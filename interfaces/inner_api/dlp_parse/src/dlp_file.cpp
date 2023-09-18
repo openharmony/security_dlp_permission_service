@@ -35,6 +35,7 @@ namespace DlpPermission {
 using Defer = std::shared_ptr<void>;
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "DlpFile"};
+const uint32_t CURRENT_VERSION = 1;
 } // namespace
 
 DlpFile::DlpFile(int32_t dlpFd) : dlpFd_(dlpFd), isFuseLink_(false), authPerm_(READ_ONLY)
@@ -340,6 +341,12 @@ int32_t DlpFile::CheckDlpFile()
         DLP_LOG_ERROR(LABEL, "parse dlp file header error.");
         (void)memset_s(&head_, sizeof(struct DlpHeader), 0, sizeof(struct DlpHeader));
         return DLP_PARSE_ERROR_FILE_NOT_DLP;
+    }
+
+    if (head_.version > CURRENT_VERSION ) {
+        DLP_LOG_ERROR(LABEL, "head_.version > CURRENT_VERSION can not open");
+        (void)memset_s(&head_, sizeof(struct DlpHeader), 0, sizeof(struct DlpHeader));
+        return DLP_PARSE_ERROR_FILE_VERSION_BIGGER_THAN_CURRENT;
     }
     return DLP_OK;
 }

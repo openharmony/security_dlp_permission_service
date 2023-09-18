@@ -41,6 +41,7 @@ enum JsErrorCode : int32_t {
     ERR_JS_OUT_OF_MEMORY = 19100012,
     ERR_JS_USER_NO_PERMISSION = 19100013,
     ERR_JS_ACCOUNT_NOT_LOGIN = 19100014,
+    ERR_JS_SYSTEM_NEED_TO_BE_UPGRADED = 19100015,
 };
 
 std::string GetJsErrMsg(int32_t errNo);

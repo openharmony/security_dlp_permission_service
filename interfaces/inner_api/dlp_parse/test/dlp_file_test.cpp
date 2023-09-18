@@ -1652,3 +1652,28 @@ HWTEST_F(DlpFileTest, DoDlpContentCopyOperation001, TestSize.Level1)
     ASSERT_NE(fd2, -1);
     ASSERT_EQ(DLP_PARSE_ERROR_FILE_OPERATE_FAIL, testFile.DoDlpContentCopyOperation(fd, fd2, 10, 100));
 }
+
+/**
+ * @tc.name: CheckDlpFile001
+ * @tc.desc: CheckDlpFile
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpFileTest, CheckDlpFile001, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL, "CheckDlpFile001");
+    int fdDlp = open("/data/fuse_test_dlp.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
+    ASSERT_NE(fdDlp, -1);
+    DlpFile testFile(fdDlp);
+    testFile.head_.certSize = 10;
+    testFile.head_.contactAccountSize = 10;
+    testFile.head_.contactAccountOffset = sizeof(struct DlpHeader) + 10;
+    testFile.head_.txtOffset = sizeof(struct DlpHeader) + 10 + 10;
+    testFile.head_.txtSize = 0;
+    testFile.head_.version = 2;
+    write(fdDlp, &testFile.head_, sizeof(struct DlpHeader));
+    lseek(fdDlp, 0, SEEK_SET);
+    int res = testFile.CheckDlpFile();
+    ASSERT_EQ(res, DLP_PARSE_ERROR_FILE_VERSION_BIGGER_THAN_CURRENT);
+    close(fdDlp);
+}

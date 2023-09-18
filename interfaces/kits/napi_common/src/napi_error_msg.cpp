@@ -41,6 +41,7 @@ static const std::unordered_map<int32_t, std::string> JS_ERROR_MSG_MAP = {
     { ERR_JS_DLP_FILE_READ_ONLY, "DLP file is read only, please check your permission" },
     { ERR_JS_SYSTEM_SERVICE_EXCEPTION, "System service exception, please try again or reboot your device" },
     { ERR_JS_OUT_OF_MEMORY, "System out of memory, please try again or reboot your device" },
+    { ERR_JS_SYSTEM_NEED_TO_BE_UPGRADED, "System need to be upgraded" },
 };
 
 static const std::unordered_map<int32_t, int32_t> NATIVE_CODE_TO_JS_CODE_MAP = {
@@ -128,6 +129,9 @@ static const std::unordered_map<int32_t, int32_t> NATIVE_CODE_TO_JS_CODE_MAP = {
     { DLP_SERVICE_ERROR_MEMORY_OPERATE_FAIL, ERR_JS_OUT_OF_MEMORY },
     { DLP_PARSE_ERROR_MEMORY_OPERATE_FAIL, ERR_JS_OUT_OF_MEMORY },
     { DLP_FUSE_ERROR_MEMORY_OPERATE_FAIL, ERR_JS_OUT_OF_MEMORY },
+
+    //ERR_JS_SYSTEM_NEED_TO_BE_UPGRADED
+    { DLP_PARSE_ERROR_FILE_VERSION_BIGGER_THAN_CURRENT, ERR_JS_SYSTEM_NEED_TO_BE_UPGRADED },
 };
 
 std::string GetJsErrMsg(int32_t jsErrCode)
