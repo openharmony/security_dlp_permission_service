@@ -53,7 +53,6 @@ public:
     static int WaitDaemonEnable(void);
     static void NotifyDaemonEnable(void);
     static void NotifyDaemonDisable(void);
-    static int NotifyKernelNoFlush(void);
     static void InitRootFileStat(void);
     static void FuseFsDaemonThread(int fuseFd);
 

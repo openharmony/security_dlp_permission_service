@@ -640,7 +640,7 @@ int32_t DlpFile::DoDlpContentCryptyOperation(int32_t inFd, int32_t outFd, uint32
 
 int32_t DlpFile::DoDlpContentCopyOperation(int32_t inFd, int32_t outFd, uint32_t inOffset, uint32_t inFileLen)
 {
-    if (inOffset >= inFileLen) {
+    if (inOffset > inFileLen) {
         return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
     }
     uint8_t *data = new (std::nothrow) uint8_t[DLP_BUFF_LEN];
