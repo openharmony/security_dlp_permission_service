@@ -1411,8 +1411,7 @@ HWTEST_F(DlpCryptTest, DlpOpensslAesHalFreeCtx001, TestSize.Level1)
     struct DlpOpensslAesCtx* opensslAesCtx = static_cast<struct DlpOpensslAesCtx*>(ctx);
     opensslAesCtx->mode = 1000;
     DlpOpensslAesHalFreeCtx(&ctx);
-    ASSERT_NE(opensslAesCtx->append, nullptr);
-    opensslAesCtx->mode = DLP_MODE_CTR;
+    ASSERT_EQ(ctx, nullptr);
 }
 
 /**
