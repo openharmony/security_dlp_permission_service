@@ -34,7 +34,6 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_
 static const fuse_ino_t ROOT_INODE = 1;
 static const int DEFAULT_ATTR_TIMEOUT = 10000;
 static const uint32_t MAX_FUSE_READ_BUFF_SIZE = 10 * 1024 * 1024; // 10M
-static constexpr const char* DEFAULT_DLP_LINK_FILE = "default.dlp";
 
 static int g_fuseReplyErr = 0;
 static struct fuse_file_info g_fuseReplyOpen;
@@ -873,23 +872,6 @@ HWTEST_F(FuseDaemonTest, FuseFsDaemonThread003, TestSize.Level1)
     FuseDaemon::FuseFsDaemonThread(1);
     EXPECT_EQ(0, FuseDaemon::WaitDaemonEnable());
     CleanMockConditions();
-}
-
-/**
- * @tc.name: NotifyKernelNoFlush001
- * @tc.desc: test nortify kernel noflush abnormal
- * @tc.type: FUNC
- * @tc.require:AR000GVIGC
- */
-HWTEST_F(FuseDaemonTest, NotifyKernelNoFlush001, TestSize.Level1)
-{
-    DLP_LOG_INFO(LABEL, "NotifyKernelNoFlush001");
-    std::shared_ptr<DlpFile> defaultfilePtr = std::make_shared<DlpFile>(-1);
-    ASSERT_NE(nullptr, defaultfilePtr);
-    DlpLinkManager::GetInstance().AddDlpLinkFile(defaultfilePtr, DEFAULT_DLP_LINK_FILE);
-    EXPECT_EQ(-1, FuseDaemon::NotifyKernelNoFlush());
-    DlpLinkManager::GetInstance().DeleteDlpLinkFile(defaultfilePtr);
-    EXPECT_EQ(-1, FuseDaemon::NotifyKernelNoFlush());
 }
 
 /**

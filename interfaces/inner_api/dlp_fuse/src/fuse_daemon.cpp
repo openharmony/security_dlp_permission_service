@@ -38,8 +38,6 @@ static constexpr int ROOT_INODE_ACCESS = 0711;
 static constexpr uint32_t MAX_READ_DIR_BUF_SIZE = 100 * 1024;  // 100K
 static constexpr const char* CUR_DIR = ".";
 static constexpr const char* UPPER_DIR = "..";
-static constexpr const char* DEFAULT_DLP_LINK_FILE = "default.dlp";
-static constexpr const char* DEFAULT_DLP_LINK_FILE_PATH = "/mnt/data/fuse/default.dlp";
 }  // namespace
 
 std::condition_variable FuseDaemon::daemonEnableCv_;
@@ -47,7 +45,6 @@ enum DaemonStatus FuseDaemon::daemonStatus_;
 std::mutex FuseDaemon::daemonEnableMtx_;
 struct stat FuseDaemon::rootFileStat_;
 bool FuseDaemon::init_ = false;
-static const int32_t INVALID_DLP_FD = -1;
 
 // caller need to check ino == ROOT_INODE
 static DlpLinkFile* GetFileNode(fuse_ino_t ino)
@@ -543,28 +540,6 @@ void FuseDaemon::FuseFsDaemonThread(int fuseFd)
     fuse_opt_free_args(&args);
 }
 
-int FuseDaemon::NotifyKernelNoFlush(void)
-{
-    std::shared_ptr<DlpFile> defaultfilePtr = std::make_shared<DlpFile>(INVALID_DLP_FD);
-    if (DlpLinkManager::GetInstance().AddDlpLinkFile(defaultfilePtr, DEFAULT_DLP_LINK_FILE) != DLP_OK) {
-        DLP_LOG_ERROR(LABEL, "Add default dlp file fail");
-        return -1;
-    }
-
-    int defaultFd = open(DEFAULT_DLP_LINK_FILE_PATH, O_RDWR);
-    if (defaultFd == -1) {
-        DLP_LOG_ERROR(LABEL, "Open default dlp file fail");
-        DlpLinkManager::GetInstance().DeleteDlpLinkFile(defaultfilePtr);
-        return -1;
-    }
-
-    // we need kernel to know that fs has no flush interface, close will trigger kernel flush
-    (void)close(defaultFd);
-    DlpLinkManager::GetInstance().DeleteDlpLinkFile(defaultfilePtr);
-    DLP_LOG_INFO(LABEL, "Notify kernel no flush succ");
-    return 0;
-}
-
 int FuseDaemon::InitFuseFs(int fuseDevFd)
 {
     if (init_) {
@@ -581,12 +556,7 @@ int FuseDaemon::InitFuseFs(int fuseDevFd)
 
     std::thread daemonThread(FuseFsDaemonThread, fuseDevFd);
     daemonThread.detach();
-    int result = WaitDaemonEnable();
-    if (result == 0) {
-        std::thread notifyThread(NotifyKernelNoFlush);
-        notifyThread.detach();
-    }
-    return result;
+    return WaitDaemonEnable();
 }
 }  // namespace DlpPermission
 }  // namespace Security
