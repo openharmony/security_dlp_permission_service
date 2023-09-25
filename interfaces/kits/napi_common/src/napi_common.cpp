@@ -564,7 +564,8 @@ void ProcessCallbackOrPromise(napi_env env, const CommonAsyncContext* asyncConte
             napi_value jsMessageStr;
             napi_value jsErrMessage;
             NAPI_CALL_RETURN_VOID(env, napi_create_string_utf8(env, "message", NAPI_AUTO_LENGTH, &jsMessageStr));
-            NAPI_CALL_RETURN_VOID(env, napi_create_string_utf8(env, errMessage.c_str(), NAPI_AUTO_LENGTH, &jsErrMessage));
+            NAPI_CALL_RETURN_VOID(env,
+                napi_create_string_utf8(env, errMessage.c_str(), NAPI_AUTO_LENGTH, &jsErrMessage));
             NAPI_CALL_RETURN_VOID(env, napi_delete_property(env, errObj, jsMessageStr, nullptr));
             NAPI_CALL_RETURN_VOID(env, napi_set_property(env, errObj, jsMessageStr, jsErrMessage));
         }
