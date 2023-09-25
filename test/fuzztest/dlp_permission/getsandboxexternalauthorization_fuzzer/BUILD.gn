@@ -45,6 +45,7 @@ ohos_fuzztest("GetSandboxExternalAuthorizationFuzzTest") {
     "access_token:libaccesstoken_sdk",
     "access_token:libtoken_setproc",
     "c_utils:utils",
+    "config_policy:configpolicy_util",
     "hilog:libhilog",
   ]
 }

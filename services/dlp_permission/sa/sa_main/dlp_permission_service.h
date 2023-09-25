@@ -89,6 +89,8 @@ private:
     int32_t UninstallDlpSandboxApp(const std::string& bundleName, int32_t appIndex, int32_t userId);
     void TerminalService();
     void StartTimer();
+    void GetCfgFilesList(std::vector<std::string> &cfgFilesList);
+    void GetConfigFileValue(const std::string &cfgFile, std::vector<std::string> &typeList);
     std::vector<std::string> InitConfig();
 
     std::atomic<int32_t> repeatTime_;
