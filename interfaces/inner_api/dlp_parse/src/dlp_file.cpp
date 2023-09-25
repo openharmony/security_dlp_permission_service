@@ -343,7 +343,7 @@ int32_t DlpFile::CheckDlpFile()
         return DLP_PARSE_ERROR_FILE_NOT_DLP;
     }
 
-    if (head_.version > CURRENT_VERSION ) {
+    if (head_.version > CURRENT_VERSION) {
         DLP_LOG_ERROR(LABEL, "head_.version > CURRENT_VERSION can not open");
         (void)memset_s(&head_, sizeof(struct DlpHeader), 0, sizeof(struct DlpHeader));
         return DLP_PARSE_ERROR_FILE_VERSION_BIGGER_THAN_CURRENT;
