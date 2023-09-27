@@ -54,7 +54,7 @@ static const std::chrono::seconds SLEEP_TIME(120);
 static const int REPEAT_TIME = 5;
 static const std::string DLP_CONFIG = "etc/dlp_permission/dlp_config.json";
 static const std::string SUPPORT_FILE_TYPE = "support_file_type";
-static const std::string DEAULT_DLP_CONFIG = "/system/etc/dlp_permission/dlp_config.json";
+static const std::string DEAULT_DLP_CONFIG = "/system/etc/dlp_config.json";
 }
 REGISTER_SYSTEM_ABILITY_BY_ID(DlpPermissionService, SA_ID_DLP_PERMISSION_SERVICE, true);
 
