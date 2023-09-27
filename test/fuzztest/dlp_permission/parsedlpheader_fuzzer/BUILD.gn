@@ -35,13 +35,11 @@ ohos_fuzztest("ParseDlpHeaderFuzzTest") {
   configs = [ "${dlp_root_dir}/config:coverage_flags" ]
 
   cflags_cc = [ "-DHILOG_ENABLE" ]
-  sources = [
-    "parsedlpheader_fuzzer.cpp"
-  ]
+  sources = [ "parsedlpheader_fuzzer.cpp" ]
 
   deps = [
-    "${dlp_root_dir}/interfaces/inner_api/dlp_permission:libdlp_permission_sdk",
     "${dlp_root_dir}/interfaces/inner_api/dlp_parse:libdlpparse_inner",
+    "${dlp_root_dir}/interfaces/inner_api/dlp_permission:libdlp_permission_sdk",
   ]
 
   external_deps = [
@@ -49,7 +47,6 @@ ohos_fuzztest("ParseDlpHeaderFuzzTest") {
     "access_token:libaccesstoken_sdk",
     "access_token:libtoken_setproc",
     "c_utils:utils",
-    "config_policy:configpolicy_util",
     "hilog:libhilog",
   ]
 }
