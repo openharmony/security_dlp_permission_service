@@ -18,6 +18,7 @@
 #include "accesstoken_kit.h"
 #include "account_adapt.h"
 #include "app_uninstall_observer.h"
+#include "cert_parcel.h"
 #define private public
 #include "dlp_sandbox_change_callback_manager.h"
 #include "open_dlp_file_callback_manager.h"
@@ -63,6 +64,11 @@ const int64_t DELTA_EXPIRY_TIME = 200;
 const uint64_t EXPIRY_TEN_MINUTE = 60 * 10;
 const uint32_t AESKEY_LEN = 32;
 const std::string ENC_ACCOUNT_TYPE = "accountType";
+const std::string ENC_DATA_LEN = "encDataLen";
+const std::string ENC_DATA = "encData";
+const std::string EXTRA_INFO_LEN = "extraInfoLen";
+const std::string EXTRA_INFO = "extraInfo";
+const std::string ENC_POLICY = "encPolicy";
 
 static const std::string POLICY_CIPHER = "8B6696A5DD160005C9DCAF43025CB240958D1E53D8E54D70DBED8C191411FA60C9B5D491B"
     "AE3F34F124DBA805736FCBBC175D881818A93A0E07C844E9DF9503641BF2A98EC49BE0BB2"
@@ -765,10 +771,10 @@ HWTEST_F(DlpPermissionServiceTest, OnStart001, TestSize.Level1)
  */
 HWTEST_F(DlpPermissionServiceTest, ParseDlpCertificate001, TestSize.Level1)
 {
-    std::vector<uint8_t> cert;
-    uint32_t flag = 0;
+    sptr<CertParcel> certParcel = new (std::nothrow) CertParcel();;
     sptr<IDlpPermissionCallback> callback = nullptr;
-    ASSERT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, dlpPermissionService_->ParseDlpCertificate(cert, flag, callback));
+    ASSERT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID,
+        dlpPermissionService_->ParseDlpCertificate(certParcel, callback));
 }
 
 /**
@@ -879,21 +885,19 @@ HWTEST_F(DlpPermissionServiceTest, SerializeEncPolicyData001, TestSize.Level1)
     unordered_json decDataJson = encDataJson;
     encAndDecOptions.extraInfoLen = 0;
     encPolicyData.options = encAndDecOptions;
-    res = DlpPermissionSerializer::GetInstance().SerializeEncPolicyData(encPolicyData, encDataJson);
-    ASSERT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, res);
     DLP_EncPolicyData decPolicyData;
-    res = DlpPermissionSerializer::GetInstance().DeserializeEncPolicyData(decDataJson, decPolicyData, true);
+    res = DlpPermissionSerializer::GetInstance().DeserializeEncPolicyData(decDataJson, decPolicyData, false);
     ASSERT_EQ(DLP_OK, res);
     AccountType tempType;
     encDataJson.at(ENC_ACCOUNT_TYPE).get_to(tempType);
     decDataJson[ENC_ACCOUNT_TYPE] = "test";
-    res = DlpPermissionSerializer::GetInstance().DeserializeEncPolicyData(decDataJson, decPolicyData, true);
+    res = DlpPermissionSerializer::GetInstance().DeserializeEncPolicyData(decDataJson, decPolicyData, false);
     ASSERT_EQ(DLP_OK, res);
     decDataJson.erase(ENC_ACCOUNT_TYPE);
-    res = DlpPermissionSerializer::GetInstance().DeserializeEncPolicyData(decDataJson, decPolicyData, true);
+    res = DlpPermissionSerializer::GetInstance().DeserializeEncPolicyData(decDataJson, decPolicyData, false);
     ASSERT_EQ(DLP_OK, res);
     decDataJson[ENC_ACCOUNT_TYPE] = tempType;
-    res = DlpPermissionSerializer::GetInstance().DeserializeEncPolicyData(decDataJson, decPolicyData, true);
+    res = DlpPermissionSerializer::GetInstance().DeserializeEncPolicyData(decDataJson, decPolicyData, false);
     ASSERT_EQ(DLP_OK, res);
 }
 
@@ -960,4 +964,43 @@ HWTEST_F(DlpPermissionServiceTest, RemoveRetentionInfo001, TestSize.Level1)
     RetentionInfo info;
     bool ret = dlpPermissionService_->RemoveRetentionInfo(retentionSandBoxInfoVec, info);
     ASSERT_EQ(true, ret);
+}
+/**
+ * @tc.name: DeserializeEncPolicyDataByFirstVersion001
+ * @tc.desc: DeserializeEncPolicyDataByFirstVersion test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionServiceTest, DeserializeEncPolicyDataByFirstVersion001, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL, "DeserializeEncPolicyDataByFirstVersion001");
+    unordered_json encDataJson = {
+        { ENC_DATA_LEN, 11 }
+    };
+    unordered_json encDataJson2;
+    DLP_EncPolicyData encData;
+    std::string ownerAccountId;
+    int res = DlpPermissionSerializer::GetInstance().DeserializeEncPolicyDataByFirstVersion(encDataJson, encDataJson2,
+        encData, ownerAccountId);
+    ASSERT_EQ(res, DLP_SERVICE_ERROR_VALUE_INVALID);
+    encDataJson[ENC_DATA] = "1";
+    res = DlpPermissionSerializer::GetInstance().DeserializeEncPolicyDataByFirstVersion(encDataJson, encDataJson2,
+        encData, ownerAccountId);
+    ASSERT_EQ(res, DLP_SERVICE_ERROR_VALUE_INVALID);
+    encDataJson[EXTRA_INFO] = "1";
+    res = DlpPermissionSerializer::GetInstance().DeserializeEncPolicyDataByFirstVersion(encDataJson, encDataJson2,
+        encData, ownerAccountId);
+    ASSERT_EQ(res, DLP_OK);
+    encDataJson2[ENC_POLICY] = "1";
+    res = DlpPermissionSerializer::GetInstance().DeserializeEncPolicyDataByFirstVersion(encDataJson, encDataJson2,
+        encData, ownerAccountId);
+    ASSERT_EQ(res, DLP_SERVICE_ERROR_VALUE_INVALID);
+    encDataJson2[ENC_ACCOUNT_TYPE] = 2;
+    res = DlpPermissionSerializer::GetInstance().DeserializeEncPolicyDataByFirstVersion(encDataJson, encDataJson2,
+        encData, ownerAccountId);
+    ASSERT_EQ(res, DLP_SERVICE_ERROR_VALUE_INVALID);
+    encDataJson2[EXTRA_INFO] = "1";
+    res = DlpPermissionSerializer::GetInstance().DeserializeEncPolicyDataByFirstVersion(encDataJson, encDataJson2,
+        encData, ownerAccountId);
+    ASSERT_EQ(res, DLP_OK);
 }

@@ -92,6 +92,7 @@ ohos_shared_library("dlp_permission_service") {
   ]
 
   sources = [
+    "${dlp_root_dir}/frameworks/common/src/cert_parcel.cpp",
     "${dlp_root_dir}/frameworks/common/src/permission_policy.cpp",
     "${dlp_root_dir}/frameworks/common/src/retention_sandbox_info.cpp",
     "${dlp_root_dir}/frameworks/common/src/visited_dlp_file_info.cpp",

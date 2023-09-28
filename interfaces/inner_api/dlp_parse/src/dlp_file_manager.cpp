@@ -81,7 +81,11 @@ int32_t DlpFileManager::GenerateCertData(const PermissionPolicy& policy, struct 
         DLP_LOG_ERROR(LABEL, "Generate dlp cert fail, errno=%{public}d", result);
         return result;
     }
+    return GenerateCertBlob(cert, certData);
+}
 
+int32_t DlpFileManager::GenerateCertBlob(const std::vector<uint8_t>& cert, struct DlpBlob& certData) const
+{
     size_t certSize = cert.size();
     if (certSize > DLP_MAX_CERT_SIZE) {
         DLP_LOG_ERROR(LABEL, "Check dlp cert fail, cert is too large, size=%{public}zu", certSize);
@@ -158,63 +162,68 @@ int32_t DlpFileManager::PrepareDlpEncryptParms(
     return DLP_OK;
 }
 
+int32_t DlpFileManager::UpdateDlpFile(bool isNeedAdapter, uint32_t oldCertSize, const std::string& workDir,
+    const std::vector<uint8_t>& cert, std::shared_ptr<DlpFile>& filePtr)
+{
+    std::lock_guard<std::mutex> lock(g_offlineLock_);
+    int32_t result = filePtr->CheckDlpFile();
+    if (result != DLP_OK) {
+        return result;
+    }
+    struct DlpBlob certBlob;
+    result = GenerateCertBlob(cert, certBlob);
+    if (result != DLP_OK) {
+        return result;
+    }
+    if (isNeedAdapter || oldCertSize != certBlob.size) {
+        return filePtr->UpdateCertAndText(cert, workDir, certBlob);
+    }
+    return filePtr->UpdateCert(certBlob);
+}
+
 int32_t DlpFileManager::ParseDlpFileFormat(std::shared_ptr<DlpFile>& filePtr, const std::string& workDir)
 {
     int32_t result = filePtr->ParseDlpHeader();
     if (result != DLP_OK) {
         return result;
     }
-
     struct DlpBlob cert;
     filePtr->GetEncryptCert(cert);
-    std::vector<uint8_t> certBuf = std::vector<uint8_t>(cert.data, cert.data + cert.size);
-
-    std::vector<uint8_t> offlineCertBuf;
+    sptr<CertParcel> certParcel = new (std::nothrow) CertParcel();
+    if (certParcel == nullptr) {
+        DLP_LOG_ERROR(LABEL, "Alloc certParcel parcel fail");
+        return DLP_PARSE_ERROR_MEMORY_OPERATE_FAIL;
+    }
+    certParcel->cert = std::vector<uint8_t>(cert.data, cert.data + cert.size);
+    uint32_t oldCertSize = cert.size;
     struct DlpBlob offlineCert = { 0 };
     uint32_t flag =  filePtr->GetOfflineAccess();
     if (flag != 0) {
         filePtr->GetOfflineCert(offlineCert);
-        offlineCertBuf = std::vector<uint8_t>(offlineCert.data, offlineCert.data + offlineCert.size);
+        certParcel->offlineCert = std::vector<uint8_t>(offlineCert.data, offlineCert.data + offlineCert.size);
     }
-
     PermissionPolicy policy;
+    filePtr->GetContactAccount(certParcel->contactAccount);
+    certParcel->isNeedAdapter = filePtr->NeedAdapter();
     StartTrace(HITRACE_TAG_ACCESS_CONTROL, "DlpParseCertificate");
-    result = DlpPermissionKit::ParseDlpCertificate(certBuf, offlineCertBuf, flag, policy);
+    result = DlpPermissionKit::ParseDlpCertificate(certParcel, policy);
     FinishTrace(HITRACE_TAG_ACCESS_CONTROL);
     if (result != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "Parse cert fail, errno=%{public}d", result);
         return result;
     }
-
     result = filePtr->SetPolicy(policy);
     if (result != DLP_OK) {
         return result;
     }
-
     struct DlpBlob key = {.size = policy.GetAeskeyLen(), .data = policy.GetAeskey()};
-    struct DlpCipherParam param = {
-        .iv = {.size = policy.GetIvLen(), .data = policy.GetIv()},
-    };
-    struct DlpUsageSpec usage = {
-        .mode = DLP_MODE_CTR,
-        .algParam = &param,
-    };
+    struct DlpCipherParam param = {.iv = {.size = policy.GetIvLen(), .data = policy.GetIv()}};
+    struct DlpUsageSpec usage = {.mode = DLP_MODE_CTR, .algParam = &param};
     result = filePtr->SetCipher(key, usage);
     if (result != DLP_OK) {
         return result;
     }
-
-    if (flag == DLP_CERT_UPDATED) {
-        std::lock_guard<std::mutex> lock(g_offlineLock_);
-        DLP_LOG_DEBUG(LABEL, "enter %{public}s", workDir.c_str());
-        result = filePtr->CheckDlpFile();
-        if (result != DLP_OK) {
-            return result;
-        }
-        result = filePtr->AddOfflineCert(offlineCertBuf, workDir);
-    }
-
-    return result;
+    return UpdateDlpFile(filePtr->NeedAdapter(), oldCertSize, workDir, certParcel->offlineCert, filePtr);
 }
 
 void DlpFileManager::FreeChiperBlob(struct DlpBlob& key, struct DlpBlob& certData, struct DlpUsageSpec& usage) const
@@ -296,7 +305,6 @@ int32_t DlpFileManager::GenerateDlpFile(
     }
 
     filePtr = std::make_shared<DlpFile>(dlpFileFd);
-
     int32_t result = SetDlpFileParams(filePtr, property);
     if (result != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "Generate dlp file fail, set dlp obj params error, errno=%{public}d", result);

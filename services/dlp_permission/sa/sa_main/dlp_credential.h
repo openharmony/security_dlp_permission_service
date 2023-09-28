@@ -18,6 +18,7 @@
 
 #include <string>
 #include <vector>
+#include "cert_parcel.h"
 #include "i_dlp_permission_callback.h"
 #include "permission_policy.h"
 
@@ -32,8 +33,7 @@ public:
     int32_t GenerateDlpCertificate(
         const std::string& policy, const std::string& accountInfo, DlpAccountType accountType,
         sptr<IDlpPermissionCallback>& callback);
-    int32_t ParseDlpCertificate(const std::vector<uint8_t>& cert, uint32_t flag,
-        sptr<IDlpPermissionCallback>& callback);
+    int32_t ParseDlpCertificate(sptr<CertParcel>& certParcel, sptr<IDlpPermissionCallback>& callback);
 };
 }  // namespace DlpPermission
 }  // namespace Security

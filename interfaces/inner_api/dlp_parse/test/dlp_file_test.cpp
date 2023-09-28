@@ -24,6 +24,7 @@
 #include <sys/stat.h>
 #define private public
 #include "dlp_file.h"
+#include "dlp_file_manager.h"
 #undef private
 #include "dlp_permission.h"
 #include "dlp_permission_log.h"
@@ -1670,7 +1671,7 @@ HWTEST_F(DlpFileTest, CheckDlpFile001, TestSize.Level1)
     testFile.head_.contactAccountOffset = sizeof(struct DlpHeader) + 10;
     testFile.head_.txtOffset = sizeof(struct DlpHeader) + 10 + 10;
     testFile.head_.txtSize = 0;
-    testFile.head_.version = 2;
+    testFile.head_.version = 3;
     write(fdDlp, &testFile.head_, sizeof(struct DlpHeader));
     lseek(fdDlp, 0, SEEK_SET);
     int res = testFile.CheckDlpFile();
@@ -1679,38 +1680,20 @@ HWTEST_F(DlpFileTest, CheckDlpFile001, TestSize.Level1)
 }
 
 /**
- * @tc.name: GetOfflineCert001
- * @tc.desc: GetOfflineCert
+ * @tc.name: NeedAdapter001
+ * @tc.desc: NeedAdapter
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpFileTest, GetOfflineCert001, TestSize.Level1)
+HWTEST_F(DlpFileTest, NeedAdapter001, TestSize.Level1)
 {
-    DLP_LOG_INFO(LABEL, "GetOfflineCert001");
-
+    DLP_LOG_INFO(LABEL, "NeedAdapter001");
     DlpFile testFile(1000);
-    struct DlpBlob cert = {
-        .data = nullptr,
-        .size = 0
-    };
-    (void)testFile.GetOfflineCert(cert);
-}
-
-/**
- * @tc.name: AddOfflineCert001
- * @tc.desc: AddOfflineCert
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(DlpFileTest, AddOfflineCert001, TestSize.Level1)
-{
-    DLP_LOG_INFO(LABEL, "AddOfflineCert001");
-
-    DlpFile testFile(1000);
-    std::vector<uint8_t> offlineCert;
-    std::string workDir;
-    int32_t ret = testFile.AddOfflineCert(offlineCert, workDir);
-    ASSERT_EQ(DLP_PARSE_ERROR_FILE_OPERATE_FAIL, ret);
+    ASSERT_FALSE(testFile.NeedAdapter());
+    testFile.head_.version = 1;
+    ASSERT_TRUE(testFile.NeedAdapter());
+    testFile.head_.version = 2;
+    ASSERT_FALSE(testFile.NeedAdapter());
 }
 
 /**

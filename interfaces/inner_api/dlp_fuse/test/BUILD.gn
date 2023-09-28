@@ -34,6 +34,7 @@ ohos_unittest("dlp_fuse_test") {
   ]
 
   sources = [
+    "${dlp_root_dir}/frameworks/common/src/cert_parcel.cpp",
     "${dlp_root_dir}/frameworks/common/src/permission_policy.cpp",
     "${dlp_root_dir}/frameworks/common/src/random_mbedtls.cpp",
     "${dlp_root_dir}/frameworks/test/mock/c_mock_common.cpp",
@@ -59,8 +60,8 @@ ohos_unittest("dlp_fuse_test") {
 
   deps = [
     "${dlp_root_dir}/services/dlp_permission/sa:dlp_permission_serializer_static",
+    "//third_party/mbedtls:mbedtls_shared",
     "//third_party/openssl:libcrypto_shared",
-    "//third_party/mbedtls:mbedtls_shared"
   ]
 
   external_deps = [
@@ -68,8 +69,8 @@ ohos_unittest("dlp_fuse_test") {
     "access_token:libaccesstoken_sdk",
     "access_token:libtoken_setproc",
     "c_utils:utils",
-    "hitrace:hitrace_meter",
     "hilog:libhilog",
+    "hitrace:hitrace_meter",
     "ipc:ipc_core",
     "os_account:libaccountkits",
   ]

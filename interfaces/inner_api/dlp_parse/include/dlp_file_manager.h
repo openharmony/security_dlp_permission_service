@@ -47,6 +47,9 @@ private:
     int32_t RemoveDlpFileNode(const std::shared_ptr<DlpFile>& filePtr);
     std::shared_ptr<DlpFile> GetDlpFile(int32_t dlpFd);
     int32_t GenerateCertData(const PermissionPolicy& policy, struct DlpBlob& certData) const;
+    int32_t GenerateCertBlob(const std::vector<uint8_t>& cert, struct DlpBlob& certData) const;
+    int32_t UpdateDlpFile(bool isNeedAdapter, uint32_t oldCertSize, const std::string& workDir,
+        const std::vector<uint8_t>& cert, std::shared_ptr<DlpFile>& filePtr);
     int32_t PrepareDlpEncryptParms(
         PermissionPolicy& policy, struct DlpBlob& key, struct DlpUsageSpec& usage, struct DlpBlob& certData) const;
     int32_t ParseDlpFileFormat(std::shared_ptr<DlpFile>& filePtr, const std::string& workDir);

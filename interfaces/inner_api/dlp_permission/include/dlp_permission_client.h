@@ -40,8 +40,7 @@ public:
 
     int32_t GenerateDlpCertificate(
         const PermissionPolicy& policy, std::shared_ptr<GenerateDlpCertificateCallback> callback);
-    int32_t ParseDlpCertificate(
-        const std::vector<uint8_t>& cert, uint32_t flag, std::shared_ptr<ParseDlpCertificateCallback> callback);
+    int32_t ParseDlpCertificate(sptr<CertParcel>& certParcel, std::shared_ptr<ParseDlpCertificateCallback> callback);
     int32_t InstallDlpSandbox(const std::string& bundleName, DLPFileAccess dlpFileAccess, int32_t userId,
         SandboxInfo& sandboxInfo, const std::string& uri);
     int32_t UninstallDlpSandbox(const std::string& bundleName, int32_t appIndex, int32_t userId);

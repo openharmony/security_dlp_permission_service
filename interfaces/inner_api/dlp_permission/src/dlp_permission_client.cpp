@@ -95,10 +95,10 @@ int32_t DlpPermissionClient::GenerateDlpCertificate(
     return proxy->GenerateDlpCertificate(policyParcel, asyncStub);
 }
 
-int32_t DlpPermissionClient::ParseDlpCertificate(
-    const std::vector<uint8_t>& cert, uint32_t flag, std::shared_ptr<ParseDlpCertificateCallback> callback)
+int32_t DlpPermissionClient::ParseDlpCertificate(sptr<CertParcel>& certParcel,
+    std::shared_ptr<ParseDlpCertificateCallback> callback)
 {
-    if (callback == nullptr || cert.size() == 0) {
+    if (callback == nullptr || certParcel->cert.size() == 0) {
         return DLP_SERVICE_ERROR_VALUE_INVALID;
     }
     auto proxy = GetProxy(true);
@@ -113,7 +113,7 @@ int32_t DlpPermissionClient::ParseDlpCertificate(
         return DLP_SERVICE_ERROR_MEMORY_OPERATE_FAIL;
     }
 
-    return proxy->ParseDlpCertificate(cert, flag, asyncStub);
+    return proxy->ParseDlpCertificate(certParcel, asyncStub);
 }
 
 int32_t DlpPermissionClient::InstallDlpSandbox(const std::string& bundleName, DLPFileAccess dlpFileAccess,
