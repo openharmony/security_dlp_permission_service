@@ -417,7 +417,8 @@ void DlpPermissionService::GetConfigFileValue(const std::string &cfgFile, std::v
         DLP_LOG_WARN(LABEL, "JsonObj is discarded");
         return ;
     }
-    if (jsonObj.find(SUPPORT_FILE_TYPE) != jsonObj.end() && jsonObj.at(SUPPORT_FILE_TYPE).is_array()) {
+    if (jsonObj.find(SUPPORT_FILE_TYPE) != jsonObj.end() && jsonObj.at(SUPPORT_FILE_TYPE).is_array()
+        && !jsonObj.at(SUPPORT_FILE_TYPE).empty() && jsonObj.at(SUPPORT_FILE_TYPE).at(0).is_string()) {
         typeList = jsonObj.at(SUPPORT_FILE_TYPE).get<std::vector<std::string>>();
     }
 }
