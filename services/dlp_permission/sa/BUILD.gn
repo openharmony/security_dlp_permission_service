@@ -67,11 +67,9 @@ ohos_static_library("dlp_permission_serializer_static") {
 
   if (dlp_credential_enable == true) {
     cflags_cc += [ "-DSUPPORT_DLP_CREDENTIAL" ]
-    external_deps += [ "dlp_credential_service:dlp_credential_sdk", ]
-  }else{
-    include_dirs +=[
-        "mock",
-    ]
+    external_deps += [ "dlp_credential_service:dlp_credential_sdk" ]
+  } else {
+    include_dirs += [ "mock" ]
   }
 }
 
@@ -110,11 +108,11 @@ ohos_shared_library("dlp_permission_service") {
     "adapt/sandbox_json_manager.cpp",
     "adapt/visit_record_file_manager.cpp",
     "adapt/visit_record_json_manager.cpp",
-    "callback/dlp_sandbox_change_callback/dlp_sandbox_change_callback_manager.cpp",
     "callback/dlp_sandbox_change_callback/dlp_sandbox_change_callback_death_recipient.cpp",
+    "callback/dlp_sandbox_change_callback/dlp_sandbox_change_callback_manager.cpp",
     "callback/dlp_sandbox_change_callback/dlp_sandbox_change_callback_proxy.cpp",
-    "callback/open_dlp_file_callback/open_dlp_file_callback_manager.cpp",
     "callback/open_dlp_file_callback/open_dlp_file_callback_death_recipient.cpp",
+    "callback/open_dlp_file_callback/open_dlp_file_callback_manager.cpp",
     "callback/open_dlp_file_callback/open_dlp_file_callback_proxy.cpp",
     "sa_main/dlp_credential.cpp",
     "sa_main/dlp_permission_async_proxy.cpp",
@@ -157,11 +155,12 @@ ohos_shared_library("dlp_permission_service") {
     "access_token:libaccesstoken_sdk",
     "bundle_framework:appexecfwk_base",
     "bundle_framework:appexecfwk_core",
+    "c_utils:utils",
     "common_event_service:cesfwk_core",
     "common_event_service:cesfwk_innerkits",
-    "c_utils:utils",
-    "hisysevent:libhisysevent",
+    "config_policy:configpolicy_util",
     "hilog:libhilog",
+    "hisysevent:libhisysevent",
     "init:libbegetutil",
     "ipc:ipc_core",
     "os_account:libaccountkits",
@@ -172,13 +171,9 @@ ohos_shared_library("dlp_permission_service") {
 
   if (dlp_credential_enable == true) {
     cflags_cc += [ "-DSUPPORT_DLP_CREDENTIAL" ]
-    external_deps += [ "dlp_credential_service:dlp_credential_sdk", ]
-  }else{
-    include_dirs +=[
-        "mock",
-    ]
-    sources += [
-      "mock/dlp_credential_service.c",
-    ]
+    external_deps += [ "dlp_credential_service:dlp_credential_sdk" ]
+  } else {
+    include_dirs += [ "mock" ]
+    sources += [ "mock/dlp_credential_service.c" ]
   }
 }

@@ -19,19 +19,20 @@
 #include "account_adapt.h"
 #include "app_mgr_client.h"
 #include "bundle_mgr_client.h"
-#include "dlp_sandbox_change_callback_manager.h"
-#include "open_dlp_file_callback_manager.h"
+#include "config_policy_utils.h"
 #include "dlp_credential_client.h"
 #include "dlp_credential.h"
 #include "dlp_permission.h"
 #include "dlp_permission_log.h"
 #include "dlp_permission_serializer.h"
+#include "dlp_sandbox_change_callback_manager.h"
 #include "dlp_sandbox_info.h"
 #include "file_operator.h"
 #include "hap_token_info.h"
 #include "if_system_ability_manager.h"
 #include "ipc_skeleton.h"
 #include "iservice_registry.h"
+#include "open_dlp_file_callback_manager.h"
 #if defined(DLP_DEBUG_ENABLE) && DLP_DEBUG_ENABLE == 1
 #include "parameter.h"
 #endif
@@ -51,8 +52,9 @@ static const std::string ALLOW_ACTION[] = {"ohos.want.action.CREATE_FILE"};
 static const std::string DLP_MANAGER = "com.ohos.dlpmanager";
 static const std::chrono::seconds SLEEP_TIME(120);
 static const int REPEAT_TIME = 5;
-static const std::string DLP_CONFIG = "/system/etc/dlp_config.json";
+static const std::string DLP_CONFIG = "etc/dlp_permission/dlp_config.json";
 static const std::string SUPPORT_FILE_TYPE = "support_file_type";
+static const std::string DEAULT_DLP_CONFIG = "/system/etc/dlp_config.json";
 }
 REGISTER_SYSTEM_ABILITY_BY_ID(DlpPermissionService, SA_ID_DLP_PERMISSION_SERVICE, true);
 
@@ -389,6 +391,38 @@ int32_t DlpPermissionService::IsInDlpSandbox(bool& inSandbox)
     return appStateObserver_->IsInDlpSandbox(inSandbox, uid);
 }
 
+void DlpPermissionService::GetCfgFilesList(std::vector<std::string> &cfgFilesList)
+{
+    CfgFiles *cfgFiles = GetCfgFiles(DLP_CONFIG.c_str()); // need free
+    if (cfgFiles != nullptr) {
+        for (auto &cfgPath : cfgFiles->paths) {
+            if (cfgPath != nullptr) {
+                cfgFilesList.emplace_back(cfgPath);
+            }
+        }
+        FreeCfgFiles(cfgFiles); // free memory
+    }
+    std::reverse(cfgFilesList.begin(), cfgFilesList.end()); // priority from low to high, need reverse
+}
+
+void DlpPermissionService::GetConfigFileValue(const std::string &cfgFile, std::vector<std::string> &typeList)
+{
+    std::string content;
+    (void)FileOperator().GetFileContentByPath(cfgFile, content);
+    if (content.empty()) {
+        return ;
+    }
+    auto jsonObj = nlohmann::json::parse(content);
+    if (jsonObj.is_discarded() || (!jsonObj.is_object())) {
+        DLP_LOG_WARN(LABEL, "JsonObj is discarded");
+        return ;
+    }
+    if (jsonObj.find(SUPPORT_FILE_TYPE) != jsonObj.end() && jsonObj.at(SUPPORT_FILE_TYPE).is_array()
+        && !jsonObj.at(SUPPORT_FILE_TYPE).empty() && jsonObj.at(SUPPORT_FILE_TYPE).at(0).is_string()) {
+        typeList = jsonObj.at(SUPPORT_FILE_TYPE).get<std::vector<std::string>>();
+    }
+}
+
 std::vector<std::string> DlpPermissionService::InitConfig()
 {
     static std::vector<std::string> typeList;
@@ -396,22 +430,22 @@ std::vector<std::string> DlpPermissionService::InitConfig()
     std::lock_guard<std::mutex> lock(mutex_);
     if (cfgInit) {
         cfgInit = false;
-        std::string content;
-        (void)FileOperator().GetFileContentByPath(DLP_CONFIG, content);
-        if (content.empty()) {
-            return typeList;
+        std::vector<std::string> cfgFilesList;
+        GetCfgFilesList(cfgFilesList);
+        for (auto &cfgFile : cfgFilesList) {
+            GetConfigFileValue(cfgFile, typeList);
+            if (!typeList.empty()) {
+                break;
+            }
         }
-        auto jsonObj = nlohmann::json::parse(content);
-        if (jsonObj.is_discarded() || (!jsonObj.is_object())) {
-            DLP_LOG_ERROR(LABEL, "JsonObj is discarded");
-            return typeList;
-        }
-
-        if (jsonObj.find(SUPPORT_FILE_TYPE) != jsonObj.end() && jsonObj.at(SUPPORT_FILE_TYPE).is_array()) {
-            typeList = jsonObj.at(SUPPORT_FILE_TYPE).get<std::vector<std::string>>();
+        if (typeList.empty()) {
+            DLP_LOG_INFO(LABEL, "get config value failed, use default file path");
+            GetConfigFileValue(DEAULT_DLP_CONFIG, typeList);
+            if (typeList.empty()) {
+                DLP_LOG_ERROR(LABEL, "support file type list is empty");
+            }
         }
     }
-
     return typeList;
 }
 

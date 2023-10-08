@@ -45,7 +45,8 @@
         "napi",
         "safwk",
         "samgr",
-        "c_utils"
+        "c_utils",
+        "config_policy"
       ],
       "third_party": [
         "libfuse",
