@@ -19,26 +19,26 @@
 #include "account_adapt.h"
 #include "app_mgr_client.h"
 #include "bundle_mgr_client.h"
-#include "dlp_sandbox_change_callback_manager.h"
-#include "open_dlp_file_callback_manager.h"
+#include "config_policy_utils.h"
 #include "dlp_credential_client.h"
 #include "dlp_credential.h"
 #include "dlp_permission.h"
 #include "dlp_permission_log.h"
 #include "dlp_permission_serializer.h"
+#include "dlp_sandbox_change_callback_manager.h"
 #include "dlp_sandbox_info.h"
 #include "file_operator.h"
 #include "hap_token_info.h"
 #include "if_system_ability_manager.h"
 #include "ipc_skeleton.h"
 #include "iservice_registry.h"
+#include "open_dlp_file_callback_manager.h"
 #if defined(DLP_DEBUG_ENABLE) && DLP_DEBUG_ENABLE == 1
 #include "parameter.h"
 #endif
 #include "permission_policy.h"
 #include "system_ability_definition.h"
 #include "visit_record_file_manager.h"
-#include "config_policy_utils.h"
 
 namespace OHOS {
 namespace Security {
