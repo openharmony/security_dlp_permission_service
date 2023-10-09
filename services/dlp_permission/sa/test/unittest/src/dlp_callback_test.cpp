@@ -116,6 +116,7 @@ HWTEST_F(DlpCallbackTest, DlpSandboxChangeCallback002, TestSize.Level1)
         it->second.callbackObject_ = nullptr;
         DlpSandboxChangeCallbackManager::GetInstance().callbackInfoMap_.erase(it);
     }
+    DlpSandboxChangeCallbackManager::GetInstance().callbackInfoMap_.clear();
 }
 
 class TestOpenDlpFileCallback : public OpenDlpFileCallbackStub {
