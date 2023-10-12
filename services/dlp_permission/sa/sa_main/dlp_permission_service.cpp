@@ -432,7 +432,7 @@ std::vector<std::string> DlpPermissionService::InitConfig()
         cfgInit = false;
         std::vector<std::string> cfgFilesList;
         GetCfgFilesList(cfgFilesList);
-        for (auto &cfgFile : cfgFilesList) {
+        for (const auto &cfgFile : cfgFilesList) {
             GetConfigFileValue(cfgFile, typeList);
             if (!typeList.empty()) {
                 break;
