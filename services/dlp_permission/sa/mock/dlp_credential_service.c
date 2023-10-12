@@ -111,7 +111,7 @@ bool GetAccountName(uint32_t accountType, uint32_t userId, char** account)
 
 static int CheckAccount(const uint8_t* data, uint32_t len, uint32_t accountType, uint32_t userId, bool isNeedCheckList)
 {
-    int res = DLP_SUCCESS;
+    int res = DLP_ERROR;
     char owner[STRING_LEN];
     char* account = NULL;
     char user[STRING_LEN];
@@ -127,26 +127,21 @@ static int CheckAccount(const uint8_t* data, uint32_t len, uint32_t accountType,
     }
     if (memcpy_s(policy, len + 1, data, len) != EOK) {
         DLP_LOG_ERROR("memcpy_s error");
-        res = DLP_ERROR;
         goto end;
     }
     policy[len] = '\0';
     if (!GetAccountName(accountType, userId, &account)) {
-        res = DLP_ERROR;
         goto end;
     }
     if (sprintf_s(owner, STRING_LEN, "\"ownerAccountName\":\"%s\"", account) <= 0 ||
         sprintf_s(user, STRING_LEN, "\"%s\":{", account) <= 0 ||
         sprintf_s(everyone, STRING_LEN, "\"%s\":{", "everyone") <= 0) {
         DLP_LOG_ERROR("sprintf_s owner error");
-        res = DLP_ERROR;
         goto end;
     }
-    DLP_LOG_INFO("policy:%{public}s ownerAccountName:%{public}s user %{public}s", policy, owner, user);
     if (!isNeedCheckList) {
         if (strstr(policy, owner) == NULL) {
             DLP_LOG_ERROR("policy owner check error");
-            res = DLP_ERROR;
         }
         goto end;
     }
@@ -154,7 +149,6 @@ static int CheckAccount(const uint8_t* data, uint32_t len, uint32_t accountType,
         res = DLP_SUCCESS;
     } else {
         DLP_LOG_ERROR("No permission to parse policy");
-        res = DLP_ERROR;
     }
 end:
     free(account);
