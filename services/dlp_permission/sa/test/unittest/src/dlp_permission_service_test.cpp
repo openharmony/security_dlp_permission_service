@@ -896,3 +896,68 @@ HWTEST_F(DlpPermissionServiceTest, SerializeEncPolicyData001, TestSize.Level1)
     res = DlpPermissionSerializer::GetInstance().DeserializeEncPolicyData(decDataJson, decPolicyData, true);
     ASSERT_EQ(DLP_OK, res);
 }
+
+/**
+ * @tc.name: UninstallDlpSandboxApp001
+ * @tc.desc: UninstallDlpSandboxApp test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionServiceTest, UninstallDlpSandboxApp001, TestSize.Level1)
+{
+    DLP_LOG_DEBUG(LABEL, "UninstallDlpSandboxApp001");
+
+    std::string bundleName;
+    int32_t appIndex = 0;
+    int32_t userId = 0;
+    int32_t ret = dlpPermissionService_->UninstallDlpSandboxApp(bundleName, appIndex, userId);
+    ASSERT_EQ(DLP_SERVICE_ERROR_UNINSTALL_SANDBOX_FAIL, ret);
+}
+
+/**
+ * @tc.name: GetSandboxExternalAuthorization001
+ * @tc.desc: GetSandboxExternalAuthorization test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionServiceTest, GetSandboxExternalAuthorization001, TestSize.Level1)
+{
+    DLP_LOG_DEBUG(LABEL, "GetSandboxExternalAuthorization001");
+
+    int sandboxUid = -1;
+    AAFwk::Want want;
+    SandBoxExternalAuthorType authType;
+    int32_t ret = dlpPermissionService_->GetSandboxExternalAuthorization(sandboxUid, want, authType);
+    ASSERT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, ret);
+}
+
+/**
+ * @tc.name: GetConfigFileValue001
+ * @tc.desc: GetConfigFileValue test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionServiceTest, GetConfigFileValue001, TestSize.Level1)
+{
+    DLP_LOG_DEBUG(LABEL, "GetConfigFileValue001");
+
+    std::string cfgFile;
+    std::vector<std::string> typeList;
+    (void)dlpPermissionService_->GetConfigFileValue(cfgFile, typeList);
+}
+
+/**
+ * @tc.name: RemoveRetentionInfo001
+ * @tc.desc: RemoveRetentionInfo test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionServiceTest, RemoveRetentionInfo001, TestSize.Level1)
+{
+    DLP_LOG_DEBUG(LABEL, "RemoveRetentionInfo001");
+
+    std::vector<RetentionSandBoxInfo> retentionSandBoxInfoVec;
+    RetentionInfo info;
+    bool ret = dlpPermissionService_->RemoveRetentionInfo(retentionSandBoxInfoVec, info);
+    ASSERT_EQ(true, ret);
+}
