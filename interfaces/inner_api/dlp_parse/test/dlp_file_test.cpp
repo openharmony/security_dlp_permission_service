@@ -1677,3 +1677,55 @@ HWTEST_F(DlpFileTest, CheckDlpFile001, TestSize.Level1)
     ASSERT_EQ(res, DLP_PARSE_ERROR_FILE_VERSION_BIGGER_THAN_CURRENT);
     close(fdDlp);
 }
+
+/**
+ * @tc.name: GetOfflineCert001
+ * @tc.desc: GetOfflineCert
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpFileTest, GetOfflineCert001, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL, "GetOfflineCert001");
+
+    DlpFile testFile(1000);
+    struct DlpBlob cert = {
+        .data = nullptr,
+        .size = 0
+    };
+    (void)testFile.GetOfflineCert(cert);
+}
+
+/**
+ * @tc.name: AddOfflineCert001
+ * @tc.desc: AddOfflineCert
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpFileTest, AddOfflineCert001, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL, "AddOfflineCert001");
+
+    DlpFile testFile(1000);
+    std::vector<uint8_t> offlineCert;
+    std::string workDir;
+    int32_t ret = testFile.AddOfflineCert(offlineCert, workDir);
+    ASSERT_EQ(DLP_PARSE_ERROR_FILE_OPERATE_FAIL, ret);
+}
+
+/**
+ * @tc.name: WriteHeadAndCert001
+ * @tc.desc: WriteHeadAndCert
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpFileTest, WriteHeadAndCert001, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL, "WriteHeadAndCert001");
+
+    DlpFile testFile(1000);
+    int tmpFile = 0;
+    std::vector<uint8_t> offlineCert;
+    int32_t ret = testFile.WriteHeadAndCert(tmpFile, offlineCert);
+    ASSERT_EQ(DLP_PARSE_ERROR_FILE_OPERATE_FAIL, ret);
+}
