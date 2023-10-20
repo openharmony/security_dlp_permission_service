@@ -20,6 +20,7 @@
 #include <unistd.h>
 #include <unordered_map>
 #include "account_adapt.h"
+#include "cert_parcel.h"
 #include "dlp_credential_client.h"
 #include "dlp_permission.h"
 #include "dlp_permission_async_proxy.h"
@@ -116,17 +117,13 @@ HWTEST_F(DlpCredentialTest, DlpCredentialTest002, TestSize.Level1)
 
     int res = DlpCredential::GetInstance().GenerateDlpCertificate(policy, account, accountType, stub);
     EXPECT_EQ(DLP_CREDENTIAL_ERROR_COMMON_ERROR, res);
-    std::vector<uint8_t> cert;
-    uint32_t flag = 0;
-    res = DlpCredential::GetInstance().ParseDlpCertificate(cert, flag++, stub);
-    EXPECT_EQ(DLP_SERVICE_ERROR_JSON_OPERATE_FAIL, res);
-    res = DlpCredential::GetInstance().ParseDlpCertificate(cert, flag++, stub);
-    EXPECT_EQ(DLP_SERVICE_ERROR_JSON_OPERATE_FAIL, res);
-    res = DlpCredential::GetInstance().ParseDlpCertificate(cert, flag++, stub);
+    sptr<CertParcel> certParcel = new (std::nothrow) CertParcel();;
+    res = DlpCredential::GetInstance().ParseDlpCertificate(certParcel, stub);
     EXPECT_EQ(DLP_SERVICE_ERROR_JSON_OPERATE_FAIL, res);
     std::string s2(POLICY_PLAINTTEXT);
     std::vector<uint8_t> cert2(s2.begin(), s2.end());
-    res = DlpCredential::GetInstance().ParseDlpCertificate(cert2, flag, stub);
+    certParcel->cert = cert2;
+    res = DlpCredential::GetInstance().ParseDlpCertificate(certParcel, stub);
     EXPECT_EQ(DLP_CREDENTIAL_ERROR_COMMON_ERROR, res);
 }
 }  // namespace DlpPermission

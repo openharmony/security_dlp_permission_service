@@ -35,6 +35,7 @@ namespace {
 const std::string LOCAL_ENCRYPTED_CERT = "encryptedPolicy";
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "DlpCredential"};
 static const size_t MAX_REQUEST_NUM = 100;
+static const std::string POLICY_CERT = "policyCert";
 static std::unordered_map<uint64_t, sptr<IDlpPermissionCallback>> g_requestMap;
 static std::unordered_map<uint64_t, DlpAccountType> g_requestAccountTypeMap;
 std::mutex g_lockRequest;
@@ -186,16 +187,53 @@ static void DlpPackPolicyCallback(uint64_t requestId, int errorCode, DLP_EncPoli
     callback->OnGenerateDlpCertificate(errorCode, cert);
 }
 
-static std::vector<uint8_t> GetOfflineCert(const unordered_json& jsonObj)
+static int32_t GetNewCert(const unordered_json& plainPolicyJson, std::vector<uint8_t>& cert,
+    DlpAccountType ownerAccountType)
 {
-    unordered_json encPolicyJson;
-    if (jsonObj.find(LOCAL_ENCRYPTED_CERT) != jsonObj.end() && jsonObj.at(LOCAL_ENCRYPTED_CERT).is_object()) {
-        jsonObj.at(LOCAL_ENCRYPTED_CERT).get_to(encPolicyJson);
+    unordered_json json;
+    if (plainPolicyJson.find(POLICY_CERT) == plainPolicyJson.end() || !plainPolicyJson.at(POLICY_CERT).is_object()) {
+        DLP_LOG_ERROR(LABEL, "can not found policyCert");
+        return DLP_CREDENTIAL_ERROR_SERVER_ERROR;
     }
+    plainPolicyJson.at(POLICY_CERT).get_to(json);
+    std::string encData = json.dump();
+    DLP_EncPolicyData params;
+    params.data = reinterpret_cast<uint8_t*>(strdup(encData.c_str()));
+    params.dataLen = encData.length();
+    params.accountType = static_cast<AccountType>(ownerAccountType);
+    unordered_json encDataJson;
+    int32_t res = DlpPermissionSerializer::GetInstance().SerializeEncPolicyData(params, encDataJson);
+    if (res != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "Serialize fail");
+        free(params.data);
+        params.data = nullptr;
+        return res;
+    }
+    free(params.data);
+    params.data = nullptr;
+    std::string encDataStr = encDataJson.dump();
+    cert.assign(encDataStr.begin(), encDataStr.end());
+    return DLP_OK;
+}
 
-    std::string offPolicy = encPolicyJson.dump();
-    std::vector<uint8_t> cert(offPolicy.begin(), offPolicy.end());
-    return cert;
+static int32_t DlpRestorePolicyCallbackCheck(sptr<IDlpPermissionCallback> callback, DlpAccountType accountType,
+    int errorCode, DLP_RestorePolicyData* outParams, PermissionPolicy policyInfo)
+{
+    if (callback == nullptr || accountType == INVALID_ACCOUNT) {
+        DLP_LOG_ERROR(LABEL, "callback is null or accountType is 0");
+        return DLP_SERVICE_ERROR_VALUE_INVALID;
+    }
+    if (errorCode != 0) {
+        DLP_LOG_ERROR(LABEL, "Restore Policy error, errorCode: %{public}d", errorCode);
+        callback->OnParseDlpCertificate(ConvertCredentialError(errorCode), policyInfo, {});
+        return DLP_SERVICE_ERROR_VALUE_INVALID;
+    }
+    if (outParams == nullptr || outParams->data == nullptr) {
+        DLP_LOG_ERROR(LABEL, "Params is null");
+        callback->OnParseDlpCertificate(DLP_SERVICE_ERROR_VALUE_INVALID, policyInfo, {});
+        return DLP_SERVICE_ERROR_VALUE_INVALID;
+    }
+    return DLP_OK;
 }
 
 static void DlpRestorePolicyCallback(uint64_t requestId, int errorCode, DLP_RestorePolicyData* outParams)
@@ -203,19 +241,9 @@ static void DlpRestorePolicyCallback(uint64_t requestId, int errorCode, DLP_Rest
     DLP_LOG_INFO(LABEL, "Called, requestId: %{public}llu", static_cast<unsigned long long>(requestId));
     auto callback = GetCallbackFromRequestMap(requestId);
     auto accountType = GetAccountTypeFromRequestMap(requestId);
-    if (callback == nullptr || accountType == INVALID_ACCOUNT) {
-        DLP_LOG_ERROR(LABEL, "callback is null or accountType is 0");
-        return;
-    }
     PermissionPolicy policyInfo;
-    if (errorCode != 0) {
-        DLP_LOG_ERROR(LABEL, "Restore Policy error, errorCode: %{public}d", errorCode);
-        callback->OnParseDlpCertificate(ConvertCredentialError(errorCode), policyInfo, {});
-        return;
-    }
-    if (outParams == nullptr || outParams->data == nullptr) {
-        DLP_LOG_ERROR(LABEL, "Params is null");
-        callback->OnParseDlpCertificate(DLP_SERVICE_ERROR_VALUE_INVALID, policyInfo, {});
+    int32_t res = DlpRestorePolicyCallbackCheck(callback, accountType, errorCode, outParams, policyInfo);
+    if (res != DLP_OK) {
         return;
     }
     auto policyStr = new (std::nothrow) char[outParams->dataLen + 1];
@@ -240,13 +268,19 @@ static void DlpRestorePolicyCallback(uint64_t requestId, int errorCode, DLP_Rest
     }
     delete[] policyStr;
     policyStr = nullptr;
-    int32_t res = DlpPermissionSerializer::GetInstance().DeserializeDlpPermission(jsonObj, policyInfo);
+    res = DlpPermissionSerializer::GetInstance().DeserializeDlpPermission(jsonObj, policyInfo);
     if (res != DLP_OK) {
         callback->OnParseDlpCertificate(res, policyInfo, {});
         return;
     }
     policyInfo.ownerAccountType_ = accountType;
-    callback->OnParseDlpCertificate(errorCode, policyInfo, GetOfflineCert(jsonObj));
+    std::vector<uint8_t> cert;
+    res = GetNewCert(jsonObj, cert, accountType);
+    if (res != DLP_OK) {
+        callback->OnParseDlpCertificate(res, policyInfo, {});
+        return;
+    }
+    callback->OnParseDlpCertificate(errorCode, policyInfo, cert);
 }
 
 DlpCredential& DlpCredential::GetInstance()
@@ -297,7 +331,6 @@ int32_t DlpCredential::GenerateDlpCertificate(
         .accountType = static_cast<AccountType>(accountType),
         .senderAccountInfo = accountCfg,
     };
-
     int res = 0;
     {
         std::lock_guard<std::mutex> lock(g_lockRequest);
@@ -350,32 +383,21 @@ static void FreeDLPEncPolicyData(DLP_EncPolicyData& encPolicy)
     }
 }
 
-static CloudEncOption getCertOption(uint32_t flag)
-{
-    enum DlpAuthType opFlag = static_cast<enum DlpAuthType>(flag);
-
-    switch (opFlag) {
-        case DlpAuthType::ONLINE_AUTH_FOR_OFFLINE_CERT:
-            return CloudEncOption::RECEIVER_DECRYPT_MUST_USE_CLOUD_AND_RETURN_ENCRYPTION_VALUE;
-        case DlpAuthType::OFFLINE_AUTH_ONLY:
-            return CloudEncOption::ALLOW_RECEIVER_DECRYPT_WITHOUT_USE_CLOUD;
-        default:
-            return CloudEncOption::RECEIVER_DECRYPT_MUST_USE_CLOUD;
-    }
-}
-
-static int32_t GetLocalAccountName(std::string& account)
+static int32_t GetLocalAccountName(std::string& account, std::string contactAccount, bool* isOwner)
 {
     std::pair<bool, AccountSA::OhosAccountInfo> accountInfo =
         AccountSA::OhosAccountKits::GetInstance().QueryOhosAccountInfo();
     if (accountInfo.first) {
-        account = accountInfo.second.name_;
+        account = accountInfo.second.uid_;
+        if (contactAccount.compare("") != 0 && contactAccount.compare(accountInfo.second.name_) == 0) {
+            *isOwner = true;
+        }
         return DLP_OK;
     }
     return DLP_PARSE_ERROR_ACCOUNT_INVALID;
 }
 
-static int32_t GetDomainAccountName(std::string& account)
+static int32_t GetDomainAccountName(std::string& account, std::string contactAccount, bool* isOwner)
 {
     std::vector<int32_t> ids;
     if (OHOS::AccountSA::OsAccountManager::QueryActiveOsAccountIds(ids) != 0) {
@@ -398,20 +420,24 @@ static int32_t GetDomainAccountName(std::string& account)
         DLP_LOG_ERROR(LABEL, "accountName_ empty");
         return DLP_PARSE_ERROR_ACCOUNT_INVALID;
     }
-    account = domainInfo.accountName_;
+    if (contactAccount.compare("") != 0 && contactAccount.compare(domainInfo.accountName_) == 0) {
+        *isOwner = true;
+    }
+    account = domainInfo.accountId_;
     return DLP_OK;
 }
 
-static void GetAccoutInfo(DlpAccountType accountType, AccountInfo& accountCfg)
+static void GetAccoutInfo(DlpAccountType accountType, AccountInfo& accountCfg, std::string contactAccount,
+    bool* isOwner)
 {
     std::string account;
     if (accountType == DOMAIN_ACCOUNT) {
-        if (GetDomainAccountName(account) != DLP_OK) {
+        if (GetDomainAccountName(account, contactAccount, isOwner) != DLP_OK) {
             DLP_LOG_ERROR(LABEL, "query GetDomainAccountName failed");
             return;
         }
     } else {
-        if (GetLocalAccountName(account) != DLP_OK) {
+        if (GetLocalAccountName(account, contactAccount, isOwner) != DLP_OK) {
             DLP_LOG_ERROR(LABEL, "query GetLocalAccountName failed");
             return;
         }
@@ -423,32 +449,54 @@ static void GetAccoutInfo(DlpAccountType accountType, AccountInfo& accountCfg)
     };
 }
 
-int32_t DlpCredential::ParseDlpCertificate(const std::vector<uint8_t>& cert, uint32_t flag,
-    sptr<IDlpPermissionCallback>& callback)
+static int32_t AdapterData(const std::vector<uint8_t>& offlineCert, bool isOwner, unordered_json jsonObj,
+    DLP_EncPolicyData& encPolicy)
 {
-    std::string encDataJsonStr(cert.begin(), cert.end());
+    DLP_LOG_DEBUG(LABEL, "enter");
+    unordered_json offlineJsonObj;
+    if (!offlineCert.empty()) {
+        std::string offlineEncDataJsonStr(offlineCert.begin(), offlineCert.end());
+        offlineJsonObj = unordered_json::parse(offlineEncDataJsonStr, nullptr, false);
+    }
+    std::string ownerAccountId = "";
+    if (isOwner) {
+        std::string temp((char*)encPolicy.receiverAccountInfo.accountId);
+        ownerAccountId = temp;
+    }
+    int32_t result = DlpPermissionSerializer::GetInstance().DeserializeEncPolicyDataByFirstVersion(jsonObj,
+        offlineJsonObj, encPolicy, ownerAccountId);
+    if (result != DLP_OK) {
+        FreeDLPEncPolicyData(encPolicy);
+        return result;
+    }
+    return DLP_OK;
+}
+
+int32_t DlpCredential::ParseDlpCertificate(sptr<CertParcel>& certParcel, sptr<IDlpPermissionCallback>& callback)
+{
+    std::string encDataJsonStr(certParcel->cert.begin(), certParcel->cert.end());
     auto jsonObj = unordered_json::parse(encDataJsonStr, nullptr, false);
     if (jsonObj.is_discarded() || (!jsonObj.is_object())) {
         DLP_LOG_ERROR(LABEL, "JsonObj is discarded");
         return DLP_SERVICE_ERROR_JSON_OPERATE_FAIL;
     }
     EncAndDecOptions encAndDecOptions = {
-        .opt = getCertOption(flag)
+        .opt = CloudEncOption::RECEIVER_DECRYPT_MUST_USE_CLOUD_AND_RETURN_ENCRYPTION_VALUE,
+        .extraInfo = nullptr
     };
-    DLP_EncPolicyData encPolicy = {
-        .featureName = strdup("dlp_permission_service"),
-        .options = encAndDecOptions,
-    };
-    bool opFlag = (encAndDecOptions.opt == CloudEncOption::ALLOW_RECEIVER_DECRYPT_WITHOUT_USE_CLOUD);
-    int32_t result = DlpPermissionSerializer::GetInstance().DeserializeEncPolicyData(jsonObj, encPolicy, opFlag);
+    DLP_EncPolicyData encPolicy = {.featureName = strdup("dlp_permission_service"), .options = encAndDecOptions};
+    int32_t result =
+        DlpPermissionSerializer::GetInstance().DeserializeEncPolicyData(jsonObj, encPolicy, certParcel->isNeedAdapter);
     auto accountType = static_cast<DlpAccountType>(encPolicy.accountType);
     if (result != DLP_OK) {
         FreeDLPEncPolicyData(encPolicy);
         return DLP_SERVICE_ERROR_JSON_OPERATE_FAIL;
     }
-
-    GetAccoutInfo(accountType, encPolicy.receiverAccountInfo);
-
+    bool isOwner = false;
+    GetAccoutInfo(accountType, encPolicy.receiverAccountInfo, certParcel->contactAccount, &isOwner);
+    if (certParcel->isNeedAdapter) {
+        result = AdapterData(certParcel->offlineCert, isOwner, jsonObj, encPolicy);
+    }
     int res = 0;
     {
         std::lock_guard<std::mutex> lock(g_lockRequest);

@@ -36,6 +36,7 @@ ohos_unittest("dlp_permission_service_test") {
   ]
 
   sources = [
+    "${dlp_root_dir}/frameworks/common/src/cert_parcel.cpp",
     "${dlp_root_dir}/frameworks/common/src/permission_policy.cpp",
     "${dlp_root_dir}/frameworks/common/src/random_mbedtls.cpp",
     "${dlp_root_dir}/frameworks/common/src/retention_sandbox_info.cpp",

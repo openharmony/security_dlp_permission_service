@@ -20,6 +20,7 @@
 #include <vector>
 #include "gtest/gtest.h"
 #include "accesstoken_kit.h"
+#include "cert_parcel.h"
 #include "dlp_permission.h"
 #include "dlp_permission_log.h"
 #include "dlp_sandbox_callback_info.h"
@@ -506,14 +507,12 @@ HWTEST_F(DlpPermissionKitTest, GenerateDlpCertificate001, TestSize.Level1)
  */
 HWTEST_F(DlpPermissionKitTest, ParseDlpCertificate001, TestSize.Level1)
 {
-    std::vector<uint8_t> cert;
-    std::vector<uint8_t> offlineCert;
+    sptr<CertParcel> certParcel = new (std::nothrow) CertParcel();;
     PermissionPolicy policy;
-    uint32_t flag = 0;
-
-    ASSERT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, DlpPermissionKit::ParseDlpCertificate(cert, offlineCert, flag, policy));
-    cert = {1, 2, 3};
-    ASSERT_NE(DLP_OK, DlpPermissionKit::ParseDlpCertificate(cert, offlineCert, flag, policy));
+    certParcel->contactAccount = "test";
+    ASSERT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, DlpPermissionKit::ParseDlpCertificate(certParcel, policy));
+    certParcel->cert = {1, 2, 3};
+    ASSERT_NE(DLP_OK, DlpPermissionKit::ParseDlpCertificate(certParcel, policy));
 }
 
 /**
@@ -1218,13 +1217,11 @@ HWTEST_F(DlpPermissionKitTest, OnGenerateDlpCertificate002, TestSize.Level1)
  */
 HWTEST_F(DlpPermissionKitTest, ParseDlpCertificate002, TestSize.Level1)
 {
-    std::vector<uint8_t> cert;
-    std::vector<uint8_t> offlineCert;
-    offlineCert.push_back(1);
+    sptr<CertParcel> certParcel = new (std::nothrow) CertParcel();;
+    certParcel->offlineCert.push_back(1);
     PermissionPolicy policy;
-    uint32_t offlineFlag = 0;
     ASSERT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID,
-        DlpPermissionKit::ParseDlpCertificate(cert, offlineCert, offlineFlag, policy));
+        DlpPermissionKit::ParseDlpCertificate(certParcel, policy));
 
     policy.ownerAccount_ = "test";
     policy.ownerAccountId_ = "test";
@@ -1241,7 +1238,7 @@ HWTEST_F(DlpPermissionKitTest, ParseDlpCertificate002, TestSize.Level1)
     policy.SetIv(iv, 16);
     policy.SetAeskey(aseKey, 16);
     ASSERT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID,
-        DlpPermissionKit::ParseDlpCertificate(cert, offlineCert, offlineFlag, policy));
+        DlpPermissionKit::ParseDlpCertificate(certParcel, policy));
     delete[] iv;
     delete[] aseKey;
 }

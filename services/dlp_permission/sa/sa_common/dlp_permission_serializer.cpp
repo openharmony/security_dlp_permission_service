@@ -49,7 +49,12 @@ const std::string FC_INDEX = "fullCtrl";
 const std::string RIGHT_INDEX = "right";
 const std::string EVERYONE_INDEX = "everyone";
 const std::string ENC_POLICY_INDEX = "encPolicy";
-
+const std::string POLICY_CERT_VERSION = "policyCertVersion";
+const std::string ONLINE_CERT = "onlineCert";
+const std::string ENC_POLICY = "encPolicy";
+const std::string OFFLINE_CERT = "offlineCert";
+const std::string ACCOUNT_TYPE = "accountType";
+const std::string RECEIVER_ACCOUNT_INFO = "receiverAccountInfo";
 constexpr uint64_t  VALID_TIME_STAMP = 2147483647;
 
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
@@ -97,7 +102,7 @@ static int32_t ReadUint8ArrayFromJson(const unordered_json& permJson, uint8_t** 
 static void TransHexStringToByte(std::string& outer, const std::string& input)
 {
     uint32_t len = input.size() / BYTE_TO_HEX_OPER_LENGTH;
-    uint8_t* buff = new (std::nothrow) uint8_t[len];
+    uint8_t* buff = new (std::nothrow) uint8_t[len + 1];
     if (buff == nullptr) {
         DLP_LOG_ERROR(LABEL, "New memory fail");
         return;
@@ -111,7 +116,7 @@ static void TransHexStringToByte(std::string& outer, const std::string& input)
         buff = nullptr;
         return;
     }
-
+    buff[len] = '\0';
     outer = reinterpret_cast<char *>(buff);
     (void)memset_s(buff, len, 0, len);
     delete[] buff;
@@ -308,7 +313,7 @@ int32_t DlpPermissionSerializer::SerializeDlpPermission(const PermissionPolicy& 
     return DLP_OK;
 }
 
-static void GetPolicyJson(const unordered_json& permJson, unordered_json& plainPolicyJson)
+static int32_t GetPolicyJson(const unordered_json& permJson, unordered_json& plainPolicyJson)
 {
     if (permJson.find(ONLINE_POLICY_CONTENT) != permJson.end() && permJson.at(ONLINE_POLICY_CONTENT).is_string()) {
         std::string plainHexPolicy;
@@ -318,11 +323,12 @@ static void GetPolicyJson(const unordered_json& permJson, unordered_json& plainP
         plainPolicyJson = unordered_json::parse(plainPolicy);
         if (plainPolicyJson.is_discarded() || (!plainPolicyJson.is_object())) {
             DLP_LOG_ERROR(LABEL, "JsonObj is discarded");
-            return;
+            return DLP_PARSE_ERROR_VALUE_INVALID;
         }
     } else {
         plainPolicyJson = permJson;
     }
+    return DLP_OK;
 }
 
 static void DeserializeEveryoneInfo(const unordered_json& policyJson, PermissionPolicy& policy)
@@ -362,11 +368,26 @@ static void DeserializeEveryoneInfo(const unordered_json& policyJson, Permission
     }
 }
 
+static void InitPermissionPolicy(PermissionPolicy& policy, std::vector<AuthUserInfo> userList,
+    unordered_json policyJson)
+{
+    policy.authUsers_ = userList;
+    if (policyJson.find(OWNER_ACCOUNT_NAME) != policyJson.end() && policyJson.at(OWNER_ACCOUNT_NAME).is_string()) {
+        policyJson.at(OWNER_ACCOUNT_NAME).get_to(policy.ownerAccount_);
+    }
+    if (policyJson.find(OWNER_ACCOUNT_ID) != policyJson.end() && policyJson.at(OWNER_ACCOUNT_ID).is_string()) {
+        policyJson.at(OWNER_ACCOUNT_ID).get_to(policy.ownerAccountId_);
+    }
+    policy.ownerAccountType_ = CLOUD_ACCOUNT;
+}
+
 int32_t DlpPermissionSerializer::DeserializeDlpPermission(const unordered_json& permJson, PermissionPolicy& policy)
 {
     unordered_json plainPolicyJson;
-    GetPolicyJson(permJson, plainPolicyJson);
-
+    int32_t res = GetPolicyJson(permJson, plainPolicyJson);
+    if (res != DLP_OK) {
+        return res;
+    }
     unordered_json policyJson;
     if (plainPolicyJson.find(POLICY_INDEX) != plainPolicyJson.end() && plainPolicyJson.at(POLICY_INDEX).is_object()) {
         plainPolicyJson.at(POLICY_INDEX).get_to(policyJson);
@@ -379,27 +400,15 @@ int32_t DlpPermissionSerializer::DeserializeDlpPermission(const unordered_json& 
     DeserializeEveryoneInfo(policyJson, policy);
 
     std::vector<AuthUserInfo> userList;
-    int32_t res = DeserializeAuthUserList(accountListJson, userList);
-    if (res == DLP_OK) {
-        policy.authUsers_ = userList;
-    } else {
+    res = DeserializeAuthUserList(accountListJson, userList);
+    if (res != DLP_OK) {
         return res;
     }
-
-    if (policyJson.find(OWNER_ACCOUNT_NAME) != policyJson.end() && policyJson.at(OWNER_ACCOUNT_NAME).is_string()) {
-        policyJson.at(OWNER_ACCOUNT_NAME).get_to(policy.ownerAccount_);
-    }
-
-    if (policyJson.find(OWNER_ACCOUNT_ID) != policyJson.end() && policyJson.at(OWNER_ACCOUNT_ID).is_string()) {
-        policyJson.at(OWNER_ACCOUNT_ID).get_to(policy.ownerAccountId_);
-    }
-    policy.ownerAccountType_ = CLOUD_ACCOUNT;
-
+    InitPermissionPolicy(policy, userList, policyJson);
     unordered_json fileEncJson;
     if (plainPolicyJson.find(FILE_INDEX) != plainPolicyJson.end() && plainPolicyJson.at(FILE_INDEX).is_object()) {
         plainPolicyJson.at(FILE_INDEX).get_to(fileEncJson);
     }
-
     uint8_t* key = nullptr;
     uint32_t keyLen = 0;
     res = ReadUint8ArrayFromJson(fileEncJson, &key, keyLen, AESKEY, AESKEY_LEN);
@@ -409,7 +418,6 @@ int32_t DlpPermissionSerializer::DeserializeDlpPermission(const unordered_json& 
     policy.SetAeskey(key, keyLen);
     delete[] key;
     key = nullptr;
-
     uint8_t* iv = nullptr;
     uint32_t ivLen = 0;
     res = ReadUint8ArrayFromJson(fileEncJson, &iv, ivLen, "iv", "ivLen");
@@ -417,10 +425,8 @@ int32_t DlpPermissionSerializer::DeserializeDlpPermission(const unordered_json& 
         return res;
     }
     policy.SetIv(iv, ivLen);
-
     delete[] iv;
     iv = nullptr;
-
     return DLP_OK;
 }
 
@@ -430,10 +436,7 @@ int32_t DlpPermissionSerializer::SerializeEncPolicyData(const DLP_EncPolicyData&
         DLP_LOG_ERROR(LABEL, "Cert lenth %{public}d is invalid", encData.dataLen);
         return DLP_SERVICE_ERROR_VALUE_INVALID;
     }
-    if (encData.options.extraInfoLen == 0 || encData.options.extraInfoLen > DLP_MAX_EXTRA_INFO_LEN) {
-        DLP_LOG_ERROR(LABEL, "Cert extra info lenth %{public}d is invalid", encData.options.extraInfoLen);
-        return DLP_SERVICE_ERROR_VALUE_INVALID;
-    }
+
     uint32_t encDataHexLen = encData.dataLen * BYTE_TO_HEX_OPER_LENGTH + 1;
     char* encDataHex = new (std::nothrow) char[encDataHexLen];
     if (encDataHex == nullptr) {
@@ -447,66 +450,88 @@ int32_t DlpPermissionSerializer::SerializeEncPolicyData(const DLP_EncPolicyData&
         return res;
     }
 
-    uint32_t extraInfoHexLen = encData.options.extraInfoLen * BYTE_TO_HEX_OPER_LENGTH + 1;
-    char* extraInfoHex = new (std::nothrow) char[extraInfoHexLen];
-    if (extraInfoHex == nullptr) {
-        DLP_LOG_ERROR(LABEL, "New memory fail");
-        FreeCharBuffer(encDataHex, encDataHexLen);
-        return DLP_SERVICE_ERROR_MEMORY_OPERATE_FAIL;
-    }
-    res = ByteToHexString(encData.options.extraInfo, encData.options.extraInfoLen, extraInfoHex, extraInfoHexLen);
-    if (res != DLP_OK) {
-        DLP_LOG_ERROR(LABEL, "Byte to hexstring fail");
-        FreeCharBuffer(encDataHex, encDataHexLen);
-        FreeCharBuffer(extraInfoHex, extraInfoHexLen);
-        return res;
-    }
-
     encDataJson = {
         {ENC_DATA_LEN, encData.dataLen},
         {ENC_DATA, encDataHex},
-        {EXTRA_INFO_LEN, encData.options.extraInfoLen},
-        {EXTRA_INFO, extraInfoHex},
         {ENC_ACCOUNT_TYPE, encData.accountType},
     };
     DLP_LOG_INFO(LABEL, "Serialize successfully!");
     FreeCharBuffer(encDataHex, encDataHexLen);
-    FreeCharBuffer(extraInfoHex, extraInfoHexLen);
     return DLP_OK;
 }
 
-int32_t DlpPermissionSerializer::DeserializeEncPolicyData(const unordered_json &encDataJson, DLP_EncPolicyData &encData,
-    bool isOff)
+int32_t DlpPermissionSerializer::DeserializeEncPolicyData(const unordered_json& encDataJson, DLP_EncPolicyData& encData,
+    bool isNeedAdapter)
 {
     if (encDataJson.find(ENC_ACCOUNT_TYPE) != encDataJson.end() && encDataJson.at(ENC_ACCOUNT_TYPE).is_number()) {
         encDataJson.at(ENC_ACCOUNT_TYPE).get_to(encData.accountType);
     }
 
-    if (isOff) {
-        int32_t res = ReadUint8ArrayFromJson(encDataJson, &encData.data, encData.dataLen, ENC_POLICY_INDEX, "");
-        if (res != DLP_OK) {
-            return res;
-        }
-
-        res = ReadUint8ArrayFromJson(
-            encDataJson, &encData.options.extraInfo, encData.options.extraInfoLen, EXTRA_INFO, "");
-        if (res != DLP_OK) {
-            return res;
-        }
-    } else {
-        int32_t res = ReadUint8ArrayFromJson(encDataJson, &encData.data, encData.dataLen, ENC_DATA, ENC_DATA_LEN);
-        if (res != DLP_OK) {
-            return res;
-        }
-
-        res = ReadUint8ArrayFromJson(
-            encDataJson, &encData.options.extraInfo, encData.options.extraInfoLen, EXTRA_INFO, EXTRA_INFO_LEN);
-        if (res != DLP_OK) {
-            return res;
-        }
+    if (isNeedAdapter) {
+        DLP_LOG_INFO(LABEL, "open 4.0 Dlp File");
+        return DLP_OK;
     }
 
+    int32_t res = ReadUint8ArrayFromJson(encDataJson, &encData.data, encData.dataLen, ENC_DATA, ENC_DATA_LEN);
+    if (res != DLP_OK) {
+        return res;
+    }
     DLP_LOG_INFO(LABEL, "Deserialize successfully!");
+    return DLP_OK;
+}
+
+int32_t getEncJson(const unordered_json& encDataJson, unordered_json& certJson, std::string dataKey,
+    std::string extraKey)
+{
+    if (encDataJson.find(dataKey) == encDataJson.end() || !encDataJson.at(dataKey).is_string()) {
+        DLP_LOG_ERROR(LABEL, "key=%{public}s not found", dataKey.c_str());
+        return DLP_SERVICE_ERROR_VALUE_INVALID;
+    }
+    if (encDataJson.find(extraKey) == encDataJson.end() || !encDataJson.at(extraKey).is_string()) {
+        DLP_LOG_ERROR(LABEL, "key=%{public}s not found", extraKey.c_str());
+        return DLP_SERVICE_ERROR_VALUE_INVALID;
+    }
+    certJson[ENC_POLICY] = encDataJson.at(dataKey).get<std::string>();
+    certJson[EXTRA_INFO] = encDataJson.at(extraKey).get<std::string>();
+    return DLP_OK;
+}
+
+int32_t DlpPermissionSerializer::DeserializeEncPolicyDataByFirstVersion(const unordered_json& encDataJson,
+    const unordered_json& offlineEncDataJson, DLP_EncPolicyData& encData, std::string ownerAccountId)
+{
+    unordered_json serverJson;
+    int res = getEncJson(encDataJson, serverJson, ENC_DATA, EXTRA_INFO);
+    if (res != DLP_OK) {
+        return res;
+    }
+    unordered_json data = { { POLICY_CERT_VERSION, 1 },
+                            { OWNER_ACCOUNT_ID, ownerAccountId },
+                            { ONLINE_CERT, serverJson } };
+    if (offlineEncDataJson != nullptr && !offlineEncDataJson.is_null()) {
+        unordered_json offlineServerJson;
+        if (offlineEncDataJson.find(ACCOUNT_TYPE) != offlineEncDataJson.end() &&
+            offlineEncDataJson.at(ACCOUNT_TYPE).is_number()) {
+            uint32_t accountType;
+            offlineEncDataJson.at(ACCOUNT_TYPE).get_to(accountType);
+            offlineServerJson[ACCOUNT_TYPE] = accountType;
+        }
+        res = getEncJson(offlineEncDataJson, offlineServerJson, ENC_POLICY, EXTRA_INFO);
+        if (res != DLP_OK) {
+            return res;
+        }
+        data[OFFLINE_CERT] = offlineServerJson;
+    }
+    std::string encDataStr = data.dump();
+    encData.data = new (std::nothrow) uint8_t[encDataStr.length()];
+    if (encData.data == nullptr) {
+        DLP_LOG_ERROR(LABEL, "New memory fail");
+        return DLP_SERVICE_ERROR_MEMORY_OPERATE_FAIL;
+    }
+    encData.dataLen = encDataStr.length();
+    if (memcpy_s(encData.data, encDataStr.length(), (uint8_t*)encDataStr.c_str(), encDataStr.length()) != EOK) {
+        DLP_LOG_ERROR(LABEL, "Memcpy encData fill fail");
+        return DLP_SERVICE_ERROR_MEMORY_OPERATE_FAIL;
+    }
     return DLP_OK;
 }
 }  // namespace DlpPermission

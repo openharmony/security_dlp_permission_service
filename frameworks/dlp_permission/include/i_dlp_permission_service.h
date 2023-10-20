@@ -17,6 +17,7 @@
 #define I_DLP_PERMISSION_SERVICE_H
 
 #include <string>
+#include "cert_parcel.h"
 #include "dlp_permission_info_parcel.h"
 #include "dlp_permission_service_ipc_interface_code.h"
 #include "dlp_policy_parcel.h"
@@ -38,8 +39,7 @@ public:
     virtual int32_t GenerateDlpCertificate(
         const sptr<DlpPolicyParcel>& policyParcel, sptr<IDlpPermissionCallback>& callback) = 0;
 
-    virtual int32_t ParseDlpCertificate(const std::vector<uint8_t>& cert, uint32_t flag,
-        sptr<IDlpPermissionCallback>& callback) = 0;
+    virtual int32_t ParseDlpCertificate(sptr<CertParcel>& certParcel, sptr<IDlpPermissionCallback>& callback) = 0;
 
     virtual int32_t InstallDlpSandbox(const std::string& bundleName, DLPFileAccess dlpFileAccess, int32_t userId,
         SandboxInfo& sandboxInfo, const std::string& uri) = 0;

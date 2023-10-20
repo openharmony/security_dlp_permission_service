@@ -20,6 +20,7 @@
 #include <mutex>
 #include <string>
 #include <vector>
+#include "cert_parcel.h"
 #include "dlp_permission_callback.h"
 #include "dlp_sandbox_change_callback_customize.h"
 #include "open_dlp_file_callback_customize.h"
@@ -65,8 +66,7 @@ public:
 class DlpPermissionKit {
 public:
     static int32_t GenerateDlpCertificate(const PermissionPolicy& policy, std::vector<uint8_t>& cert);
-    static int32_t ParseDlpCertificate(const std::vector<uint8_t>& onlineCert,  std::vector<uint8_t>& offlineCert,
-        uint32_t& offlineFlag, PermissionPolicy& policy);
+    static int32_t ParseDlpCertificate(sptr<CertParcel>& certParcel, PermissionPolicy& policy);
     static int32_t InstallDlpSandbox(const std::string& bundleName, DLPFileAccess access, int32_t userId,
         SandboxInfo& sandboxInfo, const std::string& uri);
     static int32_t UninstallDlpSandbox(const std::string& bundleName, int32_t appIndex, int32_t userId);

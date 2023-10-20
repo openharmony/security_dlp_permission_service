@@ -75,7 +75,8 @@ public:
     int32_t ParseDlpHeader();
     void GetEncryptCert(struct DlpBlob& cert) const;
     void GetOfflineCert(struct DlpBlob& cert) const;
-    int32_t AddOfflineCert(std::vector<uint8_t>& offlineCert, const std::string& workDir);
+    int32_t UpdateCertAndText(const std::vector<uint8_t>& cert, const std::string& workDir, struct DlpBlob certBlob);
+    int32_t UpdateCert(struct DlpBlob certBlob);
     int32_t SetEncryptCert(const struct DlpBlob& cert);
     void SetOfflineAccess(bool flag);
     bool GetOfflineAccess();
@@ -86,7 +87,7 @@ public:
     uint32_t GetFsContentSize() const;
     void UpdateDlpFilePermission();
     int32_t CheckDlpFile();
-
+    bool NeedAdapter();
     int32_t SetPolicy(const PermissionPolicy& policy);
     void GetPolicy(PermissionPolicy& policy) const
     {
@@ -130,7 +131,7 @@ private:
     int32_t DoDlpContentCryptyOperation(int32_t inFd, int32_t outFd, uint32_t inOffset,
         uint32_t inFileLen, bool isEncrypt);
     int32_t DoDlpContentCopyOperation(int32_t inFd, int32_t outFd, uint32_t inOffset, uint32_t inFileLen);
-    int32_t WriteHeadAndCert(int tmpFile, std::vector<uint8_t>& offlineCert);
+    int32_t WriteHeadAndCert(int tmpFile, const std::vector<uint8_t>& offlineCert);
     int32_t DupUsageSpec(struct DlpUsageSpec& spec);
     int32_t DoDlpBlockCryptOperation(struct DlpBlob& message1,
         struct DlpBlob& message2, uint32_t offset, bool isEncrypt);
@@ -138,6 +139,8 @@ private:
     int32_t FillHoleData(uint32_t holeStart, uint32_t holeSize);
     int32_t DoDlpFileWrite(uint32_t offset, void* buf, uint32_t size);
     int32_t UpdateDlpFileContentSize();
+    int32_t UpdateFile(int tmpFile, const std::vector<uint8_t>& cert, uint32_t oldTxtOffset);
+    int32_t GetTempFile(const std::string& workDir, int& tempFile, std::string& path);
 
     bool isFuseLink_;
     DLPFileAccess authPerm_;

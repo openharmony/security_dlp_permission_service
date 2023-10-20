@@ -126,19 +126,11 @@ int32_t DlpPermissionStub::ParseDlpCertificateInner(MessageParcel& data, Message
     if (!CheckPermission(PERMISSION_ACCESS_DLP_FILE)) {
         return DLP_SERVICE_ERROR_PERMISSION_DENY;
     }
-
-    uint32_t flag;
-    if (!data.ReadUint32(flag)) {
-        DLP_LOG_ERROR(LABEL, "Read flag fail");
+    sptr<CertParcel> certParcel = data.ReadParcelable<CertParcel>();
+    if (certParcel == nullptr) {
+        DLP_LOG_ERROR(LABEL, "Read certParcel fail");
         return DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL;
     }
-
-    std::vector<uint8_t> cert;
-    if (!data.ReadUInt8Vector(&cert)) {
-        DLP_LOG_ERROR(LABEL, "Read cert fail");
-        return DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL;
-    }
-
     sptr<IRemoteObject> obj = data.ReadRemoteObject();
     if (obj == nullptr) {
         DLP_LOG_ERROR(LABEL, "Read parse cert callback object fail");
@@ -150,7 +142,7 @@ int32_t DlpPermissionStub::ParseDlpCertificateInner(MessageParcel& data, Message
         return DLP_SERVICE_ERROR_VALUE_INVALID;
     }
 
-    int32_t res = this->ParseDlpCertificate(cert, flag, callback);
+    int32_t res = this->ParseDlpCertificate(certParcel, callback);
     if (!reply.WriteInt32(res)) {
         DLP_LOG_ERROR(LABEL, "Write parse cert result fail");
         return DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL;

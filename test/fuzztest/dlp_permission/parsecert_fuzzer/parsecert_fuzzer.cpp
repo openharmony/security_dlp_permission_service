@@ -19,6 +19,7 @@
 #include <vector>
 #include <thread>
 #include "accesstoken_kit.h"
+#include "cert_parcel.h"
 #include "dlp_permission_log.h"
 #include "dlp_permission.h"
 #include "securec.h"
@@ -29,11 +30,11 @@ using namespace OHOS::Security::AccessToken;
 namespace OHOS {
 static void FuzzTest(const uint8_t* data, size_t size)
 {
+    sptr<CertParcel> certParcel = new (std::nothrow) CertParcel();;
     std::vector<uint8_t> cert(data, data + size);
-    std::vector<uint8_t> offlineCert;
+    certParcel->cert = cert;
     PermissionPolicy policy;
-    uint32_t flag = 0;
-    DlpPermissionKit::ParseDlpCertificate(cert, offlineCert, flag, policy);
+    DlpPermissionKit::ParseDlpCertificate(certParcel, policy);
 }
 
 bool ParseCertFuzzTest(const uint8_t* data, size_t size)

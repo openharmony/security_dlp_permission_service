@@ -39,8 +39,10 @@ public:
     int32_t DeserializeDlpPermission(const unordered_json& permJson, PermissionPolicy& policy);
 
     int32_t SerializeEncPolicyData(const DLP_EncPolicyData& encData, unordered_json& encDataJson);
-    int32_t DeserializeEncPolicyData(
-        const unordered_json& encDataJson, DLP_EncPolicyData& encData, bool isOff);
+    int32_t DeserializeEncPolicyData(const unordered_json& encDataJson, DLP_EncPolicyData& encData,
+        bool isNeedAdapter);
+    int32_t DeserializeEncPolicyDataByFirstVersion(const unordered_json& encDataJson,
+        const unordered_json& offlineEncDataJson, DLP_EncPolicyData& encData, std::string ownerAccountId);
 };
 }  // namespace DlpPermission
 }  // namespace Security

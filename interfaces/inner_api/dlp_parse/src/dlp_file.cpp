@@ -35,13 +35,15 @@ namespace DlpPermission {
 using Defer = std::shared_ptr<void>;
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "DlpFile"};
-const uint32_t CURRENT_VERSION = 1;
+const uint32_t CURRENT_VERSION = 2;
+const uint32_t FIRST = 1;
+const uint32_t SECOND = 2;
 } // namespace
 
 DlpFile::DlpFile(int32_t dlpFd) : dlpFd_(dlpFd), isFuseLink_(false), authPerm_(READ_ONLY)
 {
     head_.magic = DLP_FILE_MAGIC;
-    head_.version = 1;
+    head_.version = CURRENT_VERSION;
     head_.offlineAccess = 0;
     head_.txtOffset = INVALID_FILE_SIZE;
     head_.txtSize = INVALID_FILE_SIZE;
@@ -351,6 +353,11 @@ int32_t DlpFile::CheckDlpFile()
     return DLP_OK;
 }
 
+bool DlpFile::NeedAdapter()
+{
+    return head_.version == FIRST && CURRENT_VERSION == SECOND;
+}
+
 int32_t DlpFile::ParseDlpHeader()
 {
     int ret = CheckDlpFile();
@@ -402,7 +409,6 @@ int32_t DlpFile::ParseDlpHeader()
         offlineCert_.data = tmpBuf;
         offlineCert_.size = head_.offlineCertSize;
     }
-
     return DLP_OK;
 }
 
@@ -441,34 +447,9 @@ int32_t DlpFile::SetEncryptCert(const struct DlpBlob& cert)
     return DLP_OK;
 }
 
-int32_t DlpFile::AddOfflineCert(std::vector<uint8_t>& offlineCert, const std::string& workDir)
+int32_t DlpFile::UpdateFile(int tmpFile, const std::vector<uint8_t>& cert, uint32_t oldTxtOffset)
 {
-    static uint32_t count = 0;
-
-    char realPath[PATH_MAX] = {0};
-    if ((realpath(workDir.c_str(), realPath) == nullptr) && (errno != ENOENT)) {
-        DLP_LOG_ERROR(LABEL, "realpath, %{public}s, workDir %{private}s", strerror(errno), workDir.c_str());
-        return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
-    }
-    std::string rPath(realPath);
-    std::string path = rPath + "/dlp" + std::to_string(count++) + ".txt";
-    int tmpFile = open(path.c_str(), O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
-    if (tmpFile < 0) {
-        DLP_LOG_ERROR(LABEL, "open file fail, %{public}s, realPath %{private}s", strerror(errno), path.c_str());
-        return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
-    }
-
-    Defer p(nullptr, [&](...) {
-        (void)close(tmpFile);
-        (void)unlink(path.c_str());
-    });
-
-    head_.offlineCertOffset = head_.contactAccountOffset + head_.contactAccountSize;
-    head_.offlineCertSize = offlineCert.size();
-
-    uint32_t oldTxtOffset = head_.txtOffset;
-    head_.txtOffset = head_.offlineCertOffset + head_.offlineCertSize;
-    if (WriteHeadAndCert(tmpFile, offlineCert) != DLP_OK) {
+    if (WriteHeadAndCert(tmpFile, cert) != DLP_OK) {
         return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
     }
     (void)lseek(dlpFd_, oldTxtOffset, SEEK_SET);
@@ -491,7 +472,65 @@ int32_t DlpFile::AddOfflineCert(std::vector<uint8_t>& offlineCert, const std::st
     return DLP_OK;
 }
 
-int32_t DlpFile::WriteHeadAndCert(int tmpFile, std::vector<uint8_t>& offlineCert)
+int32_t DlpFile::GetTempFile(const std::string& workDir, int& tempFile, std::string& path)
+{
+    static uint32_t count = 0;
+    char realPath[PATH_MAX] = {0};
+    if ((realpath(workDir.c_str(), realPath) == nullptr) && (errno != ENOENT)) {
+        DLP_LOG_ERROR(LABEL, "realpath, %{public}s, workDir %{private}s", strerror(errno), workDir.c_str());
+        return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
+    }
+    std::string rPath(realPath);
+    path = rPath + "/dlp" + std::to_string(count++) + ".txt";
+    tempFile = open(path.c_str(), O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
+    if (tempFile < 0) {
+        DLP_LOG_ERROR(LABEL, "open file fail, %{public}s, realPath %{private}s", strerror(errno), path.c_str());
+        return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
+    }
+    return DLP_OK;
+}
+
+int32_t DlpFile::UpdateCertAndText(const std::vector<uint8_t>& cert, const std::string& workDir,
+    struct DlpBlob certBlob)
+{
+    int tmpFile;
+    std::string path;
+    int32_t res = GetTempFile(workDir, tmpFile, path);
+    if (res != DLP_OK) {
+        return res;
+    }
+    Defer p(nullptr, [&](...) {
+        (void)close(tmpFile);
+        (void)unlink(path.c_str());
+    });
+    if (CopyBlobParam(certBlob, cert_) != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "Cert copy failed");
+        return DLP_PARSE_ERROR_MEMORY_OPERATE_FAIL;
+    }
+    head_.certSize = cert.size();
+    uint32_t oldTxtOffset = head_.txtOffset;
+    head_.contactAccountOffset = head_.certOffset + head_.certSize;
+    head_.txtOffset = head_.contactAccountOffset + head_.contactAccountSize;
+    head_.version = CURRENT_VERSION;
+    head_.offlineCertSize = 0;
+    return UpdateFile(tmpFile, cert, oldTxtOffset);
+}
+
+int32_t DlpFile::UpdateCert(struct DlpBlob certBlob)
+{
+    DLP_LOG_DEBUG(LABEL, "enter");
+    if (CopyBlobParam(certBlob, cert_) != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "Cert copy failed");
+        return DLP_PARSE_ERROR_MEMORY_OPERATE_FAIL;
+    }
+    if (write(dlpFd_, cert_.data, head_.certSize) != (ssize_t)head_.certSize) {
+        DLP_LOG_ERROR(LABEL, "write dlp cert data failed, %{public}s", strerror(errno));
+        return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
+    }
+    return DLP_OK;
+}
+
+int32_t DlpFile::WriteHeadAndCert(int tmpFile, const std::vector<uint8_t>& cert)
 {
     if (write(tmpFile, &head_, sizeof(struct DlpHeader)) != sizeof(struct DlpHeader)) {
         DLP_LOG_ERROR(LABEL, "write dlp head failed, %{public}s", strerror(errno));
@@ -504,11 +543,6 @@ int32_t DlpFile::WriteHeadAndCert(int tmpFile, std::vector<uint8_t>& offlineCert
     if (write(tmpFile, contactAccount_.c_str(), contactAccount_.size()) !=
         static_cast<int32_t>(contactAccount_.size())) {
         DLP_LOG_ERROR(LABEL, "write dlp contact data failed, %{public}s", strerror(errno));
-        return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
-    }
-    if (write(tmpFile, &offlineCert[0], offlineCert.size()) !=
-        static_cast<int32_t>(offlineCert.size())) {
-        DLP_LOG_ERROR(LABEL, "write offlineCert data failed, %{public}s", strerror(errno));
         return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
     }
     return DLP_OK;
@@ -667,7 +701,6 @@ int32_t DlpFile::DoDlpContentCopyOperation(int32_t inFd, int32_t outFd, uint32_t
         }
         inOffset += readLen;
     }
-
     delete[] data;
     return ret;
 }

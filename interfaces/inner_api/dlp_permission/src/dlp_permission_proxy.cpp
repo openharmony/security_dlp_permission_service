@@ -75,25 +75,17 @@ int32_t DlpPermissionProxy::GenerateDlpCertificate(
     return res;
 }
 
-int32_t DlpPermissionProxy::ParseDlpCertificate(
-    const std::vector<uint8_t>& cert, uint32_t flag, sptr<IDlpPermissionCallback>& callback)
+int32_t DlpPermissionProxy::ParseDlpCertificate(sptr<CertParcel>& certParcel, sptr<IDlpPermissionCallback>& callback)
 {
     MessageParcel data;
     if (!data.WriteInterfaceToken(DlpPermissionProxy::GetDescriptor())) {
         DLP_LOG_ERROR(LABEL, "Write descriptor fail");
         return DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL;
     }
-
-    if (!data.WriteUint32(flag)) {
-        DLP_LOG_ERROR(LABEL, "Write uint32 flag fail");
+    if (!data.WriteParcelable(certParcel)) {
+        DLP_LOG_ERROR(LABEL, "Write certParcel fail");
         return DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL;
     }
-
-    if (!data.WriteUInt8Vector(cert)) {
-        DLP_LOG_ERROR(LABEL, "Write uint8 vector fail");
-        return DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL;
-    }
-
     if (!data.WriteRemoteObject(callback->AsObject())) {
         DLP_LOG_ERROR(LABEL, "Write object fail");
         return DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL;

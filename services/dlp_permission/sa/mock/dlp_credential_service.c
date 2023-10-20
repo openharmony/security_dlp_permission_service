@@ -226,7 +226,6 @@ static void* RestorePolicyCallbackTask(void* inputTaskParams)
     }
     outParams.data = taskParams->encData->data;
     outParams.dataLen = taskParams->encData->dataLen;
-
 end:
     taskParams->callback(taskParams->requestId, taskParams->errorCode, &outParams);
     DLP_LOG_INFO("End thread, requestId: %{public}llu", (unsigned long long)taskParams->requestId);
@@ -274,6 +273,7 @@ err:
 int DLP_PackPolicy(
     uint32_t osAccountId, const DLP_PackPolicyParams* params, DLP_PackPolicyCallback callback, uint64_t* requestId)
 {
+    DLP_LOG_DEBUG("enter mock");
     (void)osAccountId;
     if (params == NULL || params->data == NULL || params->featureName == NULL || callback == NULL ||
         requestId == NULL || params->dataLen == 0 || params->dataLen > MAX_CERT_LEN) {
