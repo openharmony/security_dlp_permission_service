@@ -34,6 +34,7 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_
 static const fuse_ino_t ROOT_INODE = 1;
 static const int DEFAULT_ATTR_TIMEOUT = 10000;
 static const uint32_t MAX_FUSE_READ_BUFF_SIZE = 10 * 1024 * 1024; // 10M
+static const uint32_t MAX_READ_DIR_BUF_SIZE = 100 * 1024;  // 100K
 
 static int g_fuseReplyErr = 0;
 static struct fuse_file_info g_fuseReplyOpen;
@@ -514,6 +515,15 @@ HWTEST_F(FuseDaemonTest, FuseDaemonReadDir001, TestSize.Level1)
     g_fuseReplyErr = 0;
     FuseDaemon::fuseDaemonOper_.readdir(req, 0, 10, 0, nullptr);
     EXPECT_EQ(ENOTDIR, g_fuseReplyErr);
+    CleanMockConditions();
+
+    // size > MAX_READ_DIR_BUF_SIZE
+    condition.mockSequence = { true };
+    SetMockConditions("fuse_reply_err", condition);
+    SetMockCallback("fuse_reply_err", reinterpret_cast<CommonMockFuncT>(FuseReplyErrMock));
+    g_fuseReplyErr = 0;
+    FuseDaemon::fuseDaemonOper_.readdir(req, ROOT_INODE, MAX_READ_DIR_BUF_SIZE + 1, 0, nullptr);
+    EXPECT_EQ(EINVAL, g_fuseReplyErr);
     CleanMockConditions();
 }
 

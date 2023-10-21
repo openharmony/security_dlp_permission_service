@@ -28,9 +28,11 @@ ohos_unittest("dlp_permission_kit_test") {
     "${dlp_root_dir}/interfaces/inner_api/dlp_permission/include",
   ]
 
-  sources = [ 
+  sources = [
     "${dlp_root_dir}/frameworks/common/src/random_mbedtls.cpp",
-    "unittest/src/dlp_permission_kit_test.cpp" ]
+    "unittest/src/dlp_permission_async_stub_test.cpp",
+    "unittest/src/dlp_permission_kit_test.cpp",
+  ]
 
   cflags_cc = [ "-DHILOG_ENABLE" ]
 
@@ -38,7 +40,7 @@ ohos_unittest("dlp_permission_kit_test") {
 
   deps = [
     "${dlp_root_dir}/interfaces/inner_api/dlp_permission:libdlp_permission_sdk",
-    "//third_party/mbedtls:mbedtls_shared"
+    "//third_party/mbedtls:mbedtls_shared",
   ]
 
   external_deps = [
