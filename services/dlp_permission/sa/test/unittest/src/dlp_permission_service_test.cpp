@@ -771,7 +771,7 @@ HWTEST_F(DlpPermissionServiceTest, OnStart001, TestSize.Level1)
  */
 HWTEST_F(DlpPermissionServiceTest, ParseDlpCertificate001, TestSize.Level1)
 {
-    sptr<CertParcel> certParcel = new (std::nothrow) CertParcel();;
+    sptr<CertParcel> certParcel = new (std::nothrow) CertParcel();
     sptr<IDlpPermissionCallback> callback = nullptr;
     ASSERT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID,
         dlpPermissionService_->ParseDlpCertificate(certParcel, callback));
