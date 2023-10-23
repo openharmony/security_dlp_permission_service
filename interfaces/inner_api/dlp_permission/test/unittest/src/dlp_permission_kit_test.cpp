@@ -507,7 +507,7 @@ HWTEST_F(DlpPermissionKitTest, GenerateDlpCertificate001, TestSize.Level1)
  */
 HWTEST_F(DlpPermissionKitTest, ParseDlpCertificate001, TestSize.Level1)
 {
-    sptr<CertParcel> certParcel = new (std::nothrow) CertParcel();;
+    sptr<CertParcel> certParcel = new (std::nothrow) CertParcel();
     PermissionPolicy policy;
     certParcel->contactAccount = "test";
     ASSERT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, DlpPermissionKit::ParseDlpCertificate(certParcel, policy));
@@ -1217,7 +1217,7 @@ HWTEST_F(DlpPermissionKitTest, OnGenerateDlpCertificate002, TestSize.Level1)
  */
 HWTEST_F(DlpPermissionKitTest, ParseDlpCertificate002, TestSize.Level1)
 {
-    sptr<CertParcel> certParcel = new (std::nothrow) CertParcel();;
+    sptr<CertParcel> certParcel = new (std::nothrow) CertParcel();
     certParcel->offlineCert.push_back(1);
     PermissionPolicy policy;
     ASSERT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID,

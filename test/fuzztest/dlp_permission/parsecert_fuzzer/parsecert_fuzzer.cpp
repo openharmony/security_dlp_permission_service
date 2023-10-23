@@ -30,7 +30,7 @@ using namespace OHOS::Security::AccessToken;
 namespace OHOS {
 static void FuzzTest(const uint8_t* data, size_t size)
 {
-    sptr<CertParcel> certParcel = new (std::nothrow) CertParcel();;
+    sptr<CertParcel> certParcel = new (std::nothrow) CertParcel();
     std::vector<uint8_t> cert(data, data + size);
     certParcel->cert = cert;
     PermissionPolicy policy;

@@ -2100,6 +2100,6 @@ HWTEST_F(DlpCryptTest, DlpCtrModeIncreaeIvCounter001, TestSize.Level1)
     mIn.size = 8;
     ASSERT_EQ(DLP_OK, DlpCtrModeIncreaeIvCounter(mIn, 1));
     ASSERT_EQ(mIn.data[7], 0);
-    ASSERT_EQ(mIn.data[6], 1);;
+    ASSERT_EQ(mIn.data[6], 1);
 }
 

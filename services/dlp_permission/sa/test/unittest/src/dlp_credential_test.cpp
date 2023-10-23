@@ -117,7 +117,7 @@ HWTEST_F(DlpCredentialTest, DlpCredentialTest002, TestSize.Level1)
 
     int res = DlpCredential::GetInstance().GenerateDlpCertificate(policy, account, accountType, stub);
     EXPECT_EQ(DLP_CREDENTIAL_ERROR_COMMON_ERROR, res);
-    sptr<CertParcel> certParcel = new (std::nothrow) CertParcel();;
+    sptr<CertParcel> certParcel = new (std::nothrow) CertParcel();
     res = DlpCredential::GetInstance().ParseDlpCertificate(certParcel, stub);
     EXPECT_EQ(DLP_SERVICE_ERROR_JSON_OPERATE_FAIL, res);
     std::string s2(POLICY_PLAINTTEXT);
