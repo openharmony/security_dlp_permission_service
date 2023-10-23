@@ -46,8 +46,6 @@ void AppStateObserverTest::TearDown() {}
 HWTEST_F(AppStateObserverTest, OnProcessDied001, TestSize.Level1)
 {
     DLP_LOG_INFO(LABEL, "OnProcessDied001");
-    
-    DLP_LOG_INFO(LABEL, "111111111111111");
 
     AppStateObserver observer;
     OHOS::AppExecFwk::ProcessData processData;
@@ -55,6 +53,7 @@ HWTEST_F(AppStateObserverTest, OnProcessDied001, TestSize.Level1)
     processData.uid = 0;
 
     observer.OnProcessDied(processData);
+    ASSERT_EQ(0, processData.uid);
 }
 
 /**
@@ -95,7 +94,7 @@ HWTEST_F(AppStateObserverTest, CheckSandboxInfo001, TestSize.Level1)
     ASSERT_TRUE(ret);
 
     ret = observer.CheckSandboxInfo(appInfo.bundleName, appInfo.appIndex + 1, appInfo.uid);
-    ASSERT_FALSE(ret);    
+    ASSERT_FALSE(ret);
 }
 
 /**
@@ -112,7 +111,7 @@ HWTEST_F(AppStateObserverTest, EraseDlpSandboxInfo001, TestSize.Level1)
     int uid = 0;
 
     bool ret = observer.EraseDlpSandboxInfo(uid);
-    ASSERT_EQ(0, ret);   
+    ASSERT_EQ(0, ret);
 }
 
 /**
@@ -128,7 +127,8 @@ HWTEST_F(AppStateObserverTest, AddDlpSandboxInfo001, TestSize.Level1)
     AppStateObserver observer;
     DlpSandboxInfo appInfo;
 
-    observer.AddDlpSandboxInfo(appInfo);  
+    observer.AddDlpSandboxInfo(appInfo);
+    ASSERT_EQ(-1, appInfo.uid);
 }
 
 /**
@@ -147,7 +147,7 @@ HWTEST_F(AppStateObserverTest, QueryDlpFileAccessByUid001, TestSize.Level1)
     int32_t uid = 0;
 
     int32_t ret = observer.QueryDlpFileAccessByUid(dlpFileAccess, uid);
-    ASSERT_EQ(DLP_SERVICE_ERROR_APPOBSERVER_ERROR, ret);   
+    ASSERT_EQ(DLP_SERVICE_ERROR_APPOBSERVER_ERROR, ret);
 }
 
 /**
@@ -165,5 +165,5 @@ HWTEST_F(AppStateObserverTest, QueryDlpFileCopyableByTokenId001, TestSize.Level1
     uint32_t tokenId = 0;
 
     int32_t ret = observer.QueryDlpFileCopyableByTokenId(copyable, tokenId);
-    ASSERT_EQ(DLP_SERVICE_ERROR_APPOBSERVER_ERROR, ret);   
+    ASSERT_EQ(DLP_SERVICE_ERROR_APPOBSERVER_ERROR, ret);
 }
