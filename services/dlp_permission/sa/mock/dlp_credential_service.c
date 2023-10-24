@@ -142,6 +142,8 @@ static int CheckAccount(const uint8_t* data, uint32_t len, uint32_t accountType,
     if (!isNeedCheckList) {
         if (strstr(policy, owner) == NULL) {
             DLP_LOG_ERROR("policy owner check error");
+        } else {
+            res = DLP_SUCCESS;
         }
         goto end;
     }
