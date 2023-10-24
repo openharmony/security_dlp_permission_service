@@ -113,10 +113,6 @@ ohos_unittest("dlp_permission_service_test") {
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
   ]
-
-  if (dlp_credential_enable == true) {
-    cflags_cc += [ "-DSUPPORT_DLP_CREDENTIAL" ]
-  }
 }
 
 group("unittest") {

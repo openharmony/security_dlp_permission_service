@@ -190,6 +190,7 @@ static void DlpPackPolicyCallback(uint64_t requestId, int errorCode, DLP_EncPoli
 static int32_t GetNewCert(const unordered_json& plainPolicyJson, std::vector<uint8_t>& cert,
     DlpAccountType ownerAccountType)
 {
+#ifdef SUPPORT_DLP_CREDENTIAL
     unordered_json json;
     if (plainPolicyJson.find(POLICY_CERT) == plainPolicyJson.end() || !plainPolicyJson.at(POLICY_CERT).is_object()) {
         DLP_LOG_ERROR(LABEL, "can not found policyCert");
@@ -213,6 +214,7 @@ static int32_t GetNewCert(const unordered_json& plainPolicyJson, std::vector<uin
     params.data = nullptr;
     std::string encDataStr = encDataJson.dump();
     cert.assign(encDataStr.begin(), encDataStr.end());
+#endif
     return DLP_OK;
 }
 

@@ -171,10 +171,14 @@ int32_t DlpFileManager::UpdateDlpFile(bool isNeedAdapter, uint32_t oldCertSize, 
         return result;
     }
     struct DlpBlob certBlob;
+#ifdef SUPPORT_DLP_CREDENTIAL
     result = GenerateCertBlob(cert, certBlob);
     if (result != DLP_OK) {
         return result;
     }
+#else
+    return DLP_OK;
+#endif
     if (isNeedAdapter || oldCertSize != certBlob.size) {
         return filePtr->UpdateCertAndText(cert, workDir, certBlob);
     }
