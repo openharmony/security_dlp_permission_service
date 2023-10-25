@@ -31,7 +31,10 @@ ohos_unittest("dlp_permission_kit_test") {
   sources = [
     "${dlp_root_dir}/frameworks/common/src/random_mbedtls.cpp",
     "unittest/src/dlp_permission_async_stub_test.cpp",
+    "unittest/src/dlp_permission_client_test.cpp",
     "unittest/src/dlp_permission_kit_test.cpp",
+    "unittest/src/dlp_permission_load_callback_test.cpp",
+    "unittest/src/dlp_sandbox_change_callback_stub_test.cpp",
   ]
 
   cflags_cc = [ "-DHILOG_ENABLE" ]
