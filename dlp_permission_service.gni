@@ -16,16 +16,17 @@ dlp_root_dir = "//base/security/dlp_permission_service"
 declare_args() {
   dlp_permission_service_gathering_policy = false
   if (!defined(global_parts_info) ||
-    defined(global_parts_info.account_os_account)) {
+      defined(global_parts_info.account_os_account)) {
     dlp_parse_inner = true
   } else {
     dlp_parse_inner = false
   }
 
   if (!defined(global_parts_info) ||
-    defined(global_parts_info.security_dlp_credential_service)) {
+      defined(global_parts_info.security_dlp_credential_service)) {
     dlp_credential_enable = true
   } else {
     dlp_credential_enable = false
   }
+  dlp_permission_service_credential_connection_enable = true
 }

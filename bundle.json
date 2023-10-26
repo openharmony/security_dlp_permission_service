@@ -20,7 +20,8 @@
     ],
     "features": [
       "dlp_permission_service_feature_coverage",
-      "dlp_permission_service_gathering_policy"
+      "dlp_permission_service_gathering_policy",
+      "dlp_permission_service_credential_connection_enable"
     ],
     "adapted_system_type": [
       "standard"
