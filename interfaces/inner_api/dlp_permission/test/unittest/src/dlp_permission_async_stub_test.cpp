@@ -28,8 +28,8 @@ using namespace OHOS::Security::DlpPermission;
 using namespace std;
 
 namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL =
-    {LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "DlpPermissionAsyncStubTest"};
+static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
+    LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "DlpPermissionAsyncStubTest"};
 }
 
 void DlpPermissionAsyncStubTest::SetUpTestCase() {}

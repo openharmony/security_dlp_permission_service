@@ -27,8 +27,8 @@ using namespace OHOS::Security::DlpPermission;
 using namespace std;
 
 namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL =
-    {LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "DlpSandboxChangeCallbackStubTest"};
+static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
+    LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "DlpSandboxChangeCallbackStubTest"};
 constexpr uint32_t DLP_SANDBOX_STATE_CHANGE = 0;
 }
 
