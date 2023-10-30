@@ -142,7 +142,7 @@ HWTEST_F(DlpPermissionSerializerTest, DeserializeDlpPermission001, TestSize.Leve
  
     unordered_json permJson;
     PermissionPolicy policy;
-    permJson["plaintextPolicy"] = "7b7d";
+    permJson[ONLINE_POLICY_CONTENT] = "7b2266696c65223a7b226976223a223132222c2269764c656e223a31367d7d";
 
     DlpPermissionSerializer serialize;
     int32_t ret = serialize.DeserializeDlpPermission(permJson, policy);
@@ -161,7 +161,7 @@ HWTEST_F(DlpPermissionSerializerTest, DeserializeDlpPermission002, TestSize.Leve
  
     unordered_json permJson;
     PermissionPolicy policy;
-    permJson["file"] = {{"filekey", "ttttt"}, {"filekeyLen", AESKEY_LEN}};
+    permJson[FILE_INDEX] = {{"filekey", "ttttt"}, {"filekeyLen", AESKEY_LEN}};
 
     DlpPermissionSerializer serialize;
     int32_t ret = serialize.DeserializeDlpPermission(permJson, policy);
@@ -180,7 +180,7 @@ HWTEST_F(DlpPermissionSerializerTest, DeserializeDlpPermission003, TestSize.Leve
  
     unordered_json permJson;
     PermissionPolicy policy;
-    permJson["file"] = {{"iv", "ttttt"}, {"ivLen", AESKEY_LEN}};
+    permJson[FILE_INDEX] = {{"iv", "ttttt"}, {"ivLen", AESKEY_LEN}};
 
     DlpPermissionSerializer serialize;
     int32_t ret = serialize.DeserializeDlpPermission(permJson, policy);
@@ -198,10 +198,10 @@ HWTEST_F(DlpPermissionSerializerTest, DeserializeDlpPermission004, TestSize.Leve
     DLP_LOG_INFO(LABEL, "DeserializeDlpPermission004");
  
     unordered_json permJson1;
-    permJson1["policy"] = {{"account", {"right", {"edit", true}}}};
+    permJson1[POLICY_INDEX] = {{"account", {"right", {"edit", true}}}};
 
     unordered_json permJson2;
-    permJson1["policy"] = {{"account", {"right", {"fullCtrl", true}}}};
+    permJson2[POLICY_INDEX] = {{"account", {"right", {"fullCtrl", true}}}};
 
     PermissionPolicy policy;
     DlpPermissionSerializer serialize;
