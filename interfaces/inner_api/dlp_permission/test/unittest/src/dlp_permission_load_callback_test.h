@@ -4,7 +4,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -13,32 +13,26 @@
  * limitations under the License.
  */
 
-#ifndef DLP_PERMISSION_SERIALIZER_TEST_H
-#define DLP_PERMISSION_SERIALIZER_TEST_H
+#ifndef DLP_PERMISSION_LOAD_CALLBACK_TEST_H
+#define DLP_PERMISSION_LOAD_CALLBACK_TEST_H
 
 #include <gtest/gtest.h>
-#include "dlp_permission_serializer.h"
+#include "dlp_permission_load_callback.h"
 
 namespace OHOS {
 namespace Security {
 namespace DlpPermission {
-
-constexpr int32_t IVKEY_LEN = 16;
-constexpr int32_t AESKEY_LEN = 32;
-constexpr int32_t IVKEY_STR_LEN = 36;
-constexpr int32_t AESKEY_STR_LEN = 72;
-
-class DlpPermissionSerializerTest : public testing::Test {
+class DlpPermissionLoadCallbackTest : public testing::Test {
 public:
     static void SetUpTestCase();
 
     static void TearDownTestCase();
 
-    void SetUp();
+    void SetUp() override;
 
-    void TearDown();
+    void TearDown() override;
 };
-} // namespace DlpPermission
-} // namespace Security
-} // namespace OHOS
-#endif // DLP_PERMISSION_SERIALIZER_TEST_H
+}  // namespace DlpPermission
+}  // namespace Security
+}  // namespace OHOS
+#endif  // DLP_PERMISSION_LOAD_CALLBACK_TEST_H
