@@ -23,6 +23,9 @@ namespace OHOS {
 namespace Security {
 namespace DlpPermission {
 
+#define ONLINE_POLICY_CONTENT "plaintextPolicy"
+#define POLICY_INDEX "policy"
+#define FILE_INDEX "file"
 constexpr int32_t IVKEY_LEN = 16;
 constexpr int32_t AESKEY_LEN = 32;
 constexpr int32_t IVKEY_STR_LEN = 36;
