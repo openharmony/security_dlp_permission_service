@@ -55,7 +55,7 @@ static void FuzzTest(const uint8_t* data, size_t size)
 {
     int fd = open("/data/fuse_test.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
 
-    DlpFile testFile(fd);
+    DlpFile testFile(fd, "abc", 0, false);
     uint32_t txtSize = static_cast<uint32_t>(size) % 100;
 
     struct DlpHeader header = {

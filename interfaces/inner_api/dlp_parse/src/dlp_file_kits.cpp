@@ -22,6 +22,7 @@
 #include <unistd.h>
 #include <unordered_map>
 #include "dlp_permission_log.h"
+#include "dlp_zip.h"
 #include "securec.h"
 
 namespace OHOS {
@@ -124,6 +125,11 @@ bool DlpFileKits::IsDlpFile(int32_t dlpFd)
         DLP_LOG_ERROR(LABEL, "dlp file fd is invalid");
         return false;
     }
+
+    if (IsZipFile(dlpFd)) {
+        return true;
+    }
+
     off_t curPos = lseek(dlpFd, 0, SEEK_CUR);
     if (curPos < 0) {
         DLP_LOG_ERROR(LABEL, "seek dlp file current failed, %{public}s", strerror(errno));

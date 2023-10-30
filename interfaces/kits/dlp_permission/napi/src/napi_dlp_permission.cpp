@@ -117,8 +117,28 @@ void NapiDlpPermission::GenerateDlpFileExcute(napi_env env, void* data)
         return;
     }
 
+    auto context = AbilityRuntime::ApplicationContext::GetInstance();
+    if (context == nullptr) {
+        DLP_LOG_ERROR(LABEL, "get application context is nullptr");
+        return;
+    }
+
+    std::string workDir = context->GetFilesDir();
+    if (workDir.empty() || access(workDir.c_str(), 0) != 0) {
+        DLP_LOG_ERROR(LABEL, "path is null or workDir doesn't exist");
+        return;
+    }
+
+    char realPath[PATH_MAX] = {0};
+    if ((realpath(workDir.c_str(), realPath) == nullptr) && (errno != ENOENT)) {
+        DLP_LOG_ERROR(LABEL, "realpath, %{public}s, workDir %{private}s", strerror(errno), workDir.c_str());
+        return;
+    }
+    std::string rPath(realPath);
+
     asyncContext->errCode = DlpFileManager::GetInstance().GenerateDlpFile(
-        asyncContext->plaintextFd, asyncContext->ciphertextFd, asyncContext->property, asyncContext->dlpFileNative);
+        asyncContext->plaintextFd, asyncContext->ciphertextFd, asyncContext->property,
+        asyncContext->dlpFileNative, rPath);
 }
 
 void NapiDlpPermission::GenerateDlpFileComplete(napi_env env, napi_status status, void* data)
@@ -205,8 +225,15 @@ void NapiDlpPermission::OpenDlpFileExcute(napi_env env, void* data)
         return;
     }
 
+    char realPath[PATH_MAX] = {0};
+    if ((realpath(workDir.c_str(), realPath) == nullptr) && (errno != ENOENT)) {
+        DLP_LOG_ERROR(LABEL, "realpath, %{public}s, workDir %{private}s", strerror(errno), workDir.c_str());
+        return;
+    }
+    std::string rPath(realPath);
+
     asyncContext->errCode =
-        DlpFileManager::GetInstance().OpenDlpFile(asyncContext->ciphertextFd, asyncContext->dlpFileNative, workDir);
+        DlpFileManager::GetInstance().OpenDlpFile(asyncContext->ciphertextFd, asyncContext->dlpFileNative, rPath);
 }
 
 static void GetDlpProperty(std::shared_ptr<DlpFile>& dlpFileNative, DlpProperty& property)

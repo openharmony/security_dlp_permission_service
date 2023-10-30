@@ -66,9 +66,83 @@ enum VALID_KEY_SIZE {
     DLP_KEY_LEN_256 = 32,
 };
 
+#define CHECK_RET(ret, expect, retcode, TAG)                            \
+    do {                                                                \
+        if ((ret) != (expect)) {                                            \
+            DLP_LOG_ERROR(TAG, "check fail ret %{public}d, expect %{public}d, errno %{public}s", \
+                ret, expect, strerror(errno));                          \
+            return retcode;                                             \
+        }                                                               \
+    } while (0)                                                         \
+
+#define CHDIR_AND_CHECK(path, ret, TAG)                                 \
+    do {                                                                \
+        if (chdir(path) != 0) {                                         \
+            DLP_LOG_ERROR(TAG, "chdir fail path %{public}s, errno %{public}s", \
+                path, strerror(errno));                                 \
+            return ret;                                                 \
+        }                                                               \
+    } while (0)                                                         \
+
+#define UNLINK_AND_CHECK(path, ret, TAG)                                \
+    do {                                                                \
+        if (unlink(path) != 0) {                                        \
+            DLP_LOG_ERROR(TAG, "unlink fail path %{public}s, errno %{public}s", \
+                path, strerror(errno));                                 \
+            return ret;                                                 \
+        }                                                               \
+    } while (0)                                                         \
+
+#define MKDIR_AND_CHECK(path, mode, ret, TAG)                           \
+    do {                                                                \
+        if (mkdir(path, mode) != 0) {                                   \
+            DLP_LOG_ERROR(TAG, "mkdir fail path %{public}s, errno %{public}s", \
+                path, strerror(errno));                                 \
+            return ret;                                                 \
+        }                                                               \
+    } while (0)                                                         \
+
+#define GETCWD_AND_CHECK(buf, size, ret, TAG)                           \
+    do {                                                                \
+        if (getcwd(buf, size) == nullptr) {                             \
+            DLP_LOG_ERROR(TAG, "getcwd fail errno %{public}s",          \
+                strerror(errno));                                       \
+            return ret;                                                 \
+        }                                                               \
+    } while (0)                                                         \
+
+#define LSEEK_AND_CHECK(fd, size, flag, ret, TAG)                       \
+    do {                                                                \
+        if (lseek(fd, size, flag) == -1) {                              \
+            DLP_LOG_ERROR(TAG, "lseek failed, %{public}s",              \
+                strerror(errno));                                       \
+            return ret;                                                 \
+        }                                                               \
+    } while (0)                                                         \
+
+#define OPEN_AND_CHECK(fd, path, flag, mode, ret, TAG)                  \
+    do {                                                                \
+        fd = open(path, flag, mode);                                    \
+        if ((fd) == -1) {                                                \
+            DLP_LOG_ERROR(TAG, "open failed, %{public}s",               \
+                strerror(errno));                                       \
+            return ret;                                                 \
+        }                                                               \
+    } while (0)                                                         \
+
+#define FTRUNCATE_AND_CHECK(fd, size, ret, TAG)                         \
+    do {                                                                \
+        if (ftruncate(fd, size) == -1) {                                \
+            DLP_LOG_ERROR(TAG, "ftruncate failed, %{public}s",          \
+                strerror(errno));                                       \
+            return ret;                                                 \
+        }                                                               \
+    } while (0)                                                         \
+
+
 class DlpFile {
 public:
-    DlpFile(int32_t dlpFd);
+    DlpFile(int32_t dlpFd, std::string workDir, int32_t index, bool isZip);
     ~DlpFile();
 
     int32_t SetCipher(const struct DlpBlob& key, const struct DlpUsageSpec& spec);
@@ -88,6 +162,8 @@ public:
     void UpdateDlpFilePermission();
     int32_t CheckDlpFile();
     bool NeedAdapter();
+    bool CleanTmpFile();
+
     int32_t SetPolicy(const PermissionPolicy& policy);
     void GetPolicy(PermissionPolicy& policy) const
     {
@@ -141,16 +217,33 @@ private:
     int32_t UpdateDlpFileContentSize();
     int32_t UpdateFile(int tmpFile, const std::vector<uint8_t>& cert, uint32_t oldTxtOffset);
     int32_t GetTempFile(const std::string& workDir, int& tempFile, std::string& path);
+    bool ParseDlpInfo();
+    bool ParseCert();
+    bool ParseEncData();
 
+    int32_t UnzipDlpFile();
+    int32_t ParseDlpHeaderInRaw();
+    int32_t GenEncData(int32_t inPlainFileFd);
+    int32_t GenFileInZip(int32_t inPlainFileFd);
+    int32_t GenFileInRaw(int32_t inPlainFileFd);
+    int32_t RemoveDlpPermissionInZip(int32_t outPlainFileFd);
+    int32_t RemoveDlpPermissionInRaw(int32_t outPlainFileFd);
+
+    std::string workDir_ = "";
+    std::string dirIndex_;
+    bool isZip_ = false;
     bool isFuseLink_;
     DLPFileAccess authPerm_;
+
+    std::vector<std::string> extraInfo_;
+    int32_t encDataFd_;
 
     // dlp parse format
     struct DlpHeader head_;
     struct DlpBlob cert_;
     struct DlpBlob offlineCert_;
-    struct DlpCipher cipher_;
 
+    struct DlpCipher cipher_;
     // policy in certificate
     PermissionPolicy policy_;
     std::string contactAccount_;

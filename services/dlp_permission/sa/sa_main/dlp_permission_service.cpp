@@ -411,7 +411,7 @@ void DlpPermissionService::GetConfigFileValue(const std::string &cfgFile, std::v
     if (content.empty()) {
         return ;
     }
-    auto jsonObj = nlohmann::json::parse(content);
+    auto jsonObj = nlohmann::json::parse(content, nullptr, false);
     if (jsonObj.is_discarded() || (!jsonObj.is_object())) {
         DLP_LOG_WARN(LABEL, "JsonObj is discarded");
         return ;

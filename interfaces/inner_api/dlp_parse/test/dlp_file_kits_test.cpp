@@ -46,6 +46,7 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_
 static int g_dlpFileFd = -1;
 static const std::string PLAIN_FILE_NAME = "/data/fuse_test.txt";
 static const std::string DLP_FILE_NAME = "/data/fuse_test.txt.dlp";
+static const std::string DLP_TEST_DIR = "/data/dlpTest/";
 static const int DLP_FILE_PERMISSION = 0777;
 
 void CreateDlpFileFd()
@@ -64,7 +65,8 @@ void CreateDlpFileFd()
     prop.contactAccount = "test@test.com";
 
     std::shared_ptr<DlpFile> filePtr;
-    int ret = DlpFileManager::GetInstance().GenerateDlpFile(plainFileFd, g_dlpFileFd, prop, filePtr);
+    int ret = DlpFileManager::GetInstance().GenerateDlpFile(plainFileFd,
+        g_dlpFileFd, prop, filePtr, DLP_TEST_DIR);
     close(plainFileFd);
     if (ret != DLP_OK) {
         cout << "create dlpFile object failed" << endl;
@@ -76,6 +78,19 @@ void CreateDlpFileFd()
 
 void DlpFileKitsTest::SetUpTestCase()
 {
+    struct stat fstat;
+    if (stat(DLP_TEST_DIR.c_str(), &fstat) != 0) {
+        if (errno == ENOENT) {
+            int32_t ret = mkdir(DLP_TEST_DIR.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
+            if (ret < 0) {
+                DLP_LOG_ERROR(LABEL, "mkdir mount point failed errno %{public}d", errno);
+                return;
+            }
+        } else {
+            DLP_LOG_ERROR(LABEL, "get mount point failed errno %{public}d", errno);
+            return;
+        }
+    }
     CreateDlpFileFd();
 }
 
@@ -85,6 +100,7 @@ void DlpFileKitsTest::TearDownTestCase()
         close(g_dlpFileFd);
         g_dlpFileFd = -1;
     }
+    rmdir(DLP_TEST_DIR.c_str());
 }
 
 void DlpFileKitsTest::SetUp() {}

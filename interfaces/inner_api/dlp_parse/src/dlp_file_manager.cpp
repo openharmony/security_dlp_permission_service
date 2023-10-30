@@ -14,6 +14,12 @@
  */
 #include "dlp_file_manager.h"
 
+#include <dirent.h>
+#include <cstdio>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
+
 #include "dlp_crypt.h"
 #include "dlp_file.h"
 #include "dlp_permission.h"
@@ -295,8 +301,57 @@ int32_t DlpFileManager::SetDlpFileParams(std::shared_ptr<DlpFile>& filePtr, cons
     return result;
 }
 
+static bool RemoveDirRecursive(const char *path)
+{
+    DIR *dir = opendir(path);
+    if (dir == nullptr) {
+        return false;
+    }
+
+    dirent *entry;
+    while ((entry = readdir(dir)) != nullptr) {
+        if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) {
+            continue;
+        }
+        std::string subPath = std::string(path) + "/" + entry->d_name;
+        if (entry->d_type == DT_DIR) {
+            if (!RemoveDirRecursive(subPath.c_str())) {
+                closedir(dir);
+                return false;
+            }
+        } else {
+            if (remove(subPath.c_str()) != 0) {
+                closedir(dir);
+                return false;
+            }
+        }
+    }
+
+    closedir(dir);
+
+    if (rmdir(path) != 0) {
+        DLP_LOG_ERROR(LABEL, "rmdir fail, errno %{public}s", strerror(errno));
+        return false;
+    }
+    return true;
+}
+
+std::mutex g_dirCleanLock;
+static void PrepareDirs(const std::string& path)
+{
+    std::lock_guard<std::mutex> lock(g_dirCleanLock);
+    static bool cleanOnce = true;
+    if (cleanOnce) {
+        cleanOnce = false;
+        RemoveDirRecursive(path.c_str());
+        mkdir(path.c_str(), S_IRWXU);
+    }
+}
+
+
 int32_t DlpFileManager::GenerateDlpFile(
-    int32_t plainFileFd, int32_t dlpFileFd, const DlpProperty& property, std::shared_ptr<DlpFile>& filePtr)
+    int32_t plainFileFd, int32_t dlpFileFd, const DlpProperty& property, std::shared_ptr<DlpFile>& filePtr,
+    const std::string& workDir)
 {
     if (plainFileFd < 0 || dlpFileFd < 0) {
         DLP_LOG_ERROR(LABEL, "Generate dlp file fail, plain file fd or dlp file fd invalid");
@@ -308,7 +363,10 @@ int32_t DlpFileManager::GenerateDlpFile(
         return DLP_PARSE_ERROR_FILE_ALREADY_OPENED;
     }
 
-    filePtr = std::make_shared<DlpFile>(dlpFileFd);
+    std::string cache = workDir + "/cache";
+    PrepareDirs(cache);
+    filePtr = std::make_shared<DlpFile>(dlpFileFd, cache, ++index_, true);
+
     int32_t result = SetDlpFileParams(filePtr, property);
     if (result != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "Generate dlp file fail, set dlp obj params error, errno=%{public}d", result);
@@ -336,8 +394,10 @@ int32_t DlpFileManager::OpenDlpFile(int32_t dlpFileFd, std::shared_ptr<DlpFile>&
         DLP_LOG_INFO(LABEL, "Open dlp file fail, fd %{public}d has opened", dlpFileFd);
         return DLP_OK;
     }
-
-    filePtr = std::make_shared<DlpFile>(dlpFileFd);
+ 
+    std::string cache = workDir + "/cache";
+    PrepareDirs(cache);
+    filePtr = std::make_shared<DlpFile>(dlpFileFd, cache, ++index_, false);
 
     int32_t result = ParseDlpFileFormat(filePtr, workDir);
     if (result != DLP_OK) {
@@ -348,39 +408,13 @@ int32_t DlpFileManager::OpenDlpFile(int32_t dlpFileFd, std::shared_ptr<DlpFile>&
     return AddDlpFileNode(filePtr);
 }
 
-int32_t DlpFileManager::IsDlpFile(int32_t dlpFileFd, bool& isDlpFile)
-{
-    if (dlpFileFd < 0) {
-        DLP_LOG_ERROR(LABEL, "File type check fail, fd %{public}d is invalid", dlpFileFd);
-        isDlpFile = false;
-        return DLP_PARSE_ERROR_FD_ERROR;
-    }
-
-    std::shared_ptr<DlpFile> filePtr = GetDlpFile(dlpFileFd);
-    if (filePtr != nullptr) {
-        DLP_LOG_INFO(LABEL, "File type check fail, fd %{public}d has opened", dlpFileFd);
-        isDlpFile = true;
-        return DLP_OK;
-    }
-
-    filePtr = std::make_shared<DlpFile>(dlpFileFd);
-
-    int32_t result = filePtr->ParseDlpHeader();
-    if (result != DLP_OK) {
-        DLP_LOG_ERROR(LABEL, "File type check fail, parse dlp file error, errno=%{public}d", result);
-        isDlpFile = false;
-        return result;
-    }
-    isDlpFile = true;
-    return DLP_OK;
-}
-
 int32_t DlpFileManager::CloseDlpFile(const std::shared_ptr<DlpFile>& dlpFile)
 {
     if (dlpFile == nullptr) {
         DLP_LOG_ERROR(LABEL, "Close dlp file fail, dlp obj is null");
         return DLP_PARSE_ERROR_PTR_NULL;
     }
+
     return RemoveDlpFileNode(dlpFile);
 }
 

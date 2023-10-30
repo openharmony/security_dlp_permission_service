@@ -15,6 +15,9 @@
 #include <cerrno>
 #include <gtest/gtest.h>
 #include <securec.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+
 #include "c_mock_common.h"
 #define private public
 #include "dlp_link_manager.h"
@@ -43,6 +46,7 @@ static struct stat g_fuseReplyAttr;
 static double g_fuseReplyAttrTimeout = 0.0F;
 static size_t g_fuseReplyBufSize = 0;
 static int g_session;
+static const std::string DLP_TEST_DIR = "/data/dlpTest/";
 
 static int FuseReplyErrMock(fuse_req_t req, int err)
 {
@@ -144,9 +148,27 @@ int FuseSessionMountMock(struct fuse_session *se, const char *mountpoint)
 
 class FuseDaemonTest : public testing::Test {
 public:
-    static void SetUpTestCase() {};
+    static void SetUpTestCase()
+    {
+        struct stat fstat;
+        if (stat(DLP_TEST_DIR.c_str(), &fstat) != 0) {
+            if (errno == ENOENT) {
+                int32_t ret = mkdir(DLP_TEST_DIR.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
+                if (ret < 0) {
+                    DLP_LOG_ERROR(LABEL, "mkdir mount point failed errno %{public}d", errno);
+                    return;
+                }
+            } else {
+                DLP_LOG_ERROR(LABEL, "get mount point failed errno %{public}d", errno);
+                return;
+            }
+        }
+    };
 
-    static void TearDownTestCase() {};
+    static void TearDownTestCase()
+    {
+        rmdir(DLP_TEST_DIR.c_str());
+    };
 
     void SetUp() {};
 
@@ -276,7 +298,7 @@ HWTEST_F(FuseDaemonTest, FuseDaemonOpen001, TestSize.Level1)
     CleanMockConditions();
 
     // open readonly dlp with O_TRUNC
-    std::shared_ptr<DlpFile> dlpFile = std::make_shared<DlpFile>(-1);
+    std::shared_ptr<DlpFile> dlpFile = std::make_shared<DlpFile>(-1, DLP_TEST_DIR, 0, false);
     ASSERT_NE(dlpFile, nullptr);
     DlpLinkFile linkfile("test", dlpFile);
     fuse_ino_t ino = static_cast<fuse_ino_t>(reinterpret_cast<uintptr_t>(&linkfile));
@@ -372,7 +394,7 @@ HWTEST_F(FuseDaemonTest, FuseDaemonRead002, TestSize.Level1)
     CleanMockConditions();
 
     // can not read dlp file
-    std::shared_ptr<DlpFile> dlpFile = std::make_shared<DlpFile>(-1);
+    std::shared_ptr<DlpFile> dlpFile = std::make_shared<DlpFile>(-1, DLP_TEST_DIR, 0, false);
     ASSERT_NE(dlpFile, nullptr);
     DlpLinkFile linkfile("test", dlpFile);
     fuse_ino_t ino = static_cast<fuse_ino_t>(reinterpret_cast<uintptr_t>(&linkfile));
@@ -435,7 +457,7 @@ HWTEST_F(FuseDaemonTest, FuseDaemonWrite001, TestSize.Level1)
     CleanMockConditions();
 
     // can not write dlp file
-    std::shared_ptr<DlpFile> dlpFile = std::make_shared<DlpFile>(-1);
+    std::shared_ptr<DlpFile> dlpFile = std::make_shared<DlpFile>(-1, DLP_TEST_DIR, 0, false);
     ASSERT_NE(dlpFile, nullptr);
     DlpLinkFile linkfile("test", dlpFile);
     fuse_ino_t ino = static_cast<fuse_ino_t>(reinterpret_cast<uintptr_t>(&linkfile));
@@ -591,7 +613,7 @@ HWTEST_F(FuseDaemonTest, FuseDaemonReadDir004, TestSize.Level1)
 {
     DLP_LOG_INFO(LABEL, "FuseDaemonReadDir004");
     fuse_req_t req = nullptr;
-    std::shared_ptr<DlpFile> filePtr = std::make_shared<DlpFile>(-1);
+    std::shared_ptr<DlpFile> filePtr = std::make_shared<DlpFile>(-1, DLP_TEST_DIR, 0, false);
     ASSERT_NE(filePtr, nullptr);
     DlpLinkManager::GetInstance().g_DlpLinkFileNameMap_.clear();
     DlpLinkManager::GetInstance().AddDlpLinkFile(filePtr, "test");
@@ -623,7 +645,7 @@ HWTEST_F(FuseDaemonTest, FuseDaemonReadDir005, TestSize.Level1)
 {
     DLP_LOG_INFO(LABEL, "FuseDaemonReadDir005");
     fuse_req_t req = nullptr;
-    std::shared_ptr<DlpFile> filePtr = std::make_shared<DlpFile>(-1);
+    std::shared_ptr<DlpFile> filePtr = std::make_shared<DlpFile>(-1, DLP_TEST_DIR, 0, false);
     DlpLinkManager::GetInstance().AddDlpLinkFile(filePtr, "test");
     DlpCMockCondition condition;
     condition.mockSequence = { true };
@@ -720,7 +742,7 @@ HWTEST_F(FuseDaemonTest, FuseDaemonSetAttr001, TestSize.Level1)
     CleanMockConditions();
 
     // truncate fail
-    std::shared_ptr<DlpFile> dlpFile = std::make_shared<DlpFile>(-1);
+    std::shared_ptr<DlpFile> dlpFile = std::make_shared<DlpFile>(-1, DLP_TEST_DIR, 0, false);
     ASSERT_NE(dlpFile, nullptr);
     DlpLinkFile linkfile("test", dlpFile);
     fuse_ino_t ino = static_cast<fuse_ino_t>(reinterpret_cast<uintptr_t>(&linkfile));
@@ -749,7 +771,7 @@ HWTEST_F(FuseDaemonTest, FuseDaemonSetAttr002, TestSize.Level1)
     // attr = nullptr
     DlpCMockCondition condition;
 
-    std::shared_ptr<DlpFile> dlpFile = std::make_shared<DlpFile>(-1);
+    std::shared_ptr<DlpFile> dlpFile = std::make_shared<DlpFile>(-1, DLP_TEST_DIR, 0, false);
     ASSERT_NE(dlpFile, nullptr);
     DlpLinkFile linkfile("test", dlpFile);
     fuse_ino_t ino = static_cast<fuse_ino_t>(reinterpret_cast<uintptr_t>(&linkfile));
