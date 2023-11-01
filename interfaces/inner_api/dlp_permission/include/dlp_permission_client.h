@@ -85,7 +85,7 @@ private:
     std::mutex cvLock_;
     bool readyFlag_ = false;
     std::condition_variable dlpPermissionCon_;
-    std::recursive_mutex proxyMutex_;
+    std::mutex proxyMutex_;
     sptr<IDlpPermissionService> proxy_ = nullptr;
     sptr<DlpPermissionDeathRecipient> serviceDeathObserver_ = nullptr;
     std::mutex callbackMutex_;
