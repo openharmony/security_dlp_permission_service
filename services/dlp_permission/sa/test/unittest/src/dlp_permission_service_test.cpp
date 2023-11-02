@@ -155,8 +155,6 @@ struct GeneratePolicyParam {
     int64_t deltaTime;
 };
 
-using GeneratePolicyParam = struct GeneratePolicyParam;
-
 void GeneratePolicy(PermissionPolicy& encPolicy, GeneratePolicyParam param)
 {
     uint64_t curTime = static_cast<uint64_t>(

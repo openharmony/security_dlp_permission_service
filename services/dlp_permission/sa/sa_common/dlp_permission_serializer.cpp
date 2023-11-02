@@ -368,7 +368,7 @@ static void DeserializeEveryoneInfo(const unordered_json& policyJson, Permission
     }
 }
 
-static void InitPermissionPolicy(PermissionPolicy& policy, std::vector<AuthUserInfo> userList,
+static void InitPermissionPolicy(PermissionPolicy& policy, const std::vector<AuthUserInfo> userList,
     unordered_json policyJson)
 {
     policy.authUsers_ = userList;
@@ -528,7 +528,8 @@ int32_t DlpPermissionSerializer::DeserializeEncPolicyDataByFirstVersion(const un
         return DLP_SERVICE_ERROR_MEMORY_OPERATE_FAIL;
     }
     encData.dataLen = encDataStr.length();
-    if (memcpy_s(encData.data, encDataStr.length(), (uint8_t*)encDataStr.c_str(), encDataStr.length()) != EOK) {
+    if (memcpy_s(encData.data, encDataStr.length(),
+        reinterpret_cast<const uint8_t*>(encDataStr.c_str()), encDataStr.length()) != EOK) {
         DLP_LOG_ERROR(LABEL, "Memcpy encData fill fail");
         return DLP_SERVICE_ERROR_MEMORY_OPERATE_FAIL;
     }

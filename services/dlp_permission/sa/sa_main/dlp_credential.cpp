@@ -385,7 +385,7 @@ static void FreeDLPEncPolicyData(DLP_EncPolicyData& encPolicy)
     }
 }
 
-static int32_t GetLocalAccountName(std::string& account, std::string contactAccount, bool* isOwner)
+static int32_t GetLocalAccountName(std::string& account, const std::string contactAccount, bool* isOwner)
 {
     std::pair<bool, AccountSA::OhosAccountInfo> accountInfo =
         AccountSA::OhosAccountKits::GetInstance().QueryOhosAccountInfo();
@@ -399,7 +399,7 @@ static int32_t GetLocalAccountName(std::string& account, std::string contactAcco
     return DLP_PARSE_ERROR_ACCOUNT_INVALID;
 }
 
-static int32_t GetDomainAccountName(std::string& account, std::string contactAccount, bool* isOwner)
+static int32_t GetDomainAccountName(std::string& account, const std::string contactAccount, bool* isOwner)
 {
     std::vector<int32_t> ids;
     if (OHOS::AccountSA::OsAccountManager::QueryActiveOsAccountIds(ids) != 0) {
@@ -429,8 +429,8 @@ static int32_t GetDomainAccountName(std::string& account, std::string contactAcc
     return DLP_OK;
 }
 
-static void GetAccoutInfo(DlpAccountType accountType, AccountInfo& accountCfg, std::string contactAccount,
-    bool* isOwner)
+static void GetAccoutInfo(DlpAccountType accountType, AccountInfo& accountCfg,
+    const std::string contactAccount, bool* isOwner)
 {
     std::string account;
     if (accountType == DOMAIN_ACCOUNT) {
@@ -462,7 +462,7 @@ static int32_t AdapterData(const std::vector<uint8_t>& offlineCert, bool isOwner
     }
     std::string ownerAccountId = "";
     if (isOwner) {
-        std::string temp((char*)encPolicy.receiverAccountInfo.accountId);
+        std::string temp(reinterpret_cast<const char*>(encPolicy.receiverAccountInfo.accountId));
         ownerAccountId = temp;
     }
     int32_t result = DlpPermissionSerializer::GetInstance().DeserializeEncPolicyDataByFirstVersion(jsonObj,
@@ -497,7 +497,7 @@ int32_t DlpCredential::ParseDlpCertificate(sptr<CertParcel>& certParcel, sptr<ID
     bool isOwner = false;
     GetAccoutInfo(accountType, encPolicy.receiverAccountInfo, certParcel->contactAccount, &isOwner);
     if (certParcel->isNeedAdapter) {
-        result = AdapterData(certParcel->offlineCert, isOwner, jsonObj, encPolicy);
+        AdapterData(certParcel->offlineCert, isOwner, jsonObj, encPolicy);
     }
     int res = 0;
     {
