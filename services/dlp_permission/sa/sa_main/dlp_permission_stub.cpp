@@ -128,7 +128,7 @@ int32_t DlpPermissionStub::ParseDlpCertificateInner(MessageParcel& data, Message
     }
     std::string appId;
     if (!data.ReadString(appId)) {
-        DLP_LOG_ERROR(LABEL, "Read bundle name fail");
+        DLP_LOG_ERROR(LABEL, "Read appId fail");
         return DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL;
     }
     sptr<CertParcel> certParcel = data.ReadParcelable<CertParcel>();
@@ -563,6 +563,52 @@ int32_t DlpPermissionStub::GetDLPFileVisitRecordInner(MessageParcel& data, Messa
     return DLP_OK;
 }
 
+int32_t DlpPermissionStub::SetPolicyInner(MessageParcel& data, MessageParcel& reply)
+{
+    std::vector<std::string> appIdList;
+    if (!data.ReadStringVector(&appIdList)) {
+        DLP_LOG_ERROR(LABEL, "Read appId List fail");
+        return DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL;
+    }
+    int32_t result = this->SetPolicy(appIdList);
+    if (!reply.WriteInt32(result)) {
+        DLP_LOG_ERROR(LABEL, "Write set policy result fail");
+        return DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL;
+    }
+    return DLP_OK;
+}
+
+int32_t DlpPermissionStub::GetPolicyInner(MessageParcel& data, MessageParcel& reply)
+{
+    std::vector<std::string> appIdList;
+    int32_t result = this->GetPolicy(appIdList);
+    if (!reply.WriteInt32(result)) {
+        DLP_LOG_ERROR(LABEL, "Write get policy result fail");
+        return DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL;
+    }
+    size_t listNum = appIdList.size();
+    if (!reply.WriteUint32(listNum)) {
+        DLP_LOG_ERROR(LABEL, "Write appId list num fail");
+        return DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL;
+    }
+    if (!reply.WriteStringVector(appIdList)) {
+        DLP_LOG_ERROR(LABEL, "Write string vector fail");
+        return DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL;
+    }
+    return DLP_OK;
+}
+
+int32_t DlpPermissionStub::RemovePolicyInner(MessageParcel& data, MessageParcel& reply)
+{
+    int32_t result = this->RemovePolicy();
+    if (!reply.WriteInt32(result)) {
+        DLP_LOG_ERROR(LABEL, "Write remove policy result fail");
+        return DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL;
+    }
+    return DLP_OK;
+}
+
+
 DlpPermissionStub::DlpPermissionStub()
 {
     requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::GENERATE_DLP_CERTIFICATE)] =
@@ -604,6 +650,12 @@ DlpPermissionStub::DlpPermissionStub()
         &DlpPermissionStub::RegisterOpenDlpFileCallbackInner;
     requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::UN_REGISTER_OPEN_DLP_FILE_CALLBACK)] =
         &DlpPermissionStub::UnRegisterOpenDlpFileCallbackInner;
+    requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::SET_POLICY)] =
+        &DlpPermissionStub::SetPolicyInner;
+    requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::GET_POLICY)] =
+        &DlpPermissionStub::GetPolicyInner;
+    requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::REMOVE_POLICY)] =
+        &DlpPermissionStub::RemovePolicyInner;
 }
 
 DlpPermissionStub::~DlpPermissionStub()

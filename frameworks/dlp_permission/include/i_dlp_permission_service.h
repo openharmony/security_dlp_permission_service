@@ -39,7 +39,8 @@ public:
     virtual int32_t GenerateDlpCertificate(
         const sptr<DlpPolicyParcel>& policyParcel, sptr<IDlpPermissionCallback>& callback) = 0;
 
-    virtual int32_t ParseDlpCertificate(sptr<CertParcel>& certParcel, sptr<IDlpPermissionCallback>& callback, const std::string& appId) = 0;
+    virtual int32_t ParseDlpCertificate(sptr<CertParcel>& certParcel, sptr<IDlpPermissionCallback>& callback,
+        const std::string& appId) = 0;
 
     virtual int32_t InstallDlpSandbox(const std::string& bundleName, DLPFileAccess dlpFileAccess, int32_t userId,
         SandboxInfo& sandboxInfo, const std::string& uri) = 0;
@@ -76,6 +77,12 @@ public:
     virtual int32_t ClearUnreservedSandbox() = 0;
 
     virtual int32_t GetDLPFileVisitRecord(std::vector<VisitedDLPFileInfo>& infoVec) = 0;
+
+    virtual int32_t SetPolicy(const std::vector<std::string>& appIdList) = 0;
+
+    virtual int32_t GetPolicy(std::vector<std::string>& appIdList) = 0;
+
+    virtual int32_t RemovePolicy() = 0;
 };
 }  // namespace DlpPermission
 }  // namespace Security

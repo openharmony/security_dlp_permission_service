@@ -47,6 +47,7 @@ using namespace Security::AccessToken;
 using namespace OHOS::AppExecFwk;
 namespace {
 constexpr OHOS::HiviewDFX::HiLogLabel LABEL = { LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "DlpPermissionService" };
+constexpr const int32_t EDM_UID = 3057;
 static const std::string ALLOW_ABILITY[] = {"com.ohos.dlpmanager"};
 static const std::string ALLOW_ACTION[] = {"ohos.want.action.CREATE_FILE"};
 static const std::string DLP_MANAGER = "com.ohos.dlpmanager";
@@ -161,7 +162,8 @@ int32_t DlpPermissionService::GenerateDlpCertificate(
         policyParcel->policyParams_.ownerAccountType_, callback);
 }
 
-int32_t DlpPermissionService::ParseDlpCertificate(sptr<CertParcel>& certParcel, sptr<IDlpPermissionCallback>& callback, const std::string& appId)
+int32_t DlpPermissionService::ParseDlpCertificate(sptr<CertParcel>& certParcel, sptr<IDlpPermissionCallback>& callback,
+    const std::string& appId)
 {
     if (callback == nullptr) {
         DLP_LOG_ERROR(LABEL, "Callback is null");
@@ -715,6 +717,40 @@ int32_t DlpPermissionService::GetDLPFileVisitRecord(std::vector<VisitedDLPFileIn
     StartTimer();
 #endif
     return result;
+}
+
+int32_t DlpPermissionService::SetPolicy(const std::vector<std::string>& appIdList)
+{
+    if (appIdList.empty()) {
+        DLP_LOG_ERROR(LABEL, "get appIdList empty");
+        return DLP_SERVICE_ERROR_VALUE_INVALID;
+    }
+    int32_t uid = IPCSkeleton::GetCallingUid();
+    if (uid != EDM_UID) {
+        DLP_LOG_ERROR(LABEL, "invalid caller");
+        return DLP_SERVICE_ERROR_PERMISSION_DENY;
+    }
+    return DlpCredential::GetInstance().SetPolicy(appIdList);
+}
+
+int32_t DlpPermissionService::GetPolicy(std::vector<std::string>& appIdList)
+{
+    int32_t uid = IPCSkeleton::GetCallingUid();
+    if (uid != EDM_UID) {
+        DLP_LOG_ERROR(LABEL, "invalid caller");
+        return DLP_SERVICE_ERROR_PERMISSION_DENY;
+    }
+    return DlpCredential::GetInstance().GetPolicy(appIdList);
+}
+
+int32_t DlpPermissionService::RemovePolicy()
+{
+    int32_t uid = IPCSkeleton::GetCallingUid();
+    if (uid != EDM_UID) {
+        DLP_LOG_ERROR(LABEL, "invalid caller");
+        return DLP_SERVICE_ERROR_PERMISSION_DENY;
+    }
+    return DlpCredential::GetInstance().RemovePolicy();
 }
 
 int DlpPermissionService::Dump(int fd, const std::vector<std::u16string>& args)

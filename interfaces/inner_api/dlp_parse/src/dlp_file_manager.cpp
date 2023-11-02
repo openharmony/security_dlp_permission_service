@@ -191,7 +191,8 @@ int32_t DlpFileManager::UpdateDlpFile(bool isNeedAdapter, uint32_t oldCertSize, 
     return filePtr->UpdateCert(certBlob);
 }
 
-int32_t DlpFileManager::ParseDlpFileFormat(std::shared_ptr<DlpFile>& filePtr, const std::string& workDir, const std::string& appId)
+int32_t DlpFileManager::ParseDlpFileFormat(std::shared_ptr<DlpFile>& filePtr, const std::string& workDir,
+    const std::string& appId)
 {
     int32_t result = filePtr->ParseDlpHeader();
     if (result != DLP_OK) {
@@ -382,7 +383,8 @@ int32_t DlpFileManager::GenerateDlpFile(
     return AddDlpFileNode(filePtr);
 }
 
-int32_t DlpFileManager::OpenDlpFile(int32_t dlpFileFd, std::shared_ptr<DlpFile>& filePtr, const std::string& workDir, const std::string& appId)
+int32_t DlpFileManager::OpenDlpFile(int32_t dlpFileFd, std::shared_ptr<DlpFile>& filePtr, const std::string& workDir,
+    const std::string& appId)
 {
     if (dlpFileFd < 0) {
         DLP_LOG_ERROR(LABEL, "Open dlp file fail, fd %{public}d is invalid", dlpFileFd);

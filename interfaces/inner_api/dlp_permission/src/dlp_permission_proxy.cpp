@@ -27,6 +27,7 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_
 static const uint32_t MAX_SUPPORT_FILE_TYPE_NUM = 1024;
 static const uint32_t MAX_RETENTION_SIZE = 1024;
 static const uint32_t MAX_FIEL_RECORD_SIZE = 1024;
+static const uint32_t MAX_APPID_LIST_SIZE = 250;
 }
 
 DlpPermissionProxy::DlpPermissionProxy(const sptr<IRemoteObject>& impl) : IRemoteProxy<IDlpPermissionService>(impl)
@@ -785,6 +786,111 @@ int32_t DlpPermissionProxy::GetDLPFileVisitRecord(std::vector<VisitedDLPFileInfo
         }
     }
 
+    return res;
+}
+
+int32_t DlpPermissionProxy::SetPolicy(const std::vector<std::string>& appIdList)
+{
+    MessageParcel data;
+    if (!data.WriteInterfaceToken(DlpPermissionProxy::GetDescriptor())) {
+        DLP_LOG_ERROR(LABEL, "Write descriptor fail");
+        return DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL;
+    }
+
+    if (!data.WriteStringVector(appIdList)) {
+        DLP_LOG_ERROR(LABEL, "Write string vector fail");
+        return DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL;
+    }
+
+    MessageParcel reply;
+    MessageOption option(MessageOption::TF_SYNC);
+    sptr<IRemoteObject> remote = Remote();
+    if (remote == nullptr) {
+        DLP_LOG_ERROR(LABEL, "Remote service is null");
+        return DLP_SERVICE_ERROR_SERVICE_NOT_EXIST;
+    }
+    int32_t requestResult = remote->SendRequest(
+        static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::SET_POLICY), data, reply, option);
+    if (requestResult != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "Request fail, result: %{public}d", requestResult);
+        return requestResult;
+    }
+    int32_t res;
+    if (!reply.ReadInt32(res)) {
+        DLP_LOG_ERROR(LABEL, "Read int32 fail");
+        return DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL;
+    }
+    return res;
+}
+
+int32_t DlpPermissionProxy::GetPolicy(std::vector<std::string>& appIdList)
+{
+    MessageParcel data;
+    if (!data.WriteInterfaceToken(DlpPermissionProxy::GetDescriptor())) {
+        DLP_LOG_ERROR(LABEL, "Write descriptor fail");
+        return DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL;
+    }
+
+    MessageParcel reply;
+    MessageOption option(MessageOption::TF_SYNC);
+    sptr<IRemoteObject> remote = Remote();
+    if (remote == nullptr) {
+        DLP_LOG_ERROR(LABEL, "Remote service is null");
+        return DLP_SERVICE_ERROR_SERVICE_NOT_EXIST;
+    }
+    int32_t requestResult = remote->SendRequest(
+        static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::GET_POLICY), data, reply, option);
+    if (requestResult != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "Request fail, result: %{public}d", requestResult);
+        return requestResult;
+    }
+    int32_t res;
+    if (!reply.ReadInt32(res)) {
+        DLP_LOG_ERROR(LABEL, "Read int32 fail");
+        return DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL;
+    }
+    uint32_t listNum;
+    if (!reply.ReadUint32(listNum)) {
+        DLP_LOG_ERROR(LABEL, "Read uint32 fail");
+        return DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL;
+    }
+    if (listNum > MAX_APPID_LIST_SIZE) {
+        DLP_LOG_ERROR(LABEL, "appIdList larger than limit");
+        return DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL;
+    }
+    if (!reply.ReadStringVector(&appIdList)) {
+        DLP_LOG_ERROR(LABEL, "Read appId List fail");
+        return DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL;
+    }
+    return res;
+}
+
+int32_t DlpPermissionProxy::RemovePolicy()
+{
+    MessageParcel data;
+    if (!data.WriteInterfaceToken(DlpPermissionProxy::GetDescriptor())) {
+        DLP_LOG_ERROR(LABEL, "Write descriptor fail");
+        return DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL;
+    }
+
+    MessageParcel reply;
+    MessageOption option(MessageOption::TF_SYNC);
+    sptr<IRemoteObject> remote = Remote();
+    if (remote == nullptr) {
+        DLP_LOG_ERROR(LABEL, "Remote service is null");
+        return DLP_SERVICE_ERROR_SERVICE_NOT_EXIST;
+    }
+    int32_t requestResult = remote->SendRequest(
+        static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::REMOVE_POLICY), data, reply, option);
+    if (requestResult != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "Request fail, result: %{public}d", requestResult);
+        return requestResult;
+    }
+    int32_t res;
+    if (!reply.ReadInt32(res)) {
+        DLP_LOG_ERROR(LABEL, "Read int32 fail");
+        return DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL;
+    }
     return res;
 }
 }  // namespace DlpPermission

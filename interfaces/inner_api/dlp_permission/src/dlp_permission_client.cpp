@@ -481,6 +481,39 @@ int32_t DlpPermissionClient::GetDLPFileVisitRecord(std::vector<VisitedDLPFileInf
     return proxy->GetDLPFileVisitRecord(infoVec);
 }
 
+int32_t DlpPermissionClient::SetPolicy(const std::vector<std::string>& appIdList)
+{
+    auto proxy = GetProxy(true);
+    if (proxy == nullptr) {
+        DLP_LOG_ERROR(LABEL, "Proxy is null");
+        return DLP_OK;
+    }
+
+    return proxy->SetPolicy(appIdList);
+}
+
+int32_t DlpPermissionClient::GetPolicy(std::vector<std::string>& appIdList)
+{
+    auto proxy = GetProxy(true);
+    if (proxy == nullptr) {
+        DLP_LOG_ERROR(LABEL, "Proxy is null");
+        return DLP_OK;
+    }
+
+    return proxy->GetPolicy(appIdList);
+}
+
+int32_t DlpPermissionClient::RemovePolicy()
+{
+    auto proxy = GetProxy(true);
+    if (proxy == nullptr) {
+        DLP_LOG_ERROR(LABEL, "Proxy is null");
+        return DLP_OK;
+    }
+
+    return proxy->RemovePolicy();
+}
+
 bool DlpPermissionClient::StartLoadDlpPermissionSa()
 {
     {

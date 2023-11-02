@@ -392,3 +392,18 @@ int DLP_RestorePolicy(
     DLP_LOG_INFO("Start new thread, requestId: %{public}llu", (unsigned long long)*requestId);
     return DLP_SUCCESS;
 }
+
+int32_t DLP_AddPolicy(PolicyType type, const uint8_t *policy, uint32_t policyLen)
+{
+    return DLP_SUCCESS;
+}
+
+int32_t DLP_GetPolicy(PolicyType type, uint8_t *policy, uint32_t *policyLen)
+{
+    return DLP_SUCCESS;
+}
+
+int32_t DLP_RemovePolicy(PolicyType type)
+{
+    return DLP_SUCCESS;
+}

@@ -40,7 +40,8 @@ public:
 
     int32_t GenerateDlpCertificate(
         const PermissionPolicy& policy, std::shared_ptr<GenerateDlpCertificateCallback> callback);
-    int32_t ParseDlpCertificate(sptr<CertParcel>& certParcel, std::shared_ptr<ParseDlpCertificateCallback> callback, const std::string& appId);
+    int32_t ParseDlpCertificate(sptr<CertParcel>& certParcel, std::shared_ptr<ParseDlpCertificateCallback> callback,
+        const std::string& appId);
     int32_t InstallDlpSandbox(const std::string& bundleName, DLPFileAccess dlpFileAccess, int32_t userId,
         SandboxInfo& sandboxInfo, const std::string& uri);
     int32_t UninstallDlpSandbox(const std::string& bundleName, int32_t appIndex, int32_t userId);
@@ -61,6 +62,9 @@ public:
         std::vector<RetentionSandBoxInfo>& retentionSandBoxInfoVec);
     int32_t ClearUnreservedSandbox();
     int32_t GetDLPFileVisitRecord(std::vector<VisitedDLPFileInfo>& infoVec);
+    int32_t SetPolicy(const std::vector<std::string>& appIdList);
+    int32_t GetPolicy(std::vector<std::string>& appIdList);
+    int32_t RemovePolicy();
 
     void FinishStartSASuccess(const sptr<IRemoteObject>& remoteObject);
     void FinishStartSAFail();

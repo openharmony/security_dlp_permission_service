@@ -1220,7 +1220,7 @@ HWTEST_F(DlpPermissionKitTest, ParseDlpCertificate002, TestSize.Level1)
     certParcel->offlineCert.push_back(1);
     PermissionPolicy policy;
     ASSERT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID,
-        DlpPermissionKit::ParseDlpCertificate(certParcel, policy,""));
+        DlpPermissionKit::ParseDlpCertificate(certParcel, policy, ""));
 
     policy.ownerAccount_ = "test";
     policy.ownerAccountId_ = "test";
@@ -1237,7 +1237,7 @@ HWTEST_F(DlpPermissionKitTest, ParseDlpCertificate002, TestSize.Level1)
     policy.SetIv(iv, 16);
     policy.SetAeskey(aseKey, 16);
     ASSERT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID,
-        DlpPermissionKit::ParseDlpCertificate(certParcel, policy,""));
+        DlpPermissionKit::ParseDlpCertificate(certParcel, policy, ""));
     delete[] iv;
     delete[] aseKey;
 }
@@ -1273,6 +1273,69 @@ HWTEST_F(DlpPermissionKitTest, GetDLPFileVisitRecord001, TestSize.Level1)
     ASSERT_EQ(DLP_OK, DlpPermissionKit::UninstallDlpSandbox(DLP_MANAGER_APP, sandboxInfo.appIndex, DEFAULT_USERID));
 
     TestRecoverProcessInfo(uid, selfTokenId);
+}
+
+/* *
+ * @tc.name: SetPolicy001
+ * @tc.desc: SetPolicy001 abnormal input test.
+ * @tc.type: FUNC
+ * @tc.require: SR000IEUHS
+ */
+HWTEST_F(DlpPermissionKitTest, SetPolicy001, TestSize.Level1)
+{
+    seteuid(1000);
+    std::vector<std::string> appIdList;
+    ASSERT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, DlpPermissionKit::SetPolicy(appIdList));
+    appIdList.push_back("@ohos.test.bundleName1_QG9ob3MudGVzdC5idW5kbGVOYW1lMQ==");
+    ASSERT_EQ(DLP_SERVICE_ERROR_PERMISSION_DENY, DlpPermissionKit::SetPolicy(appIdList));
+    seteuid(3057);
+    ASSERT_EQ(DLP_OK, DlpPermissionKit::SetPolicy(appIdList));
+    appIdList.push_back("");
+    ASSERT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, DlpPermissionKit::SetPolicy(appIdList));
+    appIdList.pop_back();
+    appIdList.push_back("@ohos.test.bundleName2_QG9ob3MudGVzdC5idW5kbGVOYW1lMg==");
+    appIdList.push_back("@ohos.test.bundleName3_QG9ob3MudGVzdC5idW5kbGVOYW1lMw==");
+    appIdList.push_back(
+        "@ohos.test.bundleNameWhichIsLongerThanThe200digitsLengthLimit\
+        123456789123456789123456789_QG9ob3MudGVzdC5idW5kbGVOYW1lV2hpY2hJc0xvbmdlclRoYW5UaGUyMDBkaWdpdHNMZW5nd\
+        GhMaW1pdDEyMzQ1Njc4OTEyMzQ1Njc4OTEyMzQ1Njc4OQ==");
+    ASSERT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, DlpPermissionKit::SetPolicy(appIdList));
+    appIdList.pop_back();
+    for (int i = 0; i < 250; i++) {
+        appIdList.push_back("@ohos.test.bundleName1_QG9ob3MudGVzdC5idW5kbGVOYW1lMQ==");
+    }
+    ASSERT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, DlpPermissionKit::SetPolicy(appIdList));
+    appIdList.clear();
+}
+
+/* *
+ * @tc.name: GetPolicy001
+ * @tc.desc: GetPolicy001S abnormal input test.
+ * @tc.type: FUNC
+ * @tc.require: SR000IEUHS
+ */
+HWTEST_F(DlpPermissionKitTest, GetPolicy001, TestSize.Level1)
+{
+    seteuid(1000);
+    std::vector<std::string> appIdList;
+    ASSERT_EQ(DLP_SERVICE_ERROR_PERMISSION_DENY, DlpPermissionKit::GetPolicy(appIdList));
+    seteuid(3057);
+    ASSERT_EQ(DLP_OK, DlpPermissionKit::GetPolicy(appIdList));
+    appIdList.clear();
+}
+
+/* *
+ * @tc.name: RemovePolicy001
+ * @tc.desc: RemovePolicy001 abnormal input test.
+ * @tc.type: FUNC
+ * @tc.require: SR000IEUHS
+ */
+HWTEST_F(DlpPermissionKitTest, RemovePolicy001, TestSize.Level1)
+{
+    seteuid(1000);
+    ASSERT_EQ(DLP_SERVICE_ERROR_PERMISSION_DENY, DlpPermissionKit::RemovePolicy());
+    seteuid(3057);
+    ASSERT_EQ(DLP_OK, DlpPermissionKit::RemovePolicy());
 }
 }  // namespace DlpPermission
 }  // namespace Security

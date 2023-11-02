@@ -33,7 +33,11 @@ public:
     int32_t GenerateDlpCertificate(
         const std::string& policy, const std::string& accountInfo, DlpAccountType accountType,
         sptr<IDlpPermissionCallback>& callback);
-    int32_t ParseDlpCertificate(sptr<CertParcel>& certParcel, sptr<IDlpPermissionCallback>& callback, const std::string& appId);
+    int32_t ParseDlpCertificate(sptr<CertParcel>& certParcel, sptr<IDlpPermissionCallback>& callback,
+        const std::string& appId);
+    int32_t SetPolicy(const std::vector<std::string>& appIdList);
+    int32_t GetPolicy(std::vector<std::string>& appIdList);
+    int32_t RemovePolicy();
 };
 }  // namespace DlpPermission
 }  // namespace Security

@@ -233,7 +233,8 @@ HWTEST_F(DlpFileManagerTest, ParseDlpFileFormat001, TestSize.Level1)
     uint8_t buffer[64] = {0};
     write(g_fdDlp, buffer, 64);
     lseek(g_fdDlp, 0, SEEK_SET);
-    EXPECT_EQ(DLP_SERVICE_ERROR_JSON_OPERATE_FAIL, DlpFileManager::GetInstance().ParseDlpFileFormat(filePtr, "", appId));
+    EXPECT_EQ(DLP_SERVICE_ERROR_JSON_OPERATE_FAIL,
+        DlpFileManager::GetInstance().ParseDlpFileFormat(filePtr, "", appId));
 
     close(g_fdDlp);
     unlink("/data/fuse_test_dlp.txt");

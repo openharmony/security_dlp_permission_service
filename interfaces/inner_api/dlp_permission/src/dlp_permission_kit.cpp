@@ -84,7 +84,8 @@ int32_t DlpPermissionKit::GenerateDlpCertificate(const PermissionPolicy& policy,
     return callback->result_;
 }
 
-int32_t DlpPermissionKit::ParseDlpCertificate(sptr<CertParcel>& certParcel, PermissionPolicy& policy, const std::string& appId)
+int32_t DlpPermissionKit::ParseDlpCertificate(sptr<CertParcel>& certParcel, PermissionPolicy& policy,
+    const std::string& appId)
 {
     std::shared_ptr<ClientParseDlpCertificateCallback> callback = std::make_shared<ClientParseDlpCertificateCallback>();
     int32_t res = DlpPermissionClient::GetInstance().ParseDlpCertificate(certParcel, callback, appId);
@@ -200,6 +201,21 @@ int32_t DlpPermissionKit::ClearUnreservedSandbox()
 int32_t DlpPermissionKit::GetDLPFileVisitRecord(std::vector<VisitedDLPFileInfo>& infoVec)
 {
     return DlpPermissionClient::GetInstance().GetDLPFileVisitRecord(infoVec);
+}
+
+int32_t DlpPermissionKit::SetPolicy(const std::vector<std::string>& appIdList)
+{
+    return DlpPermissionClient::GetInstance().SetPolicy(appIdList);
+}
+
+int32_t DlpPermissionKit::GetPolicy(std::vector<std::string>& appIdList)
+{
+    return DlpPermissionClient::GetInstance().GetPolicy(appIdList);
+}
+
+int32_t DlpPermissionKit::RemovePolicy()
+{
+    return DlpPermissionClient::GetInstance().RemovePolicy();
 }
 }  // namespace DlpPermission
 }  // namespace Security

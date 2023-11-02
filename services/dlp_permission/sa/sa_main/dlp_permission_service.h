@@ -52,7 +52,8 @@ public:
 
     int32_t GenerateDlpCertificate(
         const sptr<DlpPolicyParcel>& policyParcel, sptr<IDlpPermissionCallback>& callback) override;
-    int32_t ParseDlpCertificate(sptr<CertParcel>& certParcel, sptr<IDlpPermissionCallback>& callback, const std::string& appId) override;
+    int32_t ParseDlpCertificate(sptr<CertParcel>& certParcel, sptr<IDlpPermissionCallback>& callback,
+        const std::string& appId) override;
     int32_t InstallDlpSandbox(const std::string& bundleName, DLPFileAccess dlpFileAccess, int32_t userId,
         SandboxInfo &sandboxInfo, const std::string& uri) override;
     int32_t UninstallDlpSandbox(const std::string& bundleName, int32_t appIndex, int32_t userId) override;
@@ -75,6 +76,10 @@ public:
         std::vector<RetentionSandBoxInfo>& retentionSandBoxInfoVec) override;
     int32_t ClearUnreservedSandbox() override;
     int32_t GetDLPFileVisitRecord(std::vector<VisitedDLPFileInfo>& infoVec) override;
+
+    int32_t SetPolicy(const std::vector<std::string>& appIdList) override;
+    int32_t GetPolicy(std::vector<std::string>& appIdList) override;
+    int32_t RemovePolicy() override;
 
     int Dump(int fd, const std::vector<std::u16string>& args) override;
 
