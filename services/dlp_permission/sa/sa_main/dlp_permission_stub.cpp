@@ -126,6 +126,11 @@ int32_t DlpPermissionStub::ParseDlpCertificateInner(MessageParcel& data, Message
     if (!CheckPermission(PERMISSION_ACCESS_DLP_FILE)) {
         return DLP_SERVICE_ERROR_PERMISSION_DENY;
     }
+    std::string appId;
+    if (!data.ReadString(appId)) {
+        DLP_LOG_ERROR(LABEL, "Read bundle name fail");
+        return DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL;
+    }
     sptr<CertParcel> certParcel = data.ReadParcelable<CertParcel>();
     if (certParcel == nullptr) {
         DLP_LOG_ERROR(LABEL, "Read certParcel fail");
@@ -142,7 +147,7 @@ int32_t DlpPermissionStub::ParseDlpCertificateInner(MessageParcel& data, Message
         return DLP_SERVICE_ERROR_VALUE_INVALID;
     }
 
-    int32_t res = this->ParseDlpCertificate(certParcel, callback);
+    int32_t res = this->ParseDlpCertificate(certParcel, callback, appId);
     if (!reply.WriteInt32(res)) {
         DLP_LOG_ERROR(LABEL, "Write parse cert result fail");
         return DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL;

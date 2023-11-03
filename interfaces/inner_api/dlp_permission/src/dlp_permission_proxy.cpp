@@ -75,11 +75,16 @@ int32_t DlpPermissionProxy::GenerateDlpCertificate(
     return res;
 }
 
-int32_t DlpPermissionProxy::ParseDlpCertificate(sptr<CertParcel>& certParcel, sptr<IDlpPermissionCallback>& callback)
+int32_t DlpPermissionProxy::ParseDlpCertificate(sptr<CertParcel>& certParcel,
+    sptr<IDlpPermissionCallback>& callback, const std::string& appId)
 {
     MessageParcel data;
     if (!data.WriteInterfaceToken(DlpPermissionProxy::GetDescriptor())) {
         DLP_LOG_ERROR(LABEL, "Write descriptor fail");
+        return DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL;
+    }
+    if (!data.WriteString(appId)) {
+        DLP_LOG_ERROR(LABEL, "Write appId fail");
         return DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL;
     }
     if (!data.WriteParcelable(certParcel)) {

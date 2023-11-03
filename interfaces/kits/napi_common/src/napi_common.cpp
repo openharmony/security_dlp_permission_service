@@ -652,7 +652,7 @@ bool GetOpenDlpFileParams(const napi_env env, const napi_callback_info info, Dlp
     napi_value argv[PARAM_SIZE_TWO] = {nullptr};
     NAPI_CALL_BASE(env, napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr), false);
 
-    if (!NapiCheckArgc(env, argc, PARAM_SIZE_TWO)) {
+    if (!NapiCheckArgc(env, argc, PARAM_SIZE_THREE)) {
         return false;
     }
 
@@ -661,8 +661,14 @@ bool GetOpenDlpFileParams(const napi_env env, const napi_callback_info info, Dlp
         ThrowParamError(env, "ciphertextFd", "number");
         return false;
     }
+    
+    if (!GetStringValue(env, argv[PARAM1], asyncContext.appId)) {
+        DLP_LOG_ERROR(LABEL, "js get appId fail");
+        ThrowParamError(env, "appId", "string");
+        return false;
+    }
 
-    if (argc == PARAM_SIZE_TWO) {
+    if (argc == PARAM_SIZE_THREE) {
         if (!ParseCallback(env, argv[PARAM1], asyncContext.callbackRef)) {
             ThrowParamError(env, "callback", "function");
             return false;
@@ -670,6 +676,7 @@ bool GetOpenDlpFileParams(const napi_env env, const napi_callback_info info, Dlp
     }
 
     DLP_LOG_DEBUG(LABEL, "Fd: %{private}" PRId64, asyncContext.ciphertextFd);
+    DLP_LOG_DEBUG(LABEL, "appId: %{private}s" PRId64, asyncContext.appId.c_str());
     return true;
 }
 

@@ -161,14 +161,14 @@ int32_t DlpPermissionService::GenerateDlpCertificate(
         policyParcel->policyParams_.ownerAccountType_, callback);
 }
 
-int32_t DlpPermissionService::ParseDlpCertificate(sptr<CertParcel>& certParcel, sptr<IDlpPermissionCallback>& callback)
+int32_t DlpPermissionService::ParseDlpCertificate(sptr<CertParcel>& certParcel, sptr<IDlpPermissionCallback>& callback, const std::string& appId)
 {
     if (callback == nullptr) {
         DLP_LOG_ERROR(LABEL, "Callback is null");
         return DLP_SERVICE_ERROR_VALUE_INVALID;
     }
 
-    return DlpCredential::GetInstance().ParseDlpCertificate(certParcel, callback);
+    return DlpCredential::GetInstance().ParseDlpCertificate(certParcel, callback, appId);
 }
 
 bool DlpPermissionService::InsertDlpSandboxInfo(DlpSandboxInfo& sandboxInfo, bool hasRetention)

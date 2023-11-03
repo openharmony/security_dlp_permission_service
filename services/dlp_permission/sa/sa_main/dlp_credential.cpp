@@ -72,6 +72,9 @@ static int32_t ConvertCredentialError(int errorCode)
     if (errorCode == DLP_SUCCESS) {
         return DLP_OK;
     }
+    if (errorCode == DLP_ERR_APPID_NOT_AUTHORIZED) {
+        return DLP_CREDENTIAL_ERROR_APPID_NOT_AUTHORIZED;
+    }
     if (errorCode == DLP_ERR_CONNECTION_TIME_OUT || errorCode == DLP_ERR_TOKEN_CONNECTION_TIME_OUT) {
         return DLP_CREDENTIAL_ERROR_SERVER_TIME_OUT_ERROR;
     }
@@ -474,7 +477,7 @@ static int32_t AdapterData(const std::vector<uint8_t>& offlineCert, bool isOwner
     return DLP_OK;
 }
 
-int32_t DlpCredential::ParseDlpCertificate(sptr<CertParcel>& certParcel, sptr<IDlpPermissionCallback>& callback)
+int32_t DlpCredential::ParseDlpCertificate(sptr<CertParcel>& certParcel, sptr<IDlpPermissionCallback>& callback, const std::string& appId)
 {
     std::string encDataJsonStr(certParcel->cert.begin(), certParcel->cert.end());
     auto jsonObj = unordered_json::parse(encDataJsonStr, nullptr, false);
@@ -486,7 +489,7 @@ int32_t DlpCredential::ParseDlpCertificate(sptr<CertParcel>& certParcel, sptr<ID
         .opt = CloudEncOption::RECEIVER_DECRYPT_MUST_USE_CLOUD_AND_RETURN_ENCRYPTION_VALUE,
         .extraInfo = nullptr
     };
-    DLP_EncPolicyData encPolicy = {.featureName = strdup("dlp_permission_service"), .options = encAndDecOptions};
+    DLP_EncPolicyData encPolicy = {.featureName = strdup(const_cast<char *>(appId.c_str())), .options = encAndDecOptions};
     int32_t result =
         DlpPermissionSerializer::GetInstance().DeserializeEncPolicyData(jsonObj, encPolicy, certParcel->isNeedAdapter);
     auto accountType = static_cast<DlpAccountType>(encPolicy.accountType);

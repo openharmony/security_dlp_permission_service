@@ -358,6 +358,14 @@ int DLP_RestorePolicy(
         return DLP_ERROR;
     }
 
+    char *tmp1 = "test_appId_passed_1";
+    char *tmp2 = "test_appId_passed_2";
+    if (strcmp(params->featureName, tmp1) || strcmp(params->featureName, tmp2)) {
+        DLP_LOG_DEBUG("appId check pass");
+    } else {
+        return DLP_ERR_APPID_NOT_AUTHORIZED;
+    }
+
     pthread_mutex_lock(&g_mutex);
     uint64_t id = ++g_requestId;  // Simulation allocation requestId.
     pthread_mutex_unlock(&g_mutex);
