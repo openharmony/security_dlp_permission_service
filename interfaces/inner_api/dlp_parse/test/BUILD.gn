@@ -43,10 +43,12 @@ ohos_unittest("dlp_parse_test") {
     "${dlp_root_dir}/interfaces/inner_api/dlp_parse/src/dlp_file.cpp",
     "${dlp_root_dir}/interfaces/inner_api/dlp_parse/src/dlp_file_kits.cpp",
     "${dlp_root_dir}/interfaces/inner_api/dlp_parse/src/dlp_file_manager.cpp",
+    "${dlp_root_dir}/interfaces/inner_api/dlp_parse/src/dlp_zip.cpp",
     "dlp_crypt_test.cpp",
     "dlp_file_kits_test.cpp",
     "dlp_file_manager_test.cpp",
     "dlp_file_test.cpp",
+    "dlp_zip_test.cpp",
   ]
 
   include_dirs = [
@@ -57,11 +59,13 @@ ohos_unittest("dlp_parse_test") {
     "${dlp_root_dir}/frameworks/test/mock/",
     "${dlp_root_dir}/services/dlp_permission/sa/mock",
     "${dlp_root_dir}/services/dlp_permission/sa/sa_common",
+    "//third_party/zlib",
   ]
 
   deps = [
     "${dlp_root_dir}/services/dlp_permission/sa:dlp_permission_serializer_static",
     "//third_party/openssl:libcrypto_shared",
+    "//third_party/zlib:shared_libz",
   ]
 
   external_deps = [

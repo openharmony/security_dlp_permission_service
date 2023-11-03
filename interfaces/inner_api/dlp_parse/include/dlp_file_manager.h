@@ -16,6 +16,7 @@
 #ifndef INTERFACES_INNER_API_DLP_FILE_MANAGER_H
 #define INTERFACES_INNER_API_DLP_FILE_MANAGER_H
 
+#include <atomic>
 #include <mutex>
 #include <unordered_map>
 #include <string>
@@ -33,7 +34,8 @@ public:
     ~DlpFileManager() {};
 
     int32_t GenerateDlpFile(
-        int32_t plainFileFd, int32_t dlpFileFd, const DlpProperty& property, std::shared_ptr<DlpFile>& filePtr);
+        int32_t plainFileFd, int32_t dlpFileFd, const DlpProperty& property, std::shared_ptr<DlpFile>& filePtr,
+        const std::string& workDir);
     int32_t OpenDlpFile(int32_t dlpFileFd, std::shared_ptr<DlpFile>& filePtr, const std::string& workDir);
     int32_t IsDlpFile(int32_t dlpFileFd, bool& isDlpFile);
     int32_t CloseDlpFile(const std::shared_ptr<DlpFile>& dlpFile);
@@ -57,6 +59,7 @@ private:
     int32_t SetDlpFileParams(std::shared_ptr<DlpFile>& filePtr, const DlpProperty& property) const;
     std::mutex g_offlineLock_;
     OHOS::Utils::RWLock g_DlpMapLock_;
+    std::atomic<int> index_ = 0;
     std::unordered_map<int32_t, std::shared_ptr<DlpFile>> g_DlpFileMap_;
 };
 }  // namespace DlpPermission

@@ -18,11 +18,14 @@
 #include <cstdlib>
 #include <fcntl.h>
 #include <string>
+#include <fstream>
+#include <sstream>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include "dlp_permission.h"
 #include "dlp_permission_log.h"
+#include "dlp_zip.h"
 #include "ohos_account_kits.h"
 #ifdef DLP_PARSE_INNER
 #include "os_account_manager.h"
@@ -38,9 +41,23 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_
 const uint32_t CURRENT_VERSION = 2;
 const uint32_t FIRST = 1;
 const uint32_t SECOND = 2;
-} // namespace
 
-DlpFile::DlpFile(int32_t dlpFd) : dlpFd_(dlpFd), isFuseLink_(false), authPerm_(READ_ONLY)
+const uint32_t DLP_CWD_MAX = 256;
+const std::string DLP_GENERAL_INFO = "dlp_general_info";
+const std::string DLP_CERT = "dlp_cert";
+const std::string DLP_ENC_DATA = "encrypted_data";
+const std::string DLP_OPENING_ENC_DATA = "opened_encrypted_data";
+const std::string DLP_GEN_FILE = "gen_dlp_file";
+
+const std::string DLP_CONTACT_ACCOUNT = "contactAccount";
+const std::string DLP_VERSION = "dlp_version";
+const std::string DLP_OFFLINE_FLAG = "offlineAccess";
+const std::string DLP_EXTRA_INFO = "extra_info";
+} // namespace
+std::mutex g_fileOpLock_;
+
+DlpFile::DlpFile(int32_t dlpFd, std::string workDir, int32_t index, bool isZip) : dlpFd_(dlpFd), workDir_(workDir),
+    dirIndex_(std::to_string(index)), isZip_(isZip), isFuseLink_(false), authPerm_(READ_ONLY)
 {
     head_.magic = DLP_FILE_MAGIC;
     head_.version = CURRENT_VERSION;
@@ -65,6 +82,8 @@ DlpFile::DlpFile(int32_t dlpFd) : dlpFd_(dlpFd), isFuseLink_(false), authPerm_(R
     cipher_.encKey.data = nullptr;
     cipher_.encKey.size = 0;
     cipher_.usageSpec = { 0 };
+
+    encDataFd_ = -1;
 }
 
 DlpFile::~DlpFile()
@@ -95,6 +114,8 @@ DlpFile::~DlpFile()
         delete[] offlineCert_.data;
         offlineCert_.data = nullptr;
     }
+
+    CleanTmpFile();
 }
 
 bool DlpFile::IsValidCipher(const struct DlpBlob& key, const struct DlpUsageSpec& spec) const
@@ -329,6 +350,10 @@ int32_t DlpFile::CheckDlpFile()
         return DLP_PARSE_ERROR_FILE_LINKING;
     }
 
+    if (IsZipFile(dlpFd_)) {
+        return DLP_OK;
+    }
+
     if (lseek(dlpFd_, 0, SEEK_SET) == static_cast<off_t>(-1)) {
         DLP_LOG_ERROR(LABEL, "seek dlp file start failed, %{public}s", strerror(errno));
         return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
@@ -358,9 +383,211 @@ bool DlpFile::NeedAdapter()
     return head_.version == FIRST && CURRENT_VERSION == SECOND;
 }
 
-int32_t DlpFile::ParseDlpHeader()
+static bool IsExistFile(const std::string& path)
 {
-    int ret = CheckDlpFile();
+    if (path.empty()) {
+        return false;
+    }
+
+    struct stat buf = {};
+    if (stat(path.c_str(), &buf) != 0) {
+        return false;
+    }
+
+    return S_ISREG(buf.st_mode);
+}
+
+static int32_t GetFileContent(const std::string& path, std::string& content)
+{
+    if (!IsExistFile(path)) {
+        DLP_LOG_INFO(LABEL, "cannot find file, path = %{public}s", path.c_str());
+        return DLP_RETENTION_FILE_FIND_FILE_ERROR;
+    }
+    std::stringstream buffer;
+    std::ifstream i(path);
+    if (!i.is_open()) {
+        DLP_LOG_INFO(LABEL, "cannot open file %{public}s, errno %{public}d.", path.c_str(), errno);
+        return DLP_RETENTION_COMMON_FILE_OPEN_FAILED;
+    }
+    buffer << i.rdbuf();
+    content = buffer.str();
+    i.close();
+    return DLP_OK;
+}
+
+bool DlpFile::ParseDlpInfo()
+{
+    std::string content;
+    (void)GetFileContent(DLP_GENERAL_INFO, content);
+
+    auto jsonObj = nlohmann::json::parse(content, nullptr, false);
+    if (jsonObj.is_discarded() || (!jsonObj.is_object())) {
+        DLP_LOG_ERROR(LABEL, "JsonObj is discarded");
+        return false;
+    }
+
+    if (jsonObj.find(DLP_VERSION) != jsonObj.end() && jsonObj.at(DLP_VERSION).is_number_integer()) {
+        head_.version = jsonObj.at(DLP_VERSION).get<int32_t>();
+    } else {
+        DLP_LOG_ERROR(LABEL, "DLP_VERSION is not found");
+        return false;
+    }
+
+    if (jsonObj.find(DLP_OFFLINE_FLAG) != jsonObj.end() && jsonObj.at(DLP_OFFLINE_FLAG).is_boolean()) {
+        head_.offlineAccess = jsonObj.at(DLP_OFFLINE_FLAG).get<bool>();
+    } else {
+        DLP_LOG_ERROR(LABEL, "DLP_OFFLINE_FLAG is not found");
+        return false;
+    }
+
+    if (jsonObj.find(DLP_EXTRA_INFO) != jsonObj.end() && jsonObj.at(DLP_EXTRA_INFO).is_array()
+        && !jsonObj.at(DLP_EXTRA_INFO).empty() && jsonObj.at(DLP_EXTRA_INFO).at(0).is_string()) {
+        extraInfo_ = jsonObj.at(DLP_EXTRA_INFO).get<std::vector<std::string>>();
+    } else {
+        DLP_LOG_ERROR(LABEL, "DLP_EXTRA_INFO is not found");
+        return false;
+    }
+
+    if (jsonObj.find(DLP_CONTACT_ACCOUNT) != jsonObj.end() && jsonObj.at(DLP_CONTACT_ACCOUNT).is_string()) {
+        contactAccount_ = jsonObj.at(DLP_CONTACT_ACCOUNT).get<std::string>();
+        if (contactAccount_ == "") {
+            DLP_LOG_ERROR(LABEL, "invalid contact account");
+            return false;
+        }
+    }
+    return true;
+}
+
+bool DlpFile::ParseCert()
+{
+    struct stat fz;
+    if (stat(DLP_CERT.c_str(), &fz) != 0) {
+        DLP_LOG_ERROR(LABEL, "ParseCert failed, %{public}s", strerror(errno));
+        return false;
+    }
+    cert_.size = fz.st_size;
+    cert_.data = new (std::nothrow) uint8_t[cert_.size];
+    if (cert_.data == nullptr) {
+        DLP_LOG_ERROR(LABEL, "new failed");
+        return false;
+    }
+
+    int32_t fd = open(DLP_CERT.c_str(), O_RDWR);
+    if (fd == -1) {
+        DLP_LOG_ERROR(LABEL, "open failed, %{public}s", strerror(errno));
+        return false;
+    }
+
+    uint32_t size = read(fd, cert_.data, cert_.size);
+    if (size != cert_.size) {
+        DLP_LOG_ERROR(LABEL, "read failed, %{public}s", strerror(errno));
+        return false;
+    }
+
+    (void)close(fd);
+
+    return true;
+}
+
+bool DlpFile::ParseEncData()
+{
+    int32_t fd = open(DLP_OPENING_ENC_DATA.c_str(), O_RDWR);
+    if (fd == -1) {
+        DLP_LOG_ERROR(LABEL, "ParseEncData failed, %{public}s", strerror(errno));
+        return false;
+    }
+    encDataFd_ = fd;
+    return true;
+}
+
+bool DlpFile::CleanTmpFile()
+{
+    if (!isZip_) {
+        return true;
+    }
+
+    close(encDataFd_);
+
+    std::lock_guard<std::mutex> lock(g_fileOpLock_);
+    char cwd[DLP_CWD_MAX] = {0};
+    GETCWD_AND_CHECK(cwd, DLP_CWD_MAX, DLP_PARSE_ERROR_FILE_OPERATE_FAIL, LABEL);
+    Defer p(nullptr, [&](...) {
+        if (chdir(cwd) != 0) {
+            DLP_LOG_ERROR(LABEL, "chdir failed, %{public}s", strerror(errno));
+        }
+    });
+
+    if (chdir(workDir_.c_str()) != 0) {
+        DLP_LOG_ERROR(LABEL, "chdir failed, %{public}s", strerror(errno));
+        return false;
+    }
+
+    if (chdir(dirIndex_.c_str()) != 0) {
+        DLP_LOG_ERROR(LABEL, "chdir failed, %{public}s", strerror(errno));
+        return false;
+    }
+
+    if (unlink(DLP_GENERAL_INFO.c_str()) != 0) {
+        DLP_LOG_ERROR(LABEL, "unlink failed, %{public}s errno %{public}s", DLP_GENERAL_INFO.c_str(), strerror(errno));
+    }
+
+    if (unlink(DLP_CERT.c_str()) != 0) {
+        DLP_LOG_ERROR(LABEL, "unlink failed, %{public}s errno %{public}s", DLP_CERT.c_str(), strerror(errno));
+    }
+
+    if (unlink(DLP_OPENING_ENC_DATA.c_str()) != 0) {
+        DLP_LOG_ERROR(LABEL, "unlink failed, %{public}s errno %{public}s",
+            DLP_OPENING_ENC_DATA.c_str(), strerror(errno));
+    }
+
+    if (chdir(workDir_.c_str()) != 0) {
+        DLP_LOG_ERROR(LABEL, "chdir failed, errno %{public}s", strerror(errno));
+    }
+
+    if (rmdir(dirIndex_.c_str()) != 0) {
+        DLP_LOG_ERROR(LABEL, "rmdir failed, %{public}s errno %{public}s", dirIndex_.c_str(), strerror(errno));
+        return false;
+    }
+
+    return true;
+}
+
+int32_t DlpFile::UnzipDlpFile()
+{
+    std::lock_guard<std::mutex> lock(g_fileOpLock_);
+    isZip_ = true;
+    head_.txtOffset = 0;
+    char cwd[DLP_CWD_MAX] = {0};
+    GETCWD_AND_CHECK(cwd, DLP_CWD_MAX, DLP_PARSE_ERROR_FILE_OPERATE_FAIL, LABEL);
+    Defer p(nullptr, [&](...) {
+        if (chdir(cwd) != 0) {
+            DLP_LOG_ERROR(LABEL, "chdir failed, %{public}s", strerror(errno));
+        }
+    });
+
+    CHDIR_AND_CHECK(workDir_.c_str(), DLP_PARSE_ERROR_FILE_OPERATE_FAIL, LABEL);
+    MKDIR_AND_CHECK(dirIndex_.c_str(), S_IRWXU, DLP_PARSE_ERROR_FILE_OPERATE_FAIL, LABEL);
+    CHDIR_AND_CHECK(dirIndex_.c_str(), DLP_PARSE_ERROR_FILE_OPERATE_FAIL, LABEL);
+
+    UnzipSpecificFile(dlpFd_, DLP_GENERAL_INFO.c_str(), DLP_GENERAL_INFO.c_str());
+    if (!ParseDlpInfo()) {
+        return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
+    }
+    UnzipSpecificFile(dlpFd_, DLP_CERT.c_str(), DLP_CERT.c_str());
+    if (!ParseCert()) {
+        return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
+    }
+    UnzipSpecificFile(dlpFd_, DLP_ENC_DATA.c_str(), DLP_OPENING_ENC_DATA.c_str());
+    if (!ParseEncData()) {
+        return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
+    }
+
+    return DLP_OK;
+}
+
+int32_t DlpFile::ParseDlpHeaderInRaw()
+{
+    int32_t ret = CheckDlpFile();
     if (ret != DLP_OK) {
         return ret;
     }
@@ -412,6 +639,15 @@ int32_t DlpFile::ParseDlpHeader()
     return DLP_OK;
 }
 
+int32_t DlpFile::ParseDlpHeader()
+{
+    if (IsZipFile(dlpFd_)) {
+        return UnzipDlpFile();
+    } else {
+        return ParseDlpHeaderInRaw();
+    }
+}
+
 void DlpFile::GetEncryptCert(struct DlpBlob& cert) const
 {
     cert.data = cert_.data;
@@ -447,7 +683,7 @@ int32_t DlpFile::SetEncryptCert(const struct DlpBlob& cert)
     return DLP_OK;
 }
 
-int32_t DlpFile::UpdateFile(int tmpFile, const std::vector<uint8_t>& cert, uint32_t oldTxtOffset)
+int32_t DlpFile::UpdateFile(int32_t tmpFile, const std::vector<uint8_t>& cert, uint32_t oldTxtOffset)
 {
     if (WriteHeadAndCert(tmpFile, cert) != DLP_OK) {
         return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
@@ -457,22 +693,20 @@ int32_t DlpFile::UpdateFile(int tmpFile, const std::vector<uint8_t>& cert, uint3
     if (ret != DLP_OK) {
         return ret;
     }
-    int fileSize = lseek(tmpFile, 0, SEEK_CUR);
+    int32_t fileSize = lseek(tmpFile, 0, SEEK_CUR);
     (void)lseek(tmpFile, 0, SEEK_SET);
     (void)lseek(dlpFd_, 0, SEEK_SET);
     ret = DoDlpContentCopyOperation(tmpFile, dlpFd_, 0, fileSize);
     if (ret != DLP_OK) {
         return ret;
     }
-    if (ftruncate(dlpFd_, fileSize) == -1) {
-        DLP_LOG_ERROR(LABEL, "truncate plain file to zero failed, %{public}s", strerror(errno));
-        return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
-    }
+
+    FTRUNCATE_AND_CHECK(dlpFd_, fileSize, DLP_PARSE_ERROR_FILE_OPERATE_FAIL, LABEL);
     (void)fsync(dlpFd_);
     return DLP_OK;
 }
 
-int32_t DlpFile::GetTempFile(const std::string& workDir, int& tempFile, std::string& path)
+int32_t DlpFile::GetTempFile(const std::string& workDir, int32_t& tempFile, std::string& path)
 {
     static uint32_t count = 0;
     char realPath[PATH_MAX] = {0};
@@ -493,7 +727,16 @@ int32_t DlpFile::GetTempFile(const std::string& workDir, int& tempFile, std::str
 int32_t DlpFile::UpdateCertAndText(const std::vector<uint8_t>& cert, const std::string& workDir,
     struct DlpBlob certBlob)
 {
-    int tmpFile;
+    if (CopyBlobParam(certBlob, cert_) != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "Cert copy failed");
+        return DLP_PARSE_ERROR_MEMORY_OPERATE_FAIL;
+    }
+
+    if (isZip_) {
+        return GenFileInZip(-1);
+    }
+
+    int32_t tmpFile;
     std::string path;
     int32_t res = GetTempFile(workDir, tmpFile, path);
     if (res != DLP_OK) {
@@ -503,26 +746,30 @@ int32_t DlpFile::UpdateCertAndText(const std::vector<uint8_t>& cert, const std::
         (void)close(tmpFile);
         (void)unlink(path.c_str());
     });
-    if (CopyBlobParam(certBlob, cert_) != DLP_OK) {
-        DLP_LOG_ERROR(LABEL, "Cert copy failed");
-        return DLP_PARSE_ERROR_MEMORY_OPERATE_FAIL;
-    }
+
     head_.certSize = cert.size();
     uint32_t oldTxtOffset = head_.txtOffset;
     head_.contactAccountOffset = head_.certOffset + head_.certSize;
     head_.txtOffset = head_.contactAccountOffset + head_.contactAccountSize;
     head_.version = CURRENT_VERSION;
     head_.offlineCertSize = 0;
+
     return UpdateFile(tmpFile, cert, oldTxtOffset);
 }
 
 int32_t DlpFile::UpdateCert(struct DlpBlob certBlob)
 {
     DLP_LOG_DEBUG(LABEL, "enter");
+
     if (CopyBlobParam(certBlob, cert_) != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "Cert copy failed");
         return DLP_PARSE_ERROR_MEMORY_OPERATE_FAIL;
     }
+
+    if (isZip_) {
+        return GenFileInZip(-1);
+    }
+
     if (write(dlpFd_, cert_.data, head_.certSize) != (ssize_t)head_.certSize) {
         DLP_LOG_ERROR(LABEL, "write dlp cert data failed, %{public}s", strerror(errno));
         return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
@@ -530,7 +777,7 @@ int32_t DlpFile::UpdateCert(struct DlpBlob certBlob)
     return DLP_OK;
 }
 
-int32_t DlpFile::WriteHeadAndCert(int tmpFile, const std::vector<uint8_t>& cert)
+int32_t DlpFile::WriteHeadAndCert(int32_t tmpFile, const std::vector<uint8_t>& cert)
 {
     if (write(tmpFile, &head_, sizeof(struct DlpHeader)) != sizeof(struct DlpHeader)) {
         DLP_LOG_ERROR(LABEL, "write dlp head failed, %{public}s", strerror(errno));
@@ -639,7 +886,7 @@ int32_t DlpFile::DoDlpContentCryptyOperation(int32_t inFd, int32_t outFd, uint32
     }
 
     uint32_t dlpContentOffset = inOffset;
-    int32_t ret = DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
+    int32_t ret = DLP_OK;
     while (inOffset < inFileLen) {
         uint32_t readLen = ((inFileLen - inOffset) < DLP_BUFF_LEN) ? (inFileLen - inOffset) : DLP_BUFF_LEN;
         (void)memset_s(message.data, DLP_BUFF_LEN, 0, DLP_BUFF_LEN);
@@ -705,13 +952,97 @@ int32_t DlpFile::DoDlpContentCopyOperation(int32_t inFd, int32_t outFd, uint32_t
     return ret;
 }
 
-int32_t DlpFile::GenFile(int32_t inPlainFileFd)
+static int32_t GetFileSize(int32_t fd)
 {
-    if (inPlainFileFd < 0 || dlpFd_ < 0 || !IsValidCipher(cipher_.encKey, cipher_.usageSpec)) {
-        DLP_LOG_ERROR(LABEL, "params is error");
-        return DLP_PARSE_ERROR_VALUE_INVALID;
-    }
+    int32_t fileLen = lseek(fd, 0, SEEK_END);
+    (void)lseek(fd, 0, SEEK_SET);
+    return fileLen;
+}
 
+static void SetDlpGeneralInfo(bool accessFlag, std::string& contactAccount, std::string& out)
+{
+    nlohmann::json dlp_general_info;
+    dlp_general_info[DLP_VERSION] = CURRENT_VERSION;
+    dlp_general_info[DLP_OFFLINE_FLAG] = accessFlag;
+    dlp_general_info[DLP_CONTACT_ACCOUNT] = contactAccount;
+    dlp_general_info[DLP_EXTRA_INFO] = {"kia_info", "cert_info", "enc_data"};
+    out = dlp_general_info.dump();
+}
+
+int32_t DlpFile::GenEncData(int32_t inPlainFileFd)
+{
+    int32_t encFile;
+    if (inPlainFileFd == -1) {
+        encFile = open(DLP_OPENING_ENC_DATA.c_str(), O_RDWR);
+    } else {
+        int32_t fileLen = GetFileSize(inPlainFileFd);
+        OPEN_AND_CHECK(encFile, DLP_OPENING_ENC_DATA.c_str(), O_RDWR | O_CREAT | O_TRUNC, S_IRWXU,
+            DLP_PARSE_ERROR_FILE_OPERATE_FAIL, LABEL);
+        encDataFd_ = encFile;
+        int32_t ret = DoDlpContentCryptyOperation(inPlainFileFd, encFile, 0, fileLen, true);
+        CHECK_RET(ret, 0, DLP_PARSE_ERROR_FILE_OPERATE_FAIL, LABEL);
+        LSEEK_AND_CHECK(encFile, 0, SEEK_SET, DLP_PARSE_ERROR_FILE_OPERATE_FAIL, LABEL);
+    }
+    return encFile;
+}
+
+int32_t DlpFile::GenFileInZip(int32_t inPlainFileFd)
+{
+    if (isZip_ == false) {
+        return DLP_OK;
+    }
+    std::string ja;
+    SetDlpGeneralInfo(head_.offlineAccess, contactAccount_, ja);
+    char cwd[DLP_CWD_MAX] = {0};
+    std::lock_guard<std::mutex> lock(g_fileOpLock_);
+    GETCWD_AND_CHECK(cwd, DLP_CWD_MAX, DLP_PARSE_ERROR_FILE_OPERATE_FAIL, LABEL);
+    Defer p(nullptr, [&](...) {
+        (void)chdir(cwd);
+    });
+    CHDIR_AND_CHECK(workDir_.c_str(), DLP_PARSE_ERROR_FILE_OPERATE_FAIL, LABEL);
+    if (inPlainFileFd != -1) {
+        MKDIR_AND_CHECK(dirIndex_.c_str(), S_IRWXU, DLP_PARSE_ERROR_FILE_OPERATE_FAIL, LABEL);
+    }
+    CHDIR_AND_CHECK(dirIndex_.c_str(), DLP_PARSE_ERROR_FILE_OPERATE_FAIL, LABEL);
+
+    int32_t tmpFile;
+    OPEN_AND_CHECK(tmpFile, DLP_GEN_FILE.c_str(), O_RDWR | O_CREAT | O_TRUNC, S_IRWXU,
+        DLP_PARSE_ERROR_FILE_OPERATE_FAIL, LABEL);
+    Defer p2(nullptr, [&](...) {
+        (void)close(tmpFile);
+        (void)unlink(DLP_GEN_FILE.c_str());
+    });
+    int32_t ret = AddBuffToZip(reinterpret_cast<const void *>(ja.c_str()), ja.size(),
+        DLP_GENERAL_INFO.c_str(), DLP_GEN_FILE.c_str());
+    CHECK_RET(ret, 0, DLP_PARSE_ERROR_FILE_OPERATE_FAIL, LABEL);
+    ret = AddBuffToZip(reinterpret_cast<const void *>(cert_.data), cert_.size,
+        DLP_CERT.c_str(), DLP_GEN_FILE.c_str());
+    CHECK_RET(ret, 0, DLP_PARSE_ERROR_FILE_OPERATE_FAIL, LABEL);
+
+    int32_t encFile = GenEncData(inPlainFileFd);
+    Defer p3(nullptr, [&](...) {
+        if (inPlainFileFd == -1) {
+            (void)close(encFile);
+        }
+    });
+
+    ret = AddFileContextToZip(encFile, DLP_ENC_DATA.c_str(), DLP_GEN_FILE.c_str());
+    CHECK_RET(ret, 0, DLP_PARSE_ERROR_FILE_OPERATE_FAIL, LABEL);
+
+    int32_t zipSize =  GetFileSize(tmpFile);
+
+    LSEEK_AND_CHECK(dlpFd_, 0, SEEK_SET, DLP_PARSE_ERROR_FILE_OPERATE_FAIL, LABEL);
+    ret = DoDlpContentCopyOperation(tmpFile, dlpFd_, 0, zipSize);
+    CHECK_RET(ret, 0, DLP_PARSE_ERROR_FILE_OPERATE_FAIL, LABEL);
+
+    FTRUNCATE_AND_CHECK(dlpFd_, zipSize, DLP_PARSE_ERROR_FILE_OPERATE_FAIL, LABEL);
+
+    (void)fsync(dlpFd_);
+    return DLP_OK;
+}
+
+int32_t DlpFile::GenFileInRaw(int32_t inPlainFileFd)
+{
     off_t fileLen = lseek(inPlainFileFd, 0, SEEK_END);
     if (fileLen == static_cast<off_t>(-1) || fileLen > static_cast<off_t>(DLP_MAX_CONTENT_SIZE)) {
         DLP_LOG_ERROR(LABEL, "inFd len is invalid, %{public}s", strerror(errno));
@@ -759,28 +1090,50 @@ int32_t DlpFile::GenFile(int32_t inPlainFileFd)
     return DoDlpContentCryptyOperation(inPlainFileFd, dlpFd_, 0, fileLen, true);
 }
 
-int32_t DlpFile::RemoveDlpPermission(int32_t outPlainFileFd)
+int32_t DlpFile::GenFile(int32_t inPlainFileFd)
 {
-    if (isFuseLink_) {
-        DLP_LOG_ERROR(LABEL, "current dlp file is linking, do not operate it.");
-        return DLP_PARSE_ERROR_FILE_LINKING;
+    if (inPlainFileFd < 0 || dlpFd_ < 0 || !IsValidCipher(cipher_.encKey, cipher_.usageSpec)) {
+        DLP_LOG_ERROR(LABEL, "params is error");
+        return DLP_PARSE_ERROR_VALUE_INVALID;
     }
-
-    if (authPerm_ != FULL_CONTROL) {
-        DLP_LOG_ERROR(LABEL, "check permission fail, remove dlp permission failed.");
-        return DLP_PARSE_ERROR_FILE_READ_ONLY;
+    if (isZip_) {
+        head_.txtOffset = 0;
+        return GenFileInZip(inPlainFileFd);
+    } else {
+        return GenFileInRaw(inPlainFileFd);
     }
+}
 
-    if (outPlainFileFd < 0 || dlpFd_ < 0) {
-        DLP_LOG_ERROR(LABEL, "fd is invalid");
-        return DLP_PARSE_ERROR_FD_ERROR;
-    }
+int32_t DlpFile::RemoveDlpPermissionInZip(int32_t outPlainFileFd)
+{
+    std::lock_guard<std::mutex> lock(g_fileOpLock_);
+    char cwd[DLP_CWD_MAX] = {0};
+    GETCWD_AND_CHECK(cwd, DLP_CWD_MAX, DLP_PARSE_ERROR_FILE_OPERATE_FAIL, LABEL);
+    Defer p(nullptr, [&](...) {
+        if (chdir(cwd) != 0) {
+            DLP_LOG_ERROR(LABEL, "chdir failed, %{public}s", strerror(errno));
+        }
+    });
 
-    if (!IsValidCipher(cipher_.encKey, cipher_.usageSpec)) {
-        DLP_LOG_ERROR(LABEL, "cipher params is invalid");
-        return DLP_PARSE_ERROR_CIPHER_PARAMS_INVALID;
-    }
+    CHDIR_AND_CHECK(workDir_.c_str(), DLP_PARSE_ERROR_FILE_OPERATE_FAIL, LABEL);
+    CHDIR_AND_CHECK(dirIndex_.c_str(), DLP_PARSE_ERROR_FILE_OPERATE_FAIL, LABEL);
 
+    int32_t encFd = open(DLP_OPENING_ENC_DATA.c_str(), O_RDWR, S_IRWXU);
+    Defer p2(nullptr, [&](...) {
+        if (close(encFd) != 0) {
+            DLP_LOG_ERROR(LABEL, "close failed, %{public}s", strerror(errno));
+        }
+    });
+
+    int32_t fileSize = GetFileSize(encFd);
+    int32_t ret = DoDlpContentCryptyOperation(encFd, outPlainFileFd, 0, fileSize, false);
+    CHECK_RET(ret, 0, DLP_PARSE_ERROR_FILE_OPERATE_FAIL, LABEL);
+
+    return DLP_OK;
+}
+
+int32_t DlpFile::RemoveDlpPermissionInRaw(int32_t outPlainFileFd)
+{
     off_t fileLen = lseek(dlpFd_, 0, SEEK_END);
     if (fileLen == static_cast<off_t>(-1) || fileLen > static_cast<off_t>(DLP_MAX_CONTENT_SIZE)) {
         DLP_LOG_ERROR(LABEL, "can not get dlp file len, %{public}s", strerror(errno));
@@ -811,21 +1164,41 @@ int32_t DlpFile::RemoveDlpPermission(int32_t outPlainFileFd)
     return DoDlpContentCryptyOperation(dlpFd_, outPlainFileFd, head_.txtOffset, fileLen, false);
 }
 
-static void DeleteBufs(uint8_t* buff1, uint8_t* buff2)
+int32_t DlpFile::RemoveDlpPermission(int32_t outPlainFileFd)
 {
-    if (buff1 != nullptr) {
-        delete[] buff1;
+    if (isFuseLink_) {
+        DLP_LOG_ERROR(LABEL, "current dlp file is linking, do not operate it.");
+        return DLP_PARSE_ERROR_FILE_LINKING;
     }
-    if (buff2 != nullptr) {
-        delete[] buff2;
+
+    if (authPerm_ != FULL_CONTROL) {
+        DLP_LOG_ERROR(LABEL, "check permission fail, remove dlp permission failed.");
+        return DLP_PARSE_ERROR_FILE_READ_ONLY;
+    }
+
+    if (outPlainFileFd < 0 || dlpFd_ < 0) {
+        DLP_LOG_ERROR(LABEL, "fd is invalid");
+        return DLP_PARSE_ERROR_FD_ERROR;
+    }
+
+    if (!IsValidCipher(cipher_.encKey, cipher_.usageSpec)) {
+        DLP_LOG_ERROR(LABEL, "cipher params is invalid");
+        return DLP_PARSE_ERROR_CIPHER_PARAMS_INVALID;
+    }
+
+    if (isZip_) {
+        return RemoveDlpPermissionInZip(outPlainFileFd);
+    } else {
+        return RemoveDlpPermissionInRaw(outPlainFileFd);
     }
 }
 
 int32_t DlpFile::DlpFileRead(uint32_t offset, void* buf, uint32_t size)
 {
+    int32_t opFd = isZip_ ? encDataFd_ : dlpFd_;
     if (buf == nullptr || size == 0 || size > DLP_FUSE_MAX_BUFFLEN ||
         (offset >= DLP_MAX_CONTENT_SIZE - size) ||
-        dlpFd_ < 0 || !IsValidCipher(cipher_.encKey, cipher_.usageSpec)) {
+        opFd < 0 || !IsValidCipher(cipher_.encKey, cipher_.usageSpec)) {
         DLP_LOG_ERROR(LABEL, "params is error");
         return DLP_PARSE_ERROR_VALUE_INVALID;
     }
@@ -833,49 +1206,35 @@ int32_t DlpFile::DlpFileRead(uint32_t offset, void* buf, uint32_t size)
     uint32_t alignOffset = (offset / DLP_BLOCK_SIZE) * DLP_BLOCK_SIZE;
     uint32_t prefixingSize = offset - alignOffset;
     uint32_t alignSize = size + prefixingSize;
-    if (lseek(dlpFd_, head_.txtOffset + alignOffset, SEEK_SET) == -1) {
+
+    if (lseek(opFd, head_.txtOffset + alignOffset, SEEK_SET) == -1) {
         DLP_LOG_ERROR(LABEL, "lseek dlp file failed. %{public}s", strerror(errno));
         return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
     }
 
-    uint8_t* encBuff = new (std::nothrow) uint8_t[alignSize]();
-    if (encBuff == nullptr) {
-        DLP_LOG_ERROR(LABEL, "new buff fail");
-        return DLP_PARSE_ERROR_MEMORY_OPERATE_FAIL;
-    }
-
-    uint8_t* outBuff = new (std::nothrow) uint8_t[alignSize]();
-    if (outBuff == nullptr) {
-        DeleteBufs(encBuff, nullptr);
-        DLP_LOG_ERROR(LABEL, "new buff fail");
-        return DLP_PARSE_ERROR_MEMORY_OPERATE_FAIL;
-    }
-
-    int32_t readLen = read(dlpFd_, encBuff, alignSize);
+    auto encBuff = std::make_unique<uint8_t[]>(alignSize);
+    auto outBuff = std::make_unique<uint8_t[]>(alignSize);
+    
+    int32_t readLen = read(opFd, encBuff.get(), alignSize);
     if (readLen == -1) {
-        DeleteBufs(encBuff, outBuff);
         DLP_LOG_ERROR(LABEL, "read buff fail, %{public}s", strerror(errno));
         return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
     }
     if (readLen <= static_cast<int32_t>(prefixingSize)) {
-        DeleteBufs(encBuff, outBuff);
         return 0;
     }
 
-    struct DlpBlob message1 = {.size = readLen, .data = encBuff};
-    struct DlpBlob message2 = {.size = readLen, .data = static_cast<uint8_t*>(outBuff)};
+    struct DlpBlob message1 = {.size = readLen, .data = encBuff.get()};
+    struct DlpBlob message2 = {.size = readLen, .data = outBuff.get()};
     if (DoDlpBlockCryptOperation(message1, message2, alignOffset, false) != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "decrypt fail");
-        DeleteBufs(encBuff, outBuff);
         return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
     }
 
-    if (memcpy_s(buf, size, outBuff + prefixingSize, message2.size - prefixingSize) != EOK) {
-        DeleteBufs(encBuff, outBuff);
+    if (memcpy_s(buf, size, outBuff.get() + prefixingSize, message2.size - prefixingSize) != EOK) {
         DLP_LOG_ERROR(LABEL, "copy decrypt result failed");
         return DLP_PARSE_ERROR_MEMORY_OPERATE_FAIL;
     }
-    DeleteBufs(encBuff, outBuff);
     return message2.size - prefixingSize;
 }
 
@@ -887,12 +1246,13 @@ int32_t DlpFile::WriteFirstBlockData(uint32_t offset, void* buf, uint32_t size)
     uint32_t writtenSize = prefixingSize + requestSize;
     uint8_t enBuf[DLP_BLOCK_SIZE] = {0};
     uint8_t deBuf[DLP_BLOCK_SIZE] = {0};
+    int32_t opFd = isZip_ ? encDataFd_ : dlpFd_;
 
     do {
         if (prefixingSize == 0) {
             break;
         }
-        int32_t readLen = read(dlpFd_, enBuf, prefixingSize);
+        int32_t readLen = read(opFd, enBuf, prefixingSize);
         if (readLen == -1) {
             DLP_LOG_ERROR(LABEL, "read first block prefixing fail, %{public}s", strerror(errno));
             return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
@@ -921,12 +1281,12 @@ int32_t DlpFile::WriteFirstBlockData(uint32_t offset, void* buf, uint32_t size)
         return DLP_PARSE_ERROR_CRYPT_FAIL;
     }
 
-    if (lseek(dlpFd_, head_.txtOffset + alignOffset, SEEK_SET) == static_cast<off_t>(-1)) {
+    if (lseek(opFd, head_.txtOffset + alignOffset, SEEK_SET) == static_cast<off_t>(-1)) {
         DLP_LOG_ERROR(LABEL, "lseek failed, %{public}s", strerror(errno));
         return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
     }
 
-    if (write(dlpFd_, enBuf, writtenSize) != (ssize_t)writtenSize) {
+    if (write(opFd, enBuf, writtenSize) != (ssize_t)writtenSize) {
         DLP_LOG_ERROR(LABEL, "write failed, %{public}s", strerror(errno));
         return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
     }
@@ -935,8 +1295,9 @@ int32_t DlpFile::WriteFirstBlockData(uint32_t offset, void* buf, uint32_t size)
 
 int32_t DlpFile::DoDlpFileWrite(uint32_t offset, void* buf, uint32_t size)
 {
+    int32_t opFd = isZip_ ? encDataFd_ : dlpFd_;
     uint32_t alignOffset = (offset / DLP_BLOCK_SIZE * DLP_BLOCK_SIZE);
-    if (lseek(dlpFd_, head_.txtOffset + alignOffset, SEEK_SET) == static_cast<off_t>(-1)) {
+    if (lseek(opFd, head_.txtOffset + alignOffset, SEEK_SET) == static_cast<off_t>(-1)) {
         DLP_LOG_ERROR(LABEL, "lseek dlp file offset %{public}d failed, %{public}s",
             head_.txtOffset + offset, strerror(errno));
         return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
@@ -964,14 +1325,14 @@ int32_t DlpFile::DoDlpFileWrite(uint32_t offset, void* buf, uint32_t size)
     struct DlpBlob message1 = {.size = restBlocksSize, .data = restBlocksPtr};
     struct DlpBlob message2 = {.size = restBlocksSize, .data = writeBuff};
 
-    int ret = DoDlpBlockCryptOperation(message1, message2, alignOffset + DLP_BLOCK_SIZE, true);
+    int32_t ret = DoDlpBlockCryptOperation(message1, message2, alignOffset + DLP_BLOCK_SIZE, true);
     if (ret != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "encrypt write buffer fail");
         delete[] writeBuff;
         return ret;
     }
 
-    ret = write(dlpFd_, writeBuff, restBlocksSize);
+    ret = write(opFd, writeBuff, restBlocksSize);
     delete[] writeBuff;
     if (ret <= 0) {
         DLP_LOG_ERROR(LABEL, "write buff failed, %{public}s", strerror(errno));
@@ -984,9 +1345,10 @@ int32_t DlpFile::DoDlpFileWrite(uint32_t offset, void* buf, uint32_t size)
 uint32_t DlpFile::GetFsContentSize() const
 {
     struct stat fileStat;
-    int32_t ret = fstat(dlpFd_, &fileStat);
+    int32_t opFd = isZip_ ? encDataFd_ : dlpFd_;
+    int32_t ret = fstat(opFd, &fileStat);
     if (ret != 0) {
-        DLP_LOG_ERROR(LABEL, "fstat error %{public}d , errno %{public}d dlpfd: %{public}d ", ret, errno, dlpFd_);
+        DLP_LOG_ERROR(LABEL, "fstat error %{public}d , errno %{public}d dlpfd: %{public}d ", ret, errno, opFd);
         return INVALID_FILE_SIZE;
     }
     if (head_.txtOffset > fileStat.st_size || fileStat.st_size >= static_cast<off_t>(INVALID_FILE_SIZE)) {
@@ -1011,15 +1373,18 @@ int32_t DlpFile::UpdateDlpFileContentSize()
     head_.txtSize = contentSize;
     DLP_LOG_DEBUG(LABEL, "Update dlp file content size");
 
-    if (lseek(dlpFd_, 0, SEEK_SET) == static_cast<off_t>(-1)) {
-        DLP_LOG_ERROR(LABEL, "Lseek failed, %{public}s", strerror(errno));
-        return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
+    if (isZip_ == false) {
+        if (lseek(dlpFd_, 0, SEEK_SET) == static_cast<off_t>(-1)) {
+            DLP_LOG_ERROR(LABEL, "Lseek failed, %{public}s", strerror(errno));
+            return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
+        }
+
+        if (write(dlpFd_, &head_, sizeof(head_)) != sizeof(head_)) {
+            DLP_LOG_ERROR(LABEL, "Write failed, %{public}s", strerror(errno));
+            return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
+        }
     }
 
-    if (write(dlpFd_, &head_, sizeof(head_)) != sizeof(head_)) {
-        DLP_LOG_ERROR(LABEL, "Write failed, %{public}s", strerror(errno));
-        return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
-    }
     return DLP_OK;
 }
 
@@ -1053,10 +1418,10 @@ int32_t DlpFile::DlpFileWrite(uint32_t offset, void* buf, uint32_t size)
         DLP_LOG_ERROR(LABEL, "Dlp file is readonly, write failed");
         return DLP_PARSE_ERROR_FILE_READ_ONLY;
     }
-
+    int32_t opFd = isZip_ ? encDataFd_ : dlpFd_;
     if (buf == nullptr || size == 0 || size > DLP_FUSE_MAX_BUFFLEN ||
         (offset >= DLP_MAX_CONTENT_SIZE - size) ||
-        dlpFd_ < 0 || !IsValidCipher(cipher_.encKey, cipher_.usageSpec)) {
+        opFd < 0 || !IsValidCipher(cipher_.encKey, cipher_.usageSpec)) {
         DLP_LOG_ERROR(LABEL, "Dlp file param invalid");
         return DLP_PARSE_ERROR_VALUE_INVALID;
     }
@@ -1069,6 +1434,7 @@ int32_t DlpFile::DlpFileWrite(uint32_t offset, void* buf, uint32_t size)
     }
     int32_t res = DoDlpFileWrite(offset, buf, size);
     UpdateDlpFileContentSize();
+    GenFileInZip(-1);
     return res;
 }
 
@@ -1080,20 +1446,22 @@ int32_t DlpFile::Truncate(uint32_t size)
         DLP_LOG_ERROR(LABEL, "Dlp file is readonly, truncate failed");
         return DLP_PARSE_ERROR_FILE_READ_ONLY;
     }
-
-    if (dlpFd_ < 0 || size >= DLP_MAX_CONTENT_SIZE) {
+    int32_t opFd = isZip_ ? encDataFd_ : dlpFd_;
+    if (opFd < 0 || size >= DLP_MAX_CONTENT_SIZE) {
         DLP_LOG_ERROR(LABEL, "Param invalid");
         return DLP_PARSE_ERROR_VALUE_INVALID;
     }
 
     uint32_t curSize = GetFsContentSize();
-    int res = DLP_OK;
+    int32_t res = DLP_OK;
     if (size < curSize) {
-        res = ftruncate(dlpFd_, head_.txtOffset + size);
+        res = ftruncate(opFd, head_.txtOffset + size);
         UpdateDlpFileContentSize();
+        GenFileInZip(-1);
     } else if (size > curSize) {
         res = FillHoleData(curSize, size - curSize);
         UpdateDlpFileContentSize();
+        GenFileInZip(-1);
     } else {
         DLP_LOG_INFO(LABEL, "Truncate file size equals origin file");
     }

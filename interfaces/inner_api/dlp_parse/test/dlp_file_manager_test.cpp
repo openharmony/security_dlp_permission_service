@@ -32,9 +32,25 @@ using namespace std;
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "DlpFileManagerTest"};
 static int g_fdDlp = -1;
+static const std::string DLP_TEST_DIR = "/data/dlpTest/";
 }
 
-void DlpFileManagerTest::SetUpTestCase() {}
+void DlpFileManagerTest::SetUpTestCase()
+{
+    struct stat fstat;
+    if (stat(DLP_TEST_DIR.c_str(), &fstat) != 0) {
+        if (errno == ENOENT) {
+            int32_t ret = mkdir(DLP_TEST_DIR.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
+            if (ret < 0) {
+                DLP_LOG_ERROR(LABEL, "mkdir mount point failed errno %{public}d", errno);
+                return;
+            }
+        } else {
+            DLP_LOG_ERROR(LABEL, "get mount point failed errno %{public}d", errno);
+            return;
+        }
+    }
+}
 
 void DlpFileManagerTest::TearDownTestCase()
 {
@@ -43,6 +59,7 @@ void DlpFileManagerTest::TearDownTestCase()
         unlink("/data/fuse_test_dlp.txt");
         g_fdDlp = -1;
     }
+    rmdir(DLP_TEST_DIR.c_str());
 }
 
 void DlpFileManagerTest::SetUp() {}
@@ -59,7 +76,7 @@ HWTEST_F(DlpFileManagerTest, OperDlpFileNode001, TestSize.Level1)
 {
     DLP_LOG_INFO(LABEL, "OperDlpFileNode001");
 
-    std::shared_ptr<DlpFile> filePtr = std::make_shared<DlpFile>(1);
+    std::shared_ptr<DlpFile> filePtr = std::make_shared<DlpFile>(1, DLP_TEST_DIR, 0, false);
     ASSERT_NE(filePtr, nullptr);
     EXPECT_EQ(DlpFileManager::GetInstance().AddDlpFileNode(filePtr), DLP_OK);
     EXPECT_EQ(DlpFileManager::GetInstance().AddDlpFileNode(filePtr), DLP_PARSE_ERROR_FILE_ALREADY_OPENED);
@@ -85,12 +102,12 @@ HWTEST_F(DlpFileManagerTest, OperDlpFileNode002, TestSize.Level1)
     std::shared_ptr<DlpFile> openDlpFiles[1000];
 
     for (int i = 0; i < 1000; i++) {
-        std::shared_ptr<DlpFile> filePtr = std::make_shared<DlpFile>(i);
+        std::shared_ptr<DlpFile> filePtr = std::make_shared<DlpFile>(i, DLP_TEST_DIR, i, false);
         openDlpFiles[i] = filePtr;
         EXPECT_EQ(DlpFileManager::GetInstance().AddDlpFileNode(filePtr), DLP_OK);
     }
 
-    std::shared_ptr<DlpFile> filePtr1 = std::make_shared<DlpFile>(1001);
+    std::shared_ptr<DlpFile> filePtr1 = std::make_shared<DlpFile>(1001, DLP_TEST_DIR, 0, false);
     EXPECT_EQ(DlpFileManager::GetInstance().AddDlpFileNode(filePtr1), DLP_PARSE_ERROR_TOO_MANY_OPEN_DLP_FILE);
 
     for (int i = 0; i < 1000; i++) {
@@ -193,7 +210,7 @@ HWTEST_F(DlpFileManagerTest, ParseDlpFileFormat001, TestSize.Level1)
     DLP_LOG_INFO(LABEL, "UpdateDlpFileContentSize001");
     g_fdDlp = open("/data/fuse_test_dlp.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
     ASSERT_NE(g_fdDlp, -1);
-    std::shared_ptr<DlpFile> filePtr = std::make_shared<DlpFile>(g_fdDlp);
+    std::shared_ptr<DlpFile> filePtr = std::make_shared<DlpFile>(g_fdDlp, DLP_TEST_DIR, 0, false);
     ASSERT_NE(filePtr, nullptr);
 
     filePtr->dlpFd_ = -1;
@@ -234,7 +251,7 @@ HWTEST_F(DlpFileManagerTest, ParseDlpFileFormat002, TestSize.Level1)
     g_fdDlp = open("/data/fuse_test_dlp.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
     ASSERT_NE(g_fdDlp, -1);
 
-    std::shared_ptr<DlpFile> filePtr = std::make_shared<DlpFile>(g_fdDlp);
+    std::shared_ptr<DlpFile> filePtr = std::make_shared<DlpFile>(g_fdDlp, DLP_TEST_DIR, 0, false);
     ASSERT_NE(filePtr, nullptr);
 
     struct DlpHeader header = {
@@ -276,7 +293,7 @@ HWTEST_F(DlpFileManagerTest, ParseDlpFileFormat003, TestSize.Level1)
     DLP_LOG_INFO(LABEL, "ParseDlpFileFormat003");
     g_fdDlp = open("/data/fuse_test_dlp.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
     ASSERT_NE(g_fdDlp, -1);
-    std::shared_ptr<DlpFile> filePtr = std::make_shared<DlpFile>(g_fdDlp);
+    std::shared_ptr<DlpFile> filePtr = std::make_shared<DlpFile>(g_fdDlp, DLP_TEST_DIR, 0, false);
     ASSERT_NE(filePtr, nullptr);
 
     struct DlpHeader header = {
@@ -325,7 +342,7 @@ HWTEST_F(DlpFileManagerTest, ParseDlpFileFormat004, TestSize.Level1)
         DLP_LOG_INFO(LABEL, "UpdateDlpFileContentSize001");
     g_fdDlp = open("/data/fuse_test_dlp.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
     ASSERT_NE(g_fdDlp, -1);
-    std::shared_ptr<DlpFile> filePtr = std::make_shared<DlpFile>(g_fdDlp);
+    std::shared_ptr<DlpFile> filePtr = std::make_shared<DlpFile>(g_fdDlp, DLP_TEST_DIR, 0, false);
     ASSERT_NE(filePtr, nullptr);
     filePtr->SetOfflineAccess(true);
 
@@ -380,7 +397,7 @@ HWTEST_F(DlpFileManagerTest, FreeChiperBlob001, TestSize.Level1)
 HWTEST_F(DlpFileManagerTest, SetDlpFileParams001, TestSize.Level1)
 {
     DLP_LOG_INFO(LABEL, "SetDlpFileParams001");
-    std::shared_ptr<DlpFile> filePtr = std::make_shared<DlpFile>(1000);
+    std::shared_ptr<DlpFile> filePtr = std::make_shared<DlpFile>(1000, DLP_TEST_DIR, 0, false);
     ASSERT_NE(filePtr, nullptr);
     DlpProperty property;
 
@@ -417,7 +434,7 @@ HWTEST_F(DlpFileManagerTest, SetDlpFileParams001, TestSize.Level1)
 HWTEST_F(DlpFileManagerTest, SetDlpFileParams002, TestSize.Level1)
 {
     DLP_LOG_INFO(LABEL, "SetDlpFileParams002");
-    std::shared_ptr<DlpFile> filePtr = std::make_shared<DlpFile>(1000);
+    std::shared_ptr<DlpFile> filePtr = std::make_shared<DlpFile>(1000, DLP_TEST_DIR, 0, false);
     ASSERT_NE(filePtr, nullptr);
     DlpProperty property;
 
@@ -440,7 +457,7 @@ HWTEST_F(DlpFileManagerTest, SetDlpFileParams002, TestSize.Level1)
 HWTEST_F(DlpFileManagerTest, SetDlpFileParams003, TestSize.Level1)
 {
     DLP_LOG_INFO(LABEL, "SetDlpFileParams003");
-    std::shared_ptr<DlpFile> filePtr = std::make_shared<DlpFile>(1000);
+    std::shared_ptr<DlpFile> filePtr = std::make_shared<DlpFile>(1000, DLP_TEST_DIR, 0, false);
     ASSERT_NE(filePtr, nullptr);
     DlpProperty property;
 
@@ -470,7 +487,7 @@ HWTEST_F(DlpFileManagerTest, SetDlpFileParams003, TestSize.Level1)
 HWTEST_F(DlpFileManagerTest, SetDlpFileParams004, TestSize.Level1)
 {
     DLP_LOG_INFO(LABEL, "SetDlpFileParams004");
-    std::shared_ptr<DlpFile> filePtr = std::make_shared<DlpFile>(1000);
+    std::shared_ptr<DlpFile> filePtr = std::make_shared<DlpFile>(1000, DLP_TEST_DIR, 0, false);
     ASSERT_NE(filePtr, nullptr);
     DlpProperty property;
 
@@ -494,7 +511,7 @@ HWTEST_F(DlpFileManagerTest, SetDlpFileParams004, TestSize.Level1)
 HWTEST_F(DlpFileManagerTest, GenerateDlpFile001, TestSize.Level1)
 {
     DLP_LOG_INFO(LABEL, "GenerateDlpFile001");
-    std::shared_ptr<DlpFile> filePtr = std::make_shared<DlpFile>(1000);
+    std::shared_ptr<DlpFile> filePtr = std::make_shared<DlpFile>(1000, DLP_TEST_DIR, 0, false);
     ASSERT_NE(filePtr, nullptr);
     DlpProperty property;
     property.ownerAccount = "owner";
@@ -503,14 +520,14 @@ HWTEST_F(DlpFileManagerTest, GenerateDlpFile001, TestSize.Level1)
     property.ownerAccountType = DOMAIN_ACCOUNT;
 
     EXPECT_EQ(DLP_PARSE_ERROR_FD_ERROR,
-        DlpFileManager::GetInstance().GenerateDlpFile(-1, 1000, property, filePtr));
+        DlpFileManager::GetInstance().GenerateDlpFile(-1, 1000, property, filePtr, DLP_TEST_DIR));
 
     EXPECT_EQ(DLP_PARSE_ERROR_FD_ERROR,
-        DlpFileManager::GetInstance().GenerateDlpFile(1000, -1, property, filePtr));
+        DlpFileManager::GetInstance().GenerateDlpFile(1000, -1, property, filePtr, DLP_TEST_DIR));
 
     DlpFileManager::GetInstance().AddDlpFileNode(filePtr);
     EXPECT_EQ(DLP_PARSE_ERROR_FILE_ALREADY_OPENED,
-        DlpFileManager::GetInstance().GenerateDlpFile(1000, 1000, property, filePtr));
+        DlpFileManager::GetInstance().GenerateDlpFile(1000, 1000, property, filePtr, DLP_TEST_DIR));
     DlpFileManager::GetInstance().RemoveDlpFileNode(filePtr);
 }
 
@@ -531,7 +548,7 @@ HWTEST_F(DlpFileManagerTest, GenerateDlpFile002, TestSize.Level1)
     property.ownerAccountType = DOMAIN_ACCOUNT;
 
     EXPECT_EQ(DLP_PARSE_ERROR_VALUE_INVALID,
-        DlpFileManager::GetInstance().GenerateDlpFile(1000, 1000, property, filePtr));
+        DlpFileManager::GetInstance().GenerateDlpFile(1000, 1000, property, filePtr, DLP_TEST_DIR));
 }
 
 /**
@@ -551,7 +568,7 @@ HWTEST_F(DlpFileManagerTest, GenerateDlpFile003, TestSize.Level1)
     property.ownerAccountType = DOMAIN_ACCOUNT;
 
     EXPECT_EQ(DLP_PARSE_ERROR_FILE_OPERATE_FAIL,
-        DlpFileManager::GetInstance().GenerateDlpFile(1000, 1000, property, filePtr));
+        DlpFileManager::GetInstance().GenerateDlpFile(1000, 1000, property, filePtr, DLP_TEST_DIR));
 }
 
 /**
@@ -573,7 +590,7 @@ HWTEST_F(DlpFileManagerTest, OpenDlpFile001, TestSize.Level1)
     EXPECT_EQ(DLP_PARSE_ERROR_FD_ERROR,
         DlpFileManager::GetInstance().OpenDlpFile(-1, filePtr, ""));
 
-    std::shared_ptr<DlpFile> filePtr1 = std::make_shared<DlpFile>(1000);
+    std::shared_ptr<DlpFile> filePtr1 = std::make_shared<DlpFile>(1000, DLP_TEST_DIR, 0, false);
     ASSERT_NE(filePtr1, nullptr);
     DlpFileManager::GetInstance().AddDlpFileNode(filePtr1);
 
@@ -584,34 +601,6 @@ HWTEST_F(DlpFileManagerTest, OpenDlpFile001, TestSize.Level1)
 
     EXPECT_EQ(DLP_PARSE_ERROR_FILE_OPERATE_FAIL,
         DlpFileManager::GetInstance().OpenDlpFile(1000, filePtr, ""));
-}
-
-/**
- * @tc.name: IsDlpFile001
- * @tc.desc: test check IsDlpFile with wrong params
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(DlpFileManagerTest, IsDlpFile001, TestSize.Level1)
-{
-    DLP_LOG_INFO(LABEL, "IsDlpFile001");
-    bool isDlpFile = false;
-    EXPECT_EQ(DLP_PARSE_ERROR_FD_ERROR,
-        DlpFileManager::GetInstance().IsDlpFile(-1, isDlpFile));
-    EXPECT_FALSE(isDlpFile);
-
-    std::shared_ptr<DlpFile> filePtr = std::make_shared<DlpFile>(1000);
-    ASSERT_NE(filePtr, nullptr);
-    DlpFileManager::GetInstance().AddDlpFileNode(filePtr);
-
-    EXPECT_EQ(DLP_OK,
-        DlpFileManager::GetInstance().IsDlpFile(1000, isDlpFile));
-    EXPECT_TRUE(isDlpFile);
-    DlpFileManager::GetInstance().RemoveDlpFileNode(filePtr);
-
-    EXPECT_EQ(DLP_PARSE_ERROR_FILE_OPERATE_FAIL,
-        DlpFileManager::GetInstance().IsDlpFile(1000, isDlpFile));
-    EXPECT_FALSE(isDlpFile);
 }
 
 /**
@@ -640,7 +629,7 @@ HWTEST_F(DlpFileManagerTest, RecoverDlpFile001, TestSize.Level1)
     EXPECT_EQ(DLP_PARSE_ERROR_PTR_NULL,
         DlpFileManager::GetInstance().RecoverDlpFile(filePtr, 1000));
 
-    filePtr = std::make_shared<DlpFile>(1000);
+    filePtr = std::make_shared<DlpFile>(1000, DLP_TEST_DIR, 0, false);
     ASSERT_NE(filePtr, nullptr);
     EXPECT_EQ(DLP_PARSE_ERROR_FD_ERROR,
         DlpFileManager::GetInstance().RecoverDlpFile(filePtr, -1));
