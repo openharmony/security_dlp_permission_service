@@ -481,6 +481,7 @@ bool DlpFile::ParseCert()
     uint32_t size = read(fd, cert_.data, cert_.size);
     if (size != cert_.size) {
         DLP_LOG_ERROR(LABEL, "read failed, %{public}s", strerror(errno));
+        (void)close(fd);
         return false;
     }
 

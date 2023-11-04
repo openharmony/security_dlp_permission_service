@@ -37,7 +37,6 @@ public:
         int32_t plainFileFd, int32_t dlpFileFd, const DlpProperty& property, std::shared_ptr<DlpFile>& filePtr,
         const std::string& workDir);
     int32_t OpenDlpFile(int32_t dlpFileFd, std::shared_ptr<DlpFile>& filePtr, const std::string& workDir);
-    int32_t IsDlpFile(int32_t dlpFileFd, bool& isDlpFile);
     int32_t CloseDlpFile(const std::shared_ptr<DlpFile>& dlpFile);
     int32_t RecoverDlpFile(std::shared_ptr<DlpFile>& file, int32_t plainFd) const;
 
