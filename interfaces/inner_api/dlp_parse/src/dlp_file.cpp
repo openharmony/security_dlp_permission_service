@@ -24,6 +24,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include "dlp_permission.h"
+#include "dlp_permission_public_interface.h"
 #include "dlp_permission_log.h"
 #include "dlp_zip.h"
 #include "ohos_account_kits.h"
@@ -41,18 +42,12 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_
 const uint32_t CURRENT_VERSION = 2;
 const uint32_t FIRST = 1;
 const uint32_t SECOND = 2;
-
 const uint32_t DLP_CWD_MAX = 256;
 const std::string DLP_GENERAL_INFO = "dlp_general_info";
 const std::string DLP_CERT = "dlp_cert";
 const std::string DLP_ENC_DATA = "encrypted_data";
 const std::string DLP_OPENING_ENC_DATA = "opened_encrypted_data";
 const std::string DLP_GEN_FILE = "gen_dlp_file";
-
-const std::string DLP_CONTACT_ACCOUNT = "contactAccount";
-const std::string DLP_VERSION = "dlp_version";
-const std::string DLP_OFFLINE_FLAG = "offlineAccess";
-const std::string DLP_EXTRA_INFO = "extra_info";
 } // namespace
 std::mutex g_fileOpLock_;
 
@@ -419,42 +414,16 @@ bool DlpFile::ParseDlpInfo()
 {
     std::string content;
     (void)GetFileContent(DLP_GENERAL_INFO, content);
-
-    auto jsonObj = nlohmann::json::parse(content, nullptr, false);
-    if (jsonObj.is_discarded() || (!jsonObj.is_object())) {
-        DLP_LOG_ERROR(LABEL, "JsonObj is discarded");
+    GenerateInfoParams params;
+    int32_t res = ParseDlpExtraInfo(content, params);
+    if (res != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "ParseDlpExtraInfo %{public}s", content.c_str());
         return false;
     }
-
-    if (jsonObj.find(DLP_VERSION) != jsonObj.end() && jsonObj.at(DLP_VERSION).is_number_integer()) {
-        head_.version = jsonObj.at(DLP_VERSION).get<int32_t>();
-    } else {
-        DLP_LOG_ERROR(LABEL, "DLP_VERSION is not found");
-        return false;
-    }
-
-    if (jsonObj.find(DLP_OFFLINE_FLAG) != jsonObj.end() && jsonObj.at(DLP_OFFLINE_FLAG).is_boolean()) {
-        head_.offlineAccess = jsonObj.at(DLP_OFFLINE_FLAG).get<bool>();
-    } else {
-        DLP_LOG_ERROR(LABEL, "DLP_OFFLINE_FLAG is not found");
-        return false;
-    }
-
-    if (jsonObj.find(DLP_EXTRA_INFO) != jsonObj.end() && jsonObj.at(DLP_EXTRA_INFO).is_array()
-        && !jsonObj.at(DLP_EXTRA_INFO).empty() && jsonObj.at(DLP_EXTRA_INFO).at(0).is_string()) {
-        extraInfo_ = jsonObj.at(DLP_EXTRA_INFO).get<std::vector<std::string>>();
-    } else {
-        DLP_LOG_ERROR(LABEL, "DLP_EXTRA_INFO is not found");
-        return false;
-    }
-
-    if (jsonObj.find(DLP_CONTACT_ACCOUNT) != jsonObj.end() && jsonObj.at(DLP_CONTACT_ACCOUNT).is_string()) {
-        contactAccount_ = jsonObj.at(DLP_CONTACT_ACCOUNT).get<std::string>();
-        if (contactAccount_ == "") {
-            DLP_LOG_ERROR(LABEL, "invalid contact account");
-            return false;
-        }
-    }
+    head_.version = params.version;
+    head_.offlineAccess = params.accessFlag;
+    extraInfo_ = params.extraInfo;
+    contactAccount_ = params.contactAccount;
     return true;
 }
 
@@ -961,12 +930,12 @@ static int32_t GetFileSize(int32_t fd)
 
 static void SetDlpGeneralInfo(bool accessFlag, std::string& contactAccount, std::string& out)
 {
-    nlohmann::json dlp_general_info;
-    dlp_general_info[DLP_VERSION] = CURRENT_VERSION;
-    dlp_general_info[DLP_OFFLINE_FLAG] = accessFlag;
-    dlp_general_info[DLP_CONTACT_ACCOUNT] = contactAccount;
-    dlp_general_info[DLP_EXTRA_INFO] = {"kia_info", "cert_info", "enc_data"};
-    out = dlp_general_info.dump();
+    GenerateInfoParams params = {
+        .contactAccount = contactAccount,
+        .accessFlag = accessFlag,
+        .extraInfo = {"kia_info", "cert_info", "enc_data"},
+    };
+    GeneratetDlpExtraInfo(params, out);
 }
 
 int32_t DlpFile::GenEncData(int32_t inPlainFileFd)
@@ -1214,7 +1183,7 @@ int32_t DlpFile::DlpFileRead(uint32_t offset, void* buf, uint32_t size)
 
     auto encBuff = std::make_unique<uint8_t[]>(alignSize);
     auto outBuff = std::make_unique<uint8_t[]>(alignSize);
-    
+
     int32_t readLen = read(opFd, encBuff.get(), alignSize);
     if (readLen == -1) {
         DLP_LOG_ERROR(LABEL, "read buff fail, %{public}s", strerror(errno));

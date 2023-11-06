@@ -63,6 +63,7 @@ ohos_unittest("dlp_parse_test") {
   ]
 
   deps = [
+    "${dlp_root_dir}/interfaces/inner_api/dlp_permission:libdlp_permission_common_interface",
     "${dlp_root_dir}/services/dlp_permission/sa:dlp_permission_serializer_static",
     "//third_party/openssl:libcrypto_shared",
     "//third_party/zlib:shared_libz",
