@@ -15,6 +15,14 @@ import("//build/ohos.gni")
 import("../../../dlp_permission_service.gni")
 
 ohos_shared_library("libdlp_fuse") {
+  branch_protector_ret = "pac_ret"
+
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
+
   subsystem_name = "security"
   part_name = "dlp_permission_service"
   output_name = "libdlp_fuse"

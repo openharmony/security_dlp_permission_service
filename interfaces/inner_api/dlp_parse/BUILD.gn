@@ -26,6 +26,14 @@ config("dlpparse_public_config") {
 }
 
 ohos_shared_library("libdlpparse") {
+  branch_protector_ret = "pac_ret"
+
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
+
   sources = [
     "$ROOT_DIR/src/dlp_file_kits.cpp",
     "$ROOT_DIR/src/dlp_zip.cpp",
