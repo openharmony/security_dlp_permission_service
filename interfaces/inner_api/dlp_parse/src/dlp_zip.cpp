@@ -149,7 +149,6 @@ static zipFile OpenZipFile(int fd)
     uf = unzOpenFile(ff);
     if (uf == nullptr) {
         DLP_LOG_ERROR(LABEL, "unzOpenFile fail errno %{public}d", errno);
-        (void)fclose(ff);
         return nullptr;
     }
     return uf;
@@ -230,7 +229,6 @@ bool IsZipFile(int32_t fd)
     unzFile uz = unzOpenFile(ff);
     if (uz == nullptr) {
         DLP_LOG_ERROR(LABEL, "unzOpenFile fail, %{public}d", errno);
-        (void)fclose(ff);
         return false;
     }
 
