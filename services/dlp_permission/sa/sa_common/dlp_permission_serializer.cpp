@@ -368,7 +368,7 @@ static void DeserializeEveryoneInfo(const unordered_json& policyJson, Permission
     }
 }
 
-static void InitPermissionPolicy(PermissionPolicy& policy, const std::vector<AuthUserInfo> userList,
+static void InitPermissionPolicy(PermissionPolicy& policy, const std::vector<AuthUserInfo>& userList,
     unordered_json policyJson)
 {
     policy.authUsers_ = userList;
