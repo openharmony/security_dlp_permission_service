@@ -22,6 +22,14 @@ ohos_prebuilt_etc("dlp_permission_service.rc") {
 }
 
 ohos_static_library("dlp_hex_string_static") {
+  branch_protector_ret = "pac_ret"
+
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
+
   subsystem_name = "security"
   part_name = "dlp_permission_service"
 
@@ -40,6 +48,14 @@ ohos_static_library("dlp_hex_string_static") {
 }
 
 ohos_static_library("dlp_permission_serializer_static") {
+  branch_protector_ret = "pac_ret"
+
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
+
   subsystem_name = "security"
   part_name = "dlp_permission_service"
 
@@ -74,6 +90,14 @@ ohos_static_library("dlp_permission_serializer_static") {
 }
 
 ohos_shared_library("dlp_permission_service") {
+  branch_protector_ret = "pac_ret"
+
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
+
   subsystem_name = "security"
   part_name = "dlp_permission_service"
 
