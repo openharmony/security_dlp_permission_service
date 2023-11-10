@@ -385,7 +385,7 @@ static void FreeDLPEncPolicyData(DLP_EncPolicyData& encPolicy)
     }
 }
 
-static int32_t GetLocalAccountName(std::string& account, const std::string contactAccount, bool* isOwner)
+static int32_t GetLocalAccountName(std::string& account, const std::string& contactAccount, bool* isOwner)
 {
     std::pair<bool, AccountSA::OhosAccountInfo> accountInfo =
         AccountSA::OhosAccountKits::GetInstance().QueryOhosAccountInfo();
@@ -399,7 +399,7 @@ static int32_t GetLocalAccountName(std::string& account, const std::string conta
     return DLP_PARSE_ERROR_ACCOUNT_INVALID;
 }
 
-static int32_t GetDomainAccountName(std::string& account, const std::string contactAccount, bool* isOwner)
+static int32_t GetDomainAccountName(std::string& account, const std::string& contactAccount, bool* isOwner)
 {
     std::vector<int32_t> ids;
     if (OHOS::AccountSA::OsAccountManager::QueryActiveOsAccountIds(ids) != 0) {
@@ -430,7 +430,7 @@ static int32_t GetDomainAccountName(std::string& account, const std::string cont
 }
 
 static void GetAccoutInfo(DlpAccountType accountType, AccountInfo& accountCfg,
-    const std::string contactAccount, bool* isOwner)
+    const std::string& contactAccount, bool* isOwner)
 {
     std::string account;
     if (accountType == DOMAIN_ACCOUNT) {
