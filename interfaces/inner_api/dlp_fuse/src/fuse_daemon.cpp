@@ -15,6 +15,7 @@
 
 #include "fuse_daemon.h"
 
+#include <pthread.h>
 #include <securec.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -38,6 +39,7 @@ static constexpr int ROOT_INODE_ACCESS = 0711;
 static constexpr uint32_t MAX_READ_DIR_BUF_SIZE = 100 * 1024;  // 100K
 static constexpr const char* CUR_DIR = ".";
 static constexpr const char* UPPER_DIR = "..";
+static constexpr const char* THREAD_OS_DLP_FUSE = "OS_DLP_FUSE";
 }  // namespace
 
 std::condition_variable FuseDaemon::daemonEnableCv_;
@@ -555,6 +557,7 @@ int FuseDaemon::InitFuseFs(int fuseDevFd)
     daemonStatus_ = DAEMON_UNDEF;
 
     std::thread daemonThread(FuseFsDaemonThread, fuseDevFd);
+    pthread_setname_np(daemonThread.native_handle(), THREAD_OS_DLP_FUSE);
     daemonThread.detach();
     return WaitDaemonEnable();
 }
