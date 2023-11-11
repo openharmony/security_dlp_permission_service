@@ -400,6 +400,11 @@ int32_t DLP_AddPolicy(PolicyType type, const uint8_t *policy, uint32_t policyLen
 
 int32_t DLP_GetPolicy(PolicyType type, uint8_t *policy, uint32_t *policyLen)
 {
+    if (policyLen < 0) {
+        DLP_LOG_ERROR("policyLen is null");
+        return DLP_ERROR;
+    }
+    *policyLen = 0;
     return DLP_SUCCESS;
 }
 
