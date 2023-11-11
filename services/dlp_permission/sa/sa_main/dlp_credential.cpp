@@ -19,6 +19,7 @@
 #include <unordered_map>
 #include "account_adapt.h"
 #include "dlp_credential_client.h"
+#include "dlp_policy_mgr_client.h"
 #include "dlp_permission.h"
 #include "dlp_permission_log.h"
 #include "dlp_permission_serializer.h"
@@ -35,6 +36,8 @@ namespace {
 const std::string LOCAL_ENCRYPTED_CERT = "encryptedPolicy";
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "DlpCredential"};
 static const size_t MAX_REQUEST_NUM = 100;
+static const uint32_t MAX_APPID_LIST_NUM = 250;
+static const uint32_t MAX_APPID_LENGTH = 200;
 static const std::string POLICY_CERT = "policyCert";
 static std::unordered_map<uint64_t, sptr<IDlpPermissionCallback>> g_requestMap;
 static std::unordered_map<uint64_t, DlpAccountType> g_requestAccountTypeMap;
@@ -71,6 +74,9 @@ static int32_t ConvertCredentialError(int errorCode)
 {
     if (errorCode == DLP_SUCCESS) {
         return DLP_OK;
+    }
+    if (errorCode == DLP_ERR_APPID_NOT_AUTHORIZED) {
+        return DLP_CREDENTIAL_ERROR_APPID_NOT_AUTHORIZED;
     }
     if (errorCode == DLP_ERR_CONNECTION_TIME_OUT || errorCode == DLP_ERR_TOKEN_CONNECTION_TIME_OUT) {
         return DLP_CREDENTIAL_ERROR_SERVER_TIME_OUT_ERROR;
@@ -474,7 +480,8 @@ static int32_t AdapterData(const std::vector<uint8_t>& offlineCert, bool isOwner
     return DLP_OK;
 }
 
-int32_t DlpCredential::ParseDlpCertificate(sptr<CertParcel>& certParcel, sptr<IDlpPermissionCallback>& callback)
+int32_t DlpCredential::ParseDlpCertificate(sptr<CertParcel>& certParcel, sptr<IDlpPermissionCallback>& callback,
+    const std::string& appId)
 {
     std::string encDataJsonStr(certParcel->cert.begin(), certParcel->cert.end());
     auto jsonObj = unordered_json::parse(encDataJsonStr, nullptr, false);
@@ -486,7 +493,8 @@ int32_t DlpCredential::ParseDlpCertificate(sptr<CertParcel>& certParcel, sptr<ID
         .opt = CloudEncOption::RECEIVER_DECRYPT_MUST_USE_CLOUD_AND_RETURN_ENCRYPTION_VALUE,
         .extraInfo = nullptr
     };
-    DLP_EncPolicyData encPolicy = {.featureName = strdup("dlp_permission_service"), .options = encAndDecOptions};
+    DLP_EncPolicyData encPolicy = {.featureName = strdup(const_cast<char *>(appId.c_str())),
+        .options = encAndDecOptions};
     int32_t result =
         DlpPermissionSerializer::GetInstance().DeserializeEncPolicyData(jsonObj, encPolicy, certParcel->isNeedAdapter);
     auto accountType = static_cast<DlpAccountType>(encPolicy.accountType);
@@ -522,6 +530,111 @@ int32_t DlpCredential::ParseDlpCertificate(sptr<CertParcel>& certParcel, sptr<ID
     }
     FreeDLPEncPolicyData(encPolicy);
     return ConvertCredentialError(res);
+}
+
+int32_t ParseStringVectorToUint8TypedArray(const std::vector<std::string>& appIdList, uint8_t *policy,
+    uint32_t policySize)
+{
+    uint32_t count = static_cast<uint32_t>(appIdList.size());
+    if (memcpy_s(policy, policySize, &count, sizeof(uint32_t)) != EOK) {
+        DLP_LOG_ERROR(LABEL, "Memcpy policy fail");
+        return DLP_CREDENTIAL_ERROR_MEMORY_OPERATE_FAIL;
+    }
+    int32_t offset = sizeof(uint32_t);
+    for (int32_t i = 0; i < static_cast<int32_t>(appIdList.size()); i++) {
+        if (appIdList[i].empty()) {
+            DLP_LOG_ERROR(LABEL, "Empty appId");
+            return DLP_SERVICE_ERROR_VALUE_INVALID;
+        }
+        char *appId = const_cast<char *>(appIdList[i].c_str());
+        uint32_t length = static_cast<uint32_t>(strlen(appId));
+        if (length > MAX_APPID_LENGTH) {
+            DLP_LOG_ERROR(LABEL, "AppId longer than limit");
+            return DLP_SERVICE_ERROR_VALUE_INVALID;
+        }
+        if (memcpy_s(policy + offset, policySize - offset, &length, sizeof(uint32_t)) != EOK) {
+            DLP_LOG_ERROR(LABEL, "Memcpy policy fail");
+            return DLP_CREDENTIAL_ERROR_MEMORY_OPERATE_FAIL;
+        }
+        offset += sizeof(uint32_t);
+        if (memcpy_s(policy + offset, policySize - offset, appId, strlen(appId)) != EOK) {
+            DLP_LOG_ERROR(LABEL, "Memcpy policy fail");
+            return DLP_CREDENTIAL_ERROR_MEMORY_OPERATE_FAIL;
+        }
+        offset += strlen(appId);
+    }
+    return offset;
+}
+
+int32_t ParseUint8TypedArrayToStringVector(uint8_t *policy, uint32_t *policyLen, std::vector<std::string>& appIdList)
+{
+    uint32_t count = reinterpret_cast<uint32_t *>(policy)[0];
+    if (count < 0 || count > MAX_APPID_LIST_NUM) {
+        DLP_LOG_ERROR(LABEL, "get appId List too large");
+        return DLP_SERVICE_ERROR_VALUE_INVALID;
+    }
+    int32_t offset = sizeof(uint32_t);
+    for (int32_t i = 0; i < count; i++) {
+        int32_t length = reinterpret_cast<uint32_t *>(policy + offset)[0];
+        offset += sizeof(uint32_t);
+        appIdList.push_back(std::string(reinterpret_cast<char *>(policy + offset), length));
+        offset += length;
+    }
+    return 0;
+}
+
+int32_t DlpCredential::SetPolicy(const std::vector<std::string>& appIdList)
+{
+    if (size(appIdList) > MAX_APPID_LENGTH) {
+        DLP_LOG_ERROR(LABEL, "appId List too large");
+        return DLP_SERVICE_ERROR_VALUE_INVALID;
+    }
+    uint32_t policySize = size(appIdList) * MAX_APPID_LENGTH;
+    uint8_t *policy = new (std::nothrow)uint8_t[policySize];
+    if (policy == nullptr) {
+        DLP_LOG_WARN(LABEL, "alloc policy failed.");
+        delete[] policy;
+        return DLP_CREDENTIAL_ERROR_MEMORY_OPERATE_FAIL;
+    }
+    int32_t policyLen = ParseStringVectorToUint8TypedArray(appIdList, policy, policySize);
+    if (policyLen <= 0) {
+        delete[] policy;
+        return policyLen;
+    }
+    int32_t res = DLP_AddPolicy(PolicyType::AUTHORIZED_APPLICATION_LIST, policy, policyLen);
+    if (res != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "SetPolicy request fail, error: %{public}d", res);
+    }
+    delete[] policy;
+    return res;
+}
+
+int32_t DlpCredential::GetPolicy(std::vector<std::string>& appIdList)
+{
+    uint32_t policyLen = MAX_APPID_LIST_NUM * MAX_APPID_LENGTH;
+    uint8_t *policy = new (std::nothrow)uint8_t[policyLen];
+    int32_t res = DLP_GetPolicy(PolicyType::AUTHORIZED_APPLICATION_LIST, policy, &policyLen);
+    if (res != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "GetPolicy request fail, error: %{public}d", res);
+        delete[] policy;
+        return res;
+    }
+    if (policyLen == 0) {
+        DLP_LOG_WARN(LABEL, "appIdList is empty.");
+        delete[] policy;
+        return DLP_OK;
+    }
+    delete[] policy;
+    return ParseUint8TypedArrayToStringVector(policy, &policyLen, appIdList);
+}
+
+int32_t DlpCredential::RemovePolicy()
+{
+    int32_t res = DLP_RemovePolicy(PolicyType::AUTHORIZED_APPLICATION_LIST);
+    if (res != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "RemovePolicy request fail, error: %{public}d", res);
+    }
+    return res;
 }
 }  // namespace DlpPermission
 }  // namespace Security

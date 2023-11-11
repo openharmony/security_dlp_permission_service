@@ -156,6 +156,7 @@ struct GenerateDlpFileAsyncContext : public CommonAsyncContext {
 struct DlpFileAsyncContext : public CommonAsyncContext {
     explicit DlpFileAsyncContext(napi_env env) : CommonAsyncContext(env) {};
     int64_t ciphertextFd = -1;
+    std::string appId;
     DlpProperty property;
     bool isDlpFile = false;
     std::shared_ptr<DlpFile> dlpFileNative = nullptr;

@@ -66,7 +66,8 @@ public:
 class DlpPermissionKit {
 public:
     static int32_t GenerateDlpCertificate(const PermissionPolicy& policy, std::vector<uint8_t>& cert);
-    static int32_t ParseDlpCertificate(sptr<CertParcel>& certParcel, PermissionPolicy& policy);
+    static int32_t ParseDlpCertificate(sptr<CertParcel>& certParcel, PermissionPolicy& policy,
+        const std::string& appId);
     static int32_t InstallDlpSandbox(const std::string& bundleName, DLPFileAccess access, int32_t userId,
         SandboxInfo& sandboxInfo, const std::string& uri);
     static int32_t UninstallDlpSandbox(const std::string& bundleName, int32_t appIndex, int32_t userId);
@@ -87,6 +88,9 @@ public:
         std::vector<RetentionSandBoxInfo>& retentionSandBoxInfoVec);
     static int32_t ClearUnreservedSandbox();
     static int32_t GetDLPFileVisitRecord(std::vector<VisitedDLPFileInfo>& infoVec);
+    static int32_t SetPolicy(const std::vector<std::string>& appIdList);
+    static int32_t GetPolicy(std::vector<std::string>& appIdList);
+    static int32_t RemovePolicy();
 };
 }  // namespace DlpPermission
 }  // namespace Security

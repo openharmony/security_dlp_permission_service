@@ -23,6 +23,16 @@
 extern "C" {
 #endif
 
+typedef enum {
+    AUTHORIZED_APPLICATION_LIST = 1,
+    FILE_CLASSIFICATION_POLICY,
+} PolicyType;
+
+typedef union {
+    char *id;
+    int32_t index;
+} PolicyHandle;
+
 __attribute__ ((visibility("default"))) int DLP_PackPolicy(uint32_t osAccountId, const DLP_PackPolicyParams *params,
     DLP_PackPolicyCallback callback, uint64_t *requestId);
 

@@ -358,6 +358,14 @@ int DLP_RestorePolicy(
         return DLP_ERROR;
     }
 
+    char *tmp1 = "test_appId_passed_1";
+    char *tmp2 = "test_appId_passed_2";
+    if (strcmp(params->featureName, tmp1) || strcmp(params->featureName, tmp2)) {
+        DLP_LOG_DEBUG("appId check pass");
+    } else {
+        return DLP_ERR_APPID_NOT_AUTHORIZED;
+    }
+
     pthread_mutex_lock(&g_mutex);
     uint64_t id = ++g_requestId;  // Simulation allocation requestId.
     pthread_mutex_unlock(&g_mutex);
@@ -382,5 +390,20 @@ int DLP_RestorePolicy(
         return DLP_ERROR;
     }
     DLP_LOG_INFO("Start new thread, requestId: %{public}llu", (unsigned long long)*requestId);
+    return DLP_SUCCESS;
+}
+
+int32_t DLP_AddPolicy(PolicyType type, const uint8_t *policy, uint32_t policyLen)
+{
+    return DLP_SUCCESS;
+}
+
+int32_t DLP_GetPolicy(PolicyType type, uint8_t *policy, uint32_t *policyLen)
+{
+    return DLP_SUCCESS;
+}
+
+int32_t DLP_RemovePolicy(PolicyType type)
+{
     return DLP_SUCCESS;
 }

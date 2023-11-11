@@ -4,7 +4,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -13,15 +13,14 @@
  * limitations under the License.
  */
 
-#include "parsecert_fuzzer.h"
+#include "getpolicy_fuzzer.h"
 #include <iostream>
 #include <string>
-#include <vector>
 #include <thread>
+#include <vector>
 #include "accesstoken_kit.h"
-#include "cert_parcel.h"
-#include "dlp_permission_log.h"
 #include "dlp_permission.h"
+#include "dlp_permission_log.h"
 #include "securec.h"
 #include "token_setproc.h"
 
@@ -30,28 +29,25 @@ using namespace OHOS::Security::AccessToken;
 namespace OHOS {
 static void FuzzTest(const uint8_t* data, size_t size)
 {
-    sptr<CertParcel> certParcel = new (std::nothrow) CertParcel();
-    std::vector<uint8_t> cert(data, data + size);
-    certParcel->cert = cert;
-    PermissionPolicy policy;
-    DlpPermissionKit::ParseDlpCertificate(certParcel, policy, "");
+    std::vector<std::string> appIdList;
+    DlpPermissionKit::GetPolicy(appIdList);
 }
 
-bool ParseCertFuzzTest(const uint8_t* data, size_t size)
+bool GetPolicyFuzzTest(const uint8_t* data, size_t size)
 {
     int selfTokenId = GetSelfTokenID();
-    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(100, "com.ohos.dlpmanager", 0);  // user_id = 100
+    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(100, "com.ohos.dlpmanager", 0); // user_id = 100
     SetSelfTokenID(tokenId);
     FuzzTest(data, size);
     SetSelfTokenID(selfTokenId);
     return true;
 }
-}  // namespace OHOS
+} // namespace OHOS
 
 /* Fuzzer entry point */
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 {
     /* Run your code on data */
-    OHOS::ParseCertFuzzTest(data, size);
+    OHOS::GetPolicyFuzzTest(data, size);
     return 0;
 }

@@ -373,7 +373,7 @@ HWTEST_F(DlpFuseTest, OpenDlpFile001, TestSize.Level1)
     result = DlpFileManager::GetInstance().CloseDlpFile(g_Dlpfile);
     ASSERT_EQ(result, 0);
     g_Dlpfile = nullptr;
-    result = DlpFileManager::GetInstance().OpenDlpFile(g_dlpFileFd, g_Dlpfile, DLP_TEST_DIR);
+    result = DlpFileManager::GetInstance().OpenDlpFile(g_dlpFileFd, g_Dlpfile, DLP_TEST_DIR, "test_appId_passed");
     ASSERT_EQ(result, 0);
     ASSERT_NE(g_Dlpfile, nullptr);
     PermissionPolicy policy;
@@ -433,7 +433,8 @@ HWTEST_F(DlpFuseTest, OpenDlpFile002, TestSize.Level1)
     result = DlpFileManager::GetInstance().CloseDlpFile(g_Dlpfile);
     ASSERT_EQ(result, 0);
     g_Dlpfile = nullptr;
-    result = DlpFileManager::GetInstance().OpenDlpFile(g_dlpFileFd, g_Dlpfile, DLP_TEST_DIR);
+    std::string appId = "test_appId_passed";
+    result = DlpFileManager::GetInstance().OpenDlpFile(g_dlpFileFd, g_Dlpfile, DLP_TEST_DIR, appId);
     ASSERT_EQ(result, 0);
     ASSERT_NE(g_Dlpfile, nullptr);
     PermissionPolicy policy;
