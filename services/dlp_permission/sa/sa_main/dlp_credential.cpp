@@ -574,7 +574,7 @@ int32_t ParseUint8TypedArrayToStringVector(uint8_t *policy, uint32_t *policyLen,
         return DLP_SERVICE_ERROR_VALUE_INVALID;
     }
     int32_t offset = sizeof(uint32_t);
-    for (int32_t i = 0; i < count; i++) {
+    for (uint32_t i = 0; i < count; i++) {
         int32_t length = reinterpret_cast<uint32_t *>(policy + offset)[0];
         offset += sizeof(uint32_t);
         appIdList.push_back(std::string(reinterpret_cast<char *>(policy + offset), length));
@@ -624,8 +624,9 @@ int32_t DlpCredential::GetPolicy(std::vector<std::string>& appIdList)
         delete[] policy;
         return DLP_OK;
     }
+    res = ParseUint8TypedArrayToStringVector(policy, &policyLen, appIdList);
     delete[] policy;
-    return ParseUint8TypedArrayToStringVector(policy, &policyLen, appIdList);
+    return res;
 }
 
 int32_t DlpCredential::RemovePolicy()
