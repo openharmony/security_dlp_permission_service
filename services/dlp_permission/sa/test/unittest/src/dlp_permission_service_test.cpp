@@ -155,8 +155,6 @@ struct GeneratePolicyParam {
     int64_t deltaTime;
 };
 
-using GeneratePolicyParam = struct GeneratePolicyParam;
-
 void GeneratePolicy(PermissionPolicy& encPolicy, GeneratePolicyParam param)
 {
     uint64_t curTime = static_cast<uint64_t>(
@@ -774,7 +772,7 @@ HWTEST_F(DlpPermissionServiceTest, ParseDlpCertificate001, TestSize.Level1)
     sptr<CertParcel> certParcel = new (std::nothrow) CertParcel();
     sptr<IDlpPermissionCallback> callback = nullptr;
     ASSERT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID,
-        dlpPermissionService_->ParseDlpCertificate(certParcel, callback));
+        dlpPermissionService_->ParseDlpCertificate(certParcel, callback, ""));
 }
 
 /**

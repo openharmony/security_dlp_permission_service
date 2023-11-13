@@ -40,6 +40,9 @@ enum DlpPermissionServiceInterfaceCode {
     GET_VISTI_FILE_RECORD_LIST,
     REGISTER_OPEN_DLP_FILE_CALLBACK,
     UN_REGISTER_OPEN_DLP_FILE_CALLBACK,
+    SET_POLICY,
+    GET_POLICY,
+    REMOVE_POLICY,
 };
 
 enum DlpPermissionCallbackInterfaceCode {

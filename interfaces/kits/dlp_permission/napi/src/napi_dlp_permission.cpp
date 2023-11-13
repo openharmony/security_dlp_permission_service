@@ -233,7 +233,8 @@ void NapiDlpPermission::OpenDlpFileExcute(napi_env env, void* data)
     std::string rPath(realPath);
 
     asyncContext->errCode =
-        DlpFileManager::GetInstance().OpenDlpFile(asyncContext->ciphertextFd, asyncContext->dlpFileNative, rPath);
+        DlpFileManager::GetInstance().OpenDlpFile(asyncContext->ciphertextFd, asyncContext->dlpFileNative, rPath,
+            asyncContext->appId);
 }
 
 static void GetDlpProperty(std::shared_ptr<DlpFile>& dlpFileNative, DlpProperty& property)

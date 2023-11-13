@@ -118,12 +118,13 @@ HWTEST_F(DlpCredentialTest, DlpCredentialTest002, TestSize.Level1)
     int res = DlpCredential::GetInstance().GenerateDlpCertificate(policy, account, accountType, stub);
     EXPECT_EQ(DLP_CREDENTIAL_ERROR_COMMON_ERROR, res);
     sptr<CertParcel> certParcel = new (std::nothrow) CertParcel();
-    res = DlpCredential::GetInstance().ParseDlpCertificate(certParcel, stub);
+    std::string appId = "test_appId_passed";
+    res = DlpCredential::GetInstance().ParseDlpCertificate(certParcel, stub, appId);
     EXPECT_EQ(DLP_SERVICE_ERROR_JSON_OPERATE_FAIL, res);
     std::string s2(POLICY_PLAINTTEXT);
     std::vector<uint8_t> cert2(s2.begin(), s2.end());
     certParcel->cert = cert2;
-    res = DlpCredential::GetInstance().ParseDlpCertificate(certParcel, stub);
+    res = DlpCredential::GetInstance().ParseDlpCertificate(certParcel, stub, appId);
     EXPECT_EQ(DLP_CREDENTIAL_ERROR_COMMON_ERROR, res);
 }
 }  // namespace DlpPermission
