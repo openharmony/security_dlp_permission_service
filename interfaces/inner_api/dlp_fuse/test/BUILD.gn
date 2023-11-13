@@ -114,7 +114,7 @@ ohos_unittest("dlp_fuse_test") {
   ]
 
   configs = [ "${dlp_root_dir}/config:coverage_flags" ]
-  deps = []
+
   deps = [
     "${dlp_root_dir}/interfaces/inner_api/dlp_permission:libdlp_permission_common_interface",
     "${dlp_root_dir}/services/dlp_permission/sa:dlp_permission_serializer_static",

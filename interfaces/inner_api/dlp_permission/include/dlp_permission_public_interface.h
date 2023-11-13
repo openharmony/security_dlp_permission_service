@@ -24,13 +24,13 @@ namespace Security {
 namespace DlpPermission {
 struct GenerateInfoParams {
     int32_t version;
-    bool accessFlag;
+    bool offlineAccessFlag;
     std::string contactAccount;
     std::vector<std::string> extraInfo;
 };
 
-int32_t GeneratetDlpExtraInfo(const GenerateInfoParams& params, std::string& generalInfo);
-int32_t ParseDlpExtraInfo(const std::string& generalInfo, GenerateInfoParams& params);
+int32_t GenerateDlpGeneralInfo(const GenerateInfoParams& params, std::string& generalInfo);
+int32_t ParseDlpGeneralInfo(const std::string& generalInfo, GenerateInfoParams& params);
 }  // namespace DlpPermission
 }  // namespace Security
 }  // namespace OHOS

@@ -28,11 +28,14 @@ const std::string DLP_VERSION = "dlp_version";
 const std::string DLP_OFFLINE_FLAG = "offlineAccess";
 const std::string DLP_EXTRA_INFO = "extra_info";
 
-int32_t GeneratetDlpExtraInfo(const GenerateInfoParams& params, std::string& generalInfo)
+int32_t GenerateDlpGeneralInfo(const GenerateInfoParams& params, std::string& generalInfo)
 {
     nlohmann::json dlp_general_info;
     dlp_general_info[DLP_VERSION] = CURRENT_VERSION;
-    dlp_general_info[DLP_OFFLINE_FLAG] = params.accessFlag;
+    dlp_general_info[DLP_OFFLINE_FLAG] = params.offlineAccessFlag;
+    if (params.contactAccount.empty()) {
+        return DLP_SERVICE_ERROR_VALUE_INVALID;
+    }
     dlp_general_info[DLP_CONTACT_ACCOUNT] = params.contactAccount;
     dlp_general_info[DLP_EXTRA_INFO] = params.extraInfo;
     if (params.extraInfo.empty()) {
@@ -42,7 +45,7 @@ int32_t GeneratetDlpExtraInfo(const GenerateInfoParams& params, std::string& gen
     return DLP_OK;
 }
 
-int32_t ParseDlpExtraInfo(const std::string& generalInfo, GenerateInfoParams& params)
+int32_t ParseDlpGeneralInfo(const std::string& generalInfo, GenerateInfoParams& params)
 {
     if (generalInfo.empty()) {
         return DLP_SERVICE_ERROR_VALUE_INVALID;
@@ -59,7 +62,7 @@ int32_t ParseDlpExtraInfo(const std::string& generalInfo, GenerateInfoParams& pa
     }
 
     if (jsonObj.find(DLP_OFFLINE_FLAG) != jsonObj.end() && jsonObj.at(DLP_OFFLINE_FLAG).is_boolean()) {
-        params.accessFlag = jsonObj.at(DLP_OFFLINE_FLAG).get<bool>();
+        params.offlineAccessFlag = jsonObj.at(DLP_OFFLINE_FLAG).get<bool>();
     } else {
         return DLP_PARSE_ERROR_VALUE_INVALID;
     }

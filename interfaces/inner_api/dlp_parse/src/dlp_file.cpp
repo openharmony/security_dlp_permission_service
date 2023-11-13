@@ -415,13 +415,13 @@ bool DlpFile::ParseDlpInfo()
     std::string content;
     (void)GetFileContent(DLP_GENERAL_INFO, content);
     GenerateInfoParams params;
-    int32_t res = ParseDlpExtraInfo(content, params);
+    int32_t res = ParseDlpGeneralInfo(content, params);
     if (res != DLP_OK) {
-        DLP_LOG_ERROR(LABEL, "ParseDlpExtraInfo %{public}s", content.c_str());
+        DLP_LOG_ERROR(LABEL, "ParseDlpGeneralInfo %{public}s", content.c_str());
         return false;
     }
     head_.version = params.version;
-    head_.offlineAccess = params.accessFlag;
+    head_.offlineAccess = params.offlineAccessFlag;
     extraInfo_ = params.extraInfo;
     contactAccount_ = params.contactAccount;
     return true;
@@ -933,10 +933,10 @@ static void SetDlpGeneralInfo(bool accessFlag, std::string& contactAccount, std:
 {
     GenerateInfoParams params = {
         .contactAccount = contactAccount,
-        .accessFlag = accessFlag,
+        .offlineAccessFlag = accessFlag,
         .extraInfo = {"kia_info", "cert_info", "enc_data"},
     };
-    GeneratetDlpExtraInfo(params, out);
+    GenerateDlpGeneralInfo(params, out);
 }
 
 int32_t DlpFile::GenEncData(int32_t inPlainFileFd)
