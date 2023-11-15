@@ -396,7 +396,7 @@ int32_t DlpFileManager::OpenDlpFile(int32_t dlpFileFd, std::shared_ptr<DlpFile>&
         DLP_LOG_INFO(LABEL, "Open dlp file fail, fd %{public}d has opened", dlpFileFd);
         return DLP_OK;
     }
- 
+
     std::string cache = workDir + "/cache";
     PrepareDirs(cache);
     filePtr = std::make_shared<DlpFile>(dlpFileFd, cache, ++index_, false);

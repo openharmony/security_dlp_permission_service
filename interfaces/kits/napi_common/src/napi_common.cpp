@@ -1125,6 +1125,36 @@ bool GetOriginalFilenameParams(const napi_env env, const napi_callback_info info
     return true;
 }
 
+bool GetSandboxAppConfigParams(const napi_env env, const napi_callback_info info,
+    SandboxAppConifgAsyncContext& asyncContext)
+{
+    size_t argc = PARAM_SIZE_TWO;
+    napi_value argv[PARAM_SIZE_TWO] = {nullptr};
+    NAPI_CALL_BASE(env, napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr), false);
+
+    if (!NapiCheckArgc(env, argc, PARAM_SIZE_FOUR)) {
+        return false;
+    }
+
+    if (!GetStringValue(env, argv[PARAM0], asyncContext.configInfo)) {
+        ThrowParamError(env, "config", "string");
+        return false;
+    }
+
+    if (asyncContext.configInfo.empty()) {
+        DlpNapiThrow(env, ERR_JS_INVALID_PARAMETER, GetJsErrMsg(ERR_JS_INVALID_PARAMETER));
+        return false;
+    }
+
+    if (argc == PARAM_SIZE_TWO) {
+        if (!ParseCallback(env, argv[PARAM1], asyncContext.callbackRef)) {
+            ThrowParamError(env, "callback", "function");
+            return false;
+        }
+    }
+    return true;
+}
+
 bool GetThirdInterfaceParams(
     const napi_env env, const napi_callback_info info, CommonAsyncContext& asyncContext)
 {
@@ -1398,7 +1428,7 @@ bool ParseCallback(const napi_env& env, const napi_value& value, napi_ref& callb
 {
     napi_valuetype valuetype = napi_undefined;
     NAPI_CALL_BASE(env, napi_typeof(env, value, &valuetype), false);
-    
+
     if (valuetype == napi_function) {
         NAPI_CALL_BASE(env, napi_create_reference(env, value, 1, &callbackRef), false);
         return true;

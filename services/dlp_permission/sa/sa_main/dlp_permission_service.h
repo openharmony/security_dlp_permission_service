@@ -24,6 +24,7 @@
 #include "iremote_object.h"
 #include "nocopyable.h"
 #include "retention_file_manager.h"
+#include "sandbox_config_kv_data_storage.h"
 #include "singleton.h"
 #include "system_ability.h"
 
@@ -76,6 +77,9 @@ public:
         std::vector<RetentionSandBoxInfo>& retentionSandBoxInfoVec) override;
     int32_t ClearUnreservedSandbox() override;
     int32_t GetDLPFileVisitRecord(std::vector<VisitedDLPFileInfo>& infoVec) override;
+    int32_t SetSandboxAppConfig(const std::string& configInfo) override;
+    int32_t CleanSandboxAppConfig() override;
+    int32_t GetSandboxAppConfig(std::string& configInfo) override;
 
     int32_t SetPolicy(const std::vector<std::string>& appIdList) override;
     int32_t GetPolicy(std::vector<std::string>& appIdList) override;
@@ -105,6 +109,7 @@ private:
     ServiceRunningState state_;
     sptr<AppExecFwk::IAppMgr> iAppMgr_;
     sptr<AppStateObserver> appStateObserver_;
+    std::shared_ptr<SandboxConifgKvDataStorage> sandboxConifgKvDataStorage_ = nullptr;
 };
 }  // namespace DlpPermission
 }  // namespace Security

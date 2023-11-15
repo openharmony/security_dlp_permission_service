@@ -22,6 +22,7 @@
 #include "config_policy_utils.h"
 #include "dlp_credential_client.h"
 #include "dlp_credential.h"
+#include "dlp_kv_data_storage.h"
 #include "dlp_permission.h"
 #include "dlp_permission_log.h"
 #include "dlp_permission_serializer.h"
@@ -83,6 +84,12 @@ void DlpPermissionService::OnStart()
     DLP_LOG_INFO(LABEL, "DlpPermissionService is starting");
     if (!RegisterAppStateObserver()) {
         DLP_LOG_ERROR(LABEL, "Failed to register app state observer!");
+        return;
+    }
+    KvDataStorageOptions options = { .autoSync = false };
+    sandboxConifgKvDataStorage_ = std::make_shared<SandboxConifgKvDataStorage>(options);
+    if(sandboxConifgKvDataStorage_ == nullptr) {
+        DLP_LOG_ERROR(LABEL, "sandboxConifgKvDataStorage_ is null! ");
         return;
     }
     state_ = ServiceRunningState::STATE_RUNNING;
@@ -751,6 +758,66 @@ int32_t DlpPermissionService::RemovePolicy()
         return DLP_SERVICE_ERROR_PERMISSION_DENY;
     }
     return DlpCredential::GetInstance().RemovePolicy();
+}
+
+int32_t DlpPermissionService::SetSandboxAppConfig(const std::string& configInfo)
+{
+    std::string callerBundleName;
+    uint32_t tokenId = IPCSkeleton::GetCallingTokenID();
+    if (!GetCallerBundleName(tokenId, callerBundleName)) {
+        return DLP_SERVICE_ERROR_VALUE_INVALID;
+    }
+    int32_t userId = GetCallingUserId();
+    if (userId < 0) {
+        DLP_LOG_ERROR(LABEL, "get userId error");
+        return DLP_SERVICE_ERROR_VALUE_INVALID;
+    }
+    int32_t res = sandboxConifgKvDataStorage_->AddSandboxConfigIntoDataStorage(userId,callerBundleName,configInfo);
+#ifndef DLP_FUZZ_TEST
+    DLP_LOG_DEBUG(LABEL, "enter StartTimer");
+    StartTimer();
+#endif
+    return res;
+}
+
+int32_t DlpPermissionService::CleanSandboxAppConfig()
+{
+    std::string callerBundleName;
+    uint32_t tokenId = IPCSkeleton::GetCallingTokenID();
+    if (!GetCallerBundleName(tokenId, callerBundleName)) {
+        return DLP_SERVICE_ERROR_VALUE_INVALID;
+    }
+    int32_t userId = GetCallingUserId();
+    if (userId < 0) {
+        DLP_LOG_ERROR(LABEL, "get userId error");
+        return DLP_SERVICE_ERROR_VALUE_INVALID;
+    }
+    int32_t res = sandboxConifgKvDataStorage_->DeleteSandboxConfigFromDataStorage(userId,callerBundleName);
+#ifndef DLP_FUZZ_TEST
+    DLP_LOG_DEBUG(LABEL, "enter StartTimer");
+    StartTimer();
+#endif
+    return res;
+}
+
+int32_t DlpPermissionService::GetSandboxAppConfig(std::string& configInfo)
+{
+    std::string callerBundleName;
+    uint32_t tokenId = IPCSkeleton::GetCallingTokenID();
+    if (!GetCallerBundleName(tokenId, callerBundleName)) {
+        return DLP_SERVICE_ERROR_VALUE_INVALID;
+    }
+    int32_t userId = GetCallingUserId();
+    if (userId < 0) {
+        DLP_LOG_ERROR(LABEL, "get userId error");
+        return DLP_SERVICE_ERROR_VALUE_INVALID;
+    }
+    int32_t res = sandboxConifgKvDataStorage_->GetSandboxConfigFromDataStorage(userId,callerBundleName,configInfo);
+#ifndef DLP_FUZZ_TEST
+    DLP_LOG_DEBUG(LABEL, "enter StartTimer");
+    StartTimer();
+#endif
+    return res;
 }
 
 int DlpPermissionService::Dump(int fd, const std::vector<std::u16string>& args)

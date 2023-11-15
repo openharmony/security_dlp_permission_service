@@ -53,6 +53,9 @@ private:
     int32_t GetRetentionSandboxListInner(MessageParcel& data, MessageParcel& reply);
     int32_t ClearUnreservedSandboxInner(MessageParcel& data, MessageParcel& reply);
     int32_t GetDLPFileVisitRecordInner(MessageParcel& data, MessageParcel& reply);
+    int32_t SetSandboxAppConfigInner(MessageParcel& data, MessageParcel& reply);
+    int32_t CleanSandboxAppConfigInner(MessageParcel& data, MessageParcel& reply);
+    int32_t GetSandboxAppConfigInner(MessageParcel& data, MessageParcel& reply);
 
     int32_t SetPolicyInner(MessageParcel& data, MessageParcel& reply);
     int32_t GetPolicyInner(MessageParcel& data, MessageParcel& reply);

@@ -47,7 +47,8 @@
         "safwk",
         "samgr",
         "c_utils",
-        "config_policy"
+        "config_policy",
+        "kv_store"
       ],
       "third_party": [
         "libfuse",

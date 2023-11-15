@@ -33,6 +33,7 @@ ohos_fuzztest("QueryDlpFileCopyableByTokenIdStubFuzzTest") {
     "${dlp_root_dir}/services/dlp_permission/sa/mock",
     "${dlp_root_dir}/services/dlp_permission/sa/sa_common",
     "${dlp_root_dir}/services/dlp_permission/sa/sa_main",
+    "${dlp_root_dir}/services/dlp_permission/sa/storage/include",
   ]
   cflags = [
     "-g",
@@ -68,6 +69,7 @@ ohos_fuzztest("QueryDlpFileCopyableByTokenIdStubFuzzTest") {
     "hisysevent:libhisysevent",
     "init:libbegetutil",
     "ipc:ipc_core",
+    "kv_store:distributeddata_inner",
     "os_account:libaccountkits",
     "os_account:os_account_innerkits",
     "safwk:system_ability_fwk",

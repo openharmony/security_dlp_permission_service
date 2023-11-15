@@ -217,6 +217,21 @@ int32_t DlpPermissionKit::RemovePolicy()
 {
     return DlpPermissionClient::GetInstance().RemovePolicy();
 }
+
+int32_t DlpPermissionKit::SetSandboxAppConfig(const std::string& configInfo)
+{
+    return DlpPermissionClient::GetInstance().SetSandboxAppConfig(configInfo);
+}
+
+int32_t DlpPermissionKit::CleanSandboxAppConfig()
+{
+    return DlpPermissionClient::GetInstance().CleanSandboxAppConfig();
+}
+
+int32_t DlpPermissionKit::GetSandboxAppConfig(std::string& configInfo)
+{
+    return DlpPermissionClient::GetInstance().GetSandboxAppConfig(configInfo);
+}
 }  // namespace DlpPermission
 }  // namespace Security
 }  // namespace OHOS

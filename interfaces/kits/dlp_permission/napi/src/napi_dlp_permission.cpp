@@ -1617,6 +1617,159 @@ void NapiDlpPermission::GetDLPFileVisitRecordComplete(napi_env env, napi_status 
     ProcessCallbackOrPromise(env, asyncContext, resJs);
 }
 
+napi_value NapiDlpPermission::SetSandboxAppConfig(napi_env env, napi_callback_info cbInfo)
+{
+    DLP_LOG_DEBUG(LABEL, "napi_create_async_work SetSandboxAppConfig running");
+    auto* asyncContext = new (std::nothrow) SandboxAppConifgAsyncContext(env);
+    if (asyncContext == nullptr) {
+        DLP_LOG_ERROR(LABEL, "insufficient memory for asyncContext!");
+        return nullptr;
+    }
+    std::unique_ptr<SandboxAppConifgAsyncContext> asyncContextPtr { asyncContext };
+
+    if (!GetSandboxAppConfigParams(env, cbInfo, *asyncContext)) {
+        return nullptr;
+    }
+
+    napi_value result = nullptr;
+    if (asyncContext->callbackRef == nullptr) {
+        DLP_LOG_DEBUG(LABEL, "Create promise");
+        NAPI_CALL(env, napi_create_promise(env, &asyncContext->deferred, &result));
+    } else {
+        DLP_LOG_DEBUG(LABEL, "Undefined the result parameter");
+        NAPI_CALL(env, napi_get_undefined(env, &result));
+    }
+
+    napi_value resource = nullptr;
+    NAPI_CALL(env, napi_create_string_utf8(env, "SetSandboxAppConfig", NAPI_AUTO_LENGTH, &resource));
+    NAPI_CALL(env, napi_create_async_work(env, nullptr, resource, SetSandboxAppConfigExcute,
+        SetSandboxAppConfigComplete, static_cast<void*>(asyncContext), &(asyncContext->work)));
+    NAPI_CALL(env, napi_queue_async_work(env, asyncContext->work));
+    asyncContextPtr.release();
+    return result;
+}
+
+void NapiDlpPermission::SetSandboxAppConfigExcute(napi_env env, void* data)
+{
+    DLP_LOG_DEBUG(LABEL, "napi_create_async_work SetSandboxAppConfigExcute running");
+    auto asyncContext = reinterpret_cast<SandboxAppConifgAsyncContext*>(data);
+    asyncContext->errCode = DlpPermissionKit::SetSandboxAppConfig(asyncContext->configInfo);
+}
+
+void NapiDlpPermission::SetSandboxAppConfigComplete(napi_env env, napi_status status, void* data)
+{
+    DLP_LOG_DEBUG(LABEL, "napi_create_async_work SetSandboxAppConfig complete");
+    auto asyncContext = reinterpret_cast<SandboxAppConifgAsyncContext*>(data);
+    std::unique_ptr<SandboxAppConifgAsyncContext> asyncContextPtr { asyncContext };
+    if (asyncContext == nullptr) {
+        DLP_LOG_ERROR(LABEL, "asyncContext is nullptr");
+        return;
+    }
+    napi_value resJs = nullptr;
+    if (asyncContext->errCode == DLP_OK) {
+        NAPI_CALL_RETURN_VOID(env, napi_get_undefined(env, &resJs));
+    }
+    ProcessCallbackOrPromise(env, asyncContext, resJs);
+}
+
+napi_value NapiDlpPermission::CleanSandboxAppConfig(napi_env env, napi_callback_info cbInfo)
+{
+    auto* asyncContext = new (std::nothrow) SandboxAppConifgAsyncContext(env);
+    if (asyncContext == nullptr) {
+        DLP_LOG_ERROR(LABEL, "insufficient memory for asyncContext!");
+        return nullptr;
+    }
+    std::unique_ptr<SandboxAppConifgAsyncContext> asyncContextPtr { asyncContext };
+
+    if (!GetThirdInterfaceParams(env, cbInfo, *asyncContext)) {
+        return nullptr;
+    }
+
+    napi_value result = nullptr;
+    if (asyncContext->callbackRef == nullptr) {
+        DLP_LOG_DEBUG(LABEL, "Create promise");
+        NAPI_CALL(env, napi_create_promise(env, &asyncContext->deferred, &result));
+    } else {
+        DLP_LOG_DEBUG(LABEL, "Undefined the result parameter");
+        NAPI_CALL(env, napi_get_undefined(env, &result));
+    }
+
+    napi_value resource = nullptr;
+    NAPI_CALL(env, napi_create_string_utf8(env, "CleanSandboxAppConfig", NAPI_AUTO_LENGTH, &resource));
+    NAPI_CALL(env, napi_create_async_work(env, nullptr, resource, CleanSandboxAppConfigExcute,
+        CleanSandboxAppConfigComplete, static_cast<void*>(asyncContext), &(asyncContext->work)));
+    NAPI_CALL(env, napi_queue_async_work(env, asyncContext->work));
+    asyncContextPtr.release();
+    return result;
+}
+
+void NapiDlpPermission::CleanSandboxAppConfigExcute(napi_env env, void* data)
+{
+    DLP_LOG_DEBUG(LABEL, "napi_create_async_work CleanSandboxAppConfigExcute running");
+    auto asyncContext = reinterpret_cast<SandboxAppConifgAsyncContext*>(data);
+    asyncContext->errCode = DlpPermissionKit::CleanSandboxAppConfig();
+}
+
+void NapiDlpPermission::CleanSandboxAppConfigComplete(napi_env env, napi_status status, void* data)
+{
+    DLP_LOG_DEBUG(LABEL, "napi_create_async_work CleanSandboxAppConfig complete");
+    SetSandboxAppConfigComplete(env, status, data);
+}
+
+napi_value NapiDlpPermission::GetSandboxAppConfig(napi_env env, napi_callback_info cbInfo)
+{
+    auto* asyncContext = new (std::nothrow) SandboxAppConifgAsyncContext(env);
+    if (asyncContext == nullptr) {
+        DLP_LOG_ERROR(LABEL, "insufficient memory for asyncContext!");
+        return nullptr;
+    }
+    std::unique_ptr<SandboxAppConifgAsyncContext> asyncContextPtr { asyncContext };
+
+    if (!GetThirdInterfaceParams(env, cbInfo, *asyncContext)) {
+        return nullptr;
+    }
+
+    napi_value result = nullptr;
+    if (asyncContext->callbackRef == nullptr) {
+        DLP_LOG_DEBUG(LABEL, "Create promise");
+        NAPI_CALL(env, napi_create_promise(env, &asyncContext->deferred, &result));
+    } else {
+        DLP_LOG_DEBUG(LABEL, "Undefined the result parameter");
+        NAPI_CALL(env, napi_get_undefined(env, &result));
+    }
+
+    napi_value resource = nullptr;
+    NAPI_CALL(env, napi_create_string_utf8(env, "GetSandboxAppConfig", NAPI_AUTO_LENGTH, &resource));
+    NAPI_CALL(env, napi_create_async_work(env, nullptr, resource, GetSandboxAppConfigExcute,
+        GetSandboxAppConfigComplete, static_cast<void*>(asyncContext), &(asyncContext->work)));
+    NAPI_CALL(env, napi_queue_async_work(env, asyncContext->work));
+    asyncContextPtr.release();
+    return result;
+}
+
+void NapiDlpPermission::GetSandboxAppConfigExcute(napi_env env, void* data)
+{
+    DLP_LOG_DEBUG(LABEL, "napi_create_async_work GetSandboxAppConfigExcute running");
+    auto asyncContext = reinterpret_cast<SandboxAppConifgAsyncContext*>(data);
+    asyncContext->errCode = DlpPermissionKit::GetSandboxAppConfig(asyncContext->configInfo);
+}
+
+void NapiDlpPermission::GetSandboxAppConfigComplete(napi_env env, napi_status status, void* data)
+{
+    DLP_LOG_DEBUG(LABEL, "napi_create_async_work GetSandboxAppConfig complete");
+    auto asyncContext = reinterpret_cast<SandboxAppConifgAsyncContext*>(data);
+    std::unique_ptr<SandboxAppConifgAsyncContext> asyncContextPtr { asyncContext };
+    if (asyncContext == nullptr) {
+        DLP_LOG_ERROR(LABEL, "asyncContext is nullptr");
+        return;
+    }
+    napi_value configInfoJs = nullptr;
+    if (asyncContext->errCode == DLP_OK) {
+        NAPI_CALL_RETURN_VOID(env, napi_create_string_utf8(env, asyncContext->configInfo.c_str(), NAPI_AUTO_LENGTH, &configInfoJs));
+    }
+    ProcessCallbackOrPromise(env, asyncContext, configInfoJs);
+}
+
 napi_value NapiDlpPermission::GetDLPSuffix(napi_env env, napi_callback_info cbInfo)
 {
     GetSuffixAsyncContext *asyncContext = new (std::nothrow) GetSuffixAsyncContext(env);
@@ -1684,6 +1837,9 @@ napi_value NapiDlpPermission::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("on", Subscribe),
         DECLARE_NAPI_FUNCTION("off", UnSubscribe),
         DECLARE_NAPI_FUNCTION("getDLPGatheringPolicy", GetDlpGatheringPolicy),
+        DECLARE_NAPI_FUNCTION("setSandboxAppConfig", SetSandboxAppConfig),
+        DECLARE_NAPI_FUNCTION("cleanSandboxAppConfig", CleanSandboxAppConfig),
+        DECLARE_NAPI_FUNCTION("GetSandboxAppConfig", GetSandboxAppConfig),
     };
     NAPI_CALL(env, napi_define_properties(env, exports, sizeof(desc) / sizeof(desc[PARAM0]), desc));
 

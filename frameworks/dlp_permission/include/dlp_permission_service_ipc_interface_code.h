@@ -43,6 +43,10 @@ enum DlpPermissionServiceInterfaceCode {
     SET_POLICY,
     GET_POLICY,
     REMOVE_POLICY,
+    SET_SANDBOX_APP_CONFIG,
+    CLEAN_SANDBOX_APP_CONFIG,
+    GET_SANDBOX_APP_CONFIG,
+
 };
 
 enum DlpPermissionCallbackInterfaceCode {
