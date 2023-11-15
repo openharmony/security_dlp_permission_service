@@ -13,11 +13,11 @@
  * limitations under the License.
  */
 
-#ifndef TEST_FUZZTEST_SET_POLICY_STUB_FUZZER_H
-#define TEST_FUZZTEST_SET_POLICY_STUB_FUZZER_H
+#ifndef TEST_FUZZTEST_SET_MDM_POLICY_STUB_FUZZER_H
+#define TEST_FUZZTEST_SET_MDM_POLICY_STUB_FUZZER_H
 
-#define FUZZ_PROJECT_NAME "setpolicystub_fuzzer"
+#define FUZZ_PROJECT_NAME "setmdmpolicystub_fuzzer"
 
 #include "dlp_permission_service.h"
 
-#endif // TEST_FUZZTEST_SET_POLICY_STUB_FUZZER_H
+#endif // TEST_FUZZTEST_SET_MDM_POLICY_STUB_FUZZER_H

@@ -563,14 +563,14 @@ int32_t DlpPermissionStub::GetDLPFileVisitRecordInner(MessageParcel& data, Messa
     return DLP_OK;
 }
 
-int32_t DlpPermissionStub::SetPolicyInner(MessageParcel& data, MessageParcel& reply)
+int32_t DlpPermissionStub::SetMDMPolicyInner(MessageParcel& data, MessageParcel& reply)
 {
     std::vector<std::string> appIdList;
     if (!data.ReadStringVector(&appIdList)) {
         DLP_LOG_ERROR(LABEL, "Read appId List fail");
         return DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL;
     }
-    int32_t result = this->SetPolicy(appIdList);
+    int32_t result = this->SetMDMPolicy(appIdList);
     if (!reply.WriteInt32(result)) {
         DLP_LOG_ERROR(LABEL, "Write set policy result fail");
         return DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL;
@@ -578,10 +578,10 @@ int32_t DlpPermissionStub::SetPolicyInner(MessageParcel& data, MessageParcel& re
     return DLP_OK;
 }
 
-int32_t DlpPermissionStub::GetPolicyInner(MessageParcel& data, MessageParcel& reply)
+int32_t DlpPermissionStub::GetMDMPolicyInner(MessageParcel& data, MessageParcel& reply)
 {
     std::vector<std::string> appIdList;
-    int32_t result = this->GetPolicy(appIdList);
+    int32_t result = this->GetMDMPolicy(appIdList);
     if (!reply.WriteInt32(result)) {
         DLP_LOG_ERROR(LABEL, "Write get policy result fail");
         return DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL;
@@ -598,9 +598,9 @@ int32_t DlpPermissionStub::GetPolicyInner(MessageParcel& data, MessageParcel& re
     return DLP_OK;
 }
 
-int32_t DlpPermissionStub::RemovePolicyInner(MessageParcel& data, MessageParcel& reply)
+int32_t DlpPermissionStub::RemoveMDMPolicyInner(MessageParcel& data, MessageParcel& reply)
 {
-    int32_t result = this->RemovePolicy();
+    int32_t result = this->RemoveMDMPolicy();
     if (!reply.WriteInt32(result)) {
         DLP_LOG_ERROR(LABEL, "Write remove policy result fail");
         return DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL;
@@ -650,12 +650,12 @@ DlpPermissionStub::DlpPermissionStub()
         &DlpPermissionStub::RegisterOpenDlpFileCallbackInner;
     requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::UN_REGISTER_OPEN_DLP_FILE_CALLBACK)] =
         &DlpPermissionStub::UnRegisterOpenDlpFileCallbackInner;
-    requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::SET_POLICY)] =
-        &DlpPermissionStub::SetPolicyInner;
-    requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::GET_POLICY)] =
-        &DlpPermissionStub::GetPolicyInner;
-    requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::REMOVE_POLICY)] =
-        &DlpPermissionStub::RemovePolicyInner;
+    requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::SET_MDM_POLICY)] =
+        &DlpPermissionStub::SetMDMPolicyInner;
+    requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::GET_MDM_POLICY)] =
+        &DlpPermissionStub::GetMDMPolicyInner;
+    requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::REMOVE_MDM_POLICY)] =
+        &DlpPermissionStub::RemoveMDMPolicyInner;
 }
 
 DlpPermissionStub::~DlpPermissionStub()

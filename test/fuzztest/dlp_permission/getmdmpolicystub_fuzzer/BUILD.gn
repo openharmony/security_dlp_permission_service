@@ -17,14 +17,23 @@ import("../../../../dlp_permission_service.gni")
 
 module_output_path = "dlp_permission_service/dlp_permission_service"
 
-ohos_fuzztest("SetPolicyFuzzTest") {
+ohos_fuzztest("GetMDMPolicyStubFuzzTest") {
   module_out_path = module_output_path
   fuzz_config_file =
-      "${dlp_root_dir}/test/fuzztest/dlp_permission/setpolicy_fuzzer"
+      "${dlp_root_dir}/test/fuzztest/dlp_permission/getmdmpolicystub_fuzzer"
 
   include_dirs = [
-    "${dlp_root_dir}/services/dlp_permission/sa/sa_common",
+    "${dlp_root_dir}/frameworks/common/include",
+    "${dlp_root_dir}/frameworks/dlp_permission/include",
     "${dlp_root_dir}/interfaces/inner_api/dlp_permission/include",
+    "${dlp_root_dir}/services/dlp_permission/sa/adapt",
+    "${dlp_root_dir}/services/dlp_permission/sa/callback/dlp_sandbox_change_callback/",
+    "${dlp_root_dir}/services/dlp_permission/sa/callback/open_dlp_file_callback/",
+    "${dlp_root_dir}/services/dlp_permission/sa/mock",
+    "${dlp_root_dir}/services/dlp_permission/sa/sa_common",
+    "${dlp_root_dir}/services/dlp_permission/sa/sa_main",
+    "//third_party/json/include",
+    "//third_party/json/test/thirdparty/fifo_map",
   ]
   cflags = [
     "-g",
@@ -35,17 +44,34 @@ ohos_fuzztest("SetPolicyFuzzTest") {
   configs = [ "${dlp_root_dir}/config:coverage_flags" ]
 
   cflags_cc = [ "-DHILOG_ENABLE" ]
-  sources = [ "setpolicy_fuzzer.cpp" ]
+  sources = [
+    "${dlp_root_dir}/services/dlp_permission/sa/sa_main/dlp_permission_service.cpp",
+    "getmdmpolicystub_fuzzer.cpp",
+  ]
 
   deps = [
     "${dlp_root_dir}/interfaces/inner_api/dlp_permission:libdlp_permission_sdk",
+    "${dlp_root_dir}/services/dlp_permission/sa:dlp_permission_service",
   ]
 
   external_deps = [
     "ability_base:want",
+    "ability_runtime:app_manager",
     "access_token:libaccesstoken_sdk",
     "access_token:libtoken_setproc",
+    "bundle_framework:appexecfwk_base",
+    "bundle_framework:appexecfwk_core",
     "c_utils:utils",
+    "common_event_service:cesfwk_core",
+    "common_event_service:cesfwk_innerkits",
+    "config_policy:configpolicy_util",
     "hilog:libhilog",
+    "hisysevent:libhisysevent",
+    "init:libbegetutil",
+    "ipc:ipc_core",
+    "os_account:libaccountkits",
+    "os_account:os_account_innerkits",
+    "safwk:system_ability_fwk",
+    "samgr:samgr_proxy",
   ]
 }

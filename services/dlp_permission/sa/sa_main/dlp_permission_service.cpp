@@ -719,7 +719,7 @@ int32_t DlpPermissionService::GetDLPFileVisitRecord(std::vector<VisitedDLPFileIn
     return result;
 }
 
-int32_t DlpPermissionService::SetPolicy(const std::vector<std::string>& appIdList)
+int32_t DlpPermissionService::SetMDMPolicy(const std::vector<std::string>& appIdList)
 {
     if (appIdList.empty()) {
         DLP_LOG_ERROR(LABEL, "get appIdList empty");
@@ -730,27 +730,27 @@ int32_t DlpPermissionService::SetPolicy(const std::vector<std::string>& appIdLis
         DLP_LOG_ERROR(LABEL, "invalid caller");
         return DLP_SERVICE_ERROR_PERMISSION_DENY;
     }
-    return DlpCredential::GetInstance().SetPolicy(appIdList);
+    return DlpCredential::GetInstance().SetMDMPolicy(appIdList);
 }
 
-int32_t DlpPermissionService::GetPolicy(std::vector<std::string>& appIdList)
+int32_t DlpPermissionService::GetMDMPolicy(std::vector<std::string>& appIdList)
 {
     int32_t uid = IPCSkeleton::GetCallingUid();
     if (uid != EDM_UID) {
         DLP_LOG_ERROR(LABEL, "invalid caller");
         return DLP_SERVICE_ERROR_PERMISSION_DENY;
     }
-    return DlpCredential::GetInstance().GetPolicy(appIdList);
+    return DlpCredential::GetInstance().GetMDMPolicy(appIdList);
 }
 
-int32_t DlpPermissionService::RemovePolicy()
+int32_t DlpPermissionService::RemoveMDMPolicy()
 {
     int32_t uid = IPCSkeleton::GetCallingUid();
     if (uid != EDM_UID) {
         DLP_LOG_ERROR(LABEL, "invalid caller");
         return DLP_SERVICE_ERROR_PERMISSION_DENY;
     }
-    return DlpCredential::GetInstance().RemovePolicy();
+    return DlpCredential::GetInstance().RemoveMDMPolicy();
 }
 
 int DlpPermissionService::Dump(int fd, const std::vector<std::u16string>& args)

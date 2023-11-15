@@ -54,9 +54,9 @@ public:
         std::vector<RetentionSandBoxInfo>& retentionSandBoxInfoVec) override;
     int32_t ClearUnreservedSandbox() override;
     int32_t GetDLPFileVisitRecord(std::vector<VisitedDLPFileInfo>& infoVec) override;
-    int32_t SetPolicy(const std::vector<std::string>& appIdList) override;
-    int32_t GetPolicy(std::vector<std::string>& appIdList) override;
-    int32_t RemovePolicy() override;
+    int32_t SetMDMPolicy(const std::vector<std::string>& appIdList) override;
+    int32_t GetMDMPolicy(std::vector<std::string>& appIdList) override;
+    int32_t RemoveMDMPolicy() override;
 
 private:
     static inline BrokerDelegator<DlpPermissionProxy> delegator_;

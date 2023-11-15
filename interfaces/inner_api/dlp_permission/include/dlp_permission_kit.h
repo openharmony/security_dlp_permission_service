@@ -88,9 +88,9 @@ public:
         std::vector<RetentionSandBoxInfo>& retentionSandBoxInfoVec);
     static int32_t ClearUnreservedSandbox();
     static int32_t GetDLPFileVisitRecord(std::vector<VisitedDLPFileInfo>& infoVec);
-    static int32_t SetPolicy(const std::vector<std::string>& appIdList);
-    static int32_t GetPolicy(std::vector<std::string>& appIdList);
-    static int32_t RemovePolicy();
+    static int32_t SetMDMPolicy(const std::vector<std::string>& appIdList);
+    static int32_t GetMDMPolicy(std::vector<std::string>& appIdList);
+    static int32_t RemoveMDMPolicy();
 };
 }  // namespace DlpPermission
 }  // namespace Security
