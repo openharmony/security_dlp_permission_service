@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-#include "setpolicy_fuzzer.h"
+#include "setmdmpolicystub_fuzzer.h"
 #include <iostream>
 #include <string>
 #include <thread>
@@ -32,12 +32,21 @@ static void FuzzTest(const uint8_t* data, size_t size)
     if ((data == nullptr) || (size == 0)) {
         return;
     }
+    MessageParcel datas;
+    datas.WriteInterfaceToken(IDlpPermissionService::GetDescriptor());
     std::string appId(reinterpret_cast<const char*>(data), size);
     std::vector<std::string> appIdList = { appId };
-    DlpPermissionKit::SetPolicy(appIdList);
+    if (!datas.WriteStringVector(appIdList)) {
+        return;
+    }
+    uint32_t code = static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::SET_MDM_POLICY);
+    MessageParcel reply;
+    MessageOption option;
+    auto service = std::make_shared<DlpPermissionService>(SA_ID_DLP_PERMISSION_SERVICE, true);
+    service->OnRemoteRequest(code, datas, reply, option);
 }
 
-bool SetPolicyFuzzTest(const uint8_t* data, size_t size)
+bool SetMDMPolicyFuzzTest(const uint8_t* data, size_t size)
 {
     int selfTokenId = GetSelfTokenID();
     AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(100, "com.ohos.dlpmanager", 0); // user_id = 100
@@ -52,6 +61,6 @@ bool SetPolicyFuzzTest(const uint8_t* data, size_t size)
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 {
     /* Run your code on data */
-    OHOS::SetPolicyFuzzTest(data, size);
+    OHOS::SetMDMPolicyFuzzTest(data, size);
     return 0;
 }

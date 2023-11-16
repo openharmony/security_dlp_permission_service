@@ -583,7 +583,7 @@ int32_t ParseUint8TypedArrayToStringVector(uint8_t *policy, uint32_t *policyLen,
     return 0;
 }
 
-int32_t DlpCredential::SetPolicy(const std::vector<std::string>& appIdList)
+int32_t DlpCredential::SetMDMPolicy(const std::vector<std::string>& appIdList)
 {
     if (size(appIdList) > MAX_APPID_LENGTH) {
         DLP_LOG_ERROR(LABEL, "appId List too large");
@@ -603,19 +603,19 @@ int32_t DlpCredential::SetPolicy(const std::vector<std::string>& appIdList)
     }
     int32_t res = DLP_AddPolicy(PolicyType::AUTHORIZED_APPLICATION_LIST, policy, policyLen);
     if (res != DLP_OK) {
-        DLP_LOG_ERROR(LABEL, "SetPolicy request fail, error: %{public}d", res);
+        DLP_LOG_ERROR(LABEL, "SetMDMPolicy request fail, error: %{public}d", res);
     }
     delete[] policy;
     return res;
 }
 
-int32_t DlpCredential::GetPolicy(std::vector<std::string>& appIdList)
+int32_t DlpCredential::GetMDMPolicy(std::vector<std::string>& appIdList)
 {
     uint32_t policyLen = MAX_APPID_LIST_NUM * MAX_APPID_LENGTH;
     uint8_t *policy = new (std::nothrow)uint8_t[policyLen];
     int32_t res = DLP_GetPolicy(PolicyType::AUTHORIZED_APPLICATION_LIST, policy, &policyLen);
     if (res != DLP_OK) {
-        DLP_LOG_ERROR(LABEL, "GetPolicy request fail, error: %{public}d", res);
+        DLP_LOG_ERROR(LABEL, "GetMDMPolicy request fail, error: %{public}d", res);
         delete[] policy;
         return res;
     }
@@ -629,11 +629,11 @@ int32_t DlpCredential::GetPolicy(std::vector<std::string>& appIdList)
     return res;
 }
 
-int32_t DlpCredential::RemovePolicy()
+int32_t DlpCredential::RemoveMDMPolicy()
 {
     int32_t res = DLP_RemovePolicy(PolicyType::AUTHORIZED_APPLICATION_LIST);
     if (res != DLP_OK) {
-        DLP_LOG_ERROR(LABEL, "RemovePolicy request fail, error: %{public}d", res);
+        DLP_LOG_ERROR(LABEL, "RemoveMDMPolicy request fail, error: %{public}d", res);
     }
     return res;
 }

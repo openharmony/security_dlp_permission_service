@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-#include "getpolicy_fuzzer.h"
+#include "getmdmpolicy_fuzzer.h"
 #include <iostream>
 #include <string>
 #include <thread>
@@ -30,10 +30,10 @@ namespace OHOS {
 static void FuzzTest(const uint8_t* data, size_t size)
 {
     std::vector<std::string> appIdList;
-    DlpPermissionKit::GetPolicy(appIdList);
+    DlpPermissionKit::GetMDMPolicy(appIdList);
 }
 
-bool GetPolicyFuzzTest(const uint8_t* data, size_t size)
+bool GetMDMPolicyFuzzTest(const uint8_t* data, size_t size)
 {
     int selfTokenId = GetSelfTokenID();
     AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(100, "com.ohos.dlpmanager", 0); // user_id = 100
@@ -48,6 +48,6 @@ bool GetPolicyFuzzTest(const uint8_t* data, size_t size)
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 {
     /* Run your code on data */
-    OHOS::GetPolicyFuzzTest(data, size);
+    OHOS::GetMDMPolicyFuzzTest(data, size);
     return 0;
 }
