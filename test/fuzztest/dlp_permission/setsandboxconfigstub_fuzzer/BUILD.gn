@@ -19,7 +19,8 @@ module_output_path = "dlp_permission_service/dlp_permission_service"
 
 ohos_fuzztest("SetSandboxConfigStubFuzzTest") {
   module_out_path = module_output_path
-  fuzz_config_file = "${dlp_root_dir}/test/fuzztest/dlp_permission/setsandboxconfigstub_fuzzer"
+  fuzz_config_file =
+      "${dlp_root_dir}/test/fuzztest/dlp_permission/setsandboxconfigstub_fuzzer"
 
   include_dirs = [
     "${dlp_root_dir}/frameworks/common/include",

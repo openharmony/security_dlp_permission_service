@@ -4,7 +4,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -13,11 +13,25 @@
  * limitations under the License.
  */
 
-#ifndef TEST_FUZZTEST_SET_POLICY_FUZZER_H
-#define TEST_FUZZTEST_SET_POLICY_FUZZER_H
+#ifndef DLP_BUNDLE_ADAPTER_TEST_H
+#define DLP_BUNDLE_ADAPTER_TEST_H
 
-#define FUZZ_PROJECT_NAME "setpolicy_fuzzer"
+#include <gtest/gtest.h>
 
-#include "dlp_permission_kit.h"
+namespace OHOS {
+namespace Security {
+namespace DlpPermission {
+class DlpBundleAdapterTest : public testing::Test {
+public:
+    static void SetUpTestCase();
 
-#endif // TEST_FUZZTEST_SET_POLICY_FUZZER_H
+    static void TearDownTestCase();
+
+    void SetUp();
+
+    void TearDown();
+};
+}  // namespace DlpPermission
+}  // namespace Security
+}  // namespace OHOS
+#endif  // DLP_BUNDLE_ADAPTER_TEST_H

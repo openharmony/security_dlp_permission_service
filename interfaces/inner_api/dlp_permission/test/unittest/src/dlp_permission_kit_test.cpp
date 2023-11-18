@@ -1276,22 +1276,41 @@ HWTEST_F(DlpPermissionKitTest, GetDLPFileVisitRecord001, TestSize.Level1)
 }
 
 /* *
- * @tc.name: SetPolicy001
- * @tc.desc: SetPolicy001 abnormal input test.
+ * @tc.name: SetSandboxAppConfig001
+ * @tc.desc: SetSandboxAppConfig001  test.
+ * @tc.type: FUNC
+ * @tc.require: SR000IEUH3
+ */
+HWTEST_F(DlpPermissionKitTest, SetSandboxAppConfig001, TestSize.Level1)
+{
+    int32_t uid = getuid();
+    AccessTokenID tokenId = GetSelfTokenID();
+    TestMockApp(DLP_MANAGER_APP, 0, DEFAULT_USERID);
+    std::string config = "test";
+    ASSERT_EQ(DLP_OK, DlpPermissionKit::SetSandboxAppConfig(config));
+    std::string configGet;
+    ASSERT_EQ(DLP_OK, DlpPermissionKit::GetSandboxAppConfig(configGet));
+    ASSERT_EQ(DLP_OK, DlpPermissionKit::CleanSandboxAppConfig());
+    TestRecoverProcessInfo(uid, tokenId);
+}
+
+/* *
+ * @tc.name: SetMDMPolicy001
+ * @tc.desc: SetMDMPolicy001 abnormal input test.
  * @tc.type: FUNC
  * @tc.require: SR000IEUHS
  */
-HWTEST_F(DlpPermissionKitTest, SetPolicy001, TestSize.Level1)
+HWTEST_F(DlpPermissionKitTest, SetMDMPolicy001, TestSize.Level1)
 {
     seteuid(1000);
     std::vector<std::string> appIdList;
-    ASSERT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, DlpPermissionKit::SetPolicy(appIdList));
+    ASSERT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, DlpPermissionKit::SetMDMPolicy(appIdList));
     appIdList.push_back("@ohos.test.bundleName1_QG9ob3MudGVzdC5idW5kbGVOYW1lMQ==");
-    ASSERT_EQ(DLP_SERVICE_ERROR_PERMISSION_DENY, DlpPermissionKit::SetPolicy(appIdList));
+    ASSERT_EQ(DLP_SERVICE_ERROR_PERMISSION_DENY, DlpPermissionKit::SetMDMPolicy(appIdList));
     seteuid(3057);
-    ASSERT_EQ(DLP_OK, DlpPermissionKit::SetPolicy(appIdList));
+    ASSERT_EQ(DLP_OK, DlpPermissionKit::SetMDMPolicy(appIdList));
     appIdList.push_back("");
-    ASSERT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, DlpPermissionKit::SetPolicy(appIdList));
+    ASSERT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, DlpPermissionKit::SetMDMPolicy(appIdList));
     appIdList.pop_back();
     appIdList.push_back("@ohos.test.bundleName2_QG9ob3MudGVzdC5idW5kbGVOYW1lMg==");
     appIdList.push_back("@ohos.test.bundleName3_QG9ob3MudGVzdC5idW5kbGVOYW1lMw==");
@@ -1299,43 +1318,43 @@ HWTEST_F(DlpPermissionKitTest, SetPolicy001, TestSize.Level1)
         "@ohos.test.bundleNameWhichIsLongerThanThe200digitsLengthLimit\
         123456789123456789123456789_QG9ob3MudGVzdC5idW5kbGVOYW1lV2hpY2hJc0xvbmdlclRoYW5UaGUyMDBkaWdpdHNMZW5nd\
         GhMaW1pdDEyMzQ1Njc4OTEyMzQ1Njc4OTEyMzQ1Njc4OQ==");
-    ASSERT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, DlpPermissionKit::SetPolicy(appIdList));
+    ASSERT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, DlpPermissionKit::SetMDMPolicy(appIdList));
     appIdList.pop_back();
     for (int i = 0; i < 250; i++) {
         appIdList.push_back("@ohos.test.bundleName1_QG9ob3MudGVzdC5idW5kbGVOYW1lMQ==");
     }
-    ASSERT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, DlpPermissionKit::SetPolicy(appIdList));
+    ASSERT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, DlpPermissionKit::SetMDMPolicy(appIdList));
     appIdList.clear();
 }
 
 /* *
- * @tc.name: GetPolicy001
- * @tc.desc: GetPolicy001S abnormal input test.
+ * @tc.name: GetMDMPolicy001
+ * @tc.desc: GetMDMPolicy001S abnormal input test.
  * @tc.type: FUNC
  * @tc.require: SR000IEUHS
  */
-HWTEST_F(DlpPermissionKitTest, GetPolicy001, TestSize.Level1)
+HWTEST_F(DlpPermissionKitTest, GetMDMPolicy001, TestSize.Level1)
 {
     seteuid(1000);
     std::vector<std::string> appIdList;
-    ASSERT_EQ(DLP_SERVICE_ERROR_PERMISSION_DENY, DlpPermissionKit::GetPolicy(appIdList));
+    ASSERT_EQ(DLP_SERVICE_ERROR_PERMISSION_DENY, DlpPermissionKit::GetMDMPolicy(appIdList));
     seteuid(3057);
-    ASSERT_EQ(DLP_OK, DlpPermissionKit::GetPolicy(appIdList));
+    ASSERT_EQ(DLP_OK, DlpPermissionKit::GetMDMPolicy(appIdList));
     appIdList.clear();
 }
 
 /* *
- * @tc.name: RemovePolicy001
- * @tc.desc: RemovePolicy001 abnormal input test.
+ * @tc.name: RemoveMDMPolicy001
+ * @tc.desc: RemoveMDMPolicy001 abnormal input test.
  * @tc.type: FUNC
  * @tc.require: SR000IEUHS
  */
-HWTEST_F(DlpPermissionKitTest, RemovePolicy001, TestSize.Level1)
+HWTEST_F(DlpPermissionKitTest, RemoveMDMPolicy001, TestSize.Level1)
 {
     seteuid(1000);
-    ASSERT_EQ(DLP_SERVICE_ERROR_PERMISSION_DENY, DlpPermissionKit::RemovePolicy());
+    ASSERT_EQ(DLP_SERVICE_ERROR_PERMISSION_DENY, DlpPermissionKit::RemoveMDMPolicy());
     seteuid(3057);
-    ASSERT_EQ(DLP_OK, DlpPermissionKit::RemovePolicy());
+    ASSERT_EQ(DLP_OK, DlpPermissionKit::RemoveMDMPolicy());
 }
 }  // namespace DlpPermission
 }  // namespace Security

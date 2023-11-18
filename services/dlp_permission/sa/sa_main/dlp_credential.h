@@ -35,9 +35,9 @@ public:
         sptr<IDlpPermissionCallback>& callback);
     int32_t ParseDlpCertificate(sptr<CertParcel>& certParcel, sptr<IDlpPermissionCallback>& callback,
         const std::string& appId);
-    int32_t SetPolicy(const std::vector<std::string>& appIdList);
-    int32_t GetPolicy(std::vector<std::string>& appIdList);
-    int32_t RemovePolicy();
+    int32_t SetMDMPolicy(const std::vector<std::string>& appIdList);
+    int32_t GetMDMPolicy(std::vector<std::string>& appIdList);
+    int32_t RemoveMDMPolicy();
 };
 }  // namespace DlpPermission
 }  // namespace Security

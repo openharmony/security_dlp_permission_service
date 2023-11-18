@@ -54,6 +54,21 @@ int8_t GetLocalAccountName(char** account, uint32_t userId)
     return -1;
 }
 
+bool GetUserIdByActiveAccount(int32_t* userId)
+{
+    std::vector<int32_t> ids;
+    if (OHOS::AccountSA::OsAccountManager::QueryActiveOsAccountIds(ids) != 0) {
+        DLP_LOG_ERROR(LABEL, "QueryActiveOsAccountIds return not 0");
+        return false;
+    }
+    if (ids.size() < 1) {
+        DLP_LOG_ERROR(LABEL, "QueryActiveOsAccountIds empty");
+        return false;
+    }
+    *userId = ids[0];
+    return true;
+}
+
 int32_t GetLocalAccountUid(std::string& accountUid)
 {
     OHOS::AccountSA::OhosAccountInfo accountInfo;

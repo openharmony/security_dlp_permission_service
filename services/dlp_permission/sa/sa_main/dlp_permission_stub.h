@@ -57,9 +57,9 @@ private:
     int32_t CleanSandboxAppConfigInner(MessageParcel& data, MessageParcel& reply);
     int32_t GetSandboxAppConfigInner(MessageParcel& data, MessageParcel& reply);
 
-    int32_t SetPolicyInner(MessageParcel& data, MessageParcel& reply);
-    int32_t GetPolicyInner(MessageParcel& data, MessageParcel& reply);
-    int32_t RemovePolicyInner(MessageParcel& data, MessageParcel& reply);
+    int32_t SetMDMPolicyInner(MessageParcel& data, MessageParcel& reply);
+    int32_t GetMDMPolicyInner(MessageParcel& data, MessageParcel& reply);
+    int32_t RemoveMDMPolicyInner(MessageParcel& data, MessageParcel& reply);
 
     using RequestFuncType = int32_t (DlpPermissionStub::*)(MessageParcel& data, MessageParcel& reply);
     std::map<uint32_t, RequestFuncType> requestFuncMap_;

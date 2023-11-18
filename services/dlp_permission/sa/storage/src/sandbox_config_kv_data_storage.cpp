@@ -21,94 +21,107 @@ namespace OHOS {
 namespace Security {
 namespace DlpPermission {
 namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "SandboxConifgKvDataStorage"};
+static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION,
+    "SandboxConfigKvDataStorage"};
 static const std::string APP_CONFIG_STORE_ID = "sandbox_app_config_info";
 static const std::string KEY_SEPATATOR = "_";
 }
-SandboxConifgKvDataStorage::SandboxConifgKvDataStorage(const KvDataStorageOptions &options)
+SandboxConfigKvDataStorage::SandboxConfigKvDataStorage(const KvDataStorageOptions &options)
     : DlpKvDataStorage(APP_CONFIG_STORE_ID, options)
 {}
 
-SandboxConifgKvDataStorage::~SandboxConifgKvDataStorage()
+SandboxConfigKvDataStorage::~SandboxConfigKvDataStorage()
 {}
 
-int32_t SandboxConifgKvDataStorage::GetSandboxConfigFromDataStorage(const int32_t userId, const std::string& bundleName, std::string& configInfo)
+int32_t SandboxConfigKvDataStorage::GetSandboxConfigFromDataStorage(const int32_t userId, const std::string& bundleName,
+    std::string& configInfo)
 {
     std::string key;
-    if(!generateKey(userId, bundleName, key)) {
-        DLP_LOG_ERROR(LABEL,"generate key error");
+    if (!GenerateKey(userId, bundleName, key)) {
+        DLP_LOG_ERROR(LABEL, "generate key error");
         return DLP_SERVICE_ERROR_VALUE_INVALID;
+    }
+    if (!IsKeyExists(key)) {
+        DLP_LOG_ERROR(LABEL, "the key not exists.");
+        return DLP_KV_GET_DATA_NOT_FOUND;
     }
     int32_t result = GetValueFromKvStore(key, configInfo);
     if (result != DLP_OK) {
-        DLP_LOG_ERROR(LABEL,"failed to get config info by key, result %{public}d.", result);
+        DLP_LOG_ERROR(LABEL, "failed to get config info by key, result %{public}d.", result);
     }
-
     return result;
 }
 
-int32_t SandboxConifgKvDataStorage::AddSandboxConfigIntoDataStorage(const int32_t userId, const std::string& bundleName,const std::string& configInfo)
+int32_t SandboxConfigKvDataStorage::AddSandboxConfigIntoDataStorage(const int32_t userId, const std::string& bundleName,
+    const std::string& configInfo)
 {
     std::string key;
-    if(!generateKey(userId, bundleName, key)) {
-        DLP_LOG_ERROR(LABEL,"generate key error");
+    if (!GenerateKey(userId, bundleName, key)) {
+        DLP_LOG_ERROR(LABEL, "generate key error");
         return DLP_SERVICE_ERROR_VALUE_INVALID;
     }
-    int32_t result = AddValue(key, configInfo);
+    int32_t result = AddOrUpdateValue(key, configInfo);
     if (result != DLP_OK) {
-        DLP_LOG_ERROR(LABEL,"failed to add config info, result = %{public}d", result);
+        DLP_LOG_ERROR(LABEL, "failed to add config info, result = %{public}d", result);
     }
-
     return result;
 }
 
-int32_t SandboxConifgKvDataStorage::SaveSandboxConfigIntoDataStorage(const int32_t userId, const std::string& bundleName,const std::string& configInfo)
+int32_t SandboxConfigKvDataStorage::DeleteSandboxConfigFromDataStorage(const int32_t userId,
+    const std::string& bundleName)
 {
     std::string key;
-    if(!generateKey(userId, bundleName, key)) {
-        DLP_LOG_ERROR(LABEL,"generate key error");
+    if (!GenerateKey(userId, bundleName, key)) {
+        DLP_LOG_ERROR(LABEL, "generate key error");
         return DLP_SERVICE_ERROR_VALUE_INVALID;
     }
-    int32_t result = SaveValue(key, configInfo);
-    if (result != DLP_OK) {
-        DLP_LOG_ERROR(LABEL,"failed to save config info, result = %{public}d", result);
-    }
-
-    return result;
-}
-
-int32_t SandboxConifgKvDataStorage::DeleteSandboxConfigFromDataStorage(const int32_t userId, const std::string& bundleName)
-{
-    std::string key;
-    if(!generateKey(userId, bundleName, key)) {
-        DLP_LOG_ERROR(LABEL,"generate key error");
-        return DLP_SERVICE_ERROR_VALUE_INVALID;
+    if (!IsKeyExists(key)) {
+        DLP_LOG_ERROR(LABEL, "the key not exists.");
+        return DLP_OK;
     }
     int32_t ret = RemoveValueFromKvStore(key);
     if (ret != DLP_OK) {
-        DLP_LOG_ERROR(LABEL,"RemoveValueFromKvStore failed! ret = %{public}d.", ret);
+        DLP_LOG_ERROR(LABEL, "RemoveValueFromKvStore failed! ret = %{public}d.", ret);
     }
     return ret;
 }
 
-bool SandboxConifgKvDataStorage::generateKey(const int32_t userId, const std::string& bundleName, std::string& key)
+bool SandboxConfigKvDataStorage::GenerateKey(const int32_t userId, const std::string& bundleName, std::string& key)
 {
-    if(bundleName.empty()) {
-        DLP_LOG_ERROR(LABEL,"bundleName is empty");
+    if (bundleName.empty()) {
+        DLP_LOG_ERROR(LABEL, "bundleName is empty");
         return false;
     }
     key = std::to_string(userId) + KEY_SEPATATOR + bundleName;
     return true;
 }
 
-void SandboxConifgKvDataStorage::SaveEntries(
+int32_t SandboxConfigKvDataStorage::GetKeySetByUserId(const int32_t userId, std::set<std::string>& bundleNameSet)
+{
+    std::map<std::string, std::string> infos;
+    int32_t res = LoadAllData(infos);
+    if (res != DLP_OK) {
+        return res;
+    }
+    for (auto it = infos.begin(); it != infos.end(); ++it) {
+        std::string prefix = std::to_string(userId) + KEY_SEPATATOR;
+        if (it->first.find(prefix) != std::string::npos) {
+            std::string bundleName = it->first.substr(prefix.length(), it->first.length());
+            bundleNameSet.emplace(bundleName);
+        }
+    }
+    return DLP_OK;
+}
+
+void SandboxConfigKvDataStorage::SaveEntries(
     std::vector<OHOS::DistributedKv::Entry> allEntries, std::map<std::string, std::string> &infos)
 {
+    DLP_LOG_DEBUG(LABEL, "start, allEntries size is: %{public}zu", allEntries.size());
     for (auto const &item : allEntries) {
         infos.emplace(item.key.ToString(), item.value.ToString());
     }
+    DLP_LOG_DEBUG(LABEL, "end");
 }
-
 }  // namespace DlpPermission
 }  // namespace Security
 }  // namespace OHOS

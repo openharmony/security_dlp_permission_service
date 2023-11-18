@@ -17,10 +17,10 @@ import("../../../../dlp_permission_service.gni")
 
 module_output_path = "dlp_permission_service/dlp_permission_service"
 
-ohos_fuzztest("GetPolicyFuzzTest") {
+ohos_fuzztest("SetMDMPolicyFuzzTest") {
   module_out_path = module_output_path
   fuzz_config_file =
-      "${dlp_root_dir}/test/fuzztest/dlp_permission/getpolicy_fuzzer"
+      "${dlp_root_dir}/test/fuzztest/dlp_permission/setmdmpolicy_fuzzer"
 
   include_dirs = [
     "${dlp_root_dir}/services/dlp_permission/sa/sa_common",
@@ -35,7 +35,7 @@ ohos_fuzztest("GetPolicyFuzzTest") {
   configs = [ "${dlp_root_dir}/config:coverage_flags" ]
 
   cflags_cc = [ "-DHILOG_ENABLE" ]
-  sources = [ "getpolicy_fuzzer.cpp" ]
+  sources = [ "setmdmpolicy_fuzzer.cpp" ]
 
   deps = [
     "${dlp_root_dir}/interfaces/inner_api/dlp_permission:libdlp_permission_sdk",

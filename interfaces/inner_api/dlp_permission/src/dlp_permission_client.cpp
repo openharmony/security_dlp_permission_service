@@ -481,7 +481,7 @@ int32_t DlpPermissionClient::GetDLPFileVisitRecord(std::vector<VisitedDLPFileInf
     return proxy->GetDLPFileVisitRecord(infoVec);
 }
 
-int32_t DlpPermissionClient::SetPolicy(const std::vector<std::string>& appIdList)
+int32_t DlpPermissionClient::SetMDMPolicy(const std::vector<std::string>& appIdList)
 {
     auto proxy = GetProxy(true);
     if (proxy == nullptr) {
@@ -489,10 +489,10 @@ int32_t DlpPermissionClient::SetPolicy(const std::vector<std::string>& appIdList
         return DLP_OK;
     }
 
-    return proxy->SetPolicy(appIdList);
+    return proxy->SetMDMPolicy(appIdList);
 }
 
-int32_t DlpPermissionClient::GetPolicy(std::vector<std::string>& appIdList)
+int32_t DlpPermissionClient::GetMDMPolicy(std::vector<std::string>& appIdList)
 {
     auto proxy = GetProxy(true);
     if (proxy == nullptr) {
@@ -500,10 +500,10 @@ int32_t DlpPermissionClient::GetPolicy(std::vector<std::string>& appIdList)
         return DLP_OK;
     }
 
-    return proxy->GetPolicy(appIdList);
+    return proxy->GetMDMPolicy(appIdList);
 }
 
-int32_t DlpPermissionClient::RemovePolicy()
+int32_t DlpPermissionClient::RemoveMDMPolicy()
 {
     auto proxy = GetProxy(true);
     if (proxy == nullptr) {
@@ -511,7 +511,7 @@ int32_t DlpPermissionClient::RemovePolicy()
         return DLP_OK;
     }
 
-    return proxy->RemovePolicy();
+    return proxy->RemoveMDMPolicy();
 }
 
 int32_t DlpPermissionClient::SetSandboxAppConfig(const std::string& configInfo)

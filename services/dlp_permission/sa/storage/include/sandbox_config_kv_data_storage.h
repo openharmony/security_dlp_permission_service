@@ -21,20 +21,27 @@
 namespace OHOS {
 namespace Security {
 namespace DlpPermission {
-class SandboxConifgKvDataStorage  : public DlpKvDataStorage {
-public:
-    SandboxConifgKvDataStorage() = delete;
-    SandboxConifgKvDataStorage(const KvDataStorageOptions &options);
-    ~SandboxConifgKvDataStorage() override;
-    int32_t GetSandboxConfigFromDataStorage(const int32_t userId, const std::string& bundleName, std::string& configInfo);
-    int32_t AddSandboxConfigIntoDataStorage(const int32_t userId, const std::string& bundleName,const std::string& configInfo);
-    int32_t SaveSandboxConfigIntoDataStorage(const int32_t userId, const std::string& bundleName,const std::string& configInfo);
-    int32_t DeleteSandboxConfigFromDataStorage(const int32_t userId, const std::string& bundleName);
+typedef enum SandboxConfigOperationEnum : uint8_t {
+    ADD,
+    GET,
+    CLEAN,
+} SandboxConfigOperationEnum;
 
-private:
-    bool generateKey(const int32_t userId, const std::string& bundleName, std::string& key);
+class SandboxConfigKvDataStorage  : public DlpKvDataStorage {
+public:
+    SandboxConfigKvDataStorage() = delete;
+    SandboxConfigKvDataStorage(const KvDataStorageOptions &options);
+    ~SandboxConfigKvDataStorage() override;
+    int32_t GetSandboxConfigFromDataStorage(const int32_t userId, const std::string& bundleName,
+        std::string& configInfo);
+    int32_t AddSandboxConfigIntoDataStorage(const int32_t userId, const std::string& bundleName,
+        const std::string& configInfo);
+    int32_t DeleteSandboxConfigFromDataStorage(const int32_t userId, const std::string& bundleName);
+    int32_t GetKeySetByUserId(const int32_t userId, std::set<std::string>& keySet);
     void SaveEntries(std::vector<OHOS::DistributedKv::Entry> allEntries,
         std::map<std::string, std::string> &infos) override;
+private:
+    bool GenerateKey(const int32_t userId, const std::string& bundleName, std::string& key);
 };
 }  // namespace DlpPermission
 }  // namespace Security

@@ -78,11 +78,12 @@ public:
 
     virtual int32_t GetDLPFileVisitRecord(std::vector<VisitedDLPFileInfo>& infoVec) = 0;
 
-    virtual int32_t SetPolicy(const std::vector<std::string>& appIdList) = 0;
+    virtual int32_t SetMDMPolicy(const std::vector<std::string>& appIdList) = 0;
 
-    virtual int32_t GetPolicy(std::vector<std::string>& appIdList) = 0;
+    virtual int32_t GetMDMPolicy(std::vector<std::string>& appIdList) = 0;
 
-    virtual int32_t RemovePolicy() = 0;
+    virtual int32_t RemoveMDMPolicy() = 0;
+
     virtual int32_t SetSandboxAppConfig(const std::string& configInfo) = 0;
 
     virtual int32_t CleanSandboxAppConfig() = 0;

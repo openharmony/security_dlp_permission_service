@@ -203,19 +203,19 @@ int32_t DlpPermissionKit::GetDLPFileVisitRecord(std::vector<VisitedDLPFileInfo>&
     return DlpPermissionClient::GetInstance().GetDLPFileVisitRecord(infoVec);
 }
 
-int32_t DlpPermissionKit::SetPolicy(const std::vector<std::string>& appIdList)
+int32_t DlpPermissionKit::SetMDMPolicy(const std::vector<std::string>& appIdList)
 {
-    return DlpPermissionClient::GetInstance().SetPolicy(appIdList);
+    return DlpPermissionClient::GetInstance().SetMDMPolicy(appIdList);
 }
 
-int32_t DlpPermissionKit::GetPolicy(std::vector<std::string>& appIdList)
+int32_t DlpPermissionKit::GetMDMPolicy(std::vector<std::string>& appIdList)
 {
-    return DlpPermissionClient::GetInstance().GetPolicy(appIdList);
+    return DlpPermissionClient::GetInstance().GetMDMPolicy(appIdList);
 }
 
-int32_t DlpPermissionKit::RemovePolicy()
+int32_t DlpPermissionKit::RemoveMDMPolicy()
 {
-    return DlpPermissionClient::GetInstance().RemovePolicy();
+    return DlpPermissionClient::GetInstance().RemoveMDMPolicy();
 }
 
 int32_t DlpPermissionKit::SetSandboxAppConfig(const std::string& configInfo)

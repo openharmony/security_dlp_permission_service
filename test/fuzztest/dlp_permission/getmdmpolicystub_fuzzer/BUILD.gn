@@ -17,10 +17,10 @@ import("../../../../dlp_permission_service.gni")
 
 module_output_path = "dlp_permission_service/dlp_permission_service"
 
-ohos_fuzztest("GetPolicyStubFuzzTest") {
+ohos_fuzztest("GetMDMPolicyStubFuzzTest") {
   module_out_path = module_output_path
   fuzz_config_file =
-      "${dlp_root_dir}/test/fuzztest/dlp_permission/getpolicystub_fuzzer"
+      "${dlp_root_dir}/test/fuzztest/dlp_permission/getmdmpolicystub_fuzzer"
 
   include_dirs = [
     "${dlp_root_dir}/frameworks/common/include",
@@ -32,6 +32,7 @@ ohos_fuzztest("GetPolicyStubFuzzTest") {
     "${dlp_root_dir}/services/dlp_permission/sa/mock",
     "${dlp_root_dir}/services/dlp_permission/sa/sa_common",
     "${dlp_root_dir}/services/dlp_permission/sa/sa_main",
+    "${dlp_root_dir}/services/dlp_permission/sa/storage/include",
     "//third_party/json/include",
     "//third_party/json/test/thirdparty/fifo_map",
   ]
@@ -46,7 +47,7 @@ ohos_fuzztest("GetPolicyStubFuzzTest") {
   cflags_cc = [ "-DHILOG_ENABLE" ]
   sources = [
     "${dlp_root_dir}/services/dlp_permission/sa/sa_main/dlp_permission_service.cpp",
-    "getpolicystub_fuzzer.cpp",
+    "getmdmpolicystub_fuzzer.cpp",
   ]
 
   deps = [
@@ -69,6 +70,7 @@ ohos_fuzztest("GetPolicyStubFuzzTest") {
     "hisysevent:libhisysevent",
     "init:libbegetutil",
     "ipc:ipc_core",
+    "kv_store:distributeddata_inner",
     "os_account:libaccountkits",
     "os_account:os_account_innerkits",
     "safwk:system_ability_fwk",

@@ -62,13 +62,12 @@ public:
         std::vector<RetentionSandBoxInfo>& retentionSandBoxInfoVec);
     int32_t ClearUnreservedSandbox();
     int32_t GetDLPFileVisitRecord(std::vector<VisitedDLPFileInfo>& infoVec);
-    int32_t SetPolicy(const std::vector<std::string>& appIdList);
-    int32_t GetPolicy(std::vector<std::string>& appIdList);
-    int32_t RemovePolicy();
+    int32_t SetMDMPolicy(const std::vector<std::string>& appIdList);
+    int32_t GetMDMPolicy(std::vector<std::string>& appIdList);
+    int32_t RemoveMDMPolicy();
     int32_t SetSandboxAppConfig(const std::string& configInfo);
     int32_t CleanSandboxAppConfig();
     int32_t GetSandboxAppConfig(std::string& configInfo);
-
     void FinishStartSASuccess(const sptr<IRemoteObject>& remoteObject);
     void FinishStartSAFail();
     void OnRemoteDiedHandle();

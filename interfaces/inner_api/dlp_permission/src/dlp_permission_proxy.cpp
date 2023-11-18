@@ -789,7 +789,7 @@ int32_t DlpPermissionProxy::GetDLPFileVisitRecord(std::vector<VisitedDLPFileInfo
     return res;
 }
 
-int32_t DlpPermissionProxy::SetPolicy(const std::vector<std::string>& appIdList)
+int32_t DlpPermissionProxy::SetMDMPolicy(const std::vector<std::string>& appIdList)
 {
     MessageParcel data;
     if (!data.WriteInterfaceToken(DlpPermissionProxy::GetDescriptor())) {
@@ -810,7 +810,7 @@ int32_t DlpPermissionProxy::SetPolicy(const std::vector<std::string>& appIdList)
         return DLP_SERVICE_ERROR_SERVICE_NOT_EXIST;
     }
     int32_t requestResult = remote->SendRequest(
-        static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::SET_POLICY), data, reply, option);
+        static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::SET_MDM_POLICY), data, reply, option);
     if (requestResult != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "Request fail, result: %{public}d", requestResult);
         return requestResult;
@@ -823,7 +823,7 @@ int32_t DlpPermissionProxy::SetPolicy(const std::vector<std::string>& appIdList)
     return res;
 }
 
-int32_t DlpPermissionProxy::GetPolicy(std::vector<std::string>& appIdList)
+int32_t DlpPermissionProxy::GetMDMPolicy(std::vector<std::string>& appIdList)
 {
     MessageParcel data;
     if (!data.WriteInterfaceToken(DlpPermissionProxy::GetDescriptor())) {
@@ -839,7 +839,7 @@ int32_t DlpPermissionProxy::GetPolicy(std::vector<std::string>& appIdList)
         return DLP_SERVICE_ERROR_SERVICE_NOT_EXIST;
     }
     int32_t requestResult = remote->SendRequest(
-        static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::GET_POLICY), data, reply, option);
+        static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::GET_MDM_POLICY), data, reply, option);
     if (requestResult != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "Request fail, result: %{public}d", requestResult);
         return requestResult;
@@ -865,7 +865,7 @@ int32_t DlpPermissionProxy::GetPolicy(std::vector<std::string>& appIdList)
     return res;
 }
 
-int32_t DlpPermissionProxy::RemovePolicy()
+int32_t DlpPermissionProxy::RemoveMDMPolicy()
 {
     MessageParcel data;
     if (!data.WriteInterfaceToken(DlpPermissionProxy::GetDescriptor())) {
@@ -881,7 +881,7 @@ int32_t DlpPermissionProxy::RemovePolicy()
         return DLP_SERVICE_ERROR_SERVICE_NOT_EXIST;
     }
     int32_t requestResult = remote->SendRequest(
-        static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::REMOVE_POLICY), data, reply, option);
+        static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::REMOVE_MDM_POLICY), data, reply, option);
     if (requestResult != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "Request fail, result: %{public}d", requestResult);
         return requestResult;
@@ -893,9 +893,10 @@ int32_t DlpPermissionProxy::RemovePolicy()
     }
     return res;
 }
+
 int32_t DlpPermissionProxy::SetSandboxAppConfig(const std::string& configInfo)
 {
-   MessageParcel data;
+    MessageParcel data;
     if (!data.WriteInterfaceToken(DlpPermissionProxy::GetDescriptor())) {
         DLP_LOG_ERROR(LABEL, "Write descriptor fail");
         return DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL;
@@ -919,12 +920,11 @@ int32_t DlpPermissionProxy::SetSandboxAppConfig(const std::string& configInfo)
         DLP_LOG_ERROR(LABEL, "Request fail, result: %{public}d", requestResult);
         return requestResult;
     }
-    int32_t res;
-    if (!reply.ReadInt32(res)) {
+    if (!reply.ReadInt32(requestResult)) {
         DLP_LOG_ERROR(LABEL, "Read int32 fail");
         return DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL;
     }
-    return res;
+    return requestResult;
 }
 
 int32_t DlpPermissionProxy::CleanSandboxAppConfig()
@@ -946,6 +946,11 @@ int32_t DlpPermissionProxy::CleanSandboxAppConfig()
         static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::CLEAN_SANDBOX_APP_CONFIG), data, reply, option);
     if (requestResult != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "Request fail, result: %{public}d", requestResult);
+        return requestResult;
+    }
+    if (!reply.ReadInt32(requestResult)) {
+        DLP_LOG_ERROR(LABEL, "Read int32 fail");
+        return DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL;
     }
     return requestResult;
 }
@@ -971,16 +976,18 @@ int32_t DlpPermissionProxy::GetSandboxAppConfig(std::string& configInfo)
         DLP_LOG_ERROR(LABEL, "Request fail, result: %{public}d", requestResult);
         return requestResult;
     }
-    int32_t res;
-    if (!reply.ReadInt32(res)) {
+    if (!reply.ReadInt32(requestResult)) {
         DLP_LOG_ERROR(LABEL, "Read int32 fail");
         return DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL;
     }
+    if (requestResult != DLP_OK) {
+        return requestResult;
+    }
     if (!reply.ReadString(configInfo)) {
-        DLP_LOG_ERROR(LABEL, "Read bool fail");
+        DLP_LOG_ERROR(LABEL, "Read string fail");
         return DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL;
     }
-    return res;
+    return requestResult;
 }
 }  // namespace DlpPermission
 }  // namespace Security

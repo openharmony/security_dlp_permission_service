@@ -20,6 +20,7 @@
 #include <string>
 #include <vector>
 #include "app_state_observer.h"
+#include "app_uninstall_observer.h"
 #include "dlp_permission_stub.h"
 #include "iremote_object.h"
 #include "nocopyable.h"
@@ -81,24 +82,26 @@ public:
     int32_t CleanSandboxAppConfig() override;
     int32_t GetSandboxAppConfig(std::string& configInfo) override;
 
-    int32_t SetPolicy(const std::vector<std::string>& appIdList) override;
-    int32_t GetPolicy(std::vector<std::string>& appIdList) override;
-    int32_t RemovePolicy() override;
+    int32_t SetMDMPolicy(const std::vector<std::string>& appIdList) override;
+    int32_t GetMDMPolicy(std::vector<std::string>& appIdList) override;
+    int32_t RemoveMDMPolicy() override;
 
     int Dump(int fd, const std::vector<std::u16string>& args) override;
 
 private:
     bool Initialize() const;
-
+    void RemoveUninstallInfo();
     bool InsertDlpSandboxInfo(DlpSandboxInfo& sandboxInfo, bool hasRetention);
     uint32_t DeleteDlpSandboxInfo(const std::string& bundleName, int32_t appIndex, int32_t userId);
     bool GetCallerBundleName(const uint32_t tokenId, std::string& bundleName);
     bool RemoveRetentionInfo(std::vector<RetentionSandBoxInfo>& retentionSandBoxInfoVec, RetentionInfo& info);
     int32_t UninstallDlpSandboxApp(const std::string& bundleName, int32_t appIndex, int32_t userId);
+    int32_t SandboxConfigOperate(std::string& configInfo, SandboxConfigOperationEnum operationEnum);
     void TerminalService();
     void StartTimer();
     void GetCfgFilesList(std::vector<std::string> &cfgFilesList);
     void GetConfigFileValue(const std::string &cfgFile, std::vector<std::string> &typeList);
+    int32_t CheckMdmPermission(const std::string& bundleName, int32_t userId);
     std::vector<std::string> InitConfig();
 
     std::atomic<int32_t> repeatTime_;
@@ -109,7 +112,8 @@ private:
     ServiceRunningState state_;
     sptr<AppExecFwk::IAppMgr> iAppMgr_;
     sptr<AppStateObserver> appStateObserver_;
-    std::shared_ptr<SandboxConifgKvDataStorage> sandboxConifgKvDataStorage_ = nullptr;
+    std::shared_ptr<SandboxConfigKvDataStorage> sandboxConfigKvDataStorage_ = nullptr;
+    std::shared_ptr<DlpEventSubSubscriber> dlpEventSubSubscriber_ = nullptr;
 };
 }  // namespace DlpPermission
 }  // namespace Security

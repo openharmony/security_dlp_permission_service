@@ -18,7 +18,6 @@
 
 #include <string>
 #include <map>
-
 #include "distributed_kv_data_manager.h"
 
 namespace OHOS {
@@ -36,18 +35,16 @@ public:
     DlpKvDataStorage() = delete;
     DlpKvDataStorage(const std::string &storeId, const KvDataStorageOptions &options);
     virtual ~DlpKvDataStorage();
-    int32_t LoadAllData(std::map<std::string, std::string> &infos);
-    int32_t AddValue(const std::string &key,const std::string &value);
-    int32_t SaveValue(const std::string &key,const std::string &value);
-    int32_t LoadDataByLocalFuzzyQuery(std::string subId, std::map<std::string, std::string> &infos);
     void TryTwice(const std::function<DistributedKv::Status()> &func) const;
-    virtual void SaveEntries(std::vector<OHOS::DistributedKv::Entry> allEntries,
-        std::map<std::string, std::string> &infos) = 0;
+    int32_t LoadAllData(std::map<std::string, std::string> &infos);
+    int32_t AddOrUpdateValue(const std::string &key, const std::string &value);
     int DeleteKvStore();
     bool IsKeyExists(const std::string keyStr);
     int32_t PutValueToKvStore(const std::string &keyStr, const std::string &valueStr);
     int32_t GetValueFromKvStore(const std::string &keyStr, std::string &valueStr);
     int32_t RemoveValueFromKvStore(const std::string &keyStr);
+    virtual void SaveEntries(std::vector<OHOS::DistributedKv::Entry> allEntries,
+        std::map<std::string, std::string> &infos) = 0;
 
 protected:
     OHOS::DistributedKv::Status GetEntries(

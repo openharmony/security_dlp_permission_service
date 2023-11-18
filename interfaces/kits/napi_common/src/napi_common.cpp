@@ -1128,11 +1128,11 @@ bool GetOriginalFilenameParams(const napi_env env, const napi_callback_info info
 bool GetSandboxAppConfigParams(const napi_env env, const napi_callback_info info,
     SandboxAppConifgAsyncContext& asyncContext)
 {
-    size_t argc = PARAM_SIZE_TWO;
-    napi_value argv[PARAM_SIZE_TWO] = {nullptr};
+    size_t argc = PARAM_SIZE_ONE;
+    napi_value argv[PARAM_SIZE_ONE] = {nullptr};
     NAPI_CALL_BASE(env, napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr), false);
 
-    if (!NapiCheckArgc(env, argc, PARAM_SIZE_FOUR)) {
+    if (!NapiCheckArgc(env, argc, PARAM_SIZE_ONE)) {
         return false;
     }
 
@@ -1146,12 +1146,6 @@ bool GetSandboxAppConfigParams(const napi_env env, const napi_callback_info info
         return false;
     }
 
-    if (argc == PARAM_SIZE_TWO) {
-        if (!ParseCallback(env, argv[PARAM1], asyncContext.callbackRef)) {
-            ThrowParamError(env, "callback", "function");
-            return false;
-        }
-    }
     return true;
 }
 
@@ -1428,7 +1422,7 @@ bool ParseCallback(const napi_env& env, const napi_value& value, napi_ref& callb
 {
     napi_valuetype valuetype = napi_undefined;
     NAPI_CALL_BASE(env, napi_typeof(env, value, &valuetype), false);
-
+    
     if (valuetype == napi_function) {
         NAPI_CALL_BASE(env, napi_create_reference(env, value, 1, &callbackRef), false);
         return true;
