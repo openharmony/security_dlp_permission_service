@@ -158,7 +158,7 @@ static void SerializeAuthUserInfo(unordered_json& authUsersJson,
     return;
 }
 
-static int32_t DeserializeAuthUserInfo(const unordered_json& accountInfoJson,
+int32_t DlpPermissionSerializer::DeserializeAuthUserInfo(const unordered_json& accountInfoJson,
     AuthUserInfo& userInfo)
 {
     unordered_json rightInfoJson;
@@ -200,7 +200,7 @@ static unordered_json SerializeAuthUserList(const std::vector<AuthUserInfo>& aut
     return authUsersJson;
 }
 
-static int32_t DeserializeAuthUserList(
+int32_t DlpPermissionSerializer::DeserializeAuthUserList(
     const unordered_json& authUsersJson, std::vector<AuthUserInfo>& userList)
 {
     for (auto iter = authUsersJson.begin(); iter != authUsersJson.end(); ++iter) {
@@ -331,10 +331,10 @@ static int32_t GetPolicyJson(const unordered_json& permJson, unordered_json& pla
     return DLP_OK;
 }
 
-static void DeserializeEveryoneInfo(const unordered_json& policyJson, PermissionPolicy& policy)
+bool DlpPermissionSerializer::DeserializeEveryoneInfo(const unordered_json& policyJson, PermissionPolicy& policy)
 {
     if (policyJson.find(EVERYONE_INDEX) == policyJson.end() || !policyJson.at(EVERYONE_INDEX).is_object()) {
-        return;
+        return false;
     }
 
     policy.supportEveryone_ = true;
@@ -344,7 +344,7 @@ static void DeserializeEveryoneInfo(const unordered_json& policyJson, Permission
     unordered_json rightInfoJson;
     if (everyoneInfoJson.find(RIGHT_INDEX) == everyoneInfoJson.end() ||
         !everyoneInfoJson.at(RIGHT_INDEX).is_object()) {
-        return;
+        return false;
     }
     everyoneInfoJson.at(RIGHT_INDEX).get_to(rightInfoJson);
 
@@ -366,6 +366,7 @@ static void DeserializeEveryoneInfo(const unordered_json& policyJson, Permission
     } else {
         policy.everyonePerm_ = READ_ONLY;
     }
+    return true;
 }
 
 static void InitPermissionPolicy(PermissionPolicy& policy, const std::vector<AuthUserInfo>& userList,
@@ -528,8 +529,9 @@ int32_t DlpPermissionSerializer::DeserializeEncPolicyDataByFirstVersion(const un
         return DLP_SERVICE_ERROR_MEMORY_OPERATE_FAIL;
     }
     encData.dataLen = encDataStr.length();
-    if (memcpy_s(encData.data, encDataStr.length(),
-        reinterpret_cast<const uint8_t*>(encDataStr.c_str()), encDataStr.length()) != EOK) {
+    res = memcpy_s(encData.data, encDataStr.length(),
+        reinterpret_cast<const uint8_t*>(encDataStr.c_str()), encDataStr.length());
+    if (res != EOK) {
         DLP_LOG_ERROR(LABEL, "Memcpy encData fill fail");
         return DLP_SERVICE_ERROR_MEMORY_OPERATE_FAIL;
     }
