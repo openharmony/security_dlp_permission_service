@@ -96,7 +96,7 @@ int32_t DlpPermissionClient::GenerateDlpCertificate(
 }
 
 int32_t DlpPermissionClient::ParseDlpCertificate(sptr<CertParcel>& certParcel,
-    std::shared_ptr<ParseDlpCertificateCallback> callback, const std::string& appId)
+    std::shared_ptr<ParseDlpCertificateCallback> callback, const std::string& appId, const bool& offlineAccess)
 {
     if (callback == nullptr || certParcel->cert.size() == 0) {
         return DLP_SERVICE_ERROR_VALUE_INVALID;
@@ -113,7 +113,7 @@ int32_t DlpPermissionClient::ParseDlpCertificate(sptr<CertParcel>& certParcel,
         return DLP_SERVICE_ERROR_MEMORY_OPERATE_FAIL;
     }
 
-    return proxy->ParseDlpCertificate(certParcel, asyncStub, appId);
+    return proxy->ParseDlpCertificate(certParcel, asyncStub, appId, offlineAccess);
 }
 
 int32_t DlpPermissionClient::InstallDlpSandbox(const std::string& bundleName, DLPFileAccess dlpFileAccess,

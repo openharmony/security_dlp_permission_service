@@ -43,7 +43,7 @@ int32_t DlpPermissionKit::GenerateDlpCertificate(const PermissionPolicy& policy,
 }
 
 int32_t DlpPermissionKit::ParseDlpCertificate(sptr<CertParcel>& certParcel, PermissionPolicy& policy,
-    const std::string& appId)
+    const std::string& appId, const bool& offlineAccess)
 {
     std::string encJsonStr(certParcel->cert.begin(), certParcel->cert.end());
     auto jsonObj = nlohmann::json::parse(encJsonStr, nullptr, false);

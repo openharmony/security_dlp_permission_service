@@ -252,6 +252,7 @@ static void GetDlpProperty(std::shared_ptr<DlpFile>& dlpFileNative, DlpProperty&
         .offlineAccess = dlpFileNative->GetOfflineAccess(),
         .supportEveryone = policy.supportEveryone_,
         .everyonePerm = policy.everyonePerm_,
+        .expireTime = policy.expireTime_,
     };
 }
 
@@ -284,7 +285,8 @@ void NapiDlpPermission::OpenDlpFileComplete(napi_env env, napi_status status, vo
         }
     } else {
         if (asyncContext->dlpFileNative != nullptr &&
-            asyncContext->errCode == DLP_CREDENTIAL_ERROR_NO_PERMISSION_ERROR) {
+            (asyncContext->errCode == DLP_CREDENTIAL_ERROR_NO_PERMISSION_ERROR ||
+            asyncContext->errCode == DLP_CREDENTIAL_ERROR_TIME_EXPIRED)) {
             std::string contactAccount = "";
             asyncContext->dlpFileNative->GetContactAccount(contactAccount);
             if (!contactAccount.empty()) {

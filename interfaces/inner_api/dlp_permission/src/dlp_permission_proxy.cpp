@@ -77,7 +77,7 @@ int32_t DlpPermissionProxy::GenerateDlpCertificate(
 }
 
 int32_t DlpPermissionProxy::ParseDlpCertificate(sptr<CertParcel>& certParcel,
-    sptr<IDlpPermissionCallback>& callback, const std::string& appId)
+    sptr<IDlpPermissionCallback>& callback, const std::string& appId, const bool& offlineAccess)
 {
     MessageParcel data;
     if (!data.WriteInterfaceToken(DlpPermissionProxy::GetDescriptor())) {
@@ -96,6 +96,10 @@ int32_t DlpPermissionProxy::ParseDlpCertificate(sptr<CertParcel>& certParcel,
         DLP_LOG_ERROR(LABEL, "Write object fail");
         return DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL;
     }
+    if (!data.WriteBool(offlineAccess)) {
+        DLP_LOG_ERROR(LABEL, "Write offlineAccess fail");
+        return DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL;
+    }
 
     MessageParcel reply;
     MessageOption option(MessageOption::TF_SYNC);
@@ -106,7 +110,8 @@ int32_t DlpPermissionProxy::ParseDlpCertificate(sptr<CertParcel>& certParcel,
     }
 
     int32_t requestResult = remote->SendRequest(
-        static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::PARSE_DLP_CERTIFICATE), data, reply, option);
+        static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::PARSE_DLP_CERTIFICATE),
+        data, reply, option);
     if (requestResult != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "Request fail, result: %{public}d", requestResult);
         return requestResult;

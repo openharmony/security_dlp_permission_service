@@ -141,13 +141,18 @@ int32_t DlpPermissionStub::ParseDlpCertificateInner(MessageParcel& data, Message
         DLP_LOG_ERROR(LABEL, "Read parse cert callback object fail");
         return DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL;
     }
+    bool offlineAccess = false;
+    if (!data.ReadBool(offlineAccess)) {
+        DLP_LOG_ERROR(LABEL, "Read offlineAccess fail");
+        return DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL;
+    }
     sptr<IDlpPermissionCallback> callback = iface_cast<IDlpPermissionCallback>(obj);
     if (callback == nullptr) {
         DLP_LOG_ERROR(LABEL, "Iface cast parse cert callback fail");
         return DLP_SERVICE_ERROR_VALUE_INVALID;
     }
 
-    int32_t res = this->ParseDlpCertificate(certParcel, callback, appId);
+    int32_t res = this->ParseDlpCertificate(certParcel, callback, appId, offlineAccess);
     if (!reply.WriteInt32(res)) {
         DLP_LOG_ERROR(LABEL, "Write parse cert result fail");
         return DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL;

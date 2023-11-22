@@ -72,8 +72,18 @@ bool DlpPolicyParcel::Marshalling(Parcel& out) const
     if (!(out.WriteBuffer(this->policyParams_.GetIv(), this->policyParams_.GetIvLen()))) {
         DLP_LOG_ERROR(LABEL, "Write iv fail");
     }
-
+    MarshallingExpireTime(out);
     return true;
+}
+
+void DlpPolicyParcel::MarshallingExpireTime(Parcel& out) const
+{
+    if (!(out.WriteUint64(this->policyParams_.expireTime_))) {
+        DLP_LOG_ERROR(LABEL, "Write expiryTime_ fail");
+    }
+    if (!(out.WriteUint32(this->policyParams_.needOnline_))) {
+        DLP_LOG_ERROR(LABEL, "Write needOnline_ fail");
+    }
 }
 
 static bool ReadAesParam(PermissionPolicy& policy, Parcel& in)
@@ -108,6 +118,15 @@ static bool ReadAesParam(PermissionPolicy& policy, Parcel& in)
         return false;
     }
     policy.SetIv(iv, len);
+
+    if (!(in.ReadUint64(policy.expireTime_))) {
+        DLP_LOG_ERROR(LABEL, "Read expiryTime_ fail");
+        return false;
+    }
+    if (!(in.ReadUint32(policy.needOnline_))) {
+        DLP_LOG_ERROR(LABEL, "Read needOnline_ fail");
+        return false;
+    }
     return true;
 }
 

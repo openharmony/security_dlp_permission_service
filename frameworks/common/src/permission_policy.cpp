@@ -15,6 +15,7 @@
 
 #include "permission_policy.h"
 #include <chrono>
+#include <cinttypes>
 #include <set>
 #include "dlp_permission.h"
 #include "dlp_permission_log.h"
@@ -117,6 +118,8 @@ PermissionPolicy::PermissionPolicy()
     ownerAccountId_ = "";
     ownerAccountType_ = INVALID_ACCOUNT;
     authUsers_ = {};
+    expireTime_ = 0;
+    needOnline_ = 0;
     aeskey_ = nullptr;
     aeskeyLen_ = 0;
     iv_ = nullptr;
@@ -131,6 +134,8 @@ PermissionPolicy::PermissionPolicy(const DlpProperty& property)
     authUsers_ = property.authUsers;
     supportEveryone_ = property.supportEveryone;
     everyonePerm_ = property.everyonePerm;
+    expireTime_ = property.expireTime;
+    needOnline_ = !property.offlineAccess;
     aeskey_ = nullptr;
     aeskeyLen_ = 0;
     iv_ = nullptr;
@@ -232,14 +237,18 @@ void PermissionPolicy::CopyPermissionPolicy(const PermissionPolicy& srcPolicy)
     if (!srcPolicy.IsValid()) {
         return;
     }
-    DLP_LOG_DEBUG(LABEL, "ownerAccount_ %{private}s ownerAccountId %{private}s accountType %{public}u",
-        srcPolicy.ownerAccount_.c_str(), srcPolicy.ownerAccountId_.c_str(), srcPolicy.ownerAccountType_);
+    DLP_LOG_DEBUG(LABEL, "ownerAccount_ %{private}s ownerAccountId %{private}s"
+        " accountType %{public}u needOnline %{public}u expireTime %{public}" PRId64,
+        srcPolicy.ownerAccount_.c_str(), srcPolicy.ownerAccountId_.c_str(),
+        srcPolicy.ownerAccountType_, srcPolicy.needOnline_, srcPolicy.expireTime_);
     ownerAccount_ = srcPolicy.ownerAccount_;
     ownerAccountId_ = srcPolicy.ownerAccountId_;
     ownerAccountType_ = srcPolicy.ownerAccountType_;
     authUsers_ = srcPolicy.authUsers_;
     supportEveryone_ = srcPolicy.supportEveryone_;
     everyonePerm_ = srcPolicy.everyonePerm_;
+    expireTime_ = srcPolicy.expireTime_;
+    needOnline_ = srcPolicy.needOnline_;
     aeskeyLen_ = srcPolicy.aeskeyLen_;
     aeskey_ = new (std::nothrow) uint8_t[aeskeyLen_];
     if (aeskey_ == nullptr) {

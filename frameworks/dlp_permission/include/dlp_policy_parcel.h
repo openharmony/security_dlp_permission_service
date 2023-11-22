@@ -29,6 +29,7 @@ struct DlpPolicyParcel final : public Parcelable {
     ~DlpPolicyParcel() override = default;
 
     bool Marshalling(Parcel& out) const override;
+    void MarshallingExpireTime(Parcel& out) const;
 
     static DlpPolicyParcel* Unmarshalling(Parcel& in);
 
