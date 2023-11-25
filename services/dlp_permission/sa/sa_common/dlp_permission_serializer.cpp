@@ -14,6 +14,7 @@
  */
 
 #include "dlp_permission_serializer.h"
+#include <cinttypes>
 #include "dlp_permission.h"
 #include "dlp_permission_log.h"
 #include "hex_string.h"
@@ -293,8 +294,8 @@ int32_t DlpPermissionSerializer::SerializeDlpPermission(const PermissionPolicy& 
     policyJson[OWNER_ACCOUNT_NAME] = policy.ownerAccount_;
     policyJson[OWNER_ACCOUNT_ID] = policy.ownerAccountId_;
     policyJson[VERSION_INDEX] = 1;
-    policyJson[PERM_EXPIRY_TIME] = 0;
-    policyJson[NEED_ONLINE] = 0;
+    policyJson[PERM_EXPIRY_TIME] = policy.expireTime_;
+    policyJson[NEED_ONLINE] = policy.needOnline_;
     policyJson[ACCOUNT_INDEX] = authUsersJson;
     SerializeEveryoneInfo(policy, policyJson);
 
@@ -378,6 +379,12 @@ static void InitPermissionPolicy(PermissionPolicy& policy, const std::vector<Aut
     }
     if (policyJson.find(OWNER_ACCOUNT_ID) != policyJson.end() && policyJson.at(OWNER_ACCOUNT_ID).is_string()) {
         policyJson.at(OWNER_ACCOUNT_ID).get_to(policy.ownerAccountId_);
+    }
+    if (policyJson.find(PERM_EXPIRY_TIME) != policyJson.end() && policyJson.at(PERM_EXPIRY_TIME).is_number()) {
+        policyJson.at(PERM_EXPIRY_TIME).get_to(policy.expireTime_);
+    }
+    if (policyJson.find(NEED_ONLINE) != policyJson.end() && policyJson.at(NEED_ONLINE).is_number()) {
+        policyJson.at(NEED_ONLINE).get_to(policy.needOnline_);
     }
     policy.ownerAccountType_ = CLOUD_ACCOUNT;
 }

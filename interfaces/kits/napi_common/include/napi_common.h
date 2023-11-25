@@ -279,6 +279,7 @@ bool GetRetentionSandboxListParams(const napi_env env, const napi_callback_info 
     GetRetentionSandboxListAsyncContext& asyncContext);
 bool GetOriginalFilenameParams(const napi_env env, const napi_callback_info info,
     GetOriginalFileAsyncContext& asyncContext);
+void GetDlpPropertyExpireTime(napi_env env, napi_value jsObject, DlpProperty& property);
 bool GetDlpProperty(napi_env env, napi_value object, DlpProperty& property);
 bool ParseCallback(const napi_env& env, const napi_value& value, napi_ref& callbackRef);
 

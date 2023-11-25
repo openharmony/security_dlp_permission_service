@@ -85,10 +85,10 @@ int32_t DlpPermissionKit::GenerateDlpCertificate(const PermissionPolicy& policy,
 }
 
 int32_t DlpPermissionKit::ParseDlpCertificate(sptr<CertParcel>& certParcel, PermissionPolicy& policy,
-    const std::string& appId)
+    const std::string& appId, const bool& offlineAccess)
 {
     std::shared_ptr<ClientParseDlpCertificateCallback> callback = std::make_shared<ClientParseDlpCertificateCallback>();
-    int32_t res = DlpPermissionClient::GetInstance().ParseDlpCertificate(certParcel, callback, appId);
+    int32_t res = DlpPermissionClient::GetInstance().ParseDlpCertificate(certParcel, callback, appId, offlineAccess);
     if (res != DLP_OK) {
         DLP_LOG_INFO(LABEL, "ParseDlpCertificate return %{public}d", res);
         return res;

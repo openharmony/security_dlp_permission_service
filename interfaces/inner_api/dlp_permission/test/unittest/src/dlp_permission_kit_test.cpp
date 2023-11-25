@@ -509,9 +509,9 @@ HWTEST_F(DlpPermissionKitTest, ParseDlpCertificate001, TestSize.Level1)
     PermissionPolicy policy;
     certParcel->contactAccount = "test";
     std::string appId = "test_appId_passed";
-    ASSERT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, DlpPermissionKit::ParseDlpCertificate(certParcel, policy, appId));
+    ASSERT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, DlpPermissionKit::ParseDlpCertificate(certParcel, policy, appId, true));
     certParcel->cert = {1, 2, 3};
-    ASSERT_NE(DLP_OK, DlpPermissionKit::ParseDlpCertificate(certParcel, policy, appId));
+    ASSERT_NE(DLP_OK, DlpPermissionKit::ParseDlpCertificate(certParcel, policy, appId, true));
 }
 
 /**
@@ -1220,7 +1220,7 @@ HWTEST_F(DlpPermissionKitTest, ParseDlpCertificate002, TestSize.Level1)
     certParcel->offlineCert.push_back(1);
     PermissionPolicy policy;
     ASSERT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID,
-        DlpPermissionKit::ParseDlpCertificate(certParcel, policy, ""));
+        DlpPermissionKit::ParseDlpCertificate(certParcel, policy, "", true));
 
     policy.ownerAccount_ = "test";
     policy.ownerAccountId_ = "test";
@@ -1237,7 +1237,7 @@ HWTEST_F(DlpPermissionKitTest, ParseDlpCertificate002, TestSize.Level1)
     policy.SetIv(iv, 16);
     policy.SetAeskey(aseKey, 16);
     ASSERT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID,
-        DlpPermissionKit::ParseDlpCertificate(certParcel, policy, ""));
+        DlpPermissionKit::ParseDlpCertificate(certParcel, policy, "", true));
     delete[] iv;
     delete[] aseKey;
 }

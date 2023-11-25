@@ -93,6 +93,7 @@ struct DlpProperty {
     bool offlineAccess = false;
     bool supportEveryone = false;
     DLPFileAccess everyonePerm = NO_PERMISSION;
+    uint64_t expireTime = 0;
 };
 
 typedef enum SandBoxExternalAuthorType {
@@ -122,6 +123,8 @@ public:
     std::vector<AuthUserInfo> authUsers_;
     bool supportEveryone_ = false;
     DLPFileAccess everyonePerm_ = NO_PERMISSION;
+    uint64_t expireTime_ = 0;
+    uint32_t needOnline_ = 0;
 
 private:
     uint8_t* aeskey_;

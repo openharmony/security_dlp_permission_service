@@ -42,6 +42,8 @@ static const std::unordered_map<int32_t, std::string> JS_ERROR_MSG_MAP = {
     { ERR_JS_SYSTEM_SERVICE_EXCEPTION, "System service exception, please try again or reboot your device" },
     { ERR_JS_OUT_OF_MEMORY, "System out of memory, please try again or reboot your device" },
     { ERR_JS_SYSTEM_NEED_TO_BE_UPGRADED, "System need to be upgraded" },
+    { ERR_JS_DLP_FILE_EXPIRE_TIME, "DLP file is expiry, please contact the owner" },
+    { ERR_JS_DLP_CREDENTIAL_NO_INTERNET_ERROR, "DLP credential need internet, please check your connection" },
 };
 
 static const std::unordered_map<int32_t, int32_t> NATIVE_CODE_TO_JS_CODE_MAP = {
@@ -135,6 +137,12 @@ static const std::unordered_map<int32_t, int32_t> NATIVE_CODE_TO_JS_CODE_MAP = {
 
     // ERR_JS_APPLICATION_NOT_AUTHORIZED
     { DLP_CREDENTIAL_ERROR_APPID_NOT_AUTHORIZED, ERR_JS_APPLICATION_NOT_AUTHORIZED},
+
+    // ERR_JS_DLP_FILE_EXPIRE_TIME
+    { DLP_CREDENTIAL_ERROR_TIME_EXPIRED, ERR_JS_DLP_FILE_EXPIRE_TIME },
+
+    // ERR_JS_DLP_CREDENTIAL_NO_INTERNET_ERROR
+    { DLP_CREDENTIAL_ERROR_NO_INTERNET, ERR_JS_DLP_CREDENTIAL_NO_INTERNET_ERROR },
 };
 
 std::string GetJsErrMsg(int32_t jsErrCode)

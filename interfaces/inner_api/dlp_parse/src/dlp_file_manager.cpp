@@ -217,7 +217,7 @@ int32_t DlpFileManager::ParseDlpFileFormat(std::shared_ptr<DlpFile>& filePtr, co
     filePtr->GetContactAccount(certParcel->contactAccount);
     certParcel->isNeedAdapter = filePtr->NeedAdapter();
     StartTrace(HITRACE_TAG_ACCESS_CONTROL, "DlpParseCertificate");
-    result = DlpPermissionKit::ParseDlpCertificate(certParcel, policy, appId);
+    result = DlpPermissionKit::ParseDlpCertificate(certParcel, policy, appId, filePtr->GetOfflineAccess());
     FinishTrace(HITRACE_TAG_ACCESS_CONTROL);
     if (result != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "Parse cert fail, errno=%{public}d", result);
