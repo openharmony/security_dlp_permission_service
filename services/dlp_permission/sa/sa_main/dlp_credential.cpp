@@ -494,15 +494,11 @@ int32_t DlpCredential::ParseDlpCertificate(sptr<CertParcel>& certParcel, sptr<ID
         DLP_LOG_ERROR(LABEL, "JsonObj is discarded");
         return DLP_SERVICE_ERROR_JSON_OPERATE_FAIL;
     }
-    EncAndDecOptions encAndDecOptions = {
-        .opt = CloudEncOption::RECEIVER_DECRYPT_MUST_USE_CLOUD,
-        .extraInfo = nullptr
-    };
+    EncAndDecOptions options = {.opt = CloudEncOption::RECEIVER_DECRYPT_MUST_USE_CLOUD, .extraInfo = nullptr};
     if (offlineAccess) {
-        encAndDecOptions.opt = CloudEncOption::RECEIVER_DECRYPT_MUST_USE_CLOUD_AND_RETURN_ENCRYPTION_VALUE;
+        options.opt = CloudEncOption::RECEIVER_DECRYPT_MUST_USE_CLOUD_AND_RETURN_ENCRYPTION_VALUE;
     }
-    DLP_EncPolicyData encPolicy = {.featureName = strdup(const_cast<char *>(appId.c_str())),
-        .options = encAndDecOptions};
+    DLP_EncPolicyData encPolicy = {.featureName = strdup(const_cast<char *>(appId.c_str())), .options = options};
     int32_t result =
         DlpPermissionSerializer::GetInstance().DeserializeEncPolicyData(jsonObj, encPolicy, certParcel->isNeedAdapter);
     auto accountType = static_cast<DlpAccountType>(encPolicy.accountType);
