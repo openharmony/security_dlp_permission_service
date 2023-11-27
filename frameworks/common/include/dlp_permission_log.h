@@ -23,7 +23,7 @@
 #ifndef __cplusplus
 
 #undef LOG_DOMAIN
-#define LOG_DOMAIN 0xD002F05
+#define LOG_DOMAIN 0xD005A04
 
 #define DLP_LOG_DEBUG(fmt, ...) HILOG_DEBUG(LOG_CORE, "[%{public}s:%{public}d]:" fmt, \
     __func__, __LINE__, ##__VA_ARGS__)
@@ -38,7 +38,7 @@
 
 #else
 
-static constexpr unsigned int SECURITY_DOMAIN_DLP_PERMISSION = 0xD002F05;
+static constexpr unsigned int SECURITY_DOMAIN_DLP_PERMISSION = 0xD005A04;
 
 #define DLP_LOG_DEBUG(label, fmt, ...) \
     OHOS::HiviewDFX::HiLog::Debug(label, "[%{public}s]:" fmt, __func__, ##__VA_ARGS__)
