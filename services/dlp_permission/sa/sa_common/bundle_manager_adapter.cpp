@@ -26,13 +26,13 @@ namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = { LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION,
     "BundleManagerAdapter" };
 }
-BundleManagerAdapter *BundleManagerAdapter::GetInstance()
+BundleManagerAdapter& BundleManagerAdapter::GetInstance()
 {
-    static BundleManagerAdapter *instance = new (std::nothrow) BundleManagerAdapter();
+    static BundleManagerAdapter instance;
     return instance;
 }
 
-BundleManagerAdapter::BundleManagerAdapter()
+BundleManagerAdapter::BundleManagerAdapter() :proxy_(nullptr)
 {}
 
 BundleManagerAdapter::~BundleManagerAdapter()
@@ -64,25 +64,26 @@ int32_t BundleManagerAdapter::GetBundleInfoV9(const std::string &bundleName, App
 
 int32_t BundleManagerAdapter::Connect()
 {
+    if (proxy_ != nullptr) {
+        return DLP_OK;
+    }
+    sptr<ISystemAbilityManager> systemAbilityManager =
+        SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+    if (systemAbilityManager == nullptr) {
+        DLP_LOG_ERROR(LABEL, "failed to get system ability manager");
+        return DLP_SERVICE_ERROR_IPC_REQUEST_FAIL;
+    }
+
+    sptr<IRemoteObject> remoteObj = systemAbilityManager->CheckSystemAbility(BUNDLE_MGR_SERVICE_SYS_ABILITY_ID);
+    if (remoteObj == nullptr) {
+        DLP_LOG_ERROR(LABEL, "Fail to connect bundle manager service.");
+        return DLP_SERVICE_ERROR_IPC_REQUEST_FAIL;
+    }
+
+    proxy_ = iface_cast<AppExecFwk::IBundleMgr>(remoteObj);
     if (proxy_ == nullptr) {
-        sptr<ISystemAbilityManager> systemAbilityManager =
-            SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
-        if (systemAbilityManager == nullptr) {
-            DLP_LOG_ERROR(LABEL, "failed to get system ability manager");
-            return DLP_SERVICE_ERROR_IPC_REQUEST_FAIL;
-        }
-
-        sptr<IRemoteObject> remoteObj = systemAbilityManager->CheckSystemAbility(BUNDLE_MGR_SERVICE_SYS_ABILITY_ID);
-        if (remoteObj == nullptr) {
-            DLP_LOG_ERROR(LABEL, "Fail to connect bundle manager service.");
-            return DLP_SERVICE_ERROR_IPC_REQUEST_FAIL;
-        }
-
-        proxy_ = iface_cast<AppExecFwk::IBundleMgr>(remoteObj);
-        if (proxy_ == nullptr) {
-            DLP_LOG_ERROR(LABEL, "failed to get bundle mgr service remote object");
-            return DLP_SERVICE_ERROR_IPC_REQUEST_FAIL;
-        }
+        DLP_LOG_ERROR(LABEL, "failed to get bundle mgr service remote object");
+        return DLP_SERVICE_ERROR_IPC_REQUEST_FAIL;
     }
     return DLP_OK;
 }

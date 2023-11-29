@@ -19,6 +19,9 @@
 #include <securec.h>
 #include "dlp_permission.h"
 #include "dlp_permission_log.h"
+#define  private public
+#include "dlp_permission_serializer.h"
+#undef private
 
 using namespace testing::ext;
 using namespace OHOS;
@@ -47,7 +50,7 @@ void DlpPermissionSerializerTest::TearDown() {}
 HWTEST_F(DlpPermissionSerializerTest, SerializeDlpPermission001, TestSize.Level1)
 {
     DLP_LOG_INFO(LABEL, "SerializeDlpPermission001");
- 
+
     std::vector<AuthUserInfo> authUsers;
     AuthUserInfo info;
     info.authPerm = CONTENT_EDIT;
@@ -139,7 +142,7 @@ HWTEST_F(DlpPermissionSerializerTest, SerializeDlpPermission003, TestSize.Level1
 HWTEST_F(DlpPermissionSerializerTest, DeserializeDlpPermission001, TestSize.Level1)
 {
     DLP_LOG_INFO(LABEL, "DeserializeDlpPermission001");
- 
+
     unordered_json permJson;
     PermissionPolicy policy;
     permJson["plaintextPolicy"] = "7b2266696c65223a7b226976223a223132222c2269764c656e223a31367d7d";
@@ -158,7 +161,7 @@ HWTEST_F(DlpPermissionSerializerTest, DeserializeDlpPermission001, TestSize.Leve
 HWTEST_F(DlpPermissionSerializerTest, DeserializeDlpPermission002, TestSize.Level1)
 {
     DLP_LOG_INFO(LABEL, "DeserializeDlpPermission002");
- 
+
     unordered_json permJson;
     PermissionPolicy policy;
     permJson["file"] = {{"filekey", "ttttt"}, {"filekeyLen", AESKEY_LEN}};
@@ -177,7 +180,7 @@ HWTEST_F(DlpPermissionSerializerTest, DeserializeDlpPermission002, TestSize.Leve
 HWTEST_F(DlpPermissionSerializerTest, DeserializeDlpPermission003, TestSize.Level1)
 {
     DLP_LOG_INFO(LABEL, "DeserializeDlpPermission003");
- 
+
     unordered_json permJson;
     PermissionPolicy policy;
     permJson["file"] = {{"iv", "ttttt"}, {"ivLen", AESKEY_LEN}};
@@ -196,7 +199,7 @@ HWTEST_F(DlpPermissionSerializerTest, DeserializeDlpPermission003, TestSize.Leve
 HWTEST_F(DlpPermissionSerializerTest, DeserializeDlpPermission004, TestSize.Level1)
 {
     DLP_LOG_INFO(LABEL, "DeserializeDlpPermission004");
- 
+
     unordered_json permJson1;
     permJson1["policy"] = {{"account", {"right", {"edit", true}}}};
 
@@ -209,5 +212,125 @@ HWTEST_F(DlpPermissionSerializerTest, DeserializeDlpPermission004, TestSize.Leve
     ASSERT_EQ(DLP_OK, ret);
 
     ret = serialize.DeserializeDlpPermission(permJson2, policy);
+    ASSERT_EQ(DLP_OK, ret);
+}
+
+/**
+ * @tc.name: DeserializeEncPolicyData001
+ * @tc.desc: DeserializeEncPolicyData test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionSerializerTest, DeserializeEncPolicyData001, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL, "DeserializeEncPolicyData001");
+
+    unordered_json permJson1;
+    DLP_EncPolicyData encData;
+    DlpPermissionSerializer serialize;
+    int32_t ret = serialize.DeserializeEncPolicyData(permJson1, encData, true);
+    ASSERT_EQ(DLP_OK, ret);
+}
+
+/**
+ * @tc.name: DeserializeEncPolicyData002
+ * @tc.desc: DeserializeEncPolicyData test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionSerializerTest, DeserializeEncPolicyData002, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL, "DeserializeEncPolicyData002");
+
+    unordered_json permJson1;
+    permJson1["encData"] = "X";
+    permJson1["encDataLen"] = 11;
+    DLP_EncPolicyData encData;
+    DlpPermissionSerializer serialize;
+    int32_t ret = serialize.DeserializeEncPolicyData(permJson1, encData, false);
+    ASSERT_NE(DLP_OK, ret);
+}
+
+/**
+ * @tc.name: DeserializeEveryoneInfo001
+ * @tc.desc: DeserializeEveryoneInfo test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionSerializerTest, DeserializeEveryoneInfo001, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL, "DeserializeEveryoneInfo001");
+
+    unordered_json permJson1;
+    unordered_json rightInfoJson;
+    unordered_json everyoneJson;
+    rightInfoJson["read"] = true;
+    everyoneJson["right1"] = rightInfoJson;
+    permJson1["everyone"] = everyoneJson;
+    PermissionPolicy policy;
+    DlpPermissionSerializer serialize;
+    bool ret = serialize.DeserializeEveryoneInfo(permJson1, policy);
+    ASSERT_EQ(false, ret);
+    everyoneJson["right"] = 1;
+    permJson1["everyone"] = everyoneJson;
+    ret = serialize.DeserializeEveryoneInfo(permJson1, policy);
+    ASSERT_EQ(false, ret);
+    rightInfoJson["edit"] = "true";
+    rightInfoJson["fullCtrl"] = "true";
+    everyoneJson["right"] = rightInfoJson;
+    permJson1["everyone"] = everyoneJson;
+    ret = serialize.DeserializeEveryoneInfo(permJson1, policy);
+    ASSERT_EQ(true, ret);
+    rightInfoJson["edit"] = true;
+    everyoneJson["right"] = rightInfoJson;
+    permJson1["everyone"] = everyoneJson;
+    ret = serialize.DeserializeEveryoneInfo(permJson1, policy);
+    ASSERT_EQ(true, ret);
+    rightInfoJson["fullCtrl"] = true;
+    everyoneJson["right"] = rightInfoJson;
+    permJson1["everyone"] = everyoneJson;
+    ret = serialize.DeserializeEveryoneInfo(permJson1, policy);
+    ASSERT_EQ(true, ret);
+}
+
+/**
+ * @tc.name: DeserializeAuthUserInfo001
+ * @tc.desc: DeserializeAuthUserInfo test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionSerializerTest, DeserializeAuthUserInfo001, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL, "DeserializeAuthUserInfo001");
+
+    unordered_json permJson1;
+    unordered_json rightInfoJson;
+    unordered_json everyoneJson;
+    rightInfoJson["read"] = true;
+    everyoneJson["right1"] = rightInfoJson;
+    permJson1["everyone"] = everyoneJson;
+    AuthUserInfo userInfo;
+    DlpPermissionSerializer serialize;
+    int32_t ret = serialize.DeserializeAuthUserInfo(permJson1, userInfo);
+    ASSERT_EQ(DLP_OK, ret);
+    everyoneJson["right"] = 1;
+    permJson1["everyone"] = everyoneJson;
+    ret = serialize.DeserializeAuthUserInfo(permJson1, userInfo);
+    ASSERT_EQ(DLP_OK, ret);
+    rightInfoJson["edit"] = "true";
+    rightInfoJson["fullCtrl"] = "true";
+    everyoneJson["right"] = rightInfoJson;
+    permJson1["everyone"] = everyoneJson;
+    ret = serialize.DeserializeAuthUserInfo(permJson1, userInfo);
+    ASSERT_EQ(DLP_OK, ret);
+    rightInfoJson["edit"] = true;
+    everyoneJson["right"] = rightInfoJson;
+    permJson1["everyone"] = everyoneJson;
+    ret = serialize.DeserializeAuthUserInfo(permJson1, userInfo);
+    ASSERT_EQ(DLP_OK, ret);
+    rightInfoJson["fullCtrl"] = true;
+    everyoneJson["right"] = rightInfoJson;
+    permJson1["everyone"] = everyoneJson;
+    ret = serialize.DeserializeAuthUserInfo(permJson1, userInfo);
     ASSERT_EQ(DLP_OK, ret);
 }

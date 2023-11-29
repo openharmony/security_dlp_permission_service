@@ -23,6 +23,14 @@ config("dlp_permission_config") {
 }
 
 ohos_shared_library("libdlp_permission_common_interface") {
+  branch_protector_ret = "pac_ret"
+
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
+
   subsystem_name = "security"
   part_name = "dlp_permission_service"
   output_name = "libdlp_permission_common_interface"

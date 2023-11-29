@@ -48,7 +48,7 @@ void DlpBundleAdapterTest::TearDown() {}
 HWTEST_F(DlpBundleAdapterTest, DlpBundleAdapterTest001, TestSize.Level1)
 {
     BundleInfo bundleInfo;
-    bool result = BundleManagerAdapter::GetInstance()->GetBundleInfo(
+    bool result = BundleManagerAdapter::GetInstance().GetBundleInfo(
         BUNDLE_NAME, BundleFlag::GET_BUNDLE_WITH_ABILITIES, bundleInfo, USER_ID);
     ASSERT_EQ(result, false);
 }
@@ -62,7 +62,7 @@ HWTEST_F(DlpBundleAdapterTest, DlpBundleAdapterTest001, TestSize.Level1)
 HWTEST_F(DlpBundleAdapterTest, DlpBundleAdapterTest002, TestSize.Level1)
 {
     BundleInfo bundleInfo;
-    int32_t result = BundleManagerAdapter::GetInstance()->GetBundleInfoV9(
+    int32_t result = BundleManagerAdapter::GetInstance().GetBundleInfoV9(
         BUNDLE_NAME, BundleFlag::GET_BUNDLE_WITH_ABILITIES, bundleInfo, USER_ID);
     ASSERT_NE(result, DLP_OK);
 }

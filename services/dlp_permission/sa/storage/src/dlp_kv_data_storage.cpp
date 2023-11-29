@@ -22,10 +22,10 @@ namespace OHOS {
 namespace Security {
 namespace DlpPermission {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "DlpKvDataStorage"};
-const int32_t MAX_TIMES = 10;
-const int32_t SLEEP_INTERVAL = 100 * 1000;
-const std::string KV_STORE_EL1_BASE_DIR = "/data/service/el1/public/database/";
-const std::string KV_STORE_EL2_BASE_DIR = "/data/service/el2/public/database/";
+static const int32_t MAX_TIMES = 10;
+static const int32_t SLEEP_INTERVAL = 100 * 1000;
+static const std::string KV_STORE_EL1_BASE_DIR = "/data/service/el1/public/database/";
+static const std::string KV_STORE_EL2_BASE_DIR = "/data/service/el2/public/database/";
 static const std::string DLP_KV_APP_ID = "dlp_permission_service_storage";
 
 DlpKvDataStorage::DlpKvDataStorage(const std::string &storeId,
@@ -63,14 +63,12 @@ int32_t DlpKvDataStorage::LoadAllData(std::map<std::string, std::string> &infos)
         DLP_LOG_ERROR(LABEL, "kvStore is nullptr");
         return DLP_COMMON_CHECK_KVSTORE_ERROR;
     }
-
     OHOS::DistributedKv::Status status = DistributedKv::Status::SUCCESS;
     std::vector<OHOS::DistributedKv::Entry> allEntries;
     TryTwice([this, &status, &allEntries] {
         status = GetEntries("", allEntries);
         return status;
     });
-
     if (status != OHOS::DistributedKv::Status::SUCCESS) {
         DLP_LOG_ERROR(LABEL, "get entries error: %{public}d", status);
         return DLP_QUERY_DISTRIBUTE_DATA_ERROR;
@@ -92,7 +90,6 @@ OHOS::DistributedKv::Status DlpKvDataStorage::GetKvStore()
         .kvStoreType = OHOS::DistributedKv::KvStoreType::SINGLE_VERSION,
         .baseDir = baseDir_,
     };
-
     OHOS::DistributedKv::Status status = dataManager_.GetSingleKvStore(options, appId_, storeId_, kvStorePtr_);
     if (status != OHOS::DistributedKv::Status::SUCCESS || kvStorePtr_ == nullptr) {
         DLP_LOG_ERROR(LABEL, "GetSingleKvStore failed! status %{public}d, kvStorePtr_ is nullptr", status);
@@ -104,7 +101,6 @@ OHOS::DistributedKv::Status DlpKvDataStorage::GetKvStore()
 bool DlpKvDataStorage::CheckKvStore()
 {
     std::lock_guard<std::mutex> lock(kvStorePtrMutex_);
-
     if (kvStorePtr_ != nullptr) {
         return true;
     }
@@ -113,18 +109,12 @@ bool DlpKvDataStorage::CheckKvStore()
     while (tryTimes > 0) {
         status = GetKvStore();
         if (status == OHOS::DistributedKv::Status::SUCCESS && kvStorePtr_ != nullptr) {
-            break;
+            return true;
         }
-
         usleep(SLEEP_INTERVAL);
         tryTimes--;
     }
-
-    if (kvStorePtr_ == nullptr) {
-        return false;
-    }
-
-    return true;
+    return false;
 }
 
 int32_t DlpKvDataStorage::AddOrUpdateValue(const std::string &key, const std::string &value)
@@ -142,7 +132,6 @@ int32_t DlpKvDataStorage::RemoveValueFromKvStore(const std::string &keyStr)
         DLP_LOG_ERROR(LABEL, "kvStore is nullptr");
         return DLP_COMMON_CHECK_KVSTORE_ERROR;
     }
-
     OHOS::DistributedKv::Key key(keyStr);
     OHOS::DistributedKv::Status status;
     OHOS::DistributedKv::Value value;
@@ -158,7 +147,6 @@ int32_t DlpKvDataStorage::RemoveValueFromKvStore(const std::string &keyStr)
             DLP_LOG_INFO(LABEL, "key does not exist in kvStore.");
             return DLP_OK;
         }
-
         // delete
         status = kvStorePtr_->Delete(key);
         if (status == OHOS::DistributedKv::Status::IPC_ERROR) {
@@ -166,12 +154,10 @@ int32_t DlpKvDataStorage::RemoveValueFromKvStore(const std::string &keyStr)
             DLP_LOG_ERROR(LABEL, "kvstore ipc error and try to call again, status = %{public}d", status);
         }
     }
-
     if (status != OHOS::DistributedKv::Status::SUCCESS) {
         DLP_LOG_ERROR(LABEL, "delete key from kvstore failed, status %{public}d.", status);
         return DLP_COMMON_DELETE_KEY_FROM_KVSTORE_ERROR;
     }
-
     DLP_LOG_DEBUG(LABEL, "delete key from kvStore succeed!");
     return DLP_OK;
 }
@@ -182,7 +168,6 @@ int32_t DlpKvDataStorage::DeleteKvStore()
         DLP_LOG_ERROR(LABEL, "kvStore is nullptr");
         return DLP_QUERY_DISTRIBUTE_DATA_ERROR;
     }
-
     OHOS::DistributedKv::Status status;
     {
         std::lock_guard<std::mutex> lock(kvStorePtrMutex_);
@@ -194,7 +179,6 @@ int32_t DlpKvDataStorage::DeleteKvStore()
         DLP_LOG_ERROR(LABEL, "error, status = %{public}d", status);
         return DLP_QUERY_DISTRIBUTE_DATA_ERROR;
     }
-
     return DLP_OK;
 }
 
@@ -204,11 +188,9 @@ int32_t DlpKvDataStorage::PutValueToKvStore(const std::string &keyStr, const std
         DLP_LOG_ERROR(LABEL, "kvStore is nullptr");
         return DLP_COMMON_CHECK_KVSTORE_ERROR;
     }
-
     OHOS::DistributedKv::Key key(keyStr);
     OHOS::DistributedKv::Value value(valueStr);
     OHOS::DistributedKv::Status status;
-
     {
         std::lock_guard<std::mutex> lock(kvStorePtrMutex_);
         status = kvStorePtr_->Put(key, value);
@@ -216,12 +198,10 @@ int32_t DlpKvDataStorage::PutValueToKvStore(const std::string &keyStr, const std
             status = kvStorePtr_->Put(key, value);
         }
     }
-
     if (status != OHOS::DistributedKv::Status::SUCCESS) {
         DLP_LOG_ERROR(LABEL, "put value to kvStore error, status = %{public}d", status);
         return DLP_QUERY_DISTRIBUTE_DATA_ERROR;
     }
-
     return DLP_OK;
 }
 
@@ -231,11 +211,9 @@ int32_t DlpKvDataStorage::GetValueFromKvStore(const std::string &keyStr, std::st
         DLP_LOG_ERROR(LABEL, "kvStore is nullptr");
         return DLP_COMMON_CHECK_KVSTORE_ERROR;
     }
-
     OHOS::DistributedKv::Key key(keyStr);
     OHOS::DistributedKv::Value value;
     OHOS::DistributedKv::Status status;
-
     {
         std::lock_guard<std::mutex> lock(kvStorePtrMutex_);
         status = kvStorePtr_->Get(key, value);
@@ -244,12 +222,10 @@ int32_t DlpKvDataStorage::GetValueFromKvStore(const std::string &keyStr, std::st
             status = kvStorePtr_->Get(key, value);
         }
     }
-
     if (status != OHOS::DistributedKv::Status::SUCCESS) {
         DLP_LOG_ERROR(LABEL, "get value from kvstore error, status %{public}d.", status);
         return DLP_QUERY_DISTRIBUTE_DATA_ERROR;
     }
-
     valueStr = value.ToString();
     return DLP_OK;
 }

@@ -17,7 +17,6 @@
 #define DLP_PERMISSION_SERIALIZER_TEST_H
 
 #include <gtest/gtest.h>
-#include "dlp_permission_serializer.h"
 
 namespace OHOS {
 namespace Security {

@@ -130,15 +130,15 @@ private:
     static void GetDLPFileVisitRecordComplete(napi_env env, napi_status status, void* data);
     static napi_value GetDLPFileVisitRecord(napi_env env, napi_callback_info cbInfo);
 
-    static void SetSandboxAppConfigExcute(napi_env env, void* data);
+    static void SetSandboxAppConfigExecute(napi_env env, void* data);
     static void SetSandboxAppConfigComplete(napi_env env, napi_status status, void* data);
     static napi_value SetSandboxAppConfig(napi_env env, napi_callback_info cbInfo);
 
-    static void CleanSandboxAppConfigExcute(napi_env env, void* data);
+    static void CleanSandboxAppConfigExecute(napi_env env, void* data);
     static void CleanSandboxAppConfigComplete(napi_env env, napi_status status, void* data);
     static napi_value CleanSandboxAppConfig(napi_env env, napi_callback_info cbInfo);
 
-    static void GetSandboxAppConfigExcute(napi_env env, void* data);
+    static void GetSandboxAppConfigExecute(napi_env env, void* data);
     static void GetSandboxAppConfigComplete(napi_env env, napi_status status, void* data);
     static napi_value GetSandboxAppConfig(napi_env env, napi_callback_info cbInfo);
 };

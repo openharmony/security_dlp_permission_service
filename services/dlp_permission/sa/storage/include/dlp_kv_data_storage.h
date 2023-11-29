@@ -16,8 +16,8 @@
 #ifndef DLP_KV_DATA_STORAGE_H
 #define DLP_KV_DATA_STORAGE_H
 
-#include <string>
 #include <map>
+#include <string>
 #include "distributed_kv_data_manager.h"
 
 namespace OHOS {

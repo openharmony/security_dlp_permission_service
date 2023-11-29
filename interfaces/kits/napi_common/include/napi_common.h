@@ -237,8 +237,8 @@ struct GetDLPFileVisitRecordAsyncContext : public CommonAsyncContext {
     std::vector<VisitedDLPFileInfo> visitedDlpFileInfoVec;
 };
 
-struct SandboxAppConifgAsyncContext : public CommonAsyncContext {
-    explicit SandboxAppConifgAsyncContext(napi_env env) : CommonAsyncContext(env) {};
+struct SandboxAppConfigAsyncContext : public CommonAsyncContext {
+    explicit SandboxAppConfigAsyncContext(napi_env env) : CommonAsyncContext(env) {};
     std::string configInfo = "";
 };
 
@@ -285,7 +285,8 @@ bool GetRetentionSandboxListParams(const napi_env env, const napi_callback_info 
 bool GetOriginalFilenameParams(const napi_env env, const napi_callback_info info,
     GetOriginalFileAsyncContext& asyncContext);
 bool GetSandboxAppConfigParams(const napi_env env, const napi_callback_info info,
-    SandboxAppConifgAsyncContext& asyncContext);
+    SandboxAppConfigAsyncContext* asyncContext);
+void GetDlpPropertyExpireTime(napi_env env, napi_value jsObject, DlpProperty& property);
 bool GetDlpProperty(napi_env env, napi_value object, DlpProperty& property);
 bool ParseCallback(const napi_env& env, const napi_value& value, napi_ref& callbackRef);
 

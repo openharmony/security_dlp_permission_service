@@ -30,7 +30,7 @@ namespace Security {
 namespace DlpPermission {
 class BundleManagerAdapter {
 public:
-    static BundleManagerAdapter* GetInstance();
+    static BundleManagerAdapter& GetInstance();
     bool GetBundleInfo(const std::string &bundleName, int32_t flag,
         AppExecFwk::BundleInfo &bundleInfo, int32_t userId);
     int32_t GetBundleInfoV9(const std::string &bundleName, AppExecFwk::BundleFlag flag,

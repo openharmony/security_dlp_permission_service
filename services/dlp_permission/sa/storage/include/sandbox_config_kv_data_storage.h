@@ -39,7 +39,7 @@ public:
     int32_t DeleteSandboxConfigFromDataStorage(const int32_t userId, const std::string& bundleName);
     int32_t GetKeySetByUserId(const int32_t userId, std::set<std::string>& keySet);
     void SaveEntries(std::vector<OHOS::DistributedKv::Entry> allEntries,
-        std::map<std::string, std::string> &infos) override;
+        std::map<std::string, std::string>& infos) override;
 private:
     bool GenerateKey(const int32_t userId, const std::string& bundleName, std::string& key);
 };

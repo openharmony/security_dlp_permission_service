@@ -61,8 +61,7 @@ static bool IsDlpCredentialServerError(int errorCode)
 
 static bool IsNoPermissionError(int errorCode)
 {
-    return ((errorCode == DLP_ERR_CONNECTION_VIP_RIGHT_EXPIRED) || (errorCode == DLP_ERR_CONNECTION_NO_PERMISSION) ||
-            (errorCode == DLP_ERR_CONNECTION_POLICY_PERMISSION_EXPIRED));
+    return ((errorCode == DLP_ERR_CONNECTION_VIP_RIGHT_EXPIRED) || (errorCode == DLP_ERR_CONNECTION_NO_PERMISSION));
 }
 
 static bool IsNoAccountError(int errorCode)
@@ -74,6 +73,12 @@ static int32_t ConvertCredentialError(int errorCode)
 {
     if (errorCode == DLP_SUCCESS) {
         return DLP_OK;
+    }
+    if (errorCode == DLP_ERR_TOKEN_CONNECTION_FAIL) {
+        return DLP_CREDENTIAL_ERROR_NO_INTERNET;
+    }
+    if (errorCode == DLP_ERR_CONNECTION_POLICY_PERMISSION_EXPIRED) {
+        return DLP_CREDENTIAL_ERROR_TIME_EXPIRED;
     }
     if (errorCode == DLP_ERR_APPID_NOT_AUTHORIZED) {
         return DLP_CREDENTIAL_ERROR_APPID_NOT_AUTHORIZED;
@@ -93,7 +98,7 @@ static int32_t ConvertCredentialError(int errorCode)
     if (IsDlpCredentialIpcError(errorCode)) {
         return DLP_CREDENTIAL_ERROR_IPC_ERROR;
     }
-    if (errorCode == DLP_ERR_TOKEN_CONNECTION_FAIL || IsDlpCredentialServerError(errorCode)) {
+    if (IsDlpCredentialServerError(errorCode)) {
         return DLP_CREDENTIAL_ERROR_SERVER_ERROR;
     }
     return DLP_CREDENTIAL_ERROR_COMMON_ERROR;
@@ -481,7 +486,7 @@ static int32_t AdapterData(const std::vector<uint8_t>& offlineCert, bool isOwner
 }
 
 int32_t DlpCredential::ParseDlpCertificate(sptr<CertParcel>& certParcel, sptr<IDlpPermissionCallback>& callback,
-    const std::string& appId)
+    const std::string& appId, const bool& offlineAccess)
 {
     std::string encDataJsonStr(certParcel->cert.begin(), certParcel->cert.end());
     auto jsonObj = unordered_json::parse(encDataJsonStr, nullptr, false);
@@ -490,9 +495,12 @@ int32_t DlpCredential::ParseDlpCertificate(sptr<CertParcel>& certParcel, sptr<ID
         return DLP_SERVICE_ERROR_JSON_OPERATE_FAIL;
     }
     EncAndDecOptions encAndDecOptions = {
-        .opt = CloudEncOption::RECEIVER_DECRYPT_MUST_USE_CLOUD_AND_RETURN_ENCRYPTION_VALUE,
+        .opt = CloudEncOption::RECEIVER_DECRYPT_MUST_USE_CLOUD,
         .extraInfo = nullptr
     };
+    if (offlineAccess) {
+        encAndDecOptions.opt = CloudEncOption::RECEIVER_DECRYPT_MUST_USE_CLOUD_AND_RETURN_ENCRYPTION_VALUE;
+    }
     DLP_EncPolicyData encPolicy = {.featureName = strdup(const_cast<char *>(appId.c_str())),
         .options = encAndDecOptions};
     int32_t result =

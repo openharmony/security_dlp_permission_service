@@ -553,7 +553,8 @@ void ProcessCallbackOrPromise(napi_env env, const CommonAsyncContext* asyncConte
     } else {
         int32_t jsErrCode = NativeCodeToJsCode(asyncContext->errCode);
         napi_value errObj = GenerateBusinessError(env, jsErrCode, GetJsErrMsg(jsErrCode));
-        if (data != nullptr && asyncContext->errCode == DLP_CREDENTIAL_ERROR_NO_PERMISSION_ERROR) {
+        if (data != nullptr && (asyncContext->errCode == DLP_CREDENTIAL_ERROR_NO_PERMISSION_ERROR ||
+            asyncContext->errCode == DLP_CREDENTIAL_ERROR_TIME_EXPIRED)) {
             std::string errContacter;
             if (!GetStringValue(env, data, errContacter)) {
                 DLP_LOG_ERROR(LABEL, "js get contacter data fail");
@@ -639,10 +640,11 @@ bool GetGenerateDlpFileParams(
 
     DLP_LOG_DEBUG(LABEL,
         "Fd: %{private}" PRId64 ",ownerAccount:%{private}s,ownerAccountId: %{private}s, ownerAccountType: %{private}d,"
-        "contactAccount: %{private}s, size: %{private}zu",
+        "contactAccount: %{private}s, size: %{private}zu, expireTime: %{public}" PRId64,
         asyncContext.plaintextFd, asyncContext.property.ownerAccount.c_str(),
         asyncContext.property.ownerAccountId.c_str(), asyncContext.property.ownerAccountType,
-        asyncContext.property.contactAccount.c_str(), asyncContext.property.authUsers.size());
+        asyncContext.property.contactAccount.c_str(), asyncContext.property.authUsers.size(),
+        asyncContext.property.expireTime);
     return true;
 }
 
@@ -661,7 +663,7 @@ bool GetOpenDlpFileParams(const napi_env env, const napi_callback_info info, Dlp
         ThrowParamError(env, "ciphertextFd", "number");
         return false;
     }
-    
+
     if (!GetStringValue(env, argv[PARAM1], asyncContext.appId)) {
         DLP_LOG_ERROR(LABEL, "js get appId fail");
         ThrowParamError(env, "appId", "string");
@@ -1126,22 +1128,19 @@ bool GetOriginalFilenameParams(const napi_env env, const napi_callback_info info
 }
 
 bool GetSandboxAppConfigParams(const napi_env env, const napi_callback_info info,
-    SandboxAppConifgAsyncContext& asyncContext)
+    SandboxAppConfigAsyncContext* asyncContext)
 {
     size_t argc = PARAM_SIZE_ONE;
     napi_value argv[PARAM_SIZE_ONE] = {nullptr};
     NAPI_CALL_BASE(env, napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr), false);
-
     if (!NapiCheckArgc(env, argc, PARAM_SIZE_ONE)) {
         return false;
     }
-
-    if (!GetStringValue(env, argv[PARAM0], asyncContext.configInfo)) {
+    if (!GetStringValue(env, argv[PARAM0], asyncContext->configInfo)) {
         ThrowParamError(env, "config", "string");
         return false;
     }
-
-    if (asyncContext.configInfo.empty()) {
+    if (asyncContext->configInfo.empty()) {
         DlpNapiThrow(env, ERR_JS_INVALID_PARAMETER, GetJsErrMsg(ERR_JS_INVALID_PARAMETER));
         return false;
     }
@@ -1163,6 +1162,15 @@ bool GetThirdInterfaceParams(
         }
     }
     return true;
+}
+
+void GetDlpPropertyExpireTime(napi_env env, napi_value jsObject, DlpProperty& property)
+{
+    int64_t jsExpireTime = 0;
+    if (!GetInt64ValueByKey(env, jsObject, "expireTime", jsExpireTime)) {
+        DLP_LOG_INFO(LABEL, "js get expity time fail, set zero");
+    }
+    property.expireTime = static_cast<uint64_t>(jsExpireTime);
 }
 
 bool GetDlpProperty(napi_env env, napi_value jsObject, DlpProperty& property)
@@ -1196,6 +1204,7 @@ bool GetDlpProperty(napi_env env, napi_value jsObject, DlpProperty& property)
         DLP_LOG_ERROR(LABEL, "js get offline access flag fail");
         return false;
     }
+    GetDlpPropertyExpireTime(env, jsObject, property);
 
     napi_value everyoneAccessListObj = GetNapiValue(env, jsObject, "everyoneAccessList");
     if (everyoneAccessListObj != nullptr) {
@@ -1278,6 +1287,10 @@ napi_value DlpPropertyToJs(napi_env env, const DlpProperty& property)
     napi_value offlineAccessJs;
     napi_get_boolean(env, property.offlineAccess, &offlineAccessJs);
     NAPI_CALL(env, napi_set_named_property(env, dlpPropertyJs, "offlineAccess", offlineAccessJs));
+
+    napi_value expireTimeJs;
+    napi_create_int64(env, property.expireTime, &expireTimeJs);
+    NAPI_CALL(env, napi_set_named_property(env, dlpPropertyJs, "expireTime", expireTimeJs));
 
     napi_value ownerAccountJs;
     NAPI_CALL(env, napi_create_string_utf8(env, property.ownerAccount.c_str(), NAPI_AUTO_LENGTH, &ownerAccountJs));
@@ -1422,7 +1435,7 @@ bool ParseCallback(const napi_env& env, const napi_value& value, napi_ref& callb
 {
     napi_valuetype valuetype = napi_undefined;
     NAPI_CALL_BASE(env, napi_typeof(env, value, &valuetype), false);
-    
+
     if (valuetype == napi_function) {
         NAPI_CALL_BASE(env, napi_create_reference(env, value, 1, &callbackRef), false);
         return true;

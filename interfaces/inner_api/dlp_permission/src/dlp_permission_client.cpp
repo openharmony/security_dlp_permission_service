@@ -96,7 +96,7 @@ int32_t DlpPermissionClient::GenerateDlpCertificate(
 }
 
 int32_t DlpPermissionClient::ParseDlpCertificate(sptr<CertParcel>& certParcel,
-    std::shared_ptr<ParseDlpCertificateCallback> callback, const std::string& appId)
+    std::shared_ptr<ParseDlpCertificateCallback> callback, const std::string& appId, const bool& offlineAccess)
 {
     if (callback == nullptr || certParcel->cert.size() == 0) {
         return DLP_SERVICE_ERROR_VALUE_INVALID;
@@ -113,7 +113,7 @@ int32_t DlpPermissionClient::ParseDlpCertificate(sptr<CertParcel>& certParcel,
         return DLP_SERVICE_ERROR_MEMORY_OPERATE_FAIL;
     }
 
-    return proxy->ParseDlpCertificate(certParcel, asyncStub, appId);
+    return proxy->ParseDlpCertificate(certParcel, asyncStub, appId, offlineAccess);
 }
 
 int32_t DlpPermissionClient::InstallDlpSandbox(const std::string& bundleName, DLPFileAccess dlpFileAccess,
@@ -526,10 +526,9 @@ int32_t DlpPermissionClient::SetSandboxAppConfig(const std::string& configInfo)
     }
     auto proxy = GetProxy(true);
     if (proxy == nullptr) {
-        DLP_LOG_INFO(LABEL, "Proxy is null");
+        DLP_LOG_ERROR(LABEL, "Proxy is null");
         return DLP_CALLBACK_SA_WORK_ABNORMAL;
     }
-
     return proxy->SetSandboxAppConfig(configInfo);
 }
 
@@ -545,10 +544,9 @@ int32_t DlpPermissionClient::CleanSandboxAppConfig()
     }
     auto proxy = GetProxy(true);
     if (proxy == nullptr) {
-        DLP_LOG_INFO(LABEL, "Proxy is null");
+        DLP_LOG_ERROR(LABEL, "Proxy is null");
         return DLP_CALLBACK_SA_WORK_ABNORMAL;
     }
-
     return proxy->CleanSandboxAppConfig();
 }
 
@@ -556,10 +554,9 @@ int32_t DlpPermissionClient::GetSandboxAppConfig(std::string& configInfo)
 {
     auto proxy = GetProxy(false);
     if (proxy == nullptr) {
-        DLP_LOG_INFO(LABEL, "Proxy is null");
+        DLP_LOG_ERROR(LABEL, "Proxy is null");
         return DLP_CALLBACK_SA_WORK_ABNORMAL;
     }
-
     return proxy->GetSandboxAppConfig(configInfo);
 }
 

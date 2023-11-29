@@ -252,6 +252,7 @@ static void GetDlpProperty(std::shared_ptr<DlpFile>& dlpFileNative, DlpProperty&
         .offlineAccess = dlpFileNative->GetOfflineAccess(),
         .supportEveryone = policy.supportEveryone_,
         .everyonePerm = policy.everyonePerm_,
+        .expireTime = policy.expireTime_,
     };
 }
 
@@ -284,7 +285,8 @@ void NapiDlpPermission::OpenDlpFileComplete(napi_env env, napi_status status, vo
         }
     } else {
         if (asyncContext->dlpFileNative != nullptr &&
-            asyncContext->errCode == DLP_CREDENTIAL_ERROR_NO_PERMISSION_ERROR) {
+            (asyncContext->errCode == DLP_CREDENTIAL_ERROR_NO_PERMISSION_ERROR ||
+            asyncContext->errCode == DLP_CREDENTIAL_ERROR_TIME_EXPIRED)) {
             std::string contactAccount = "";
             asyncContext->dlpFileNative->GetContactAccount(contactAccount);
             if (!contactAccount.empty()) {
@@ -1620,39 +1622,42 @@ void NapiDlpPermission::GetDLPFileVisitRecordComplete(napi_env env, napi_status 
 napi_value NapiDlpPermission::SetSandboxAppConfig(napi_env env, napi_callback_info cbInfo)
 {
     DLP_LOG_DEBUG(LABEL, "napi_create_async_work SetSandboxAppConfig running");
-    auto asyncContextPtr = std::make_unique<SandboxAppConifgAsyncContext>(env);
-    if (!GetSandboxAppConfigParams(env, cbInfo, asyncContext.get())) {
+    auto asyncContextPtr = std::make_unique<SandboxAppConfigAsyncContext>(env);
+    if (!GetSandboxAppConfigParams(env, cbInfo, asyncContextPtr.get())) {
         return nullptr;
     }
     napi_value result = nullptr;
     DLP_LOG_DEBUG(LABEL, "Create promise");
-    NAPI_CALL(env, napi_create_promise(env, &asyncContext->deferred, &result));
-
+    NAPI_CALL(env, napi_create_promise(env, &asyncContextPtr->deferred, &result));
     napi_value resource = nullptr;
     NAPI_CALL(env, napi_create_string_utf8(env, "SetSandboxAppConfig", NAPI_AUTO_LENGTH, &resource));
-    NAPI_CALL(env, napi_create_async_work(env, nullptr, resource, SetSandboxAppConfigExcute,
-        SetSandboxAppConfigComplete, static_cast<void*>(asyncContext), &(asyncContext->work)));
-    NAPI_CALL(env, napi_queue_async_work(env, asyncContext->work));
+    NAPI_CALL(env, napi_create_async_work(env, nullptr, resource, SetSandboxAppConfigExecute,
+        SetSandboxAppConfigComplete, static_cast<void*>(asyncContextPtr.get()), &(asyncContextPtr->work)));
+    NAPI_CALL(env, napi_queue_async_work(env, asyncContextPtr->work));
     asyncContextPtr.release();
     return result;
 }
 
-void NapiDlpPermission::SetSandboxAppConfigExcute(napi_env env, void* data)
+void NapiDlpPermission::SetSandboxAppConfigExecute(napi_env env, void* data)
 {
-    DLP_LOG_DEBUG(LABEL, "napi_create_async_work SetSandboxAppConfigExcute running");
-    auto asyncContext = reinterpret_cast<SandboxAppConifgAsyncContext*>(data);
+    DLP_LOG_DEBUG(LABEL, "napi_create_async_work SetSandboxAppConfigExecute running");
+    auto asyncContext = reinterpret_cast<SandboxAppConfigAsyncContext*>(data);
+    if (asyncContext == nullptr) {
+        DLP_LOG_ERROR(LABEL, "asyncContext is nullptr");
+        return;
+    }
     asyncContext->errCode = DlpPermissionKit::SetSandboxAppConfig(asyncContext->configInfo);
 }
 
 void NapiDlpPermission::SetSandboxAppConfigComplete(napi_env env, napi_status status, void* data)
 {
     DLP_LOG_DEBUG(LABEL, "napi_create_async_work SetSandboxAppConfig complete");
-    auto asyncContext = reinterpret_cast<SandboxAppConifgAsyncContext*>(data);
-    std::unique_ptr<SandboxAppConifgAsyncContext> asyncContextPtr { asyncContext };
+    auto asyncContext = reinterpret_cast<SandboxAppConfigAsyncContext*>(data);
     if (asyncContext == nullptr) {
         DLP_LOG_ERROR(LABEL, "asyncContext is nullptr");
         return;
     }
+    std::unique_ptr<SandboxAppConfigAsyncContext> asyncContextPtr { asyncContext };
     napi_value resJs = nullptr;
     if (asyncContext->errCode == DLP_OK) {
         NAPI_CALL_RETURN_VOID(env, napi_get_undefined(env, &resJs));
@@ -1662,36 +1667,39 @@ void NapiDlpPermission::SetSandboxAppConfigComplete(napi_env env, napi_status st
 
 napi_value NapiDlpPermission::CleanSandboxAppConfig(napi_env env, napi_callback_info cbInfo)
 {
-    auto asyncContextPtr = std::make_unique<SandboxAppConifgAsyncContext>(env);
+    auto asyncContextPtr = std::make_unique<SandboxAppConfigAsyncContext>(env);
     napi_value result = nullptr;
     DLP_LOG_DEBUG(LABEL, "Create promise");
-    NAPI_CALL(env, napi_create_promise(env, &asyncContext->deferred, &result));
-
+    NAPI_CALL(env, napi_create_promise(env, &asyncContextPtr->deferred, &result));
     napi_value resource = nullptr;
     NAPI_CALL(env, napi_create_string_utf8(env, "CleanSandboxAppConfig", NAPI_AUTO_LENGTH, &resource));
-    NAPI_CALL(env, napi_create_async_work(env, nullptr, resource, CleanSandboxAppConfigExcute,
-        CleanSandboxAppConfigComplete, static_cast<void*>(asyncContext), &(asyncContext->work)));
-    NAPI_CALL(env, napi_queue_async_work(env, asyncContext->work));
+    NAPI_CALL(env, napi_create_async_work(env, nullptr, resource, CleanSandboxAppConfigExecute,
+        CleanSandboxAppConfigComplete, static_cast<void*>(asyncContextPtr.get()), &(asyncContextPtr->work)));
+    NAPI_CALL(env, napi_queue_async_work(env, asyncContextPtr->work));
     asyncContextPtr.release();
     return result;
 }
 
-void NapiDlpPermission::CleanSandboxAppConfigExcute(napi_env env, void* data)
+void NapiDlpPermission::CleanSandboxAppConfigExecute(napi_env env, void* data)
 {
-    DLP_LOG_DEBUG(LABEL, "napi_create_async_work CleanSandboxAppConfigExcute running");
-    auto asyncContext = reinterpret_cast<SandboxAppConifgAsyncContext*>(data);
+    DLP_LOG_DEBUG(LABEL, "napi_create_async_work CleanSandboxAppConfigExecute running");
+    auto asyncContext = reinterpret_cast<SandboxAppConfigAsyncContext*>(data);
+    if (asyncContext == nullptr) {
+        DLP_LOG_ERROR(LABEL, "asyncContext is nullptr");
+        return;
+    }
     asyncContext->errCode = DlpPermissionKit::CleanSandboxAppConfig();
 }
 
 void NapiDlpPermission::CleanSandboxAppConfigComplete(napi_env env, napi_status status, void* data)
 {
     DLP_LOG_DEBUG(LABEL, "napi_create_async_work CleanSandboxAppConfig complete");
-    auto asyncContext = reinterpret_cast<SandboxAppConifgAsyncContext*>(data);
-    std::unique_ptr<SandboxAppConifgAsyncContext> asyncContextPtr { asyncContext };
+    auto asyncContext = reinterpret_cast<SandboxAppConfigAsyncContext*>(data);
     if (asyncContext == nullptr) {
         DLP_LOG_ERROR(LABEL, "asyncContext is nullptr");
         return;
     }
+    std::unique_ptr<SandboxAppConfigAsyncContext> asyncContextPtr { asyncContext };
     napi_value resJs = nullptr;
     if (asyncContext->errCode == DLP_OK) {
         NAPI_CALL_RETURN_VOID(env, napi_get_undefined(env, &resJs));
@@ -1701,40 +1709,42 @@ void NapiDlpPermission::CleanSandboxAppConfigComplete(napi_env env, napi_status 
 
 napi_value NapiDlpPermission::GetSandboxAppConfig(napi_env env, napi_callback_info cbInfo)
 {
-    auto asyncContextPtr = std::make_unique<SandboxAppConifgAsyncContext>(env);
-    if (!GetThirdInterfaceParams(env, cbInfo, asyncContext.get())) {
+    auto asyncContextPtr = std::make_unique<SandboxAppConfigAsyncContext>(env);
+    if (!GetThirdInterfaceParams(env, cbInfo, *asyncContextPtr.get())) {
         return nullptr;
     }
-
     napi_value result = nullptr;
     DLP_LOG_DEBUG(LABEL, "Create promise");
-    NAPI_CALL(env, napi_create_promise(env, &asyncContext->deferred, &result));
-
+    NAPI_CALL(env, napi_create_promise(env, &asyncContextPtr->deferred, &result));
     napi_value resource = nullptr;
     NAPI_CALL(env, napi_create_string_utf8(env, "GetSandboxAppConfig", NAPI_AUTO_LENGTH, &resource));
-    NAPI_CALL(env, napi_create_async_work(env, nullptr, resource, GetSandboxAppConfigExcute,
-        GetSandboxAppConfigComplete, static_cast<void*>(asyncContext), &(asyncContext->work)));
-    NAPI_CALL(env, napi_queue_async_work(env, asyncContext->work));
+    NAPI_CALL(env, napi_create_async_work(env, nullptr, resource, GetSandboxAppConfigExecute,
+        GetSandboxAppConfigComplete, static_cast<void*>(asyncContextPtr.get()), &(asyncContextPtr->work)));
+    NAPI_CALL(env, napi_queue_async_work(env, asyncContextPtr->work));
     asyncContextPtr.release();
     return result;
 }
 
-void NapiDlpPermission::GetSandboxAppConfigExcute(napi_env env, void* data)
+void NapiDlpPermission::GetSandboxAppConfigExecute(napi_env env, void* data)
 {
-    DLP_LOG_DEBUG(LABEL, "napi_create_async_work GetSandboxAppConfigExcute running");
-    auto asyncContext = reinterpret_cast<SandboxAppConifgAsyncContext*>(data);
+    DLP_LOG_DEBUG(LABEL, "napi_create_async_work GetSandboxAppConfigExecute running");
+    auto asyncContext = reinterpret_cast<SandboxAppConfigAsyncContext*>(data);
+    if (asyncContext == nullptr) {
+        DLP_LOG_ERROR(LABEL, "asyncContext is nullptr");
+        return;
+    }
     asyncContext->errCode = DlpPermissionKit::GetSandboxAppConfig(asyncContext->configInfo);
 }
 
 void NapiDlpPermission::GetSandboxAppConfigComplete(napi_env env, napi_status status, void* data)
 {
     DLP_LOG_DEBUG(LABEL, "napi_create_async_work GetSandboxAppConfig complete");
-    auto asyncContext = reinterpret_cast<SandboxAppConifgAsyncContext*>(data);
-    std::unique_ptr<SandboxAppConifgAsyncContext> asyncContextPtr { asyncContext };
+    auto asyncContext = reinterpret_cast<SandboxAppConfigAsyncContext*>(data);
     if (asyncContext == nullptr) {
         DLP_LOG_ERROR(LABEL, "asyncContext is nullptr");
         return;
     }
+    std::unique_ptr<SandboxAppConfigAsyncContext> asyncContextPtr { asyncContext };
     napi_value configInfoJs = nullptr;
     if (asyncContext->errCode == DLP_OK) {
         NAPI_CALL_RETURN_VOID(env, napi_create_string_utf8(env, asyncContext->configInfo.c_str(),
@@ -1790,6 +1800,30 @@ bool NapiDlpPermission::IsSystemApp(napi_env env)
 
 napi_value NapiDlpPermission::Init(napi_env env, napi_value exports)
 {
+    napi_property_descriptor desc[] = {
+        DECLARE_NAPI_FUNCTION("isDLPFile", IsDlpFile),
+        DECLARE_NAPI_FUNCTION("getDLPPermissionInfo", GetDLPPermissionInfo),
+        DECLARE_NAPI_FUNCTION("getDLPSuffix", GetDLPSuffix),
+        DECLARE_NAPI_FUNCTION("getOriginalFileName", GetOriginalFileName),
+        DECLARE_NAPI_FUNCTION("isInSandbox", IsInSandbox),
+        DECLARE_NAPI_FUNCTION("getDlpSupportFileType", GetDlpSupportFileType),
+        DECLARE_NAPI_FUNCTION("getDLPSupportedFileTypes", GetDlpSupportFileType),
+        DECLARE_NAPI_FUNCTION("setRetentionState", SetRetentionState),
+        DECLARE_NAPI_FUNCTION("cancelRetentionState", CancelRetentionState),
+        DECLARE_NAPI_FUNCTION("getRetentionSandboxList", GetRetentionSandboxList),
+        DECLARE_NAPI_FUNCTION("getDLPFileAccessRecords", GetDLPFileVisitRecord),
+
+        DECLARE_NAPI_FUNCTION("generateDLPFile", GenerateDlpFile),
+        DECLARE_NAPI_FUNCTION("openDLPFile", OpenDlpFile),
+        DECLARE_NAPI_FUNCTION("installDLPSandbox", InstallDlpSandbox),
+        DECLARE_NAPI_FUNCTION("uninstallDLPSandbox", UninstallDlpSandbox),
+        DECLARE_NAPI_FUNCTION("on", Subscribe),
+        DECLARE_NAPI_FUNCTION("off", UnSubscribe),
+        DECLARE_NAPI_FUNCTION("getDLPGatheringPolicy", GetDlpGatheringPolicy),
+        DECLARE_NAPI_FUNCTION("setSandboxAppConfig", SetSandboxAppConfig),
+        DECLARE_NAPI_FUNCTION("cleanSandboxAppConfig", CleanSandboxAppConfig),
+        DECLARE_NAPI_FUNCTION("getSandboxAppConfig", GetSandboxAppConfig),
+    };
     NAPI_CALL(env, napi_define_properties(env, exports, sizeof(desc) / sizeof(desc[PARAM0]), desc));
     napi_property_descriptor descriptor[] = {DECLARE_NAPI_FUNCTION("DLPFile", DlpFile)};
     NAPI_CALL(
@@ -1825,30 +1859,6 @@ napi_value NapiDlpPermission::Init(napi_env env, napi_value exports)
 
 napi_value NapiDlpPermission::JsConstructor(napi_env env, napi_callback_info cbinfo)
 {
-    napi_property_descriptor desc[] = {
-        DECLARE_NAPI_FUNCTION("isDLPFile", IsDlpFile),
-        DECLARE_NAPI_FUNCTION("getDLPPermissionInfo", GetDLPPermissionInfo),
-        DECLARE_NAPI_FUNCTION("getDLPSuffix", GetDLPSuffix),
-        DECLARE_NAPI_FUNCTION("getOriginalFileName", GetOriginalFileName),
-        DECLARE_NAPI_FUNCTION("isInSandbox", IsInSandbox),
-        DECLARE_NAPI_FUNCTION("getDlpSupportFileType", GetDlpSupportFileType),
-        DECLARE_NAPI_FUNCTION("getDLPSupportedFileTypes", GetDlpSupportFileType),
-        DECLARE_NAPI_FUNCTION("setRetentionState", SetRetentionState),
-        DECLARE_NAPI_FUNCTION("cancelRetentionState", CancelRetentionState),
-        DECLARE_NAPI_FUNCTION("getRetentionSandboxList", GetRetentionSandboxList),
-        DECLARE_NAPI_FUNCTION("getDLPFileAccessRecords", GetDLPFileVisitRecord),
-
-        DECLARE_NAPI_FUNCTION("generateDLPFile", GenerateDlpFile),
-        DECLARE_NAPI_FUNCTION("openDLPFile", OpenDlpFile),
-        DECLARE_NAPI_FUNCTION("installDLPSandbox", InstallDlpSandbox),
-        DECLARE_NAPI_FUNCTION("uninstallDLPSandbox", UninstallDlpSandbox),
-        DECLARE_NAPI_FUNCTION("on", Subscribe),
-        DECLARE_NAPI_FUNCTION("off", UnSubscribe),
-        DECLARE_NAPI_FUNCTION("getDLPGatheringPolicy", GetDlpGatheringPolicy),
-        DECLARE_NAPI_FUNCTION("setSandboxAppConfig", SetSandboxAppConfig),
-        DECLARE_NAPI_FUNCTION("cleanSandboxAppConfig", CleanSandboxAppConfig),
-        DECLARE_NAPI_FUNCTION("getSandboxAppConfig", GetSandboxAppConfig),
-    };
     napi_value thisVar = nullptr;
     size_t argc = PARAM_SIZE_TWO;
     napi_value argv[PARAM_SIZE_TWO] = {nullptr};

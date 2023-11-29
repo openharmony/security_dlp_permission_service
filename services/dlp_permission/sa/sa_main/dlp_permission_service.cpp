@@ -59,7 +59,6 @@ static const int REPEAT_TIME = 5;
 static const std::string DLP_CONFIG = "etc/dlp_permission/dlp_config.json";
 static const std::string SUPPORT_FILE_TYPE = "support_file_type";
 static const std::string DEAULT_DLP_CONFIG = "/system/etc/dlp_config.json";
-static const int32_t KV_VALUE_MAX_LENGTH = 4194303;
 }
 REGISTER_SYSTEM_ABILITY_BY_ID(DlpPermissionService, SA_ID_DLP_PERMISSION_SERVICE, true);
 
@@ -90,7 +89,7 @@ void DlpPermissionService::OnStart()
         return;
     }
     KvDataStorageOptions options = { .autoSync = false };
-    SandboxConfigKvDataStorage_ = std::make_shared<SandboxConfigKvDataStorage>(options);
+    sandboxConfigKvDataStorage_ = std::make_shared<SandboxConfigKvDataStorage>(options);
     dlpEventSubSubscriber_ = std::make_shared<DlpEventSubSubscriber>();
     state_ = ServiceRunningState::STATE_RUNNING;
     bool ret = Publish(this);
@@ -170,14 +169,14 @@ int32_t DlpPermissionService::GenerateDlpCertificate(
 }
 
 int32_t DlpPermissionService::ParseDlpCertificate(sptr<CertParcel>& certParcel, sptr<IDlpPermissionCallback>& callback,
-    const std::string& appId)
+    const std::string& appId, const bool& offlineAccess)
 {
     if (callback == nullptr) {
         DLP_LOG_ERROR(LABEL, "Callback is null");
         return DLP_SERVICE_ERROR_VALUE_INVALID;
     }
 
-    return DlpCredential::GetInstance().ParseDlpCertificate(certParcel, callback, appId);
+    return DlpCredential::GetInstance().ParseDlpCertificate(certParcel, callback, appId, offlineAccess);
 }
 
 bool DlpPermissionService::InsertDlpSandboxInfo(DlpSandboxInfo& sandboxInfo, bool hasRetention)
@@ -697,7 +696,7 @@ void DlpPermissionService::RemoveUninstallInfo()
     std::set<std::string> kvBundleNameSet;
     std::set<std::string> retentionBundleNameSet;
     std::set<std::string> retentionUninstallBundleNameSet;
-    SandboxConfigKvDataStorage_->GetKeySetByUserId(userId, kvBundleNameSet);
+    sandboxConfigKvDataStorage_->GetKeySetByUserId(userId, kvBundleNameSet);
     RetentionFileManager::GetInstance().GetBundleNameSetByUserId(userId, retentionBundleNameSet);
     std::set<std::string> bundleNameSet;
     std::set_union(std::begin(kvBundleNameSet), std::end(kvBundleNameSet), std::begin(retentionBundleNameSet),
@@ -707,14 +706,14 @@ void DlpPermissionService::RemoveUninstallInfo()
     }
     AppExecFwk::BundleInfo bundleInfo;
     for (auto it = bundleNameSet.begin(); it != bundleNameSet.end(); ++it) {
-        int32_t res = BundleManagerAdapter::GetInstance()->GetBundleInfoV9(*it,
+        int32_t res = BundleManagerAdapter::GetInstance().GetBundleInfoV9(*it,
             AppExecFwk::BundleFlag::GET_BUNDLE_DEFAULT, bundleInfo, userId);
         DLP_LOG_DEBUG(LABEL, "GetBundleInfo %{public}s, res:%{public}d", it->c_str(), res);
         if (res != ERR_BUNDLE_MANAGER_BUNDLE_NOT_EXIST) {
             continue;
         }
         if (kvBundleNameSet.count(*it) != 0) {
-            SandboxConfigKvDataStorage_->DeleteSandboxConfigFromDataStorage(userId, *it);
+            sandboxConfigKvDataStorage_->DeleteSandboxConfigFromDataStorage(userId, *it);
         }
         if (retentionBundleNameSet.count(*it) != 0) {
             retentionUninstallBundleNameSet.emplace(*it);
@@ -800,7 +799,7 @@ int32_t DlpPermissionService::RemoveMDMPolicy()
 int32_t DlpPermissionService::CheckMdmPermission(const std::string& bundleName, int32_t userId)
 {
     AppExecFwk::BundleInfo bundleInfo;
-    if (!BundleManagerAdapter::GetInstance()->GetBundleInfo(bundleName,
+    if (!BundleManagerAdapter::GetInstance().GetBundleInfo(bundleName,
         static_cast<int32_t>(AppExecFwk::GetBundleInfoFlag::GET_BUNDLE_INFO_WITH_SIGNATURE_INFO), bundleInfo, userId)) {
         DLP_LOG_ERROR(LABEL, "get appId error");
         return DLP_SERVICE_ERROR_IPC_REQUEST_FAIL;
@@ -818,7 +817,7 @@ int32_t DlpPermissionService::CheckMdmPermission(const std::string& bundleName, 
 
 int32_t DlpPermissionService::SetSandboxAppConfig(const std::string& configInfo)
 {
-    if (configInfo.size() >= KV_VALUE_MAX_LENGTH) {
+    if (configInfo.size() >= OHOS::DistributedKv::Entry::MAX_VALUE_LENGTH) {
         DLP_LOG_ERROR(LABEL, "configInfo is too long");
         return DLP_PARSE_ERROR_VALUE_INVALID;
     }
@@ -855,13 +854,13 @@ int32_t DlpPermissionService::SandboxConfigOperate(std::string& configInfo, Sand
     }
     switch (operationEnum) {
         case ADD:
-            res = SandboxConfigKvDataStorage_->AddSandboxConfigIntoDataStorage(userId, callerBundleName, configInfo);
+            res = sandboxConfigKvDataStorage_->AddSandboxConfigIntoDataStorage(userId, callerBundleName, configInfo);
             break;
         case GET:
-            res = SandboxConfigKvDataStorage_->GetSandboxConfigFromDataStorage(userId, callerBundleName, configInfo);
+            res = sandboxConfigKvDataStorage_->GetSandboxConfigFromDataStorage(userId, callerBundleName, configInfo);
             break;
         case CLEAN:
-            res = SandboxConfigKvDataStorage_->DeleteSandboxConfigFromDataStorage(userId, callerBundleName);
+            res = sandboxConfigKvDataStorage_->DeleteSandboxConfigFromDataStorage(userId, callerBundleName);
             break;
         default:
             DLP_LOG_ERROR(LABEL, "enter default case");

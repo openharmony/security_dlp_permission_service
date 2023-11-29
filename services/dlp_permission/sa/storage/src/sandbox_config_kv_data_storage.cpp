@@ -120,7 +120,6 @@ void SandboxConfigKvDataStorage::SaveEntries(
     for (auto const &item : allEntries) {
         infos.emplace(item.key.ToString(), item.value.ToString());
     }
-    DLP_LOG_DEBUG(LABEL, "end");
 }
 }  // namespace DlpPermission
 }  // namespace Security
