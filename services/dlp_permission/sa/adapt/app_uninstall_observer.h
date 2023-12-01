@@ -19,6 +19,7 @@
 #include "common_event_manager.h"
 #include "common_event_subscriber.h"
 #include "common_event_support.h"
+#include "sandbox_config_kv_data_storage.h"
 
 namespace OHOS {
 namespace Security {
@@ -29,6 +30,16 @@ public:
     explicit AppUninstallObserver(const EventFwk::CommonEventSubscribeInfo& subscribeInfo);
     virtual ~AppUninstallObserver() {};
     virtual void OnReceiveEvent(const EventFwk::CommonEventData& data);
+private:
+    bool InitKvDataStorage();
+    std::shared_ptr<SandboxConfigKvDataStorage> sandboxConfigKvDataStorage_ = nullptr;
+};
+
+class DlpEventSubSubscriber {
+public:
+    DlpEventSubSubscriber();
+private:
+    std::shared_ptr<AppUninstallObserver> subscriber_ = nullptr;
 };
 } // namespace DlpPermission
 } // namespace Security

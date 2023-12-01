@@ -57,6 +57,9 @@ public:
     int32_t SetMDMPolicy(const std::vector<std::string>& appIdList) override;
     int32_t GetMDMPolicy(std::vector<std::string>& appIdList) override;
     int32_t RemoveMDMPolicy() override;
+    int32_t SetSandboxAppConfig(const std::string& configInfo) override;
+    int32_t CleanSandboxAppConfig() override;
+    int32_t GetSandboxAppConfig(std::string& configInfo) override;
 
 private:
     static inline BrokerDelegator<DlpPermissionProxy> delegator_;

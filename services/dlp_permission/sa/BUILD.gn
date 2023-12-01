@@ -108,6 +108,7 @@ ohos_shared_library("dlp_permission_service") {
     "callback/open_dlp_file_callback",
     "sa_main",
     "sa_common",
+    "storage/include",
     "//third_party/json/include",
     "${dlp_root_dir}/frameworks/common/include",
     "${dlp_root_dir}/frameworks/dlp_permission/include",
@@ -139,10 +140,13 @@ ohos_shared_library("dlp_permission_service") {
     "callback/open_dlp_file_callback/open_dlp_file_callback_death_recipient.cpp",
     "callback/open_dlp_file_callback/open_dlp_file_callback_manager.cpp",
     "callback/open_dlp_file_callback/open_dlp_file_callback_proxy.cpp",
+    "sa_common/bundle_manager_adapter.cpp",
     "sa_main/dlp_credential.cpp",
     "sa_main/dlp_permission_async_proxy.cpp",
     "sa_main/dlp_permission_service.cpp",
     "sa_main/dlp_permission_stub.cpp",
+    "storage/src/dlp_kv_data_storage.cpp",
+    "storage/src/sandbox_config_kv_data_storage.cpp",
   ]
 
   cflags_cc = [ "-DHILOG_ENABLE" ]
@@ -188,6 +192,7 @@ ohos_shared_library("dlp_permission_service") {
     "hisysevent:libhisysevent",
     "init:libbegetutil",
     "ipc:ipc_core",
+    "kv_store:distributeddata_inner",
     "os_account:libaccountkits",
     "os_account:os_account_innerkits",
     "safwk:system_ability_fwk",

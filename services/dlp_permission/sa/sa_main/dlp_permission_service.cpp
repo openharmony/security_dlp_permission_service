@@ -18,13 +18,16 @@
 #include "accesstoken_kit.h"
 #include "account_adapt.h"
 #include "app_mgr_client.h"
+#include "bundle_manager_adapter.h"
 #include "bundle_mgr_client.h"
 #include "config_policy_utils.h"
 #include "dlp_credential_client.h"
 #include "dlp_credential.h"
+#include "dlp_kv_data_storage.h"
 #include "dlp_permission.h"
 #include "dlp_permission_log.h"
 #include "dlp_permission_serializer.h"
+#include "dlp_policy_mgr_client.h"
 #include "dlp_sandbox_change_callback_manager.h"
 #include "dlp_sandbox_info.h"
 #include "file_operator.h"
@@ -85,6 +88,9 @@ void DlpPermissionService::OnStart()
         DLP_LOG_ERROR(LABEL, "Failed to register app state observer!");
         return;
     }
+    KvDataStorageOptions options = { .autoSync = false };
+    sandboxConfigKvDataStorage_ = std::make_shared<SandboxConfigKvDataStorage>(options);
+    dlpEventSubSubscriber_ = std::make_shared<DlpEventSubSubscriber>();
     state_ = ServiceRunningState::STATE_RUNNING;
     bool ret = Publish(this);
     if (!ret) {
@@ -673,10 +679,47 @@ int32_t DlpPermissionService::ClearUnreservedSandbox()
 {
     {
         std::lock_guard<std::mutex> lock(terminalMutex_);
+        RemoveUninstallInfo();
         RetentionFileManager::GetInstance().ClearUnreservedSandbox();
     }
     StartTimer();
     return DLP_OK;
+}
+
+void DlpPermissionService::RemoveUninstallInfo()
+{
+    int32_t userId;
+    if (!GetUserIdByActiveAccount(&userId)) {
+        DLP_LOG_ERROR(LABEL, "get userID fail");
+        return;
+    }
+    std::set<std::string> kvBundleNameSet;
+    std::set<std::string> retentionBundleNameSet;
+    std::set<std::string> retentionUninstallBundleNameSet;
+    sandboxConfigKvDataStorage_->GetKeySetByUserId(userId, kvBundleNameSet);
+    RetentionFileManager::GetInstance().GetBundleNameSetByUserId(userId, retentionBundleNameSet);
+    std::set<std::string> bundleNameSet;
+    std::set_union(std::begin(kvBundleNameSet), std::end(kvBundleNameSet), std::begin(retentionBundleNameSet),
+        std::end(retentionBundleNameSet), std::inserter(bundleNameSet, std::begin(bundleNameSet)));
+    if (bundleNameSet.size() == 0) {
+        return;
+    }
+    AppExecFwk::BundleInfo bundleInfo;
+    for (auto it = bundleNameSet.begin(); it != bundleNameSet.end(); ++it) {
+        int32_t res = BundleManagerAdapter::GetInstance().GetBundleInfoV9(*it,
+            AppExecFwk::BundleFlag::GET_BUNDLE_DEFAULT, bundleInfo, userId);
+        DLP_LOG_DEBUG(LABEL, "GetBundleInfo %{public}s, res:%{public}d", it->c_str(), res);
+        if (res != ERR_BUNDLE_MANAGER_BUNDLE_NOT_EXIST) {
+            continue;
+        }
+        if (kvBundleNameSet.count(*it) != 0) {
+            sandboxConfigKvDataStorage_->DeleteSandboxConfigFromDataStorage(userId, *it);
+        }
+        if (retentionBundleNameSet.count(*it) != 0) {
+            retentionUninstallBundleNameSet.emplace(*it);
+        }
+    }
+    RetentionFileManager::GetInstance().RemoveRetentionInfoByUserId(userId, retentionUninstallBundleNameSet);
 }
 
 bool DlpPermissionService::GetCallerBundleName(const uint32_t tokenId, std::string& bundleName)
@@ -751,6 +794,83 @@ int32_t DlpPermissionService::RemoveMDMPolicy()
         return DLP_SERVICE_ERROR_PERMISSION_DENY;
     }
     return DlpCredential::GetInstance().RemoveMDMPolicy();
+}
+
+int32_t DlpPermissionService::CheckMdmPermission(const std::string& bundleName, int32_t userId)
+{
+    AppExecFwk::BundleInfo bundleInfo;
+    if (!BundleManagerAdapter::GetInstance().GetBundleInfo(bundleName,
+        static_cast<int32_t>(AppExecFwk::GetBundleInfoFlag::GET_BUNDLE_INFO_WITH_SIGNATURE_INFO), bundleInfo, userId)) {
+        DLP_LOG_ERROR(LABEL, "get appId error");
+        return DLP_SERVICE_ERROR_IPC_REQUEST_FAIL;
+    }
+    std::string appId = bundleInfo.appId;
+    DLP_LOG_DEBUG(LABEL, "appId:%{public}s", appId.c_str());
+    PolicyHandle handle = {.id = strdup(const_cast<char *>(bundleInfo.appId.c_str()))};
+    int32_t res = DLP_CheckPermission(PolicyType::AUTHORIZED_APPLICATION_LIST, handle);
+    if (res != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "DLP_CheckPermission error:%{public}d", res);
+        return DLP_CREDENTIAL_ERROR_APPID_NOT_AUTHORIZED;
+    }
+    return DLP_OK;
+}
+
+int32_t DlpPermissionService::SetSandboxAppConfig(const std::string& configInfo)
+{
+    if (configInfo.size() >= OHOS::DistributedKv::Entry::MAX_VALUE_LENGTH) {
+        DLP_LOG_ERROR(LABEL, "configInfo is too long");
+        return DLP_PARSE_ERROR_VALUE_INVALID;
+    }
+    std::string temp = configInfo;
+    return SandboxConfigOperate(temp, SandboxConfigOperationEnum::ADD);
+}
+
+int32_t DlpPermissionService::CleanSandboxAppConfig()
+{
+    std::string emptyStr = "";
+    return SandboxConfigOperate(emptyStr, SandboxConfigOperationEnum::CLEAN);
+}
+
+int32_t DlpPermissionService::GetSandboxAppConfig(std::string& configInfo)
+{
+    return SandboxConfigOperate(configInfo, SandboxConfigOperationEnum::GET);
+}
+
+int32_t DlpPermissionService::SandboxConfigOperate(std::string& configInfo, SandboxConfigOperationEnum operationEnum)
+{
+    std::string callerBundleName;
+    uint32_t tokenId = IPCSkeleton::GetCallingTokenID();
+    if (!GetCallerBundleName(tokenId, callerBundleName)) {
+        return DLP_SERVICE_ERROR_VALUE_INVALID;
+    }
+    int32_t userId = GetCallingUserId();
+    if (userId < 0) {
+        DLP_LOG_ERROR(LABEL, "get userId error");
+        return DLP_SERVICE_ERROR_VALUE_INVALID;
+    }
+    int32_t res = CheckMdmPermission(callerBundleName, userId);
+    if (res != DLP_OK) {
+        return res;
+    }
+    switch (operationEnum) {
+        case ADD:
+            res = sandboxConfigKvDataStorage_->AddSandboxConfigIntoDataStorage(userId, callerBundleName, configInfo);
+            break;
+        case GET:
+            res = sandboxConfigKvDataStorage_->GetSandboxConfigFromDataStorage(userId, callerBundleName, configInfo);
+            break;
+        case CLEAN:
+            res = sandboxConfigKvDataStorage_->DeleteSandboxConfigFromDataStorage(userId, callerBundleName);
+            break;
+        default:
+            DLP_LOG_ERROR(LABEL, "enter default case");
+            break;
+    }
+#ifndef DLP_FUZZ_TEST
+    DLP_LOG_DEBUG(LABEL, "enter StartTimer");
+    StartTimer();
+#endif
+    return res;
 }
 
 int DlpPermissionService::Dump(int fd, const std::vector<std::u16string>& args)

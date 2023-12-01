@@ -58,18 +58,17 @@ public:
         std::vector<RetentionSandBoxInfo>& retentionSandBoxInfoVec, bool isRetention);
     void RetentionInfoToJson(Json& json, const RetentionInfo& info) const;
     int32_t ClearUnreservedSandbox();
-    int32_t ClearDateByUninstall();
-    bool NeedRemove(const RetentionInfo& info, int32_t userId, std::map<std::string, bool> bundleInfoMap);
     Json ToJson() const override;
     void FromJson(const Json& jsonObject) override;
     std::string ToString() const override;
+    int32_t GetBundleNameSetByUserId(const int32_t userId, std::set<std::string>& bundleNameSet);
+    int32_t RemoveRetentionInfoByUserId(const int32_t userId, const std::set<std::string>& bundleNameSet);
 
 private:
     bool InsertSandboxInfo(const std::set<std::string>& docUriSet, uint32_t tokenId, const std::string& bundleName,
         int32_t appIndex, int32_t userId);
     sptr<AppExecFwk::IBundleMgr> GetBundleMgr();
     bool GetUserIdByUid(int32_t& userId);
-    bool GetUserIdByActiveAccount(int32_t& userId);
     bool CheckReInstall(const RetentionInfo& info, const int32_t userId);
     static bool CompareByTokenId(const RetentionInfo& info1, const RetentionInfo& info2);
     static bool CompareByBundleName(const RetentionInfo& info1, const RetentionInfo& info2);
@@ -79,9 +78,7 @@ private:
         bool (*compare)(const RetentionInfo& info1, const RetentionInfo& info2),
         bool (*update)(RetentionInfo& info, const std::set<std::string>& newSet));
     std::mutex mutex_;
-    std::mutex bundleMgrMutex_;
     std::vector<RetentionInfo> infoVec_;
-    sptr<AppExecFwk::IBundleMgr> bundleMgr_;
 };
 } // namespace DlpPermission
 } // namespace Security

@@ -1276,6 +1276,25 @@ HWTEST_F(DlpPermissionKitTest, GetDLPFileVisitRecord001, TestSize.Level1)
 }
 
 /* *
+ * @tc.name: SetSandboxAppConfig001
+ * @tc.desc: SetSandboxAppConfig001  test.
+ * @tc.type: FUNC
+ * @tc.require: SR000IEUH3
+ */
+HWTEST_F(DlpPermissionKitTest, SetSandboxAppConfig001, TestSize.Level1)
+{
+    int32_t uid = getuid();
+    AccessTokenID tokenId = GetSelfTokenID();
+    TestMockApp(DLP_MANAGER_APP, 0, DEFAULT_USERID);
+    std::string config = "test";
+    ASSERT_EQ(DLP_OK, DlpPermissionKit::SetSandboxAppConfig(config));
+    std::string configGet;
+    ASSERT_EQ(DLP_OK, DlpPermissionKit::GetSandboxAppConfig(configGet));
+    ASSERT_EQ(DLP_OK, DlpPermissionKit::CleanSandboxAppConfig());
+    TestRecoverProcessInfo(uid, tokenId);
+}
+
+/* *
  * @tc.name: SetMDMPolicy001
  * @tc.desc: SetMDMPolicy001 abnormal input test.
  * @tc.type: FUNC

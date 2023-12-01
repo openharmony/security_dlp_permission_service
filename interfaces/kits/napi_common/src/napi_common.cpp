@@ -663,7 +663,7 @@ bool GetOpenDlpFileParams(const napi_env env, const napi_callback_info info, Dlp
         ThrowParamError(env, "ciphertextFd", "number");
         return false;
     }
-    
+
     if (!GetStringValue(env, argv[PARAM1], asyncContext.appId)) {
         DLP_LOG_ERROR(LABEL, "js get appId fail");
         ThrowParamError(env, "appId", "string");
@@ -1127,6 +1127,27 @@ bool GetOriginalFilenameParams(const napi_env env, const napi_callback_info info
     return true;
 }
 
+bool GetSandboxAppConfigParams(const napi_env env, const napi_callback_info info,
+    SandboxAppConfigAsyncContext* asyncContext)
+{
+    size_t argc = PARAM_SIZE_ONE;
+    napi_value argv[PARAM_SIZE_ONE] = {nullptr};
+    NAPI_CALL_BASE(env, napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr), false);
+    if (!NapiCheckArgc(env, argc, PARAM_SIZE_ONE)) {
+        return false;
+    }
+    if (!GetStringValue(env, argv[PARAM0], asyncContext->configInfo)) {
+        ThrowParamError(env, "config", "string");
+        return false;
+    }
+    if (asyncContext->configInfo.empty()) {
+        DlpNapiThrow(env, ERR_JS_INVALID_PARAMETER, GetJsErrMsg(ERR_JS_INVALID_PARAMETER));
+        return false;
+    }
+
+    return true;
+}
+
 bool GetThirdInterfaceParams(
     const napi_env env, const napi_callback_info info, CommonAsyncContext& asyncContext)
 {
@@ -1414,7 +1435,7 @@ bool ParseCallback(const napi_env& env, const napi_value& value, napi_ref& callb
 {
     napi_valuetype valuetype = napi_undefined;
     NAPI_CALL_BASE(env, napi_typeof(env, value, &valuetype), false);
-    
+
     if (valuetype == napi_function) {
         NAPI_CALL_BASE(env, napi_create_reference(env, value, 1, &callbackRef), false);
         return true;

@@ -83,6 +83,12 @@ public:
     virtual int32_t GetMDMPolicy(std::vector<std::string>& appIdList) = 0;
 
     virtual int32_t RemoveMDMPolicy() = 0;
+
+    virtual int32_t SetSandboxAppConfig(const std::string& configInfo) = 0;
+
+    virtual int32_t CleanSandboxAppConfig() = 0;
+
+    virtual int32_t GetSandboxAppConfig(std::string& configInfo) = 0;
 };
 }  // namespace DlpPermission
 }  // namespace Security

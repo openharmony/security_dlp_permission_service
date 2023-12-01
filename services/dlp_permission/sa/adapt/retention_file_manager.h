@@ -44,7 +44,8 @@ public:
         std::vector<RetentionSandBoxInfo>& retentionSandBoxInfoVec, bool isRetention);
     bool HasRetentionSandboxInfo(const std::string& bundleName);
     int32_t ClearUnreservedSandbox();
-
+    int32_t GetBundleNameSetByUserId(const int32_t userId, std::set<std::string>& bundleNameSet);
+    int32_t RemoveRetentionInfoByUserId(const int32_t userId, const std::set<std::string>& bundleNameSet);
 private:
     bool Init();
     int32_t UpdateFile(const int32_t& jsonRes);

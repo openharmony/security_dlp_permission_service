@@ -613,6 +613,65 @@ int32_t DlpPermissionStub::RemoveMDMPolicyInner(MessageParcel& data, MessageParc
     return DLP_OK;
 }
 
+int32_t DlpPermissionStub::SetSandboxAppConfigInner(MessageParcel& data, MessageParcel& reply)
+{
+    bool sandboxFlag;
+    if (CheckSandboxFlag(GetCallingTokenID(), sandboxFlag) != DLP_OK) {
+        return DLP_SERVICE_ERROR_VALUE_INVALID;
+    }
+    if (sandboxFlag) {
+        DLP_LOG_ERROR(LABEL, "Forbid called by a sandbox app");
+        return DLP_SERVICE_ERROR_API_NOT_FOR_SANDBOX_ERROR;
+    }
+    std::string configInfo;
+    if (!data.ReadString(configInfo)) {
+        DLP_LOG_ERROR(LABEL, "Read configInfo fail");
+        return DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL;
+    }
+    int32_t res = this->SetSandboxAppConfig(configInfo);
+    if (!reply.WriteInt32(res)) {
+        DLP_LOG_ERROR(LABEL, "Write SetSandboxAppConfig result fail");
+        return DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL;
+    }
+    return res;
+}
+
+int32_t DlpPermissionStub::CleanSandboxAppConfigInner(MessageParcel& data, MessageParcel& reply)
+{
+    bool sandboxFlag;
+    if (CheckSandboxFlag(GetCallingTokenID(), sandboxFlag) != DLP_OK) {
+        return DLP_SERVICE_ERROR_VALUE_INVALID;
+    }
+    if (sandboxFlag) {
+        DLP_LOG_ERROR(LABEL, "Forbid called by a sandbox app");
+        return DLP_SERVICE_ERROR_API_NOT_FOR_SANDBOX_ERROR;
+    }
+    int32_t res = this->CleanSandboxAppConfig();
+    if (!reply.WriteInt32(res)) {
+        DLP_LOG_ERROR(LABEL, "Write CleanSandboxAppConfig result fail");
+        return DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL;
+    }
+    return res;
+}
+
+int32_t DlpPermissionStub::GetSandboxAppConfigInner(MessageParcel& data, MessageParcel& reply)
+{
+    std::string configInfo;
+    int32_t res = this->GetSandboxAppConfig(configInfo);
+    if (!reply.WriteInt32(res)) {
+        DLP_LOG_ERROR(LABEL, "Write support sandbox app config query result fail");
+        return DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL;
+    }
+    if (res != DLP_OK) {
+        return res;
+    }
+    if (!reply.WriteString(configInfo)) {
+        DLP_LOG_ERROR(LABEL, "Write configInfo fail");
+        return DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL;
+    }
+    return DLP_OK;
+}
+
 
 DlpPermissionStub::DlpPermissionStub()
 {
@@ -661,6 +720,12 @@ DlpPermissionStub::DlpPermissionStub()
         &DlpPermissionStub::GetMDMPolicyInner;
     requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::REMOVE_MDM_POLICY)] =
         &DlpPermissionStub::RemoveMDMPolicyInner;
+    requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::SET_SANDBOX_APP_CONFIG)] =
+        &DlpPermissionStub::SetSandboxAppConfigInner;
+    requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::CLEAN_SANDBOX_APP_CONFIG)] =
+        &DlpPermissionStub::CleanSandboxAppConfigInner;
+    requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::GET_SANDBOX_APP_CONFIG)] =
+        &DlpPermissionStub::GetSandboxAppConfigInner;
 }
 
 DlpPermissionStub::~DlpPermissionStub()

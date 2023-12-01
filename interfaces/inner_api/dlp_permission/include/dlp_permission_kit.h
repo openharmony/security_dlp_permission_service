@@ -91,6 +91,9 @@ public:
     static int32_t SetMDMPolicy(const std::vector<std::string>& appIdList);
     static int32_t GetMDMPolicy(std::vector<std::string>& appIdList);
     static int32_t RemoveMDMPolicy();
+    static int32_t SetSandboxAppConfig(const std::string& configInfo);
+    static int32_t CleanSandboxAppConfig();
+    static int32_t GetSandboxAppConfig(std::string& configInfo);
 };
 }  // namespace DlpPermission
 }  // namespace Security

@@ -461,6 +461,28 @@ HWTEST_F(DlpPermissionServiceTest, SandboxJsonManager003, TestSize.Level1)
 }
 
 /**
+ * @tc.name:SandboxJsonManager004
+ * @tc.desc: GetBundleNameSetByUserId test
+ * @tc.type: FUNC
+ * @tc.require:DTS2023040302317
+ */
+HWTEST_F(DlpPermissionServiceTest, SandboxJsonManager004, TestSize.Level1)
+{
+    std::shared_ptr<SandboxJsonManager> sandboxJsonManager_ = std::make_shared<SandboxJsonManager>();
+    std::set<std::string> keySet;
+    int res = sandboxJsonManager_->GetBundleNameSetByUserId(100, keySet);
+    ASSERT_EQ(DLP_OK, res);
+    sandboxJsonManager_->AddSandboxInfo(1, 827818, "testbundle1", 10000);
+    sandboxJsonManager_->AddSandboxInfo(1, 827819, "testbundle1", 100);
+    res = sandboxJsonManager_->GetBundleNameSetByUserId(100, keySet);
+    ASSERT_EQ(DLP_OK, res);
+    res = sandboxJsonManager_->RemoveRetentionInfoByUserId(100, keySet);
+    ASSERT_EQ(DLP_OK, res);
+    res = sandboxJsonManager_->RemoveRetentionInfoByUserId(100, keySet);
+    ASSERT_EQ(DLP_FILE_NO_NEED_UPDATE, res);
+}
+
+/**
  * @tc.name:RetentionFileManager001
  * @tc.desc: RetentionFileManager test
  * @tc.type: FUNC

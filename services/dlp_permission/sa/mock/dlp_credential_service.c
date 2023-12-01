@@ -412,3 +412,8 @@ int32_t DLP_RemovePolicy(PolicyType type)
 {
     return DLP_SUCCESS;
 }
+
+int32_t  DLP_CheckPermission(PolicyType type, PolicyHandle handle)
+{
+    return DLP_SUCCESS;
+}

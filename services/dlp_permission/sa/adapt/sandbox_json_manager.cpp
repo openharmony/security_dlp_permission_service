@@ -43,7 +43,6 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = { LOG_CORE, SECURITY_DOMAIN
 
 SandboxJsonManager::SandboxJsonManager()
 {
-    GetBundleMgr();
     infoVec_.clear();
 }
 
@@ -55,7 +54,7 @@ SandboxJsonManager::~SandboxJsonManager()
 bool SandboxJsonManager::HasRetentionSandboxInfo(const std::string& bundleName)
 {
     int32_t userId;
-    if (!GetUserIdByActiveAccount(userId)) {
+    if (!GetUserIdByActiveAccount(&userId)) {
         return false;
     }
     std::lock_guard<std::mutex> lock(mutex_);
@@ -196,7 +195,7 @@ int32_t SandboxJsonManager::RemoveRetentionState(const std::string& bundleName, 
     bool hasBundleName = false;
     {
         int32_t userId;
-        if (!GetUserIdByActiveAccount(userId)) {
+        if (!GetUserIdByActiveAccount(&userId)) {
             return false;
         }
         std::lock_guard<std::mutex> lock(mutex_);
@@ -256,7 +255,7 @@ int32_t SandboxJsonManager::ClearUnreservedSandbox()
 {
     DLP_LOG_INFO(LABEL, "ClearUnreservedSandbox called");
     int32_t userId;
-    if (!GetUserIdByActiveAccount(userId)) {
+    if (!GetUserIdByActiveAccount(&userId)) {
         return false;
     }
     std::lock_guard<std::mutex> lock(mutex_);
@@ -292,37 +291,43 @@ bool SandboxJsonManager::GetUserIdByUid(int32_t& userId)
     return GetUserIdFromUid(uid, &userId) == 0;
 }
 
-bool SandboxJsonManager::GetUserIdByActiveAccount(int32_t& userId)
+int32_t SandboxJsonManager::GetBundleNameSetByUserId(const int32_t userId, std::set<std::string>& keySet)
 {
-    std::vector<int32_t> ids;
-    if (OHOS::AccountSA::OsAccountManager::QueryActiveOsAccountIds(ids) != 0) {
-        DLP_LOG_ERROR(LABEL, "QueryActiveOsAccountIds return not 0");
-        return false;
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (infoVec_.size() == 0) {
+        return DLP_OK;
     }
-    if (ids.size() != 1) {
-        DLP_LOG_ERROR(LABEL, "QueryActiveOsAccountIds size not 1");
-        return false;
+    for (auto iter = infoVec_.begin(); iter != infoVec_.end(); ++iter) {
+        if (iter->userId == userId) {
+            keySet.emplace(iter->bundleName);
+        }
     }
-    userId = ids[0];
-    return true;
+    return DLP_OK;
 }
 
-int32_t SandboxJsonManager::ClearDateByUninstall()
+int32_t SandboxJsonManager::RemoveRetentionInfoByUserId(const int32_t userId,
+    const std::set<std::string>& bundleNameSet)
 {
-    int32_t userId;
-    if (!GetUserIdByActiveAccount(userId)) {
-        return DLP_RETENTION_UPDATE_ERROR;
-    }
-    std::lock_guard<std::mutex> lock(mutex_);
     bool isNeedUpdate = false;
-    std::map<std::string, bool> bundleInfoMap;
+    AppExecFwk::BundleMgrClient bundleMgrClient;
+    std::lock_guard<std::mutex> lock(mutex_);
     for (auto iter = infoVec_.begin(); iter != infoVec_.end();) {
-        if (iter->userId == userId && (NeedRemove(*iter, userId, bundleInfoMap) || CheckReInstall(*iter, userId))) {
-            iter = infoVec_.erase(iter);
-            isNeedUpdate = true;
-        } else {
+        if ((iter->userId != userId) ||
+            ((bundleNameSet.count(iter->bundleName) == 0) && !CheckReInstall(*iter, userId))) {
             ++iter;
+            continue;
         }
+        int32_t res = bundleMgrClient.UninstallSandboxApp(iter->bundleName, iter->appIndex, iter->userId);
+        if (res != DLP_OK && res != ERR_APPEXECFWK_SANDBOX_INSTALL_NO_SANDBOX_APP_INFO) {
+            DLP_LOG_ERROR(LABEL, "uninstall sandbox %{public}s fail, index=%{public}d, error=%{public}d",
+                iter->bundleName.c_str(), iter->appIndex, res);
+            ++iter;
+            continue;
+        }
+        DLP_LOG_DEBUG(LABEL, "uninstall sandbox %{public}s success, index=%{public}d, error=%{public}d",
+            iter->bundleName.c_str(), iter->appIndex, res);
+        iter = infoVec_.erase(iter);
+        isNeedUpdate = true;
     }
     if (!isNeedUpdate) {
         DLP_LOG_INFO(LABEL, "do not need update");
@@ -339,50 +344,6 @@ bool SandboxJsonManager::CheckReInstall(const RetentionInfo& info, const int32_t
     }
     DLP_LOG_ERROR(LABEL, "GetHapTokenID not equal %{public}s,%{public}d", info.bundleName.c_str(), info.appIndex);
     return true;
-}
-
-bool SandboxJsonManager::NeedRemove(const RetentionInfo& info, int32_t userId,
-    std::map<std::string, bool> bundleInfoMap)
-{
-    auto iter = bundleInfoMap.find(info.bundleName);
-    if (iter != bundleInfoMap.end()) {
-        return iter->second;
-    }
-    AppExecFwk::BundleInfo bundleInfo;
-    int32_t res =
-        bundleMgr_->GetBundleInfoV9(info.bundleName, AppExecFwk::BundleFlag::GET_BUNDLE_DEFAULT, bundleInfo, userId);
-    if (res == ERR_BUNDLE_MANAGER_BUNDLE_NOT_EXIST) {
-        bundleInfoMap[info.bundleName] = true;
-        return true;
-    }
-    DLP_LOG_ERROR(LABEL, "GetBundleInfo failed %{public}s,%{public}d", info.bundleName.c_str(), res);
-    bundleInfoMap[info.bundleName] = false;
-    return false;
-}
-
-sptr<AppExecFwk::IBundleMgr> SandboxJsonManager::GetBundleMgr()
-{
-    if (bundleMgr_ == nullptr) {
-        std::lock_guard<std::mutex> lock(bundleMgrMutex_);
-        if (bundleMgr_ == nullptr) {
-            auto systemAbilityManager = OHOS::SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
-            if (systemAbilityManager == nullptr) {
-                DLP_LOG_ERROR(LABEL, "systemAbilityManager is null.");
-                return nullptr;
-            }
-            auto bundleMgrSa = systemAbilityManager->GetSystemAbility(OHOS::BUNDLE_MGR_SERVICE_SYS_ABILITY_ID);
-            if (bundleMgrSa == nullptr) {
-                DLP_LOG_ERROR(LABEL, "bundleMgrSa is null.");
-                return nullptr;
-            }
-            bundleMgr_ = OHOS::iface_cast<AppExecFwk::IBundleMgr>(bundleMgrSa);
-            if (bundleMgr_ == nullptr) {
-                DLP_LOG_ERROR(LABEL, "iface_cast failed.");
-                return nullptr;
-            }
-        }
-    }
-    return bundleMgr_;
 }
 
 bool SandboxJsonManager::InsertSandboxInfo(const std::set<std::string>& docUriSet, uint32_t tokenId,

@@ -27,19 +27,45 @@ constexpr OHOS::HiviewDFX::HiLogLabel LABEL = { LOG_CORE, SECURITY_DOMAIN_DLP_PE
 
 AppUninstallObserver::AppUninstallObserver(const EventFwk::CommonEventSubscribeInfo& subscribeInfo)
     : CommonEventSubscriber(subscribeInfo)
-{}
+{
+    InitKvDataStorage();
+}
+
+bool AppUninstallObserver::InitKvDataStorage()
+{
+    KvDataStorageOptions options = { .autoSync = false };
+    sandboxConfigKvDataStorage_ = std::make_shared<SandboxConfigKvDataStorage>(options);
+    return true;
+}
 
 void AppUninstallObserver::OnReceiveEvent(const EventFwk::CommonEventData& data)
 {
     std::string action = data.GetWant().GetAction();
-    if (action == EventFwk::CommonEventSupport::COMMON_EVENT_PACKAGE_REMOVED ||
-        action == EventFwk::CommonEventSupport::COMMON_EVENT_PACKAGE_FULLY_REMOVED) {
-        std::string bundleName = data.GetWant().GetBundle();
-        DLP_LOG_INFO(LABEL, "action %{public}s %{public}s is uninstall", action.c_str(), bundleName.c_str());
-        if (RetentionFileManager::GetInstance().HasRetentionSandboxInfo(bundleName)) {
-            RetentionFileManager::GetInstance().RemoveRetentionState(bundleName, -1);
-        }
+    std::string bundleName = data.GetWant().GetBundle();
+    DLP_LOG_DEBUG(LABEL, "action %{public}s %{public}s is uninstall", action.c_str(), bundleName.c_str());
+    if (action != EventFwk::CommonEventSupport::COMMON_EVENT_PACKAGE_REMOVED &&
+        action != EventFwk::CommonEventSupport::COMMON_EVENT_PACKAGE_FULLY_REMOVED) {
+        return;
     }
+    if (RetentionFileManager::GetInstance().HasRetentionSandboxInfo(bundleName)) {
+        RetentionFileManager::GetInstance().RemoveRetentionState(bundleName, -1);
+    }
+    int32_t userId;
+    if (!GetUserIdByActiveAccount(&userId)) {
+        DLP_LOG_ERROR(LABEL, "get userId error");
+        return;
+    }
+    sandboxConfigKvDataStorage_->DeleteSandboxConfigFromDataStorage(userId, bundleName);
+}
+
+DlpEventSubSubscriber::DlpEventSubSubscriber()
+{
+    EventFwk::MatchingSkills matchingSkills;
+    matchingSkills.AddEvent(EventFwk::CommonEventSupport::COMMON_EVENT_PACKAGE_REMOVED);
+    matchingSkills.AddEvent(EventFwk::CommonEventSupport::COMMON_EVENT_PACKAGE_FULLY_REMOVED);
+    EventFwk::CommonEventSubscribeInfo subscribeInfo(matchingSkills);
+    auto appUninstallObserver = std::make_shared<AppUninstallObserver>(subscribeInfo);
+    EventFwk::CommonEventManager::SubscribeCommonEvent(appUninstallObserver);
 }
 } // namespace DlpPermission
 } // namespace Security

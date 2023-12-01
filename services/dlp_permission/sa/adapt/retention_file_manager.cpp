@@ -16,7 +16,6 @@
 #include "retention_file_manager.h"
 #include "dlp_permission.h"
 #include "dlp_permission_log.h"
-#include "app_uninstall_observer.h"
 
 namespace OHOS {
 namespace Security {
@@ -33,13 +32,6 @@ RetentionFileManager::RetentionFileManager()
       fileOperator_(std::make_shared<FileOperator>()),
       sandboxJsonManager_(std::make_shared<SandboxJsonManager>())
 {
-    EventFwk::MatchingSkills matchingSkills;
-    matchingSkills.AddEvent(EventFwk::CommonEventSupport::COMMON_EVENT_PACKAGE_REMOVED);
-    matchingSkills.AddEvent(EventFwk::CommonEventSupport::COMMON_EVENT_PACKAGE_FULLY_REMOVED);
-    EventFwk::CommonEventSubscribeInfo subscribeInfo(matchingSkills);
-    auto appUninstallObserver = std::make_shared<AppUninstallObserver>(subscribeInfo);
-    EventFwk::CommonEventManager::SubscribeCommonEvent(appUninstallObserver);
-
     Init();
 }
 
@@ -70,15 +62,6 @@ bool RetentionFileManager::Init()
         }
         Json callbackInfoJson = Json::parse(constraintsConfigStr, nullptr, false);
         sandboxJsonManager_->FromJson(callbackInfoJson);
-        int32_t res = sandboxJsonManager_->ClearDateByUninstall();
-        if (res == DLP_RETENTION_UPDATE_ERROR) {
-            return false;
-        }
-        DLP_LOG_DEBUG(LABEL, "ClearDateByUninstall %{public}d", res);
-        int32_t updateRes = UpdateFile(res);
-        if (updateRes != DLP_OK) {
-            return false;
-        }
     } else {
         if (fileOperator_->InputFileByPathAndContent(DLP_RETENTION_JSON_PATH, "") != DLP_OK) {
             DLP_LOG_ERROR(LABEL, "InputFileByPathAndContent failed!");
@@ -175,6 +158,26 @@ int32_t RetentionFileManager::GetRetentionSandboxList(const std::string& bundleN
         return DLP_RETENTION_UPDATE_ERROR;
     }
     return sandboxJsonManager_->GetRetentionSandboxList(bundleName, retentionSandBoxInfoVec, isRetention);
+}
+
+int32_t RetentionFileManager::GetBundleNameSetByUserId(const int32_t userId, std::set<std::string>& bundleNameSet)
+{
+    if (!hasInit && !Init()) {
+        DLP_LOG_ERROR(LABEL, "Init failed!");
+        return DLP_RETENTION_UPDATE_ERROR;
+    }
+    return sandboxJsonManager_->GetBundleNameSetByUserId(userId, bundleNameSet);
+}
+
+int32_t RetentionFileManager::RemoveRetentionInfoByUserId(const int32_t userId,
+    const std::set<std::string>& bundleNameSet)
+{
+    if (!hasInit && !Init()) {
+        DLP_LOG_ERROR(LABEL, "Init failed!");
+        return DLP_RETENTION_UPDATE_ERROR;
+    }
+    int32_t res = sandboxJsonManager_->RemoveRetentionInfoByUserId(userId, bundleNameSet);
+    return UpdateFile(res);
 }
 } // namespace DlpPermission
 } // namespace Security
