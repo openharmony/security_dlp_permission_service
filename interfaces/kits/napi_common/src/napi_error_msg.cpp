@@ -45,6 +45,8 @@ static const std::unordered_map<int32_t, std::string> JS_ERROR_MSG_MAP = {
     { ERR_JS_APPLICATION_NOT_AUTHORIZED, "Not authorized application" },
     { ERR_JS_DLP_FILE_EXPIRE_TIME, "DLP file is expiry, please contact the owner" },
     { ERR_JS_DLP_CREDENTIAL_NO_INTERNET_ERROR, "DLP credential need internet, please check your connection" },
+    { ERR_JS_URI_NOT_EXIST, "Check uri in want" },
+    { ERR_JS_PARAM_DISPLAY_NAME_NOT_EXIST, "Check displayName in want parameters" },
 };
 
 static const std::unordered_map<int32_t, int32_t> NATIVE_CODE_TO_JS_CODE_MAP = {

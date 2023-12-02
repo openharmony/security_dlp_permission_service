@@ -48,7 +48,8 @@
         "samgr",
         "c_utils",
         "config_policy",
-        "kv_store"
+        "kv_store",
+        "ace_engine"
       ],
       "third_party": [
         "libfuse",

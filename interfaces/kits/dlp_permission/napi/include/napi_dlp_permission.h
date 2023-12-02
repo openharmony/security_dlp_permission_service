@@ -141,6 +141,8 @@ private:
     static void GetSandboxAppConfigExecute(napi_env env, void* data);
     static void GetSandboxAppConfigComplete(napi_env env, napi_status status, void* data);
     static napi_value GetSandboxAppConfig(napi_env env, napi_callback_info cbInfo);
+
+    static napi_value StartDLPManagerForResult(napi_env env, napi_callback_info cbInfo);
 };
 }  // namespace DlpPermission
 }  // namespace Security

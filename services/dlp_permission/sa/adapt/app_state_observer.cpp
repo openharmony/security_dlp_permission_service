@@ -202,7 +202,8 @@ void AppStateObserver::OnProcessDied(const AppExecFwk::ProcessData& processData)
     DLP_LOG_INFO(LABEL, "%{public}s is died, uid: %{public}d", processData.bundleName.c_str(), processData.uid);
 
     // current died process is dlpmanager
-    if (processData.bundleName == "com.ohos.dlpmanager") {
+    if (processData.bundleName == "com.ohos.dlpmanager" &&
+        processData.processName != "com.ohos.dlpmanager:sys/commonUI") {
         int32_t userId;
         if (GetUserIdFromUid(processData.uid, &userId) != 0) {
             return;
