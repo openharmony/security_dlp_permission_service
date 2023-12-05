@@ -20,14 +20,18 @@
 #include <unistd.h>
 #include <uv.h>
 
+#include "ability_context.h"
 #include "napi/native_api.h"
 #include "napi/native_node_api.h"
+#include "napi_base_context.h"
+#include "napi_common_want.h"
 #include "dlp_file.h"
 #include "dlp_sandbox_callback_info.h"
 #include "dlp_sandbox_change_callback_customize.h"
 #include "open_dlp_file_callback_customize.h"
 #include "permission_policy.h"
 #include "retention_sandbox_info.h"
+#include "ui_content.h"
 #include "visited_dlp_file_info.h"
 
 namespace OHOS {
@@ -242,6 +246,33 @@ struct SandboxAppConfigAsyncContext : public CommonAsyncContext {
     std::string configInfo = "";
 };
 
+struct UIExtensionRequestContext : public CommonAsyncContext {
+    explicit UIExtensionRequestContext(napi_env env) : CommonAsyncContext(env) {};
+    std::shared_ptr<OHOS::AbilityRuntime::AbilityContext> context = nullptr;
+    OHOS::AAFwk::Want requestWant;
+};
+
+class UIExtensionCallback {
+public:
+    explicit UIExtensionCallback(std::shared_ptr<UIExtensionRequestContext>& reqContext);
+    void SetSessionId(int32_t sessionId);
+    void OnRelease(int32_t releaseCode);
+    void OnResult(int32_t resultCode, const OHOS::AAFwk::Want& result);
+    void OnReceive(const OHOS::AAFwk::WantParams& request);
+    void OnError(int32_t code, const std::string& name, const std::string& message);
+    void OnRemoteReady(const std::shared_ptr<OHOS::Ace::ModalUIExtensionProxy>& uiProxy);
+    void OnDestroy();
+    void SendMessageBack();
+
+private:
+    bool SetErrorCode(int32_t code);
+    int32_t sessionId_ = 0;
+    int32_t resultCode_ = 0;
+    OHOS::AAFwk::Want resultWant_;
+    std::shared_ptr<UIExtensionRequestContext> reqContext_ = nullptr;
+    bool alreadyCallback_ = false;
+};
+
 void ThrowParamError(const napi_env env, const std::string& param, const std::string& type);
 void DlpNapiThrow(napi_env env, int32_t nativeErrCode);
 void DlpNapiThrow(napi_env env, int32_t jsErrCode, const std::string &jsErrMsg);
@@ -316,6 +347,11 @@ napi_value VectorStringToJs(napi_env env, const std::vector<std::string>& value)
 napi_value SetStringToJs(napi_env env, const std::set<std::string>& value);
 napi_value DlpPermissionInfoToJs(napi_env env, const DLPPermissionInfo& permInfo);
 napi_value SandboxInfoToJs(napi_env env, const SandboxInfo& sandboxInfo);
+
+bool ParseUIAbilityContextReq(
+    napi_env env, const napi_value& obj, std::shared_ptr<OHOS::AbilityRuntime::AbilityContext>& abilityContext);
+bool ParseWantReq(napi_env env, const napi_value& obj, OHOS::AAFwk::Want& requestWant);
+void StartUIExtensionAbility(std::shared_ptr<UIExtensionRequestContext> asyncContext);
 }  // namespace DlpPermission
 }  // namespace Security
 }  // namespace OHOS

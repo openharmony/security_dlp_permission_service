@@ -21,6 +21,8 @@
 #include "dlp_permission_log.h"
 #include "napi_error_msg.h"
 #include "securec.h"
+#include "string_wrapper.h"
+#include "want_params_wrapper.h"
 
 namespace OHOS {
 namespace Security {
@@ -28,6 +30,10 @@ namespace DlpPermission {
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "DlpPermissionCommon"};
 static const int MAX_FILE_NAME_LEN = 256;
+const std::string PARAM_UI_EXTENSION_TYPE = "ability.want.params.uiExtensionType";
+const std::string SYS_COMMON_UI = "sys/commonUI";
+const std::string DLP_MANAGER_BUNDLENAME = "com.ohos.dlpmanager";
+const std::string DLP_MANAGER_ABILITYNAME = "MainAbilityEx";
 
 static bool ConvertDlpSandboxChangeInfo(napi_env env, napi_value value, const DlpSandboxCallbackInfo &result)
 {
@@ -1679,6 +1685,228 @@ bool GetVectorUint32(napi_env env, napi_value jsObject, std::vector<uint32_t>& r
         resultVec.emplace_back(num);
     }
     return true;
+}
+
+bool ParseUIAbilityContextReq(
+    napi_env env, const napi_value& obj, std::shared_ptr<OHOS::AbilityRuntime::AbilityContext>& abilityContext)
+{
+    bool stageMode = false;
+    napi_status status = OHOS::AbilityRuntime::IsStageContext(env, obj, stageMode);
+    if (status != napi_ok || !stageMode) {
+        DLP_LOG_ERROR(LABEL, "not stage mode");
+        return false;
+    }
+
+    auto context = OHOS::AbilityRuntime::GetStageModeContext(env, obj);
+    if (context == nullptr) {
+        DLP_LOG_ERROR(LABEL, "get context failed");
+        return false;
+    }
+
+    abilityContext = OHOS::AbilityRuntime::Context::ConvertTo<OHOS::AbilityRuntime::AbilityContext>(context);
+    if (abilityContext == nullptr) {
+        DLP_LOG_ERROR(LABEL, "get abilityContext failed");
+        return false;
+    }
+    DLP_LOG_DEBUG(LABEL, "end ParseUIAbilityContextReq");
+    return true;
+}
+
+bool ParseWantReq(napi_env env, const napi_value& obj, OHOS::AAFwk::Want& requestWant)
+{
+    requestWant.SetElementName(DLP_MANAGER_BUNDLENAME, DLP_MANAGER_ABILITYNAME);
+    std::string uri;
+    bool ret = GetStringValueByKey(env, obj, "uri", uri);
+    if (!ret || uri.empty()) {
+        DLP_LOG_ERROR(LABEL, "get uri failed");
+        DlpNapiThrow(env, ERR_JS_URI_NOT_EXIST, "uri not exist in want");
+        return false;
+    }
+    requestWant.SetUri(uri);
+
+    napi_value wantParameters = GetNapiValue(env, obj, "parameters");
+    if (wantParameters == nullptr) {
+        DLP_LOG_ERROR(LABEL, "get wantParameters failed");
+        DlpNapiThrow(env, ERR_JS_PARAM_DISPLAY_NAME_NOT_EXIST, "parameters not exist in want");
+        return false;
+    }
+    std::string displayName;
+    ret = GetStringValueByKey(env, wantParameters, "displayName", displayName);
+    if (!ret || displayName.empty()) {
+        DLP_LOG_ERROR(LABEL, "get displayName failed");
+        DlpNapiThrow(env, ERR_JS_PARAM_DISPLAY_NAME_NOT_EXIST, "displayName not exist in want parameters");
+        return false;
+    }
+    AAFwk::WantParams requestWantParam;
+    requestWantParam.SetParam("displayName", AAFwk::String::Box(displayName));
+    AAFwk::WantParams fileNameObj;
+    fileNameObj.SetParam("name", AAFwk::String::Box(displayName));
+    requestWantParam.SetParam("fileName", AAFwk::WantParamWrapper::Box(fileNameObj));
+
+    napi_status result = napi_has_named_property(env, wantParameters, "linkFileName", &ret);
+    if (result == napi_ok && ret) {
+        napi_value linkFileName = GetNapiValue(env, wantParameters, "linkFileName");
+        std::string linkFileNameStr;
+        ret = GetStringValueByKey(env, linkFileName, "name", linkFileNameStr);
+        if (ret && !linkFileNameStr.empty()) {
+            AAFwk::WantParams linkFileNameObj;
+            linkFileNameObj.SetParam("name", AAFwk::String::Box(linkFileNameStr));
+            requestWantParam.SetParam("linkFileName", AAFwk::WantParamWrapper::Box(linkFileNameObj));
+            DLP_LOG_DEBUG(LABEL, "set linkFileName");
+        }
+    }
+
+    requestWant.SetParams(requestWantParam);
+    requestWant.SetParam(PARAM_UI_EXTENSION_TYPE, SYS_COMMON_UI);
+    DLP_LOG_DEBUG(LABEL, "end ParseWantReq");
+    return true;
+}
+
+void StartUIExtensionAbility(std::shared_ptr<UIExtensionRequestContext> asyncContext)
+{
+    DLP_LOG_DEBUG(LABEL, "begin StartUIExtensionAbility");
+    if (asyncContext == nullptr) {
+        DLP_LOG_ERROR(LABEL, "asyncContext is null");
+        DlpNapiThrow(asyncContext->env, ERR_JS_INVALID_PARAMETER, "asyncContext is null");
+        return;
+    }
+    auto abilityContext = asyncContext->context;
+    if (abilityContext == nullptr) {
+        DLP_LOG_ERROR(LABEL, "abilityContext is null");
+        DlpNapiThrow(asyncContext->env, ERR_JS_INVALID_PARAMETER, "abilityContext is null");
+        return;
+    }
+    auto uiContent = abilityContext->GetUIContent();
+    if (uiContent == nullptr) {
+        DLP_LOG_ERROR(LABEL, "uiContent is null");
+        DlpNapiThrow(asyncContext->env, ERR_JS_INVALID_PARAMETER, "uiContent is null");
+        return;
+    }
+
+    auto uiExtCallback = std::make_shared<UIExtensionCallback>(asyncContext);
+    OHOS::Ace::ModalUIExtensionCallbacks extensionCallbacks = {
+        std::bind(&UIExtensionCallback::OnRelease, uiExtCallback, std::placeholders::_1),
+        std::bind(&UIExtensionCallback::OnResult, uiExtCallback, std::placeholders::_1, std::placeholders::_2),
+        std::bind(&UIExtensionCallback::OnReceive, uiExtCallback, std::placeholders::_1),
+        std::bind(&UIExtensionCallback::OnError, uiExtCallback, std::placeholders::_1,
+            std::placeholders::_2, std::placeholders::_3),
+        std::bind(&UIExtensionCallback::OnRemoteReady, uiExtCallback, std::placeholders::_1),
+        std::bind(&UIExtensionCallback::OnDestroy, uiExtCallback)
+    };
+
+    OHOS::Ace::ModalUIExtensionConfig uiExtConfig;
+    uiExtConfig.isProhibitBack = false;
+    int32_t sessionId = uiContent->CreateModalUIExtension(asyncContext->requestWant, extensionCallbacks, uiExtConfig);
+    DLP_LOG_INFO(LABEL, "end CreateModalUIExtension sessionId = %{public}d", sessionId);
+    if (sessionId == 0) {
+        DLP_LOG_ERROR(LABEL, "CreateModalUIExtension failed, sessionId is %{public}d", sessionId);
+    }
+    uiExtCallback->SetSessionId(sessionId);
+    return;
+}
+
+UIExtensionCallback::UIExtensionCallback(std::shared_ptr<UIExtensionRequestContext>& reqContext)
+{
+    this->reqContext_ = reqContext;
+}
+
+void UIExtensionCallback::SetSessionId(int32_t sessionId)
+{
+    this->sessionId_ = sessionId;
+}
+
+bool UIExtensionCallback::SetErrorCode(int32_t code)
+{
+    if (this->reqContext_ == nullptr) {
+        DLP_LOG_ERROR(LABEL, "OnError reqContext is nullptr");
+        return false;
+    }
+    if (this->alreadyCallback_) {
+        DLP_LOG_DEBUG(LABEL, "alreadyCallback");
+        return false;
+    }
+    this->alreadyCallback_ = true;
+    this->reqContext_->errCode = code;
+    return true;
+}
+
+void UIExtensionCallback::OnRelease(int32_t releaseCode)
+{
+    DLP_LOG_DEBUG(LABEL, "UIExtensionComponent OnRelease(), releaseCode = %{public}d", releaseCode);
+    if (SetErrorCode(releaseCode)) {
+        SendMessageBack();
+    }
+}
+
+void UIExtensionCallback::OnResult(int32_t resultCode, const OHOS::AAFwk::Want& result)
+{
+    DLP_LOG_DEBUG(LABEL, "UIExtensionComponent OnResult(), resultCode = %{public}d", resultCode);
+    this->resultCode_ = resultCode;
+    this->resultWant_ = result;
+    if (SetErrorCode(0)) {
+        SendMessageBack();
+    }
+}
+
+void UIExtensionCallback::OnReceive(const OHOS::AAFwk::WantParams& request)
+{
+    DLP_LOG_DEBUG(LABEL, "UIExtensionComponent OnReceive()");
+}
+
+void UIExtensionCallback::OnError(int32_t errorCode, const std::string& name, const std::string& message)
+{
+    DLP_LOG_ERROR(LABEL,
+        "UIExtensionComponent OnError(), errorCode = %{public}d, name = %{public}s, message = %{public}s",
+        errorCode, name.c_str(), message.c_str());
+    if (SetErrorCode(errorCode)) {
+        SendMessageBack();
+    }
+}
+
+void UIExtensionCallback::OnRemoteReady(const std::shared_ptr<OHOS::Ace::ModalUIExtensionProxy>& uiProxy)
+{
+    DLP_LOG_DEBUG(LABEL, "UIExtensionComponent OnRemoteReady()");
+}
+
+void UIExtensionCallback::OnDestroy()
+{
+    DLP_LOG_DEBUG(LABEL, "UIExtensionComponent OnDestroy()");
+    if (SetErrorCode(0)) {
+        SendMessageBack();
+    }
+}
+
+void UIExtensionCallback::SendMessageBack()
+{
+    DLP_LOG_INFO(LABEL, "start SendMessageBack");
+    if (this->reqContext_ == nullptr) {
+        DLP_LOG_ERROR(LABEL, "reqContext is nullptr");
+        return;
+    }
+
+    auto abilityContext = this->reqContext_->context;
+    if (abilityContext != nullptr) {
+        auto uiContent = abilityContext->GetUIContent();
+        if (uiContent != nullptr) {
+            DLP_LOG_DEBUG(LABEL, "CloseModalUIExtension");
+            uiContent->CloseModalUIExtension(this->sessionId_);
+        }
+    }
+
+    napi_value nativeObjJs = nullptr;
+    NAPI_CALL_RETURN_VOID(this->reqContext_->env, napi_create_object(this->reqContext_->env, &nativeObjJs));
+    napi_value resultCode = nullptr;
+    NAPI_CALL_RETURN_VOID(this->reqContext_->env,
+        napi_create_int32(this->reqContext_->env, this->resultCode_, &resultCode));
+    NAPI_CALL_RETURN_VOID(this->reqContext_->env,
+        napi_set_named_property(this->reqContext_->env, nativeObjJs, "resultCode", resultCode));
+    napi_value resultWant = nullptr;
+    resultWant = OHOS::AppExecFwk::WrapWant(this->reqContext_->env, this->resultWant_);
+    NAPI_CALL_RETURN_VOID(this->reqContext_->env,
+        napi_set_named_property(this->reqContext_->env, nativeObjJs, "want", resultWant));
+
+    DLP_LOG_DEBUG(LABEL, "ProcessCallbackOrPromise");
+    ProcessCallbackOrPromise(this->reqContext_->env, this->reqContext_.get(), nativeObjJs);
 }
 }  // namespace DlpPermission
 }  // namespace Security

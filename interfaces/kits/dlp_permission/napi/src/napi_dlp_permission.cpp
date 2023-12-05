@@ -14,6 +14,7 @@
  */
 
 #include "napi_dlp_permission.h"
+#include <functional>
 #include <string>
 #include "accesstoken_kit.h"
 #include "application_context.h"
@@ -1798,6 +1799,44 @@ bool NapiDlpPermission::IsSystemApp(napi_env env)
     return true;
 }
 
+napi_value NapiDlpPermission::StartDLPManagerForResult(napi_env env, napi_callback_info cbInfo)
+{
+    DLP_LOG_INFO(LABEL, "begin StartDLPManagerForResult");
+    size_t argc = PARAM_SIZE_TWO;
+    size_t maxArgcNum = PARAM_SIZE_TWO;
+    size_t contextIndex = PARAM0;
+    size_t requestIndex = PARAM1;
+
+    napi_value argv[PARAM2] = {nullptr};
+    napi_value thisVar = nullptr;
+    napi_value result = nullptr;
+    NAPI_CALL(env, napi_get_undefined(env, &result));
+    NAPI_CALL(env, napi_get_cb_info(env, cbInfo, &argc, argv, &thisVar, nullptr));
+    if (argc != maxArgcNum) {
+        DLP_LOG_ERROR(LABEL, "params number mismatch");
+        std::string errMsg = "Parameter Error. Params number mismatch, need " + std::to_string(maxArgcNum) +
+            ", given " + std::to_string(argc);
+        DlpNapiThrow(env, ERR_JS_PARAMETER_ERROR, errMsg);
+        return result;
+    }
+
+    auto asyncContext = std::make_shared<UIExtensionRequestContext>(env);
+    if (!ParseUIAbilityContextReq(env, argv[contextIndex], asyncContext->context)) {
+        DLP_LOG_ERROR(LABEL, "ParseUIAbilityContextReq failed");
+        DlpNapiThrow(env, ERR_JS_INVALID_PARAMETER, "get context failed");
+        return result;
+    }
+    if (!ParseWantReq(env, argv[requestIndex], asyncContext->requestWant)) {
+        DLP_LOG_ERROR(LABEL, "ParseWantReq failed");
+        return result;
+    }
+    NAPI_CALL(env, napi_create_promise(env, &asyncContext->deferred, &result));
+
+    StartUIExtensionAbility(asyncContext);
+    DLP_LOG_DEBUG(LABEL, "end StartDLPManagerForResult");
+    return result;
+}
+
 napi_value NapiDlpPermission::Init(napi_env env, napi_value exports)
 {
     napi_property_descriptor desc[] = {
@@ -1812,6 +1851,7 @@ napi_value NapiDlpPermission::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("cancelRetentionState", CancelRetentionState),
         DECLARE_NAPI_FUNCTION("getRetentionSandboxList", GetRetentionSandboxList),
         DECLARE_NAPI_FUNCTION("getDLPFileAccessRecords", GetDLPFileVisitRecord),
+        DECLARE_NAPI_FUNCTION("startDLPManagerForResult", StartDLPManagerForResult),
 
         DECLARE_NAPI_FUNCTION("generateDLPFile", GenerateDlpFile),
         DECLARE_NAPI_FUNCTION("openDLPFile", OpenDlpFile),
