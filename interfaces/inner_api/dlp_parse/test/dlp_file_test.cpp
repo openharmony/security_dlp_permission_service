@@ -2125,7 +2125,6 @@ HWTEST_F(DlpFileTest, ParseCert001, TestSize.Level1)
     EXPECT_EQ(false, testFile2.ParseCert());
     EXPECT_NE(rmdir(dst.c_str()), -1);
 
-    int fInfo = open(dst.c_str(), O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
     testFile2.cert_.size = READ_SIZE;
     EXPECT_EQ(true, testFile2.ParseCert());
 

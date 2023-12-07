@@ -124,7 +124,6 @@ HWTEST_F(DlpZipTest, AddBuffToZip, TestSize.Level1)
 HWTEST_F(DlpZipTest, AddFileContextToZip, TestSize.Level1)
 {
     DLP_LOG_INFO(LABEL, "AddFileContextToZip");
-    std::string buf("123");
     std::string inZip("dlp_general_info");
     std::string zipFile("test_zip");
 
@@ -157,7 +156,6 @@ HWTEST_F(DlpZipTest, AddFileContextToZip, TestSize.Level1)
 HWTEST_F(DlpZipTest, IsZipFile, TestSize.Level1)
 {
     DLP_LOG_INFO(LABEL, "IsZipFile");
-    std::string buf("123");
     std::string inZip1("dlp_general_info1");
     std::string inZip2("dlp_general_info");
     std::string zipFile("test_zip");
