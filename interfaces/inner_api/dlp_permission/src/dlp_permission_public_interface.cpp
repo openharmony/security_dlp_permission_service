@@ -25,21 +25,23 @@ using Json = nlohmann::json;
 uint32_t CURRENT_VERSION = 2;
 const std::string DLP_CONTACT_ACCOUNT = "contactAccount";
 const std::string DLP_VERSION = "dlp_version";
+const std::string DLP_VERSION_LOW_CAMEL_CASE = "dlpVersion";
 const std::string DLP_OFFLINE_FLAG = "offlineAccess";
 const std::string DLP_EXTRA_INFO = "extra_info";
+const std::string DLP_EXTRA_INFO_LOW_CAMEL_CASE = "extraInfo";
 
 int32_t GenerateDlpGeneralInfo(const GenerateInfoParams& params, std::string& generalInfo)
 {
     nlohmann::json dlp_general_info;
-    dlp_general_info[DLP_VERSION] = CURRENT_VERSION;
+    dlp_general_info[DLP_VERSION_LOW_CAMEL_CASE] = CURRENT_VERSION;
     dlp_general_info[DLP_OFFLINE_FLAG] = params.offlineAccessFlag;
     if (params.contactAccount.empty()) {
         return DLP_SERVICE_ERROR_VALUE_INVALID;
     }
     dlp_general_info[DLP_CONTACT_ACCOUNT] = params.contactAccount;
-    dlp_general_info[DLP_EXTRA_INFO] = params.extraInfo;
+    dlp_general_info[DLP_EXTRA_INFO_LOW_CAMEL_CASE] = params.extraInfo;
     if (params.extraInfo.empty()) {
-        dlp_general_info[DLP_EXTRA_INFO] = {"kia_info", "cert_info", "enc_data"};
+        dlp_general_info[DLP_EXTRA_INFO_LOW_CAMEL_CASE] = {"kia_info", "cert_info", "enc_data"};
     }
     generalInfo = dlp_general_info.dump();
     return DLP_OK;
@@ -57,6 +59,9 @@ int32_t ParseDlpGeneralInfo(const std::string& generalInfo, GenerateInfoParams& 
 
     if (jsonObj.find(DLP_VERSION) != jsonObj.end() && jsonObj.at(DLP_VERSION).is_number_integer()) {
         params.version = jsonObj.at(DLP_VERSION).get<int32_t>();
+    } else if (jsonObj.find(DLP_VERSION_LOW_CAMEL_CASE) != jsonObj.end() &&
+        jsonObj.at(DLP_VERSION_LOW_CAMEL_CASE).is_number_integer()) {
+        params.version = jsonObj.at(DLP_VERSION_LOW_CAMEL_CASE).get<int32_t>();
     } else {
         return DLP_PARSE_ERROR_VALUE_INVALID;
     }
@@ -67,9 +72,14 @@ int32_t ParseDlpGeneralInfo(const std::string& generalInfo, GenerateInfoParams& 
         return DLP_PARSE_ERROR_VALUE_INVALID;
     }
 
-    if (jsonObj.find(DLP_EXTRA_INFO) != jsonObj.end() && jsonObj.at(DLP_EXTRA_INFO).is_array()
-        && !jsonObj.at(DLP_EXTRA_INFO).empty() && jsonObj.at(DLP_EXTRA_INFO).at(0).is_string()) {
+    if (jsonObj.find(DLP_EXTRA_INFO) != jsonObj.end() && jsonObj.at(DLP_EXTRA_INFO).is_array() &&
+        !jsonObj.at(DLP_EXTRA_INFO).empty() && jsonObj.at(DLP_EXTRA_INFO).at(0).is_string()) {
         params.extraInfo = jsonObj.at(DLP_EXTRA_INFO).get<std::vector<std::string>>();
+    } else if (jsonObj.find(DLP_EXTRA_INFO_LOW_CAMEL_CASE) != jsonObj.end() &&
+        jsonObj.at(DLP_EXTRA_INFO_LOW_CAMEL_CASE).is_array() &&
+        !jsonObj.at(DLP_EXTRA_INFO_LOW_CAMEL_CASE).empty() &&
+        jsonObj.at(DLP_EXTRA_INFO_LOW_CAMEL_CASE).at(0).is_string()) {
+        params.extraInfo = jsonObj.at(DLP_EXTRA_INFO_LOW_CAMEL_CASE).get<std::vector<std::string>>();
     } else {
         return DLP_PARSE_ERROR_VALUE_INVALID;
     }

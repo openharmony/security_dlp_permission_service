@@ -48,9 +48,9 @@ const std::string DLP_WRITING_FILE = "write_dlp_file";
 const std::string DLP_GEN_FILE = "gen_dlp_file";
 
 const std::string DLP_CONTACT_ACCOUNT = "contactAccount";
-const std::string DLP_VERSION = "dlp_version";
+const std::string DLP_VERSION = "dlpVersion";
 const std::string DLP_OFFLINE_FLAG = "offlineAccess";
-const std::string DLP_EXTRA_INFO = "extra_info";
+const std::string DLP_EXTRA_INFO = "extraInfo";
 
 void initDlpFileCiper(DlpFile &testFile)
 {
