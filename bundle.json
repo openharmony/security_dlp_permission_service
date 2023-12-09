@@ -16,7 +16,8 @@
       "SystemCapability.Security.DlpPermissionService"
     ],
     "hisysevent_config": [
-      "//base/security/dlp_permission_service/hisysevent.yaml"
+      "//base/security/dlp_permission_service/hisysevent.yaml",
+      "//base/security/dlp_permission_service/hisysevent-DLP_UE.yaml"
     ],
     "features": [
       "dlp_permission_service_feature_coverage",
