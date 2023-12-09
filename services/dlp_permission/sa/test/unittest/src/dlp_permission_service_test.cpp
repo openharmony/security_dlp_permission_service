@@ -985,6 +985,7 @@ HWTEST_F(DlpPermissionServiceTest, RemoveRetentionInfo001, TestSize.Level1)
     bool ret = dlpPermissionService_->RemoveRetentionInfo(retentionSandBoxInfoVec, info);
     ASSERT_EQ(true, ret);
 }
+
 /**
  * @tc.name: DeserializeEncPolicyDataByFirstVersion001
  * @tc.desc: DeserializeEncPolicyDataByFirstVersion test
@@ -1023,4 +1024,31 @@ HWTEST_F(DlpPermissionServiceTest, DeserializeEncPolicyDataByFirstVersion001, Te
     res = DlpPermissionSerializer::GetInstance().DeserializeEncPolicyDataByFirstVersion(encDataJson, encDataJson2,
         encData, ownerAccountId);
     ASSERT_EQ(res, DLP_OK);
+}
+
+/**
+ * @tc.name: CheckMdmPermission001
+ * @tc.desc: CheckMdmPermission test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionServiceTest, CheckMdmPermission001, TestSize.Level1)
+{
+    DLP_LOG_DEBUG(LABEL, "CheckMdmPermission001");
+    int32_t ret = dlpPermissionService_->CheckMdmPermission("testBundle", 101);
+    ASSERT_EQ(DLP_SERVICE_ERROR_IPC_REQUEST_FAIL, ret);
+}
+
+/**
+ * @tc.name: SandboxConfigOperate001
+ * @tc.desc: SandboxConfigOperate test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionServiceTest, SandboxConfigOperate001, TestSize.Level1)
+{
+    DLP_LOG_DEBUG(LABEL, "SandboxConfigOperate001");
+    std::string config;
+    int32_t ret = dlpPermissionService_->SandboxConfigOperate(config, SandboxConfigOperationEnum::ADD);
+    ASSERT_NE(DLP_OK, ret);
 }
