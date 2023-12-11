@@ -18,6 +18,7 @@
 #include <unistd.h>
 #include <unordered_map>
 #include "account_adapt.h"
+#include "bundle_manager_adapter.h"
 #include "dlp_credential_client.h"
 #include "dlp_policy_mgr_client.h"
 #include "dlp_permission.h"
@@ -32,6 +33,7 @@
 namespace OHOS {
 namespace Security {
 namespace DlpPermission {
+using namespace OHOS::AppExecFwk;
 namespace {
 const std::string LOCAL_ENCRYPTED_CERT = "encryptedPolicy";
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "DlpCredential"};
@@ -39,6 +41,7 @@ static const size_t MAX_REQUEST_NUM = 100;
 static const uint32_t MAX_APPID_LIST_NUM = 250;
 static const uint32_t MAX_APPID_LENGTH = 200;
 static const std::string POLICY_CERT = "policyCert";
+static const std::string DLP_MANAGER_BUNDLE_NAME = "com.ohos.dlpmanager";
 static std::unordered_map<uint64_t, sptr<IDlpPermissionCallback>> g_requestMap;
 static std::unordered_map<uint64_t, DlpAccountType> g_requestAccountTypeMap;
 std::mutex g_lockRequest;
@@ -588,7 +591,35 @@ int32_t ParseUint8TypedArrayToStringVector(uint8_t *policy, uint32_t *policyLen,
         appIdList.push_back(std::string(reinterpret_cast<char *>(policy + offset), length));
         offset += length;
     }
-    return 0;
+    return DLP_OK;
+}
+
+int32_t PresetDLPPolicy(const std::vector<std::string>& srcList, std::vector<std::string>& dstList)
+{
+    AppExecFwk::BundleInfo bundleInfo;
+    int32_t userId;
+    bool result = GetUserIdByActiveAccount(&userId);
+    if (!result) {
+        DLP_LOG_ERROR(LABEL, "get userId error");
+        return DLP_SERVICE_ERROR_VALUE_INVALID;
+    }
+    if (!BundleManagerAdapter::GetInstance().GetBundleInfo(DLP_MANAGER_BUNDLE_NAME,
+        static_cast<int32_t>(AppExecFwk::GetBundleInfoFlag::GET_BUNDLE_INFO_WITH_SIGNATURE_INFO), bundleInfo, userId)) {
+        DLP_LOG_ERROR(LABEL, "get appId error");
+        return DLP_SERVICE_ERROR_IPC_REQUEST_FAIL;
+    }
+    std::string appId = bundleInfo.appId;
+    dstList.assign(srcList.begin(), srcList.end());
+    dstList.push_back(appId);
+    return DLP_OK;
+}
+
+int32_t RemovePresetDLPPolicy(std::vector<std::string>& appIdList)
+{
+    if (appIdList.size() > 0) {
+        appIdList.pop_back();
+    }
+    return DLP_OK;
 }
 
 int32_t DlpCredential::SetMDMPolicy(const std::vector<std::string>& appIdList)
@@ -604,12 +635,18 @@ int32_t DlpCredential::SetMDMPolicy(const std::vector<std::string>& appIdList)
         delete[] policy;
         return DLP_CREDENTIAL_ERROR_MEMORY_OPERATE_FAIL;
     }
-    int32_t policyLen = ParseStringVectorToUint8TypedArray(appIdList, policy, policySize);
+    std::vector<std::string> presetAppIdList;
+    int32_t res = PresetDLPPolicy(appIdList, presetAppIdList);
+    if (res != DLP_OK) {
+        delete[] policy;
+        return res;
+    }
+    int32_t policyLen = ParseStringVectorToUint8TypedArray(presetAppIdList, policy, policySize);
     if (policyLen <= 0) {
         delete[] policy;
         return policyLen;
     }
-    int32_t res = DLP_AddPolicy(PolicyType::AUTHORIZED_APPLICATION_LIST, policy, policyLen);
+    res = DLP_AddPolicy(PolicyType::AUTHORIZED_APPLICATION_LIST, policy, policyLen);
     if (res != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "SetMDMPolicy request fail, error: %{public}d", res);
     }
@@ -634,6 +671,9 @@ int32_t DlpCredential::GetMDMPolicy(std::vector<std::string>& appIdList)
     }
     res = ParseUint8TypedArrayToStringVector(policy, &policyLen, appIdList);
     delete[] policy;
+    if (res == DLP_OK) {
+        res = RemovePresetDLPPolicy(appIdList);
+    }
     return res;
 }
 
