@@ -59,7 +59,8 @@ void DlpKvDataStorage::TryTwice(const std::function<DistributedKv::Status()> &fu
 
 int32_t DlpKvDataStorage::LoadAllData(std::map<std::string, std::string> &infos)
 {
-    if (!CheckKvStore()) {
+    bool res = CheckKvStore();
+    if (!res) {
         DLP_LOG_ERROR(LABEL, "kvStore is nullptr");
         return DLP_COMMON_CHECK_KVSTORE_ERROR;
     }
@@ -91,7 +92,8 @@ OHOS::DistributedKv::Status DlpKvDataStorage::GetKvStore()
         .baseDir = baseDir_,
     };
     OHOS::DistributedKv::Status status = dataManager_.GetSingleKvStore(options, appId_, storeId_, kvStorePtr_);
-    if (status != OHOS::DistributedKv::Status::SUCCESS || kvStorePtr_ == nullptr) {
+    bool res = (status != OHOS::DistributedKv::Status::SUCCESS) || (kvStorePtr_ == nullptr);
+    if (res) {
         DLP_LOG_ERROR(LABEL, "GetSingleKvStore failed! status %{public}d, kvStorePtr_ is nullptr", status);
         return status;
     }
@@ -108,7 +110,8 @@ bool DlpKvDataStorage::CheckKvStore()
     OHOS::DistributedKv::Status status = OHOS::DistributedKv::Status::SUCCESS;
     while (tryTimes > 0) {
         status = GetKvStore();
-        if (status == OHOS::DistributedKv::Status::SUCCESS && kvStorePtr_ != nullptr) {
+        bool res = (status == OHOS::DistributedKv::Status::SUCCESS) && (kvStorePtr_ != nullptr);
+        if (res) {
             return true;
         }
         usleep(SLEEP_INTERVAL);
@@ -128,7 +131,8 @@ int32_t DlpKvDataStorage::AddOrUpdateValue(const std::string &key, const std::st
 
 int32_t DlpKvDataStorage::RemoveValueFromKvStore(const std::string &keyStr)
 {
-    if (!CheckKvStore()) {
+    bool res = CheckKvStore();
+    if (!res) {
         DLP_LOG_ERROR(LABEL, "kvStore is nullptr");
         return DLP_COMMON_CHECK_KVSTORE_ERROR;
     }
@@ -164,7 +168,8 @@ int32_t DlpKvDataStorage::RemoveValueFromKvStore(const std::string &keyStr)
 
 int32_t DlpKvDataStorage::DeleteKvStore()
 {
-    if (!CheckKvStore()) {
+    bool res = CheckKvStore();
+    if (!res) {
         DLP_LOG_ERROR(LABEL, "kvStore is nullptr");
         return DLP_QUERY_DISTRIBUTE_DATA_ERROR;
     }
@@ -184,7 +189,8 @@ int32_t DlpKvDataStorage::DeleteKvStore()
 
 int32_t DlpKvDataStorage::PutValueToKvStore(const std::string &keyStr, const std::string &valueStr)
 {
-    if (!CheckKvStore()) {
+    bool res = CheckKvStore();
+    if (!res) {
         DLP_LOG_ERROR(LABEL, "kvStore is nullptr");
         return DLP_COMMON_CHECK_KVSTORE_ERROR;
     }
@@ -207,7 +213,8 @@ int32_t DlpKvDataStorage::PutValueToKvStore(const std::string &keyStr, const std
 
 int32_t DlpKvDataStorage::GetValueFromKvStore(const std::string &keyStr, std::string &valueStr)
 {
-    if (!CheckKvStore()) {
+    bool res = CheckKvStore();
+    if (!res) {
         DLP_LOG_ERROR(LABEL, "kvStore is nullptr");
         return DLP_COMMON_CHECK_KVSTORE_ERROR;
     }
@@ -246,7 +253,8 @@ bool DlpKvDataStorage::IsKeyExists(const std::string keyStr)
         return false;
     }
     std::string valueStr;
-    if (GetValueFromKvStore(keyStr, valueStr) != DLP_OK) {
+    bool res = GetValueFromKvStore(keyStr, valueStr) != DLP_OK;
+    if (res) {
         return false;
     }
     return true;

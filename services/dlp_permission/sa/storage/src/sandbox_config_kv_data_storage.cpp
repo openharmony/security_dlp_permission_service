@@ -37,11 +37,13 @@ int32_t SandboxConfigKvDataStorage::GetSandboxConfigFromDataStorage(const int32_
     std::string& configInfo)
 {
     std::string key;
-    if (!GenerateKey(userId, bundleName, key)) {
+    bool res = GenerateKey(userId, bundleName, key);
+    if (!res) {
         DLP_LOG_ERROR(LABEL, "generate key error");
         return DLP_SERVICE_ERROR_VALUE_INVALID;
     }
-    if (!IsKeyExists(key)) {
+    res = IsKeyExists(key);
+    if (!res) {
         DLP_LOG_ERROR(LABEL, "the key not exists.");
         return DLP_KV_GET_DATA_NOT_FOUND;
     }
@@ -56,7 +58,8 @@ int32_t SandboxConfigKvDataStorage::AddSandboxConfigIntoDataStorage(const int32_
     const std::string& configInfo)
 {
     std::string key;
-    if (!GenerateKey(userId, bundleName, key)) {
+    bool res = GenerateKey(userId, bundleName, key);
+    if (!res) {
         DLP_LOG_ERROR(LABEL, "generate key error");
         return DLP_SERVICE_ERROR_VALUE_INVALID;
     }
@@ -71,11 +74,13 @@ int32_t SandboxConfigKvDataStorage::DeleteSandboxConfigFromDataStorage(const int
     const std::string& bundleName)
 {
     std::string key;
-    if (!GenerateKey(userId, bundleName, key)) {
+    bool res = GenerateKey(userId, bundleName, key);
+    if (!res) {
         DLP_LOG_ERROR(LABEL, "generate key error");
         return DLP_SERVICE_ERROR_VALUE_INVALID;
     }
-    if (!IsKeyExists(key)) {
+    res = IsKeyExists(key);
+    if (!res) {
         DLP_LOG_ERROR(LABEL, "the key not exists.");
         return DLP_OK;
     }

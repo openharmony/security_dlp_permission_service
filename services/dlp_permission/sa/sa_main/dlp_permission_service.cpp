@@ -799,8 +799,9 @@ int32_t DlpPermissionService::RemoveMDMPolicy()
 int32_t DlpPermissionService::CheckMdmPermission(const std::string& bundleName, int32_t userId)
 {
     AppExecFwk::BundleInfo bundleInfo;
-    if (!BundleManagerAdapter::GetInstance().GetBundleInfo(bundleName,
-        static_cast<int32_t>(AppExecFwk::GetBundleInfoFlag::GET_BUNDLE_INFO_WITH_SIGNATURE_INFO), bundleInfo, userId)) {
+    bool result = BundleManagerAdapter::GetInstance().GetBundleInfo(bundleName,
+        static_cast<int32_t>(AppExecFwk::GetBundleInfoFlag::GET_BUNDLE_INFO_WITH_SIGNATURE_INFO), bundleInfo, userId);
+    if (!result) {
         DLP_LOG_ERROR(LABEL, "get appId error");
         return DLP_SERVICE_ERROR_IPC_REQUEST_FAIL;
     }
@@ -840,7 +841,8 @@ int32_t DlpPermissionService::SandboxConfigOperate(std::string& configInfo, Sand
 {
     std::string callerBundleName;
     uint32_t tokenId = IPCSkeleton::GetCallingTokenID();
-    if (!GetCallerBundleName(tokenId, callerBundleName)) {
+    bool result = GetCallerBundleName(tokenId, callerBundleName);
+    if (!result) {
         return DLP_SERVICE_ERROR_VALUE_INVALID;
     }
     int32_t userId = GetCallingUserId();
