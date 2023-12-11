@@ -932,8 +932,8 @@ static int32_t GetFileSize(int32_t fd)
 static void SetDlpGeneralInfo(bool accessFlag, std::string& contactAccount, std::string& out)
 {
     GenerateInfoParams params = {
-        .contactAccount = contactAccount,
         .offlineAccessFlag = accessFlag,
+        .contactAccount = contactAccount,
         .extraInfo = {"kia_info", "cert_info", "enc_data"},
     };
     GenerateDlpGeneralInfo(params, out);
