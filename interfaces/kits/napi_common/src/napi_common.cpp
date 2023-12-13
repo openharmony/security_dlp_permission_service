@@ -1767,7 +1767,6 @@ void StartUIExtensionAbility(std::shared_ptr<UIExtensionRequestContext> asyncCon
     DLP_LOG_DEBUG(LABEL, "begin StartUIExtensionAbility");
     if (asyncContext == nullptr) {
         DLP_LOG_ERROR(LABEL, "asyncContext is null");
-        DlpNapiThrow(asyncContext->env, ERR_JS_INVALID_PARAMETER, "asyncContext is null");
         return;
     }
     auto abilityContext = asyncContext->context;
