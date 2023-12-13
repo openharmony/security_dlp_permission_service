@@ -695,8 +695,7 @@ DlpPermissionStub::DlpPermissionStub()
         &DlpPermissionStub::GetDlpSupportFileTypeInner;
     requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::REGISTER_DLP_SANDBOX_CHANGE_CALLBACK)] =
         &DlpPermissionStub::RegisterDlpSandboxChangeCallbackInner;
-    requestFuncMap_[static_cast<uint32_t>(
-        DlpPermissionServiceInterfaceCode::UNREGISTER_DLP_SANDBOX_CHANGE_CALLBACK)] =
+    requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::UNREGISTER_DLP_SANDBOX_CHANGE_CALLBACK)] =
         &DlpPermissionStub::UnRegisterDlpSandboxChangeCallbackInner;
     requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::GET_DLP_GATHERING_POLICY)] =
         &DlpPermissionStub::GetDlpGatheringPolicyInner;

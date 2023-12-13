@@ -129,11 +129,11 @@ int FuseReplyBufMock(fuse_req_t req, const char *buf, size_t size)
 
 
 struct fuse_session *FuseSessionNewMock(struct fuse_args *args, const struct fuse_lowlevel_ops *op,
-    size_t op_size, void *userdata)
+    size_t opSize, void *userdata)
 {
     (void)args;
     (void)op;
-    (void)op_size;
+    (void)opSize;
     (void)userdata;
     return reinterpret_cast<struct fuse_session *>(&g_session);
 }
