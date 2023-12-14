@@ -624,7 +624,7 @@ int32_t DlpCredential::SetMDMPolicy(const std::vector<std::string>& appIdList)
         DLP_LOG_ERROR(LABEL, "appId List too large");
         return DLP_SERVICE_ERROR_VALUE_INVALID;
     }
-    uint32_t policySize = size(appIdList) * MAX_APPID_LENGTH;
+    uint32_t policySize = (size(appIdList) + 1) * MAX_APPID_LENGTH;
     uint8_t *policy = new (std::nothrow)uint8_t[policySize];
     if (policy == nullptr) {
         DLP_LOG_WARN(LABEL, "alloc policy failed.");
