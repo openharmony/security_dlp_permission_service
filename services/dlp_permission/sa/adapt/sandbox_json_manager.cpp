@@ -291,7 +291,7 @@ bool SandboxJsonManager::GetUserIdByUid(int32_t& userId)
     return GetUserIdFromUid(uid, &userId) == 0;
 }
 
-int32_t SandboxJsonManager::GetBundleNameSetByUserId(const int32_t userId, std::set<std::string>& keySet)
+int32_t SandboxJsonManager::GetBundleNameSetByUserId(const int32_t userId, std::set<std::string>& bundleNameSet)
 {
     std::lock_guard<std::mutex> lock(mutex_);
     if (infoVec_.size() == 0) {
@@ -299,7 +299,7 @@ int32_t SandboxJsonManager::GetBundleNameSetByUserId(const int32_t userId, std::
     }
     for (auto iter = infoVec_.begin(); iter != infoVec_.end(); ++iter) {
         if (iter->userId == userId) {
-            keySet.emplace(iter->bundleName);
+            bundleNameSet.emplace(iter->bundleName);
         }
     }
     return DLP_OK;
