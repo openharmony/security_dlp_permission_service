@@ -691,7 +691,7 @@ int32_t DlpPermissionProxy::GetRetentionSandboxList(const std::string& bundleNam
         return DLP_SERVICE_ERROR_SERVICE_NOT_EXIST;
     }
     int32_t requestResult = remote->SendRequest(
-        static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::GET_RETETNTION_SANDBOX_LIST), data, reply, option);
+        static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::GET_RETENTION_SANDBOX_LIST), data, reply, option);
     if (requestResult != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "Request fail, result: %{public}d", requestResult);
         return requestResult;

@@ -38,7 +38,7 @@ static void FuzzTest(const uint8_t* data, size_t size)
     if (!datas.WriteString(bundleName)) {
         return;
     }
-    uint32_t code = static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::GET_RETETNTION_SANDBOX_LIST);
+    uint32_t code = static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::GET_RETENTION_SANDBOX_LIST);
     MessageParcel reply;
     MessageOption option;
     auto service = std::make_shared<DlpPermissionService>(SA_ID_DLP_PERMISSION_SERVICE, true);
