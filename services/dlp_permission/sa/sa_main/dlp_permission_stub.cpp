@@ -672,6 +672,25 @@ int32_t DlpPermissionStub::GetSandboxAppConfigInner(MessageParcel& data, Message
     return DLP_OK;
 }
 
+void DlpPermissionStub::InitMDMPolicy()
+{
+    requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::SET_MDM_POLICY)] =
+        &DlpPermissionStub::SetMDMPolicyInner;
+    requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::GET_MDM_POLICY)] =
+        &DlpPermissionStub::GetMDMPolicyInner;
+    requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::REMOVE_MDM_POLICY)] =
+        &DlpPermissionStub::RemoveMDMPolicyInner;
+}
+
+void DlpPermissionStub::InitSandboxAppConfig()
+{
+    requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::SET_SANDBOX_APP_CONFIG)] =
+        &DlpPermissionStub::SetSandboxAppConfigInner;
+    requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::CLEAN_SANDBOX_APP_CONFIG)] =
+        &DlpPermissionStub::CleanSandboxAppConfigInner;
+    requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::GET_SANDBOX_APP_CONFIG)] =
+        &DlpPermissionStub::GetSandboxAppConfigInner;
+}
 
 DlpPermissionStub::DlpPermissionStub()
 {
@@ -703,7 +722,7 @@ DlpPermissionStub::DlpPermissionStub()
         &DlpPermissionStub::SetRetentionStateInner;
     requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::SET_NOT_RETENTION_STATE)] =
         &DlpPermissionStub::CancelRetentionStateInner;
-    requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::GET_RETETNTION_SANDBOX_LIST)] =
+    requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::GET_RETENTION_SANDBOX_LIST)] =
         &DlpPermissionStub::GetRetentionSandboxListInner;
     requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::CLEAR_UNRESERVED_SANDBOX)] =
         &DlpPermissionStub::ClearUnreservedSandboxInner;
@@ -713,18 +732,8 @@ DlpPermissionStub::DlpPermissionStub()
         &DlpPermissionStub::RegisterOpenDlpFileCallbackInner;
     requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::UN_REGISTER_OPEN_DLP_FILE_CALLBACK)] =
         &DlpPermissionStub::UnRegisterOpenDlpFileCallbackInner;
-    requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::SET_MDM_POLICY)] =
-        &DlpPermissionStub::SetMDMPolicyInner;
-    requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::GET_MDM_POLICY)] =
-        &DlpPermissionStub::GetMDMPolicyInner;
-    requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::REMOVE_MDM_POLICY)] =
-        &DlpPermissionStub::RemoveMDMPolicyInner;
-    requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::SET_SANDBOX_APP_CONFIG)] =
-        &DlpPermissionStub::SetSandboxAppConfigInner;
-    requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::CLEAN_SANDBOX_APP_CONFIG)] =
-        &DlpPermissionStub::CleanSandboxAppConfigInner;
-    requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::GET_SANDBOX_APP_CONFIG)] =
-        &DlpPermissionStub::GetSandboxAppConfigInner;
+    InitMDMPolicy();
+    InitSandboxAppConfig();
 }
 
 DlpPermissionStub::~DlpPermissionStub()

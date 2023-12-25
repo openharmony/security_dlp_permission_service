@@ -1837,7 +1837,7 @@ napi_value NapiDlpPermission::StartDLPManagerForResult(napi_env env, napi_callba
     return result;
 }
 
-napi_value NapiDlpPermission::Init(napi_env env, napi_value exports)
+void NapiDlpPermission::InitFunction(napi_env env, napi_value exports)
 {
     napi_property_descriptor desc[] = {
         DECLARE_NAPI_FUNCTION("isDLPFile", IsDlpFile),
@@ -1864,7 +1864,12 @@ napi_value NapiDlpPermission::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("cleanSandboxAppConfig", CleanSandboxAppConfig),
         DECLARE_NAPI_FUNCTION("getSandboxAppConfig", GetSandboxAppConfig),
     };
-    NAPI_CALL(env, napi_define_properties(env, exports, sizeof(desc) / sizeof(desc[PARAM0]), desc));
+    NAPI_CALL_RETURN_VOID(env, napi_define_properties(env, exports, sizeof(desc) / sizeof(desc[PARAM0]), desc));
+}
+
+napi_value NapiDlpPermission::Init(napi_env env, napi_value exports)
+{
+    InitFunction(env, exports);
     napi_property_descriptor descriptor[] = {DECLARE_NAPI_FUNCTION("DLPFile", DlpFile)};
     NAPI_CALL(
         env, napi_define_properties(env, exports, sizeof(descriptor) / sizeof(napi_property_descriptor), descriptor));

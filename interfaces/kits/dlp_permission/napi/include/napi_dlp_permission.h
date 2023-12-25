@@ -34,6 +34,8 @@ public:
     static napi_value Init(napi_env env, napi_value exports);
 
 private:
+    static void InitFunction(napi_env env, napi_value exports);
+
     static napi_value JsConstructor(napi_env env, napi_callback_info cbinfo);
     static napi_value DlpFile(napi_env env, napi_callback_info cbInfo);
     static bool IsSystemApp(napi_env env);
