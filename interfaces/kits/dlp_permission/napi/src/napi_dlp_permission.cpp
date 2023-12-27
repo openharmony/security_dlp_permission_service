@@ -1924,7 +1924,7 @@ napi_value NapiDlpPermission::JsConstructor(napi_env env, napi_callback_info cbi
     } else {
         DLP_LOG_INFO(LABEL, "native obj construct by %{private}p", obj);
     }
-    if (argv[PARAM1] == nullptr) {
+    if (argc < PARAM_SIZE_TWO) {
         DLP_LOG_ERROR(LABEL, "property is null");
     }
     NAPI_CALL(env, napi_set_named_property(env, thisVar, "dlpProperty", argv[PARAM1]));
