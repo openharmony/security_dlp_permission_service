@@ -88,8 +88,6 @@ void DlpPermissionService::OnStart()
         DLP_LOG_ERROR(LABEL, "Failed to register app state observer!");
         return;
     }
-    KvDataStorageOptions options = { .autoSync = false };
-    sandboxConfigKvDataStorage_ = std::make_shared<SandboxConfigKvDataStorage>(options);
     dlpEventSubSubscriber_ = std::make_shared<DlpEventSubSubscriber>();
     state_ = ServiceRunningState::STATE_RUNNING;
     bool ret = Publish(this);
@@ -696,7 +694,7 @@ void DlpPermissionService::RemoveUninstallInfo()
     std::set<std::string> kvBundleNameSet;
     std::set<std::string> retentionBundleNameSet;
     std::set<std::string> retentionUninstallBundleNameSet;
-    sandboxConfigKvDataStorage_->GetKeySetByUserId(userId, kvBundleNameSet);
+    SandboxConfigKvDataStorage::GetInstance().GetKeySetByUserId(userId, kvBundleNameSet);
     RetentionFileManager::GetInstance().GetBundleNameSetByUserId(userId, retentionBundleNameSet);
     std::set<std::string> bundleNameSet;
     std::set_union(std::begin(kvBundleNameSet), std::end(kvBundleNameSet), std::begin(retentionBundleNameSet),
@@ -713,7 +711,7 @@ void DlpPermissionService::RemoveUninstallInfo()
             continue;
         }
         if (kvBundleNameSet.count(*it) != 0) {
-            sandboxConfigKvDataStorage_->DeleteSandboxConfigFromDataStorage(userId, *it);
+            SandboxConfigKvDataStorage::GetInstance().DeleteSandboxConfigFromDataStorage(userId, *it);
         }
         if (retentionBundleNameSet.count(*it) != 0) {
             retentionUninstallBundleNameSet.emplace(*it);
@@ -856,13 +854,16 @@ int32_t DlpPermissionService::SandboxConfigOperate(std::string& configInfo, Sand
     }
     switch (operationEnum) {
         case ADD:
-            res = sandboxConfigKvDataStorage_->AddSandboxConfigIntoDataStorage(userId, callerBundleName, configInfo);
+            res = SandboxConfigKvDataStorage::GetInstance().AddSandboxConfigIntoDataStorage(userId, callerBundleName,
+                configInfo);
             break;
         case GET:
-            res = sandboxConfigKvDataStorage_->GetSandboxConfigFromDataStorage(userId, callerBundleName, configInfo);
+            res = SandboxConfigKvDataStorage::GetInstance().GetSandboxConfigFromDataStorage(userId, callerBundleName,
+                configInfo);
             break;
         case CLEAN:
-            res = sandboxConfigKvDataStorage_->DeleteSandboxConfigFromDataStorage(userId, callerBundleName);
+            res = SandboxConfigKvDataStorage::GetInstance().DeleteSandboxConfigFromDataStorage(userId,
+                callerBundleName);
             break;
         default:
             DLP_LOG_ERROR(LABEL, "enter default case");

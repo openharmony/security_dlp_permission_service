@@ -51,106 +51,63 @@ void DlpKvStorageTest::TearDown() {}
  */
 HWTEST_F(DlpKvStorageTest, DlpKvStorageTest001, TestSize.Level1)
 {
-    auto sandboxConfigKvDataStorage_ = std::make_shared<SandboxConfigKvDataStorage>(options);
     std::string configInfo;
-    int32_t res = sandboxConfigKvDataStorage_->AddSandboxConfigIntoDataStorage(100, BUNDLE_NAME, CONFIG);
+    int32_t res = SandboxConfigKvDataStorage::GetInstance().AddSandboxConfigIntoDataStorage(100, BUNDLE_NAME, CONFIG);
     ASSERT_EQ(res, DLP_OK);
-    res = sandboxConfigKvDataStorage_->GetSandboxConfigFromDataStorage(100, BUNDLE_NAME, configInfo);
+    res = SandboxConfigKvDataStorage::GetInstance().GetSandboxConfigFromDataStorage(100, BUNDLE_NAME, configInfo);
     ASSERT_EQ(res, DLP_OK);
-    res = sandboxConfigKvDataStorage_->GetSandboxConfigFromDataStorage(1000, BUNDLE_NAME, configInfo);
+    res = SandboxConfigKvDataStorage::GetInstance().GetSandboxConfigFromDataStorage(1000, BUNDLE_NAME, configInfo);
     ASSERT_EQ(res, DLP_KV_GET_DATA_NOT_FOUND);
     std::set<std::string> keySet;
-    res = sandboxConfigKvDataStorage_->GetKeySetByUserId(100, keySet);
+    res = SandboxConfigKvDataStorage::GetInstance().GetKeySetByUserId(100, keySet);
     ASSERT_EQ(res, DLP_OK);
-    res = sandboxConfigKvDataStorage_->GetKeySetByUserId(101, keySet);
+    res = SandboxConfigKvDataStorage::GetInstance().GetKeySetByUserId(101, keySet);
     ASSERT_EQ(res, DLP_OK);
-    res = sandboxConfigKvDataStorage_->DeleteSandboxConfigFromDataStorage(1000, BUNDLE_NAME);
+    res = SandboxConfigKvDataStorage::GetInstance().DeleteSandboxConfigFromDataStorage(1000, BUNDLE_NAME);
     ASSERT_EQ(res, DLP_OK);
-    res = sandboxConfigKvDataStorage_->DeleteSandboxConfigFromDataStorage(100, BUNDLE_NAME);
+    res = SandboxConfigKvDataStorage::GetInstance().DeleteSandboxConfigFromDataStorage(100, BUNDLE_NAME);
     ASSERT_EQ(res, DLP_OK);
-    res = sandboxConfigKvDataStorage_->RemoveValueFromKvStore("testKey");
+    res = SandboxConfigKvDataStorage::GetInstance().RemoveValueFromKvStore("testKey");
     ASSERT_EQ(res, DLP_OK);
-    res = sandboxConfigKvDataStorage_->DeleteKvStore();
+    res = SandboxConfigKvDataStorage::GetInstance().DeleteKvStore();
     ASSERT_EQ(res, DLP_OK);
 }
 
 /**
  * @tc.name: DlpKvStorageTest002
- * @tc.desc: test DlpKvDataStorage create
+ * @tc.desc: test  DlpKvStorageTest
  * @tc.type: FUNC
  * @tc.require:
  */
 HWTEST_F(DlpKvStorageTest, DlpKvStorageTest002, TestSize.Level1)
 {
-    options.area = DistributedKv::EL2;
-    auto sandboxConfigKvDataStorage_ = std::make_shared<SandboxConfigKvDataStorage>(options);
-    ASSERT_NE(sandboxConfigKvDataStorage_, nullptr);
-    options.area = DistributedKv::EL1;
+    int32_t res = SandboxConfigKvDataStorage::GetInstance().AddOrUpdateValue("", CONFIG);
+    ASSERT_EQ(res, DLP_KV_DATE_INFO_EMPTY_ERROR);
+    res = SandboxConfigKvDataStorage::GetInstance().AddOrUpdateValue(BUNDLE_NAME, "");
+    ASSERT_EQ(res, DLP_KV_DATE_INFO_EMPTY_ERROR);
+    bool result = SandboxConfigKvDataStorage::GetInstance().IsKeyExists("");
+    ASSERT_EQ(result, false);
+    res = SandboxConfigKvDataStorage::GetInstance().RemoveValueFromKvStore("testKey");
+    ASSERT_EQ(res, DLP_OK);
+    res = SandboxConfigKvDataStorage::GetInstance().DeleteKvStore();
+    ASSERT_EQ(res, DLP_OK);
 }
 
 /**
  * @tc.name: DlpKvStorageTest003
- * @tc.desc: test  DlpKvStorageTest
+ * @tc.desc: test DlpKvDataStorage
  * @tc.type: FUNC
  * @tc.require:
  */
 HWTEST_F(DlpKvStorageTest, DlpKvStorageTest003, TestSize.Level1)
 {
-    auto kvDataStorage_ = std::make_shared<SandboxConfigKvDataStorage>(options);
-    int32_t res = kvDataStorage_->AddOrUpdateValue("", CONFIG);
-    ASSERT_EQ(res, DLP_KV_DATE_INFO_EMPTY_ERROR);
-    res = kvDataStorage_->AddOrUpdateValue(BUNDLE_NAME, "");
-    ASSERT_EQ(res, DLP_KV_DATE_INFO_EMPTY_ERROR);
-    bool result = kvDataStorage_->IsKeyExists("");
-    ASSERT_EQ(result, false);
-    res = kvDataStorage_->RemoveValueFromKvStore("testKey");
-    ASSERT_EQ(res, DLP_OK);
-    res = kvDataStorage_->DeleteKvStore();
-    ASSERT_EQ(res, DLP_OK);
-}
-
-/**
- * @tc.name: DlpKvStorageTest004
- * @tc.desc: test DlpKvDataStorage
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(DlpKvStorageTest, DlpKvStorageTest004, TestSize.Level1)
-{
-    DLP_LOG_INFO(LABEL, "DlpKvStorageTest004");
-    options.area = DistributedKv::EL2;
-    auto kvDataStorage_ = std::make_shared<SandboxConfigKvDataStorage>(options);
-    std::map<std::string, std::string> infos;
-    int res = kvDataStorage_->LoadAllData(infos);
-    ASSERT_NE(res, DLP_OK);
-    res = kvDataStorage_->RemoveValueFromKvStore("testKey");
-    ASSERT_NE(res, DLP_OK);
-    res = kvDataStorage_->DeleteKvStore();
-    ASSERT_NE(res, DLP_OK);
-    res = kvDataStorage_->PutValueToKvStore(BUNDLE_NAME, "");
-    ASSERT_NE(res, DLP_OK);
-    std::string value;
-    res = kvDataStorage_->GetValueFromKvStore(BUNDLE_NAME, value);
-    ASSERT_NE(res, DLP_OK);
-    options.area = DistributedKv::EL1;
-}
-
-/**
- * @tc.name: DlpKvStorageTest005
- * @tc.desc: test DlpKvDataStorage
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(DlpKvStorageTest, DlpKvStorageTest005, TestSize.Level1)
-{
-    DLP_LOG_INFO(LABEL, "DlpKvStorageTest005");
-    auto kvDataStorage_ = std::make_shared<SandboxConfigKvDataStorage>(options);
+    DLP_LOG_INFO(LABEL, "DlpKvStorageTest003");
     std::string config;
-    int32_t res = kvDataStorage_->GetSandboxConfigFromDataStorage(100, "", config);
+    int32_t res = SandboxConfigKvDataStorage::GetInstance().GetSandboxConfigFromDataStorage(100, "", config);
     ASSERT_NE(res, DLP_OK);
-    res = kvDataStorage_->AddSandboxConfigIntoDataStorage(100, "", config);
+    res = SandboxConfigKvDataStorage::GetInstance().AddSandboxConfigIntoDataStorage(100, "", config);
     ASSERT_NE(res, DLP_OK);
-    res = kvDataStorage_->DeleteSandboxConfigFromDataStorage(100, "");
+    res = SandboxConfigKvDataStorage::GetInstance().DeleteSandboxConfigFromDataStorage(100, "");
     ASSERT_NE(res, DLP_OK);
 }
 }  // namespace DlpPermission

@@ -29,9 +29,7 @@ typedef enum SandboxConfigOperationEnum : uint8_t {
 
 class SandboxConfigKvDataStorage  : public DlpKvDataStorage {
 public:
-    SandboxConfigKvDataStorage() = delete;
-    SandboxConfigKvDataStorage(const KvDataStorageOptions &options);
-    ~SandboxConfigKvDataStorage() override;
+    static SandboxConfigKvDataStorage& GetInstance();
     int32_t GetSandboxConfigFromDataStorage(const int32_t userId, const std::string& bundleName,
         std::string& configInfo);
     int32_t AddSandboxConfigIntoDataStorage(const int32_t userId, const std::string& bundleName,
@@ -41,6 +39,9 @@ public:
     void SaveEntries(std::vector<OHOS::DistributedKv::Entry> allEntries,
         std::map<std::string, std::string>& infos) override;
 private:
+    SandboxConfigKvDataStorage() = delete;
+    SandboxConfigKvDataStorage(const KvDataStorageOptions &options);
+    ~SandboxConfigKvDataStorage() override;
     bool GenerateKey(const int32_t userId, const std::string& bundleName, std::string& key);
 };
 }  // namespace DlpPermission

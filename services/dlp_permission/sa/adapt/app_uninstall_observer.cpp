@@ -27,16 +27,7 @@ constexpr OHOS::HiviewDFX::HiLogLabel LABEL = { LOG_CORE, SECURITY_DOMAIN_DLP_PE
 
 AppUninstallObserver::AppUninstallObserver(const EventFwk::CommonEventSubscribeInfo& subscribeInfo)
     : CommonEventSubscriber(subscribeInfo)
-{
-    InitKvDataStorage();
-}
-
-bool AppUninstallObserver::InitKvDataStorage()
-{
-    KvDataStorageOptions options = { .autoSync = false };
-    sandboxConfigKvDataStorage_ = std::make_shared<SandboxConfigKvDataStorage>(options);
-    return true;
-}
+{}
 
 void AppUninstallObserver::OnReceiveEvent(const EventFwk::CommonEventData& data)
 {
@@ -55,7 +46,7 @@ void AppUninstallObserver::OnReceiveEvent(const EventFwk::CommonEventData& data)
         DLP_LOG_ERROR(LABEL, "get userId error");
         return;
     }
-    sandboxConfigKvDataStorage_->DeleteSandboxConfigFromDataStorage(userId, bundleName);
+    SandboxConfigKvDataStorage::GetInstance().DeleteSandboxConfigFromDataStorage(userId, bundleName);
 }
 
 DlpEventSubSubscriber::DlpEventSubSubscriber()

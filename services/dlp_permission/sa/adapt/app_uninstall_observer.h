@@ -30,9 +30,6 @@ public:
     explicit AppUninstallObserver(const EventFwk::CommonEventSubscribeInfo& subscribeInfo);
     virtual ~AppUninstallObserver() {};
     virtual void OnReceiveEvent(const EventFwk::CommonEventData& data);
-private:
-    bool InitKvDataStorage();
-    std::shared_ptr<SandboxConfigKvDataStorage> sandboxConfigKvDataStorage_ = nullptr;
 };
 
 class DlpEventSubSubscriber {
