@@ -28,7 +28,6 @@ ohos_unittest("dlp_file_test") {
   module_out_path = part_name + "/" + part_name
 
   include_dirs = [
-    "//third_party/json/test/thirdparty/fifo_map",
     "//third_party/googletest/include",
     "${dlp_root_dir}/interfaces/inner_api/dlp_fuse/include",
     "${dlp_root_dir}/interfaces/inner_api/dlp_parse/include",
@@ -91,7 +90,6 @@ ohos_unittest("dlp_fuse_test") {
   module_out_path = part_name + "/" + part_name
 
   include_dirs = [
-    "//third_party/json/test/thirdparty/fifo_map",
     "//third_party/googletest/include",
     "${dlp_root_dir}/interfaces/inner_api/dlp_fuse/include",
     "${dlp_root_dir}/interfaces/inner_api/dlp_parse/include",

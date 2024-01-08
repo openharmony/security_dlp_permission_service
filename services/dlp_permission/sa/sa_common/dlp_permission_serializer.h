@@ -19,16 +19,13 @@
 #include <string>
 #include <vector>
 #include "dlp_credential_client.h"
-#include "fifo_map.hpp"
 #include "nlohmann/json.hpp"
 #include "permission_policy.h"
 
 namespace OHOS {
 namespace Security {
 namespace DlpPermission {
-template<class K, class V, class dummy_compare, class A>
-using fifo_map = nlohmann::fifo_map<K, V, nlohmann::fifo_map_compare<K>, A>;
-using unordered_json = nlohmann::basic_json<fifo_map>;
+using unordered_json = nlohmann::ordered_json;
 class DlpPermissionSerializer {
 public:
     static DlpPermissionSerializer& GetInstance();
