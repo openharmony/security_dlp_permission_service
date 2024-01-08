@@ -33,7 +33,6 @@ ohos_fuzztest("CleanSandboxConfigStubFuzzTest") {
     "${dlp_root_dir}/services/dlp_permission/sa/sa_main",
     "${dlp_root_dir}/services/dlp_permission/sa/storage/include",
     "//third_party/json/include",
-    "//third_party/json/test/thirdparty/fifo_map",
   ]
   cflags = [
     "-g",

@@ -61,7 +61,6 @@ ohos_static_library("dlp_permission_serializer_static") {
 
   include_dirs = [
     "//third_party/json/include",
-    "//third_party/json/test/thirdparty/fifo_map",
     "sa_common",
     "${dlp_root_dir}/interfaces/inner_api/dlp_permission/include",
     "${dlp_root_dir}/frameworks/common/include",
@@ -102,7 +101,6 @@ ohos_shared_library("dlp_permission_service") {
   part_name = "dlp_permission_service"
 
   include_dirs = [
-    "//third_party/json/test/thirdparty/fifo_map",
     "adapt",
     "callback/dlp_sandbox_change_callback",
     "callback/open_dlp_file_callback",
