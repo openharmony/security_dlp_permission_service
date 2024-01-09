@@ -35,6 +35,9 @@ const std::string AESKEY = "filekey";
 const std::string AESKEY_LEN = "filekeyLen";
 const std::string IV = "iv";
 const std::string IV_LEN = "ivLen";
+const std::string HMACKEY = "hmacKey";
+const std::string HMACKEY_LEN = "hmacKeyLen";
+const std::string DLP_VERSION_LOW_CAMEL_CASE = "dlpVersion";
 const std::string ENC_DATA_LEN = "encDataLen";
 const std::string ENC_DATA = "encData";
 const std::string EXTRA_INFO_LEN = "extraInfoLen";
@@ -259,36 +262,31 @@ static void SerializeEveryoneInfo(const PermissionPolicy& policy, unordered_json
 
 int32_t DlpPermissionSerializer::SerializeDlpPermission(const PermissionPolicy& policy, unordered_json& permInfoJson)
 {
-    unordered_json authUsersJson = SerializeAuthUserList(policy.authUsers_);
-
     uint32_t keyHexLen = policy.GetAeskeyLen() * BYTE_TO_HEX_OPER_LENGTH + 1;
-    char* keyHex = new (std::nothrow) char[keyHexLen];
-    if (keyHex == nullptr) {
-        DLP_LOG_ERROR(LABEL, "New memory fail");
-        return DLP_SERVICE_ERROR_MEMORY_OPERATE_FAIL;
-    }
-    int32_t res = ByteToHexString(policy.GetAeskey(), policy.GetAeskeyLen(), keyHex, keyHexLen);
+    auto keyHex = std::make_unique<char[]>(keyHexLen);
+    int32_t res = ByteToHexString(policy.GetAeskey(), policy.GetAeskeyLen(), keyHex.get(), keyHexLen);
     if (res != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "Byte to hexstring fail");
-        FreeCharBuffer(keyHex, keyHexLen);
         return res;
     }
 
     uint32_t ivHexLen = policy.GetIvLen() * BYTE_TO_HEX_OPER_LENGTH + 1;
-    char* ivHex = new (std::nothrow) char[ivHexLen];
-    if (ivHex == nullptr) {
-        DLP_LOG_ERROR(LABEL, "New memory fail");
-        FreeCharBuffer(keyHex, keyHexLen);
-        return DLP_SERVICE_ERROR_MEMORY_OPERATE_FAIL;
-    }
-    res = ByteToHexString(policy.GetIv(), policy.GetIvLen(), ivHex, ivHexLen);
+    auto ivHex = std::make_unique<char[]>(ivHexLen);
+    res = ByteToHexString(policy.GetIv(), policy.GetIvLen(), ivHex.get(), ivHexLen);
     if (res != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "Byte to hexstring fail");
-        FreeCharBuffer(keyHex, keyHexLen);
-        FreeCharBuffer(ivHex, ivHexLen);
         return res;
     }
 
+    uint32_t hmacKeyHexLen = policy.GetHmacKeyLen() * BYTE_TO_HEX_OPER_LENGTH + 1;
+    auto hmacKeyHex = std::make_unique<char[]>(hmacKeyHexLen);
+    res = ByteToHexString(policy.GetHmacKey(), policy.GetHmacKeyLen(), hmacKeyHex.get(), hmacKeyHexLen);
+    if (res != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "Byte to hexstring fail");
+        return res;
+    }
+
+    unordered_json authUsersJson = SerializeAuthUserList(policy.authUsers_);
     unordered_json policyJson;
     policyJson[KIA_INDEX] = "";
     policyJson[OWNER_ACCOUNT_NAME] = policy.ownerAccount_;
@@ -298,19 +296,19 @@ int32_t DlpPermissionSerializer::SerializeDlpPermission(const PermissionPolicy& 
     policyJson[NEED_ONLINE] = policy.needOnline_;
     policyJson[ACCOUNT_INDEX] = authUsersJson;
     SerializeEveryoneInfo(policy, policyJson);
-
-    unordered_json fileEnc;
-    fileEnc[AESKEY] = keyHex;
-    fileEnc[AESKEY_LEN] = policy.GetAeskeyLen();
-    fileEnc[IV] = ivHex;
-    fileEnc[IV_LEN] = policy.GetIvLen();
-
-    permInfoJson[FILE_INDEX] = fileEnc;
     permInfoJson[POLICY_INDEX] = policyJson;
 
+    unordered_json fileEnc;
+    fileEnc[AESKEY] = keyHex.get();
+    fileEnc[AESKEY_LEN] = policy.GetAeskeyLen();
+    fileEnc[IV] = ivHex.get();
+    fileEnc[IV_LEN] = policy.GetIvLen();
+    fileEnc[HMACKEY] = hmacKeyHex.get();
+    fileEnc[HMACKEY_LEN] = policy.GetHmacKeyLen();
+    fileEnc[DLP_VERSION_LOW_CAMEL_CASE] = policy.dlpVersion_;
+    permInfoJson[FILE_INDEX] = fileEnc;
+    
     DLP_LOG_INFO(LABEL, "Serialize successfully!");
-    FreeCharBuffer(keyHex, keyHexLen);
-    FreeCharBuffer(ivHex, ivHexLen);
     return DLP_OK;
 }
 
@@ -389,6 +387,54 @@ static void InitPermissionPolicy(PermissionPolicy& policy, const std::vector<Aut
     policy.ownerAccountType_ = CLOUD_ACCOUNT;
 }
 
+static int32_t DeserializeFileEncJson(PermissionPolicy& policy, unordered_json& plainPolicyJson)
+{
+    unordered_json fileEncJson;
+    if (plainPolicyJson.find(FILE_INDEX) != plainPolicyJson.end() && plainPolicyJson.at(FILE_INDEX).is_object()) {
+        plainPolicyJson.at(FILE_INDEX).get_to(fileEncJson);
+    }
+    uint8_t* key = nullptr;
+    uint32_t keyLen = 0;
+    uint32_t res = ReadUint8ArrayFromJson(fileEncJson, &key, keyLen, AESKEY, AESKEY_LEN);
+    if (res != DLP_OK) {
+        return res;
+    }
+    policy.SetAeskey(key, keyLen);
+    (void)memset_s(key, keyLen, 0, keyLen);
+    delete[] key;
+    key = nullptr;
+
+    uint8_t* iv = nullptr;
+    uint32_t ivLen = 0;
+    res = ReadUint8ArrayFromJson(fileEncJson, &iv, ivLen, IV, IV_LEN);
+    if (res != DLP_OK) {
+        return res;
+    }
+    policy.SetIv(iv, ivLen);
+    (void)memset_s(iv, ivLen, 0, ivLen);
+    delete[] iv;
+    iv = nullptr;
+
+    uint8_t* hmacKey = nullptr;
+    uint32_t hmacKeyLen = 0;
+    res = ReadUint8ArrayFromJson(fileEncJson, &hmacKey, hmacKeyLen, HMACKEY, HMACKEY_LEN);
+    if (res != DLP_OK) {
+        return res;
+    }
+    policy.SetHmacKey(hmacKey, hmacKeyLen);
+    (void)memset_s(hmacKey, hmacKeyLen, 0, hmacKeyLen);
+    delete[] hmacKey;
+    hmacKey = nullptr;
+
+    policy.dlpVersion_ = 0;
+    if (fileEncJson.find(DLP_VERSION_LOW_CAMEL_CASE) != fileEncJson.end() &&
+        fileEncJson.at(DLP_VERSION_LOW_CAMEL_CASE).is_number()) {
+        fileEncJson.at(DLP_VERSION_LOW_CAMEL_CASE).get_to(policy.dlpVersion_);
+        DLP_LOG_DEBUG(LABEL, "set dlpVersion from DLP_CERT, dlpVersion = %{public}d", policy.dlpVersion_);
+    }
+    return DLP_OK;
+}
+
 int32_t DlpPermissionSerializer::DeserializeDlpPermission(const unordered_json& permJson, PermissionPolicy& policy)
 {
     unordered_json plainPolicyJson;
@@ -413,28 +459,11 @@ int32_t DlpPermissionSerializer::DeserializeDlpPermission(const unordered_json& 
         return res;
     }
     InitPermissionPolicy(policy, userList, policyJson);
-    unordered_json fileEncJson;
-    if (plainPolicyJson.find(FILE_INDEX) != plainPolicyJson.end() && plainPolicyJson.at(FILE_INDEX).is_object()) {
-        plainPolicyJson.at(FILE_INDEX).get_to(fileEncJson);
-    }
-    uint8_t* key = nullptr;
-    uint32_t keyLen = 0;
-    res = ReadUint8ArrayFromJson(fileEncJson, &key, keyLen, AESKEY, AESKEY_LEN);
+
+    res = DeserializeFileEncJson(policy, plainPolicyJson);
     if (res != DLP_OK) {
         return res;
     }
-    policy.SetAeskey(key, keyLen);
-    delete[] key;
-    key = nullptr;
-    uint8_t* iv = nullptr;
-    uint32_t ivLen = 0;
-    res = ReadUint8ArrayFromJson(fileEncJson, &iv, ivLen, "iv", "ivLen");
-    if (res != DLP_OK) {
-        return res;
-    }
-    policy.SetIv(iv, ivLen);
-    delete[] iv;
-    iv = nullptr;
     return DLP_OK;
 }
 

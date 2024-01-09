@@ -22,11 +22,15 @@
 namespace OHOS {
 namespace Security {
 namespace DlpPermission {
+static const uint32_t CURRENT_VERSION = 3;
+static const uint32_t HMAC_VERSION = 3;
+
 struct GenerateInfoParams {
-    int32_t version;
+    uint32_t version;
     bool offlineAccessFlag;
     std::string contactAccount;
     std::vector<std::string> extraInfo;
+    std::string hmacVal;
 };
 
 int32_t GenerateDlpGeneralInfo(const GenerateInfoParams& params, std::string& generalInfo);

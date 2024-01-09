@@ -63,6 +63,7 @@ const int AUTH_PERM = 1;
 const int64_t DELTA_EXPIRY_TIME = 200;
 const uint64_t EXPIRY_TEN_MINUTE = 60 * 10;
 const uint32_t AESKEY_LEN = 32;
+const uint32_t HMACKEY_LEN = 32;
 const std::string ENC_ACCOUNT_TYPE = "accountType";
 const std::string ENC_DATA_LEN = "encDataLen";
 const std::string ENC_DATA = "encData";
@@ -153,6 +154,7 @@ struct GeneratePolicyParam {
     uint32_t authAccountLen;
     uint32_t authPerm;
     int64_t deltaTime;
+    uint32_t hmacKeyLen;
 };
 
 void GeneratePolicy(PermissionPolicy& encPolicy, GeneratePolicyParam param)
@@ -176,6 +178,13 @@ void GeneratePolicy(PermissionPolicy& encPolicy, GeneratePolicyParam param)
         delete[] iv;
         iv = nullptr;
     }
+    uint8_t* hmacKey = GenerateRandArray(param.hmacKeyLen);
+    encPolicy.SetHmacKey(hmacKey, param.hmacKeyLen);
+    if (hmacKey != nullptr) {
+        delete[] hmacKey;
+        hmacKey = nullptr;
+    }
+
     for (uint32_t user = 0; user < param.userNum; ++user) {
         AuthUserInfo perminfo = {
             .authAccount = GenerateRandStr(param.authAccountLen),
@@ -861,7 +870,7 @@ HWTEST_F(DlpPermissionServiceTest, GenerateDlpCertificate002, TestSize.Level1)
 
     PermissionPolicy policy;
     GeneratePolicyParam param = {ACCOUNT_LENGTH, AESKEY_LEN, AESKEY_LEN, USER_NUM, ACCOUNT_LENGTH, AUTH_PERM,
-        DELTA_EXPIRY_TIME};
+        DELTA_EXPIRY_TIME, HMACKEY_LEN};
     GeneratePolicy(policy, param);
     policyParcel->policyParams_.CopyPermissionPolicy(policy);
     int32_t res = dlpPermissionService_->GenerateDlpCertificate(policyParcel, callback);

@@ -100,26 +100,30 @@ HWTEST_F(DlpPermissionSerializerTest, SerializeDlpPermission002, TestSize.Level1
 HWTEST_F(DlpPermissionSerializerTest, SerializeDlpPermission003, TestSize.Level1)
 {
     DLP_LOG_INFO(LABEL, "SerializeDlpPermission003");
-    char aeskey[AESKEY_STR_LEN] = "1234567890123456789012345678901234567890123456789012345678901234";
-    char ivkey[IVKEY_STR_LEN] = "12345678901234567890123456789012";
+    char aesKey[AESKEY_STR_LEN] = "1234567890123456789012345678901234567890123456789012345678901234";
+    char ivKey[IVKEY_STR_LEN] = "12345678901234567890123456789012";
+    char hmacKey[HMACKEY_STR_LEN] = "1234567890123456789012345678901234567890123456789012345678901234";
 
     PermissionPolicy policy1;
     policy1.supportEveryone_ = true;
     policy1.everyonePerm_ = CONTENT_EDIT;
-    policy1.SetAeskey(reinterpret_cast<uint8_t*>(aeskey), AESKEY_LEN);
-    policy1.SetIv(reinterpret_cast<uint8_t*>(ivkey), IVKEY_LEN);
+    policy1.SetAeskey(reinterpret_cast<uint8_t*>(aesKey), AESKEY_LEN);
+    policy1.SetIv(reinterpret_cast<uint8_t*>(ivKey), IVKEY_LEN);
+    policy1.SetHmacKey(reinterpret_cast<uint8_t*>(hmacKey), HMACKEY_LEN);
 
     PermissionPolicy policy2;
     policy2.supportEveryone_ = true;
     policy2.everyonePerm_ = FULL_CONTROL;
-    policy2.SetAeskey(reinterpret_cast<uint8_t*>(aeskey), AESKEY_LEN);
-    policy2.SetIv(reinterpret_cast<uint8_t*>(ivkey), IVKEY_LEN);
+    policy2.SetAeskey(reinterpret_cast<uint8_t*>(aesKey), AESKEY_LEN);
+    policy2.SetIv(reinterpret_cast<uint8_t*>(ivKey), IVKEY_LEN);
+    policy2.SetHmacKey(reinterpret_cast<uint8_t*>(hmacKey), HMACKEY_LEN);
 
     PermissionPolicy policy3;
     policy3.supportEveryone_ = true;
     policy3.everyonePerm_ = NO_PERMISSION;
-    policy3.SetAeskey(reinterpret_cast<uint8_t*>(aeskey), AESKEY_LEN);
-    policy3.SetIv(reinterpret_cast<uint8_t*>(ivkey), IVKEY_LEN);
+    policy3.SetAeskey(reinterpret_cast<uint8_t*>(aesKey), AESKEY_LEN);
+    policy3.SetIv(reinterpret_cast<uint8_t*>(ivKey), IVKEY_LEN);
+    policy3.SetHmacKey(reinterpret_cast<uint8_t*>(hmacKey), HMACKEY_LEN);
 
     unordered_json permInfoJson;
     DlpPermissionSerializer serialize;

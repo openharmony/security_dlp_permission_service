@@ -27,6 +27,7 @@
 #include "dlp_permission_public_interface.h"
 #include "dlp_permission_log.h"
 #include "dlp_zip.h"
+#include "hex_string.h"
 #include "ohos_account_kits.h"
 #ifdef DLP_PARSE_INNER
 #include "os_account_manager.h"
@@ -39,9 +40,9 @@ namespace DlpPermission {
 using Defer = std::shared_ptr<void>;
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "DlpFile"};
-const uint32_t CURRENT_VERSION = 2;
 const uint32_t FIRST = 1;
 const uint32_t SECOND = 2;
+const uint32_t HMAC_SIZE = 32;
 const uint32_t DLP_CWD_MAX = 256;
 const std::string DLP_GENERAL_INFO = "dlp_general_info";
 const std::string DLP_CERT = "dlp_cert";
@@ -77,6 +78,11 @@ DlpFile::DlpFile(int32_t dlpFd, std::string workDir, int32_t index, bool isZip) 
     cipher_.encKey.data = nullptr;
     cipher_.encKey.size = 0;
     cipher_.usageSpec = { 0 };
+    cipher_.hmacKey.data = nullptr;
+    cipher_.hmacKey.size = 0;
+
+    hmac_.data = nullptr;
+    hmac_.size = 0;
 
     encDataFd_ = -1;
 }
@@ -110,10 +116,25 @@ DlpFile::~DlpFile()
         offlineCert_.data = nullptr;
     }
 
+    // clear hmacKey
+    if (cipher_.hmacKey.data != nullptr) {
+        (void)memset_s(cipher_.hmacKey.data, cipher_.hmacKey.size, 0, cipher_.hmacKey.size);
+        delete[] cipher_.hmacKey.data;
+        cipher_.hmacKey.data = nullptr;
+    }
+
+    // clear hmac_
+    if (hmac_.data != nullptr) {
+        (void)memset_s(hmac_.data, hmac_.size, 0, hmac_.size);
+        delete[] hmac_.data;
+        hmac_.data = nullptr;
+    }
+
     CleanTmpFile();
 }
 
-bool DlpFile::IsValidCipher(const struct DlpBlob& key, const struct DlpUsageSpec& spec) const
+bool DlpFile::IsValidCipher(const struct DlpBlob& key, const struct DlpUsageSpec& spec,
+    const struct DlpBlob& hmacKey) const
 {
     if (key.data == nullptr) {
         DLP_LOG_ERROR(LABEL, "key data null");
@@ -133,6 +154,11 @@ bool DlpFile::IsValidCipher(const struct DlpBlob& key, const struct DlpUsageSpec
     struct DlpBlob& iv = spec.algParam->iv;
     if (iv.size != IV_SIZE || iv.data == nullptr) {
         DLP_LOG_ERROR(LABEL, "iv invalid");
+        return false;
+    }
+
+    if (hmacKey.data != nullptr && hmacKey.size != DLP_KEY_LEN_256) {
+        DLP_LOG_ERROR(LABEL, "hmacKey size invalid");
         return false;
     }
     return true;
@@ -256,9 +282,9 @@ void DlpFile::UpdateDlpFilePermission()
     }
 }
 
-int32_t DlpFile::SetCipher(const struct DlpBlob& key, const struct DlpUsageSpec& spec)
+int32_t DlpFile::SetCipher(const struct DlpBlob& key, const struct DlpUsageSpec& spec, const struct DlpBlob& hmacKey)
 {
-    if (!IsValidCipher(key, spec)) {
+    if (!IsValidCipher(key, spec, hmacKey)) {
         DLP_LOG_ERROR(LABEL, "dlp file cipher is invalid");
         return DLP_PARSE_ERROR_VALUE_INVALID;
     }
@@ -276,6 +302,17 @@ int32_t DlpFile::SetCipher(const struct DlpBlob& key, const struct DlpUsageSpec&
         DLP_LOG_ERROR(LABEL, "dlp file copy key param failed, res %{public}d", res);
         CleanBlobParam(cipher_.tagIv.iv);
         return res;
+    }
+
+    // copy hmacKey from param.
+    if (hmacKey.data != nullptr) {
+        res = CopyBlobParam(hmacKey, cipher_.hmacKey);
+        if (res != DLP_OK) {
+            DLP_LOG_ERROR(LABEL, "dlp file copy hmacKey param failed, res %{public}d", res);
+            CleanBlobParam(cipher_.tagIv.iv);
+            CleanBlobParam(cipher_.encKey);
+            return res;
+        }
     }
 
     cipher_.usageSpec.mode = spec.mode;
@@ -303,6 +340,9 @@ int32_t DlpFile::SetPolicy(const PermissionPolicy& policy)
     if (!policy.IsValid()) {
         DLP_LOG_ERROR(LABEL, "invalid policy");
         return DLP_PARSE_ERROR_VALUE_INVALID;
+    }
+    if (policy.dlpVersion_ != 0) {
+        head_.version = policy.dlpVersion_;
     }
     policy_.CopyPermissionPolicy(policy);
     UpdateDlpFilePermission();
@@ -375,7 +415,7 @@ int32_t DlpFile::CheckDlpFile()
 
 bool DlpFile::NeedAdapter()
 {
-    return head_.version == FIRST && CURRENT_VERSION == SECOND;
+    return head_.version == FIRST && CURRENT_VERSION != FIRST;
 }
 
 static bool IsExistFile(const std::string& path)
@@ -424,6 +464,19 @@ bool DlpFile::ParseDlpInfo()
     head_.offlineAccess = params.offlineAccessFlag;
     extraInfo_ = params.extraInfo;
     contactAccount_ = params.contactAccount;
+    if (!params.hmacVal.empty()) {
+        hmac_.size = params.hmacVal.size() / BYTE_TO_HEX_OPER_LENGTH;
+        if (hmac_.size > HMAC_SIZE) {
+            DLP_LOG_ERROR(LABEL, "hmac_.size is invalid");
+            return false;
+        }
+        hmac_.data = new (std::nothrow)uint8_t[hmac_.size];
+        if (hmac_.data == nullptr) {
+            DLP_LOG_ERROR(LABEL, "New memory fail");
+            return false;
+        }
+        HexStringToByte(params.hmacVal.c_str(), hmac_.data, hmac_.size);
+    }
     return true;
 }
 
@@ -721,7 +774,9 @@ int32_t DlpFile::UpdateCertAndText(const std::vector<uint8_t>& cert, const std::
     uint32_t oldTxtOffset = head_.txtOffset;
     head_.contactAccountOffset = head_.certOffset + head_.certSize;
     head_.txtOffset = head_.contactAccountOffset + head_.contactAccountSize;
-    head_.version = CURRENT_VERSION;
+
+    // version 1 single file auto convert to version 2 zip file, set version
+    head_.version = SECOND;
     head_.offlineCertSize = 0;
 
     return UpdateFile(tmpFile, cert, oldTxtOffset);
@@ -929,12 +984,15 @@ static int32_t GetFileSize(int32_t fd)
     return fileLen;
 }
 
-static void SetDlpGeneralInfo(bool accessFlag, std::string& contactAccount, std::string& out)
+static void SetDlpGeneralInfo(bool accessFlag, std::string& contactAccount, std::string& hmacStr,
+    const uint32_t& version, std::string& out)
 {
     GenerateInfoParams params = {
+        .version = version,
         .offlineAccessFlag = accessFlag,
         .contactAccount = contactAccount,
         .extraInfo = {"kia_info", "cert_info", "enc_data"},
+        .hmacVal = hmacStr,
     };
     GenerateDlpGeneralInfo(params, out);
 }
@@ -956,13 +1014,108 @@ int32_t DlpFile::GenEncData(int32_t inPlainFileFd)
     return encFile;
 }
 
+int32_t DlpFile::GenerateHmacVal(const int32_t& encFile, struct DlpBlob& out)
+{
+    lseek(encFile, 0, SEEK_SET);
+    int32_t fd = dup(encFile);
+    int32_t fileLen = GetFileSize(fd);
+    if (fileLen == 0) {
+        CleanBlobParam(out);
+        return DLP_OK;
+    }
+    uint8_t* inBuf = nullptr;
+    if (fileLen > 0) {
+        inBuf = new (std::nothrow) uint8_t[fileLen];
+        if (inBuf == nullptr) {
+            DLP_LOG_ERROR(LABEL, "New memory fail");
+            return DLP_SERVICE_ERROR_MEMORY_OPERATE_FAIL;
+        }
+        int ret = read(fd, inBuf, fileLen);
+        if (ret == -1) {
+            DLP_LOG_ERROR(LABEL, "read buff fail, %{public}s", strerror(errno));
+            (void)close(fd);
+            delete[] inBuf;
+            return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
+        }
+    } else if (fileLen < 0) {
+        (void)close(fd);
+        DLP_LOG_ERROR(LABEL, "fileLen less than 0");
+        return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
+    }
+    (void)close(fd);
+    struct DlpBlob in = {
+        .size = fileLen,
+        .data = inBuf,
+    };
+    
+    int ret = DlpHmacEncode(cipher_.hmacKey, in, out);
+    CleanBlobParam(in);
+    return ret;
+}
+
+int32_t DlpFile::GetHmacVal(const int32_t& encFile, std::string& hmacStr)
+{
+    if (policy_.dlpVersion_ >= HMAC_VERSION) {
+        if (hmac_.size == 0) {
+            uint8_t* outBuf = new (std::nothrow) uint8_t[HMAC_SIZE];
+            if (outBuf == nullptr) {
+                DLP_LOG_ERROR(LABEL, "New memory fail");
+                return DLP_SERVICE_ERROR_MEMORY_OPERATE_FAIL;
+            }
+            struct DlpBlob out = {
+                .size = HMAC_SIZE,
+                .data = outBuf,
+            };
+            int ret = GenerateHmacVal(encFile, out);
+            if (ret != DLP_OK) {
+                CleanBlobParam(out);
+                return ret;
+            }
+            if (out.size == 0) {
+                return DLP_OK;
+            }
+            hmac_.size = out.size;
+            hmac_.data = out.data;
+        }
+        uint32_t hmacHexLen = hmac_.size * BYTE_TO_HEX_OPER_LENGTH + 1;
+        char* hmacHex = new (std::nothrow) char[hmacHexLen];
+        if (hmacHex == nullptr) {
+            DLP_LOG_ERROR(LABEL, "New memory fail");
+            return DLP_SERVICE_ERROR_MEMORY_OPERATE_FAIL;
+        }
+        int ret = ByteToHexString(hmac_.data, hmac_.size, hmacHex, hmacHexLen);
+        if (ret != DLP_OK) {
+            DLP_LOG_ERROR(LABEL, "Byte to hexstring fail");
+            FreeCharBuffer(hmacHex, hmacHexLen);
+            return ret;
+        }
+        hmacStr = hmacHex;
+        FreeCharBuffer(hmacHex, hmacHexLen);
+    }
+    return DLP_OK;
+}
+
+int32_t DlpFile::AddGeneralInfoToBuff(const int32_t& encFile)
+{
+    std::string hmacStr;
+    int ret = GetHmacVal(encFile, hmacStr);
+    if (ret != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "GetHmacVal fail");
+        return ret;
+    }
+    std::string ja;
+    SetDlpGeneralInfo(head_.offlineAccess, contactAccount_, hmacStr, head_.version, ja);
+    ret = AddBuffToZip(reinterpret_cast<const void *>(ja.c_str()), ja.size(),
+        DLP_GENERAL_INFO.c_str(), DLP_GEN_FILE.c_str());
+    CHECK_RET(ret, 0, DLP_PARSE_ERROR_FILE_OPERATE_FAIL, LABEL);
+    return DLP_OK;
+}
+
 int32_t DlpFile::GenFileInZip(int32_t inPlainFileFd)
 {
     if (isZip_ == false) {
         return DLP_OK;
     }
-    std::string ja;
-    SetDlpGeneralInfo(head_.offlineAccess, contactAccount_, ja);
     char cwd[DLP_CWD_MAX] = {0};
     std::lock_guard<std::mutex> lock(g_fileOpLock_);
     GETCWD_AND_CHECK(cwd, DLP_CWD_MAX, DLP_PARSE_ERROR_FILE_OPERATE_FAIL, LABEL);
@@ -982,10 +1135,7 @@ int32_t DlpFile::GenFileInZip(int32_t inPlainFileFd)
         (void)close(tmpFile);
         (void)unlink(DLP_GEN_FILE.c_str());
     });
-    int32_t ret = AddBuffToZip(reinterpret_cast<const void *>(ja.c_str()), ja.size(),
-        DLP_GENERAL_INFO.c_str(), DLP_GEN_FILE.c_str());
-    CHECK_RET(ret, 0, DLP_PARSE_ERROR_FILE_OPERATE_FAIL, LABEL);
-    ret = AddBuffToZip(reinterpret_cast<const void *>(cert_.data), cert_.size,
+    int32_t ret = AddBuffToZip(reinterpret_cast<const void *>(cert_.data), cert_.size,
         DLP_CERT.c_str(), DLP_GEN_FILE.c_str());
     CHECK_RET(ret, 0, DLP_PARSE_ERROR_FILE_OPERATE_FAIL, LABEL);
 
@@ -998,9 +1148,10 @@ int32_t DlpFile::GenFileInZip(int32_t inPlainFileFd)
 
     ret = AddFileContextToZip(encFile, DLP_ENC_DATA.c_str(), DLP_GEN_FILE.c_str());
     CHECK_RET(ret, 0, DLP_PARSE_ERROR_FILE_OPERATE_FAIL, LABEL);
+    ret = AddGeneralInfoToBuff(encFile);
+    CHECK_RET(ret, 0, DLP_PARSE_ERROR_FILE_OPERATE_FAIL, LABEL);
 
-    int32_t zipSize =  GetFileSize(tmpFile);
-
+    int32_t zipSize = GetFileSize(tmpFile);
     LSEEK_AND_CHECK(dlpFd_, 0, SEEK_SET, DLP_PARSE_ERROR_FILE_OPERATE_FAIL, LABEL);
     ret = DoDlpContentCopyOperation(tmpFile, dlpFd_, 0, zipSize);
     CHECK_RET(ret, 0, DLP_PARSE_ERROR_FILE_OPERATE_FAIL, LABEL);
@@ -1062,12 +1213,15 @@ int32_t DlpFile::GenFileInRaw(int32_t inPlainFileFd)
 
 int32_t DlpFile::GenFile(int32_t inPlainFileFd)
 {
-    if (inPlainFileFd < 0 || dlpFd_ < 0 || !IsValidCipher(cipher_.encKey, cipher_.usageSpec)) {
+    if (inPlainFileFd < 0 || dlpFd_ < 0 || !IsValidCipher(cipher_.encKey, cipher_.usageSpec, cipher_.hmacKey)) {
         DLP_LOG_ERROR(LABEL, "params is error");
         return DLP_PARSE_ERROR_VALUE_INVALID;
     }
     if (isZip_) {
         head_.txtOffset = 0;
+        if (hmac_.size != 0) {
+            CleanBlobParam(hmac_);
+        }
         return GenFileInZip(inPlainFileFd);
     } else {
         return GenFileInRaw(inPlainFileFd);
@@ -1151,7 +1305,7 @@ int32_t DlpFile::RemoveDlpPermission(int32_t outPlainFileFd)
         return DLP_PARSE_ERROR_FD_ERROR;
     }
 
-    if (!IsValidCipher(cipher_.encKey, cipher_.usageSpec)) {
+    if (!IsValidCipher(cipher_.encKey, cipher_.usageSpec, cipher_.hmacKey)) {
         DLP_LOG_ERROR(LABEL, "cipher params is invalid");
         return DLP_PARSE_ERROR_CIPHER_PARAMS_INVALID;
     }
@@ -1168,7 +1322,7 @@ int32_t DlpFile::DlpFileRead(uint32_t offset, void* buf, uint32_t size)
     int32_t opFd = isZip_ ? encDataFd_ : dlpFd_;
     if (buf == nullptr || size == 0 || size > DLP_FUSE_MAX_BUFFLEN ||
         (offset >= DLP_MAX_CONTENT_SIZE - size) ||
-        opFd < 0 || !IsValidCipher(cipher_.encKey, cipher_.usageSpec)) {
+        opFd < 0 || !IsValidCipher(cipher_.encKey, cipher_.usageSpec, cipher_.hmacKey)) {
         DLP_LOG_ERROR(LABEL, "params is error");
         return DLP_PARSE_ERROR_VALUE_INVALID;
     }
@@ -1391,7 +1545,7 @@ int32_t DlpFile::DlpFileWrite(uint32_t offset, void* buf, uint32_t size)
     int32_t opFd = isZip_ ? encDataFd_ : dlpFd_;
     if (buf == nullptr || size == 0 || size > DLP_FUSE_MAX_BUFFLEN ||
         (offset >= DLP_MAX_CONTENT_SIZE - size) ||
-        opFd < 0 || !IsValidCipher(cipher_.encKey, cipher_.usageSpec)) {
+        opFd < 0 || !IsValidCipher(cipher_.encKey, cipher_.usageSpec, cipher_.hmacKey)) {
         DLP_LOG_ERROR(LABEL, "Dlp file param invalid");
         return DLP_PARSE_ERROR_VALUE_INVALID;
     }
@@ -1404,6 +1558,9 @@ int32_t DlpFile::DlpFileWrite(uint32_t offset, void* buf, uint32_t size)
     }
     int32_t res = DoDlpFileWrite(offset, buf, size);
     UpdateDlpFileContentSize();
+
+    // modify dlp file, clear old hmac value and will generate new
+    CleanBlobParam(hmac_);
     GenFileInZip(-1);
     return res;
 }
@@ -1441,6 +1598,41 @@ int32_t DlpFile::Truncate(uint32_t size)
         return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
     }
     return DLP_OK;
+}
+
+int32_t DlpFile::HmacCheck()
+{
+    DLP_LOG_DEBUG(LABEL, "start HmacCheck, dlpVersion = %{public}d", head_.version);
+    if (head_.version < HMAC_VERSION) {
+        DLP_LOG_INFO(LABEL, "no hmac check");
+        return DLP_OK;
+    }
+
+    uint8_t* outBuf = new (std::nothrow) uint8_t[HMAC_SIZE];
+    if (outBuf == nullptr) {
+        DLP_LOG_ERROR(LABEL, "New memory fail");
+        return DLP_SERVICE_ERROR_MEMORY_OPERATE_FAIL;
+    }
+    struct DlpBlob out = {
+        .size = HMAC_SIZE,
+        .data = outBuf,
+    };
+    int ret = GenerateHmacVal(encDataFd_, out);
+    if (ret != DLP_OK) {
+        CleanBlobParam(out);
+        return ret;
+    }
+
+    if (out.size == 0 || (out.size == hmac_.size && memcmp(hmac_.data, out.data, out.size) == 0)) {
+        DLP_LOG_INFO(LABEL, "verify success");
+        if (out.size != 0) {
+            CleanBlobParam(out);
+        }
+        return DLP_OK;
+    }
+    DLP_LOG_ERROR(LABEL, "verify fail");
+    CleanBlobParam(out);
+    return DLP_PARSE_ERROR_FILE_VERIFICATION_FAIL;
 }
 }  // namespace DlpPermission
 }  // namespace Security

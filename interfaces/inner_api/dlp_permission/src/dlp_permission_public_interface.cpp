@@ -22,13 +22,13 @@ namespace OHOS {
 namespace Security {
 namespace DlpPermission {
 using Json = nlohmann::json;
-uint32_t CURRENT_VERSION = 2;
 const std::string DLP_CONTACT_ACCOUNT = "contactAccount";
 const std::string DLP_VERSION = "dlp_version";
 const std::string DLP_VERSION_LOW_CAMEL_CASE = "dlpVersion";
 const std::string DLP_OFFLINE_FLAG = "offlineAccess";
 const std::string DLP_EXTRA_INFO = "extra_info";
 const std::string DLP_EXTRA_INFO_LOW_CAMEL_CASE = "extraInfo";
+const std::string DLP_HMAC_VALUE = "hmacValue";
 static bool checkParams(GenerateInfoParams& params, nlohmann::json jsonObj, std::string versionKey, std::string infoKey)
 {
     if (jsonObj.find(versionKey) == jsonObj.end() || !jsonObj.at(versionKey).is_number_integer()) {
@@ -44,7 +44,14 @@ static bool checkParams(GenerateInfoParams& params, nlohmann::json jsonObj, std:
 int32_t GenerateDlpGeneralInfo(const GenerateInfoParams& params, std::string& generalInfo)
 {
     nlohmann::json dlp_general_info;
-    dlp_general_info[DLP_VERSION_LOW_CAMEL_CASE] = CURRENT_VERSION;
+
+#ifdef DLP_FILE_VERSION_INNER
+    uint32_t version = params.version;
+#else
+    uint32_t version = CURRENT_VERSION;
+#endif
+
+    dlp_general_info[DLP_VERSION_LOW_CAMEL_CASE] = version;
     dlp_general_info[DLP_OFFLINE_FLAG] = params.offlineAccessFlag;
     if (params.contactAccount.empty()) {
         return DLP_SERVICE_ERROR_VALUE_INVALID;
@@ -53,6 +60,9 @@ int32_t GenerateDlpGeneralInfo(const GenerateInfoParams& params, std::string& ge
     dlp_general_info[DLP_EXTRA_INFO_LOW_CAMEL_CASE] = params.extraInfo;
     if (params.extraInfo.empty()) {
         dlp_general_info[DLP_EXTRA_INFO_LOW_CAMEL_CASE] = {"kia_info", "cert_info", "enc_data"};
+    }
+    if (version >= HMAC_VERSION) {
+        dlp_general_info[DLP_HMAC_VALUE] = params.hmacVal;
     }
     generalInfo = dlp_general_info.dump();
     return DLP_OK;
@@ -88,6 +98,12 @@ int32_t ParseDlpGeneralInfo(const std::string& generalInfo, GenerateInfoParams& 
         if (params.contactAccount == "") {
             return DLP_PARSE_ERROR_VALUE_INVALID;
         }
+    }
+
+    if (jsonObj.find(DLP_HMAC_VALUE) != jsonObj.end() && jsonObj.at(DLP_HMAC_VALUE).is_string()) {
+        params.hmacVal = jsonObj.at(DLP_HMAC_VALUE).get<std::string>();
+    } else if (params.version >= HMAC_VERSION) {
+        return DLP_PARSE_ERROR_VALUE_INVALID;
     }
     return DLP_OK;
 }

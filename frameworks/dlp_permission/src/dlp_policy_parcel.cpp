@@ -60,6 +60,17 @@ bool DlpPolicyParcel::Marshalling(Parcel& out) const
     if (!(out.WriteUint8(this->policyParams_.ownerAccountType_))) {
         DLP_LOG_ERROR(LABEL, "Write owner account type fail");
     }
+    
+    MarshallingKey(out);
+    MarshallingExpireTime(out);
+    if (!(out.WriteUint32(this->policyParams_.dlpVersion_))) {
+        DLP_LOG_ERROR(LABEL, "Write dlpVersion_ fail");
+    }
+    return true;
+}
+
+void DlpPolicyParcel::MarshallingKey(Parcel& out) const
+{
     if (!(out.WriteUint32(this->policyParams_.GetAeskeyLen()))) {
         DLP_LOG_ERROR(LABEL, "Write aes key len fail");
     }
@@ -72,8 +83,14 @@ bool DlpPolicyParcel::Marshalling(Parcel& out) const
     if (!(out.WriteBuffer(this->policyParams_.GetIv(), this->policyParams_.GetIvLen()))) {
         DLP_LOG_ERROR(LABEL, "Write iv fail");
     }
-    MarshallingExpireTime(out);
-    return true;
+    if (!(out.WriteUint32(this->policyParams_.GetHmacKeyLen()))) {
+        DLP_LOG_ERROR(LABEL, "Write Hmac len fail");
+    }
+    if (this->policyParams_.GetHmacKeyLen() > 0) {
+        if (!(out.WriteBuffer(this->policyParams_.GetHmacKey(), this->policyParams_.GetHmacKeyLen()))) {
+            DLP_LOG_ERROR(LABEL, "Write Hmac fail");
+        }
+    }
 }
 
 void DlpPolicyParcel::MarshallingExpireTime(Parcel& out) const
@@ -86,7 +103,7 @@ void DlpPolicyParcel::MarshallingExpireTime(Parcel& out) const
     }
 }
 
-static bool ReadAesParam(PermissionPolicy& policy, Parcel& in)
+static bool ReadKey(PermissionPolicy& policy, Parcel& in)
 {
     uint32_t len;
     if (!in.ReadUint32(len)) {
@@ -119,12 +136,38 @@ static bool ReadAesParam(PermissionPolicy& policy, Parcel& in)
     }
     policy.SetIv(iv, len);
 
+    if (!in.ReadUint32(len)) {
+        DLP_LOG_ERROR(LABEL, "Read hmac key len fail");
+        return false;
+    }
+    const uint8_t* hmacKey = nullptr;
+    if (len > 0) {
+        hmacKey = in.ReadUnpadBuffer(len);
+        if (hmacKey == nullptr) {
+            DLP_LOG_ERROR(LABEL, "Read hmacKey fail");
+            return false;
+        }
+    }
+    policy.SetHmacKey(hmacKey, len);
+    return true;
+}
+
+static bool ReadAesParam(PermissionPolicy& policy, Parcel& in)
+{
+    if (!ReadKey(policy, in)) {
+        return false;
+    }
+
     if (!(in.ReadUint64(policy.expireTime_))) {
         DLP_LOG_ERROR(LABEL, "Read expiryTime_ fail");
         return false;
     }
     if (!(in.ReadUint32(policy.needOnline_))) {
         DLP_LOG_ERROR(LABEL, "Read needOnline_ fail");
+        return false;
+    }
+    if (!(in.ReadUint32(policy.dlpVersion_))) {
+        DLP_LOG_ERROR(LABEL, "Read dlpVersion_ fail");
         return false;
     }
     return true;

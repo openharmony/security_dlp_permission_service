@@ -57,7 +57,13 @@ void initDlpFileCiper(DlpFile &testFile)
         .algParam = &param
     };
 
-    testFile.SetCipher(key, spec);
+    uint8_t hmacKeyData[32] = {};
+    struct DlpBlob hmacKey = {
+        .data = hmacKeyData,
+        .size = 32
+    };
+
+    testFile.SetCipher(key, spec, hmacKey);
 }
 }
 

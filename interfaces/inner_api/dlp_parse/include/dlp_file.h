@@ -44,6 +44,7 @@ struct DlpCipher {
     struct DlpBlob encKey;
     struct DlpCipherParam tagIv;
     struct DlpUsageSpec usageSpec;
+    struct DlpBlob hmacKey;
 };
 
 struct DlpHeader {
@@ -145,7 +146,7 @@ public:
     DlpFile(int32_t dlpFd, std::string workDir, int32_t index, bool isZip);
     ~DlpFile();
 
-    int32_t SetCipher(const struct DlpBlob& key, const struct DlpUsageSpec& spec);
+    int32_t SetCipher(const struct DlpBlob& key, const struct DlpUsageSpec& spec, const struct DlpBlob& hmacKey);
     int32_t ParseDlpHeader();
     void GetEncryptCert(struct DlpBlob& cert) const;
     void GetOfflineCert(struct DlpBlob& cert) const;
@@ -163,6 +164,7 @@ public:
     int32_t CheckDlpFile();
     bool NeedAdapter();
     bool CleanTmpFile();
+    int32_t HmacCheck();
 
     int32_t SetPolicy(const PermissionPolicy& policy);
     void GetPolicy(PermissionPolicy& policy) const
@@ -197,7 +199,8 @@ public:
 private:
     bool IsValidDlpHeader(const struct DlpHeader& head) const;
     bool IsValidPadding(uint32_t padding);
-    bool IsValidCipher(const struct DlpBlob& key, const struct DlpUsageSpec& spec) const;
+    bool IsValidCipher(const struct DlpBlob& key, const struct DlpUsageSpec& spec,
+        const struct DlpBlob& hmacKey) const;
     int32_t CopyBlobParam(const struct DlpBlob& src, struct DlpBlob& dst) const;
     int32_t CleanBlobParam(struct DlpBlob& blob) const;
     int32_t UpdateFileCertData();
@@ -228,6 +231,9 @@ private:
     int32_t GenFileInRaw(int32_t inPlainFileFd);
     int32_t RemoveDlpPermissionInZip(int32_t outPlainFileFd);
     int32_t RemoveDlpPermissionInRaw(int32_t outPlainFileFd);
+    int32_t GetHmacVal(const int32_t& encFile, std::string& hmacStr);
+    int32_t GenerateHmacVal(const int32_t& encFile, struct DlpBlob& out);
+    int32_t AddGeneralInfoToBuff(const int32_t& encFile);
 
     std::string workDir_ = "";
     std::string dirIndex_;
@@ -242,6 +248,7 @@ private:
     struct DlpHeader head_;
     struct DlpBlob cert_;
     struct DlpBlob offlineCert_;
+    struct DlpBlob hmac_;
 
     struct DlpCipher cipher_;
     // policy in certificate
