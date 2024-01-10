@@ -112,7 +112,6 @@ private:
     ServiceRunningState state_;
     sptr<AppExecFwk::IAppMgr> iAppMgr_;
     sptr<AppStateObserver> appStateObserver_;
-    std::shared_ptr<SandboxConfigKvDataStorage> sandboxConfigKvDataStorage_ = nullptr;
     std::shared_ptr<DlpEventSubSubscriber> dlpEventSubSubscriber_ = nullptr;
 };
 }  // namespace DlpPermission
