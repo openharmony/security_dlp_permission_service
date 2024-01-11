@@ -39,6 +39,7 @@ using namespace std;
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "DlpFileTest"};
 static const int32_t READ_SIZE = 100;
+static const int32_t SECOND = 2;
 static const std::string DLP_TEST_DIR = "/data/dlpTest/";
 const std::string DLP_GENERAL_INFO = "dlp_general_info";
 const std::string DLP_CERT = "dlp_cert";
@@ -69,7 +70,16 @@ void initDlpFileCiper(DlpFile &testFile)
         .algParam = &param
     };
 
-    testFile.SetCipher(key, spec);
+    uint8_t hmacKeyData[32] = {};
+    struct DlpBlob hmacKey = {
+        .data = hmacKeyData,
+        .size = 32
+    };
+
+    testFile.policy_.dlpVersion_ = SECOND;
+    testFile.head_.version = SECOND;
+
+    testFile.SetCipher(key, spec, hmacKey);
 }
 }
 
@@ -116,25 +126,31 @@ HWTEST_F(DlpFileTest, IsValidCipher001, TestSize.Level1)
     struct DlpUsageSpec spec;
     uint8_t keyData[DLP_KEY_LEN_256] = { 0 };
 
+    uint8_t hmacKeyData[32] = {};
+    struct DlpBlob hmacKey = {
+        .data = hmacKeyData,
+        .size = 32
+    };
+
     // key.data nullptr
     DlpFile testFile(1000, DLP_TEST_DIR, 0, false);
-    ASSERT_FALSE(testFile.IsValidCipher(key, spec));
+    ASSERT_FALSE(testFile.IsValidCipher(key, spec, hmacKey));
 
     // key size is invalid
     key.data = keyData;
     key.size = 100;
-    ASSERT_FALSE(testFile.IsValidCipher(key, spec));
+    ASSERT_FALSE(testFile.IsValidCipher(key, spec, hmacKey));
 
     // key size DLP_KEY_LEN_128, mode is not ctr
     key.size = DLP_KEY_LEN_128;
     spec.mode = 2;
-    ASSERT_FALSE(testFile.IsValidCipher(key, spec));
+    ASSERT_FALSE(testFile.IsValidCipher(key, spec, hmacKey));
 
     // key size DLP_KEY_LEN_192, algParam is null
     key.size = DLP_KEY_LEN_192;
     spec.mode = DLP_MODE_CTR;
     spec.algParam = nullptr;
-    ASSERT_FALSE(testFile.IsValidCipher(key, spec));
+    ASSERT_FALSE(testFile.IsValidCipher(key, spec, hmacKey));
 
     // key size DLP_KEY_LEN_256, iv size invalid
     key.size = DLP_KEY_LEN_256;
@@ -143,21 +159,21 @@ HWTEST_F(DlpFileTest, IsValidCipher001, TestSize.Level1)
     spec.algParam = &algParam;
     spec.algParam->iv.size = 1;
     spec.algParam->iv.data = ivData;
-    ASSERT_FALSE(testFile.IsValidCipher(key, spec));
+    ASSERT_FALSE(testFile.IsValidCipher(key, spec, hmacKey));
 
     // key size DLP_KEY_LEN_256, iv data invalid
     key.size = DLP_KEY_LEN_256;
     spec.algParam = &algParam;
     spec.algParam->iv.size = 16;
     spec.algParam->iv.data = nullptr;
-    ASSERT_FALSE(testFile.IsValidCipher(key, spec));
+    ASSERT_FALSE(testFile.IsValidCipher(key, spec, hmacKey));
 
     // all valid
     key.size = DLP_KEY_LEN_256;
     spec.algParam = &algParam;
     spec.algParam->iv.size = 16;
     spec.algParam->iv.data = ivData;
-    ASSERT_TRUE(testFile.IsValidCipher(key, spec));
+    ASSERT_TRUE(testFile.IsValidCipher(key, spec, hmacKey));
 }
 
 /**
@@ -402,7 +418,14 @@ HWTEST_F(DlpFileTest, SetCipher001, TestSize.Level1)
         .data = nullptr,
     };
     struct DlpUsageSpec spec;
-    ASSERT_EQ(DLP_PARSE_ERROR_VALUE_INVALID, testFile.SetCipher(key, spec));
+
+    uint8_t hmacKeyData[32] = {};
+    struct DlpBlob hmacKey = {
+        .data = hmacKeyData,
+        .size = 32
+    };
+    
+    ASSERT_EQ(DLP_PARSE_ERROR_VALUE_INVALID, testFile.SetCipher(key, spec, hmacKey));
 }
 
 /**
@@ -428,10 +451,16 @@ HWTEST_F(DlpFileTest, SetCipher002, TestSize.Level1)
     spec.algParam->iv.data = ivData;
     spec.mode = DLP_MODE_CTR;
 
+    uint8_t hmacKeyData[32] = {};
+    struct DlpBlob hmacKey = {
+        .data = hmacKeyData,
+        .size = 32
+    };
+
     DlpCMockCondition condition;
     condition.mockSequence = { true };
     SetMockConditions("memcpy_s", condition);
-    EXPECT_EQ(DLP_PARSE_ERROR_MEMORY_OPERATE_FAIL, testFile.SetCipher(key, spec));
+    EXPECT_EQ(DLP_PARSE_ERROR_MEMORY_OPERATE_FAIL, testFile.SetCipher(key, spec, hmacKey));
     CleanMockConditions();
 }
 
@@ -458,10 +487,16 @@ HWTEST_F(DlpFileTest, SetCipher003, TestSize.Level1)
     spec.algParam->iv.data = ivData;
     spec.mode = DLP_MODE_CTR;
 
+    uint8_t hmacKeyData[32] = {};
+    struct DlpBlob hmacKey = {
+        .data = hmacKeyData,
+        .size = 32
+    };
+
     DlpCMockCondition condition;
     condition.mockSequence = { false, true };
     SetMockConditions("memcpy_s", condition);
-    EXPECT_EQ(DLP_PARSE_ERROR_MEMORY_OPERATE_FAIL, testFile.SetCipher(key, spec));
+    EXPECT_EQ(DLP_PARSE_ERROR_MEMORY_OPERATE_FAIL, testFile.SetCipher(key, spec, hmacKey));
     CleanMockConditions();
 }
 
@@ -486,8 +521,15 @@ HWTEST_F(DlpFileTest, SetCipher004, TestSize.Level1)
     uint8_t ivData[IV_SIZE] = { 0 };
     spec.algParam->iv.size = 16;
     spec.algParam->iv.data = ivData;
+
+    uint8_t hmacKeyData[32] = {};
+    struct DlpBlob hmacKey = {
+        .data = hmacKeyData,
+        .size = 32
+    };
+
     spec.mode = DLP_MODE_CTR;
-    ASSERT_EQ(DLP_OK, testFile.SetCipher(key, spec));
+    ASSERT_EQ(DLP_OK, testFile.SetCipher(key, spec, hmacKey));
 }
 
 /**
@@ -1704,7 +1746,7 @@ HWTEST_F(DlpFileTest, CheckDlpFile001, TestSize.Level1)
     testFile.head_.contactAccountOffset = sizeof(struct DlpHeader) + 10;
     testFile.head_.txtOffset = sizeof(struct DlpHeader) + 10 + 10;
     testFile.head_.txtSize = 0;
-    testFile.head_.version = 3;
+    testFile.head_.version = 99;
     write(fdDlp, &testFile.head_, sizeof(struct DlpHeader));
     lseek(fdDlp, 0, SEEK_SET);
     int res = testFile.CheckDlpFile();
@@ -1806,7 +1848,7 @@ HWTEST_F(DlpFileTest, CleanTmpFile001, TestSize.Level1)
  */
 HWTEST_F(DlpFileTest, ParseDlpInfo001, TestSize.Level1)
 {
-    DLP_LOG_INFO(LABEL, "ParseDlpInfo002");
+    DLP_LOG_INFO(LABEL, "ParseDlpInfo001");
     int fdPlain = open("/data/fuse_test_plain.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
     ASSERT_NE(fdPlain, -1);
     int fdDlp = open("/data/fuse_test_dlp.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);

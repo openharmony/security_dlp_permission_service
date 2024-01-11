@@ -108,6 +108,7 @@ public:
     ~PermissionPolicy();
     void CopyPermissionPolicy(const PermissionPolicy& srcPolicy);
     void FreePermissionPolicyMem();
+    void CopyPolicyHmac(const PermissionPolicy& srcPolicy);
 
     bool IsValid() const;
     void SetAeskey(const uint8_t* key, uint32_t keyLen);
@@ -116,6 +117,9 @@ public:
     void SetIv(const uint8_t* iv, uint32_t ivLen);
     uint8_t* GetIv() const;
     uint32_t GetIvLen() const;
+    void SetHmacKey(const uint8_t* key, uint32_t keyLen);
+    uint8_t* GetHmacKey() const;
+    uint32_t GetHmacKeyLen() const;
 
     std::string ownerAccount_;
     std::string ownerAccountId_;
@@ -125,12 +129,15 @@ public:
     DLPFileAccess everyonePerm_ = NO_PERMISSION;
     uint64_t expireTime_ = 0;
     uint32_t needOnline_ = 0;
+    uint32_t dlpVersion_ = 0;
 
 private:
     uint8_t* aeskey_;
     uint32_t aeskeyLen_;
     uint8_t* iv_;
     uint32_t ivLen_;
+    uint8_t* hmacKey_;
+    uint32_t hmacKeyLen_;
 };
 
 void FreeCharBuffer(char* buff, uint32_t buffLen);

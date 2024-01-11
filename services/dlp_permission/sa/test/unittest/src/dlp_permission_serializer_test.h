@@ -25,6 +25,8 @@ constexpr int32_t IVKEY_LEN = 16;
 constexpr int32_t AESKEY_LEN = 32;
 constexpr int32_t IVKEY_STR_LEN = 36;
 constexpr int32_t AESKEY_STR_LEN = 72;
+constexpr int32_t HMACKEY_LEN = 32;
+constexpr int32_t HMACKEY_STR_LEN = 72;
 
 class DlpPermissionSerializerTest : public testing::Test {
 public:

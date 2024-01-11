@@ -19,6 +19,7 @@
 #include <set>
 #include "dlp_permission.h"
 #include "dlp_permission_log.h"
+#include "dlp_permission_public_interface.h"
 #include "securec.h"
 
 namespace OHOS {
@@ -106,6 +107,7 @@ void PermissionPolicy::FreePermissionPolicyMem()
 {
     FreeUint8Buffer(&aeskey_, aeskeyLen_);
     FreeUint8Buffer(&iv_, ivLen_);
+    FreeUint8Buffer(&hmacKey_, hmacKeyLen_);
     ownerAccount_ = "";
     ownerAccountId_ = "";
     ownerAccountType_ = INVALID_ACCOUNT;
@@ -124,6 +126,9 @@ PermissionPolicy::PermissionPolicy()
     aeskeyLen_ = 0;
     iv_ = nullptr;
     ivLen_ = 0;
+    hmacKey_ = nullptr;
+    hmacKeyLen_ = 0;
+    dlpVersion_ = CURRENT_VERSION;
 }
 
 PermissionPolicy::PermissionPolicy(const DlpProperty& property)
@@ -140,6 +145,9 @@ PermissionPolicy::PermissionPolicy(const DlpProperty& property)
     aeskeyLen_ = 0;
     iv_ = nullptr;
     ivLen_ = 0;
+    hmacKey_ = nullptr;
+    hmacKeyLen_ = 0;
+    dlpVersion_ = CURRENT_VERSION;
 }
 
 PermissionPolicy::~PermissionPolicy()
@@ -151,7 +159,8 @@ bool PermissionPolicy::IsValid() const
 {
     return (CheckAccount(this->ownerAccount_) && CheckAccount(this->ownerAccountId_) &&
         CheckAccountType(this->ownerAccountType_) && CheckAesParam(this->aeskey_, this->aeskeyLen_) &&
-        CheckAesParam(this->iv_, this->ivLen_) && CheckAuthUserInfoList(this->authUsers_));
+        CheckAesParam(this->iv_, this->ivLen_) && CheckAuthUserInfoList(this->authUsers_) &&
+        (this->hmacKeyLen_ == 0 || CheckAesParam(this->hmacKey_, this->hmacKeyLen_)));
 }
 
 void PermissionPolicy::SetAeskey(const uint8_t* key, uint32_t keyLen)
@@ -232,6 +241,64 @@ uint32_t PermissionPolicy::GetIvLen() const
     return ivLen_;
 }
 
+void PermissionPolicy::SetHmacKey(const uint8_t* key, uint32_t keyLen)
+{
+    if (key == nullptr) {
+        DLP_LOG_INFO(LABEL, "Set hmacKey to null");
+        FreeUint8Buffer(&hmacKey_, hmacKeyLen_);
+        return;
+    }
+    if (!CheckAesParamLen(keyLen)) {
+        DLP_LOG_ERROR(LABEL, "keyLen invalid, len = %{public}u", keyLen);
+        return;
+    }
+    FreeUint8Buffer(&hmacKey_, hmacKeyLen_);
+    if (keyLen < 1) {
+        DLP_LOG_ERROR(LABEL, "keyLen error %{public}u", keyLen);
+        return;
+    }
+    hmacKeyLen_ = keyLen;
+    hmacKey_ = new (std::nothrow) uint8_t[hmacKeyLen_];
+    if (hmacKey_ == nullptr) {
+        DLP_LOG_ERROR(LABEL, "Alloc %{public}u buff for hmacKey fail", keyLen);
+        return;
+    }
+    if (memcpy_s(hmacKey_, hmacKeyLen_, key, keyLen) != EOK) {
+        DLP_LOG_ERROR(LABEL, "Memcpy hmacKey buff fail");
+        FreeUint8Buffer(&hmacKey_, hmacKeyLen_);
+        return;
+    }
+}
+
+uint8_t* PermissionPolicy::GetHmacKey() const
+{
+    return hmacKey_;
+}
+
+uint32_t PermissionPolicy::GetHmacKeyLen() const
+{
+    return hmacKeyLen_;
+}
+
+void PermissionPolicy::CopyPolicyHmac(const PermissionPolicy& srcPolicy)
+{
+    if (srcPolicy.hmacKeyLen_ != 0) {
+        FreeUint8Buffer(&hmacKey_, hmacKeyLen_);
+        hmacKeyLen_ = srcPolicy.hmacKeyLen_;
+        hmacKey_ = new (std::nothrow) uint8_t[hmacKeyLen_];
+        if (hmacKey_ == nullptr) {
+            DLP_LOG_ERROR(LABEL, "Alloc %{public}u buff for hmacKey fail", hmacKeyLen_);
+            FreePermissionPolicyMem();
+            return;
+        }
+        if (memcpy_s(hmacKey_, hmacKeyLen_, srcPolicy.hmacKey_, srcPolicy.hmacKeyLen_) != EOK) {
+            DLP_LOG_ERROR(LABEL, "Memcpy hmacKey buff fail");
+            FreePermissionPolicyMem();
+            return;
+        }
+    }
+}
+
 void PermissionPolicy::CopyPermissionPolicy(const PermissionPolicy& srcPolicy)
 {
     if (!srcPolicy.IsValid()) {
@@ -272,6 +339,8 @@ void PermissionPolicy::CopyPermissionPolicy(const PermissionPolicy& srcPolicy)
         FreePermissionPolicyMem();
         return;
     }
+    CopyPolicyHmac(srcPolicy);
+    dlpVersion_ = srcPolicy.dlpVersion_;
 }
 
 bool CheckAccountType(DlpAccountType accountType)

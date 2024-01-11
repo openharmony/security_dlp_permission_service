@@ -18,6 +18,7 @@
 #include <cstdlib>
 #include <openssl/err.h>
 #include <openssl/evp.h>
+#include <openssl/hmac.h>
 #include <openssl/rand.h>
 #include <securec.h>
 #include <string>
@@ -27,6 +28,8 @@
 using namespace OHOS::Security::DlpPermission;
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "DlpParse"};
 static const uint32_t BYTE_LEN = 8;
+const uint32_t HMAC_SIZE = 32;
+const uint32_t SHA256_KEY_LEN = 32;
 
 #ifdef __cplusplus
 extern "C" {
@@ -931,6 +934,31 @@ int32_t DlpCtrModeIncreaeIvCounter(struct DlpBlob& iv, uint32_t count)
     }
 
     IncIvCounterLitteEndian(iv, count);
+    return DLP_OK;
+}
+
+int32_t DlpHmacEncode(const DlpBlob& key, const DlpBlob& in, DlpBlob& out)
+{
+    if ((key.data == nullptr) || (key.size != SHA256_KEY_LEN)) {
+        DLP_LOG_ERROR(LABEL, "Key blob invalid, size %{public}u", key.size);
+        return DLP_PARSE_ERROR_DIGEST_INVALID;
+    }
+
+    if ((in.data == nullptr) || (in.size == 0)) {
+        DLP_LOG_INFO(LABEL, "Input blob is null or size is zero");
+    }
+
+    if ((out.data == nullptr) || (out.size < HMAC_SIZE)) {
+        DLP_LOG_ERROR(LABEL, "Output blob invalid, size %{public}u", out.size);
+        return DLP_PARSE_ERROR_DIGEST_INVALID;
+    }
+
+    const EVP_MD* engine = EVP_sha256();
+    if (HMAC(engine, key.data, key.size, in.data, in.size, out.data, &out.size) == nullptr) {
+        DLP_LOG_ERROR(LABEL, "Hmac encode fail");
+        return DLP_PARSE_ERROR_DIGEST_INVALID;
+    }
+    DLP_LOG_DEBUG(LABEL, "Hmac encode success");
     return DLP_OK;
 }
 #ifdef __cplusplus

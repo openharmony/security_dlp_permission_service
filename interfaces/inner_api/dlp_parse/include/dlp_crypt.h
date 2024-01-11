@@ -60,8 +60,8 @@ enum DlpKeySize {
 };
 
 struct DlpBlob {
-    uint32_t size;
-    uint8_t* data;
+    uint32_t size = 0;
+    uint8_t* data = nullptr;
 };
 
 struct DlpCipherParam {
@@ -129,6 +129,8 @@ int32_t DlpOpensslHashFinal(void** cryptoCtx, const struct DlpBlob* msg, struct 
 int32_t DlpOpensslHashFreeCtx(void** cryptoCtx);
 
 int32_t DlpCtrModeIncreaeIvCounter(struct DlpBlob& iv, uint32_t count);
+
+int32_t DlpHmacEncode(const DlpBlob& key, const DlpBlob& in, DlpBlob& out);
 #ifdef __cplusplus
 }
 #endif

@@ -135,6 +135,10 @@ HWTEST_F(DlpFileManagerTest, GenerateCertData001, TestSize.Level1)
     policy.iv_ = new (std::nothrow) uint8_t[16];
     ASSERT_NE(policy.iv_, nullptr);
     policy.ivLen_ = 16;
+    policy.hmacKey_ = new (std::nothrow) uint8_t[16];
+    ASSERT_NE(policy.hmacKey_, nullptr);
+    policy.hmacKeyLen_ = 16;
+
     policy.ownerAccountType_ = CLOUD_ACCOUNT;
     policy.ownerAccount_ = std::string(DLP_MAX_CERT_SIZE + 1, 'a');
     policy.ownerAccountId_ = std::string(DLP_MAX_CERT_SIZE + 1, 'a');
@@ -168,32 +172,38 @@ HWTEST_F(DlpFileManagerTest, PrepareDlpEncryptParms001, TestSize.Level1)
     policy.iv_ = new (std::nothrow) uint8_t[16];
     ASSERT_NE(policy.iv_, nullptr);
     policy.ivLen_ = 16;
+
+    policy.hmacKey_ = new (std::nothrow) uint8_t[16];
+    ASSERT_NE(policy.hmacKey_, nullptr);
+    policy.hmacKeyLen_ = 16;
+
     policy.ownerAccountType_ = CLOUD_ACCOUNT;
     policy.ownerAccount_ = "test";
     policy.ownerAccountId_ = "test";
     struct DlpBlob key;
     struct DlpUsageSpec usage;
     struct DlpBlob certData;
+    struct DlpBlob hmacKey;
 
     // key create fail
     DlpCMockCondition condition;
     condition.mockSequence = { true };
     SetMockConditions("RAND_bytes", condition);
     EXPECT_EQ(DLP_PARSE_ERROR_CRYPTO_ENGINE_ERROR,
-        DlpFileManager::GetInstance().PrepareDlpEncryptParms(policy, key, usage, certData));
+        DlpFileManager::GetInstance().PrepareDlpEncryptParms(policy, key, usage, certData, hmacKey));
     CleanMockConditions();
 
     // iv create fail
     condition.mockSequence = { false, true };
     SetMockConditions("RAND_bytes", condition);
     EXPECT_EQ(DLP_PARSE_ERROR_CRYPTO_ENGINE_ERROR,
-        DlpFileManager::GetInstance().PrepareDlpEncryptParms(policy, key, usage, certData));
+        DlpFileManager::GetInstance().PrepareDlpEncryptParms(policy, key, usage, certData, hmacKey));
     CleanMockConditions();
 
     // create cert data failed with memcpy_s fail
     condition.mockSequence = { false, false, false, false, false, false, false, false, false, false, true };
     SetMockConditions("memcpy_s", condition);
-    int res = DlpFileManager::GetInstance().PrepareDlpEncryptParms(policy, key, usage, certData);
+    int res = DlpFileManager::GetInstance().PrepareDlpEncryptParms(policy, key, usage, certData, hmacKey);
     EXPECT_TRUE(res == DLP_OK || res == DLP_PARSE_ERROR_MEMORY_OPERATE_FAIL);
     DLP_LOG_INFO(LABEL, "PrepareDlpEncryptParms001 %{public}d", GetMockConditionCounts("memcpy_s"));
     CleanMockConditions();
@@ -381,14 +391,19 @@ HWTEST_F(DlpFileManagerTest, FreeChiperBlob001, TestSize.Level1)
         .algParam = nullptr
     };
 
+    struct DlpBlob hmacKey = {
+        .data = nullptr,
+        .size = 0
+    };
+
     // algparm nullptr
-    DlpFileManager::GetInstance().FreeChiperBlob(key, certData, spec);
+    DlpFileManager::GetInstance().FreeChiperBlob(key, certData, spec, hmacKey);
 
     // algparm iv nullptr
     spec.algParam = new (std::nothrow) struct DlpCipherParam;
     ASSERT_NE(spec.algParam, nullptr);
     spec.algParam->iv.data = nullptr;
-    DlpFileManager::GetInstance().FreeChiperBlob(key, certData, spec);
+    DlpFileManager::GetInstance().FreeChiperBlob(key, certData, spec, hmacKey);
 
     ASSERT_EQ(spec.algParam, nullptr);
 }

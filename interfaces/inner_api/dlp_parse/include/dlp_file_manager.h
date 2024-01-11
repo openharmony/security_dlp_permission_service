@@ -52,10 +52,12 @@ private:
     int32_t GenerateCertBlob(const std::vector<uint8_t>& cert, struct DlpBlob& certData) const;
     int32_t UpdateDlpFile(bool isNeedAdapter, uint32_t oldCertSize, const std::string& workDir,
         const std::vector<uint8_t>& cert, std::shared_ptr<DlpFile>& filePtr);
-    int32_t PrepareDlpEncryptParms(
-        PermissionPolicy& policy, struct DlpBlob& key, struct DlpUsageSpec& usage, struct DlpBlob& certData) const;
+    int32_t PrepareDlpEncryptParms(PermissionPolicy& policy, struct DlpBlob& key,
+        struct DlpUsageSpec& usage, struct DlpBlob& certData, struct DlpBlob& hmacKey) const;
     int32_t ParseDlpFileFormat(std::shared_ptr<DlpFile>& filePtr, const std::string& workDir, const std::string& appId);
-    void FreeChiperBlob(struct DlpBlob& key, struct DlpBlob& certData, struct DlpUsageSpec& usage) const;
+    void FreeChiperBlob(struct DlpBlob& key, struct DlpBlob& certData,
+        struct DlpUsageSpec& usage, struct DlpBlob& hmacKey) const;
+    void CleanTempBlob(struct DlpBlob& key, struct DlpCipherParam* tagIv, struct DlpBlob& hmacKey) const;
     int32_t SetDlpFileParams(std::shared_ptr<DlpFile>& filePtr, const DlpProperty& property) const;
     std::mutex g_offlineLock_;
     OHOS::Utils::RWLock g_DlpMapLock_;

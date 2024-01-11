@@ -119,8 +119,28 @@ int32_t DlpFileManager::GenerateCertBlob(const std::vector<uint8_t>& cert, struc
     return DLP_OK;
 }
 
-int32_t DlpFileManager::PrepareDlpEncryptParms(
-    PermissionPolicy& policy, struct DlpBlob& key, struct DlpUsageSpec& usage, struct DlpBlob& certData) const
+void DlpFileManager::CleanTempBlob(struct DlpBlob& key, struct DlpCipherParam* tagIv, struct DlpBlob& hmacKey) const
+{
+    if (key.data != nullptr) {
+        delete[] key.data;
+        key.data = nullptr;
+    }
+    if (tagIv != nullptr) {
+        if (tagIv->iv.data != nullptr) {
+            delete[] tagIv->iv.data;
+            tagIv->iv.data = nullptr;
+        }
+        delete tagIv;
+        tagIv = nullptr;
+    }
+    if (hmacKey.data != nullptr) {
+        delete[] hmacKey.data;
+        hmacKey.data = nullptr;
+    }
+}
+
+int32_t DlpFileManager::PrepareDlpEncryptParms(PermissionPolicy& policy, struct DlpBlob& key,
+    struct DlpUsageSpec& usage, struct DlpBlob& certData, struct DlpBlob& hmacKey) const
 {
     DLP_LOG_INFO(LABEL, "Generate key");
     int32_t res = DlpOpensslGenerateRandomKey(DLP_AES_KEY_SIZE_256, &key);
@@ -132,18 +152,22 @@ int32_t DlpFileManager::PrepareDlpEncryptParms(
     struct DlpCipherParam* tagIv = new (std::nothrow) struct DlpCipherParam;
     if (tagIv == nullptr) {
         DLP_LOG_ERROR(LABEL, "Alloc iv buff fail");
-        delete[] key.data;
-        key.data = nullptr;
+        CleanTempBlob(key, tagIv, hmacKey);
         return DLP_PARSE_ERROR_MEMORY_OPERATE_FAIL;
     }
     DLP_LOG_INFO(LABEL, "Generate iv");
     res = DlpOpensslGenerateRandomKey(IV_SIZE * BIT_NUM_OF_UINT8, &tagIv->iv);
     if (res != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "Generate iv fail, errno=%{public}d", res);
-        delete[] key.data;
-        key.data = nullptr;
-        delete tagIv;
-        tagIv = nullptr;
+        CleanTempBlob(key, tagIv, hmacKey);
+        return res;
+    }
+
+    DLP_LOG_INFO(LABEL, "Generate hmac key");
+    res = DlpOpensslGenerateRandomKey(DLP_AES_KEY_SIZE_256, &hmacKey);
+    if (res != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "Generate hmacKey fail, errno=%{public}d", res);
+        CleanTempBlob(key, tagIv, hmacKey);
         return res;
     }
 
@@ -151,17 +175,13 @@ int32_t DlpFileManager::PrepareDlpEncryptParms(
     usage.algParam = tagIv;
     policy.SetAeskey(key.data, key.size);
     policy.SetIv(tagIv->iv.data, tagIv->iv.size);
+    policy.SetHmacKey(hmacKey.data, hmacKey.size);
 
     DLP_LOG_INFO(LABEL, "Generate cert");
     res = GenerateCertData(policy, certData);
     if (res != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "Generate cert fail, errno=%{public}d", res);
-        delete[] key.data;
-        key.data = nullptr;
-        delete[] tagIv->iv.data;
-        tagIv->iv.data = nullptr;
-        delete tagIv;
-        tagIv = nullptr;
+        CleanTempBlob(key, tagIv, hmacKey);
         return res;
     }
 
@@ -230,14 +250,20 @@ int32_t DlpFileManager::ParseDlpFileFormat(std::shared_ptr<DlpFile>& filePtr, co
     struct DlpBlob key = {.size = policy.GetAeskeyLen(), .data = policy.GetAeskey()};
     struct DlpCipherParam param = {.iv = {.size = policy.GetIvLen(), .data = policy.GetIv()}};
     struct DlpUsageSpec usage = {.mode = DLP_MODE_CTR, .algParam = &param};
-    result = filePtr->SetCipher(key, usage);
+    struct DlpBlob hmacKey = {.size = policy.GetHmacKeyLen(), .data = policy.GetHmacKey()};
+    result = filePtr->SetCipher(key, usage, hmacKey);
+    if (result != DLP_OK) {
+        return result;
+    }
+    result = filePtr->HmacCheck();
     if (result != DLP_OK) {
         return result;
     }
     return UpdateDlpFile(filePtr->NeedAdapter(), oldCertSize, workDir, certParcel->offlineCert, filePtr);
 }
 
-void DlpFileManager::FreeChiperBlob(struct DlpBlob& key, struct DlpBlob& certData, struct DlpUsageSpec& usage) const
+void DlpFileManager::FreeChiperBlob(struct DlpBlob& key, struct DlpBlob& certData,
+    struct DlpUsageSpec& usage, struct DlpBlob& hmacKey) const
 {
     if (key.data != nullptr) {
         delete[] key.data;
@@ -256,6 +282,11 @@ void DlpFileManager::FreeChiperBlob(struct DlpBlob& key, struct DlpBlob& certDat
         delete usage.algParam;
         usage.algParam = nullptr;
     }
+
+    if (hmacKey.data != nullptr) {
+        delete[] hmacKey.data;
+        hmacKey.data = nullptr;
+    }
 }
 
 int32_t DlpFileManager::SetDlpFileParams(std::shared_ptr<DlpFile>& filePtr, const DlpProperty& property) const
@@ -264,29 +295,30 @@ int32_t DlpFileManager::SetDlpFileParams(std::shared_ptr<DlpFile>& filePtr, cons
     struct DlpBlob key;
     struct DlpBlob certData;
     struct DlpUsageSpec usage;
+    struct DlpBlob hmacKey;
 
-    int32_t result = PrepareDlpEncryptParms(policy, key, usage, certData);
+    int32_t result = PrepareDlpEncryptParms(policy, key, usage, certData, hmacKey);
     if (result != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "Set dlp obj params fail, prepare encrypt params error, errno=%{public}d", result);
         return result;
     }
-    result = filePtr->SetCipher(key, usage);
+    result = filePtr->SetCipher(key, usage, hmacKey);
     if (result != DLP_OK) {
-        FreeChiperBlob(key, certData, usage);
+        FreeChiperBlob(key, certData, usage, hmacKey);
         DLP_LOG_ERROR(LABEL, "Set dlp obj params fail, set cipher error, errno=%{public}d", result);
         return result;
     }
 
     result = filePtr->SetPolicy(policy);
     if (result != DLP_OK) {
-        FreeChiperBlob(key, certData, usage);
+        FreeChiperBlob(key, certData, usage, hmacKey);
         DLP_LOG_ERROR(LABEL, "Set dlp obj params fail, set policy error, errno=%{public}d", result);
         return result;
     }
 
     result = filePtr->SetEncryptCert(certData);
     if (result != DLP_OK) {
-        FreeChiperBlob(key, certData, usage);
+        FreeChiperBlob(key, certData, usage, hmacKey);
         DLP_LOG_ERROR(LABEL, "Set dlp obj params fail, set cert error, errno=%{public}d", result);
         return result;
     }
@@ -298,7 +330,7 @@ int32_t DlpFileManager::SetDlpFileParams(std::shared_ptr<DlpFile>& filePtr, cons
 
     filePtr->SetOfflineAccess(property.offlineAccess);
 
-    FreeChiperBlob(key, certData, usage);
+    FreeChiperBlob(key, certData, usage, hmacKey);
     return result;
 }
 

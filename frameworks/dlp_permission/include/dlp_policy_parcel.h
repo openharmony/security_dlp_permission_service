@@ -25,15 +25,14 @@ namespace Security {
 namespace DlpPermission {
 struct DlpPolicyParcel final : public Parcelable {
     DlpPolicyParcel() = default;
-
     ~DlpPolicyParcel() override = default;
-
     bool Marshalling(Parcel& out) const override;
-    void MarshallingExpireTime(Parcel& out) const;
-
     static DlpPolicyParcel* Unmarshalling(Parcel& in);
-
     PermissionPolicy policyParams_;
+
+private:
+    void MarshallingExpireTime(Parcel& out) const;
+    void MarshallingKey(Parcel& out) const;
 };
 }  // namespace DlpPermission
 }  // namespace Security

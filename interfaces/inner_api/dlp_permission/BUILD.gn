@@ -37,6 +37,11 @@ ohos_shared_library("libdlp_permission_common_interface") {
 
   public_configs = [ ":dlp_permission_config" ]
 
+  if (dlp_file_version_inner) {
+    cflags_cc = [ "-DDLP_FILE_VERSION_INNER" ]
+    cflags = [ "-DDLP_FILE_VERSION_INNER" ]
+  }
+
   include_dirs = [
     "include",
     "//third_party/json/include",

@@ -29,4 +29,6 @@ declare_args() {
     dlp_credential_enable = false
   }
   dlp_permission_service_credential_connection_enable = true
+
+  dlp_file_version_inner = true
 }
