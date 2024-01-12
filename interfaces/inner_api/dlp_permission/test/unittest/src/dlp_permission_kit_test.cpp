@@ -952,7 +952,7 @@ HWTEST_F(DlpPermissionKitTest, GetDlpGatheringPolicy001, TestSize.Level1)
  */
 HWTEST_F(DlpPermissionKitTest, ClearUnreservedSandbox001, TestSize.Level1)
 {
-    ASSERT_EQ(DLP_OK, DlpPermissionKit::ClearUnreservedSandbox());
+    ASSERT_EQ(DLP_SERVICE_ERROR_PERMISSION_DENY, DlpPermissionKit::ClearUnreservedSandbox());
 }
 
 class CbCustomizeTest : public DlpSandboxChangeCallbackCustomize {

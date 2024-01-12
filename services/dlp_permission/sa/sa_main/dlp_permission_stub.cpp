@@ -27,6 +27,7 @@ namespace Security {
 namespace DlpPermission {
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "DlpPermissionStub"};
+static const std::string FOUNDATION_SERVICE_NAME = "foundation";
 const std::string PERMISSION_ACCESS_DLP_FILE = "ohos.permission.ACCESS_DLP_FILE";
 }  // namespace
 
@@ -531,6 +532,14 @@ int32_t DlpPermissionStub::GetRetentionSandboxListInner(MessageParcel& data, Mes
 
 int32_t DlpPermissionStub::ClearUnreservedSandboxInner(MessageParcel& data, MessageParcel& reply)
 {
+    Security::AccessToken::AccessTokenID callingToken = IPCSkeleton::GetCallingTokenID();
+    Security::AccessToken::AccessTokenID bmsTokon =
+        Security::AccessToken::AccessTokenKit::GetNativeTokenId(FOUNDATION_SERVICE_NAME);
+    DLP_LOG_ERROR(LABEL, "callingToken:%{public}d bmsTokon:%{public}d", callingToken, bmsTokon);
+    if (callingToken != bmsTokon) {
+        DLP_LOG_ERROR(LABEL, "callingToken:%{public}d bmsTokon:%{public}d", callingToken, bmsTokon);
+        return DLP_SERVICE_ERROR_PERMISSION_DENY;
+    }
     this->ClearUnreservedSandbox();
     return DLP_OK;
 }
