@@ -127,6 +127,18 @@ HWTEST_F(DlpCredentialTest, DlpCredentialTest002, TestSize.Level1)
     res = DlpCredential::GetInstance().ParseDlpCertificate(certParcel, stub, appId, true);
     EXPECT_EQ(DLP_CREDENTIAL_ERROR_COMMON_ERROR, res);
 }
+
+/**
+ * @tc.name: CheckMdmPermission001
+ * @tc.desc: CheckMdmPermission test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpCredentialTest, CheckMdmPermission001, TestSize.Level1)
+{
+    int32_t ret = DlpCredential::GetInstance().CheckMdmPermission("testBundle", 101);
+    ASSERT_EQ(DLP_SERVICE_ERROR_IPC_REQUEST_FAIL, ret);
+}
 }  // namespace DlpPermission
 }  // namespace Security
 }  // namespace OHOS
