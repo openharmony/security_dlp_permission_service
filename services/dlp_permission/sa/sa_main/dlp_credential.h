@@ -38,6 +38,7 @@ public:
     int32_t SetMDMPolicy(const std::vector<std::string>& appIdList);
     int32_t GetMDMPolicy(std::vector<std::string>& appIdList);
     int32_t RemoveMDMPolicy();
+    int32_t CheckMdmPermission(const std::string& bundleName, int32_t userId);
 };
 }  // namespace DlpPermission
 }  // namespace Security

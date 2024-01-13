@@ -685,6 +685,26 @@ int32_t DlpCredential::RemoveMDMPolicy()
     }
     return res;
 }
+
+int32_t DlpCredential::CheckMdmPermission(const std::string& bundleName, int32_t userId)
+{
+    AppExecFwk::BundleInfo bundleInfo;
+    bool result = BundleManagerAdapter::GetInstance().GetBundleInfo(bundleName,
+        static_cast<int32_t>(AppExecFwk::GetBundleInfoFlag::GET_BUNDLE_INFO_WITH_SIGNATURE_INFO), bundleInfo, userId);
+    if (!result) {
+        DLP_LOG_ERROR(LABEL, "get appId error");
+        return DLP_SERVICE_ERROR_IPC_REQUEST_FAIL;
+    }
+    std::string appId = bundleInfo.appId;
+    DLP_LOG_DEBUG(LABEL, "appId:%{public}s", appId.c_str());
+    PolicyHandle handle = {.id = strdup(const_cast<char *>(bundleInfo.appId.c_str()))};
+    int32_t res = DLP_CheckPermission(PolicyType::AUTHORIZED_APPLICATION_LIST, handle);
+    if (res != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "DLP_CheckPermission error:%{public}d", res);
+        return DLP_CREDENTIAL_ERROR_APPID_NOT_AUTHORIZED;
+    }
+    return DLP_OK;
+}
 }  // namespace DlpPermission
 }  // namespace Security
 }  // namespace OHOS

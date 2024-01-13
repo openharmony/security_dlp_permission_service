@@ -1036,19 +1036,6 @@ HWTEST_F(DlpPermissionServiceTest, DeserializeEncPolicyDataByFirstVersion001, Te
 }
 
 /**
- * @tc.name: CheckMdmPermission001
- * @tc.desc: CheckMdmPermission test
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(DlpPermissionServiceTest, CheckMdmPermission001, TestSize.Level1)
-{
-    DLP_LOG_DEBUG(LABEL, "CheckMdmPermission001");
-    int32_t ret = dlpPermissionService_->CheckMdmPermission("testBundle", 101);
-    ASSERT_EQ(DLP_SERVICE_ERROR_IPC_REQUEST_FAIL, ret);
-}
-
-/**
  * @tc.name: SandboxConfigOperate001
  * @tc.desc: SandboxConfigOperate test
  * @tc.type: FUNC

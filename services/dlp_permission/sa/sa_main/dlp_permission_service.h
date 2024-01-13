@@ -101,7 +101,6 @@ private:
     void StartTimer();
     void GetCfgFilesList(std::vector<std::string> &cfgFilesList);
     void GetConfigFileValue(const std::string &cfgFile, std::vector<std::string> &typeList);
-    int32_t CheckMdmPermission(const std::string& bundleName, int32_t userId);
     std::vector<std::string> InitConfig();
 
     std::atomic<int32_t> repeatTime_;
