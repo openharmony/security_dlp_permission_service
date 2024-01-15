@@ -984,7 +984,7 @@ static int32_t GetFileSize(int32_t fd)
     return fileLen;
 }
 
-static void SetDlpGeneralInfo(bool accessFlag, std::string& contactAccount, std::string& hmacStr,
+static void SetDlpGeneralInfo(bool accessFlag, std::string& contactAccount, const std::string& hmacStr,
     const uint32_t& version, std::string& out)
 {
     GenerateInfoParams params = {
