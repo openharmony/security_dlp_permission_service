@@ -22,7 +22,7 @@
 namespace OHOS {
 namespace Security {
 namespace DlpPermission {
-static const uint32_t CURRENT_VERSION = 3;
+static const uint32_t CURRENT_VERSION = 2;
 static const uint32_t HMAC_VERSION = 3;
 
 struct GenerateInfoParams {
