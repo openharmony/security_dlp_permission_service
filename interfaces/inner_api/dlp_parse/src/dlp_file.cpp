@@ -1055,7 +1055,7 @@ int32_t DlpFile::GenerateHmacVal(const int32_t& encFile, struct DlpBlob& out)
 
 int32_t DlpFile::GetHmacVal(const int32_t& encFile, std::string& hmacStr)
 {
-    if (policy_.dlpVersion_ >= HMAC_VERSION) {
+    if (head_.version >= HMAC_VERSION) {
         if (hmac_.size == 0) {
             uint8_t* outBuf = new (std::nothrow) uint8_t[HMAC_SIZE];
             if (outBuf == nullptr) {
