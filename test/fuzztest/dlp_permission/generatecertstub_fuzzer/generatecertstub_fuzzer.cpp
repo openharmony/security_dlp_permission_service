@@ -15,6 +15,7 @@
 
 #include "generatecertstub_fuzzer.h"
 #include <iostream>
+#include <openssl/rand.h>
 #include <string>
 #include <vector>
 #include <thread>
@@ -23,7 +24,6 @@
 #include "dlp_permission_async_stub.h"
 #include "dlp_permission_kit.h"
 #include "dlp_permission_log.h"
-#include "random.h"
 #include "securec.h"
 #include "token_setproc.h"
 
@@ -32,6 +32,13 @@ using namespace OHOS::Security::AccessToken;
 namespace OHOS {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = { LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION,
                                                        "GenerateCertFuzzTest" };
+
+static int GetRandNum()
+{
+    unsigned int rand;
+    RAND_bytes(reinterpret_cast<unsigned char *>(&rand), sizeof(rand));
+    return rand;
+}
 
 static void FuzzTest(const uint8_t* data, size_t size)
 {
@@ -43,13 +50,13 @@ static void FuzzTest(const uint8_t* data, size_t size)
     encPolicy.ownerAccountType_ = DlpAccountType::DOMAIN_ACCOUNT;
     encPolicy.SetIv(nullptr, 0);
     encPolicy.SetAeskey(nullptr, 0);
-    int userNum = GetRandomUint32() % (size + 1) + 1;
+    int userNum = GetRandNum() % (size + 1) + 1;
     DLP_LOG_INFO(LABEL, "before for:%{public}d,%{public}zu", userNum, size);
     for (int user = 0; user < userNum; ++user) {
         AuthUserInfo perminfo;
         perminfo.authAccount = name;
-        perminfo.authPerm = static_cast<DLPFileAccess>(1 + GetRandomUint32() % 3); // perm type 1 to 3
-        perminfo.permExpiryTime = curTime + GetRandomUint32() % 200;              // time range 0 to 200
+        perminfo.authPerm = static_cast<DLPFileAccess>(1 + GetRandNum() % 3); // perm type 1 to 3
+        perminfo.permExpiryTime = curTime + GetRandNum() % 200;              // time range 0 to 200
         perminfo.authAccountType = DlpAccountType::DOMAIN_ACCOUNT;
         encPolicy.authUsers_.emplace_back(perminfo);
     }

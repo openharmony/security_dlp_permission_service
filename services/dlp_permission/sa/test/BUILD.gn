@@ -36,7 +36,6 @@ ohos_unittest("dlp_permission_service_test") {
     "${dlp_root_dir}/services/dlp_permission/sa/callback/dlp_sandbox_change_callback/",
     "${dlp_root_dir}/services/dlp_permission/sa/callback/open_dlp_file_callback/",
     "//third_party/json/include",
-    "//third_party/mbedtls/include",
     "${dlp_root_dir}/frameworks/common/include",
     "${dlp_root_dir}/frameworks/dlp_permission/include",
     "${dlp_root_dir}/interfaces/inner_api/dlp_permission/include",
@@ -46,7 +45,6 @@ ohos_unittest("dlp_permission_service_test") {
   sources = [
     "${dlp_root_dir}/frameworks/common/src/cert_parcel.cpp",
     "${dlp_root_dir}/frameworks/common/src/permission_policy.cpp",
-    "${dlp_root_dir}/frameworks/common/src/random_mbedtls.cpp",
     "${dlp_root_dir}/frameworks/common/src/retention_sandbox_info.cpp",
     "${dlp_root_dir}/frameworks/common/src/visited_dlp_file_info.cpp",
     "${dlp_root_dir}/frameworks/dlp_permission/src/auth_user_info_parcel.cpp",
@@ -106,7 +104,7 @@ ohos_unittest("dlp_permission_service_test") {
     "${dlp_root_dir}/services/dlp_permission/sa:dlp_permission_serializer_static",
     "${dlp_root_dir}/services/dlp_permission/sa:dlp_permission_service.rc",
     "//third_party/googletest:gtest_main",
-    "//third_party/mbedtls:mbedtls_shared",
+    "//third_party/openssl:libcrypto_shared",
   ]
 
   external_deps = [

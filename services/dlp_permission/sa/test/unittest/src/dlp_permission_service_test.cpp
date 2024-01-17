@@ -14,6 +14,7 @@
  */
 
 #include "dlp_permission_service_test.h"
+#include <openssl/rand.h>
 #include <string>
 #include "accesstoken_kit.h"
 #include "account_adapt.h"
@@ -36,7 +37,6 @@
 #include "open_dlp_file_callback_stub.h"
 #include "open_dlp_file_callback_death_recipient.h"
 #include "permission_policy.h"
-#include "random.h"
 #include "retention_file_manager.h"
 #include "sandbox_json_manager.h"
 #include "visited_dlp_file_info.h"
@@ -69,6 +69,8 @@ const std::string ENC_DATA = "encData";
 const std::string EXTRA_INFO_LEN = "extraInfoLen";
 const std::string EXTRA_INFO = "extraInfo";
 const std::string ENC_POLICY = "encPolicy";
+static const uint8_t ARRAY_CHAR_SIZE = 62;
+static const char CHAR_ARRAY[] = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
 static const std::string POLICY_CIPHER = "8B6696A5DD160005C9DCAF43025CB240958D1E53D8E54D70DBED8C191411FA60C9B5D491B"
     "AE3F34F124DBA805736FCBBC175D881818A93A0E07C844E9DF9503641BF2A98EC49BE0BB2"
@@ -112,6 +114,13 @@ void NewUserSample(AuthUserInfo& user)
     user.authAccountType = OHOS::Security::DlpPermission::DlpAccountType::CLOUD_ACCOUNT;
 }
 
+static uint8_t GetRandNum()
+{
+    uint8_t rand;
+    RAND_bytes(reinterpret_cast<unsigned char *>(&rand), sizeof(rand));
+    return rand;
+}
+
 uint8_t* GenerateRandArray(uint32_t len)
 {
     if (len < 1) {
@@ -124,25 +133,19 @@ uint8_t* GenerateRandArray(uint32_t len)
         return nullptr;
     }
     for (uint32_t i = 0; i < len; i++) {
-        str[i] = GetRandomUint32() % 255; // uint8_t range 0 ~ 255
+        str[i] = GetRandNum() % 255; // uint8_t range 0 ~ 255
     }
     return str;
 }
 
-std::string GenerateRandStr(uint32_t len)
+static void GenerateRandStr(uint32_t len, std::string& res)
 {
-    char* str = new (std::nothrow) char[len + 1];
-    if (str == nullptr) {
-        DLP_LOG_ERROR(LABEL, "New memory fail");
-        return "";
-    }
     for (uint32_t i = 0; i < len; i++) {
-        str[i] = 33 + GetRandomUint32() % (126 - 33); // Visible Character Range 33 - 126
+        uint32_t index = GetRandNum() % ARRAY_CHAR_SIZE;
+        DLP_LOG_INFO(LABEL, "%{public}u", index);
+        res.push_back(CHAR_ARRAY[index]);
     }
-    str[len] = '\0';
-    std::string res = str;
-    delete[] str;
-    return res;
+    DLP_LOG_INFO(LABEL, "%{public}s", res.c_str());
 }
 
 struct GeneratePolicyParam {
@@ -159,9 +162,7 @@ void GeneratePolicy(PermissionPolicy& encPolicy, GeneratePolicyParam param)
 {
     uint64_t curTime = static_cast<uint64_t>(
         std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count());
-    auto seed = std::time(nullptr);
-    std::srand(seed);
-    encPolicy.ownerAccount_ = GenerateRandStr(param.ownerAccountLen);
+    GenerateRandStr(param.ownerAccountLen, encPolicy.ownerAccount_);
     encPolicy.ownerAccountId_ = encPolicy.ownerAccount_;
     encPolicy.ownerAccountType_ = OHOS::Security::DlpPermission::DlpAccountType::DOMAIN_ACCOUNT;
     uint8_t* key = GenerateRandArray(param.aeskeyLen);
@@ -177,8 +178,9 @@ void GeneratePolicy(PermissionPolicy& encPolicy, GeneratePolicyParam param)
         iv = nullptr;
     }
     for (uint32_t user = 0; user < param.userNum; ++user) {
-        AuthUserInfo perminfo = {
-            .authAccount = GenerateRandStr(param.authAccountLen),
+        std::string accountName;
+        GenerateRandStr(param.authAccountLen, accountName);
+        AuthUserInfo perminfo = {.authAccount = strdup(const_cast<char *>(accountName.c_str())),
             .authPerm = static_cast<DLPFileAccess>(param.authPerm),
             .permExpiryTime = curTime + param.deltaTime,
             .authAccountType = OHOS::Security::DlpPermission::DlpAccountType::DOMAIN_ACCOUNT
