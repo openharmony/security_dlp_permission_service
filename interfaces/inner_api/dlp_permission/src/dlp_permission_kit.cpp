@@ -20,6 +20,7 @@
 #include "datetime_ex.h"
 #include "dlp_permission_client.h"
 #include "dlp_permission_log.h"
+#include "parameters.h"
 #include "permission_policy.h"
 
 namespace OHOS {
@@ -28,6 +29,7 @@ namespace DlpPermission {
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "DlpPermissionKit"};
 const int64_t TIME_WAIT_TIME_OUT = 10;
+const std::string DLP_ENABEL = "const.dlp.dlp_enable";
 }  // namespace
 
 void ClientGenerateDlpCertificateCallback::OnGenerateDlpCertificate(int32_t result, const std::vector<uint8_t>& cert)
@@ -231,6 +233,12 @@ int32_t DlpPermissionKit::CleanSandboxAppConfig()
 int32_t DlpPermissionKit::GetSandboxAppConfig(std::string& configInfo)
 {
     return DlpPermissionClient::GetInstance().GetSandboxAppConfig(configInfo);
+}
+
+int32_t DlpPermissionKit::IsDLPFeatureProvided(bool& isProvideDLPFeature)
+{
+    isProvideDLPFeature = OHOS::system::GetBoolParameter(DLP_ENABEL, false);
+    return DLP_OK;
 }
 }  // namespace DlpPermission
 }  // namespace Security

@@ -202,6 +202,11 @@ struct IsInSandboxAsyncContext : public CommonAsyncContext {
     bool inSandbox = false;
 };
 
+struct IsDLPFeatureProvidedAsyncContext : public CommonAsyncContext {
+    explicit IsDLPFeatureProvidedAsyncContext(napi_env env) : CommonAsyncContext(env) {};
+    bool isProvideDLPFeature = false;
+};
+
 struct GetOriginalFileAsyncContext : public CommonAsyncContext {
     explicit GetOriginalFileAsyncContext(napi_env env) : CommonAsyncContext(env) {};
     std::string dlpFilename = "";

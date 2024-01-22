@@ -1754,6 +1754,53 @@ void NapiDlpPermission::GetSandboxAppConfigComplete(napi_env env, napi_status st
     ProcessCallbackOrPromise(env, asyncContext, configInfoJs);
 }
 
+
+napi_value NapiDlpPermission::IsDLPFeatureProvided(napi_env env, napi_callback_info cbInfo)
+{
+    auto asyncContextPtr = std::make_unique<IsDLPFeatureProvidedAsyncContext>(env);
+    if (!GetThirdInterfaceParams(env, cbInfo, *asyncContextPtr.get())) {
+        return nullptr;
+    }
+    napi_value result = nullptr;
+    DLP_LOG_DEBUG(LABEL, "Create promise");
+    NAPI_CALL(env, napi_create_promise(env, &asyncContextPtr->deferred, &result));
+    napi_value resource = nullptr;
+    NAPI_CALL(env, napi_create_string_utf8(env, "IsDLPFeatureProvided", NAPI_AUTO_LENGTH, &resource));
+    NAPI_CALL(env, napi_create_async_work(env, nullptr, resource, IsDLPFeatureProvidedExcute,
+        IsDLPFeatureProvidedComplete, static_cast<void*>(asyncContextPtr.get()), &(asyncContextPtr->work)));
+    NAPI_CALL(env, napi_queue_async_work(env, asyncContextPtr->work));
+    asyncContextPtr.release();
+    return result;
+}
+
+void NapiDlpPermission::IsDLPFeatureProvidedExcute(napi_env env, void* data)
+{
+    DLP_LOG_DEBUG(LABEL, "napi_create_async_work running");
+    auto asyncContext = reinterpret_cast<IsDLPFeatureProvidedAsyncContext*>(data);
+    if (asyncContext == nullptr) {
+        DLP_LOG_ERROR(LABEL, "asyncContext is nullptr");
+        return;
+    }
+    asyncContext->errCode = DlpPermissionKit::IsDLPFeatureProvided(asyncContext->isProvideDLPFeature);
+}
+
+void NapiDlpPermission::IsDLPFeatureProvidedComplete(napi_env env, napi_status status, void* data)
+{
+    DLP_LOG_DEBUG(LABEL, "napi_create_async_work complete");
+    auto asyncContext = reinterpret_cast<IsDLPFeatureProvidedAsyncContext*>(data);
+    if (asyncContext == nullptr) {
+        DLP_LOG_ERROR(LABEL, "asyncContext is nullptr");
+        return;
+    }
+    std::unique_ptr<IsDLPFeatureProvidedAsyncContext> asyncContextPtr { asyncContext };
+    napi_value isProvideDLPFeatureJs = nullptr;
+    if (asyncContext->errCode == DLP_OK) {
+        DLP_LOG_INFO(LABEL, "is:%{public}d", asyncContext->isProvideDLPFeature);
+        NAPI_CALL_RETURN_VOID(env, napi_get_boolean(env, asyncContext->isProvideDLPFeature, &isProvideDLPFeatureJs));
+    }
+    ProcessCallbackOrPromise(env, asyncContext, isProvideDLPFeatureJs);
+}
+
 napi_value NapiDlpPermission::GetDLPSuffix(napi_env env, napi_callback_info cbInfo)
 {
     GetSuffixAsyncContext *asyncContext = new (std::nothrow) GetSuffixAsyncContext(env);
@@ -1863,6 +1910,7 @@ void NapiDlpPermission::InitFunction(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("setSandboxAppConfig", SetSandboxAppConfig),
         DECLARE_NAPI_FUNCTION("cleanSandboxAppConfig", CleanSandboxAppConfig),
         DECLARE_NAPI_FUNCTION("getSandboxAppConfig", GetSandboxAppConfig),
+        DECLARE_NAPI_FUNCTION("isDLPFeatureProvided", IsDLPFeatureProvided),
     };
     NAPI_CALL_RETURN_VOID(env, napi_define_properties(env, exports, sizeof(desc) / sizeof(desc[PARAM0]), desc));
 }

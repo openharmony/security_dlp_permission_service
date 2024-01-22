@@ -38,6 +38,7 @@ group("fuzztest") {
     "getsandboxexternalauthorizationstub_fuzzer:GetSandboxExternalAuthorizationStubFuzzTest",
     "installdlpsandbox_fuzzer:InstallDlpSandboxFuzzTest",
     "installdlpsandboxstub_fuzzer:InstallDlpSandboxStubFuzzTest",
+    "isDLPFeatureProvided_fuzzer:IsDLPFeatureProvidedFuzzTest",
     "isindlpsandbox_fuzzer:IsInDlpSandboxFuzzTest",
     "isindlpsandboxstub_fuzzer:IsInDlpSandboxStubFuzzTest",
     "parsecert_fuzzer:ParseCertFuzzTest",

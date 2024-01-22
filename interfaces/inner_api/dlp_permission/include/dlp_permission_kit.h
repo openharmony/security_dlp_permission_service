@@ -94,6 +94,7 @@ public:
     static int32_t SetSandboxAppConfig(const std::string& configInfo);
     static int32_t CleanSandboxAppConfig();
     static int32_t GetSandboxAppConfig(std::string& configInfo);
+    static int32_t IsDLPFeatureProvided(bool& isProvideDLPFeature);
 };
 }  // namespace DlpPermission
 }  // namespace Security

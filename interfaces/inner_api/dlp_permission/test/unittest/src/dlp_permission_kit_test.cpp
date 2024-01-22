@@ -1367,6 +1367,18 @@ HWTEST_F(DlpPermissionKitTest, RemoveMDMPolicy001, TestSize.Level1)
     seteuid(3057);
     ASSERT_EQ(DLP_OK, DlpPermissionKit::RemoveMDMPolicy());
 }
+
+/* *
+ * @tc.name: IsDLPFeatureProvided001
+ * @tc.desc: IsDLPFeatureProvided.
+ * @tc.type: FUNC
+ * @tc.require: SR20231214647387
+ */
+HWTEST_F(DlpPermissionKitTest, IsDLPFeatureProvided001, TestSize.Level1)
+{
+    bool isProvided;
+    ASSERT_EQ(DLP_OK, DlpPermissionKit::IsDLPFeatureProvided(isProvided));
+}
 }  // namespace DlpPermission
 }  // namespace Security
 }  // namespace OHOS
