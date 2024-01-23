@@ -22,6 +22,7 @@
 #include <openssl/rand.h>
 #include <securec.h>
 #include <string>
+#include <unistd.h>
 #include "dlp_permission.h"
 #include "dlp_permission_log.h"
 
@@ -30,6 +31,7 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_
 static const uint32_t BYTE_LEN = 8;
 const uint32_t HMAC_SIZE = 32;
 const uint32_t SHA256_KEY_LEN = 32;
+const uint32_t BUFFER_SIZE = 1048576;
 
 #ifdef __cplusplus
 extern "C" {
@@ -937,28 +939,43 @@ int32_t DlpCtrModeIncreaeIvCounter(struct DlpBlob& iv, uint32_t count)
     return DLP_OK;
 }
 
-int32_t DlpHmacEncode(const DlpBlob& key, const DlpBlob& in, DlpBlob& out)
+int32_t DlpHmacEncode(const DlpBlob& key, int32_t fd, DlpBlob& out)
 {
     if ((key.data == nullptr) || (key.size != SHA256_KEY_LEN)) {
         DLP_LOG_ERROR(LABEL, "Key blob invalid, size %{public}u", key.size);
         return DLP_PARSE_ERROR_DIGEST_INVALID;
     }
-
-    if ((in.data == nullptr) || (in.size == 0)) {
-        DLP_LOG_INFO(LABEL, "Input blob is null or size is zero");
-    }
-
     if ((out.data == nullptr) || (out.size < HMAC_SIZE)) {
         DLP_LOG_ERROR(LABEL, "Output blob invalid, size %{public}u", out.size);
         return DLP_PARSE_ERROR_DIGEST_INVALID;
     }
 
-    const EVP_MD* engine = EVP_sha256();
-    if (HMAC(engine, key.data, key.size, in.data, in.size, out.data, &out.size) == nullptr) {
-        DLP_LOG_ERROR(LABEL, "Hmac encode fail");
-        return DLP_PARSE_ERROR_DIGEST_INVALID;
+    HMAC_CTX* ctx = HMAC_CTX_new();
+    if (ctx == nullptr) {
+        DLP_LOG_ERROR(LABEL, "HMAC_CTX is null");
+        return DLP_PARSE_ERROR_CRYPTO_ENGINE_ERROR;
     }
-    DLP_LOG_DEBUG(LABEL, "Hmac encode success");
+    if (HMAC_Init_ex(ctx, key.data, key.size, EVP_sha256(), nullptr) != 1) {
+        DLP_LOG_ERROR(LABEL, "HMAC_Init failed");
+        HMAC_CTX_free(ctx);
+        return DLP_PARSE_ERROR_CRYPTO_ENGINE_ERROR;
+    }
+
+    auto buf = std::make_unique<unsigned char[]>(BUFFER_SIZE);
+    int32_t readSize;
+    while ((readSize = read(fd, buf.get(), BUFFER_SIZE)) > 0) {
+        if (HMAC_Update(ctx, buf.get(), readSize) != 1) {
+            DLP_LOG_ERROR(LABEL, "HMAC_Update failed");
+            HMAC_CTX_free(ctx);
+            return DLP_PARSE_ERROR_CRYPTO_ENGINE_ERROR;
+        }
+    }
+    if (HMAC_Final(ctx, out.data, &out.size) != 1) {
+        DLP_LOG_ERROR(LABEL, "HMAC_Final failed");
+        HMAC_CTX_free(ctx);
+        return DLP_PARSE_ERROR_CRYPTO_ENGINE_ERROR;
+    }
+    HMAC_CTX_free(ctx);
     return DLP_OK;
 }
 #ifdef __cplusplus
