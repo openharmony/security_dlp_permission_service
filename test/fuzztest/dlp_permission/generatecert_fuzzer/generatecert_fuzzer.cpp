@@ -15,13 +15,13 @@
 
 #include "generatecert_fuzzer.h"
 #include <iostream>
+#include <openssl/rand.h>
 #include <string>
 #include <vector>
 #include <thread>
 #include "accesstoken_kit.h"
 #include "dlp_permission.h"
 #include "dlp_permission_log.h"
-#include "random.h"
 #include "securec.h"
 #include "token_setproc.h"
 
@@ -37,10 +37,15 @@ static std::string Uint8ArrayToString(const uint8_t* buff, size_t size)
     return str;
 }
 
+static int GetRandNum()
+{
+    unsigned int rand;
+    RAND_bytes(reinterpret_cast<unsigned char *>(&rand), sizeof(rand));
+    return rand;
+}
+
 static void FuzzTest(const uint8_t* data, size_t size)
 {
-    auto seed = std::time(nullptr);
-    std::srand(seed);
     uint64_t curTime = static_cast<uint64_t>(
         std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count());
     PermissionPolicy encPolicy;
@@ -48,12 +53,12 @@ static void FuzzTest(const uint8_t* data, size_t size)
     encPolicy.ownerAccountType_ = DOMAIN_ACCOUNT;
     encPolicy.SetAeskey(data, size);
     encPolicy.SetIv(data, size);
-    int userNum = GetRandomUint32() % (size + 1);
+    int userNum = GetRandNum();
     for (int user = 0; user < userNum; ++user) {
         AuthUserInfo perminfo;
         perminfo.authAccount = Uint8ArrayToString(data, size);
-        perminfo.authPerm = static_cast<DLPFileAccess>(1 + GetRandomUint32() % 3);  // perm type 1 to 3
-        perminfo.permExpiryTime = curTime + GetRandomUint32() % 200;               // time range 0 to 200
+        perminfo.authPerm = static_cast<DLPFileAccess>(1 + GetRandNum() % 3);  // perm type 1 to 3
+        perminfo.permExpiryTime = curTime + GetRandNum() % 200;               // time range 0 to 200
         perminfo.authAccountType = DOMAIN_ACCOUNT;
         encPolicy.authUsers_.emplace_back(perminfo);
     }

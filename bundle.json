@@ -55,7 +55,6 @@
       "third_party": [
         "libfuse",
         "openssl",
-        "mbedtls",
         "zlib"
       ]
     },

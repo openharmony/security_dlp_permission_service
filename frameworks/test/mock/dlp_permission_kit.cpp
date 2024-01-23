@@ -36,7 +36,6 @@ int32_t DlpPermissionKit::GenerateDlpCertificate(const PermissionPolicy& policy,
     if (res != DLP_OK) {
         return res;
     }
-
     std::string certStr = jsonObj.dump();
     cert = std::vector<uint8_t>(certStr.begin(), certStr.end());
     return DLP_OK;

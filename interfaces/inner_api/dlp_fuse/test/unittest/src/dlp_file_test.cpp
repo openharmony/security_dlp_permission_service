@@ -18,6 +18,7 @@
 #include <cstring>
 #include <dirent.h>
 #include <fcntl.h>
+#include <openssl/rand.h>
 #include <securec.h>
 #include <sys/mount.h>
 #include <sys/stat.h>
@@ -27,7 +28,6 @@
 #include "dlp_file_manager.h"
 #include "dlp_permission.h"
 #include "dlp_permission_log.h"
-#include "random.h"
 
 namespace OHOS {
 namespace Security {
@@ -44,6 +44,8 @@ static const std::string FUSE_TYPE = "fuse";
 static const std::string DEFAULT_CURRENT_ACCOUNT = "ohosAnonymousName";
 static const int32_t TEST_USER_COUNT = 2;
 static const int32_t RAND_STR_SIZE = 16;
+static const uint8_t ARRAY_CHAR_SIZE = 62;
+static const char CHAR_ARRAY[] = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 static const int32_t EXPIRT_TIME = 10000;
 static int g_plainFileFd = -1;
 static int g_dlpFileFd = -1;
@@ -83,39 +85,42 @@ void DlpFileTest::TearDown()
 {}
 
 namespace {
-static std::string GenerateRandStr(uint32_t len)
+static uint8_t GetRandNum()
 {
-    char* str = new (std::nothrow) char[len + 1];
-    if (str == nullptr) {
-        DLP_LOG_ERROR(LABEL, "New memory fail");
-        return "";
-    }
+    uint8_t rand;
+    RAND_bytes(reinterpret_cast<unsigned char *>(&rand), sizeof(rand));
+    return rand;
+}
+
+static void GenerateRandStr(uint32_t len, std::string& res)
+{
     for (uint32_t i = 0; i < len; i++) {
-        str[i] = 33 + GetRandomUint32() % (126 - 33);  // Visible Character Range 33 - 126
+        uint32_t index = GetRandNum() % ARRAY_CHAR_SIZE;
+        DLP_LOG_INFO(LABEL, "%{public}u", index);
+        res.push_back(CHAR_ARRAY[index]);
     }
-    str[len] = '\0';
-    std::string res = str;
-    delete[] str;
-    return res;
+    DLP_LOG_INFO(LABEL, "%{public}s", res.c_str());
 }
 
 static void GenerateRandProperty(struct DlpProperty& encProp)
 {
     uint64_t curTime = static_cast<uint64_t>(
         std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count());
-    auto seed = std::time(nullptr);
-    std::srand(seed);
     encProp.ownerAccount = DEFAULT_CURRENT_ACCOUNT;
     encProp.ownerAccountId = DEFAULT_CURRENT_ACCOUNT;
     encProp.ownerAccountType = CLOUD_ACCOUNT;
     for (uint32_t user = 0; user < TEST_USER_COUNT; ++user) {
-        AuthUserInfo perminfo = {.authAccount = GenerateRandStr(RAND_STR_SIZE),
+        std::string accountName;
+        GenerateRandStr(RAND_STR_SIZE, accountName);
+        AuthUserInfo perminfo = {.authAccount = strdup(const_cast<char *>(accountName.c_str())),
             .authPerm = READ_ONLY,
             .permExpiryTime = curTime + EXPIRT_TIME,
             .authAccountType = CLOUD_ACCOUNT};
         encProp.authUsers.emplace_back(perminfo);
     }
-    encProp.contactAccount = GenerateRandStr(TEST_USER_COUNT);
+    std::string accountName;
+    GenerateRandStr(RAND_STR_SIZE, accountName);
+    encProp.contactAccount = strdup(const_cast<char *>(accountName.c_str()));
 }
 }
 /**
