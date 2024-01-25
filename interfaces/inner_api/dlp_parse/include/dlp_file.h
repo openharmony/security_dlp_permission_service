@@ -231,9 +231,9 @@ private:
     int32_t GenFileInRaw(int32_t inPlainFileFd);
     int32_t RemoveDlpPermissionInZip(int32_t outPlainFileFd);
     int32_t RemoveDlpPermissionInRaw(int32_t outPlainFileFd);
-    int32_t GetHmacVal(const int32_t& encFile, std::string& hmacStr);
-    int32_t GenerateHmacVal(const int32_t& encFile, struct DlpBlob& out);
-    int32_t AddGeneralInfoToBuff(const int32_t& encFile);
+    int32_t GetHmacVal(int32_t encFile, std::string& hmacStr);
+    int32_t GenerateHmacVal(int32_t encFile, struct DlpBlob& out);
+    int32_t AddGeneralInfoToBuff(int32_t encFile);
 
     std::string workDir_ = "";
     std::string dirIndex_;

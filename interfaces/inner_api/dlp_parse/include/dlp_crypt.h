@@ -130,7 +130,7 @@ int32_t DlpOpensslHashFreeCtx(void** cryptoCtx);
 
 int32_t DlpCtrModeIncreaeIvCounter(struct DlpBlob& iv, uint32_t count);
 
-int32_t DlpHmacEncode(const DlpBlob& key, const DlpBlob& in, DlpBlob& out);
+int32_t DlpHmacEncode(const DlpBlob& key, int32_t fd, DlpBlob& out);
 #ifdef __cplusplus
 }
 #endif

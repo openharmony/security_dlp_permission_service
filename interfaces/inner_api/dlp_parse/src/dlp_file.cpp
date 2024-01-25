@@ -1014,46 +1014,27 @@ int32_t DlpFile::GenEncData(int32_t inPlainFileFd)
     return encFile;
 }
 
-int32_t DlpFile::GenerateHmacVal(const int32_t& encFile, struct DlpBlob& out)
+int32_t DlpFile::GenerateHmacVal(int32_t encFile, struct DlpBlob& out)
 {
     lseek(encFile, 0, SEEK_SET);
     int32_t fd = dup(encFile);
     int32_t fileLen = GetFileSize(fd);
     if (fileLen == 0) {
+        (void)close(fd);
         CleanBlobParam(out);
         return DLP_OK;
-    }
-    uint8_t* inBuf = nullptr;
-    if (fileLen > 0) {
-        inBuf = new (std::nothrow) uint8_t[fileLen];
-        if (inBuf == nullptr) {
-            DLP_LOG_ERROR(LABEL, "New memory fail");
-            return DLP_SERVICE_ERROR_MEMORY_OPERATE_FAIL;
-        }
-        int ret = read(fd, inBuf, fileLen);
-        if (ret == -1) {
-            DLP_LOG_ERROR(LABEL, "read buff fail, %{public}s", strerror(errno));
-            (void)close(fd);
-            delete[] inBuf;
-            return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
-        }
     } else if (fileLen < 0) {
         (void)close(fd);
         DLP_LOG_ERROR(LABEL, "fileLen less than 0");
         return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
     }
+
+    int ret = DlpHmacEncode(cipher_.hmacKey, fd, out);
     (void)close(fd);
-    struct DlpBlob in = {
-        .size = fileLen,
-        .data = inBuf,
-    };
-    
-    int ret = DlpHmacEncode(cipher_.hmacKey, in, out);
-    CleanBlobParam(in);
     return ret;
 }
 
-int32_t DlpFile::GetHmacVal(const int32_t& encFile, std::string& hmacStr)
+int32_t DlpFile::GetHmacVal(int32_t encFile, std::string& hmacStr)
 {
     if (head_.version >= HMAC_VERSION) {
         if (hmac_.size == 0) {
@@ -1095,7 +1076,7 @@ int32_t DlpFile::GetHmacVal(const int32_t& encFile, std::string& hmacStr)
     return DLP_OK;
 }
 
-int32_t DlpFile::AddGeneralInfoToBuff(const int32_t& encFile)
+int32_t DlpFile::AddGeneralInfoToBuff(int32_t encFile)
 {
     std::string hmacStr;
     int ret = GetHmacVal(encFile, hmacStr);
@@ -1560,7 +1541,9 @@ int32_t DlpFile::DlpFileWrite(uint32_t offset, void* buf, uint32_t size)
     UpdateDlpFileContentSize();
 
     // modify dlp file, clear old hmac value and will generate new
-    CleanBlobParam(hmac_);
+    if (hmac_.size != 0) {
+        CleanBlobParam(hmac_);
+    }
     GenFileInZip(-1);
     return res;
 }
