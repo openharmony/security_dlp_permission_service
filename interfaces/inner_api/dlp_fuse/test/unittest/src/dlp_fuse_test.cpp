@@ -217,14 +217,9 @@ void PrepareDlpFuseFsMount()
     }
 }
 
-void CheckLinkFd()
+void CheckLinkFd(int32_t linkfd1)
 {
     DLP_LOG_INFO(LABEL, "CheckLinkFd");
-    // another link fd to write
-    int32_t linkfd1 = open(TEST_LINK_FILE_PATH.c_str(), O_RDWR);
-    ASSERT_GE(linkfd1, 0);
-    g_linkFdArry[1] = linkfd1;
-    ASSERT_NE(lseek(linkfd1, 0, SEEK_SET), -1);
     // offset 0 size 6
     char readBuf[64] = {0};
     ASSERT_NE(lseek(linkfd1, 0, SEEK_SET), -1);
@@ -261,9 +256,6 @@ void CheckLinkFd()
     ASSERT_NE(lseek(linkfd1, 0x10003f, SEEK_SET), -1);
     ASSERT_EQ(read(linkfd1, readBuf, EIGHTEEN), EIGHTEEN);
     ASSERT_EQ(strcmp(readBuf, "1234567890abcdefgh"), 0);
-    close(linkfd1);
-    g_linkFdArry[0] = 0;
-    g_linkFdArry[1] = 0;
 }
 
 void CheckRecoverFd()
@@ -480,7 +472,7 @@ HWTEST_F(DlpFuseTest, AddDlpLinkFile003, TestSize.Level1)
     ASSERT_NE(lseek(linkfd, 0x10003f, SEEK_SET), -1);
     ASSERT_NE(write(linkfd, "1234567890abcdefgh", strlen("1234567890abcdefgh")), -1);
 
-    CheckLinkFd();
+    CheckLinkFd(linkfd);
     close(linkfd);
     ASSERT_EQ(DlpLinkManager::GetInstance().DeleteDlpLinkFile(g_Dlpfile), 0);
     ASSERT_EQ(DlpFileManager::GetInstance().CloseDlpFile(g_Dlpfile), 0);
