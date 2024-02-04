@@ -13,7 +13,7 @@
     "name": "dlp_permission_service",
     "subsystem": "security",
     "syscap": [
-      "SystemCapability.Security.DlpPermissionService"
+      "SystemCapability.Security.DataLossPrevention"
     ],
     "hisysevent_config": [
       "//base/security/dlp_permission_service/hisysevent.yaml",
