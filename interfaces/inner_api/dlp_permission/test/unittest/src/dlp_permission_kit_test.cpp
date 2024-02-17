@@ -586,6 +586,8 @@ HWTEST_F(DlpPermissionKitTest, UninstallDlpSandbox002, TestSize.Level1)
  */
 HWTEST_F(DlpPermissionKitTest, GetSandboxExternalAuthorization001, TestSize.Level1)
 {
+    int32_t uid = getuid();
+    AccessTokenID selfTokenId = GetSelfTokenID();
     // sandboxUid is invalid
     OHOS::AAFwk::Want want;
     SandBoxExternalAuthorType authType;
@@ -597,13 +599,19 @@ HWTEST_F(DlpPermissionKitTest, GetSandboxExternalAuthorization001, TestSize.Leve
         DlpPermissionKit::InstallDlpSandbox(DLP_MANAGER_APP, READ_ONLY, DEFAULT_USERID, sandboxInfo, TEST_URI));
     int sandboxUid;
     ASSERT_TRUE(TestGetAppUid(DLP_MANAGER_APP, sandboxInfo.appIndex, DEFAULT_USERID, sandboxUid));
-    ASSERT_EQ(DLP_OK, DlpPermissionKit::GetSandboxExternalAuthorization(sandboxUid, want, authType));
+    ASSERT_EQ(DLP_SERVICE_ERROR_API_ONLY_FOR_SANDBOX_ERROR,
+        DlpPermissionKit::GetSandboxExternalAuthorization(sandboxUid, want, authType));
+    ASSERT_EQ(DLP_SERVICE_ERROR_API_ONLY_FOR_SANDBOX_ERROR,
+        DlpPermissionKit::GetSandboxExternalAuthorization(sandboxUid, want, authType));
+    TestMockApp(DLP_MANAGER_APP, sandboxInfo.appIndex, DEFAULT_USERID);
     ASSERT_TRUE(authType == DENY_START_ABILITY);
     ASSERT_EQ(DLP_OK, DlpPermissionKit::UninstallDlpSandbox(DLP_MANAGER_APP, sandboxInfo.appIndex, DEFAULT_USERID));
 
     // uid is not sandbox
-    ASSERT_EQ(DLP_OK, DlpPermissionKit::GetSandboxExternalAuthorization(1000, want, authType));
-    ASSERT_TRUE(authType == ALLOW_START_ABILITY);
+    ASSERT_EQ(DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL,
+        DlpPermissionKit::GetSandboxExternalAuthorization(1000, want, authType));
+    ASSERT_TRUE(authType == DENY_START_ABILITY);
+    TestRecoverProcessInfo(uid, selfTokenId);
 }
 
 /**

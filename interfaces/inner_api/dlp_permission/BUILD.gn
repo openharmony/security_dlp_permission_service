@@ -109,6 +109,7 @@ ohos_shared_library("libdlp_permission_sdk") {
     "c_utils:utils",
     "hilog:libhilog",
     "ipc:ipc_core",
+    "os_account:os_account_innerkits",
     "samgr:samgr_proxy",
   ]
 

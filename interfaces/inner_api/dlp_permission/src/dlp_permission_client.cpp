@@ -20,18 +20,22 @@
 #include "dlp_permission_load_callback.h"
 #include "dlp_permission_log.h"
 #include "dlp_permission_proxy.h"
+#include "ipc_skeleton.h"
 #include "iservice_registry.h"
+#include "os_account_manager.h"
 #include "permission_policy.h"
 #include "token_setproc.h"
 
 namespace OHOS {
 namespace Security {
 namespace DlpPermission {
+using namespace OHOS::Security::AccessToken;
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "DlpPermissionClient"};
 static const int32_t DLP_PERMISSION_LOAD_SA_TIMEOUT_MS = 4000;
 static const uint32_t MAX_CALLBACK_MAP_SIZE = 100;
-static const std::string ALLOW_ABILITY[] = {"com.ohos.permissionmanager"};
+static const std::string GRANT_SENSITIVE_PERMISSIONS = "ohos.permission.GRANT_SENSITIVE_PERMISSIONS";
+
 static int32_t CheckSandboxFlag(AccessToken::AccessTokenID tokenId, bool& sandboxFlag)
 {
     int32_t res = AccessToken::AccessTokenKit::GetHapDlpFlag(tokenId);
@@ -147,13 +151,35 @@ int32_t DlpPermissionClient::UninstallDlpSandbox(const std::string& bundleName, 
 
 static bool CheckAllowAbilityList(const std::string& bundleName)
 {
-    return std::any_of(std::begin(ALLOW_ABILITY), std::end(ALLOW_ABILITY),
-        [bundleName](const std::string& bundle) { return bundle == bundleName; });
+    std::vector<int32_t> ids;
+    int32_t res = OHOS::AccountSA::OsAccountManager::QueryActiveOsAccountIds(ids);
+    if (res != ERR_OK) {
+        DLP_LOG_ERROR(LABEL, "QueryActiveOsAccountIds return not 0 %{public}d", res);
+        return false;
+    }
+    if (ids.empty()) {
+        DLP_LOG_ERROR(LABEL, "QueryActiveOsAccountIds size not 1");
+        return false;
+    }
+    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(ids[0], bundleName, 0);
+    if (tokenId == 0) {
+        DLP_LOG_ERROR(LABEL, "GetHapTokenID is 0");
+        return false;
+    }
+    return PERMISSION_GRANTED == AccessTokenKit::VerifyAccessToken(tokenId, GRANT_SENSITIVE_PERMISSIONS);
 }
 
 int32_t DlpPermissionClient::GetSandboxExternalAuthorization(
     int sandboxUid, const AAFwk::Want& want, SandBoxExternalAuthorType& auth)
 {
+    bool sandboxFlag;
+    if (CheckSandboxFlag(IPCSkeleton::GetCallingTokenID(), sandboxFlag) != DLP_OK) {
+        return DLP_SERVICE_ERROR_VALUE_INVALID;
+    }
+    if (!sandboxFlag) {
+        DLP_LOG_ERROR(LABEL, "Forbid called by a non-sandbox app");
+        return DLP_SERVICE_ERROR_API_ONLY_FOR_SANDBOX_ERROR;
+    }
     if (CheckAllowAbilityList(want.GetBundle())) {
         auth = ALLOW_START_ABILITY;
         return DLP_OK;
