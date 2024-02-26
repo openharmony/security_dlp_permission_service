@@ -143,3 +143,25 @@ HWTEST_F(DlpPermissionAsyncStubTest, OnParseDlpCertificateStub001, TestSize.Leve
     int32_t ret = callback->OnParseDlpCertificateStub(data, reply);
     ASSERT_EQ(DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL, ret);
 }
+
+/**
+ * @tc.name: OnRemoteRequest001
+ * @tc.desc: OnRemoteRequest test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionAsyncStubTest, OnRemoteRequest001, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL, "OnRemoteRequest001");
+
+    std::shared_ptr<ParseDlpCertificateCallback> callback1 = nullptr;
+    sptr<DlpPermissionAsyncStub> callback = new (std::nothrow) DlpPermissionAsyncStub(callback1);
+
+    uint32_t code = 0;
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    int32_t ret = callback->OnRemoteRequest(code, data, reply, option);
+    ASSERT_EQ(DLP_SERVICE_ERROR_IPC_REQUEST_FAIL, ret);
+}
