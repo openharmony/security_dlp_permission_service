@@ -43,7 +43,10 @@ ohos_fuzztest("SetSandboxConfigStubFuzzTest") {
   ]
   configs = [ "${dlp_root_dir}/config:coverage_flags" ]
 
-  cflags_cc = [ "-DHILOG_ENABLE" ]
+  cflags_cc = [
+    "-DHILOG_ENABLE",
+    "-DDLP_FUZZ_TEST",
+  ]
   sources = [
     "${dlp_root_dir}/services/dlp_permission/sa/sa_main/dlp_permission_service.cpp",
     "setsandboxconfigstub_fuzzer.cpp",

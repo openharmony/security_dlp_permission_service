@@ -669,7 +669,10 @@ int32_t DlpPermissionService::GetRetentionSandboxList(const std::string& bundleN
     if (!isNeedTimer) {
         return res;
     }
+#ifndef DLP_FUZZ_TEST
+    DLP_LOG_DEBUG(LABEL, "enter StartTimer");
     StartTimer();
+#endif
     return res;
 }
 
