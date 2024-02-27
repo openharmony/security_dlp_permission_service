@@ -457,10 +457,6 @@ std::vector<std::string> DlpPermissionService::InitConfig()
 int32_t DlpPermissionService::GetDlpSupportFileType(std::vector<std::string>& supportFileType)
 {
     supportFileType = InitConfig();
-#ifndef DLP_FUZZ_TEST
-    DLP_LOG_DEBUG(LABEL, "enter StartTimer");
-    StartTimer();
-#endif
     return DLP_OK;
 }
 
@@ -513,10 +509,6 @@ int32_t DlpPermissionService::UnRegisterOpenDlpFileCallback(const sptr<IRemoteOb
     int32_t pid = IPCSkeleton::GetCallingPid();
     int32_t res = OpenDlpFileCallbackManager::GetInstance().RemoveCallback(pid, callback);
     appStateObserver_->RemoveCallbackListener(pid);
-#ifndef DLP_FUZZ_TEST
-    DLP_LOG_DEBUG(LABEL, "enter StartTimer");
-    StartTimer();
-#endif
     return res;
 }
 
@@ -595,10 +587,6 @@ int32_t DlpPermissionService::CancelRetentionState(const std::vector<std::string
             }
         }
     }
-#ifndef DLP_FUZZ_TEST
-    DLP_LOG_DEBUG(LABEL, "enter StartTimer");
-    StartTimer();
-#endif
     return res;
 }
 
@@ -669,10 +657,6 @@ int32_t DlpPermissionService::GetRetentionSandboxList(const std::string& bundleN
     if (!isNeedTimer) {
         return res;
     }
-#ifndef DLP_FUZZ_TEST
-    DLP_LOG_DEBUG(LABEL, "enter StartTimer");
-    StartTimer();
-#endif
     return res;
 }
 
@@ -756,10 +740,6 @@ int32_t DlpPermissionService::GetDLPFileVisitRecord(std::vector<VisitedDLPFileIn
         std::lock_guard<std::mutex> lock(terminalMutex_);
         result = VisitRecordFileManager::GetInstance().GetVisitRecordList(callerBundleName, userId, infoVec);
     }
-#ifndef DLP_FUZZ_TEST
-    DLP_LOG_DEBUG(LABEL, "enter StartTimer");
-    StartTimer();
-#endif
     return result;
 }
 
@@ -852,10 +832,6 @@ int32_t DlpPermissionService::SandboxConfigOperate(std::string& configInfo, Sand
             DLP_LOG_ERROR(LABEL, "enter default case");
             break;
     }
-#ifndef DLP_FUZZ_TEST
-    DLP_LOG_DEBUG(LABEL, "enter StartTimer");
-    StartTimer();
-#endif
     return res;
 }
 
