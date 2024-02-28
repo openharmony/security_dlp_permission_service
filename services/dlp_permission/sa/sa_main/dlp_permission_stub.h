@@ -24,16 +24,17 @@
 namespace OHOS {
 namespace Security {
 namespace DlpPermission {
+
 class DlpPermissionStub : public IRemoteStub<IDlpPermissionService> {
 public:
     DlpPermissionStub();
     virtual ~DlpPermissionStub();
 
     int OnRemoteRequest(uint32_t code, MessageParcel& data, MessageParcel& reply, MessageOption& option) override;
-
+    virtual void StartTimer() = 0;
 private:
     void InitMDMPolicy();
-    void InitSandboxAppConfig();
+    void InitTimerFuncMap();
 
     int32_t GenerateDlpCertificateInner(MessageParcel& data, MessageParcel& reply);
     int32_t ParseDlpCertificateInner(MessageParcel& data, MessageParcel& reply);
@@ -65,7 +66,11 @@ private:
     int32_t RemoveMDMPolicyInner(MessageParcel& data, MessageParcel& reply);
 
     using RequestFuncType = int32_t (DlpPermissionStub::*)(MessageParcel& data, MessageParcel& reply);
-    std::map<uint32_t, RequestFuncType> requestFuncMap_;
+    typedef struct FuncInfo {
+        RequestFuncType funcType;
+        bool isNeedStartTimer = false;
+    } FuncInfo;
+    std::map<uint32_t, FuncInfo> requestFuncMap_;
 };
 }  // namespace DlpPermission
 }  // namespace Security
