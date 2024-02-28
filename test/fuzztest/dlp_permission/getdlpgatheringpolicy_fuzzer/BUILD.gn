@@ -21,19 +21,8 @@ ohos_fuzztest("GetDlpGatheringPolicyFuzzTest") {
   module_out_path = module_output_path
   fuzz_config_file = "${dlp_root_dir}/test/fuzztest/dlp_permission/getdlpgatheringpolicy_fuzzer"
 
-  include_dirs = [
-    "${dlp_root_dir}/services/dlp_permission/sa/sa_common",
-    "${dlp_root_dir}/interfaces/inner_api/dlp_permission/include",
-  ]
-  cflags = [
-    "-g",
-    "-O0",
-    "-Wno-unused-variable",
-    "-fno-omit-frame-pointer",
-  ]
-  configs = [ "${dlp_root_dir}/config:coverage_flags" ]
+  configs = [ "${dlp_root_dir}/test/fuzztest/dlp_permission:napi_fuzz_config" ]
 
-  cflags_cc = [ "-DHILOG_ENABLE" ]
   sources = [ "getdlpgatheringpolicy_fuzzer.cpp" ]
 
   deps = [
