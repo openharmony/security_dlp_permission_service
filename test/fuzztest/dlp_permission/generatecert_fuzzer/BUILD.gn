@@ -22,19 +22,8 @@ ohos_fuzztest("GenerateCertFuzzTest") {
   fuzz_config_file =
       "${dlp_root_dir}/test/fuzztest/dlp_permission/generatecert_fuzzer"
 
-  include_dirs = [
-    "${dlp_root_dir}/frameworks/common/include",
-    "${dlp_root_dir}/interfaces/inner_api/dlp_permission/include",
-  ]
-  cflags = [
-    "-g",
-    "-O0",
-    "-Wno-unused-variable",
-    "-fno-omit-frame-pointer",
-  ]
-  configs = [ "${dlp_root_dir}/config:coverage_flags" ]
+  configs = [ "${dlp_root_dir}/test/fuzztest/dlp_permission:napi_fuzz_config" ]
 
-  cflags_cc = [ "-DHILOG_ENABLE" ]
   sources = [ "generatecert_fuzzer.cpp" ]
 
   deps = [
