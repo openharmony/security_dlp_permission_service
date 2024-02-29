@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -1762,7 +1762,6 @@ napi_value NapiDlpPermission::IsDLPFeatureProvided(napi_env env, napi_callback_i
         return nullptr;
     }
     napi_value result = nullptr;
-    DLP_LOG_DEBUG(LABEL, "Create promise");
     NAPI_CALL(env, napi_create_promise(env, &asyncContextPtr->deferred, &result));
     napi_value resource = nullptr;
     NAPI_CALL(env, napi_create_string_utf8(env, "IsDLPFeatureProvided", NAPI_AUTO_LENGTH, &resource));
@@ -1775,10 +1774,10 @@ napi_value NapiDlpPermission::IsDLPFeatureProvided(napi_env env, napi_callback_i
 
 void NapiDlpPermission::IsDLPFeatureProvidedExcute(napi_env env, void* data)
 {
-    DLP_LOG_DEBUG(LABEL, "napi_create_async_work running");
+    DLP_LOG_DEBUG(LABEL, "IsDLPFeatureProvidedExcute start run.");
     auto asyncContext = reinterpret_cast<IsDLPFeatureProvidedAsyncContext*>(data);
     if (asyncContext == nullptr) {
-        DLP_LOG_ERROR(LABEL, "asyncContext is nullptr");
+        DLP_LOG_ERROR(LABEL, "AsyncContext is nullptr.");
         return;
     }
     asyncContext->errCode = DlpPermissionKit::IsDLPFeatureProvided(asyncContext->isProvideDLPFeature);
@@ -1786,16 +1785,15 @@ void NapiDlpPermission::IsDLPFeatureProvidedExcute(napi_env env, void* data)
 
 void NapiDlpPermission::IsDLPFeatureProvidedComplete(napi_env env, napi_status status, void* data)
 {
-    DLP_LOG_DEBUG(LABEL, "napi_create_async_work complete");
+    DLP_LOG_DEBUG(LABEL, "IsDLPFeatureProvidedComplete start run.");
     auto asyncContext = reinterpret_cast<IsDLPFeatureProvidedAsyncContext*>(data);
     if (asyncContext == nullptr) {
-        DLP_LOG_ERROR(LABEL, "asyncContext is nullptr");
+        DLP_LOG_ERROR(LABEL, "AsyncContext is nullptr.");
         return;
     }
     std::unique_ptr<IsDLPFeatureProvidedAsyncContext> asyncContextPtr { asyncContext };
     napi_value isProvideDLPFeatureJs = nullptr;
     if (asyncContext->errCode == DLP_OK) {
-        DLP_LOG_INFO(LABEL, "is:%{public}d", asyncContext->isProvideDLPFeature);
         NAPI_CALL_RETURN_VOID(env, napi_get_boolean(env, asyncContext->isProvideDLPFeature, &isProvideDLPFeatureJs));
     }
     ProcessCallbackOrPromise(env, asyncContext, isProvideDLPFeatureJs);

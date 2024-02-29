@@ -1,4 +1,4 @@
-# Copyright (c) 2023 Huawei Device Co., Ltd.
+# Copyright (c) 2023-2024 Huawei Device Co., Ltd.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -10,6 +10,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+import("../../../dlp_permission_service.gni")
 
 group("fuzztest") {
   testonly = true
@@ -38,7 +40,8 @@ group("fuzztest") {
     "getsandboxexternalauthorizationstub_fuzzer:GetSandboxExternalAuthorizationStubFuzzTest",
     "installdlpsandbox_fuzzer:InstallDlpSandboxFuzzTest",
     "installdlpsandboxstub_fuzzer:InstallDlpSandboxStubFuzzTest",
-    "isDLPFeatureProvided_fuzzer:IsDLPFeatureProvidedFuzzTest",
+    "isdlpfeatureprovided_fuzzer:IsDlpFeatureProvidedFuzzTest",
+    "isdlpfeatureprovidedstub_fuzzer:IsDlpFeatureProvidedFuzzStubTest",
     "isindlpsandbox_fuzzer:IsInDlpSandboxFuzzTest",
     "isindlpsandboxstub_fuzzer:IsInDlpSandboxStubFuzzTest",
     "parsecert_fuzzer:ParseCertFuzzTest",
@@ -65,4 +68,41 @@ group("fuzztest") {
     "unregisteropendlpfilecallback_fuzzer:UnRegisterOpenDlpFileCallbackFuzzTest",
     "unregisteropendlpfilecallbackstub_fuzzer:UnRegisterOpenDlpFileCallbackStubFuzzTest",
   ]
+}
+
+config("napi_fuzz_config") {
+  include_dirs = [
+    "${dlp_root_dir}/services/dlp_permission/sa/sa_common",
+    "${dlp_root_dir}/interfaces/inner_api/dlp_permission/include",
+  ]
+  cflags = [
+    "-g",
+    "-O0",
+    "-Wno-unused-variable",
+    "-fno-omit-frame-pointer",
+  ]
+  configs = [ "${dlp_root_dir}/config:coverage_flags" ]
+  cflags_cc = [ "-DHILOG_ENABLE" ]
+}
+
+config("stub_fuzz_config") {
+  include_dirs = []
+  configs = [ ":napi_fuzz_config" ]
+  include_dirs += [
+    "//third_party/json/include",
+    "${dlp_root_dir}/frameworks/common/include",
+    "${dlp_root_dir}/frameworks/dlp_permission/include",
+    "${dlp_root_dir}/services/dlp_permission/sa/adapt",
+    "${dlp_root_dir}/services/dlp_permission/sa/callback/dlp_sandbox_change_callback/",
+    "${dlp_root_dir}/services/dlp_permission/sa/callback/open_dlp_file_callback/",
+    "${dlp_root_dir}/services/dlp_permission/sa/mock",
+    "${dlp_root_dir}/services/dlp_permission/sa/sa_main",
+    "${dlp_root_dir}/services/dlp_permission/sa/storage/include",
+  ]
+}
+
+config("stub_fuzz_need_skip_timer_config") {
+  cflags_cc = []
+  configs = [ ":stub_fuzz_config" ]
+  cflags_cc += [ "-DDLP_FUZZ_TEST" ]
 }

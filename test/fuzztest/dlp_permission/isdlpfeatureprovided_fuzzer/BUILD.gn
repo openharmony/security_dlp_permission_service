@@ -1,4 +1,4 @@
-# Copyright (c) 2023 Huawei Device Co., Ltd.
+# Copyright (c) 2024 Huawei Device Co., Ltd.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -17,25 +17,13 @@ import("../../../../dlp_permission_service.gni")
 
 module_output_path = "dlp_permission_service/dlp_permission_service"
 
-ohos_fuzztest("IsDLPFeatureProvidedFuzzTest") {
+ohos_fuzztest("IsDlpFeatureProvidedFuzzTest") {
   module_out_path = module_output_path
   fuzz_config_file =
-      "${dlp_root_dir}/test/fuzztest/dlp_permission/isDLPFeatureProvided_fuzzer"
+      "${dlp_root_dir}/test/fuzztest/dlp_permission/isdlpfeatureprovided_fuzzer"
 
-  include_dirs = [
-    "${dlp_root_dir}/services/dlp_permission/sa/sa_common",
-    "${dlp_root_dir}/interfaces/inner_api/dlp_permission/include",
-  ]
-  cflags = [
-    "-g",
-    "-O0",
-    "-Wno-unused-variable",
-    "-fno-omit-frame-pointer",
-  ]
-  configs = [ "${dlp_root_dir}/config:coverage_flags" ]
-
-  cflags_cc = [ "-DHILOG_ENABLE" ]
-  sources = [ "isDLPFeatureProvided_fuzzer.cpp" ]
+  configs = [ "${dlp_root_dir}/test/fuzztest/dlp_permission:napi_fuzz_config" ]
+  sources = [ "isdlpfeatureprovided_fuzzer.cpp" ]
 
   deps = [
     "${dlp_root_dir}/interfaces/inner_api/dlp_permission:libdlp_permission_sdk",

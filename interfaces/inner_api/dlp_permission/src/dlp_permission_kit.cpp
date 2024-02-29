@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -20,7 +20,6 @@
 #include "datetime_ex.h"
 #include "dlp_permission_client.h"
 #include "dlp_permission_log.h"
-#include "parameters.h"
 #include "permission_policy.h"
 
 namespace OHOS {
@@ -29,7 +28,6 @@ namespace DlpPermission {
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "DlpPermissionKit"};
 const int64_t TIME_WAIT_TIME_OUT = 10;
-const std::string DLP_ENABEL = "const.dlp.dlp_enable";
 }  // namespace
 
 void ClientGenerateDlpCertificateCallback::OnGenerateDlpCertificate(int32_t result, const std::vector<uint8_t>& cert)
@@ -237,8 +235,7 @@ int32_t DlpPermissionKit::GetSandboxAppConfig(std::string& configInfo)
 
 int32_t DlpPermissionKit::IsDLPFeatureProvided(bool& isProvideDLPFeature)
 {
-    isProvideDLPFeature = OHOS::system::GetBoolParameter(DLP_ENABEL, false);
-    return DLP_OK;
+    return DlpPermissionClient::GetInstance().IsDLPFeatureProvided(isProvideDLPFeature);
 }
 }  // namespace DlpPermission
 }  // namespace Security

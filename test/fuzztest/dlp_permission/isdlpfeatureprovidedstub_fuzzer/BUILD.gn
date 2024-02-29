@@ -1,4 +1,4 @@
-# Copyright (c) 2023 Huawei Device Co., Ltd.
+# Copyright (c) 2024 Huawei Device Co., Ltd.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -17,21 +17,19 @@ import("../../../../dlp_permission_service.gni")
 
 module_output_path = "dlp_permission_service/dlp_permission_service"
 
-ohos_fuzztest("InstallDlpSandboxStubFuzzTest") {
+ohos_fuzztest("IsDlpFeatureProvidedFuzzStubTest") {
   module_out_path = module_output_path
-  fuzz_config_file = "${dlp_root_dir}/test/fuzztest/dlp_permission/installdlpsandboxstub_fuzzer"
-
-  configs = [ "${dlp_root_dir}/test/fuzztest/dlp_permission:stub_fuzz_config" ]
+  fuzz_config_file = "${dlp_root_dir}/test/fuzztest/dlp_permission/isdlpfeatureprovidedstub_fuzzer"
+  configs = [ "${dlp_root_dir}/test/fuzztest/dlp_permission:stub_fuzz_need_skip_timer_config" ]
   sources = [
     "${dlp_root_dir}/services/dlp_permission/sa/sa_main/dlp_permission_service.cpp",
-    "installdlpsandboxstub_fuzzer.cpp",
+    "${dlp_root_dir}/services/dlp_permission/sa/sa_main/dlp_permission_stub.cpp",
+    "isdlpfeatureprovidedstub_fuzzer.cpp",
   ]
-
   deps = [
     "${dlp_root_dir}/interfaces/inner_api/dlp_permission:libdlp_permission_sdk",
     "${dlp_root_dir}/services/dlp_permission/sa:dlp_permission_service",
   ]
-
   external_deps = [
     "ability_base:want",
     "ability_runtime:app_manager",

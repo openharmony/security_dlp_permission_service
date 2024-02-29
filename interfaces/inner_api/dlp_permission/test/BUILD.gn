@@ -60,6 +60,7 @@ ohos_unittest("dlp_permission_kit_test") {
     "bundle_framework:appexecfwk_core",
     "c_utils:utils",
     "hilog:libhilog",
+    "init:libbegetutil",
     "ipc:ipc_core",
   ]
 }

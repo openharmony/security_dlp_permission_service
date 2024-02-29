@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -81,15 +81,15 @@ public:
     int32_t SetSandboxAppConfig(const std::string& configInfo) override;
     int32_t CleanSandboxAppConfig() override;
     int32_t GetSandboxAppConfig(std::string& configInfo) override;
+    int32_t IsDLPFeatureProvided(bool& isProvideDLPFeature) override;
 
     int32_t SetMDMPolicy(const std::vector<std::string>& appIdList) override;
     int32_t GetMDMPolicy(std::vector<std::string>& appIdList) override;
     int32_t RemoveMDMPolicy() override;
-
+    void StartTimer() override;
     int Dump(int fd, const std::vector<std::u16string>& args) override;
 
 private:
-    bool Initialize() const;
     void RemoveUninstallInfo();
     bool InsertDlpSandboxInfo(DlpSandboxInfo& sandboxInfo, bool hasRetention);
     uint32_t DeleteDlpSandboxInfo(const std::string& bundleName, int32_t appIndex, int32_t userId);
@@ -98,7 +98,6 @@ private:
     int32_t UninstallDlpSandboxApp(const std::string& bundleName, int32_t appIndex, int32_t userId);
     int32_t SandboxConfigOperate(std::string& configInfo, SandboxConfigOperationEnum operationEnum);
     void TerminalService();
-    void StartTimer();
     void GetCfgFilesList(std::vector<std::string> &cfgFilesList);
     void GetConfigFileValue(const std::string &cfgFile, std::vector<std::string> &typeList);
     std::vector<std::string> InitConfig();

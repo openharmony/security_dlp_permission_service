@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -31,6 +31,8 @@
 #include "hex_string.h"
 #include "open_dlp_file_callback.h"
 #undef private
+#include "parameters.h"
+#include "param_wrapper.h"
 #include "permission_policy.h"
 #include "securec.h"
 #include "token_setproc.h"
@@ -76,6 +78,10 @@ const std::string TEST_URI = "datashare:///media/file/8";
 const std::string TEST_UNEXIST_URI = "datashare:///media/file/1";
 static const uint8_t ARRAY_CHAR_SIZE = 62;
 static const char CHAR_ARRAY[] = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+static const std::string DLP_ENABEL = "const.dlp.dlp_enable";
+static const std::string DEVICE_TYPE = "const.product.devicetype";
+// use when the device does not support query through system parameters but system is support dlp feature like rk
+static const std::string DEFAULT_DEVICE = "default";
 }  // namespace
 
 static uint8_t GetRandNum()
@@ -203,6 +209,17 @@ static void TestRecoverProcessInfo(int32_t uid, AccessTokenID tokenId)
 {
     ASSERT_EQ(DLP_OK, setuid((uid)));
     ASSERT_TRUE(TestSetSelfTokenId((tokenId)));
+}
+
+static bool CheckProvideFeature()
+{
+    std::string device;
+    int32_t res = OHOS::system::GetStringParameter(DEVICE_TYPE, device, "");
+    DLP_LOG_DEBUG(LABEL, "CheckProvideFeature get DEVICE_TYPE res=%{public}d, device=%{public}s.", res, device.c_str());
+    if (res == 0 && DEFAULT_DEVICE == device) {
+        return true;
+    }
+    return OHOS::system::GetBoolParameter(DLP_ENABEL, false);
 }
 
 void DlpPermissionKitTest::SetUpTestCase()
@@ -1372,12 +1389,15 @@ HWTEST_F(DlpPermissionKitTest, RemoveMDMPolicy001, TestSize.Level1)
  * @tc.name: IsDLPFeatureProvided001
  * @tc.desc: IsDLPFeatureProvided.
  * @tc.type: FUNC
- * @tc.require: SR20231214647387
+ * @tc.require:
  */
 HWTEST_F(DlpPermissionKitTest, IsDLPFeatureProvided001, TestSize.Level1)
 {
+    DLP_LOG_DEBUG(LABEL, "Start IsDLPFeatureProvided001.");
     bool isProvided;
     ASSERT_EQ(DLP_OK, DlpPermissionKit::IsDLPFeatureProvided(isProvided));
+    DLP_LOG_DEBUG(LABEL, "IsDLPFeatureProvided001 isProvided=%{public}d.", isProvided);
+    ASSERT_EQ(isProvided, CheckProvideFeature());
 }
 }  // namespace DlpPermission
 }  // namespace Security

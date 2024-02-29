@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,25 +13,19 @@
  * limitations under the License.
  */
 
-#include "isDLPFeatureProvided_fuzzer.h"
-#include <iostream>
-#include <string>
-#include <vector>
-#include <thread>
-#include "dlp_permission_log.h"
-#include "dlp_permission.h"
+#include "isdlpfeatureprovidedstub_fuzzer.h"
 
 using namespace OHOS::Security::DlpPermission;
 namespace OHOS {
-static void FuzzTest(const uint8_t* data, size_t size)
+bool IsDlpFeatureProvidedFuzzStubTest(const uint8_t* data, size_t size)
 {
-    bool inSandbisDLPFeatureProvided;
-    DlpPermissionKit::IsDLPFeatureProvided(inSandbisDLPFeatureProvided);
-}
-
-bool IsDLPFeatureProvidedFuzzTest(const uint8_t* data, size_t size)
-{
-    FuzzTest(data, size);
+    MessageParcel datas;
+    datas.WriteInterfaceToken(IDlpPermissionService::GetDescriptor());
+    uint32_t code = static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::IS_DLP_FEATURE_PROVIDED);
+    MessageParcel reply;
+    MessageOption option;
+    auto service = std::make_shared<DlpPermissionService>(SA_ID_DLP_PERMISSION_SERVICE, true);
+    service->OnRemoteRequest(code, datas, reply, option);
     return true;
 }
 }  // namespace OHOS
@@ -40,6 +34,6 @@ bool IsDLPFeatureProvidedFuzzTest(const uint8_t* data, size_t size)
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 {
     /* Run your code on data */
-    OHOS::IsDLPFeatureProvidedFuzzTest(data, size);
+    OHOS::IsDlpFeatureProvidedFuzzStubTest(data, size);
     return 0;
 }
