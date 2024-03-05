@@ -40,19 +40,21 @@
 
 static constexpr unsigned int SECURITY_DOMAIN_DLP_PERMISSION = 0xD005A04;
 
-#define DLP_LOG_DEBUG(label, fmt, ...) \
-    OHOS::HiviewDFX::HiLog::Debug(label, "[%{public}s]:" fmt, __func__, ##__VA_ARGS__)
-#define DLP_LOG_INFO(label, fmt, ...) OHOS::HiviewDFX::HiLog::Info(label, "[%{public}s:%{public}d]:" fmt, \
-    __func__, __LINE__, ##__VA_ARGS__)
-#define DLP_LOG_WARN(label, fmt, ...) OHOS::HiviewDFX::HiLog::Warn(label, "[%{public}s:%{public}d]:" fmt, \
-    __func__, __LINE__, ##__VA_ARGS__)
-#define DLP_LOG_ERROR(label, fmt, ...) \
-    OHOS::HiviewDFX::HiLog::Error(label, "[%{public}s:%{public}d]:" fmt, \
-        __func__, __LINE__, ##__VA_ARGS__)
-#define DLP_LOG_FATAL(label, fmt, ...) \
-    OHOS::HiviewDFX::HiLog::Fatal(label, "[%{public}s:%{public}d]:" fmt, \
-        __func__, __LINE__, ##__VA_ARGS__)
-
+#define DLP_LOG_FATAL(label, fmt, ...)            \
+    ((void)HILOG_IMPL(label.type, LOG_FATAL, label.domain, label.tag, \
+    "[%{public}s:%{public}d]" fmt, __FUNCTION__, __LINE__, ##__VA_ARGS__))
+#define DLP_LOG_ERROR(label, fmt, ...)            \
+    ((void)HILOG_IMPL(label.type, LOG_ERROR, label.domain, label.tag, \
+    "[%{public}s:%{public}d]" fmt, __FUNCTION__, __LINE__, ##__VA_ARGS__))
+#define DLP_LOG_WARN(label, fmt, ...)            \
+    ((void)HILOG_IMPL(label.type, LOG_WARN, label.domain, label.tag, \
+    "[%{public}s:%{public}d]" fmt, __FUNCTION__, __LINE__, ##__VA_ARGS__))
+#define DLP_LOG_INFO(label, fmt, ...)            \
+    ((void)HILOG_IMPL(label.type, LOG_INFO, label.domain, label.tag, \
+    "[%{public}s:%{public}d]" fmt, __FUNCTION__, __LINE__, ##__VA_ARGS__))
+#define DLP_LOG_DEBUG(label, fmt, ...)            \
+    ((void)HILOG_IMPL(label.type, LOG_DEBUG, label.domain, label.tag, \
+    "[%{public}s:%{public}d]" fmt, __FUNCTION__, __LINE__, ##__VA_ARGS__))
 #endif  // __cplusplus
 
 #else
