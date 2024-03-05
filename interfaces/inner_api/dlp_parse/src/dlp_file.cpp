@@ -487,7 +487,7 @@ bool DlpFile::ParseCert()
         DLP_LOG_ERROR(LABEL, "ParseCert failed, %{public}s", strerror(errno));
         return false;
     }
-    cert_.size = fz.st_size;
+    cert_.size = static_cast<uint32_t>(fz.st_size);
     cert_.data = new (std::nothrow) uint8_t[cert_.size];
     if (cert_.data == nullptr) {
         DLP_LOG_ERROR(LABEL, "new failed");
@@ -500,7 +500,7 @@ bool DlpFile::ParseCert()
         return false;
     }
 
-    uint32_t size = read(fd, cert_.data, cert_.size);
+    uint32_t size = static_cast<uint32_t>(read(fd, cert_.data, cert_.size));
     if (size != cert_.size) {
         DLP_LOG_ERROR(LABEL, "read failed, %{public}s", strerror(errno));
         (void)close(fd);

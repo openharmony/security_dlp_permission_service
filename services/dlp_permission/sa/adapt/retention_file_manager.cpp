@@ -61,6 +61,10 @@ bool RetentionFileManager::Init()
             return true;
         }
         Json callbackInfoJson = Json::parse(constraintsConfigStr, nullptr, false);
+        if (callbackInfoJson.is_discarded()) {
+            DLP_LOG_ERROR(LABEL, "callbackInfoJson is discarded");
+            return false;
+        }
         sandboxJsonManager_->FromJson(callbackInfoJson);
     } else {
         if (fileOperator_->InputFileByPathAndContent(DLP_RETENTION_JSON_PATH, "") != DLP_OK) {

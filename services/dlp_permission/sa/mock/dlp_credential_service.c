@@ -170,6 +170,11 @@ static void* PackPolicyCallbackTask(void* inputTaskParams)
         FreePackPolicyCallbackTaskPara(taskParams);
         return NULL;
     }
+    if (taskParams->packParams == NULL) {
+        DLP_LOG_ERROR("packParams is null");
+        FreePackPolicyCallbackTaskPara(taskParams);
+        return NULL;
+    }
     const char* exInfo = "DlpRestorePolicyTest_NormalInput_ExtraInfo";
     EncAndDecOptions encAndDecOptions = {
         .opt = ALLOW_RECEIVER_DECRYPT_WITHOUT_USE_CLOUD,
@@ -223,7 +228,6 @@ static void* RestorePolicyCallbackTask(void* inputTaskParams)
         taskParams->userId, true) != DLP_SUCCESS) {
         taskParams->errorCode = DLP_ERR_CONNECTION_NO_PERMISSION;
         DLP_LOG_ERROR("get ownerAccount error");
-        FreeRestorePolicyCallbackTaskPara(taskParams);
         goto end;
     }
     outParams.data = taskParams->encData->data;

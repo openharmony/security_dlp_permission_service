@@ -1920,14 +1920,14 @@ napi_value NapiDlpPermission::JsConstructor(napi_env env, napi_callback_info cbi
     }
     napi_status wrapStatus = napi_wrap(env, thisVar, obj,
         [](napi_env env, void* data, void* hint) {
-            DLP_LOG_INFO(LABEL, "native obj destructed by js callback %{private}p", data);
+            DLP_LOG_INFO(LABEL, "native obj destructed by js callback");
             return;
         },
         nullptr, nullptr);
     if (wrapStatus != napi_ok) {
         DLP_LOG_ERROR(LABEL, "Wrap js and native option failed");
     } else {
-        DLP_LOG_INFO(LABEL, "native obj construct by %{private}p", obj);
+        DLP_LOG_INFO(LABEL, "native obj construct");
     }
     if (argc < PARAM_SIZE_TWO) {
         DLP_LOG_ERROR(LABEL, "property is null");

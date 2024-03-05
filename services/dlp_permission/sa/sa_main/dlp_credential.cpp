@@ -477,6 +477,10 @@ static int32_t AdapterData(const std::vector<uint8_t>& offlineCert, bool isOwner
     if (!offlineCert.empty()) {
         std::string offlineEncDataJsonStr(offlineCert.begin(), offlineCert.end());
         offlineJsonObj = unordered_json::parse(offlineEncDataJsonStr, nullptr, false);
+        if (offlineJsonObj.is_discarded()) {
+            DLP_LOG_ERROR(LABEL, "offlineJsonObj is discarded");
+            return DLP_SERVICE_ERROR_JSON_OPERATE_FAIL;
+        }
     }
     std::string ownerAccountId = "";
     if (isOwner) {
@@ -586,7 +590,7 @@ int32_t ParseUint8TypedArrayToStringVector(uint8_t *policy, uint32_t *policyLen,
     }
     int32_t offset = sizeof(uint32_t);
     for (uint32_t i = 0; i < count; i++) {
-        int32_t length = reinterpret_cast<uint32_t *>(policy + offset)[0];
+        int32_t length = reinterpret_cast<int32_t *>(policy + offset)[0];
         offset += sizeof(uint32_t);
         appIdList.push_back(std::string(reinterpret_cast<char *>(policy + offset), length));
         offset += length;
@@ -658,6 +662,10 @@ int32_t DlpCredential::GetMDMPolicy(std::vector<std::string>& appIdList)
 {
     uint32_t policyLen = MAX_APPID_LIST_NUM * MAX_APPID_LENGTH;
     uint8_t *policy = new (std::nothrow)uint8_t[policyLen];
+    if (policy == nullptr) {
+        DLP_LOG_WARN(LABEL, "alloc policy failed.");
+        return DLP_CREDENTIAL_ERROR_MEMORY_OPERATE_FAIL;
+    }
     int32_t res = DLP_GetPolicy(PolicyType::AUTHORIZED_APPLICATION_LIST, policy, &policyLen);
     if (res != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "GetMDMPolicy request fail, error: %{public}d", res);
