@@ -23,6 +23,7 @@ ohos_shared_library("libdlp_fuse") {
     debug = false
   }
 
+  innerapi_tags = [ "platformsdk" ]
   subsystem_name = "security"
   part_name = "dlp_permission_service"
   output_name = "libdlp_fuse"
