@@ -56,6 +56,10 @@ bool VisitRecordFileManager::Init()
         }
         if (!constraintsConfigStr.empty()) {
             Json callbackInfoJson = Json::parse(constraintsConfigStr, nullptr, false);
+            if (callbackInfoJson.is_discarded()) {
+                DLP_LOG_ERROR(LABEL, "callbackInfoJson is discarded");
+                return false;
+            }
             visitRecordJsonManager_->FromJson(callbackInfoJson);
         }
     }

@@ -87,14 +87,19 @@ int32_t FileOperator::InputFileByPathAndContent(const std::string& path, const s
 
 int32_t FileOperator::GetFileContentByPath(const std::string& path, std::string& content)
 {
-    if (!IsExistFile(path)) {
-        DLP_LOG_INFO(LABEL, "cannot find file, path = %{public}s", path.c_str());
+    char realPath[PATH_MAX] = {0};
+    if ((realpath(path.c_str(), realPath) == nullptr) && (errno != ENOENT)) {
+        DLP_LOG_ERROR(LABEL, "Realpath %{private}s failed, %{public}s.", path.c_str(), strerror(errno));
+        return DLP_RETENTION_FILE_FIND_FILE_ERROR;
+    }
+    if (!IsExistFile(realPath)) {
+        DLP_LOG_INFO(LABEL, "cannot find file, path = %{public}s", realPath);
         return DLP_RETENTION_FILE_FIND_FILE_ERROR;
     }
     std::stringstream buffer;
-    std::ifstream i(path);
+    std::ifstream i(realPath);
     if (!i.is_open()) {
-        DLP_LOG_INFO(LABEL, "cannot open file %{public}s, errno %{public}d.", path.c_str(), errno);
+        DLP_LOG_INFO(LABEL, "cannot open file %{public}s, errno %{public}d.", realPath, errno);
         return DLP_RETENTION_COMMON_FILE_OPEN_FAILED;
     }
     buffer << i.rdbuf();

@@ -319,6 +319,9 @@ static int32_t GetPolicyJson(const unordered_json& permJson, unordered_json& pla
         permJson.at(ONLINE_POLICY_CONTENT).get_to(plainHexPolicy);
         std::string plainPolicy;
         TransHexStringToByte(plainPolicy, plainHexPolicy);
+        if (!unordered_json::accept(plainPolicy)) {
+            return DLP_PARSE_ERROR_VALUE_INVALID;
+        }
         plainPolicyJson = unordered_json::parse(plainPolicy);
         if (plainPolicyJson.is_discarded() || (!plainPolicyJson.is_object())) {
             DLP_LOG_ERROR(LABEL, "JsonObj is discarded");
@@ -395,7 +398,7 @@ static int32_t DeserializeFileEncJson(PermissionPolicy& policy, unordered_json& 
     }
     uint8_t* key = nullptr;
     uint32_t keyLen = 0;
-    uint32_t res = ReadUint8ArrayFromJson(fileEncJson, &key, keyLen, AESKEY, AESKEY_LEN);
+    int32_t res = ReadUint8ArrayFromJson(fileEncJson, &key, keyLen, AESKEY, AESKEY_LEN);
     if (res != DLP_OK) {
         return res;
     }

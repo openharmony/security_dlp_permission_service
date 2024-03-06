@@ -116,7 +116,7 @@ int32_t DlpSandboxChangeCallbackManager::RemoveCallback(int32_t pid, bool &resul
         result = false;
         return DLP_CALLBACK_PARAM_INVALID;
     }
-    if (callbackDeathRecipient_ != nullptr) {
+    if (callbackDeathRecipient_ != nullptr && goalCallback->second.callbackObject_ != nullptr) {
         goalCallback->second.callbackObject_->RemoveDeathRecipient(callbackDeathRecipient_);
     }
     goalCallback->second.callbackObject_ = nullptr;
