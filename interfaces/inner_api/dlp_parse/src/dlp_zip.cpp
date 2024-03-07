@@ -154,27 +154,12 @@ static zipFile OpenZipFile(int fd)
     return uf;
 }
 
-static bool CheckAndOpenFile(const char *unZipName, int32_t& outFd)
-{
-    char realPath[PATH_MAX] = {0};
-    if ((realpath(unZipName, realPath) == nullptr) && (errno != ENOENT)) {
-        DLP_LOG_ERROR(LABEL, "Realpath %{private}s failed, %{public}s.", unZipName, strerror(errno));
-        return DLP_ZIP_FAIL;
-    }
-    unZipName = realPath;
-    outFd = open(unZipName, O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
-    if (outFd == -1) {
-        DLP_LOG_ERROR(LABEL, "open fail %{public}s errno %{public}d", unZipName, errno);
-        return DLP_ZIP_FAIL;
-    }
-    return DLP_ZIP_OK;
-}
-
 int32_t UnzipSpecificFile(int32_t fd, const char*nameInZip, const char *unZipName)
 {
     zipFile uf;
-    int32_t outFd;
-    if (CheckAndOpenFile(unZipName, outFd) != DLP_ZIP_OK) {
+    int32_t outFd = open(unZipName, O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
+    if (outFd == -1) {
+        DLP_LOG_ERROR(LABEL, "open fail %{public}s errno %{public}d", unZipName, errno);
         return DLP_ZIP_FAIL;
     }
     Defer p(nullptr, [&](...) {
