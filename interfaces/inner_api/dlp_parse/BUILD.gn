@@ -112,6 +112,7 @@ ohos_shared_library("libdlpparse_inner") {
   public_configs = [ ":dlpparse_public_config" ]
   configs = [ "${dlp_root_dir}/config:coverage_flags" ]
 
+  innerapi_tags = [ "platformsdk" ]
   part_name = "dlp_permission_service"
   subsystem_name = "security"
 
