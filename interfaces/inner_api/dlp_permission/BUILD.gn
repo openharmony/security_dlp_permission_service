@@ -45,7 +45,6 @@ ohos_shared_library("libdlp_permission_common_interface") {
 
   include_dirs = [
     "include",
-    "//third_party/json/include",
     "${dlp_root_dir}/frameworks/common/include",
     "${dlp_root_dir}/interfaces/inner_api/dlp_permission/include",
   ]
@@ -53,6 +52,8 @@ ohos_shared_library("libdlp_permission_common_interface") {
   sources = [ "src/dlp_permission_public_interface.cpp" ]
 
   configs = [ "${dlp_root_dir}/config:coverage_flags" ]
+
+  external_deps = [ "json:nlohmann_json_static" ]
 }
 
 ohos_shared_library("libdlp_permission_sdk") {

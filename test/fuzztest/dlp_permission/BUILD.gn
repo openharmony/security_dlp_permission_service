@@ -89,7 +89,6 @@ config("stub_fuzz_config") {
   include_dirs = []
   configs = [ ":napi_fuzz_config" ]
   include_dirs += [
-    "//third_party/json/include",
     "${dlp_root_dir}/frameworks/common/include",
     "${dlp_root_dir}/frameworks/dlp_permission/include",
     "${dlp_root_dir}/services/dlp_permission/sa/adapt",
