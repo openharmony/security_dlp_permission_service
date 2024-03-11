@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -986,6 +986,33 @@ int32_t DlpPermissionProxy::GetSandboxAppConfig(std::string& configInfo)
     }
     if (!reply.ReadString(configInfo)) {
         DLP_LOG_ERROR(LABEL, "Read string fail");
+        return DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL;
+    }
+    return requestResult;
+}
+
+int32_t DlpPermissionProxy::IsDLPFeatureProvided(bool& isProvideDLPFeature)
+{
+    MessageParcel data;
+    if (!data.WriteInterfaceToken(DlpPermissionProxy::GetDescriptor())) {
+        DLP_LOG_ERROR(LABEL, "Write descriptor failed.");
+        return DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL;
+    }
+    MessageParcel reply;
+    MessageOption option(MessageOption::TF_SYNC);
+    sptr<IRemoteObject> remote = Remote();
+    if (remote == nullptr) {
+        DLP_LOG_ERROR(LABEL, "Remote service is null.");
+        return DLP_SERVICE_ERROR_SERVICE_NOT_EXIST;
+    }
+    int32_t requestResult = remote->SendRequest(
+        static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::IS_DLP_FEATURE_PROVIDED), data, reply, option);
+    if (requestResult != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "Request fail, result=%{public}d.", requestResult);
+        return requestResult;
+    }
+    if (!reply.ReadBool(isProvideDLPFeature)) {
+        DLP_LOG_ERROR(LABEL, "Read isProvideDLPFeature failed.");
         return DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL;
     }
     return requestResult;

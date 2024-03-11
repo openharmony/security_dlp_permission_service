@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -688,6 +688,17 @@ int32_t DlpPermissionStub::GetSandboxAppConfigInner(MessageParcel& data, Message
     return DLP_OK;
 }
 
+int32_t DlpPermissionStub::IsDLPFeatureProvidedInner(MessageParcel& data, MessageParcel& reply)
+{
+    bool isProvideDLPFeature;
+    this->IsDLPFeatureProvided(isProvideDLPFeature);
+    if (!reply.WriteBool(isProvideDLPFeature)) {
+        DLP_LOG_ERROR(LABEL, "Write isProvideDLPFeature fail.");
+        return DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL;
+    }
+    return DLP_OK;
+}
+
 void DlpPermissionStub::InitMDMPolicy()
 {
     requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::SET_MDM_POLICY)] =
@@ -716,6 +727,8 @@ void DlpPermissionStub::InitTimerFuncMap()
         {.funcType = &DlpPermissionStub::ClearUnreservedSandboxInner, .isNeedStartTimer = true};
     requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::GET_VISTI_FILE_RECORD_LIST)] =
         {.funcType = &DlpPermissionStub::GetDLPFileVisitRecordInner, .isNeedStartTimer = true};
+    requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::IS_DLP_FEATURE_PROVIDED)] =
+        {.funcType = &DlpPermissionStub::IsDLPFeatureProvidedInner, .isNeedStartTimer = true};
 }
 
 DlpPermissionStub::DlpPermissionStub()

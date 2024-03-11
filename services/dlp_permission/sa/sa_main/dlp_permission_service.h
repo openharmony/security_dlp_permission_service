@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -81,6 +81,7 @@ public:
     int32_t SetSandboxAppConfig(const std::string& configInfo) override;
     int32_t CleanSandboxAppConfig() override;
     int32_t GetSandboxAppConfig(std::string& configInfo) override;
+    int32_t IsDLPFeatureProvided(bool& isProvideDLPFeature) override;
 
     int32_t SetMDMPolicy(const std::vector<std::string>& appIdList) override;
     int32_t GetMDMPolicy(std::vector<std::string>& appIdList) override;

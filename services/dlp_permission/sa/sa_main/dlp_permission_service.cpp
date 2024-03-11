@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -39,6 +39,8 @@
 #if defined(DLP_DEBUG_ENABLE) && DLP_DEBUG_ENABLE == 1
 #include "parameter.h"
 #endif
+#include "parameters.h"
+#include "param_wrapper.h"
 #include "permission_policy.h"
 #include "system_ability_definition.h"
 #include "visit_record_file_manager.h"
@@ -59,6 +61,10 @@ static const int REPEAT_TIME = 5;
 static const std::string DLP_CONFIG = "etc/dlp_permission/dlp_config.json";
 static const std::string SUPPORT_FILE_TYPE = "support_file_type";
 static const std::string DEAULT_DLP_CONFIG = "/system/etc/dlp_config.json";
+static const std::string DLP_ENABEL = "const.dlp.dlp_enable";
+static const std::string DEVICE_TYPE = "const.product.devicetype";
+// use when the device does not support query through system parameters but system is support dlp feature like rk
+static const std::string DEFAULT_DEVICE = "default";
 }
 REGISTER_SYSTEM_ABILITY_BY_ID(DlpPermissionService, SA_ID_DLP_PERMISSION_SERVICE, true);
 
@@ -796,6 +802,19 @@ int32_t DlpPermissionService::CleanSandboxAppConfig()
 int32_t DlpPermissionService::GetSandboxAppConfig(std::string& configInfo)
 {
     return SandboxConfigOperate(configInfo, SandboxConfigOperationEnum::GET);
+}
+
+int32_t DlpPermissionService::IsDLPFeatureProvided(bool& isProvideDLPFeature)
+{
+    std::string device;
+    int32_t res = OHOS::system::GetStringParameter(DEVICE_TYPE, device, "");
+    DLP_LOG_DEBUG(LABEL, "Get DEVICE_TYPE res=%{public}d, device=%{public}s.", res, device.c_str());
+    if (res == 0 && DEFAULT_DEVICE == device) {
+        isProvideDLPFeature = true;
+        return DLP_OK;
+    }
+    isProvideDLPFeature = OHOS::system::GetBoolParameter(DLP_ENABEL, false);
+    return DLP_OK;
 }
 
 int32_t DlpPermissionService::SandboxConfigOperate(std::string& configInfo, SandboxConfigOperationEnum operationEnum)

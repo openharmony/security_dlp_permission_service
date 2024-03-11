@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -584,6 +584,16 @@ int32_t DlpPermissionClient::GetSandboxAppConfig(std::string& configInfo)
         return DLP_CALLBACK_SA_WORK_ABNORMAL;
     }
     return proxy->GetSandboxAppConfig(configInfo);
+}
+
+int32_t DlpPermissionClient::IsDLPFeatureProvided(bool& isProvideDLPFeature)
+{
+    auto proxy = GetProxy(true);
+    if (proxy == nullptr) {
+        DLP_LOG_ERROR(LABEL, "Proxy is null.");
+        return DLP_SERVICE_ERROR_SERVICE_NOT_EXIST;
+    }
+    return proxy->IsDLPFeatureProvided(isProvideDLPFeature);
 }
 
 bool DlpPermissionClient::StartLoadDlpPermissionSa()
