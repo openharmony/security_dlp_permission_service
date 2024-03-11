@@ -25,12 +25,7 @@
 extern "C" {
 #endif
 
-#ifdef _ARM64_
-static const std::string LIB_PATH = "/system/lib64/";
-#else
-static const std::string LIB_PATH = "/system/lib/";
-#endif
-static const std::string LIBFUSE_LIB_PATH = LIB_PATH + "libfuse.z.so";
+static const std::string LIBFUSE_LIB_PATH = "libfuse.z.so";
 
 typedef int (*AddArgsT)(struct fuse_args *args, const char *arg);
 typedef void (*FreeArgsT)(struct fuse_args *args);
