@@ -17,7 +17,7 @@
 
 using namespace OHOS::Security::DlpPermission;
 namespace OHOS {
-bool IsDlpFeatureProvidedFuzzStubTest(const uint8_t* data, size_t size)
+bool IsDlpFeatureProvidedStubFuzzTest(const uint8_t* data, size_t size)
 {
     MessageParcel datas;
     datas.WriteInterfaceToken(IDlpPermissionService::GetDescriptor());
@@ -34,6 +34,6 @@ bool IsDlpFeatureProvidedFuzzStubTest(const uint8_t* data, size_t size)
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 {
     /* Run your code on data */
-    OHOS::IsDlpFeatureProvidedFuzzStubTest(data, size);
+    OHOS::IsDlpFeatureProvidedStubFuzzTest(data, size);
     return 0;
 }
