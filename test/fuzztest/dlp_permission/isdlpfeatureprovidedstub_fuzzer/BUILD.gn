@@ -17,7 +17,7 @@ import("../../../../dlp_permission_service.gni")
 
 module_output_path = "dlp_permission_service/dlp_permission_service"
 
-ohos_fuzztest("IsDlpFeatureProvidedFuzzStubTest") {
+ohos_fuzztest("IsDlpFeatureProvidedStubFuzzTest") {
   module_out_path = module_output_path
   fuzz_config_file = "${dlp_root_dir}/test/fuzztest/dlp_permission/isdlpfeatureprovidedstub_fuzzer"
   configs = [ "${dlp_root_dir}/test/fuzztest/dlp_permission:stub_fuzz_need_skip_timer_config" ]

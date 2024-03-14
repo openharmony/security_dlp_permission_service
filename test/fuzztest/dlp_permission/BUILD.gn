@@ -41,7 +41,7 @@ group("fuzztest") {
     "installdlpsandbox_fuzzer:InstallDlpSandboxFuzzTest",
     "installdlpsandboxstub_fuzzer:InstallDlpSandboxStubFuzzTest",
     "isdlpfeatureprovided_fuzzer:IsDlpFeatureProvidedFuzzTest",
-    "isdlpfeatureprovidedstub_fuzzer:IsDlpFeatureProvidedFuzzStubTest",
+    "isdlpfeatureprovidedstub_fuzzer:IsDlpFeatureProvidedStubFuzzTest",
     "isindlpsandbox_fuzzer:IsInDlpSandboxFuzzTest",
     "isindlpsandboxstub_fuzzer:IsInDlpSandboxStubFuzzTest",
     "parsecert_fuzzer:ParseCertFuzzTest",
