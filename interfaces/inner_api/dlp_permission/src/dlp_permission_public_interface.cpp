@@ -81,7 +81,7 @@ int32_t ParseDlpGeneralInfo(const std::string& generalInfo, GenerateInfoParams& 
         params.version = jsonObj.at(DLP_VERSION).get<uint32_t>();
         params.extraInfo = jsonObj.at(DLP_EXTRA_INFO).get<std::vector<std::string>>();
     } else if (checkParams(params, jsonObj, DLP_VERSION_LOW_CAMEL_CASE, DLP_EXTRA_INFO_LOW_CAMEL_CASE)) {
-        params.version = jsonObj.at(DLP_VERSION_LOW_CAMEL_CASE).get<int32_t>();
+        params.version = jsonObj.at(DLP_VERSION_LOW_CAMEL_CASE).get<uint32_t>();
         params.extraInfo = jsonObj.at(DLP_EXTRA_INFO_LOW_CAMEL_CASE).get<std::vector<std::string>>();
     } else {
         return DLP_PARSE_ERROR_VALUE_INVALID;

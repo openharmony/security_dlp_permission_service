@@ -206,7 +206,7 @@ static void* RestorePolicyCallbackTask(void* inputTaskParams)
         return NULL;
     }
     RestorePolicyCallbackTaskPara* taskParams = (RestorePolicyCallbackTaskPara*)inputTaskParams;
-    if (taskParams->callback == NULL) {
+    if ((taskParams->callback == NULL) || (taskParams->encData == NULL)) {
         DLP_LOG_ERROR("Callback is null");
         FreeRestorePolicyCallbackTaskPara(taskParams);
         return NULL;
