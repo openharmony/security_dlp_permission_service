@@ -144,7 +144,7 @@ int32_t OpenDlpFileCallbackManager::RemoveCallback(int32_t pid, const sptr<IRemo
             continue;
         }
         DLP_LOG_INFO(LABEL, "find callback in %{public}d", pid);
-        if (callbackDeathRecipient_ != nullptr) {
+        if ((callbackDeathRecipient_ != nullptr) && (callback != nullptr)) {
             callback->RemoveDeathRecipient(callbackDeathRecipient_);
         }
         callbackList.erase(callbackIter);
