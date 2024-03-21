@@ -67,9 +67,10 @@ static bool IsNoPermissionError(int errorCode)
     return ((errorCode == DLP_ERR_CONNECTION_VIP_RIGHT_EXPIRED) || (errorCode == DLP_ERR_CONNECTION_NO_PERMISSION));
 }
 
-static bool IsNoAccountError(int errorCode)
+static bool IsNoInternetError(int errorCode)
 {
-    return ((errorCode == DLP_ERR_CREDENTIAL_NOT_EXIST) || (errorCode == DLP_ERR_ACCOUNT_NOT_LOG_IN));
+    return ((errorCode == DLP_ERR_CONNECTION_TIME_OUT) || (errorCode == DLP_ERR_TOKEN_CONNECTION_TIME_OUT) ||
+        (errorCode == DLP_ERR_TOKEN_CONNECTION_FAIL));
 }
 
 static int32_t ConvertCredentialError(int errorCode)
@@ -77,23 +78,23 @@ static int32_t ConvertCredentialError(int errorCode)
     if (errorCode == DLP_SUCCESS) {
         return DLP_OK;
     }
-    if (errorCode == DLP_ERR_TOKEN_CONNECTION_FAIL) {
-        return DLP_CREDENTIAL_ERROR_NO_INTERNET;
-    }
     if (errorCode == DLP_ERR_CONNECTION_POLICY_PERMISSION_EXPIRED) {
         return DLP_CREDENTIAL_ERROR_TIME_EXPIRED;
     }
     if (errorCode == DLP_ERR_APPID_NOT_AUTHORIZED) {
         return DLP_CREDENTIAL_ERROR_APPID_NOT_AUTHORIZED;
     }
-    if (errorCode == DLP_ERR_CONNECTION_TIME_OUT || errorCode == DLP_ERR_TOKEN_CONNECTION_TIME_OUT) {
+    if (errorCode == DLP_ERR_CALLBACK_TIME_OUT) {
         return DLP_CREDENTIAL_ERROR_SERVER_TIME_OUT_ERROR;
+    }
+    if (errorCode == DLP_ERR_ACCOUNT_NOT_LOG_IN) {
+        return DLP_CREDENTIAL_ERROR_NO_ACCOUNT_ERROR;
+    }
+    if (IsNoInternetError(errorCode)) {
+        return DLP_CREDENTIAL_ERROR_NO_INTERNET;
     }
     if (IsNoPermissionError(errorCode)) {
         return DLP_CREDENTIAL_ERROR_NO_PERMISSION_ERROR;
-    }
-    if (IsNoAccountError(errorCode)) {
-        return DLP_CREDENTIAL_ERROR_NO_ACCOUNT_ERROR;
     }
     if (IsDlpCredentialHuksError(errorCode)) {
         return DLP_CREDENTIAL_ERROR_HUKS_ERROR;
