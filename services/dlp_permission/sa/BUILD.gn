@@ -60,7 +60,6 @@ ohos_static_library("dlp_permission_serializer_static") {
   part_name = "dlp_permission_service"
 
   include_dirs = [
-    "//third_party/json/include",
     "sa_common",
     "${dlp_root_dir}/interfaces/inner_api/dlp_permission/include",
     "${dlp_root_dir}/frameworks/common/include",
@@ -78,6 +77,7 @@ ohos_static_library("dlp_permission_serializer_static") {
   external_deps = [
     "c_utils:utils",
     "hilog:libhilog",
+    "json:nlohmann_json_static",
   ]
 
   if (dlp_credential_enable == true &&
@@ -107,7 +107,6 @@ ohos_shared_library("dlp_permission_service") {
     "sa_main",
     "sa_common",
     "storage/include",
-    "//third_party/json/include",
     "${dlp_root_dir}/frameworks/common/include",
     "${dlp_root_dir}/frameworks/dlp_permission/include",
     "${dlp_root_dir}/interfaces/inner_api/dlp_parse/include",
@@ -190,6 +189,7 @@ ohos_shared_library("dlp_permission_service") {
     "hisysevent:libhisysevent",
     "init:libbegetutil",
     "ipc:ipc_core",
+    "json:nlohmann_json_static",
     "kv_store:distributeddata_inner",
     "os_account:libaccountkits",
     "os_account:os_account_innerkits",

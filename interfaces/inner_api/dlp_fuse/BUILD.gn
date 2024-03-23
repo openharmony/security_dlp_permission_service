@@ -32,7 +32,6 @@ ohos_shared_library("libdlp_fuse") {
     "${dlp_root_dir}/frameworks/common/include",
     "${dlp_root_dir}/interfaces/inner_api/dlp_parse/include",
     "${dlp_root_dir}/interfaces/inner_api/dlp_permission/include/",
-    "//third_party/libfuse/include/",
     "include",
   ]
 
@@ -44,14 +43,12 @@ ohos_shared_library("libdlp_fuse") {
 
   configs = [ "${dlp_root_dir}/config:coverage_flags" ]
 
-  deps = [
-    "${dlp_root_dir}/interfaces/inner_api/dlp_parse:libdlpparse_inner",
-    "//third_party/libfuse:libfuse",
-  ]
+  deps = [ "${dlp_root_dir}/interfaces/inner_api/dlp_parse:libdlpparse_inner" ]
 
   external_deps = [
     "c_utils:utils",
     "hilog:libhilog",
+    "libfuse:libfuse",
   ]
 
   cflags_cc = [
