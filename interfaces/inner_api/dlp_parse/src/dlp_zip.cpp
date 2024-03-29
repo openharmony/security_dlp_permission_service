@@ -157,7 +157,7 @@ static zipFile OpenZipFile(int fd)
 int32_t UnzipSpecificFile(int32_t fd, const char*nameInZip, const char *unZipName)
 {
     zipFile uf;
-    int32_t outFd = open(unZipName, O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
+    int32_t outFd = open(unZipName, O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
     if (outFd == -1) {
         DLP_LOG_ERROR(LABEL, "open fail %{public}s errno %{public}d", unZipName, errno);
         return DLP_ZIP_FAIL;
