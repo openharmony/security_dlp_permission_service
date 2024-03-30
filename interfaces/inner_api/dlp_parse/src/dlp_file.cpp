@@ -739,7 +739,7 @@ int32_t DlpFile::GetTempFile(const std::string& workDir, int32_t& tempFile, std:
     }
     std::string rPath(realPath);
     path = rPath + "/dlp" + std::to_string(count++) + ".txt";
-    tempFile = open(path.c_str(), O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+    tempFile = open(path.c_str(), O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
     if (tempFile < 0) {
         DLP_LOG_ERROR(LABEL, "open file fail, %{public}s, realPath %{private}s", strerror(errno), path.c_str());
         return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
@@ -1005,7 +1005,7 @@ int32_t DlpFile::GenEncData(int32_t inPlainFileFd)
     } else {
         int32_t fileLen = GetFileSize(inPlainFileFd);
         OPEN_AND_CHECK(encFile, DLP_OPENING_ENC_DATA.c_str(), O_RDWR | O_CREAT | O_TRUNC,
-            S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH, DLP_PARSE_ERROR_FILE_OPERATE_FAIL, LABEL);
+            S_IRUSR | S_IWUSR, DLP_PARSE_ERROR_FILE_OPERATE_FAIL, LABEL);
         encDataFd_ = encFile;
         int32_t ret = DoDlpContentCryptyOperation(inPlainFileFd, encFile, 0, fileLen, true);
         CHECK_RET(ret, 0, DLP_PARSE_ERROR_FILE_OPERATE_FAIL, LABEL);
@@ -1110,7 +1110,7 @@ int32_t DlpFile::GenFileInZip(int32_t inPlainFileFd)
     CHDIR_AND_CHECK(dirIndex_.c_str(), DLP_PARSE_ERROR_FILE_OPERATE_FAIL, LABEL);
 
     int32_t tmpFile;
-    OPEN_AND_CHECK(tmpFile, DLP_GEN_FILE.c_str(), O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH,
+    OPEN_AND_CHECK(tmpFile, DLP_GEN_FILE.c_str(), O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR,
         DLP_PARSE_ERROR_FILE_OPERATE_FAIL, LABEL);
     Defer p2(nullptr, [&](...) {
         (void)close(tmpFile);
