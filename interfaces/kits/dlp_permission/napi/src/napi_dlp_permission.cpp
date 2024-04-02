@@ -1945,6 +1945,12 @@ napi_value NapiDlpPermission::Init(napi_env env, napi_value exports)
     };
     napi_define_properties(env, exports, sizeof(descriptors) / sizeof(napi_property_descriptor), descriptors);
 
+    int32_t result = AccessToken::AccessTokenKit::VerifyAccessToken(GetSelfTokenID(),
+        "ohos.permission.ACCESS_DLP_FILE", false);
+    if (result == AccessToken::TypePermissionState::PERMISSION_GRANTED) {
+        DLP_LOG_INFO(LABEL, "Check dlp permission success, start init dlp link manager.");
+        DlpPermission::DlpLinkManager::GetInstance();
+    }
     return exports;
 }
 
