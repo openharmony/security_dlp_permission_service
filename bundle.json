@@ -1,5 +1,5 @@
 {
-  "name": "@openharmony/dlp_permission_service",
+  "name": "@ohos/dlp_permission_service",
   "description": "dlp_permission_service",
   "version": "3.1.0",
   "license": "Apache License 2.0",
