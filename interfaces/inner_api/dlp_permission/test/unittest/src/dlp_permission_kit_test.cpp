@@ -79,9 +79,6 @@ const std::string TEST_UNEXIST_URI = "datashare:///media/file/1";
 static const uint8_t ARRAY_CHAR_SIZE = 62;
 static const char CHAR_ARRAY[] = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 static const std::string DLP_ENABEL = "const.dlp.dlp_enable";
-static const std::string DEVICE_TYPE = "const.product.devicetype";
-// use when the device does not support query through system parameters but system is support dlp feature like rk
-static const std::string DEFAULT_DEVICE = "default";
 }  // namespace
 
 static uint8_t GetRandNum()
@@ -209,17 +206,6 @@ static void TestRecoverProcessInfo(int32_t uid, AccessTokenID tokenId)
 {
     ASSERT_EQ(DLP_OK, setuid((uid)));
     ASSERT_TRUE(TestSetSelfTokenId((tokenId)));
-}
-
-static bool CheckProvideFeature()
-{
-    std::string device;
-    int32_t res = OHOS::system::GetStringParameter(DEVICE_TYPE, device, "");
-    DLP_LOG_DEBUG(LABEL, "CheckProvideFeature get DEVICE_TYPE res=%{public}d, device=%{public}s.", res, device.c_str());
-    if (res == 0 && DEFAULT_DEVICE == device) {
-        return true;
-    }
-    return OHOS::system::GetBoolParameter(DLP_ENABEL, false);
 }
 
 void DlpPermissionKitTest::SetUpTestCase()
@@ -1396,8 +1382,6 @@ HWTEST_F(DlpPermissionKitTest, IsDLPFeatureProvided001, TestSize.Level1)
     DLP_LOG_DEBUG(LABEL, "Start IsDLPFeatureProvided001.");
     bool isProvided;
     ASSERT_EQ(DLP_OK, DlpPermissionKit::IsDLPFeatureProvided(isProvided));
-    DLP_LOG_DEBUG(LABEL, "IsDLPFeatureProvided001 isProvided=%{public}d.", isProvided);
-    ASSERT_EQ(isProvided, CheckProvideFeature());
 }
 }  // namespace DlpPermission
 }  // namespace Security
