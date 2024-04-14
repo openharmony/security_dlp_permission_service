@@ -62,9 +62,8 @@ static const std::string DLP_CONFIG = "etc/dlp_permission/dlp_config.json";
 static const std::string SUPPORT_FILE_TYPE = "support_file_type";
 static const std::string DEAULT_DLP_CONFIG = "/system/etc/dlp_config.json";
 static const std::string DLP_ENABEL = "const.dlp.dlp_enable";
-static const std::string DEVICE_TYPE = "const.product.devicetype";
-// use when the device does not support query through system parameters but system is support dlp feature like rk
-static const std::string DEFAULT_DEVICE = "default";
+static const std::string TRUE_VALUE = "true";
+static const std::string FALSE_VALUE = "false";
 }
 REGISTER_SYSTEM_ABILITY_BY_ID(DlpPermissionService, SA_ID_DLP_PERMISSION_SERVICE, true);
 
@@ -806,14 +805,16 @@ int32_t DlpPermissionService::GetSandboxAppConfig(std::string& configInfo)
 
 int32_t DlpPermissionService::IsDLPFeatureProvided(bool& isProvideDLPFeature)
 {
-    std::string device;
-    int32_t res = OHOS::system::GetStringParameter(DEVICE_TYPE, device, "");
-    DLP_LOG_DEBUG(LABEL, "Get DEVICE_TYPE res=%{public}d, device=%{public}s.", res, device.c_str());
-    if (res == 0 && DEFAULT_DEVICE == device) {
+    std::string value = OHOS::system::GetParameter(DLP_ENABEL, "");
+    if (value == TRUE_VALUE) {
         isProvideDLPFeature = true;
         return DLP_OK;
     }
-    isProvideDLPFeature = OHOS::system::GetBoolParameter(DLP_ENABEL, false);
+    if (value == FALSE_VALUE) {
+        isProvideDLPFeature = false;
+        return DLP_OK;
+    }
+    isProvideDLPFeature = true;
     return DLP_OK;
 }
 
