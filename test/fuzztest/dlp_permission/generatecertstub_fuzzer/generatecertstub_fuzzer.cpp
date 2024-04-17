@@ -69,11 +69,14 @@ static void InitPolicy(PermissionPolicy &encPolicy)
     uint8_t* iv = new (std::nothrow) uint8_t[KEY_LEN];
     if (iv == nullptr) {
         DLP_LOG_ERROR(LABEL, "Alloc buff for iv key fail.");
+        FreeUint8Buffer(&aeskey, KEY_LEN);
         return;
     }
     uint8_t* mac = new (std::nothrow) uint8_t[KEY_LEN];
     if (mac == nullptr) {
         DLP_LOG_ERROR(LABEL, "Alloc buff for iv key fail.");
+        FreeUint8Buffer(&aeskey, KEY_LEN);
+        FreeUint8Buffer(&iv, KEY_LEN);
         return;
     }
     for (int i = 0; i < KEY_LEN; i++) {
