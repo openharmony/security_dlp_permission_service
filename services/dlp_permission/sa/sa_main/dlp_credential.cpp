@@ -710,9 +710,13 @@ int32_t DlpCredential::CheckMdmPermission(const std::string& bundleName, int32_t
     int32_t res = DLP_CheckPermission(PolicyType::AUTHORIZED_APPLICATION_LIST, handle);
     if (res != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "DLP_CheckPermission error:%{public}d", res);
-        return DLP_CREDENTIAL_ERROR_APPID_NOT_AUTHORIZED;
+        res = DLP_CREDENTIAL_ERROR_APPID_NOT_AUTHORIZED;
     }
-    return DLP_OK;
+    if (handle.id != nullptr) {
+        free(handle.id);
+        handle.id = nullptr;
+    }
+    return res;
 }
 }  // namespace DlpPermission
 }  // namespace Security
