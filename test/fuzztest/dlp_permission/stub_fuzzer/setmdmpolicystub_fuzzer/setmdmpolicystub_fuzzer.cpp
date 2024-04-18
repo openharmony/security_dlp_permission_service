@@ -27,6 +27,7 @@
 using namespace OHOS::Security::DlpPermission;
 using namespace OHOS::Security::AccessToken;
 namespace OHOS {
+constexpr const int32_t EDM_UID = 3057;
 static void FuzzTest(const uint8_t* data, size_t size)
 {
     if ((data == nullptr) || (size == 0)) {
@@ -48,11 +49,10 @@ static void FuzzTest(const uint8_t* data, size_t size)
 
 bool SetMDMPolicyFuzzTest(const uint8_t* data, size_t size)
 {
-    int selfTokenId = GetSelfTokenID();
-    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(100, "com.ohos.dlpmanager", 0); // user_id = 100
-    SetSelfTokenID(tokenId);
+    int uid = getuid();
+    setuid(EDM_UID);
     FuzzTest(data, size);
-    SetSelfTokenID(selfTokenId);
+    setuid(uid);
     return true;
 }
 } // namespace OHOS
