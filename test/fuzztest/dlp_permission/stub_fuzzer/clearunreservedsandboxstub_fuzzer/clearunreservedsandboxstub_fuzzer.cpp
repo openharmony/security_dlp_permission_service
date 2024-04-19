@@ -41,7 +41,7 @@ static void FuzzTest(const uint8_t* data, size_t size)
 bool ClearUnreservedSandboxFuzzTest(const uint8_t* data, size_t size)
 {
     int selfTokenId = GetSelfTokenID();
-    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(100, "com.ohos.dlpmanager", 0); // user_id = 100
+    AccessTokenID tokenId = AccessTokenKit::GetNativeTokenId("foundation"); // user_id = 100
     SetSelfTokenID(tokenId);
     FuzzTest(data, size);
     SetSelfTokenID(selfTokenId);

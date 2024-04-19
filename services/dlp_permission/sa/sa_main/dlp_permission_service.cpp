@@ -667,12 +667,9 @@ int32_t DlpPermissionService::GetRetentionSandboxList(const std::string& bundleN
 
 int32_t DlpPermissionService::ClearUnreservedSandbox()
 {
-    {
-        std::lock_guard<std::mutex> lock(terminalMutex_);
-        RemoveUninstallInfo();
-        RetentionFileManager::GetInstance().ClearUnreservedSandbox();
-    }
-    StartTimer();
+    std::lock_guard<std::mutex> lock(terminalMutex_);
+    RemoveUninstallInfo();
+    RetentionFileManager::GetInstance().ClearUnreservedSandbox();
     return DLP_OK;
 }
 

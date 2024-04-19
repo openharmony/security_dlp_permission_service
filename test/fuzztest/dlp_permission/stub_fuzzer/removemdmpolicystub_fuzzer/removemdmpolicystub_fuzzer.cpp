@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-#include "getmdmpolicystub_fuzzer.h"
+#include "removemdmpolicystub_fuzzer.h"
 #include <iostream>
 #include <string>
 #include <thread>
@@ -32,7 +32,7 @@ static void FuzzTest(const uint8_t* data, size_t size)
 {
     MessageParcel datas;
     datas.WriteInterfaceToken(IDlpPermissionService::GetDescriptor());
-    uint32_t code = static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::GET_MDM_POLICY);
+    uint32_t code = static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::REMOVE_MDM_POLICY);
     MessageParcel reply;
     MessageOption option;
     auto service = std::make_shared<DlpPermissionService>(SA_ID_DLP_PERMISSION_SERVICE, true);
