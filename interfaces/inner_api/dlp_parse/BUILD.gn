@@ -47,6 +47,8 @@ ohos_shared_library("libdlpparse") {
 
   external_deps = [
     "ability_base:want",
+    "ability_base:zuri",
+    "app_file_service:fileuri_native",
     "c_utils:utils",
     "hilog:libhilog",
     "hitrace:hitrace_meter",
@@ -94,6 +96,8 @@ ohos_shared_library("libdlpparse_inner") {
 
   external_deps = [
     "ability_base:want",
+    "ability_base:zuri",
+    "app_file_service:fileuri_native",
     "c_utils:utils",
     "hilog:libhilog",
     "hitrace:hitrace_meter",

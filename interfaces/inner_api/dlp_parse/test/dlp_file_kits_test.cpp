@@ -44,14 +44,19 @@ namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "DlpFileKitsTest"};
 
 static int g_dlpFileFd = -1;
-static const std::string PLAIN_FILE_NAME = "/data/fuse_test.txt";
-static const std::string DLP_FILE_NAME = "/data/fuse_test.txt.dlp";
-static const std::string DLP_TEST_DIR = "/data/dlpTest/";
+static const std::string PLAIN_FILE_NAME = "/storage/media/100/local/files/Docs/Documents/fuse_test.txt";
+static const std::string DLP_FILE_NAME = "/storage/media/100/local/files/Docs/Documents/fuse_test.txt.dlp";
+static const std::string DLP_FILE_NAME_2 = "/storage/media/100/local/files/Docs/Documents/fuse_test2.txt.dlp";
+static const std::string DLP_FILE_URI = "file://Docs/storage/media/100/local/files/Docs/Documents/fuse_test.txt.dlp";
+static const std::string DLP_FILE_URI_2 = "file://Docs/storage/media/100/local/files/Docs/Documents/fuse_test2.txt.dlp";
+static const std::string PLAIN_FILE_URI = "file://Docs/storage/media/100/local/files/Docs/Documents/fuse_test.txt";
+static const std::string DLP_TEST_DIR = "/storage/media/100/local/files/Docs/Documents/dlpTest/";
 static const int DLP_FILE_PERMISSION = 0777;
 
 void CreateDlpFileFd()
 {
     int plainFileFd = open(PLAIN_FILE_NAME.c_str(), O_CREAT | O_RDWR | O_TRUNC, DLP_FILE_PERMISSION);
+    int fileFd = open(DLP_FILE_NAME_2.c_str(), O_CREAT | O_RDWR | O_TRUNC, DLP_FILE_PERMISSION);
     g_dlpFileFd = open(DLP_FILE_NAME.c_str(), O_CREAT | O_RDWR | O_TRUNC, DLP_FILE_PERMISSION);
     if (plainFileFd < 0 || g_dlpFileFd < 0) {
         cout << "create dlpFile fd failed" << endl;
@@ -68,6 +73,7 @@ void CreateDlpFileFd()
     int ret = DlpFileManager::GetInstance().GenerateDlpFile(plainFileFd,
         g_dlpFileFd, prop, filePtr, DLP_TEST_DIR);
     close(plainFileFd);
+    close(fileFd);
     if (ret != DLP_OK) {
         cout << "create dlpFile object failed" << endl;
         return;
@@ -119,20 +125,9 @@ HWTEST_F(DlpFileKitsTest, GetSandboxFlag001, TestSize.Level1)
     OHOS::AAFwk::Want want;
 
     want.SetAction(TAG_ACTION_VIEW);
-
-    WantParams TopParam;
-    WantParams fileNameParam;
-    fileNameParam.SetParam(TAG_FILE_NAME_VALUE, String::Box("test.txt.dlp"));
-    TopParam.SetParam(TAG_FILE_NAME, WantParamWrapper::Box(fileNameParam));
-
-    WantParams fileFdParam;
-    fileFdParam.SetParam(TAG_KEY_FD_TYPE, String::Box(VALUE_KEY_FD_TYPE));
-    fileFdParam.SetParam(TAG_KEY_FD_VALUE, Integer::Box(g_dlpFileFd));
-    TopParam.SetParam(TAG_KEY_FD, WantParamWrapper::Box(fileFdParam));
-    want.SetParams(TopParam);
-
-    ASSERT_TRUE(DlpFileKits::GetSandboxFlag(want));
-    ASSERT_TRUE((want.GetType() == "text/plain"));
+    ASSERT_FALSE(DlpFileKits::GetSandboxFlag(want));
+    want.SetAction(TAG_ACTION_EDIT);
+    ASSERT_FALSE(DlpFileKits::GetSandboxFlag(want));
 }
 
 /**
@@ -196,20 +191,9 @@ HWTEST_F(DlpFileKitsTest, GetSandboxFlag004, TestSize.Level1)
     DLP_LOG_INFO(LABEL, "GetSandboxFlag004");
     OHOS::AAFwk::Want want;
     want.SetAction(TAG_ACTION_VIEW);
+    want.SetUri(DLP_FILE_URI);
 
-    WantParams TopParam;
-    WantParams fileNameParam;
-    fileNameParam.SetParam(TAG_FILE_NAME_VALUE, String::Box("test.txt"));
-    TopParam.SetParam(TAG_FILE_NAME, WantParamWrapper::Box(fileNameParam));
-
-    WantParams fileFdParam;
-    fileFdParam.SetParam(TAG_KEY_FD_TYPE, String::Box(VALUE_KEY_FD_TYPE));
-    fileFdParam.SetParam(TAG_KEY_FD_VALUE, Integer::Box(g_dlpFileFd));
-    TopParam.SetParam(TAG_KEY_FD, WantParamWrapper::Box(fileFdParam));
-    want.SetParams(TopParam);
-
-    ASSERT_FALSE(DlpFileKits::GetSandboxFlag(want));
-    ASSERT_FALSE((want.GetType() == "text/plain"));
+    ASSERT_TRUE(DlpFileKits::GetSandboxFlag(want));
 }
 
 /**
@@ -263,33 +247,6 @@ HWTEST_F(DlpFileKitsTest, GetSandboxFlag006, TestSize.Level1)
     want.SetParams(TopParam);
 
     ASSERT_FALSE(DlpFileKits::GetSandboxFlag(want));
-    ASSERT_FALSE((want.GetType() == "text/plain"));
-}
-
-/**
- * @tc.name: GetSandboxFlag007
- * @tc.desc: Get Sandbox flag, file name has not origin suffix
- * @tc.type: FUNC
- * @tc.require:AR000H7BOC
- */
-HWTEST_F(DlpFileKitsTest, GetSandboxFlag007, TestSize.Level1)
-{
-    DLP_LOG_INFO(LABEL, "GetSandboxFlag007");
-    OHOS::AAFwk::Want want;
-    want.SetAction(TAG_ACTION_VIEW);
-
-    WantParams TopParam;
-    WantParams fileNameParam;
-    fileNameParam.SetParam(TAG_FILE_NAME_VALUE, String::Box("test.dlp"));
-    TopParam.SetParam(TAG_FILE_NAME, WantParamWrapper::Box(fileNameParam));
-
-    WantParams fileFdParam;
-    fileFdParam.SetParam(TAG_KEY_FD_TYPE, String::Box(VALUE_KEY_FD_TYPE));
-    fileFdParam.SetParam(TAG_KEY_FD_VALUE, Integer::Box(g_dlpFileFd));
-    TopParam.SetParam(TAG_KEY_FD, WantParamWrapper::Box(fileFdParam));
-    want.SetParams(TopParam);
-
-    ASSERT_TRUE(DlpFileKits::GetSandboxFlag(want));
     ASSERT_FALSE((want.GetType() == "text/plain"));
 }
 
@@ -433,22 +390,11 @@ HWTEST_F(DlpFileKitsTest, GetSandboxFlag012, TestSize.Level1)
  */
 HWTEST_F(DlpFileKitsTest, GetSandboxFlag013, TestSize.Level1)
 {
-    DLP_LOG_INFO(LABEL, "GetSandboxFlag013");
+    DLP_LOG_INFO(LABEL, "GetSandboxFlag004");
     OHOS::AAFwk::Want want;
-
     want.SetAction(TAG_ACTION_VIEW);
-
-    WantParams TopParam;
-    WantParams fileNameParam;
-    fileNameParam.SetParam(TAG_FILE_NAME_VALUE, String::Box("test.nosuffix.dlp"));
-    TopParam.SetParam(TAG_FILE_NAME, WantParamWrapper::Box(fileNameParam));
-
-    WantParams fileFdParam;
-    fileFdParam.SetParam(TAG_KEY_FD_TYPE, String::Box(VALUE_KEY_FD_TYPE));
-    fileFdParam.SetParam(TAG_KEY_FD_VALUE, Integer::Box(g_dlpFileFd));
-    TopParam.SetParam(TAG_KEY_FD, WantParamWrapper::Box(fileFdParam));
-    want.SetParams(TopParam);
-
-    ASSERT_TRUE(DlpFileKits::GetSandboxFlag(want));
-    ASSERT_TRUE((want.GetType() == ""));
+    want.SetUri(PLAIN_FILE_URI);
+    ASSERT_FALSE(DlpFileKits::GetSandboxFlag(want));
+    want.SetUri(DLP_FILE_URI_2);
+    ASSERT_FALSE(DlpFileKits::GetSandboxFlag(want));
 }

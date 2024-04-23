@@ -23,6 +23,7 @@
 #include <unordered_map>
 #include "dlp_permission_log.h"
 #include "dlp_zip.h"
+#include "file_uri.h"
 #include "securec.h"
 
 namespace OHOS {
@@ -41,32 +42,6 @@ static const std::unordered_map<std::string, std::string> SUFFIX_MIMETYPE_MAP = 
     {"xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"},
     {"pptx", "application/vnd.openxmlformats-officedocument.presentationml.presentation"},
 };
-
-static std::string GetWantFileName(const WantParams& param)
-{
-    WantParams wp = param.GetWantParams(TAG_FILE_NAME);
-    if (wp.IsEmpty()) {
-        return std::string();
-    }
-
-    return wp.GetStringParam(TAG_FILE_NAME_VALUE);
-}
-
-static int GetWantFileDescriptor(const WantParams& param)
-{
-    WantParams wp = param.GetWantParams(TAG_KEY_FD);
-    if (wp.IsEmpty()) {
-        DLP_LOG_WARN(LABEL, "Get want params fail, no file fd param found");
-        return INVALID_FD;
-    }
-
-    std::string type = wp.GetStringParam(TAG_KEY_FD_TYPE);
-    if (type != VALUE_KEY_FD_TYPE) {
-        DLP_LOG_WARN(LABEL, "Get want params fail, fd type error, type=%{public}s", type.c_str());
-        return INVALID_FD;
-    }
-    return wp.GetIntParam(TAG_KEY_FD_VALUE, INVALID_FD);
-}
 
 static bool IsDlpFileName(const std::string& dlpFileName)
 {
@@ -162,19 +137,25 @@ bool DlpFileKits::GetSandboxFlag(Want& want)
         return false;
     }
 
-    const WantParams& param = want.GetParams();
-    std::string fileName = GetWantFileName(param);
-    if (fileName == DEFAULT_STRING || !IsDlpFileName(fileName)) {
+    std::string uri = want.GetUriString();
+    AppFileService::ModuleFileUri::FileUri fileUri(uri);
+    std::string fileName = fileUri.GetName();
+    if (fileName.empty() || !IsDlpFileName(fileName)) {
         DLP_LOG_DEBUG(LABEL, "File name is not exist or not dlp, name=%{private}s", fileName.c_str());
         return false;
     }
-
-    int fd = GetWantFileDescriptor(param);
-    if (!IsDlpFile(fd)) {
-        DLP_LOG_WARN(LABEL, "Fd %{public}d is not dlp file", fd);
+    std::string path = fileUri.GetPath();
+    int fd = open(path.c_str(), O_RDONLY);
+    if (fd == -1) {
+        DLP_LOG_ERROR(LABEL, "open file error, uri=%{private}s", uri.c_str());
         return false;
     }
-
+    if (!IsDlpFile(fd)) {
+        DLP_LOG_WARN(LABEL, "Fd %{public}d is not dlp file", fd);
+        close(fd);
+        return false;
+    }
+    close(fd);
     std::string realSuffix = GetDlpFileRealSuffix(fileName);
     if (realSuffix != DEFAULT_STRING) {
         DLP_LOG_DEBUG(LABEL, "Real suffix is %{public}s", realSuffix.c_str());
