@@ -51,22 +51,32 @@ using namespace OHOS::Security::AccessToken;
 using namespace std;
 namespace OHOS {
 static const uint32_t BUFFERSIZE = 40;
+const int32_t ONE = 1;
+const int32_t TWO = 2;
+const int32_t HUNDRED = 100;
 static void FuzzTest(const uint8_t* data, size_t size)
 {
     int fd = open("/data/fuse_test.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
 
     DlpFile testFile(fd, "abc", 0, false);
-    uint32_t txtSize = static_cast<uint32_t>(size) % 100;
-
+    uint32_t txtSize = static_cast<uint32_t>(size) % HUNDRED;
+    uint32_t certSize = txtSize;
+    uint32_t contactAccountSize = txtSize;
+    if (size > ONE) {
+        certSize = data[0] % HUNDRED;
+    }
+    if (size > TWO) {
+        contactAccountSize = data[ONE] % HUNDRED;
+    }
     struct DlpHeader header = {
         .magic = DLP_FILE_MAGIC,
         .offlineAccess = 0,
-        .txtOffset = sizeof(struct DlpHeader) + 20 + 20,
+        .txtOffset = sizeof(struct DlpHeader) + certSize + contactAccountSize,
         .txtSize = txtSize,
         .certOffset = sizeof(struct DlpHeader),
-        .certSize = 20,
-        .contactAccountOffset = sizeof(struct DlpHeader) + 20,
-        .contactAccountSize = 20,
+        .certSize = certSize,
+        .contactAccountOffset = sizeof(struct DlpHeader) + contactAccountSize,
+        .contactAccountSize = contactAccountSize,
         .offlineCertOffset = 0,
         .offlineCertSize = 0,
     };

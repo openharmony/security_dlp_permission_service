@@ -41,6 +41,10 @@ const std::string DLP_GENERAL_INFO = "dlp_general_info";
 
 int32_t AddBuffToZip(const void *buf, uint32_t size, const char *nameInZip, const char *zipName)
 {
+    if (buf == nullptr || zipName == nullptr) {
+        DLP_LOG_ERROR(LABEL, "Buff or zipName is nullptr.");
+        return DLP_ZIP_FAIL;
+    }
     zipFile zf = zipOpen64(zipName, APPEND_STATUS_ADDINZIP);
     if (zf == nullptr) {
         DLP_LOG_ERROR(LABEL, "AddBuffToZip fail err %{public}d, zipName %{public}s",
@@ -62,14 +66,16 @@ int32_t AddBuffToZip(const void *buf, uint32_t size, const char *nameInZip, cons
         (void)zipClose(zf, NULL);
         return DLP_ZIP_FAIL;
     }
-
+    int32_t res = DLP_ZIP_OK;
     err = zipWriteInFileInZip (zf, buf, (unsigned)size);
     if (err != ZIP_OK) {
         DLP_LOG_ERROR(LABEL, "zipWriteInFileInZip fail err %{public}d, %{public}s", err, nameInZip);
+        res = DLP_ZIP_FAIL;
     }
 
     if (zipCloseFileInZip(zf) != ZIP_OK) {
         DLP_LOG_ERROR(LABEL, "zipCloseFileInZip fail nameInZip %{public}s", nameInZip);
+        res = DLP_ZIP_FAIL;
     }
 
     if (zipClose(zf, NULL) != ZIP_OK) {
@@ -77,7 +83,7 @@ int32_t AddBuffToZip(const void *buf, uint32_t size, const char *nameInZip, cons
         return DLP_ZIP_FAIL;
     }
 
-    return DLP_ZIP_OK;
+    return res;
 }
 
 int32_t AddFileContextToZip(int32_t fd, const char *nameInZip, const char *zipName)
@@ -103,23 +109,26 @@ int32_t AddFileContextToZip(int32_t fd, const char *nameInZip, const char *zipNa
         zipClose(zf, NULL);
         return DLP_ZIP_FAIL;
     }
-
+    int32_t res = DLP_ZIP_OK;
     int32_t size_read;
     auto buf = std::make_unique<char[]>(ZIP_BUFF_SIZE);
     while ((size_read = read(fd, buf.get(), ZIP_BUFF_SIZE)) > 0) {
         err = zipWriteInFileInZip (zf, buf.get(), (unsigned)size_read);
         if (err != ZIP_OK) {
             DLP_LOG_ERROR(LABEL, "zipWriteInFileInZip fail err %{public}d, %{public}s", err, nameInZip);
+            res = DLP_ZIP_FAIL;
             break;
         }
     }
 
     if (size_read == -1) {
         DLP_LOG_ERROR(LABEL, "read errno %{public}s", strerror(errno));
+        res = DLP_ZIP_FAIL;
     }
 
     if (zipCloseFileInZip(zf) != ZIP_OK) {
         DLP_LOG_ERROR(LABEL, "zipCloseFileInZip fail nameInZip %{public}s", nameInZip);
+        res = DLP_ZIP_FAIL;
     }
 
     if (zipClose(zf, NULL) != ZIP_OK) {
@@ -127,7 +136,7 @@ int32_t AddFileContextToZip(int32_t fd, const char *nameInZip, const char *zipNa
         return DLP_ZIP_FAIL;
     }
 
-    return DLP_ZIP_OK;
+    return res;
 }
 
 static zipFile OpenZipFile(int fd)
@@ -184,7 +193,7 @@ int32_t UnzipSpecificFile(int32_t fd, const char*nameInZip, const char *unZipNam
         return DLP_ZIP_FAIL;
     }
 
-    int32_t readSize;
+    int32_t readSize = 0;
     auto buf = std::make_unique<char[]>(ZIP_BUFF_SIZE);
     do {
         readSize = unzReadCurrentFile(uf, buf.get(), ZIP_BUFF_SIZE);

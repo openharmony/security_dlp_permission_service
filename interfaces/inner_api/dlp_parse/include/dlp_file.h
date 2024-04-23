@@ -143,7 +143,7 @@ enum VALID_KEY_SIZE {
 
 class DlpFile {
 public:
-    DlpFile(int32_t dlpFd, std::string workDir, int32_t index, bool isZip);
+    DlpFile(int32_t dlpFd, const std::string &workDir, int32_t index, bool isZip);
     ~DlpFile();
 
     int32_t SetCipher(const struct DlpBlob& key, const struct DlpUsageSpec& spec, const struct DlpBlob& hmacKey);
