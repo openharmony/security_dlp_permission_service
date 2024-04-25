@@ -219,7 +219,10 @@ void AppStateObserver::OnProcessDied(const AppExecFwk::ProcessData& processData)
         ExitSaAfterAllDlpManagerDie();
         return;
     }
-
+    if (processData.renderUid != -1) {
+        DLP_LOG_INFO(LABEL, "Ignore render process death, renderUid: %{public}d", processData.renderUid);
+        return;
+    }
     // current died process is dlp sandbox app
     DlpSandboxInfo appInfo;
     if (!GetSandboxInfo(processData.uid, appInfo)) {
