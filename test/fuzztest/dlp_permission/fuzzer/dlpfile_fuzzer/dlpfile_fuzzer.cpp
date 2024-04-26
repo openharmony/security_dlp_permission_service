@@ -68,11 +68,11 @@ static void FuzzTest(const uint8_t* data, size_t size)
     write(plainFileFd, buffer, sizeof(buffer));
     struct DlpProperty prop;
     GenerateRandProperty(prop, data, size);
-    int32_t result = DlpFileManager::GetInstance().GenerateDlpFile(plainFileFd,
+    DlpFileManager::GetInstance().GenerateDlpFile(plainFileFd,
         dlpFileFd, prop, g_Dlpfile, DLP_TEST_DIR);
     int recoveryFileFd = open("/data/fuse_test.txt.recovery",
         O_CREAT | O_RDWR | O_TRUNC, S_IRWXU | S_IRWXG | S_IRWXO);
-    result = DlpFileManager::GetInstance().RecoverDlpFile(g_Dlpfile, recoveryFileFd);
+    DlpFileManager::GetInstance().RecoverDlpFile(g_Dlpfile, recoveryFileFd);
     DlpFileManager::GetInstance().CloseDlpFile(g_Dlpfile);
     DlpFileManager::GetInstance().OpenDlpFile(dlpFileFd, g_Dlpfile, DLP_TEST_DIR, TEST_APPID);
     g_Dlpfile->DlpFileWrite(0, const_cast<void*>(reinterpret_cast<const void*>(data)), size);
