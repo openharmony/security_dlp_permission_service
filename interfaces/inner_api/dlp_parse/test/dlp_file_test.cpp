@@ -80,6 +80,15 @@ void initDlpFileCiper(DlpFile &testFile)
     testFile.head_.version = SECOND;
 
     testFile.SetCipher(key, spec, hmacKey);
+    uint8_t* cert = new (std::nothrow) uint8_t[16];
+    if (cert == nullptr) {
+        return;
+    }
+    struct DlpBlob certKey = {
+        .data = cert,
+        .size = 16
+    };
+    testFile.SetEncryptCert(certKey);
 }
 }
 
@@ -424,7 +433,7 @@ HWTEST_F(DlpFileTest, SetCipher001, TestSize.Level1)
         .data = hmacKeyData,
         .size = 32
     };
-    
+
     ASSERT_EQ(DLP_PARSE_ERROR_VALUE_INVALID, testFile.SetCipher(key, spec, hmacKey));
 }
 
@@ -1856,6 +1865,7 @@ HWTEST_F(DlpFileTest, ParseDlpInfo001, TestSize.Level1)
 
     DlpFile testFile(fdDlp, DLP_TEST_DIR, 0, true);
     initDlpFileCiper(testFile);
+
     testFile.contactAccount_ = "aa";
     EXPECT_EQ(DLP_OK, testFile.GenFile(fdPlain));
 

@@ -227,12 +227,11 @@ void NapiDlpPermission::OpenDlpFileExcute(napi_env env, void* data)
     }
 
     char realPath[PATH_MAX] = {0};
-    if ((realpath(workDir.c_str(), realPath) == nullptr) && (errno != ENOENT)) {
+    if (realpath(workDir.c_str(), realPath) == nullptr) {
         DLP_LOG_ERROR(LABEL, "realpath, %{public}s, workDir %{private}s", strerror(errno), workDir.c_str());
         return;
     }
     std::string rPath(realPath);
-
     asyncContext->errCode =
         DlpFileManager::GetInstance().OpenDlpFile(asyncContext->ciphertextFd, asyncContext->dlpFileNative, rPath,
             asyncContext->appId);

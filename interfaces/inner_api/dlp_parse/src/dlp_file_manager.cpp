@@ -34,6 +34,7 @@ namespace DlpPermission {
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "DlpFileManager"};
 static constexpr uint32_t MAX_DLP_FILE_SIZE = 1000; // max open dlp file
+const std::string PATH_CACHE = "/cache";
 }
 
 int32_t DlpFileManager::AddDlpFileNode(const std::shared_ptr<DlpFile>& filePtr)
@@ -336,6 +337,9 @@ int32_t DlpFileManager::SetDlpFileParams(std::shared_ptr<DlpFile>& filePtr, cons
 
 static bool RemoveDirRecursive(const char *path)
 {
+    if (path == nullptr) {
+        return false;
+    }
     DIR *dir = opendir(path);
     if (dir == nullptr) {
         return false;
@@ -347,16 +351,13 @@ static bool RemoveDirRecursive(const char *path)
             continue;
         }
         std::string subPath = std::string(path) + "/" + entry->d_name;
-        if (entry->d_type == DT_DIR) {
-            if (!RemoveDirRecursive(subPath.c_str())) {
-                closedir(dir);
-                return false;
-            }
-        } else {
-            if (remove(subPath.c_str()) != 0) {
-                closedir(dir);
-                return false;
-            }
+        if ((entry->d_type == DT_DIR) && (!RemoveDirRecursive(subPath.c_str()))) {
+            closedir(dir);
+            return false;
+        }
+        if ((entry->d_type != DT_DIR) && (remove(subPath.c_str()) != 0)) {
+            closedir(dir);
+            return false;
         }
     }
 
@@ -396,7 +397,7 @@ int32_t DlpFileManager::GenerateDlpFile(
         return DLP_PARSE_ERROR_FILE_ALREADY_OPENED;
     }
 
-    std::string cache = workDir + "/cache";
+    std::string cache = workDir + PATH_CACHE;
     PrepareDirs(cache);
     filePtr = std::make_shared<DlpFile>(dlpFileFd, cache, ++index_, true);
 
@@ -428,8 +429,8 @@ int32_t DlpFileManager::OpenDlpFile(int32_t dlpFileFd, std::shared_ptr<DlpFile>&
         DLP_LOG_INFO(LABEL, "Open dlp file fail, fd %{public}d has opened", dlpFileFd);
         return DLP_OK;
     }
- 
-    std::string cache = workDir + "/cache";
+
+    std::string cache = workDir + PATH_CACHE;
     PrepareDirs(cache);
     filePtr = std::make_shared<DlpFile>(dlpFileFd, cache, ++index_, false);
 
