@@ -223,6 +223,7 @@ int32_t SandboxJsonManager::RemoveRetentionState(const std::string& bundleName, 
 int32_t SandboxJsonManager::GetRetentionSandboxList(const std::string& bundleName,
     std::vector<RetentionSandBoxInfo>& retentionSandBoxInfoVec, bool isRetention)
 {
+    std::lock_guard<std::mutex> lock(mutex_);
     if (infoVec_.empty()) {
         return DLP_OK;
     }
@@ -231,7 +232,6 @@ int32_t SandboxJsonManager::GetRetentionSandboxList(const std::string& bundleNam
     if (!GetUserIdByUid(userId)) {
         return DLP_RETENTION_SERVICE_ERROR;
     }
-    std::lock_guard<std::mutex> lock(mutex_);
     for (auto iter = infoVec_.begin(); iter != infoVec_.end(); ++iter) {
         if (iter->bundleName != bundleName || iter->userId != userId) {
             continue;
@@ -378,6 +378,7 @@ void SandboxJsonManager::RetentionInfoToJson(Json& json, const RetentionInfo& in
 
 Json SandboxJsonManager::ToJson() const
 {
+    std::lock_guard<std::mutex> lock(mutex_);
     Json jsonObject;
     for (auto iter = infoVec_.begin(); iter != infoVec_.end(); ++iter) {
         Json infoJson;
@@ -421,8 +422,11 @@ void SandboxJsonManager::FromJson(const Json& jsonObject)
 
 std::string SandboxJsonManager::ToString() const
 {
-    if (infoVec_.empty()) {
-        return "";
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        if (infoVec_.empty()) {
+            return "";
+        }
     }
     auto jsonObject = ToJson();
     return jsonObject.dump();

@@ -47,11 +47,11 @@ VisitRecordJsonManager::~VisitRecordJsonManager()
 int32_t VisitRecordJsonManager::AddVisitRecord(const std::string& bundleName, const int32_t& userId,
     const std::string& docUri, int64_t timestamp)
 {
+    std::lock_guard<std::mutex> lock(mutex_);
     if (infoList_.size() > MAX_RETENTION_SIZE) {
         DLP_LOG_ERROR(LABEL, "size bigger than MAX_RETENTION_SIZE");
         return DLP_JSON_UPDATE_ERROR;
     }
-    std::lock_guard<std::mutex> lock(mutex_);
     for (auto iter = infoList_.begin(); iter != infoList_.end(); ++iter) {
         if (iter->bundleName == bundleName && iter->userId == userId && iter->docUri == docUri) {
             infoList_.erase(iter);
@@ -79,11 +79,11 @@ int32_t VisitRecordJsonManager::AddVisitRecord(const std::string& bundleName, co
 int32_t VisitRecordJsonManager::GetVisitRecordList(const std::string& bundleName, const int32_t& userId,
     std::vector<VisitedDLPFileInfo>& infoVec)
 {
+    std::lock_guard<std::mutex> lock(mutex_);
     if (infoList_.empty()) {
         return DLP_FILE_NO_NEED_UPDATE;
     }
     bool isFind = false;
-    std::lock_guard<std::mutex> lock(mutex_);
     for (auto iter = infoList_.begin(); iter != infoList_.end();) {
         if (iter->bundleName == bundleName && iter->userId == userId) {
             VisitedDLPFileInfo info;
@@ -143,6 +143,7 @@ bool VisitRecordJsonManager::VisitRecordInfoFromJson(const Json& json, VisitReco
 
 Json VisitRecordJsonManager::ToJson() const
 {
+    std::lock_guard<std::mutex> lock(mutex_);
     Json jsonObject;
     for (auto iter = infoList_.begin(); iter != infoList_.end(); ++iter) {
         Json infoJson;
@@ -172,8 +173,11 @@ void VisitRecordJsonManager::FromJson(const Json& jsonObject)
 
 std::string VisitRecordJsonManager::ToString() const
 {
-    if (infoList_.empty()) {
-        return "";
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        if (infoList_.empty()) {
+            return "";
+        }
     }
     auto jsonObject = ToJson();
     return jsonObject.dump();

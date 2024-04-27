@@ -617,8 +617,8 @@ bool DlpPermissionService::RemoveRetentionInfo(std::vector<RetentionSandBoxInfo>
 
 void DlpPermissionService::StartTimer()
 {
-    repeatTime_ = REPEAT_TIME;
     std::lock_guard<std::mutex> lock(mutex_);
+    repeatTime_ = REPEAT_TIME;
     if (thread_ != nullptr && !thread_->joinable()) { // avoid double assign to an active thread
         DLP_LOG_ERROR(LABEL, "thread is active");
         return;
