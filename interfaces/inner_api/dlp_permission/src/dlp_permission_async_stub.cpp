@@ -40,7 +40,7 @@ int32_t DlpPermissionAsyncStub::OnRemoteRequest(
     uint32_t code, MessageParcel& data, MessageParcel& reply, MessageOption& option)
 {
     DLP_LOG_INFO(LABEL, "Called, code: 0x%{public}x, pid: %{public}d, uid: %{public}d", code,
-        IPCSkeleton::GetCallingPid(), IPCSkeleton::GetCallingUid());
+        IPCSkeleton::GetCallingRealPid(), IPCSkeleton::GetCallingUid());
 
     std::u16string descripter = DlpPermissionAsyncStub::GetDescriptor();
     std::u16string remoteDescripter = data.ReadInterfaceToken();
