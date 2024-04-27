@@ -240,7 +240,7 @@ int32_t DlpPermissionService::InstallDlpSandbox(const std::string& bundleName, D
             return DLP_SERVICE_ERROR_INSTALL_SANDBOX_FAIL;
         }
     }
-    int32_t pid = IPCSkeleton::GetCallingPid();
+    int32_t pid = IPCSkeleton::GetCallingRealPid();
     DlpSandboxInfo dlpSandboxInfo;
     dlpSandboxInfo.dlpFileAccess = dlpFileAccess;
     dlpSandboxInfo.bundleName = bundleName;
@@ -467,15 +467,15 @@ int32_t DlpPermissionService::GetDlpSupportFileType(std::vector<std::string>& su
 
 int32_t DlpPermissionService::RegisterDlpSandboxChangeCallback(const sptr<IRemoteObject> &callback)
 {
-    int32_t pid = IPCSkeleton::GetCallingPid();
-    DLP_LOG_INFO(LABEL, "GetCallingPid,%{public}d", pid);
+    int32_t pid = IPCSkeleton::GetCallingRealPid();
+    DLP_LOG_INFO(LABEL, "GetCallingRealPid,%{public}d", pid);
     return DlpSandboxChangeCallbackManager::GetInstance().AddCallback(pid, callback);
 }
 
 int32_t DlpPermissionService::UnRegisterDlpSandboxChangeCallback(bool &result)
 {
-    int32_t pid = IPCSkeleton::GetCallingPid();
-    DLP_LOG_INFO(LABEL, "GetCallingPid,%{public}d", pid);
+    int32_t pid = IPCSkeleton::GetCallingRealPid();
+    DLP_LOG_INFO(LABEL, "GetCallingRealPid,%{public}d", pid);
     return DlpSandboxChangeCallbackManager::GetInstance().RemoveCallback(pid, result);
 }
 
@@ -496,7 +496,7 @@ int32_t DlpPermissionService::RegisterOpenDlpFileCallback(const sptr<IRemoteObje
         DLP_LOG_ERROR(LABEL, "GetUserIdFromUid error");
         return false;
     }
-    int32_t pid = IPCSkeleton::GetCallingPid();
+    int32_t pid = IPCSkeleton::GetCallingRealPid();
 
     DLP_LOG_INFO(LABEL, "CallingPid: %{public}d, userId: %{public}d, CallingBundle: %{public}s", pid, userId,
         callerBundleName.c_str());
@@ -511,7 +511,7 @@ int32_t DlpPermissionService::RegisterOpenDlpFileCallback(const sptr<IRemoteObje
 
 int32_t DlpPermissionService::UnRegisterOpenDlpFileCallback(const sptr<IRemoteObject>& callback)
 {
-    int32_t pid = IPCSkeleton::GetCallingPid();
+    int32_t pid = IPCSkeleton::GetCallingRealPid();
     int32_t res = OpenDlpFileCallbackManager::GetInstance().RemoveCallback(pid, callback);
     appStateObserver_->RemoveCallbackListener(pid);
     return res;
