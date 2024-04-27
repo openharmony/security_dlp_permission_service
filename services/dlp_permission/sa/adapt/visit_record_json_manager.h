@@ -51,7 +51,7 @@ private:
         int64_t timestamp);
     void VisitRecordInfoToJson(Json& json, const VisitRecordInfo& info) const;
     bool VisitRecordInfoFromJson(const Json& json, VisitRecordInfo& info) const;
-    std::mutex mutex_;
+    mutable std::mutex mutex_;
     std::list<VisitRecordInfo> infoList_;
 };
 } // namespace DlpPermission

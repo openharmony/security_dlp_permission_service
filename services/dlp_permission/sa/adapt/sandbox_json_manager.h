@@ -77,7 +77,7 @@ private:
     int32_t UpdateRetentionState(const std::set<std::string>& newSet, const RetentionInfo& info,
         bool (*compare)(const RetentionInfo& info1, const RetentionInfo& info2),
         bool (*update)(RetentionInfo& info, const std::set<std::string>& newSet));
-    std::mutex mutex_;
+    mutable std::mutex mutex_;
     std::vector<RetentionInfo> infoVec_;
 };
 } // namespace DlpPermission
