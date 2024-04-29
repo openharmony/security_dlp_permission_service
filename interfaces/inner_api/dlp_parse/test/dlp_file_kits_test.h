@@ -19,6 +19,14 @@
 #include <gtest/gtest.h>
 
 namespace OHOS {
+namespace AppFileService {
+namespace ModuleFileUri {
+class FileUri {
+public:
+    std::string GetRealPath();
+};
+}
+}
 namespace Security {
 namespace DlpPermission {
 class DlpFileKitsTest : public testing::Test {

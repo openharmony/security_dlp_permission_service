@@ -147,7 +147,8 @@ bool DlpFileKits::GetSandboxFlag(Want& want)
     std::string path = fileUri.GetRealPath();
     int fd = open(path.c_str(), O_RDONLY);
     if (fd == -1) {
-        DLP_LOG_ERROR(LABEL, "open file error, uri=%{private}s", uri.c_str());
+        DLP_LOG_ERROR(LABEL, "open file error, uri=%{private}s path=%{private}s error=%{public}d", uri.c_str(),
+            path.c_str(), errno);
         return false;
     }
     if (!IsDlpFile(fd)) {
