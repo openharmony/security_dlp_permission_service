@@ -39,18 +39,35 @@ using WantParams = OHOS::AAFwk::WantParams;
 using WantParamWrapper = OHOS::AAFwk::WantParamWrapper;
 using String = OHOS::AAFwk::String;
 using Integer = OHOS::AAFwk::Integer;
-
+namespace OHOS {
+namespace AppFileService {
+namespace ModuleFileUri {
+namespace {
+static const std::string DLP_FILE_NAME = "/data/test/fuse_test.txt.dlp";
+}
+std::string FileUri::GetRealPath()
+{
+    static int32_t gCount = 1;
+    if (gCount == 1) {
+        gCount++;
+        return DLP_FILE_NAME;
+    }
+    return "";
+}
+}
+}
+}
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "DlpFileKitsTest"};
 
 static int g_dlpFileFd = -1;
-static const std::string PLAIN_FILE_NAME = "/storage/media/100/local/files/Docs/Documents/fuse_test.txt";
-static const std::string DLP_FILE_NAME = "/storage/media/100/local/files/Docs/Documents/fuse_test.txt.dlp";
-static const std::string DLP_FILE_NAME_2 = "/storage/media/100/local/files/Docs/Documents/fuse_test2.txt.dlp";
-static const std::string DLP_FILE_URI = "file://Docs/storage/media/100/local/files/Docs/Documents/fuse_test.txt.dlp";
-static const std::string DLP_FILE_URI_2 = "file://Docs/storage/media/100/local/files/Docs/Documents/fuse_test2.txt.dlp";
-static const std::string PLAIN_FILE_URI = "file://Docs/storage/media/100/local/files/Docs/Documents/fuse_test.txt";
-static const std::string DLP_TEST_DIR = "/storage/media/100/local/files/Docs/Documents/dlpTest/";
+static const std::string PLAIN_FILE_NAME = "/data/test/fuse_test.txt";
+static const std::string DLP_FILE_NAME = "/data/test/fuse_test.txt.dlp";
+static const std::string DLP_FILE_NAME_2 = "/data/test/fuse_test2.txt.dlp";
+static const std::string DLP_FILE_URI = "file://data/test/fuse_test.txt.dlp";
+static const std::string DLP_FILE_URI_2 = "file://data/test/fuse_test2.txt.dlp";
+static const std::string PLAIN_FILE_URI = "file://data/test/fuse_test.txt";
+static const std::string DLP_TEST_DIR = "/data/test/dlpTest/";
 static const int DLP_FILE_PERMISSION = 0777;
 
 void CreateDlpFileFd()
