@@ -19,6 +19,9 @@
 #include <thread>
 #include <vector>
 #include "accesstoken_kit.h"
+#include "bundle_info.h"
+#include "bundle_manager_adapter.h"
+#include "bundle_mgr_interface.h"
 #include "dlp_permission.h"
 #include "dlp_permission_log.h"
 #include "securec.h"
@@ -26,6 +29,17 @@
 
 using namespace OHOS::Security::DlpPermission;
 using namespace OHOS::Security::AccessToken;
+namespace OHOS {
+namespace Security {
+namespace DlpPermission {
+bool BundleManagerAdapter::GetBundleInfo(const std::string &bundleName, int32_t flag,
+    AppExecFwk::BundleInfo &bundleInfo, int32_t userId)
+{
+    return true;
+}
+}
+}
+}
 namespace OHOS {
 static void FuzzTest(const uint8_t* data, size_t size)
 {
