@@ -30,8 +30,8 @@ static const std::string KEY_SEPATATOR = "_";
 SandboxConfigKvDataStorage& SandboxConfigKvDataStorage::GetInstance()
 {
     KvDataStorageOptions options = { .autoSync = false };
-    static SandboxConfigKvDataStorage instance(options);
-    return instance;
+    static SandboxConfigKvDataStorage *instance = new (std::nothrow) SandboxConfigKvDataStorage(options);
+    return *instance;
 }
 
 SandboxConfigKvDataStorage::SandboxConfigKvDataStorage(const KvDataStorageOptions &options)
