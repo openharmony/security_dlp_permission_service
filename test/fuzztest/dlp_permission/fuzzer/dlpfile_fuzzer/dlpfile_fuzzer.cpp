@@ -20,6 +20,7 @@
 #include <vector>
 #include <thread>
 #include "accesstoken_kit.h"
+#include "dlp_credential_client_defines.h"
 #include "dlp_file_manager.h"
 #include "dlp_permission.h"
 #include "dlp_permission_log.h"
@@ -29,6 +30,22 @@
 
 using namespace OHOS::Security::DlpPermission;
 using namespace OHOS::Security::AccessToken;
+namespace {
+static const int ACCOUNT_NAME_SIZE = 20;
+}
+bool IsAccountLogIn(uint32_t osAccountId, AccountType accountType, const DlpBlob* accountId)
+{
+    return true;
+}
+int8_t GetLocalAccountName(char** account, uint32_t userId)
+{
+    if (account == nullptr) {
+        return -1;
+    }
+    *account = static_cast<char*>(malloc(ACCOUNT_NAME_SIZE * sizeof(char)));
+    strcpy_s(*account, sizeof(**account), "ohosAnonymousName");
+    return 0;
+}
 namespace OHOS {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = { LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION,
                                                        "DlpFileFuzzTest" };
@@ -47,13 +64,13 @@ static void GenerateRandProperty(struct DlpProperty& encProp, const uint8_t* dat
         std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count());
     encProp.ownerAccount = DEFAULT_CURRENT_ACCOUNT;
     encProp.ownerAccountId = DEFAULT_CURRENT_ACCOUNT;
-    encProp.ownerAccountType = CLOUD_ACCOUNT;
+    encProp.ownerAccountType = DlpAccountType::CLOUD_ACCOUNT;
     for (uint32_t user = 0; user < TEST_USER_COUNT; ++user) {
         std::string accountName = "testaccountName";
         AuthUserInfo perminfo = {.authAccount = strdup(const_cast<char *>(accountName.c_str())),
             .authPerm = READ_ONLY,
             .permExpiryTime = curTime + EXPIRT_TIME,
-            .authAccountType = CLOUD_ACCOUNT};
+            .authAccountType = DlpAccountType::CLOUD_ACCOUNT};
         encProp.authUsers.emplace_back(perminfo);
     }
     std::string accountName  = DEFAULT_CURRENT_ACCOUNT;
@@ -68,13 +85,15 @@ static void FuzzTest(const uint8_t* data, size_t size)
     write(plainFileFd, buffer, sizeof(buffer));
     struct DlpProperty prop;
     GenerateRandProperty(prop, data, size);
-    DlpFileManager::GetInstance().GenerateDlpFile(plainFileFd,
+    int32_t res = DlpFileManager::GetInstance().GenerateDlpFile(plainFileFd,
         dlpFileFd, prop, g_Dlpfile, DLP_TEST_DIR);
+    DLP_LOG_INFO(LABEL, "GenerateDlpFile res=%{public}d", res);
     int recoveryFileFd = open("/data/fuse_test.txt.recovery",
         O_CREAT | O_RDWR | O_TRUNC, S_IRWXU | S_IRWXG | S_IRWXO);
     DlpFileManager::GetInstance().RecoverDlpFile(g_Dlpfile, recoveryFileFd);
     DlpFileManager::GetInstance().CloseDlpFile(g_Dlpfile);
-    DlpFileManager::GetInstance().OpenDlpFile(dlpFileFd, g_Dlpfile, DLP_TEST_DIR, TEST_APPID);
+    res = DlpFileManager::GetInstance().OpenDlpFile(dlpFileFd, g_Dlpfile, DLP_TEST_DIR, TEST_APPID);
+    DLP_LOG_INFO(LABEL, "OpenDlpFile res=%{public}d", res);
     g_Dlpfile->DlpFileWrite(0, const_cast<void*>(reinterpret_cast<const void*>(data)), size);
     uint8_t writeBuffer[ARRRY_SIZE] = {0x1};
     g_Dlpfile->DlpFileRead(0, writeBuffer, ARRRY_SIZE);
