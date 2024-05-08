@@ -34,8 +34,7 @@ public:
     virtual ~RetentionFileManager();
     static RetentionFileManager& GetInstance();
 
-    int32_t AddSandboxInfo(const int32_t& appIndex, const uint32_t& tokenId, const std::string& bundleName,
-        const int32_t& userId);
+    int32_t AddSandboxInfo(const RetentionInfo& retentionInfo);
     int32_t DelSandboxInfo(uint32_t tokenId);
     bool CanUninstall(const uint32_t& tokenId);
     int32_t UpdateSandboxInfo(const std::set<std::string>& docUriSet, RetentionInfo& info, bool isRetention);

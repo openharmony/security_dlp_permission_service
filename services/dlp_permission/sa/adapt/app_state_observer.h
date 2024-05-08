@@ -42,7 +42,7 @@ public:
     bool CheckSandboxInfo(const std::string& bundleName, int32_t appIndex, int32_t userId);
     void DumpSandbox(int fd);
     void ExitSaAfterAllDlpManagerDie();
-
+    void GetOpeningReadOnlySandbox(const std::string& bundleName, int32_t userId, int32_t& appIndex);
     void AddCallbackListener(int32_t pid);
     bool RemoveCallbackListener(int32_t pid);
     bool CallbackListenerEmpty();

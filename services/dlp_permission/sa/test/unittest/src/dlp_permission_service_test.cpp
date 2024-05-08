@@ -200,6 +200,16 @@ void GeneratePolicy(PermissionPolicy& encPolicy, GeneratePolicyParam param)
 }
 }
 
+namespace OHOS {
+namespace AccountSA {
+ErrCode OsAccountManager::GetOsAccountLocalIdFromUid(const int uid, int &id)
+{
+    id = DEFAULT_USERID;
+    return DLP_OK;
+}
+}
+}
+
 void DlpPermissionServiceTest::SetUpTestCase()
 {}
 
@@ -374,8 +384,15 @@ HWTEST_F(DlpPermissionServiceTest, FileOperator001, TestSize.Level1)
 HWTEST_F(DlpPermissionServiceTest, SandboxJsonManager001, TestSize.Level1)
 {
     std::shared_ptr<SandboxJsonManager> sandboxJsonManager_ = std::make_shared<SandboxJsonManager>();
-    sandboxJsonManager_->AddSandboxInfo(1, 123456, "test.bundlName", 100);
-    int32_t res = sandboxJsonManager_->AddSandboxInfo(1, 123456, "test.bundlName", 100);
+    RetentionInfo retentionInfo = {
+        .appIndex = 1,
+        .tokenId = 123456,
+        .bundleName = "test.bundlName",
+        .dlpFileAccess = DLPFileAccess::CONTENT_EDIT,
+        .userId = 100
+    };
+    sandboxJsonManager_->AddSandboxInfo(retentionInfo);
+    int32_t res = sandboxJsonManager_->AddSandboxInfo(retentionInfo);
     ASSERT_EQ(DLP_INSERT_FILE_ERROR, res);
     std::set<std::string> docUriSet;
     docUriSet.emplace("testUri");
@@ -425,12 +442,22 @@ HWTEST_F(DlpPermissionServiceTest, SandboxJsonManager002, TestSize.Level1)
 {
     std::shared_ptr<SandboxJsonManager> sandboxJsonManager_ = std::make_shared<SandboxJsonManager>();
     sandboxJsonManager_->FromJson(NULL);
-    sandboxJsonManager_->AddSandboxInfo(1, 827878, "testbundle", g_userId);
+    RetentionInfo retentionInfo = {
+        .appIndex = 1,
+        .tokenId = 827878,
+        .bundleName = "testbundle",
+        .dlpFileAccess = DLPFileAccess::CONTENT_EDIT,
+        .userId = g_userId
+    };
+    sandboxJsonManager_->AddSandboxInfo(retentionInfo);
     ASSERT_TRUE(!sandboxJsonManager_->HasRetentionSandboxInfo("testbundle1"));
     int32_t uid = getuid();
     setuid(20010031);
     ASSERT_TRUE(sandboxJsonManager_->HasRetentionSandboxInfo("testbundle"));
-    sandboxJsonManager_->AddSandboxInfo(1, 827818, "testbundle1", 10000);
+    retentionInfo.bundleName = "testbundle1";
+    retentionInfo.tokenId = 827818;
+    retentionInfo.userId = 10000;
+    sandboxJsonManager_->AddSandboxInfo(retentionInfo);
     ASSERT_TRUE(!sandboxJsonManager_->HasRetentionSandboxInfo("testbundle1"));
 
     ASSERT_EQ(DLP_RETENTION_SERVICE_ERROR, sandboxJsonManager_->DelSandboxInfo(8888));
@@ -438,7 +465,7 @@ HWTEST_F(DlpPermissionServiceTest, SandboxJsonManager002, TestSize.Level1)
     RetentionInfo info;
     info.tokenId = 827878;
     std::set<std::string> docUriSet;
-    ASSERT_TRUE(!sandboxJsonManager_->UpdateDocUriSetByDifference(info, docUriSet));
+    ASSERT_TRUE(!sandboxJsonManager_->ClearDocUriSet(info, docUriSet));
     docUriSet.insert("testUri");
     sandboxJsonManager_->UpdateRetentionState(docUriSet, info, true);
     ASSERT_EQ(DLP_RETENTION_SERVICE_ERROR, sandboxJsonManager_->DelSandboxInfo(827878));
@@ -456,17 +483,27 @@ HWTEST_F(DlpPermissionServiceTest, SandboxJsonManager002, TestSize.Level1)
 HWTEST_F(DlpPermissionServiceTest, SandboxJsonManager003, TestSize.Level1)
 {
     std::shared_ptr<SandboxJsonManager> sandboxJsonManager_ = std::make_shared<SandboxJsonManager>();
-    sandboxJsonManager_->AddSandboxInfo(1, 827818, "testbundle1", 10000);
+    RetentionInfo retentionInfo = {
+        .appIndex = 1,
+        .tokenId = 827818,
+        .bundleName = "testbundle1",
+        .dlpFileAccess = DLPFileAccess::CONTENT_EDIT,
+        .userId = 10000
+    };
+    sandboxJsonManager_->AddSandboxInfo(retentionInfo);
     int32_t uid = getuid();
     ASSERT_EQ(DLP_RETENTION_GET_DATA_FROM_BASE_CONSTRAINTS_FILE_EMPTY,
         sandboxJsonManager_->RemoveRetentionState("testbundle", -1));
     ASSERT_EQ(DLP_RETENTION_GET_DATA_FROM_BASE_CONSTRAINTS_FILE_EMPTY,
         sandboxJsonManager_->RemoveRetentionState("testbundle1", -1));
-    sandboxJsonManager_->AddSandboxInfo(1, 827878, "testbundle", g_userId);
+    retentionInfo.bundleName = "testbundle";
+    retentionInfo.tokenId = 827878;
+    retentionInfo.userId = g_userId;
+    sandboxJsonManager_->AddSandboxInfo(retentionInfo);
     ASSERT_EQ(DLP_RETENTION_GET_DATA_FROM_BASE_CONSTRAINTS_FILE_EMPTY,
         sandboxJsonManager_->RemoveRetentionState("testbundle1", -1));
     ASSERT_EQ(DLP_OK, sandboxJsonManager_->RemoveRetentionState("testbundle", -1));
-    sandboxJsonManager_->AddSandboxInfo(1, 827878, "testbundle", g_userId);
+    sandboxJsonManager_->AddSandboxInfo(retentionInfo);
     ASSERT_EQ(DLP_RETENTION_GET_DATA_FROM_BASE_CONSTRAINTS_FILE_EMPTY,
         sandboxJsonManager_->RemoveRetentionState("testbundle", 2));
     ASSERT_EQ(DLP_OK, sandboxJsonManager_->RemoveRetentionState("testbundle", 1));
@@ -506,13 +543,20 @@ HWTEST_F(DlpPermissionServiceTest, SandboxJsonManager004, TestSize.Level1)
 HWTEST_F(DlpPermissionServiceTest, RetentionFileManager001, TestSize.Level1)
 {
     std::shared_ptr<SandboxJsonManager> sandboxJsonManager_ = std::make_shared<SandboxJsonManager>();
-    sandboxJsonManager_->AddSandboxInfo(1, 827878, "testbundle", 100);
+    RetentionInfo retentionInfo = {
+        .appIndex = 1,
+        .tokenId = 827878,
+        .bundleName = "testbundle",
+        .dlpFileAccess = DLPFileAccess::CONTENT_EDIT,
+        .userId = 100
+    };
+    sandboxJsonManager_->AddSandboxInfo(retentionInfo);
     int32_t uid = getuid();
     setuid(10031);
     ASSERT_TRUE(!RetentionFileManager::GetInstance().HasRetentionSandboxInfo("testbundle1"));
     setuid(20010031);
     RetentionFileManager::GetInstance().hasInit = false;
-    ASSERT_EQ(DLP_OK, RetentionFileManager::GetInstance().AddSandboxInfo(1, 827878, "testbundle", 100));
+    ASSERT_EQ(DLP_OK, RetentionFileManager::GetInstance().AddSandboxInfo(retentionInfo));
     RetentionFileManager::GetInstance().hasInit = false;
     ASSERT_EQ(DLP_RETENTION_SERVICE_ERROR, RetentionFileManager::GetInstance().DelSandboxInfo(8888));
     RetentionFileManager::GetInstance().hasInit = false;
@@ -527,6 +571,50 @@ HWTEST_F(DlpPermissionServiceTest, RetentionFileManager001, TestSize.Level1)
     ASSERT_EQ(DLP_OK, RetentionFileManager::GetInstance().GetRetentionSandboxList("testbundle1", vec, false));
 
     setuid(uid);
+}
+
+/**
+ * @tc.name:InstallDlpSandbox001
+ * @tc.desc:InstallDlpSandbox test
+ * @tc.type: FUNC
+ * @tc.require:DTS2023040302317
+ */
+HWTEST_F(DlpPermissionServiceTest, InstallDlpSandbox001, TestSize.Level1)
+{
+    DLP_LOG_DEBUG(LABEL, "InstallDlpSandbox001");
+    SandboxInfo sandboxInfo;
+    int32_t ret = dlpPermissionService_->InstallDlpSandbox(
+        DLP_MANAGER_APP, DLPFileAccess::CONTENT_EDIT, DEFAULT_USERID, sandboxInfo, "testUri");
+    ASSERT_EQ(DLP_OK, ret);
+    int32_t editAppIndex = sandboxInfo.appIndex;
+    std::set<std::string> docUriSet;
+    docUriSet.insert("testUri");
+    RetentionInfo info;
+    info.appIndex = editAppIndex;
+    info.tokenId = sandboxInfo.tokenId;
+    info.bundleName = DLP_MANAGER_APP;
+    info.userId = DEFAULT_USERID;
+    RetentionFileManager::GetInstance().UpdateSandboxInfo(docUriSet, info, true);
+    ret = dlpPermissionService_->InstallDlpSandbox(
+        DLP_MANAGER_APP, DLPFileAccess::CONTENT_EDIT, DEFAULT_USERID, sandboxInfo, "testUri");
+    ASSERT_EQ(DLP_OK, ret);
+    ASSERT_EQ(sandboxInfo.appIndex, editAppIndex);
+    ret = dlpPermissionService_->InstallDlpSandbox(
+        DLP_MANAGER_APP, DLPFileAccess::READ_ONLY, DEFAULT_USERID, sandboxInfo, "testUri");
+    ASSERT_EQ(DLP_OK, ret);
+    editAppIndex = sandboxInfo.appIndex;
+    dlpPermissionService_->InstallDlpSandbox(
+        DLP_MANAGER_APP, DLPFileAccess::READ_ONLY, DEFAULT_USERID, sandboxInfo, "testUri1");
+    ASSERT_EQ(DLP_OK, ret);
+    ASSERT_EQ(sandboxInfo.appIndex, editAppIndex);
+    editAppIndex = sandboxInfo.appIndex;
+    info.appIndex = editAppIndex;
+    info.tokenId = sandboxInfo.tokenId;
+    RetentionFileManager::GetInstance().UpdateSandboxInfo(docUriSet, info, true);
+    ret = dlpPermissionService_->InstallDlpSandbox(
+        DLP_MANAGER_APP, DLPFileAccess::READ_ONLY, DEFAULT_USERID, sandboxInfo, "testUri");
+    ASSERT_EQ(DLP_OK, ret);
+    ASSERT_EQ(sandboxInfo.appIndex, editAppIndex);
 }
 
 /**
@@ -569,7 +657,14 @@ HWTEST_F(DlpPermissionServiceTest, AppUninstallObserver001, TestSize.Level1)
     data.SetWant(want);
     observer_->OnReceiveEvent(data);
     std::shared_ptr<SandboxJsonManager> sandboxJsonManager_ = std::make_shared<SandboxJsonManager>();
-    sandboxJsonManager_->AddSandboxInfo(1, 827818, "testbundle", 100);
+    RetentionInfo retentionInfo = {
+        .appIndex = 1,
+        .tokenId = 827818,
+        .bundleName = "testbundle",
+        .dlpFileAccess = DLPFileAccess::CONTENT_EDIT,
+        .userId = 100
+    };
+    sandboxJsonManager_->AddSandboxInfo(retentionInfo);
     want.SetAction(EventFwk::CommonEventSupport::COMMON_EVENT_PACKAGE_FULLY_REMOVED);
     want.SetBundle("testbundle");
     data.SetWant(want);

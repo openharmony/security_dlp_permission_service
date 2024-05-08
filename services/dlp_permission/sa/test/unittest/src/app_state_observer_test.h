@@ -17,7 +17,6 @@
 #define APP_STATE_OBSERVER_TEST_H
 
 #include <gtest/gtest.h>
-#include "app_state_observer.h"
 
 namespace OHOS {
 namespace Security {

@@ -19,6 +19,7 @@
 #include <set>
 #include <string>
 #include "parcel.h"
+#include "permission_policy.h"
 
 namespace OHOS {
 namespace Security {
@@ -33,6 +34,7 @@ public:
 
     int32_t appIndex_;
     std::string bundleName_;
+    DLPFileAccess dlpFileAccess_;
     std::set<std::string> docUriSet_;
 };
 } // namespace DlpPermission

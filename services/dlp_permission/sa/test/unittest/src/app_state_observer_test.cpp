@@ -19,6 +19,9 @@
 #include <securec.h>
 #include "dlp_permission.h"
 #include "dlp_permission_log.h"
+#define private public
+#include "app_state_observer.h"
+#undef private
 
 using namespace testing::ext;
 using namespace OHOS;
@@ -27,6 +30,9 @@ using namespace std;
 
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "AppStateObserverTest"};
+static const int32_t DEFAULT_USERID = 100;
+static const std::string DLP_BUNDLENAME = "com.ohos.dlpmanager";
+static const int32_t DEFAULT_NUM = 1;
 }
 
 void AppStateObserverTest::SetUpTestCase() {}
@@ -166,4 +172,45 @@ HWTEST_F(AppStateObserverTest, QueryDlpFileCopyableByTokenId001, TestSize.Level1
 
     int32_t ret = observer.QueryDlpFileCopyableByTokenId(copyable, tokenId);
     ASSERT_EQ(DLP_SERVICE_ERROR_APPOBSERVER_ERROR, ret);
+}
+
+/**
+ * @tc.name: GetOpeningReadOnlySandbox001
+ * @tc.desc: GetOpeningReadOnlySandbox test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AppStateObserverTest, GetOpeningReadOnlySandbox001, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL, "GetOpeningReadOnlySandbox001");
+    AppStateObserver observer;
+    int32_t appIndex = -1;
+    observer.GetOpeningReadOnlySandbox(DLP_BUNDLENAME, DEFAULT_USERID, appIndex);
+    ASSERT_EQ(appIndex, -1);
+
+    DlpSandboxInfo appInfo;
+    appInfo.bundleName = DLP_BUNDLENAME;
+    appInfo.dlpFileAccess = DLPFileAccess::READ_ONLY;
+    appInfo.uid = DEFAULT_NUM;
+    appInfo.appIndex = DEFAULT_NUM;
+    appInfo.tokenId = DEFAULT_NUM;
+    appInfo.userId = DEFAULT_USERID;
+    observer.sandboxInfo_[DEFAULT_NUM] = appInfo;
+    observer.tokenIdToUidMap_[DEFAULT_NUM] = DEFAULT_NUM;
+    observer.GetOpeningReadOnlySandbox(DLP_BUNDLENAME, DEFAULT_USERID, appIndex);
+    ASSERT_EQ(appIndex, appInfo.appIndex);
+    appInfo.dlpFileAccess = DLPFileAccess::CONTENT_EDIT;
+    observer.sandboxInfo_[DEFAULT_NUM] = appInfo;
+    observer.GetOpeningReadOnlySandbox(DLP_BUNDLENAME, DEFAULT_USERID, appIndex);
+    ASSERT_EQ(appIndex, -1);
+    appInfo.dlpFileAccess = DLPFileAccess::READ_ONLY;
+    appInfo.bundleName = "";
+    observer.sandboxInfo_[DEFAULT_NUM] = appInfo;
+    observer.GetOpeningReadOnlySandbox(DLP_BUNDLENAME, DEFAULT_USERID, appIndex);
+    ASSERT_EQ(appIndex, -1);
+    appInfo.userId = 0;
+    appInfo.bundleName = DLP_BUNDLENAME;
+    observer.sandboxInfo_[DEFAULT_NUM] = appInfo;
+    observer.GetOpeningReadOnlySandbox(DLP_BUNDLENAME, DEFAULT_USERID, appIndex);
+    ASSERT_EQ(appIndex, -1);
 }

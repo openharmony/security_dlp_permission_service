@@ -178,9 +178,30 @@ void AppStateObserver::AddDlpSandboxInfo(const DlpSandboxInfo& appInfo)
     AddUserId(userId);
     AddSandboxInfo(appInfo);
     AddUidWithTokenId(appInfo.tokenId, appInfo.uid);
-    RetentionFileManager::GetInstance().AddSandboxInfo(appInfo.appIndex, appInfo.tokenId, appInfo.bundleName,
-        appInfo.userId);
+    RetentionInfo retentionInfo = {
+        .appIndex = appInfo.appIndex,
+        .tokenId = appInfo.tokenId,
+        .bundleName = appInfo.bundleName,
+        .dlpFileAccess = appInfo.dlpFileAccess,
+        .userId = appInfo.userId
+    };
+    RetentionFileManager::GetInstance().AddSandboxInfo(retentionInfo);
     OpenDlpFileCallbackManager::GetInstance().ExecuteCallbackAsync(appInfo);
+    return;
+}
+
+void AppStateObserver::GetOpeningReadOnlySandbox(const std::string& bundleName, int32_t userId, int32_t& appIndex)
+{
+    std::lock_guard<std::mutex> lock(sandboxInfoLock_);
+    for (auto iter = sandboxInfo_.begin(); iter != sandboxInfo_.end(); iter++) {
+        DlpSandboxInfo appInfo = iter->second;
+        if (appInfo.userId == userId && appInfo.bundleName == bundleName &&
+            appInfo.dlpFileAccess == DLPFileAccess::READ_ONLY) {
+            appIndex = appInfo.appIndex;
+            return;
+        }
+    }
+    appIndex = -1;
     return;
 }
 
