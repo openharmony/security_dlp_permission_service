@@ -981,6 +981,9 @@ int32_t DlpPermissionProxy::GetSandboxAppConfig(std::string& configInfo)
         DLP_LOG_ERROR(LABEL, "Read int32 fail");
         return DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL;
     }
+    if (requestResult == DLP_KV_GET_DATA_NOT_FOUND) {
+        return DLP_OK;
+    }
     if (requestResult != DLP_OK) {
         return requestResult;
     }
