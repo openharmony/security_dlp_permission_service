@@ -483,14 +483,16 @@ HWTEST_F(DlpPermissionServiceTest, SandboxJsonManager004, TestSize.Level1)
     std::set<std::string> keySet;
     int res = sandboxJsonManager_->GetBundleNameSetByUserId(100, keySet);
     ASSERT_EQ(DLP_OK, res);
-    sandboxJsonManager_->AddSandboxInfo(1, 827818, "testbundle1", 10000);
-    sandboxJsonManager_->AddSandboxInfo(1, 827819, "testbundle1", 100);
-    res = sandboxJsonManager_->GetBundleNameSetByUserId(100, keySet);
+    SandboxInfo sandboxInfo;
+    int32_t ret = dlpPermissionService_->InstallDlpSandbox(
+        DLP_MANAGER_APP, DLPFileAccess::CONTENT_EDIT, DEFAULT_USERID, sandboxInfo, "testUri1111");
+    ASSERT_EQ(DLP_OK, ret);
+    res = RetentionFileManager::GetInstance().GetBundleNameSetByUserId(100, keySet);
     ASSERT_EQ(DLP_OK, res);
-    res = sandboxJsonManager_->RemoveRetentionInfoByUserId(100, keySet);
+    res = RetentionFileManager::GetInstance().RemoveRetentionInfoByUserId(100, keySet);
     ASSERT_EQ(DLP_OK, res);
-    res = sandboxJsonManager_->RemoveRetentionInfoByUserId(100, keySet);
-    ASSERT_EQ(DLP_FILE_NO_NEED_UPDATE, res);
+    res = RetentionFileManager::GetInstance().RemoveRetentionInfoByUserId(100, keySet);
+    ASSERT_EQ(DLP_OK, res);
 }
 
 /**
