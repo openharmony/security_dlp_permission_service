@@ -858,7 +858,7 @@ int32_t DlpPermissionService::IsDLPFeatureProvided(bool& isProvideDLPFeature)
         isProvideDLPFeature = false;
         return DLP_OK;
     }
-    isProvideDLPFeature = true;
+    isProvideDLPFeature = false;
     return DLP_OK;
 }
 
