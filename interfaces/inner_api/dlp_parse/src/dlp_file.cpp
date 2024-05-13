@@ -487,13 +487,20 @@ bool DlpFile::ParseCert()
         DLP_LOG_ERROR(LABEL, "ParseCert failed, %{public}s", strerror(errno));
         return false;
     }
-    cert_.size = static_cast<uint32_t>(fz.st_size);
-    cert_.data = new (std::nothrow) uint8_t[cert_.size];
+    if (cert_.data != nullptr) {
+        free(cert_.data);
+        cert_.data = nullptr;
+    }
+    if (fz.st_size == 0 || fz.st_size > DLP_MAX_CERT_SIZE) {
+        DLP_LOG_ERROR(LABEL, "Cert size is too large or equit to 0.");
+        return false;
+    }
+    cert_.data = new (std::nothrow) uint8_t[fz.st_size];
     if (cert_.data == nullptr) {
         DLP_LOG_ERROR(LABEL, "new failed");
         return false;
     }
-
+    cert_.size = static_cast<uint32_t>(fz.st_size);
     int32_t fd = open(DLP_CERT.c_str(), O_RDWR);
     if (fd == -1) {
         DLP_LOG_ERROR(LABEL, "open failed, %{public}s", strerror(errno));
@@ -501,14 +508,11 @@ bool DlpFile::ParseCert()
     }
 
     uint32_t size = static_cast<uint32_t>(read(fd, cert_.data, cert_.size));
+    (void)close(fd);
     if (size != cert_.size) {
         DLP_LOG_ERROR(LABEL, "read failed, %{public}s", strerror(errno));
-        (void)close(fd);
         return false;
     }
-
-    (void)close(fd);
-
     return true;
 }
 
@@ -999,7 +1003,7 @@ static void SetDlpGeneralInfo(bool accessFlag, std::string& contactAccount, cons
 
 int32_t DlpFile::GenEncData(int32_t inPlainFileFd)
 {
-    int32_t encFile;
+    int32_t encFile = -1;
     if (inPlainFileFd == -1) {
         encFile = open(DLP_OPENING_ENC_DATA.c_str(), O_RDWR);
     } else {
