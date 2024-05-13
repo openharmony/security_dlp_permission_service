@@ -25,9 +25,6 @@
 namespace OHOS {
 namespace Security {
 namespace DlpPermission {
-static thread_local napi_ref dlpFileRef_;
-const std::string DLP_FILE_CLASS_NAME = "dlpFile";
-const int STRING_LEN_LIMIT = 1024;
 
 class NapiDlpPermission {
 public:

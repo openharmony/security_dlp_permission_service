@@ -47,7 +47,7 @@ constexpr int32_t PARAM_SIZE_TWO = 2;
 constexpr int32_t PARAM_SIZE_THREE = 3;
 constexpr int32_t PARAM_SIZE_FOUR = 4;
 constexpr int32_t PARAM_SIZE_FIVE = 5;
-const std::string ON_OFF_SANDBOX = "uninstallDLPSandbox";
+
 
 #define NAPI_CALL_BASE_WITH_SCOPE(env, theCall, retVal, scope) \
     do {                                                       \

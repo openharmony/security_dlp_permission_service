@@ -31,6 +31,9 @@ int32_t ByteToHexString(const uint8_t *byte, uint32_t byteLen, char *hexStr, uin
     if (byte == nullptr || hexStr == nullptr) {
         return DLP_SERVICE_ERROR_VALUE_INVALID;
     }
+    if (byteLen > (UINT32_MAX / BYTE_TO_HEX_OPER_LENGTH)) {
+        return DLP_SERVICE_ERROR_VALUE_INVALID;
+    }
     /* The terminator('\0') needs 1 bit */
     if (hexLen < byteLen * BYTE_TO_HEX_OPER_LENGTH + 1) {
         return DLP_SERVICE_ERROR_VALUE_INVALID;
@@ -49,13 +52,14 @@ static uint8_t CharToHex(char c)
 {
     if ((c >= 'A') && (c <= 'F')) {
         return (c - 'A' + 10);  // hex trans to dec with base 10
-    } else if ((c >= 'a') && (c <= 'f')) {
-        return (c - 'a' + 10);  // hex trans to dec with base 10
-    } else if ((c >= '0') && (c <= '9')) {
-        return (c - '0');
-    } else {
-        return 16;  // max hex must < 16
     }
+    if ((c >= 'a') && (c <= 'f')) {
+        return (c - 'a' + 10);  // hex trans to dec with base 10
+    }
+    if ((c >= '0') && (c <= '9')) {
+        return (c - '0');
+    }
+    return 16;  // max hex must < 16
 }
 
 int32_t HexStringToByte(const char *hexStr, uint8_t *byte, uint32_t byteLen)

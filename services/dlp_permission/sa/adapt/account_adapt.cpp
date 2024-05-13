@@ -62,7 +62,7 @@ bool GetUserIdByActiveAccount(int32_t* userId)
         DLP_LOG_ERROR(LABEL, "QueryActiveOsAccountIds failed %{public}d", res);
         return false;
     }
-    if (ids.size() < 1) {
+    if (ids.empty()) {
         DLP_LOG_ERROR(LABEL, "ids is empty");
         return false;
     }

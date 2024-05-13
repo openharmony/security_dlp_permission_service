@@ -44,6 +44,8 @@ std::mutex g_lockForOpenDlpFileSubscriber;
 std::set<OpenDlpFileSubscriberContext*> g_openDlpFileSubscribers;
 RegisterDlpSandboxChangeInfo *g_dlpSandboxChangeInfoRegister = nullptr;
 const std::string PERMISSION_ACCESS_DLP_FILE = "ohos.permission.ACCESS_DLP_FILE";
+static thread_local napi_ref dlpFileRef_;
+const std::string DLP_FILE_CLASS_NAME = "dlpFile";
 }  // namespace
 
 static bool CheckPermission(napi_env env, const std::string& permission)

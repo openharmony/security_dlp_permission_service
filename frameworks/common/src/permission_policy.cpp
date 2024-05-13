@@ -163,33 +163,35 @@ bool PermissionPolicy::IsValid() const
         (this->hmacKeyLen_ == 0 || CheckAesParam(this->hmacKey_, this->hmacKeyLen_)));
 }
 
+static void SetKey(const uint8_t* originalKey, uint32_t originalKeyLen, uint8_t** key, uint32_t& keyLen)
+{
+    if (originalKey == nullptr) {
+        DLP_LOG_INFO(LABEL, "Set key to null");
+        FreeUint8Buffer(key, keyLen);
+        return;
+    }
+    if (!CheckAesParamLen(originalKeyLen)) {
+        DLP_LOG_ERROR(LABEL, "Key len invalid, len=%{public}u", keyLen);
+        return;
+    }
+    FreeUint8Buffer(key, keyLen);
+    *key = new (std::nothrow) uint8_t[originalKeyLen];
+    if (*key == nullptr) {
+        DLP_LOG_ERROR(LABEL, "Alloc %{public}u buff for key fail", keyLen);
+        return;
+    }
+    keyLen = originalKeyLen;
+    if (memcpy_s(*key, keyLen, originalKey, originalKeyLen) != EOK) {
+        DLP_LOG_ERROR(LABEL, "Memcpy key buff fail");
+        FreeUint8Buffer(key, keyLen);
+        return;
+    }
+}
+
 void PermissionPolicy::SetAeskey(const uint8_t* key, uint32_t keyLen)
 {
-    if (key == nullptr) {
-        DLP_LOG_INFO(LABEL, "Set aes key to null");
-        FreeUint8Buffer(&aeskey_, aeskeyLen_);
-        return;
-    }
-    if (!CheckAesParamLen(keyLen)) {
-        DLP_LOG_ERROR(LABEL, "Aes key len invalid, len=%{public}u", keyLen);
-        return;
-    }
-    FreeUint8Buffer(&aeskey_, aeskeyLen_);
-    if (keyLen < 1) {
-        DLP_LOG_ERROR(LABEL, "keyLen error");
-        return;
-    }
-    aeskey_ = new (std::nothrow) uint8_t[keyLen];
-    if (aeskey_ == nullptr) {
-        DLP_LOG_ERROR(LABEL, "Alloc %{public}u buff for aes key fail", keyLen);
-        return;
-    }
-    aeskeyLen_ = keyLen;
-    if (memcpy_s(aeskey_, aeskeyLen_, key, keyLen) != EOK) {
-        DLP_LOG_ERROR(LABEL, "Memcpy aes key buff fail");
-        FreeUint8Buffer(&aeskey_, aeskeyLen_);
-        return;
-    }
+    DLP_LOG_DEBUG(LABEL, "Start set aes key.");
+    SetKey(key, keyLen, &aeskey_, aeskeyLen_);
 }
 
 uint8_t* PermissionPolicy::GetAeskey() const
@@ -204,31 +206,8 @@ uint32_t PermissionPolicy::GetAeskeyLen() const
 
 void PermissionPolicy::SetIv(const uint8_t* iv, uint32_t ivLen)
 {
-    if (iv == nullptr) {
-        DLP_LOG_INFO(LABEL, "Set iv to null");
-        FreeUint8Buffer(&iv_, ivLen_);
-        return;
-    }
-    if (!CheckAesParamLen(ivLen)) {
-        DLP_LOG_ERROR(LABEL, "Iv len invalid, len=%{public}u", ivLen);
-        return;
-    }
-    FreeUint8Buffer(&iv_, ivLen_);
-    if (ivLen < 1) {
-        DLP_LOG_ERROR(LABEL, "ivLen error %{public}u", ivLen);
-        return;
-    }
-    iv_ = new (std::nothrow) uint8_t[ivLen];
-    if (iv_ == nullptr) {
-        DLP_LOG_ERROR(LABEL, "Alloc %{public}u buff for iv fail", ivLen);
-        return;
-    }
-    ivLen_ = ivLen;
-    if (memcpy_s(iv_, ivLen_, iv, ivLen) != EOK) {
-        DLP_LOG_ERROR(LABEL, "Memcpy iv buff fail");
-        FreeUint8Buffer(&iv_, ivLen_);
-        return;
-    }
+    DLP_LOG_DEBUG(LABEL, "Start set iv.");
+    SetKey(iv, ivLen, &iv_, ivLen_);
 }
 
 uint8_t* PermissionPolicy::GetIv() const
@@ -243,31 +222,8 @@ uint32_t PermissionPolicy::GetIvLen() const
 
 void PermissionPolicy::SetHmacKey(const uint8_t* key, uint32_t keyLen)
 {
-    if (key == nullptr) {
-        DLP_LOG_INFO(LABEL, "Set hmacKey to null");
-        FreeUint8Buffer(&hmacKey_, hmacKeyLen_);
-        return;
-    }
-    if (!CheckAesParamLen(keyLen)) {
-        DLP_LOG_ERROR(LABEL, "keyLen invalid, len = %{public}u", keyLen);
-        return;
-    }
-    FreeUint8Buffer(&hmacKey_, hmacKeyLen_);
-    if (keyLen < 1) {
-        DLP_LOG_ERROR(LABEL, "keyLen error %{public}u", keyLen);
-        return;
-    }
-    hmacKeyLen_ = keyLen;
-    hmacKey_ = new (std::nothrow) uint8_t[hmacKeyLen_];
-    if (hmacKey_ == nullptr) {
-        DLP_LOG_ERROR(LABEL, "Alloc %{public}u buff for hmacKey fail", keyLen);
-        return;
-    }
-    if (memcpy_s(hmacKey_, hmacKeyLen_, key, keyLen) != EOK) {
-        DLP_LOG_ERROR(LABEL, "Memcpy hmacKey buff fail");
-        FreeUint8Buffer(&hmacKey_, hmacKeyLen_);
-        return;
-    }
+    DLP_LOG_DEBUG(LABEL, "Start set hmac key.");
+    SetKey(key, keyLen, &hmacKey_, hmacKeyLen_);
 }
 
 uint8_t* PermissionPolicy::GetHmacKey() const
@@ -357,7 +313,6 @@ void FreeCharBuffer(char* buff, uint32_t buffLen)
     if (buff != nullptr) {
         memset_s(buff, buffLen, 0, buffLen);
         delete[] buff;
-        buff = nullptr;
     }
 }
 
