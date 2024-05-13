@@ -179,8 +179,10 @@ void AppStateObserver::AddDlpSandboxInfo(const DlpSandboxInfo& appInfo)
     AddUserId(userId);
     AddSandboxInfo(appInfo);
     AddUidWithTokenId(appInfo.tokenId, appInfo.uid);
-    RetentionFileManager::GetInstance().AddSandboxInfo(appInfo.appIndex, appInfo.tokenId, appInfo.bundleName,
-        appInfo.userId);
+    if (appInfo.dlpFileAccess != DLPFileAccess::READ_ONLY) {
+        RetentionFileManager::GetInstance().AddSandboxInfo(appInfo.appIndex, appInfo.tokenId, appInfo.bundleName,
+            appInfo.userId);
+    }
     OpenDlpFileCallbackManager::GetInstance().ExecuteCallbackAsync(appInfo);
     return;
 }

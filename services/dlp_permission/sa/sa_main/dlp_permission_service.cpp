@@ -61,7 +61,7 @@ static const int REPEAT_TIME = 5;
 static const std::string DLP_CONFIG = "etc/dlp_permission/dlp_config.json";
 static const std::string SUPPORT_FILE_TYPE = "support_file_type";
 static const std::string DEAULT_DLP_CONFIG = "/system/etc/dlp_config.json";
-static const std::string DLP_ENABEL = "const.dlp.dlp_enable";
+static const std::string DLP_ENABLE = "const.dlp.dlp_enable";
 static const std::string TRUE_VALUE = "true";
 static const std::string FALSE_VALUE = "false";
 }
@@ -648,21 +648,14 @@ int32_t DlpPermissionService::GetRetentionSandboxList(const std::string& bundleN
     std::string callerBundleName;
     uint32_t tokenId = IPCSkeleton::GetCallingTokenID();
     GetCallerBundleName(tokenId, callerBundleName);
-    bool isNeedTimer = true;
     if (callerBundleName == DLP_MANAGER) {
         callerBundleName = bundleName;
-        isNeedTimer = false;
     }
     if (callerBundleName.empty()) {
         DLP_LOG_ERROR(LABEL, "get bundleName error");
         return DLP_SERVICE_ERROR_VALUE_INVALID;
     }
-    auto res =
-        RetentionFileManager::GetInstance().GetRetentionSandboxList(callerBundleName, retentionSandBoxInfoVec, true);
-    if (!isNeedTimer) {
-        return res;
-    }
-    return res;
+    return RetentionFileManager::GetInstance().GetRetentionSandboxList(callerBundleName, retentionSandBoxInfoVec, true);
 }
 
 int32_t DlpPermissionService::ClearUnreservedSandbox()
@@ -802,7 +795,7 @@ int32_t DlpPermissionService::GetSandboxAppConfig(std::string& configInfo)
 
 int32_t DlpPermissionService::IsDLPFeatureProvided(bool& isProvideDLPFeature)
 {
-    std::string value = OHOS::system::GetParameter(DLP_ENABEL, "");
+    std::string value = OHOS::system::GetParameter(DLP_ENABLE, "");
     if (value == TRUE_VALUE) {
         isProvideDLPFeature = true;
         return DLP_OK;
