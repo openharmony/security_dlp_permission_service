@@ -73,9 +73,20 @@ static const int DLP_FILE_PERMISSION = 0777;
 void CreateDlpFileFd()
 {
     int plainFileFd = open(PLAIN_FILE_NAME.c_str(), O_CREAT | O_RDWR | O_TRUNC, DLP_FILE_PERMISSION);
+    if (plainFileFd < 0) {
+        cout << "create dlpFile fd failed" << endl;
+        return;
+    }
     int fileFd = open(DLP_FILE_NAME_2.c_str(), O_CREAT | O_RDWR | O_TRUNC, DLP_FILE_PERMISSION);
+    if (fileFd < 0) {
+        close(plainFileFd);
+        cout << "create dlpFile fd failed" << endl;
+        return;
+    }
     g_dlpFileFd = open(DLP_FILE_NAME.c_str(), O_CREAT | O_RDWR | O_TRUNC, DLP_FILE_PERMISSION);
-    if (plainFileFd < 0 || g_dlpFileFd < 0) {
+    if (g_dlpFileFd < 0) {
+        close(plainFileFd);
+        close(fileFd);
         cout << "create dlpFile fd failed" << endl;
         return;
     }
