@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -120,19 +120,19 @@ int32_t DlpFileManager::GenerateCertBlob(const std::vector<uint8_t>& cert, struc
     return DLP_OK;
 }
 
-void DlpFileManager::CleanTempBlob(struct DlpBlob& key, struct DlpCipherParam* tagIv, struct DlpBlob& hmacKey) const
+void DlpFileManager::CleanTempBlob(struct DlpBlob& key, struct DlpCipherParam** tagIv, struct DlpBlob& hmacKey) const
 {
     if (key.data != nullptr) {
         delete[] key.data;
         key.data = nullptr;
     }
-    if (tagIv != nullptr) {
-        if (tagIv->iv.data != nullptr) {
-            delete[] tagIv->iv.data;
-            tagIv->iv.data = nullptr;
+    if ((*tagIv) != nullptr) {
+        if ((*tagIv)->iv.data != nullptr) {
+            delete[] (*tagIv)->iv.data;
+            (*tagIv)->iv.data = nullptr;
         }
-        delete tagIv;
-        tagIv = nullptr;
+        delete (*tagIv);
+        (*tagIv) = nullptr;
     }
     if (hmacKey.data != nullptr) {
         delete[] hmacKey.data;
@@ -153,14 +153,14 @@ int32_t DlpFileManager::PrepareDlpEncryptParms(PermissionPolicy& policy, struct 
     struct DlpCipherParam* tagIv = new (std::nothrow) struct DlpCipherParam;
     if (tagIv == nullptr) {
         DLP_LOG_ERROR(LABEL, "Alloc iv buff fail");
-        CleanTempBlob(key, tagIv, hmacKey);
+        CleanTempBlob(key, &tagIv, hmacKey);
         return DLP_PARSE_ERROR_MEMORY_OPERATE_FAIL;
     }
     DLP_LOG_INFO(LABEL, "Generate iv");
     res = DlpOpensslGenerateRandomKey(IV_SIZE * BIT_NUM_OF_UINT8, &tagIv->iv);
     if (res != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "Generate iv fail, errno=%{public}d", res);
-        CleanTempBlob(key, tagIv, hmacKey);
+        CleanTempBlob(key, &tagIv, hmacKey);
         return res;
     }
 
@@ -168,7 +168,7 @@ int32_t DlpFileManager::PrepareDlpEncryptParms(PermissionPolicy& policy, struct 
     res = DlpOpensslGenerateRandomKey(DLP_AES_KEY_SIZE_256, &hmacKey);
     if (res != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "Generate hmacKey fail, errno=%{public}d", res);
-        CleanTempBlob(key, tagIv, hmacKey);
+        CleanTempBlob(key, &tagIv, hmacKey);
         return res;
     }
 
@@ -182,7 +182,7 @@ int32_t DlpFileManager::PrepareDlpEncryptParms(PermissionPolicy& policy, struct 
     res = GenerateCertData(policy, certData);
     if (res != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "Generate cert fail, errno=%{public}d", res);
-        CleanTempBlob(key, tagIv, hmacKey);
+        CleanTempBlob(key, &tagIv, hmacKey);
         return res;
     }
 

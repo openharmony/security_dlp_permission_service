@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -1755,6 +1755,7 @@ HWTEST_F(DlpFileTest, CheckDlpFile001, TestSize.Level1)
     testFile.head_.contactAccountOffset = sizeof(struct DlpHeader) + 10;
     testFile.head_.txtOffset = sizeof(struct DlpHeader) + 10 + 10;
     testFile.head_.txtSize = 0;
+    // dlp file version not exist
     testFile.head_.version = 99;
     write(fdDlp, &testFile.head_, sizeof(struct DlpHeader));
     lseek(fdDlp, 0, SEEK_SET);

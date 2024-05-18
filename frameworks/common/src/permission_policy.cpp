@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -282,20 +282,20 @@ uint32_t PermissionPolicy::GetHmacKeyLen() const
 
 void PermissionPolicy::CopyPolicyHmac(const PermissionPolicy& srcPolicy)
 {
-    if (srcPolicy.hmacKeyLen_ != 0) {
-        FreeUint8Buffer(&hmacKey_, hmacKeyLen_);
-        hmacKeyLen_ = srcPolicy.hmacKeyLen_;
-        hmacKey_ = new (std::nothrow) uint8_t[hmacKeyLen_];
-        if (hmacKey_ == nullptr) {
-            DLP_LOG_ERROR(LABEL, "Alloc %{public}u buff for hmacKey fail", hmacKeyLen_);
-            FreePermissionPolicyMem();
-            return;
-        }
-        if (memcpy_s(hmacKey_, hmacKeyLen_, srcPolicy.hmacKey_, srcPolicy.hmacKeyLen_) != EOK) {
-            DLP_LOG_ERROR(LABEL, "Memcpy hmacKey buff fail");
-            FreePermissionPolicyMem();
-            return;
-        }
+    if (srcPolicy.hmacKeyLen_ == 0 || srcPolicy.hmacKey_ == nullptr) {
+        return;
+    }
+    FreeUint8Buffer(&hmacKey_, hmacKeyLen_);
+    hmacKeyLen_ = srcPolicy.hmacKeyLen_;
+    hmacKey_ = new (std::nothrow) uint8_t[hmacKeyLen_];
+    if (hmacKey_ == nullptr) {
+        DLP_LOG_ERROR(LABEL, "Alloc %{public}u buff for hmacKey fail", hmacKeyLen_);
+        FreePermissionPolicyMem();
+        return;
+    }
+    if (memcpy_s(hmacKey_, hmacKeyLen_, srcPolicy.hmacKey_, srcPolicy.hmacKeyLen_) != EOK) {
+        DLP_LOG_ERROR(LABEL, "Memcpy hmacKey buff fail");
+        FreePermissionPolicyMem();
     }
 }
 

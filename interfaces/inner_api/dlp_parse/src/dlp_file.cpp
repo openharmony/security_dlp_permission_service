@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -1036,43 +1036,44 @@ int32_t DlpFile::GenerateHmacVal(int32_t encFile, struct DlpBlob& out)
 
 int32_t DlpFile::GetHmacVal(int32_t encFile, std::string& hmacStr)
 {
-    if (head_.version >= HMAC_VERSION) {
-        if (hmac_.size == 0) {
-            uint8_t* outBuf = new (std::nothrow) uint8_t[HMAC_SIZE];
-            if (outBuf == nullptr) {
-                DLP_LOG_ERROR(LABEL, "New memory fail");
-                return DLP_SERVICE_ERROR_MEMORY_OPERATE_FAIL;
-            }
-            struct DlpBlob out = {
-                .size = HMAC_SIZE,
-                .data = outBuf,
-            };
-            int ret = GenerateHmacVal(encFile, out);
-            if (ret != DLP_OK) {
-                CleanBlobParam(out);
-                return ret;
-            }
-            if (out.size == 0) {
-                return DLP_OK;
-            }
-            hmac_.size = out.size;
-            hmac_.data = out.data;
-        }
-        uint32_t hmacHexLen = hmac_.size * BYTE_TO_HEX_OPER_LENGTH + 1;
-        char* hmacHex = new (std::nothrow) char[hmacHexLen];
-        if (hmacHex == nullptr) {
+    if (head_.version < HMAC_VERSION) {
+        return DLP_OK;
+    }
+    if (hmac_.size == 0) {
+        uint8_t* outBuf = new (std::nothrow) uint8_t[HMAC_SIZE];
+        if (outBuf == nullptr) {
             DLP_LOG_ERROR(LABEL, "New memory fail");
             return DLP_SERVICE_ERROR_MEMORY_OPERATE_FAIL;
         }
-        int ret = ByteToHexString(hmac_.data, hmac_.size, hmacHex, hmacHexLen);
+        struct DlpBlob out = {
+            .size = HMAC_SIZE,
+            .data = outBuf,
+        };
+        int ret = GenerateHmacVal(encFile, out);
         if (ret != DLP_OK) {
-            DLP_LOG_ERROR(LABEL, "Byte to hexstring fail");
-            FreeCharBuffer(hmacHex, hmacHexLen);
+            CleanBlobParam(out);
             return ret;
         }
-        hmacStr = hmacHex;
-        FreeCharBuffer(hmacHex, hmacHexLen);
+        if (out.size == 0) {
+            return DLP_OK;
+        }
+        hmac_.size = out.size;
+        hmac_.data = out.data;
     }
+    uint32_t hmacHexLen = hmac_.size * BYTE_TO_HEX_OPER_LENGTH + 1;
+    char* hmacHex = new (std::nothrow) char[hmacHexLen];
+    if (hmacHex == nullptr) {
+        DLP_LOG_ERROR(LABEL, "New memory fail");
+        return DLP_SERVICE_ERROR_MEMORY_OPERATE_FAIL;
+    }
+    int ret = ByteToHexString(hmac_.data, hmac_.size, hmacHex, hmacHexLen);
+    if (ret != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "Byte to hexstring fail");
+        FreeCharBuffer(hmacHex, hmacHexLen);
+        return ret;
+    }
+    hmacStr = hmacHex;
+    FreeCharBuffer(hmacHex, hmacHexLen);
     return DLP_OK;
 }
 
