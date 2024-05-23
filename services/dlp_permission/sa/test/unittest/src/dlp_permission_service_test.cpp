@@ -70,6 +70,7 @@ const std::string ENC_DATA = "encData";
 const std::string EXTRA_INFO_LEN = "extraInfoLen";
 const std::string EXTRA_INFO = "extraInfo";
 const std::string ENC_POLICY = "encPolicy";
+static int32_t g_userId = 100;
 static const uint8_t ARRAY_CHAR_SIZE = 62;
 static const char CHAR_ARRAY[] = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
@@ -215,6 +216,7 @@ void DlpPermissionServiceTest::SetUp()
     ASSERT_NE(nullptr, dlpPermissionService_);
     dlpPermissionService_->appStateObserver_ = new (std::nothrow) AppStateObserver();
     ASSERT_TRUE(dlpPermissionService_->appStateObserver_ != nullptr);
+    GetUserIdByActiveAccount(&g_userId);
 }
 
 void DlpPermissionServiceTest::TearDown()
@@ -423,7 +425,7 @@ HWTEST_F(DlpPermissionServiceTest, SandboxJsonManager002, TestSize.Level1)
 {
     std::shared_ptr<SandboxJsonManager> sandboxJsonManager_ = std::make_shared<SandboxJsonManager>();
     sandboxJsonManager_->FromJson(NULL);
-    sandboxJsonManager_->AddSandboxInfo(1, 827878, "testbundle", 100);
+    sandboxJsonManager_->AddSandboxInfo(1, 827878, "testbundle", g_userId);
     ASSERT_TRUE(!sandboxJsonManager_->HasRetentionSandboxInfo("testbundle1"));
     int32_t uid = getuid();
     setuid(20010031);
@@ -460,11 +462,11 @@ HWTEST_F(DlpPermissionServiceTest, SandboxJsonManager003, TestSize.Level1)
         sandboxJsonManager_->RemoveRetentionState("testbundle", -1));
     ASSERT_EQ(DLP_RETENTION_GET_DATA_FROM_BASE_CONSTRAINTS_FILE_EMPTY,
         sandboxJsonManager_->RemoveRetentionState("testbundle1", -1));
-    sandboxJsonManager_->AddSandboxInfo(1, 827878, "testbundle", 100);
+    sandboxJsonManager_->AddSandboxInfo(1, 827878, "testbundle", g_userId);
     ASSERT_EQ(DLP_RETENTION_GET_DATA_FROM_BASE_CONSTRAINTS_FILE_EMPTY,
         sandboxJsonManager_->RemoveRetentionState("testbundle1", -1));
     ASSERT_EQ(DLP_OK, sandboxJsonManager_->RemoveRetentionState("testbundle", -1));
-    sandboxJsonManager_->AddSandboxInfo(1, 827878, "testbundle", 100);
+    sandboxJsonManager_->AddSandboxInfo(1, 827878, "testbundle", g_userId);
     ASSERT_EQ(DLP_RETENTION_GET_DATA_FROM_BASE_CONSTRAINTS_FILE_EMPTY,
         sandboxJsonManager_->RemoveRetentionState("testbundle", 2));
     ASSERT_EQ(DLP_OK, sandboxJsonManager_->RemoveRetentionState("testbundle", 1));
@@ -776,9 +778,8 @@ HWTEST_F(DlpPermissionServiceTest, VisitRecordFileManager001, TestSize.Level1)
 HWTEST_F(DlpPermissionServiceTest, GetLocalAccountName001, TestSize.Level1)
 {
     char* account = nullptr;
-    uint32_t userId = 0;
-    ASSERT_EQ(0, GetLocalAccountName(&account, userId));
-    ASSERT_EQ(-1, GetLocalAccountName(nullptr, userId));
+    ASSERT_EQ(0, GetLocalAccountName(&account, g_userId));
+    ASSERT_EQ(-1, GetLocalAccountName(nullptr, g_userId));
 }
 
 /**
