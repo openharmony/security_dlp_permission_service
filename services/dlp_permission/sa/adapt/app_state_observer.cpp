@@ -43,8 +43,8 @@ void AppStateObserver::UninstallDlpSandbox(DlpSandboxInfo& appInfo)
     if (appInfo.appIndex <= 0) {  // never uninstall original hap
         return;
     }
-    auto sandboxBundleName = appInfo.bundleName + std::to_string(appInfo.appIndex);
-    DLP_LOG_INFO(LABEL, "uninstall dlp sandbox %{public}s, uid: %{public}d", sandboxBundleName.c_str(), appInfo.uid);
+    DLP_LOG_INFO(LABEL, "uninstall dlp sandbox %{public}s%{public}d, uid: %{public}d", appInfo.bundleName.c_str(),
+        appInfo.appIndex, appInfo.uid);
     AppExecFwk::BundleMgrClient bundleMgrClient;
     bundleMgrClient.UninstallSandboxApp(appInfo.bundleName, appInfo.appIndex, appInfo.userId);
     RetentionFileManager::GetInstance().DelSandboxInfo(appInfo.tokenId);
@@ -64,7 +64,7 @@ void AppStateObserver::UninstallAllDlpSandboxForUser(int32_t userId)
             UninstallDlpSandbox(appInfo);
         }
         EraseUidTokenIdMap(appInfo.tokenId);
-        sandboxInfo_.erase(iter++);
+        iter = sandboxInfo_.erase(iter);
         DLP_LOG_INFO(LABEL, "ExecuteCallbackAsync appInfo bundleName:%{public}s,appIndex:%{public}d,pid:%{public}d",
             appInfo.bundleName.c_str(), appInfo.appIndex, appInfo.pid);
         DlpSandboxChangeCallbackManager::GetInstance().ExecuteCallbackAsync(appInfo);
@@ -148,23 +148,22 @@ void AppStateObserver::EraseSandboxInfo(int32_t uid)
     std::lock_guard<std::mutex> lock(sandboxInfoLock_);
     auto iter = sandboxInfo_.find(uid);
     if (iter != sandboxInfo_.end()) {
-        auto sandboxBundleName = iter->second.bundleName + std::to_string(iter->second.appIndex);
-        DLP_LOG_INFO(LABEL, "sandbox app %{public}s info delete success, uid: %{public}d", sandboxBundleName.c_str(),
-            iter->second.uid);
+        DLP_LOG_INFO(LABEL, "sandbox app %{public}s%{public}d info delete success, uid: %{public}d",
+            iter->second.bundleName.c_str(), iter->second.appIndex, iter->second.uid);
         sandboxInfo_.erase(iter);
     }
 }
 
 void AppStateObserver::AddSandboxInfo(const DlpSandboxInfo& appInfo)
 {
-    auto sandboxBundleName = appInfo.bundleName + std::to_string(appInfo.appIndex);
     std::lock_guard<std::mutex> lock(sandboxInfoLock_);
     if (sandboxInfo_.count(appInfo.uid) > 0) {
-        DLP_LOG_WARN(LABEL, "sandbox app %{public}s is already insert, ignore it", sandboxBundleName.c_str());
+        DLP_LOG_WARN(LABEL, "sandbox app %{public}s%{public}d is already insert, ignore it", appInfo.bundleName.c_str(),
+            appInfo.appIndex);
     } else {
         sandboxInfo_[appInfo.uid] = appInfo;
-        DLP_LOG_INFO(LABEL, "sandbox app %{public}s info insert success, uid: %{public}d", sandboxBundleName.c_str(),
-            appInfo.uid);
+        DLP_LOG_INFO(LABEL, "sandbox app %{public}s%{public}d info insert success, uid: %{public}d",
+            appInfo.bundleName.c_str(), appInfo.appIndex, appInfo.uid);
     }
     return;
 }
@@ -179,10 +178,8 @@ void AppStateObserver::AddDlpSandboxInfo(const DlpSandboxInfo& appInfo)
     AddUserId(userId);
     AddSandboxInfo(appInfo);
     AddUidWithTokenId(appInfo.tokenId, appInfo.uid);
-    if (appInfo.dlpFileAccess != DLPFileAccess::READ_ONLY) {
-        RetentionFileManager::GetInstance().AddSandboxInfo(appInfo.appIndex, appInfo.tokenId, appInfo.bundleName,
-            appInfo.userId);
-    }
+    RetentionFileManager::GetInstance().AddSandboxInfo(appInfo.appIndex, appInfo.tokenId, appInfo.bundleName,
+        appInfo.userId);
     OpenDlpFileCallbackManager::GetInstance().ExecuteCallbackAsync(appInfo);
     return;
 }
@@ -345,9 +342,8 @@ int32_t AppStateObserver::QueryDlpFileAccessByUid(DLPFileAccess& dlpFileAccess, 
         return DLP_SERVICE_ERROR_APPOBSERVER_ERROR;
     }
     dlpFileAccess = appInfo.dlpFileAccess;
-    auto sandboxBundleName = appInfo.bundleName + std::to_string(appInfo.appIndex);
-    DLP_LOG_INFO(
-        LABEL, "current dlp sandbox %{public}s's perm type is %{public}d", sandboxBundleName.c_str(), dlpFileAccess);
+    DLP_LOG_INFO(LABEL, "current dlp sandbox %{public}s%{public}d's perm type is %{public}d",
+        appInfo.bundleName.c_str(), appInfo.appIndex, dlpFileAccess);
     return DLP_OK;
 }
 

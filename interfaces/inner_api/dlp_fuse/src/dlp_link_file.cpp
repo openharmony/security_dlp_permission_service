@@ -55,11 +55,11 @@ DlpLinkFile::~DlpLinkFile()
 
 bool DlpLinkFile::SubAndCheckZeroRef(int ref)
 {
-    std::lock_guard<std::mutex> lock(refLock_);
     if (ref <= 0) {
         DLP_LOG_WARN(LABEL, "Need sub reference %{public}d is error", ref);
         return false;
     }
+    std::lock_guard<std::mutex> lock(refLock_);
     if (refcount_ < ref) {
         DLP_LOG_WARN(LABEL, "Need sub reference %{public}d is larger than refcount %{public}d",
             ref, static_cast<int>(refcount_));

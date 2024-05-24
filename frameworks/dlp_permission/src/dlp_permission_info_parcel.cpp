@@ -24,11 +24,11 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_
 bool DLPPermissionInfoParcel::Marshalling(Parcel& out) const
 {
     if (!(out.WriteUint32(this->permInfo_.dlpFileAccess))) {
-        DLP_LOG_ERROR(LABEL, "Write auth user account fail");
+        DLP_LOG_ERROR(LABEL, "Write dlp file access fail");
         return false;
     }
     if (!(out.WriteUint32(this->permInfo_.flags))) {
-        DLP_LOG_ERROR(LABEL, "Write auth user perm fail");
+        DLP_LOG_ERROR(LABEL, "Write flags fail");
         return false;
     }
     return true;
@@ -38,13 +38,13 @@ DLPPermissionInfoParcel* DLPPermissionInfoParcel::Unmarshalling(Parcel& in)
 {
     auto permInfoParcel = new (std::nothrow) DLPPermissionInfoParcel();
     if (permInfoParcel == nullptr) {
-        DLP_LOG_ERROR(LABEL, "Alloc buff for auth user info parcel fail");
+        DLP_LOG_ERROR(LABEL, "Alloc buff for perm info parcel fail");
         return nullptr;
     }
 
     uint32_t res;
     if (!(in.ReadUint32(res))) {
-        DLP_LOG_ERROR(LABEL, "Read auth user account fail");
+        DLP_LOG_ERROR(LABEL, "Read dlpFileAccess fail");
         delete permInfoParcel;
         permInfoParcel = nullptr;
         return nullptr;
@@ -52,7 +52,7 @@ DLPPermissionInfoParcel* DLPPermissionInfoParcel::Unmarshalling(Parcel& in)
     permInfoParcel->permInfo_.dlpFileAccess = static_cast<DLPFileAccess>(res);
 
     if (!(in.ReadUint32(res))) {
-        DLP_LOG_ERROR(LABEL, "Read auth user perm fail");
+        DLP_LOG_ERROR(LABEL, "Read flags fail");
         delete permInfoParcel;
         permInfoParcel = nullptr;
         return nullptr;

@@ -34,6 +34,7 @@ const std::string PARAM_UI_EXTENSION_TYPE = "ability.want.params.uiExtensionType
 const std::string SYS_COMMON_UI = "sys/commonUI";
 const std::string DLP_MANAGER_BUNDLENAME = "com.ohos.dlpmanager";
 const std::string DLP_MANAGER_ABILITYNAME = "MainAbilityEx";
+const std::string ON_OFF_SANDBOX = "uninstallDLPSandbox";
 
 static bool ConvertDlpSandboxChangeInfo(napi_env env, napi_value value, const DlpSandboxCallbackInfo &result)
 {

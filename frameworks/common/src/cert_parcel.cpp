@@ -53,7 +53,6 @@ bool CertParcel::Marshalling(Parcel& data) const
 static CertParcel* FreeCertParcel(CertParcel* parcel)
 {
     delete parcel;
-    parcel = nullptr;
     return nullptr;
 }
 
@@ -77,7 +76,7 @@ CertParcel* CertParcel::Unmarshalling(Parcel& data)
         return FreeCertParcel(parcel);
     }
     if (!data.ReadUInt8Vector(&parcel->offlineCert)) {
-        DLP_LOG_ERROR(LABEL, "Read cert fail");
+        DLP_LOG_ERROR(LABEL, "Read offlineCert fail");
         return FreeCertParcel(parcel);
     }
     return parcel;

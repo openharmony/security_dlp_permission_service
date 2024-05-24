@@ -64,20 +64,17 @@ RetentionSandBoxInfo* RetentionSandBoxInfo::Unmarshalling(Parcel& in)
     if (!(in.ReadInt32(parcel->appIndex_))) {
         DLP_LOG_ERROR(LABEL, "Read appIndex fail");
         delete parcel;
-        parcel = nullptr;
         return nullptr;
     }
     if (!(in.ReadString(parcel->bundleName_))) {
         DLP_LOG_ERROR(LABEL, "Read bundleName fail");
         delete parcel;
-        parcel = nullptr;
         return nullptr;
     }
     std::vector<std::string> docUriVec;
     if (!(in.ReadStringVector(&docUriVec))) {
         DLP_LOG_ERROR(LABEL, "Read docUriVec fail");
         delete parcel;
-        parcel = nullptr;
         return nullptr;
     }
 
