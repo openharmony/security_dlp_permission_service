@@ -38,6 +38,7 @@ const std::string IV_LEN = "ivLen";
 const std::string HMACKEY = "hmacKey";
 const std::string HMACKEY_LEN = "hmacKeyLen";
 const std::string DLP_VERSION_LOW_CAMEL_CASE = "dlpVersion";
+const std::string DLP_FILE_DEBUG_FLAG = "debug";
 const std::string ENC_DATA_LEN = "encDataLen";
 const std::string ENC_DATA = "encData";
 const std::string EXTRA_INFO_LEN = "extraInfoLen";
@@ -294,6 +295,7 @@ int32_t DlpPermissionSerializer::SerializeDlpPermission(const PermissionPolicy& 
     policyJson[VERSION_INDEX] = 1;
     policyJson[PERM_EXPIRY_TIME] = policy.expireTime_;
     policyJson[NEED_ONLINE] = policy.needOnline_;
+    policyJson[DLP_FILE_DEBUG_FLAG] = policy.debug_;
     policyJson[ACCOUNT_INDEX] = authUsersJson;
     SerializeEveryoneInfo(policy, policyJson);
     permInfoJson[POLICY_INDEX] = policyJson;
@@ -307,7 +309,7 @@ int32_t DlpPermissionSerializer::SerializeDlpPermission(const PermissionPolicy& 
     fileEnc[HMACKEY_LEN] = policy.GetHmacKeyLen();
     fileEnc[DLP_VERSION_LOW_CAMEL_CASE] = policy.dlpVersion_;
     permInfoJson[FILE_INDEX] = fileEnc;
-    
+
     DLP_LOG_INFO(LABEL, "Serialize successfully!");
     return DLP_OK;
 }
@@ -386,6 +388,9 @@ static void InitPermissionPolicy(PermissionPolicy& policy, const std::vector<Aut
     }
     if (policyJson.find(NEED_ONLINE) != policyJson.end() && policyJson.at(NEED_ONLINE).is_number()) {
         policyJson.at(NEED_ONLINE).get_to(policy.needOnline_);
+    }
+    if (policyJson.find(DLP_FILE_DEBUG_FLAG) != policyJson.end() && policyJson.at(DLP_FILE_DEBUG_FLAG).is_boolean()) {
+        policyJson.at(DLP_FILE_DEBUG_FLAG).get_to(policy.debug_);
     }
     policy.ownerAccountType_ = CLOUD_ACCOUNT;
 }

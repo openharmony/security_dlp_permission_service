@@ -121,12 +121,12 @@ HWTEST_F(DlpCredentialTest, DlpCredentialTest002, TestSize.Level1)
     std::string policy;
     std::string account;
     DlpAccountType accountType = OHOS::Security::DlpPermission::CLOUD_ACCOUNT;
-
+    AppExecFwk::ApplicationInfo applicationInfo;
     int res = DlpCredential::GetInstance().GenerateDlpCertificate(policy, account, accountType, stub);
     EXPECT_EQ(DLP_CREDENTIAL_ERROR_COMMON_ERROR, res);
     sptr<CertParcel> certParcel = new (std::nothrow) CertParcel();
     std::string appId = "test_appId_passed";
-    res = DlpCredential::GetInstance().ParseDlpCertificate(certParcel, stub, appId, true);
+    res = DlpCredential::GetInstance().ParseDlpCertificate(certParcel, stub, appId, true, applicationInfo);
     EXPECT_EQ(DLP_SERVICE_ERROR_JSON_OPERATE_FAIL, res);
     unordered_json encDataJson = {
         {ENC_DATA_LEN, POLICY_PLAINTTEXT.length()},
@@ -136,7 +136,7 @@ HWTEST_F(DlpCredentialTest, DlpCredentialTest002, TestSize.Level1)
     std::string s2 = encDataJson.dump();
     std::vector<uint8_t> cert2(s2.begin(), s2.end());
     certParcel->cert = cert2;
-    res = DlpCredential::GetInstance().ParseDlpCertificate(certParcel, stub, appId, true);
+    res = DlpCredential::GetInstance().ParseDlpCertificate(certParcel, stub, appId, true, applicationInfo);
     EXPECT_EQ(DLP_OK, res);
 }
 

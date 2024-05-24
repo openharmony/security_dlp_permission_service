@@ -62,8 +62,10 @@ static const std::string DLP_CONFIG = "etc/dlp_permission/dlp_config.json";
 static const std::string SUPPORT_FILE_TYPE = "support_file_type";
 static const std::string DEAULT_DLP_CONFIG = "/system/etc/dlp_config.json";
 static const std::string DLP_ENABLE = "const.dlp.dlp_enable";
+static const std::string DEVELOPER_MODE = "const.security.developermode.state";
 static const std::string TRUE_VALUE = "true";
 static const std::string FALSE_VALUE = "false";
+static const std::string SEPARATOR = "_";
 }
 REGISTER_SYSTEM_ABILITY_BY_ID(DlpPermissionService, SA_ID_DLP_PERMISSION_SERVICE, true);
 
@@ -159,7 +161,7 @@ int32_t DlpPermissionService::GenerateDlpCertificate(
     if (!policyParcel->policyParams_.IsValid()) {
         return DLP_SERVICE_ERROR_VALUE_INVALID;
     }
-
+    policyParcel->policyParams_.SetDebug(OHOS::system::GetBoolParameter(DEVELOPER_MODE, false));
     unordered_json jsonObj;
     int32_t res = DlpPermissionSerializer::GetInstance().SerializeDlpPermission(policyParcel->policyParams_, jsonObj);
     if (res != DLP_OK) {
@@ -171,6 +173,28 @@ int32_t DlpPermissionService::GenerateDlpCertificate(
         policyParcel->policyParams_.ownerAccountType_, callback);
 }
 
+static bool GetApplicationInfo(std::string appId, AppExecFwk::ApplicationInfo& applicationInfo)
+{
+    size_t pos = appId.find_last_of(SEPARATOR);
+    if (pos > appId.length()) {
+        DLP_LOG_ERROR(LABEL, "AppId=%{public}s pos=%{public}zu can not find bundleName", appId.c_str(), pos);
+        return false;
+    }
+    std::string bundleName = appId.substr(0, pos);
+
+    int32_t userId = GetCallingUserId();
+    if (userId < 0) {
+        DLP_LOG_ERROR(LABEL, "Get userId error.");
+        return false;
+    }
+    if (!BundleManagerAdapter::GetInstance().GetApplicationInfo(bundleName,
+        OHOS::AppExecFwk::ApplicationFlag::GET_ALL_APPLICATION_INFO, userId, applicationInfo)) {
+        DLP_LOG_ERROR(LABEL, "Get applicationInfo error bundleName=%{public}s", bundleName.c_str());
+        return false;
+    }
+    return true;
+}
+
 int32_t DlpPermissionService::ParseDlpCertificate(sptr<CertParcel>& certParcel, sptr<IDlpPermissionCallback>& callback,
     const std::string& appId, const bool& offlineAccess)
 {
@@ -178,8 +202,13 @@ int32_t DlpPermissionService::ParseDlpCertificate(sptr<CertParcel>& certParcel, 
         DLP_LOG_ERROR(LABEL, "Callback is null");
         return DLP_SERVICE_ERROR_VALUE_INVALID;
     }
-
-    return DlpCredential::GetInstance().ParseDlpCertificate(certParcel, callback, appId, offlineAccess);
+    AppExecFwk::ApplicationInfo applicationInfo;
+    if (!GetApplicationInfo(appId, applicationInfo)) {
+        DLP_LOG_ERROR(LABEL, "Permission check fail.");
+        return DLP_SERVICE_ERROR_VALUE_INVALID;
+    }
+    return DlpCredential::GetInstance().ParseDlpCertificate(
+        certParcel, callback, appId, offlineAccess, applicationInfo);
 }
 
 bool DlpPermissionService::InsertDlpSandboxInfo(DlpSandboxInfo& sandboxInfo, bool hasRetention)

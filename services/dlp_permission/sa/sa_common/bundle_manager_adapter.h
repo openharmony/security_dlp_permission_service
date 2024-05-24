@@ -33,6 +33,8 @@ public:
     static BundleManagerAdapter& GetInstance();
     bool GetBundleInfo(const std::string &bundleName, int32_t flag,
         AppExecFwk::BundleInfo &bundleInfo, int32_t userId);
+    bool GetApplicationInfo(const std::string &appName, const int32_t flag, const  int32_t userId,
+        AppExecFwk::ApplicationInfo &applicationInfo);
     int32_t GetBundleInfoV9(const std::string &bundleName, AppExecFwk::BundleFlag flag,
         AppExecFwk::BundleInfo &bundleInfo, int32_t userId);
 

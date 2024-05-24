@@ -60,11 +60,14 @@ bool DlpPolicyParcel::Marshalling(Parcel& out) const
     if (!(out.WriteUint8(this->policyParams_.ownerAccountType_))) {
         DLP_LOG_ERROR(LABEL, "Write owner account type fail");
     }
-    
+
     MarshallingKey(out);
     MarshallingExpireTime(out);
     if (!(out.WriteUint32(this->policyParams_.dlpVersion_))) {
         DLP_LOG_ERROR(LABEL, "Write dlpVersion_ fail");
+    }
+    if (!(out.WriteBool(this->policyParams_.debug_))) {
+        DLP_LOG_ERROR(LABEL, "Write debug_ fail");
     }
     return true;
 }
@@ -168,6 +171,10 @@ static bool ReadAesParam(PermissionPolicy& policy, Parcel& in)
     }
     if (!(in.ReadUint32(policy.dlpVersion_))) {
         DLP_LOG_ERROR(LABEL, "Read dlpVersion_ fail");
+        return false;
+    }
+    if (!(in.ReadBool(policy.debug_))) {
+        DLP_LOG_ERROR(LABEL, "Read debug_ fail");
         return false;
     }
     return true;

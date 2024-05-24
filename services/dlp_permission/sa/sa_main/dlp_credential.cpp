@@ -27,6 +27,7 @@
 #include "ipc_skeleton.h"
 #include "ohos_account_kits.h"
 #include "os_account_manager.h"
+#include "parameters.h"
 #include "permission_policy.h"
 #include "securec.h"
 
@@ -42,8 +43,9 @@ static const uint32_t MAX_APPID_LIST_NUM = 250;
 static const uint32_t MAX_APPID_LENGTH = 200;
 static const std::string POLICY_CERT = "policyCert";
 static const std::string DLP_MANAGER_BUNDLE_NAME = "com.ohos.dlpmanager";
-static std::unordered_map<uint64_t, sptr<IDlpPermissionCallback>> g_requestMap;
+static std::unordered_map<uint64_t, RequestInfo> g_requestMap;
 static std::unordered_map<uint64_t, DlpAccountType> g_requestAccountTypeMap;
+static const std::string DEVELOPER_MODE = "const.security.developermode.state";
 std::mutex g_lockRequest;
 }  // namespace
 
@@ -108,55 +110,28 @@ static int32_t ConvertCredentialError(int errorCode)
     return DLP_CREDENTIAL_ERROR_COMMON_ERROR;
 }
 
-static sptr<IDlpPermissionCallback> GetCallbackFromRequestMap(uint64_t requestId)
+static bool GetCallbackFromRequestMap(uint64_t requestId, RequestInfo& info)
 {
     DLP_LOG_INFO(LABEL, "Get callback, requestId: %{public}llu", static_cast<unsigned long long>(requestId));
-    sptr<IDlpPermissionCallback> callback = nullptr;
     std::lock_guard<std::mutex> lock(g_lockRequest);
     auto iter = g_requestMap.find(requestId);
     if (iter != g_requestMap.end()) {
-        callback = iter->second;
+        info = iter->second;
         g_requestMap.erase(requestId);
-        return callback;
+        return true;
     }
     DLP_LOG_ERROR(LABEL, "Callback not found");
-    return nullptr;
+    return false;
 }
 
-static int32_t InsertCallbackToRequestMap(uint64_t requestId, const sptr<IDlpPermissionCallback>& callback)
+static int32_t InsertCallbackToRequestMap(uint64_t requestId, const RequestInfo& info)
 {
     DLP_LOG_DEBUG(LABEL, "insert request, requestId: %{public}llu", static_cast<unsigned long long>(requestId));
     if (g_requestMap.count(requestId) > 0) {
         DLP_LOG_ERROR(LABEL, "Duplicate task, requestId: %{public}llu", static_cast<unsigned long long>(requestId));
         return DLP_SERVICE_ERROR_CREDENTIAL_TASK_DUPLICATE;
     }
-    g_requestMap[requestId] = callback;
-    return DLP_OK;
-}
-
-static DlpAccountType GetAccountTypeFromRequestMap(uint64_t requestId)
-{
-    DLP_LOG_INFO(LABEL, "Get callback, requestId: %{public}llu", static_cast<unsigned long long>(requestId));
-    DlpAccountType accountType = INVALID_ACCOUNT;
-    std::lock_guard<std::mutex> lock(g_lockRequest);
-    auto iter = g_requestAccountTypeMap.find(requestId);
-    if (iter != g_requestAccountTypeMap.end()) {
-        accountType = iter->second;
-        g_requestAccountTypeMap.erase(requestId);
-        return accountType;
-    }
-    DLP_LOG_ERROR(LABEL, "Callback not found");
-    return INVALID_ACCOUNT;
-}
-
-static int32_t InsertAccountTypeToRequestMap(uint64_t requestId, const DlpAccountType& accountType)
-{
-    DLP_LOG_DEBUG(LABEL, "insert request, requestId: %{public}llu", static_cast<unsigned long long>(requestId));
-    if (g_requestAccountTypeMap.count(requestId) > 0) {
-        DLP_LOG_ERROR(LABEL, "Duplicate task, requestId: %{public}llu", static_cast<unsigned long long>(requestId));
-        return DLP_SERVICE_ERROR_CREDENTIAL_TASK_DUPLICATE;
-    }
-    g_requestAccountTypeMap[requestId] = accountType;
+    g_requestMap[requestId] = info;
     return DLP_OK;
 }
 
@@ -173,9 +148,8 @@ static int32_t QueryRequestIdle()
 static void DlpPackPolicyCallback(uint64_t requestId, int errorCode, DLP_EncPolicyData* outParams)
 {
     DLP_LOG_INFO(LABEL, "Called, requestId: %{public}llu", static_cast<unsigned long long>(requestId));
-
-    auto callback = GetCallbackFromRequestMap(requestId);
-    if (callback == nullptr) {
+    RequestInfo info;
+    if (!GetCallbackFromRequestMap(requestId, info)) {
         DLP_LOG_ERROR(LABEL, "callback is null");
         return;
     }
@@ -186,13 +160,13 @@ static void DlpPackPolicyCallback(uint64_t requestId, int errorCode, DLP_EncPoli
         // split DLP_CREDENTIAL error code by different situations
         errorCode = (errorCode == DLP_ERR_TOKEN_CONNECTION_FAIL) ?
             DLP_CREDENTIAL_ERROR_SERVER_ERROR : ConvertCredentialError(errorCode);
-        callback->OnGenerateDlpCertificate(errorCode, std::vector<uint8_t>());
+        info.callback->OnGenerateDlpCertificate(errorCode, std::vector<uint8_t>());
         return;
     }
 
     if (outParams == nullptr || outParams->data == nullptr || outParams->featureName == nullptr) {
         DLP_LOG_ERROR(LABEL, "Params is null");
-        callback->OnGenerateDlpCertificate(DLP_SERVICE_ERROR_VALUE_INVALID, std::vector<uint8_t>());
+        info.callback->OnGenerateDlpCertificate(DLP_SERVICE_ERROR_VALUE_INVALID, std::vector<uint8_t>());
         return;
     }
     unordered_json encDataJson;
@@ -203,7 +177,7 @@ static void DlpPackPolicyCallback(uint64_t requestId, int errorCode, DLP_EncPoli
     }
     std::string encData = encDataJson.dump();
     std::vector<uint8_t> cert(encData.begin(), encData.end());
-    callback->OnGenerateDlpCertificate(errorCode, cert);
+    info.callback->OnGenerateDlpCertificate(errorCode, cert);
 }
 
 static int32_t GetNewCert(const unordered_json& plainPolicyJson, std::vector<uint8_t>& cert,
@@ -257,51 +231,85 @@ static int32_t DlpRestorePolicyCallbackCheck(sptr<IDlpPermissionCallback> callba
     return DLP_OK;
 }
 
-static void DlpRestorePolicyCallback(uint64_t requestId, int errorCode, DLP_RestorePolicyData* outParams)
+static bool SetPermissionPolicy(DLP_RestorePolicyData* outParams, sptr<IDlpPermissionCallback> callback,
+    PermissionPolicy& policyInfo, unordered_json& jsonObj)
 {
-    DLP_LOG_INFO(LABEL, "Called, requestId: %{public}llu", static_cast<unsigned long long>(requestId));
-    auto callback = GetCallbackFromRequestMap(requestId);
-    auto accountType = GetAccountTypeFromRequestMap(requestId);
-    PermissionPolicy policyInfo;
-    int32_t res = DlpRestorePolicyCallbackCheck(callback, accountType, errorCode, outParams, policyInfo);
-    if (res != DLP_OK) {
-        return;
-    }
     auto policyStr = new (std::nothrow) char[outParams->dataLen + 1];
     if (policyStr == nullptr) {
         DLP_LOG_ERROR(LABEL, "New memory fail");
         callback->OnParseDlpCertificate(DLP_SERVICE_ERROR_MEMORY_OPERATE_FAIL, policyInfo, {});
-        return;
+        return false;
     }
     if (memcpy_s(policyStr, outParams->dataLen + 1, outParams->data, outParams->dataLen) != EOK) {
         DLP_LOG_ERROR(LABEL, "Memcpy_s fail");
         delete[] policyStr;
         callback->OnParseDlpCertificate(DLP_SERVICE_ERROR_MEMORY_OPERATE_FAIL, policyInfo, {});
-        return;
+        return false;
     }
     policyStr[outParams->dataLen] = '\0';
-    auto jsonObj = unordered_json::parse(policyStr, policyStr + outParams->dataLen + 1, nullptr, false);
+    jsonObj = unordered_json::parse(policyStr, policyStr + outParams->dataLen + 1, nullptr, false);
     if (jsonObj.is_discarded() || (!jsonObj.is_object())) {
         DLP_LOG_ERROR(LABEL, "JsonObj is discarded");
         delete[] policyStr;
         callback->OnParseDlpCertificate(DLP_SERVICE_ERROR_JSON_OPERATE_FAIL, policyInfo, {});
-        return;
+        return false;
     }
     delete[] policyStr;
     policyStr = nullptr;
-    res = DlpPermissionSerializer::GetInstance().DeserializeDlpPermission(jsonObj, policyInfo);
+    auto res = DlpPermissionSerializer::GetInstance().DeserializeDlpPermission(jsonObj, policyInfo);
     if (res != DLP_OK) {
         callback->OnParseDlpCertificate(res, policyInfo, {});
+        return false;
+    }
+    return true;
+}
+
+static int32_t CheckDebugPermission(const RequestInfo& requestInfo, PermissionPolicy& policyInfo)
+{
+    bool isDebugApp = (requestInfo.appProvisionType == AppExecFwk::Constants::APP_PROVISION_TYPE_DEBUG);
+    if (!isDebugApp) {
+        return DLP_OK;
+    }
+    bool isDeveloperMode = OHOS::system::GetBoolParameter(DEVELOPER_MODE, false);
+    if (isDeveloperMode && policyInfo.debug_) {
+        return DLP_OK;
+    }
+    DLP_LOG_ERROR(LABEL, "CheckDebugPermission error, isDeveloperMode=%{public}d "
+        "isDebugApp=%{public}d isDebugFile=%{public}d.", isDeveloperMode, isDebugApp, policyInfo.debug_);
+    return DLP_SERVICE_ERROR_PERMISSION_DENY;
+}
+
+static void DlpRestorePolicyCallback(uint64_t requestId, int errorCode, DLP_RestorePolicyData* outParams)
+{
+    DLP_LOG_INFO(LABEL, "Called, requestId: %{public}llu", static_cast<unsigned long long>(requestId));
+    RequestInfo requestInfo;
+    if (!GetCallbackFromRequestMap(requestId, requestInfo)) {
+        DLP_LOG_ERROR(LABEL, "callback is null");
         return;
     }
-    policyInfo.ownerAccountType_ = accountType;
+    PermissionPolicy policyInfo;
+    int32_t res = DlpRestorePolicyCallbackCheck(
+        requestInfo.callback, requestInfo.accountType, errorCode, outParams, policyInfo);
+    if (res != DLP_OK) {
+        return;
+    }
+    unordered_json jsonObj;
+    if (!SetPermissionPolicy(outParams, requestInfo.callback, policyInfo, jsonObj)) {
+        return;
+    }
+    policyInfo.ownerAccountType_ = requestInfo.accountType;
     std::vector<uint8_t> cert;
-    res = GetNewCert(jsonObj, cert, accountType);
+    res = GetNewCert(jsonObj, cert, requestInfo.accountType);
     if (res != DLP_OK) {
-        callback->OnParseDlpCertificate(res, policyInfo, {});
+        requestInfo.callback->OnParseDlpCertificate(res, policyInfo, {});
         return;
     }
-    callback->OnParseDlpCertificate(errorCode, policyInfo, cert);
+    res = CheckDebugPermission(requestInfo, policyInfo);
+    if (res != DLP_OK) {
+        requestInfo.callback->OnParseDlpCertificate(res, policyInfo, {});
+        return;
+    }
+    requestInfo.callback->OnParseDlpCertificate(errorCode, policyInfo, cert);
 }
 
 DlpCredential& DlpCredential::GetInstance()
@@ -366,12 +374,11 @@ int32_t DlpCredential::GenerateDlpCertificate(
         if (res == 0) {
             DLP_LOG_INFO(
                 LABEL, "Start request success, requestId: %{public}llu", static_cast<unsigned long long>(requestId));
-            res = InsertCallbackToRequestMap(requestId, callback);
-            if (res != DLP_OK) {
-                FreeDlpPackPolicyParams(packPolicy);
-                return res;
-            }
-            res = InsertAccountTypeToRequestMap(requestId, accountType);
+            RequestInfo info = {
+                .callback = callback,
+                .accountType = accountType
+            };
+            res = InsertCallbackToRequestMap(requestId, info);
             if (res != DLP_OK) {
                 FreeDlpPackPolicyParams(packPolicy);
                 return res;
@@ -498,7 +505,7 @@ static int32_t AdapterData(const std::vector<uint8_t>& offlineCert, bool isOwner
 }
 
 int32_t DlpCredential::ParseDlpCertificate(sptr<CertParcel>& certParcel, sptr<IDlpPermissionCallback>& callback,
-    const std::string& appId, const bool& offlineAccess)
+    const std::string& appId, const bool& offlineAccess, AppExecFwk::ApplicationInfo& applicationInfo)
 {
     std::string encDataJsonStr(certParcel->cert.begin(), certParcel->cert.end());
     auto jsonObj = unordered_json::parse(encDataJsonStr, nullptr, false);
@@ -534,9 +541,10 @@ int32_t DlpCredential::ParseDlpCertificate(sptr<CertParcel>& certParcel, sptr<ID
         uint64_t requestId;
         res = DLP_RestorePolicy(GetCallingUserId(), &encPolicy, DlpRestorePolicyCallback, &requestId);
         if (res == 0) {
-            res = InsertCallbackToRequestMap(requestId, callback);
-            int accountTypeRes = InsertAccountTypeToRequestMap(requestId, accountType);
-            if (res != DLP_OK || accountTypeRes != DLP_OK) {
+            RequestInfo info = {.callback = callback, .accountType = accountType,
+                .appProvisionType = applicationInfo.appProvisionType};
+            res = InsertCallbackToRequestMap(requestId, info);
+            if (res != DLP_OK) {
                 FreeDLPEncPolicyData(encPolicy);
                 return res;
             }
