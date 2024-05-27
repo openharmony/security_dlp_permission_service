@@ -16,9 +16,9 @@ import("../../../../dlp_permission_service.gni")
 
 group("param_files") {
   deps = [
+    ":dlp_config.json",
     ":dlp_permission.para",
     ":dlp_permission.para.dac",
-    ":dlp_config.json",
   ]
 }
 
