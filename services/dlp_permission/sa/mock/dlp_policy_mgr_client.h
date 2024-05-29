@@ -18,7 +18,7 @@
 
 #include <stdint.h>
 #include "dlp_credential_client.h"
-
+#include "securec.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -32,6 +32,7 @@ __attribute__ ((visibility("default"))) int32_t DLP_GetPolicy(PolicyType type, u
 
 __attribute__ ((visibility("default"))) int32_t DLP_CheckPermission(PolicyType type, PolicyHandle handle);
 
+bool ModifyParseData(uint8_t** data, uint32_t* dataLen);
 #ifdef __cplusplus
 }
 #endif

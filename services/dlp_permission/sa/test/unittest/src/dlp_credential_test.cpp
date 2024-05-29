@@ -31,6 +31,7 @@
 #include "ipc_skeleton.h"
 #include "iremote_broker.h"
 #include "iremote_stub.h"
+#include "nlohmann/json.hpp"
 #include "permission_policy.h"
 #include "securec.h"
 
@@ -40,15 +41,21 @@ namespace DlpPermission {
 using namespace testing::ext;
 using namespace OHOS;
 using namespace OHOS::Security::DlpPermission;
-
-static const std::string POLICY_PLAINTTEXT = "{\"policy\":{\"KIA\":\"KIA\",\"ownerAccountName\":\"accountIdA\","
-                                              "\"ownerAccountId\":\"accountIdA\",\"version\":1,\"account\":{"
-                                              "\"accountIdB\":{\"expireTime\":0,\"needOnline\":0,\"right\":{"
-                                              "\"read\":\"true\",\"edit\":\"true\",\"fullCtrl\": \"true\"}}}},"
-                                              "\"file\":{\"filekey\":\"31A02CFB2B89ABAD49F84957A69CBB5C54A5952"
-                                              "7B0B46F9BCF653A6406BCDBE9\",\"filekeyLen\":32,\"iv\":"
-                                              "\"3D9E014D7464C4A2414808CC842D92822998D878CDB669DBD63B990459D07E14\","
-                                              "\"ivLen\":32}}";
+using unordered_json = nlohmann::ordered_json;
+const std::string ENC_DATA_LEN = "encDataLen";
+const std::string ENC_DATA = "encData";
+const std::string ENC_ACCOUNT_TYPE = "accountType";
+static const std::string POLICY_PLAINTTEXT =
+    "7b22706f6c696379223a7b224b4941223a22222c226f776e65724163636f756e744e616d65223a226f686f73416e6f6e796d6f75734e616d6"
+    "5222c226f776e65724163636f756e744964223a226f686f73416e6f6e796d6f75734e616d65222c2276657273696f6e223a312c2265787069"
+    "726554696d65223a302c226e6565644f6e6c696e65223a312c226163636f756e74223a7b22716c7479733332636e35574d4b493534223a7b2"
+    "27269676874223a7b2272656164223a747275652c2265646974223a66616c73652c2266756c6c4374726c223a66616c73657d7d2c22377236"
+    "4c4f4b3548396c444758577078223a7b227269676874223a7b2272656164223a747275652c2265646974223a66616c73652c2266756c6c437"
+    "4726c223a66616c73657d7d7d7d2c2266696c65223a7b2266696c656b6579223a224532433037304238373531444435334142363930453337"
+    "3938464134364142314138314135393145414132354439333141303032323938363431384230343034222c2266696c656b65794c656e223a3"
+    "3322c226976223a224245303230323430393136434436394538333842463631383038333238333346222c2269764c656e223a31362c22686d"
+    "61634b6579223a223146393533374535343432444339374546394442344634413133374543304239343539463445314545303846364644344"
+    "4304245414141444336424539414644222c22686d61634b65794c656e223a33322c22646c7056657273696f6e223a337d7d";
 
 void DlpCredentialTest::SetUpTestCase() {}
 
@@ -121,11 +128,16 @@ HWTEST_F(DlpCredentialTest, DlpCredentialTest002, TestSize.Level1)
     std::string appId = "test_appId_passed";
     res = DlpCredential::GetInstance().ParseDlpCertificate(certParcel, stub, appId, true);
     EXPECT_EQ(DLP_SERVICE_ERROR_JSON_OPERATE_FAIL, res);
-    std::string s2(POLICY_PLAINTTEXT);
+    unordered_json encDataJson = {
+        {ENC_DATA_LEN, POLICY_PLAINTTEXT.length()},
+        {ENC_DATA, POLICY_PLAINTTEXT},
+        {ENC_ACCOUNT_TYPE, accountType},
+    };
+    std::string s2 = encDataJson.dump();
     std::vector<uint8_t> cert2(s2.begin(), s2.end());
     certParcel->cert = cert2;
     res = DlpCredential::GetInstance().ParseDlpCertificate(certParcel, stub, appId, true);
-    EXPECT_EQ(DLP_CREDENTIAL_ERROR_COMMON_ERROR, res);
+    EXPECT_EQ(DLP_OK, res);
 }
 
 /**

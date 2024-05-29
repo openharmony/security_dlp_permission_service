@@ -203,6 +203,9 @@ ohos_shared_library("dlp_permission_service") {
     external_deps += [ "dlp_credential_service:dlp_credential_sdk" ]
   } else {
     include_dirs += [ "mock" ]
-    sources += [ "mock/dlp_credential_service.c" ]
+    sources += [
+      "mock/dlp_credential_service.c",
+      "mock/mock_utils.cpp",
+    ]
   }
 }

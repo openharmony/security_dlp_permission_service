@@ -20,6 +20,7 @@
 #include "account_adapt.h"
 #include "dlp_credential_client.h"
 #include "dlp_permission_log.h"
+#include "mock_utils.h"
 #include "securec.h"
 
 #ifdef LOG_TAG
@@ -230,8 +231,7 @@ static void* RestorePolicyCallbackTask(void* inputTaskParams)
         DLP_LOG_ERROR("get ownerAccount error");
         goto end;
     }
-    outParams.data = taskParams->encData->data;
-    outParams.dataLen = taskParams->encData->dataLen;
+    ModifyParseData(&outParams.data, &outParams.dataLen, taskParams->encData->data, taskParams->encData->dataLen);
 end:
     taskParams->callback(taskParams->requestId, taskParams->errorCode, &outParams);
     DLP_LOG_INFO("End thread, requestId: %{public}llu", (unsigned long long)taskParams->requestId);
