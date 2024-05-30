@@ -149,17 +149,16 @@ static void *FdOpenFileFunc(void *opaque, const char *filename, int mode)
     uint32_t modeInner = static_cast<uint32_t>(mode);
     if ((modeInner & ZLIB_FILEFUNC_MODE_READWRITEFILTER) == ZLIB_FILEFUNC_MODE_READ) {
         modeFopen = "rb";
-    }
-    else if (modeInner & ZLIB_FILEFUNC_MODE_EXISTING) {
+    } else if (modeInner & ZLIB_FILEFUNC_MODE_EXISTING) {
         modeFopen = "r+b";
-    }
-    else if (modeInner & ZLIB_FILEFUNC_MODE_CREATE) {
+    } else if (modeInner & ZLIB_FILEFUNC_MODE_CREATE) {
         modeFopen = "wb";
     }
     if (modeFopen != nullptr) {
         int fd = dup(*static_cast<int *>(opaque));
-        if (fd != -1)
+        if (fd != -1) {
             file = fdopen(fd, modeFopen);
+        }
     }
 
     return file;
