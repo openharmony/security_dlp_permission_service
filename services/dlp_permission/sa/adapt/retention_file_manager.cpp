@@ -93,14 +93,13 @@ int32_t RetentionFileManager::UpdateFile(const int32_t& jsonRes)
     return DLP_OK;
 }
 
-int32_t RetentionFileManager::AddSandboxInfo(const int32_t& appIndex, const uint32_t& tokenId,
-    const std::string& bundleName, const int32_t& userId)
+int32_t RetentionFileManager::AddSandboxInfo(const RetentionInfo& retentionInfo)
 {
     if (!hasInit && !Init()) {
         DLP_LOG_ERROR(LABEL, "Init failed!");
         return DLP_RETENTION_UPDATE_ERROR;
     }
-    int32_t res = sandboxJsonManager_->AddSandboxInfo(appIndex, tokenId, bundleName, userId);
+    int32_t res = sandboxJsonManager_->AddSandboxInfo(retentionInfo);
     return UpdateFile(res);
 }
 

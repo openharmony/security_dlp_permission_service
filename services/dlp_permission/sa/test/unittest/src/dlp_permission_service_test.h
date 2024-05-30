@@ -20,8 +20,15 @@
 #define private public
 #include "dlp_permission_service.h"
 #undef private
+#include "errors.h"
 
 namespace OHOS {
+namespace AccountSA {
+class OsAccountManager {
+public:
+    static ErrCode GetOsAccountLocalIdFromUid(const int uid, int &id);
+};
+}
 namespace Security {
 namespace DlpPermission {
 class DlpPermissionServiceTest : public testing::Test {

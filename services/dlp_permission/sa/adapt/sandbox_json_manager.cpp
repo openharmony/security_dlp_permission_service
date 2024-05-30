@@ -37,6 +37,7 @@ const std::string BUNDLENAME = "bundleName";
 const std::string DOCURISET = "docUriSet";
 const std::string USERID = "userId";
 const std::string TOKENID = "tokenId";
+const std::string DLPFILEACCESS = "dlpFileAccess";
 static const uint32_t MAX_RETENTION_SIZE = 1024;
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = { LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "SandboxJsonManager" };
 }
@@ -66,11 +67,9 @@ bool SandboxJsonManager::HasRetentionSandboxInfo(const std::string& bundleName)
     return false;
 }
 
-int32_t SandboxJsonManager::AddSandboxInfo(const int32_t& appIndex, const uint32_t& tokenId,
-    const std::string& bundleName, const int32_t& userId)
+int32_t SandboxJsonManager::AddSandboxInfo(const RetentionInfo& retentionInfo)
 {
-    std::set<std::string> docUriSet;
-    if (InsertSandboxInfo(docUriSet, tokenId, bundleName, appIndex, userId)) {
+    if (InsertSandboxInfo(retentionInfo)) {
         return DLP_OK;
     }
     return DLP_INSERT_FILE_ERROR;
@@ -126,9 +125,9 @@ int32_t SandboxJsonManager::UpdateRetentionState(const std::set<std::string>& do
     }
     GetUserIdByUid(info.userId);
     if (info.tokenId == 0) {
-        return UpdateRetentionState(docUriSet, info, CompareByBundleName, UpdateDocUriSetByDifference);
+        return UpdateRetentionState(docUriSet, info, CompareByBundleName, ClearDocUriSet);
     }
-    return UpdateRetentionState(docUriSet, info, CompareByTokenId, UpdateDocUriSetByDifference);
+    return UpdateRetentionState(docUriSet, info, CompareByTokenId, ClearDocUriSet);
 }
 
 bool SandboxJsonManager::CompareByTokenId(const RetentionInfo& info1, const RetentionInfo& info2)
@@ -155,18 +154,14 @@ bool SandboxJsonManager::UpdateDocUriSetByUnion(RetentionInfo& info, const std::
     return isUpdate;
 }
 
-bool SandboxJsonManager::UpdateDocUriSetByDifference(RetentionInfo& info, const std::set<std::string>& newSet)
+bool SandboxJsonManager::ClearDocUriSet(RetentionInfo& info, const std::set<std::string>& newSet)
 {
     if (info.docUriSet.empty()) {
         DLP_LOG_INFO(LABEL, "docUriSet size=0 ");
         return false;
     }
-    std::set<std::string> temp;
-    std::set_difference(info.docUriSet.begin(), info.docUriSet.end(), newSet.begin(), newSet.end(),
-        std::insert_iterator<std::set<std::string>>(temp, temp.begin()));
-    bool isUpdate = info.docUriSet.size() != temp.size();
-    info.docUriSet = temp;
-    return isUpdate;
+    info.docUriSet.clear();
+    return true;
 }
 
 int32_t SandboxJsonManager::UpdateRetentionState(const std::set<std::string>& newSet, const RetentionInfo& info,
@@ -246,6 +241,7 @@ int32_t SandboxJsonManager::GetRetentionSandboxList(const std::string& bundleNam
         info.bundleName_ = bundleName;
         info.appIndex_ = iter->appIndex;
         info.docUriSet_ = iter->docUriSet;
+        info.dlpFileAccess_ = iter->dlpFileAccess;
         retentionSandBoxInfoVec.push_back(info);
     }
     return DLP_OK;
@@ -346,23 +342,16 @@ bool SandboxJsonManager::CheckReInstall(const RetentionInfo& info, const int32_t
     return true;
 }
 
-bool SandboxJsonManager::InsertSandboxInfo(const std::set<std::string>& docUriSet, uint32_t tokenId,
-    const std::string& bundleName, int32_t appIndex, int32_t userId)
+bool SandboxJsonManager::InsertSandboxInfo(const RetentionInfo& info)
 {
     std::lock_guard<std::mutex> lock(mutex_);
     for (auto iter = infoVec_.begin(); iter != infoVec_.end(); ++iter) {
-        if (iter->tokenId == tokenId) {
-            DLP_LOG_ERROR(LABEL, "docUri exist tokenId:%{public}d,bundleName:%{public}s,int32_t:%{public}d", tokenId,
-                bundleName.c_str(), appIndex);
+        if (iter->tokenId == info.tokenId) {
+            DLP_LOG_ERROR(LABEL, "docUri exist tokenId:%{public}d,bundleName:%{public}s,int32_t:%{public}d",
+                info.tokenId, info.bundleName.c_str(), info.appIndex);
             return false;
         }
     }
-    RetentionInfo info;
-    info.tokenId = tokenId;
-    info.bundleName = bundleName;
-    info.appIndex = appIndex;
-    info.userId = userId;
-    info.docUriSet = docUriSet;
     infoVec_.push_back(info);
     return true;
 }
@@ -373,6 +362,7 @@ void SandboxJsonManager::RetentionInfoToJson(Json& json, const RetentionInfo& in
         { TOKENID, info.tokenId },
         { BUNDLENAME, info.bundleName },
         { USERID, info.userId },
+        { DLPFILEACCESS, info.dlpFileAccess },
         { DOCURISET, info.docUriSet } };
 }
 
@@ -395,28 +385,26 @@ void SandboxJsonManager::FromJson(const Json& jsonObject)
         return;
     }
     for (auto& retentionJson : jsonObject["retention"]) {
-        std::string bundleName;
-        uint32_t tokenId;
-        std::set<std::string> docUriSet;
-        int32_t appIndex;
-        int32_t userId;
+        RetentionInfo info;
         if (!retentionJson.contains(APPINDEX) || !retentionJson.at(APPINDEX).is_number() ||
             !retentionJson.contains(BUNDLENAME) || !retentionJson.at(BUNDLENAME).is_string() ||
             !retentionJson.contains(DOCURISET) || !retentionJson.at(DOCURISET).is_array() ||
             !retentionJson.contains(TOKENID) || !retentionJson.at(TOKENID).is_number() ||
+            !retentionJson.contains(DLPFILEACCESS) || !retentionJson.at(DLPFILEACCESS).is_number() ||
             !retentionJson.contains(USERID) || !retentionJson.at(USERID).is_number()) {
             DLP_LOG_ERROR(LABEL, "json contains error");
         }
-        retentionJson.at(APPINDEX).get_to(appIndex);
-        retentionJson.at(BUNDLENAME).get_to(bundleName);
-        retentionJson.at(DOCURISET).get_to(docUriSet);
-        retentionJson.at(TOKENID).get_to(tokenId);
-        retentionJson.at(USERID).get_to(userId);
-        if (bundleName.empty() || appIndex < 0 || userId < 0 || tokenId == 0) {
+        retentionJson.at(APPINDEX).get_to(info.appIndex);
+        retentionJson.at(BUNDLENAME).get_to(info.bundleName);
+        retentionJson.at(DOCURISET).get_to(info.docUriSet);
+        retentionJson.at(TOKENID).get_to(info.tokenId);
+        retentionJson.at(DLPFILEACCESS).get_to(info.dlpFileAccess);
+        retentionJson.at(USERID).get_to(info.userId);
+        if (info.bundleName.empty() || info.appIndex < 0 || info.userId < 0 || info.tokenId == 0) {
             DLP_LOG_ERROR(LABEL, "param is invalid");
             return;
         }
-        InsertSandboxInfo(docUriSet, tokenId, bundleName, appIndex, userId);
+        InsertSandboxInfo(info);
     }
 }
 

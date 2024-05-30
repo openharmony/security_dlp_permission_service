@@ -37,6 +37,7 @@ struct RetentionInfo {
     int32_t appIndex = -1;
     uint32_t tokenId = 0;
     std::string bundleName = "";
+    DLPFileAccess dlpFileAccess = DLPFileAccess::NO_PERMISSION;
     std::set<std::string> docUriSet;
     int32_t userId = -1;
 };
@@ -46,8 +47,7 @@ public:
     SandboxJsonManager();
     ~SandboxJsonManager();
 
-    int32_t AddSandboxInfo(const int32_t& appIndex, const uint32_t& tokenId, const std::string& bundleName,
-        const int32_t& userId);
+    int32_t AddSandboxInfo(const RetentionInfo& retentionInfo);
     int32_t DelSandboxInfo(const uint32_t& tokenId);
     bool CanUninstall(const uint32_t& tokenId);
     int32_t UpdateRetentionState(const std::set<std::string>& docUriSet, RetentionInfo& info, bool isRetention);
@@ -65,15 +65,14 @@ public:
     int32_t RemoveRetentionInfoByUserId(const int32_t userId, const std::set<std::string>& bundleNameSet);
 
 private:
-    bool InsertSandboxInfo(const std::set<std::string>& docUriSet, uint32_t tokenId, const std::string& bundleName,
-        int32_t appIndex, int32_t userId);
+    bool InsertSandboxInfo(const RetentionInfo& retentionInfo);
     sptr<AppExecFwk::IBundleMgr> GetBundleMgr();
     bool GetUserIdByUid(int32_t& userId);
     bool CheckReInstall(const RetentionInfo& info, const int32_t userId);
     static bool CompareByTokenId(const RetentionInfo& info1, const RetentionInfo& info2);
     static bool CompareByBundleName(const RetentionInfo& info1, const RetentionInfo& info2);
     static bool UpdateDocUriSetByUnion(RetentionInfo& info, const std::set<std::string>& newSet);
-    static bool UpdateDocUriSetByDifference(RetentionInfo& info, const std::set<std::string>& newSet);
+    static bool ClearDocUriSet(RetentionInfo& info, const std::set<std::string>& newSet);
     int32_t UpdateRetentionState(const std::set<std::string>& newSet, const RetentionInfo& info,
         bool (*compare)(const RetentionInfo& info1, const RetentionInfo& info2),
         bool (*update)(RetentionInfo& info, const std::set<std::string>& newSet));

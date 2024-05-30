@@ -206,13 +206,9 @@ bool DlpPermissionService::InsertDlpSandboxInfo(DlpSandboxInfo& sandboxInfo, boo
     return true;
 }
 
-int32_t DlpPermissionService::InstallDlpSandbox(const std::string& bundleName, DLPFileAccess dlpFileAccess,
-    int32_t userId, SandboxInfo &sandboxInfo, const std::string& uri)
+static int32_t GetAppIndexFromRetentionInfo(const std::string& bundleName, bool isReadOnly, const std::string& uri,
+    int32_t& appIndex, bool& isNeedInstall)
 {
-    if (bundleName.empty() || dlpFileAccess > FULL_CONTROL || dlpFileAccess <= NO_PERMISSION) {
-        DLP_LOG_ERROR(LABEL, "param is invalid");
-        return DLP_SERVICE_ERROR_VALUE_INVALID;
-    }
     std::vector<RetentionSandBoxInfo> infoVec;
     auto res = RetentionFileManager::GetInstance().GetRetentionSandboxList(bundleName, infoVec, true);
     if (res != DLP_OK) {
@@ -220,14 +216,43 @@ int32_t DlpPermissionService::InstallDlpSandbox(const std::string& bundleName, D
             bundleName.c_str(), uri.c_str(), res);
         return res;
     }
-    bool isNeedInstall = true;
-    int32_t appIndex = -1;
     for (auto iter = infoVec.begin(); iter != infoVec.end(); ++iter) {
+        if (isReadOnly && iter->dlpFileAccess_ == DLPFileAccess::READ_ONLY) {
+            appIndex = iter->appIndex_;
+            isNeedInstall = false;
+            break;
+        }
+        if (isReadOnly) {
+            continue;
+        }
         auto setIter = iter->docUriSet_.find(uri);
         if (setIter != iter->docUriSet_.end()) {
             appIndex = iter->appIndex_;
             isNeedInstall = false;
             break;
+        }
+    }
+    return DLP_OK;
+}
+
+int32_t DlpPermissionService::InstallDlpSandbox(const std::string& bundleName, DLPFileAccess dlpFileAccess,
+    int32_t userId, SandboxInfo &sandboxInfo, const std::string& uri)
+{
+    if (bundleName.empty() || dlpFileAccess > FULL_CONTROL || dlpFileAccess <= NO_PERMISSION) {
+        DLP_LOG_ERROR(LABEL, "param is invalid");
+        return DLP_SERVICE_ERROR_VALUE_INVALID;
+    }
+    bool isReadOnly = dlpFileAccess == DLPFileAccess::READ_ONLY;
+    bool isNeedInstall = true;
+    int32_t appIndex = -1;
+    int32_t res = GetAppIndexFromRetentionInfo(bundleName, isReadOnly, uri, appIndex, isNeedInstall);
+    if (res != DLP_OK) {
+        return res;
+    }
+    if (isNeedInstall && isReadOnly) {
+        appStateObserver_->GetOpeningReadOnlySandbox(bundleName, userId, appIndex);
+        if (appIndex != -1) {
+            isNeedInstall = false;
         }
     }
     if (isNeedInstall) {
