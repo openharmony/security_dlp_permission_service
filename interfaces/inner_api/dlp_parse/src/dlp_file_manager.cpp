@@ -44,6 +44,10 @@ int32_t DlpFileManager::AddDlpFileNode(const std::shared_ptr<DlpFile>& filePtr)
         DLP_LOG_ERROR(LABEL, "Add dlp file node failed, too many files");
         return DLP_PARSE_ERROR_TOO_MANY_OPEN_DLP_FILE;
     }
+    if (filePtr == nullptr) {
+        DLP_LOG_ERROR(LABEL, "Add dlp file node failed, filePtr is null");
+        return DLP_PARSE_ERROR_MEMORY_OPERATE_FAIL;
+    }
     if (g_DlpFileMap_.count(filePtr->dlpFd_) > 0) {
         DLP_LOG_ERROR(LABEL, "Add dlp file node fail, fd %{public}d already exist", filePtr->dlpFd_);
         return DLP_PARSE_ERROR_FILE_ALREADY_OPENED;
@@ -55,6 +59,10 @@ int32_t DlpFileManager::AddDlpFileNode(const std::shared_ptr<DlpFile>& filePtr)
 int32_t DlpFileManager::RemoveDlpFileNode(const std::shared_ptr<DlpFile>& filePtr)
 {
     Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->g_DlpMapLock_);
+    if (filePtr == nullptr) {
+        DLP_LOG_ERROR(LABEL, "Remove dlp file node fail, filePtr is null");
+        return DLP_PARSE_ERROR_MEMORY_OPERATE_FAIL;
+    }
     for (auto iter = g_DlpFileMap_.begin(); iter != g_DlpFileMap_.end(); iter++) {
         if (filePtr->dlpFd_ == iter->first) {
             g_DlpFileMap_.erase(iter);
