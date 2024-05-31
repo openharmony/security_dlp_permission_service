@@ -111,7 +111,7 @@ int32_t FileOperator::GetFileContentByPath(const std::string& path, std::string&
 bool FileOperator::IsExistFile(const std::string& path)
 {
     if (path.empty()) {
-        DLP_LOG_INFO(LABEL, "path is empty");
+        DLP_LOG_ERROR(LABEL, "path is empty");
         return false;
     }
 
@@ -127,7 +127,7 @@ bool FileOperator::IsExistFile(const std::string& path)
 bool FileOperator::IsExistDir(const std::string& path)
 {
     if (path.empty()) {
-        DLP_LOG_INFO(LABEL, "path is empty");
+        DLP_LOG_ERROR(LABEL, "path is empty");
         return false;
     }
 
