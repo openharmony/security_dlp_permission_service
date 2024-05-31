@@ -18,6 +18,7 @@
 
 #include "contrib/minizip/unzip.h"
 #include "contrib/minizip/zip.h"
+#include "contrib/minizip/ioapi.h"
 
 namespace OHOS {
 namespace Security {

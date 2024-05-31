@@ -139,23 +139,67 @@ int32_t AddFileContextToZip(int32_t fd, const char *nameInZip, const char *zipNa
     return res;
 }
 
+static void *FdOpenFileFunc(void *opaque, const char *filename, int mode)
+{
+    if ((opaque == nullptr) || (filename == nullptr)) {
+        return nullptr;
+    }
+    FILE *file = nullptr;
+    const char *modeFopen = nullptr;
+    uint32_t modeInner = static_cast<uint32_t>(mode);
+    if ((modeInner & ZLIB_FILEFUNC_MODE_READWRITEFILTER) == ZLIB_FILEFUNC_MODE_READ) {
+        modeFopen = "rb";
+    } else if (modeInner & ZLIB_FILEFUNC_MODE_EXISTING) {
+        modeFopen = "r+b";
+    } else if (modeInner & ZLIB_FILEFUNC_MODE_CREATE) {
+        modeFopen = "wb";
+    }
+    if (modeFopen != nullptr) {
+        int fd = dup(*static_cast<int *>(opaque));
+        if (fd != -1) {
+            file = fdopen(fd, modeFopen);
+        }
+    }
+
+    return file;
+}
+
+static int FdCloseFileFunc(void *opaque, void *stream)
+{
+    if (fclose(static_cast<FILE *>(stream)) != 0) {
+        DLP_LOG_ERROR(LABEL, "fclose fail errno %{public}d", errno);
+    }
+    free(opaque);  // malloc'ed in FillFdOpenFileFunc()
+    return 0;
+}
+
+static void FillFdOpenFileFunc(zlib_filefunc_def *pzlibFilefuncDef, int fd)
+{
+    if (pzlibFilefuncDef == nullptr) {
+        return;
+    }
+    fill_fopen_filefunc(pzlibFilefuncDef);
+    pzlibFilefuncDef->zopen_file = FdOpenFileFunc;
+    pzlibFilefuncDef->zclose_file = FdCloseFileFunc;
+    int *ptrFd = static_cast<int *>(malloc(sizeof(fd)));
+    if (ptrFd == nullptr) {
+        free(ptrFd);
+        return;
+    }
+    *ptrFd = fd;
+    pzlibFilefuncDef->opaque = ptrFd;
+}
+
+static unzFile OpenFdForUnzipping(int zipFD)
+{
+    zlib_filefunc_def zipFuncs;
+    FillFdOpenFileFunc(&zipFuncs, zipFD);
+    return unzOpen2("fd", &zipFuncs);
+}
+
 static zipFile OpenZipFile(int fd)
 {
-    zipFile uf;
-    int32_t fd2 = dup(fd);
-    if (fd2 == -1) {
-        DLP_LOG_ERROR(LABEL, "dup fail errno %{public}d", errno);
-        return nullptr;
-    }
-
-    FILE *ff = fdopen(fd2, "rb");
-    if (ff == nullptr) {
-        DLP_LOG_ERROR(LABEL, "fdopen fail errno %{public}d", errno);
-        (void)close(fd2);
-        return nullptr;
-    }
-
-    uf = unzOpenFile(ff);
+    zipFile uf = OpenFdForUnzipping(fd);
     if (uf == nullptr) {
         DLP_LOG_ERROR(LABEL, "unzOpenFile fail errno %{public}d", errno);
         return nullptr;
@@ -224,18 +268,7 @@ int32_t UnzipSpecificFile(int32_t fd, const char*nameInZip, const char *unZipNam
 
 bool IsZipFile(int32_t fd)
 {
-    int32_t fd2 = dup(fd);
-    if (fd2 == -1) {
-        DLP_LOG_ERROR(LABEL, "dup fail %{public}d, %{public}d", fd2, errno);
-        return false;
-    }
-    FILE *ff = fdopen(fd2, "rb");
-    if (ff == nullptr) {
-        DLP_LOG_ERROR(LABEL, "fdopen fail %{public}d", errno);
-        (void)close(fd2);
-        return false;
-    }
-    unzFile uz = unzOpenFile(ff);
+    unzFile uz = OpenFdForUnzipping(fd);
     if (uz == nullptr) {
         DLP_LOG_ERROR(LABEL, "unzOpenFile fail, %{public}d", errno);
         return false;
