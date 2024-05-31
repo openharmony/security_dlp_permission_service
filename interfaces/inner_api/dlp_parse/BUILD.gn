@@ -120,8 +120,7 @@ ohos_shared_library("libdlpparse_inner") {
     external_deps += [ "os_account:os_account_innerkits" ]
   }
 
-  if (dlp_credential_enable == true &&
-      dlp_permission_service_credential_connection_enable == true) {
+  if (dlp_credential_enable == true) {
     cflags_cc += [ "-DSUPPORT_DLP_CREDENTIAL" ]
   }
 }

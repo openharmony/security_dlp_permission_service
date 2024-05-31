@@ -80,8 +80,7 @@ ohos_static_library("dlp_permission_serializer_static") {
     "json:nlohmann_json_static",
   ]
 
-  if (dlp_credential_enable == true &&
-      dlp_permission_service_credential_connection_enable == true) {
+  if (dlp_credential_enable == true) {
     external_deps += [ "dlp_credential_service:dlp_credential_sdk" ]
   } else {
     include_dirs += [ "mock" ]
@@ -197,8 +196,7 @@ ohos_shared_library("dlp_permission_service") {
     "samgr:samgr_proxy",
   ]
 
-  if (dlp_credential_enable == true &&
-      dlp_permission_service_credential_connection_enable == true) {
+  if (dlp_credential_enable == true) {
     cflags_cc += [ "-DSUPPORT_DLP_CREDENTIAL" ]
     external_deps += [ "dlp_credential_service:dlp_credential_sdk" ]
   } else {
