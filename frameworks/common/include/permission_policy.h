@@ -111,6 +111,7 @@ public:
     void CopyPolicyHmac(const PermissionPolicy& srcPolicy);
 
     bool IsValid() const;
+    void SetDebug(bool debug);
     void SetAeskey(const uint8_t* key, uint32_t keyLen);
     uint8_t* GetAeskey() const;
     uint32_t GetAeskeyLen() const;
@@ -130,6 +131,7 @@ public:
     uint64_t expireTime_ = 0;
     uint32_t needOnline_ = 0;
     uint32_t dlpVersion_ = 0;
+    bool debug_ = false;
 
 private:
     uint8_t* aeskey_;

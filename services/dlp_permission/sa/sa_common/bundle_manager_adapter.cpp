@@ -50,6 +50,18 @@ bool BundleManagerAdapter::GetBundleInfo(const std::string &bundleName, int32_t 
     return proxy_->GetBundleInfo(bundleName, flag, bundleInfo, userId);
 }
 
+bool BundleManagerAdapter::GetApplicationInfo(const std::string &appName, const int32_t flag, const  int32_t userId,
+    AppExecFwk::ApplicationInfo &applicationInfo)
+{
+    std::lock_guard<std::mutex> lock(proxyMutex_);
+    int32_t result = Connect();
+    if (result != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "failed to connect bundle manager service.");
+        return false;
+    }
+    return proxy_->GetApplicationInfo(appName, flag, userId, applicationInfo);
+}
+
 int32_t BundleManagerAdapter::GetBundleInfoV9(const std::string &bundleName, AppExecFwk::BundleFlag flag,
     AppExecFwk::BundleInfo &bundleInfo, int32_t userId)
 {

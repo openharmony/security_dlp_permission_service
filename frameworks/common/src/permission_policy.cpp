@@ -129,6 +129,7 @@ PermissionPolicy::PermissionPolicy()
     hmacKey_ = nullptr;
     hmacKeyLen_ = 0;
     dlpVersion_ = CURRENT_VERSION;
+    debug_ = false;
 }
 
 PermissionPolicy::PermissionPolicy(const DlpProperty& property)
@@ -148,6 +149,7 @@ PermissionPolicy::PermissionPolicy(const DlpProperty& property)
     hmacKey_ = nullptr;
     hmacKeyLen_ = 0;
     dlpVersion_ = CURRENT_VERSION;
+    debug_ = false;
 }
 
 PermissionPolicy::~PermissionPolicy()
@@ -161,6 +163,11 @@ bool PermissionPolicy::IsValid() const
         CheckAccountType(this->ownerAccountType_) && CheckAesParam(this->aeskey_, this->aeskeyLen_) &&
         CheckAesParam(this->iv_, this->ivLen_) && CheckAuthUserInfoList(this->authUsers_) &&
         (this->hmacKeyLen_ == 0 || CheckAesParam(this->hmacKey_, this->hmacKeyLen_)));
+}
+
+void PermissionPolicy::SetDebug(bool debug)
+{
+    debug_ = debug;
 }
 
 static void SetKey(const uint8_t* originalKey, uint32_t originalKeyLen, uint8_t** key, uint32_t& keyLen)
