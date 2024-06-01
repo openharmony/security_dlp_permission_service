@@ -61,7 +61,7 @@ int32_t DlpFileManager::RemoveDlpFileNode(const std::shared_ptr<DlpFile>& filePt
     Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->g_DlpMapLock_);
     if (filePtr == nullptr) {
         DLP_LOG_ERROR(LABEL, "Remove dlp file node fail, filePtr is null");
-        return DLP_PARSE_ERROR_MEMORY_OPERATE_FAIL;
+        return DLP_PARSE_ERROR_VALUE_INVALID;
     }
     for (auto iter = g_DlpFileMap_.begin(); iter != g_DlpFileMap_.end(); iter++) {
         if (filePtr->dlpFd_ == iter->first) {
