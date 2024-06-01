@@ -46,7 +46,7 @@ int32_t DlpFileManager::AddDlpFileNode(const std::shared_ptr<DlpFile>& filePtr)
     }
     if (filePtr == nullptr) {
         DLP_LOG_ERROR(LABEL, "Add dlp file node failed, filePtr is null");
-        return DLP_PARSE_ERROR_MEMORY_OPERATE_FAIL;
+        return DLP_PARSE_ERROR_VALUE_INVALID;
     }
     if (g_DlpFileMap_.count(filePtr->dlpFd_) > 0) {
         DLP_LOG_ERROR(LABEL, "Add dlp file node fail, fd %{public}d already exist", filePtr->dlpFd_);
