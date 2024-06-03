@@ -44,7 +44,7 @@ bool ModifyParseData(uint8_t** data, uint32_t* dataLen, uint8_t* dataIn, uint32_
     json[POLICY_CERT] = unordered_json::parse(dataIn, dataIn + dataInLen + 1, nullptr, false);
     std::string certStr = json.dump();
     delete[] encDataHex;
-    *data = (uint8_t *)strdup(const_cast<char *>(certStr.c_str()));
+    *data = reinterpret_cast<uint8_t *>(strdup(const_cast<char *>(certStr.c_str())));
     *dataLen = certStr.length();
     return true;
 }
