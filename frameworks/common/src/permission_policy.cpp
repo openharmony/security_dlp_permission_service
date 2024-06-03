@@ -197,7 +197,7 @@ static void SetKey(const uint8_t* originalKey, uint32_t originalKeyLen, uint8_t*
 
 void PermissionPolicy::SetAeskey(const uint8_t* key, uint32_t keyLen)
 {
-    DLP_LOG_DEBUG(LABEL, "Start set aes key.");
+    DLP_LOG_DEBUG(LABEL, "Start set key.");
     SetKey(key, keyLen, &aeskey_, aeskeyLen_);
 }
 
@@ -213,7 +213,7 @@ uint32_t PermissionPolicy::GetAeskeyLen() const
 
 void PermissionPolicy::SetIv(const uint8_t* iv, uint32_t ivLen)
 {
-    DLP_LOG_DEBUG(LABEL, "Start set iv.");
+    DLP_LOG_DEBUG(LABEL, "Start set offset.");
     SetKey(iv, ivLen, &iv_, ivLen_);
 }
 
@@ -268,7 +268,7 @@ void PermissionPolicy::CopyPermissionPolicy(const PermissionPolicy& srcPolicy)
         return;
     }
     DLP_LOG_DEBUG(LABEL, "ownerAccount_ %{private}s ownerAccountId %{private}s"
-        " accountType %{public}u needOnline %{public}u expireTime %{public}" PRId64,
+        " accountType %{public}u needOnline %{public}u expireTime %{private}" PRId64,
         srcPolicy.ownerAccount_.c_str(), srcPolicy.ownerAccountId_.c_str(),
         srcPolicy.ownerAccountType_, srcPolicy.needOnline_, srcPolicy.expireTime_);
     ownerAccount_ = srcPolicy.ownerAccount_;

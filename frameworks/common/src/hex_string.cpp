@@ -62,18 +62,17 @@ static uint8_t CharToHex(char c)
     return 16;  // max hex must < 16
 }
 
-int32_t HexStringToByte(const char *hexStr, uint8_t *byte, uint32_t byteLen)
+int32_t HexStringToByte(const char *hexStr, uint32_t hexStrLen, uint8_t *byte, uint32_t byteLen)
 {
-    if (byte == nullptr || hexStr == nullptr) {
+    if (byte == nullptr || hexStr == nullptr || hexStrLen == 0) {
         return DLP_SERVICE_ERROR_VALUE_INVALID;
     }
-    uint32_t realHexLen = strlen(hexStr);
     /* even number or not */
-    if (realHexLen % BYTE_TO_HEX_OPER_LENGTH != 0 || byteLen < realHexLen / BYTE_TO_HEX_OPER_LENGTH) {
+    if (hexStrLen % BYTE_TO_HEX_OPER_LENGTH != 0 || byteLen < hexStrLen / BYTE_TO_HEX_OPER_LENGTH) {
         return DLP_SERVICE_ERROR_VALUE_INVALID;
     }
 
-    for (uint32_t i = 0; i < realHexLen / BYTE_TO_HEX_OPER_LENGTH; i++) {
+    for (uint32_t i = 0; i < hexStrLen / BYTE_TO_HEX_OPER_LENGTH; i++) {
         uint8_t high = CharToHex(hexStr[i * BYTE_TO_HEX_OPER_LENGTH]);
         uint8_t low = CharToHex(hexStr[i * BYTE_TO_HEX_OPER_LENGTH + 1]);
         if (high == 16 || low == 16) {  // max hex must < 16

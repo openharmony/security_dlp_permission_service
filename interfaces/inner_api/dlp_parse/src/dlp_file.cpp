@@ -475,7 +475,7 @@ bool DlpFile::ParseDlpInfo()
             DLP_LOG_ERROR(LABEL, "New memory fail");
             return false;
         }
-        HexStringToByte(params.hmacVal.c_str(), hmac_.data, hmac_.size);
+        HexStringToByte(params.hmacVal.c_str(), params.hmacVal.length(), hmac_.data, hmac_.size);
     }
     return true;
 }

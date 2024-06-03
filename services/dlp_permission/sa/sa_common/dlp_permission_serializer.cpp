@@ -86,12 +86,16 @@ static int32_t ReadUint8ArrayFromJson(const unordered_json& permJson, uint8_t** 
         if (length != buffLen) {
             buffLen = length;
         }
+        if (length == 0) {
+            DLP_LOG_ERROR(LABEL, "%{public}s length is 0", keyName.c_str());
+            return DLP_SERVICE_ERROR_VALUE_INVALID;
+        }
         *buff = new (std::nothrow) uint8_t[length];
         if (*buff == nullptr) {
             DLP_LOG_ERROR(LABEL, "New memory fail");
             return DLP_SERVICE_ERROR_MEMORY_OPERATE_FAIL;
         }
-        int32_t res = HexStringToByte(tmp.c_str(), *buff, length);
+        int32_t res = HexStringToByte(tmp.c_str(), tmp.length(), *buff, length);
         if (res != DLP_OK) {
             DLP_LOG_ERROR(LABEL, "Hexstring to byte fail");
             memset_s(*buff, length, 0, length);
@@ -113,7 +117,7 @@ static void TransHexStringToByte(std::string& outer, const std::string& input)
         return;
     }
 
-    int32_t res = HexStringToByte(input.c_str(), buff, len);
+    int32_t res = HexStringToByte(input.c_str(), input.length(), buff, len);
     if (res != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "Hexstring to byte fail");
         (void)memset_s(buff, len, 0, len);
