@@ -65,7 +65,7 @@ public:
     int32_t RemoveRetentionInfoByUserId(const int32_t userId, const std::set<std::string>& bundleNameSet);
 
 private:
-    bool InsertSandboxInfo(const RetentionInfo& retentionInfo);
+    bool InsertSandboxInfo(const RetentionInfo& info);
     sptr<AppExecFwk::IBundleMgr> GetBundleMgr();
     bool GetUserIdByUid(int32_t& userId);
     bool CheckReInstall(const RetentionInfo& info, const int32_t userId);
