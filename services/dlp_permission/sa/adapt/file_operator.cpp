@@ -111,11 +111,13 @@ int32_t FileOperator::GetFileContentByPath(const std::string& path, std::string&
 bool FileOperator::IsExistFile(const std::string& path)
 {
     if (path.empty()) {
+        DLP_LOG_ERROR(LABEL, "path is empty");
         return false;
     }
 
     struct stat buf = {};
     if (stat(path.c_str(), &buf) != 0) {
+        DLP_LOG_ERROR(LABEL, "stat path: %{public}s, errno %{public}d.", path.c_str(), errno);
         return false;
     }
 
@@ -125,13 +127,13 @@ bool FileOperator::IsExistFile(const std::string& path)
 bool FileOperator::IsExistDir(const std::string& path)
 {
     if (path.empty()) {
-        DLP_LOG_INFO(LABEL, "path.empty");
+        DLP_LOG_ERROR(LABEL, "path is empty");
         return false;
     }
 
     struct stat buf = {};
     if (stat(path.c_str(), &buf) != 0) {
-        DLP_LOG_INFO(LABEL, " errno %{public}d.", errno);
+        DLP_LOG_ERROR(LABEL, "stat path: %{public}s, errno %{public}d.", path.c_str(), errno);
         return false;
     }
 

@@ -39,6 +39,10 @@ const std::string PATH_CACHE = "/cache";
 
 int32_t DlpFileManager::AddDlpFileNode(const std::shared_ptr<DlpFile>& filePtr)
 {
+    if (filePtr == nullptr) {
+        DLP_LOG_ERROR(LABEL, "Add dlp file node failed, filePtr is null");
+        return DLP_PARSE_ERROR_VALUE_INVALID;
+    }
     Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->g_DlpMapLock_);
     if (g_DlpFileMap_.size() >= MAX_DLP_FILE_SIZE) {
         DLP_LOG_ERROR(LABEL, "Add dlp file node failed, too many files");
@@ -54,6 +58,10 @@ int32_t DlpFileManager::AddDlpFileNode(const std::shared_ptr<DlpFile>& filePtr)
 
 int32_t DlpFileManager::RemoveDlpFileNode(const std::shared_ptr<DlpFile>& filePtr)
 {
+    if (filePtr == nullptr) {
+        DLP_LOG_ERROR(LABEL, "Remove dlp file node fail, filePtr is null");
+        return DLP_PARSE_ERROR_VALUE_INVALID;
+    }
     Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->g_DlpMapLock_);
     for (auto iter = g_DlpFileMap_.begin(); iter != g_DlpFileMap_.end(); iter++) {
         if (filePtr->dlpFd_ == iter->first) {

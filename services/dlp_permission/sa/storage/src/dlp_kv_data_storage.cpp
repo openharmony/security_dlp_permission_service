@@ -95,7 +95,6 @@ OHOS::DistributedKv::Status DlpKvDataStorage::GetKvStore()
     bool res = (status != OHOS::DistributedKv::Status::SUCCESS) || (kvStorePtr_ == nullptr);
     if (res) {
         DLP_LOG_ERROR(LABEL, "GetSingleKvStore failed! status %{public}d, kvStorePtr_ is nullptr", status);
-        return status;
     }
     return status;
 }
@@ -253,11 +252,7 @@ bool DlpKvDataStorage::IsKeyExists(const std::string keyStr)
         return false;
     }
     std::string valueStr;
-    bool res = GetValueFromKvStore(keyStr, valueStr) != DLP_OK;
-    if (res) {
-        return false;
-    }
-    return true;
+    return GetValueFromKvStore(keyStr, valueStr) == DLP_OK;
 }
 }  // namespace DlpPermission
 }  // namespace Security
