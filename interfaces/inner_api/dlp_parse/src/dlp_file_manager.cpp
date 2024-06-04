@@ -128,23 +128,34 @@ int32_t DlpFileManager::GenerateCertBlob(const std::vector<uint8_t>& cert, struc
     return DLP_OK;
 }
 
+static int32_t CleanBlobParam(struct DlpBlob& blob)
+{
+    if (blob.data == nullptr || blob.size == 0) {
+        DLP_LOG_ERROR(LABEL, "blobData null");
+        return DLP_PARSE_ERROR_VALUE_INVALID;
+    }
+
+    (void)memset_s(blob.data, blob.size, 0, blob.size);
+    delete[] blob.data;
+    blob.data = nullptr;
+    blob.size = 0;
+    return DLP_OK;
+}
+
 void DlpFileManager::CleanTempBlob(struct DlpBlob& key, struct DlpCipherParam** tagIv, struct DlpBlob& hmacKey) const
 {
     if (key.data != nullptr) {
-        delete[] key.data;
-        key.data = nullptr;
+        CleanBlobParam(key);
     }
     if ((*tagIv) != nullptr) {
         if ((*tagIv)->iv.data != nullptr) {
-            delete[] (*tagIv)->iv.data;
-            (*tagIv)->iv.data = nullptr;
+            CleanBlobParam((*tagIv)->iv);
         }
         delete (*tagIv);
         (*tagIv) = nullptr;
     }
     if (hmacKey.data != nullptr) {
-        delete[] hmacKey.data;
-        hmacKey.data = nullptr;
+        CleanBlobParam(hmacKey);
     }
 }
 

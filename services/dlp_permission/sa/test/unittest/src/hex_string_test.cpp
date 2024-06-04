@@ -75,22 +75,25 @@ HWTEST_F(HexStringTest, HexStringToByte001, TestSize.Level1)
     uint8_t byteBuffer[30] = {0};
 
     // hexStr is nullptr
-    EXPECT_EQ(HexStringToByte(nullptr, byteBuffer, sizeof(byteBuffer)), DLP_SERVICE_ERROR_VALUE_INVALID);
-
+    EXPECT_EQ(HexStringToByte(nullptr, 0, byteBuffer, sizeof(byteBuffer)), DLP_SERVICE_ERROR_VALUE_INVALID);
+    std::string test = "1d2c4F";
     // byte is nullptr
-    EXPECT_EQ(HexStringToByte("1d2c4F", nullptr, sizeof(byteBuffer)), DLP_SERVICE_ERROR_VALUE_INVALID);
-
+    EXPECT_EQ(HexStringToByte(test.c_str(), test.length(), nullptr, sizeof(byteBuffer)),
+        DLP_SERVICE_ERROR_VALUE_INVALID);
+    test = "1d2c4F1";
     // hexStr is not 2 aligned
-    EXPECT_EQ(HexStringToByte("1d2c4F1", nullptr, sizeof(byteBuffer)), DLP_SERVICE_ERROR_VALUE_INVALID);
+    EXPECT_EQ(HexStringToByte(test.c_str(), test.length(), nullptr, sizeof(byteBuffer)),
+        DLP_SERVICE_ERROR_VALUE_INVALID);
 
     // byte len is short
-    EXPECT_EQ(HexStringToByte("1d2c4F1", nullptr, 1), DLP_SERVICE_ERROR_VALUE_INVALID);
-
+    EXPECT_EQ(HexStringToByte(test.c_str(), test.length(), nullptr, 1), DLP_SERVICE_ERROR_VALUE_INVALID);
+    test = "1d2c4Fq";
     // not hex number
-    EXPECT_EQ(HexStringToByte("1d2c4Fq", nullptr, sizeof(byteBuffer)), DLP_SERVICE_ERROR_VALUE_INVALID);
-
+    EXPECT_EQ(HexStringToByte(test.c_str(), test.length(), nullptr, sizeof(byteBuffer)),
+        DLP_SERVICE_ERROR_VALUE_INVALID);
+    test = "1d2c4F";
     // normal branch
-    EXPECT_EQ(HexStringToByte("1d2c4F", byteBuffer, sizeof(byteBuffer)), DLP_OK);
+    EXPECT_EQ(HexStringToByte(test.c_str(), test.length(), byteBuffer, sizeof(byteBuffer)), DLP_OK);
 }
 
 /**
@@ -104,10 +107,17 @@ HWTEST_F(HexStringTest, HexStringToByte002, TestSize.Level1)
     DLP_LOG_INFO(LABEL, "ByteToHexString001");
     uint8_t byteBuffer[30] = {0};
     // normal branch
-    EXPECT_EQ(HexStringToByte("1d2c4", byteBuffer, sizeof(byteBuffer)), DLP_SERVICE_ERROR_VALUE_INVALID);
-    EXPECT_EQ(HexStringToByte("1d2c4f", byteBuffer, 1), DLP_SERVICE_ERROR_VALUE_INVALID);
-    EXPECT_EQ(HexStringToByte("gd2c4f", byteBuffer, sizeof(byteBuffer)), DLP_SERVICE_ERROR_VALUE_INVALID);
-    EXPECT_EQ(HexStringToByte("1g2c4f", byteBuffer, sizeof(byteBuffer)), DLP_SERVICE_ERROR_VALUE_INVALID);
+    std::string test = "1d2c4";
+    EXPECT_EQ(HexStringToByte(test.c_str(), test.length(), byteBuffer, sizeof(byteBuffer)),
+        DLP_SERVICE_ERROR_VALUE_INVALID);
+    test = "1d2c4f";
+    EXPECT_EQ(HexStringToByte(test.c_str(), test.length(), byteBuffer, 1), DLP_SERVICE_ERROR_VALUE_INVALID);
+    test = "gd2c4f";
+    EXPECT_EQ(HexStringToByte(test.c_str(), test.length(), byteBuffer, sizeof(byteBuffer)),
+        DLP_SERVICE_ERROR_VALUE_INVALID);
+    test = "1g2c4f";
+    EXPECT_EQ(HexStringToByte(test.c_str(), test.length(), byteBuffer, sizeof(byteBuffer)),
+        DLP_SERVICE_ERROR_VALUE_INVALID);
 }
 }  // namespace DlpPermission
 }  // namespace Security

@@ -29,7 +29,7 @@ static const int FUSE_DEV_FD = 1000;
 class DlpLinkManager final {
 public:
     static DlpLinkManager& GetInstance();
-    ~DlpLinkManager() {};
+    ~DlpLinkManager();
 
     int32_t AddDlpLinkFile(std::shared_ptr<DlpFile>& filePtr, const std::string& dlpLinkName);
     int32_t StopDlpLinkFile(std::shared_ptr<DlpFile>& filePtr);

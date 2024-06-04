@@ -33,6 +33,18 @@ DlpLinkManager::DlpLinkManager()
     FuseDaemon::InitFuseFs(FUSE_DEV_FD);
 }
 
+DlpLinkManager::~DlpLinkManager()
+{
+    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(g_DlpLinkMapLock_);
+    for (auto iter = g_DlpLinkFileNameMap_.begin(); iter != g_DlpLinkFileNameMap_.end(); iter++) {
+        DlpLinkFile* tmp = iter->second;
+        if (tmp != nullptr) {
+            iter = g_DlpLinkFileNameMap_.erase(iter);
+            delete tmp;
+        }
+    }
+}
+
 static bool IsLinkNameValid(const std::string& linkName)
 {
     size_t size = linkName.size();
