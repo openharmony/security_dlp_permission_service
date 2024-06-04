@@ -33,6 +33,7 @@ RetentionSandBoxInfo::RetentionSandBoxInfo()
 {
     bundleName_ = "";
     appIndex_ = APP_INDEX;
+    dlpFileAccess_ = NO_PERMISSION;
     docUriSet_.clear();
 }
 
