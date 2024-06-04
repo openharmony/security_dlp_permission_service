@@ -55,7 +55,7 @@ SandboxJsonManager::~SandboxJsonManager()
 bool SandboxJsonManager::HasRetentionSandboxInfo(const std::string& bundleName)
 {
     int32_t userId;
-    if (!GetUserIdByActiveAccount(&userId)) {
+    if (!GetUserIdByForegroundAccount(&userId)) {
         return false;
     }
     std::lock_guard<std::mutex> lock(mutex_);
@@ -190,7 +190,7 @@ int32_t SandboxJsonManager::RemoveRetentionState(const std::string& bundleName, 
     bool hasBundleName = false;
     {
         int32_t userId;
-        if (!GetUserIdByActiveAccount(&userId)) {
+        if (!GetUserIdByForegroundAccount(&userId)) {
             return false;
         }
         std::lock_guard<std::mutex> lock(mutex_);
@@ -251,7 +251,7 @@ int32_t SandboxJsonManager::ClearUnreservedSandbox()
 {
     DLP_LOG_INFO(LABEL, "ClearUnreservedSandbox called");
     int32_t userId;
-    if (!GetUserIdByActiveAccount(&userId)) {
+    if (!GetUserIdByForegroundAccount(&userId)) {
         return false;
     }
     std::lock_guard<std::mutex> lock(mutex_);
