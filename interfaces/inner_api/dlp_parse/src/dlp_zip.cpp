@@ -51,13 +51,13 @@ int32_t AddBuffToZip(const void *buf, uint32_t size, const char *nameInZip, cons
             errno, zipName);
         return DLP_ZIP_FAIL;
     }
-    int opt_compress_level = 0;
+    int compressLevel = 0;
     zip_fileinfo zi = {};
 
     int32_t err = zipOpenNewFileInZip3_64(zf, nameInZip, &zi,
         NULL, 0, NULL, 0, NULL /* comment */,
-        (opt_compress_level != 0) ? Z_DEFLATED : 0,
-        opt_compress_level, 0,
+        (compressLevel != 0) ? Z_DEFLATED : 0,
+        compressLevel, 0,
         /* -MAX_WBITS, DEF_MEM_LEVEL, Z_DEFAULT_STRATEGY, */
         -MAX_WBITS, DEF_MEM_LEVEL, Z_DEFAULT_STRATEGY,
         NULL, 0, 0);
@@ -94,13 +94,13 @@ int32_t AddFileContextToZip(int32_t fd, const char *nameInZip, const char *zipNa
             errno, zipName);
         return DLP_ZIP_FAIL;
     }
-    int32_t opt_compress_level = 0;
+    int32_t compressLevel = 0;
     zip_fileinfo zi = {};
 
     int32_t err = zipOpenNewFileInZip3_64(zf, nameInZip, &zi,
         NULL, 0, NULL, 0, NULL /* comment */,
-        (opt_compress_level != 0) ? Z_DEFLATED : 0,
-        opt_compress_level, 0,
+        (compressLevel != 0) ? Z_DEFLATED : 0,
+        compressLevel, 0,
         /* -MAX_WBITS, DEF_MEM_LEVEL, Z_DEFAULT_STRATEGY, */
         -MAX_WBITS, DEF_MEM_LEVEL, Z_DEFAULT_STRATEGY,
         NULL, 0, 0);
@@ -109,11 +109,11 @@ int32_t AddFileContextToZip(int32_t fd, const char *nameInZip, const char *zipNa
         zipClose(zf, NULL);
         return DLP_ZIP_FAIL;
     }
+    int32_t readLen;
     int32_t res = DLP_ZIP_OK;
-    int32_t size_read;
     auto buf = std::make_unique<char[]>(ZIP_BUFF_SIZE);
-    while ((size_read = read(fd, buf.get(), ZIP_BUFF_SIZE)) > 0) {
-        err = zipWriteInFileInZip (zf, buf.get(), (unsigned)size_read);
+    while ((readLen = read(fd, buf.get(), ZIP_BUFF_SIZE)) > 0) {
+        err = zipWriteInFileInZip (zf, buf.get(), (unsigned)readLen);
         if (err != ZIP_OK) {
             DLP_LOG_ERROR(LABEL, "zipWriteInFileInZip fail err %{public}d, %{public}s", err, nameInZip);
             res = DLP_ZIP_FAIL;
@@ -121,7 +121,7 @@ int32_t AddFileContextToZip(int32_t fd, const char *nameInZip, const char *zipNa
         }
     }
 
-    if (size_read == -1) {
+    if (readLen == -1) {
         DLP_LOG_ERROR(LABEL, "read errno %{public}s", strerror(errno));
         res = DLP_ZIP_FAIL;
     }
