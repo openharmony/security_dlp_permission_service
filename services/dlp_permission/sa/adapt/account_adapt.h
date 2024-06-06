@@ -33,7 +33,7 @@ typedef struct {
 } DlpBlob;
 
 int32_t GetCallingUserId(void);
-bool GetUserIdByActiveAccount(int32_t* userId);
+bool GetUserIdByForegroundAccount(int32_t* userId);
 int8_t GetLocalAccountName(char** account, uint32_t userId);
 int8_t GetUserIdFromUid(int32_t uid, int32_t* userId);
 int32_t GetDomainAccountName(char** account);

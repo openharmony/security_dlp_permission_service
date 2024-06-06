@@ -217,16 +217,12 @@ int32_t DlpFile::GetLocalAccountName(std::string& account) const
 int32_t DlpFile::GetDomainAccountName(std::string& account) const
 {
 #ifdef DLP_PARSE_INNER
-    std::vector<int32_t> ids;
-    if (OHOS::AccountSA::OsAccountManager::QueryActiveOsAccountIds(ids) != 0) {
-        DLP_LOG_ERROR(LABEL, "QueryActiveOsAccountIds return not 0");
+    int32_t userId;
+    int32_t res = OHOS::AccountSA::OsAccountManager::GetForegroundOsAccountLocalId(userId);
+    if (res != 0) {
+        DLP_LOG_ERROR(LABEL, "GetForegroundOsAccountLocalId failed %{public}d", res);
         return DLP_PARSE_ERROR_ACCOUNT_INVALID;
     }
-    if (ids.size() != 1) {
-        DLP_LOG_ERROR(LABEL, "QueryActiveOsAccountIds size not 1");
-        return DLP_PARSE_ERROR_ACCOUNT_INVALID;
-    }
-    int32_t userId = ids[0];
     AccountSA::OsAccountInfo osAccountInfo;
     if (OHOS::AccountSA::OsAccountManager::QueryOsAccountById(userId, osAccountInfo) != 0) {
         DLP_LOG_ERROR(LABEL, "GetOsAccountLocalIdFromDomain return not 0");

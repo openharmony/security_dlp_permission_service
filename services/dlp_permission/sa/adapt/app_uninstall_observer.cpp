@@ -42,7 +42,7 @@ void AppUninstallObserver::OnReceiveEvent(const EventFwk::CommonEventData& data)
         RetentionFileManager::GetInstance().RemoveRetentionState(bundleName, -1);
     }
     int32_t userId;
-    if (!GetUserIdByActiveAccount(&userId)) {
+    if (!GetUserIdByForegroundAccount(&userId)) {
         DLP_LOG_ERROR(LABEL, "get userId error");
         return;
     }

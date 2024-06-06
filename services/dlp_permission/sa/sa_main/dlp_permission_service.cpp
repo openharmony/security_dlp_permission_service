@@ -267,6 +267,10 @@ static int32_t GetAppIndexFromRetentionInfo(const std::string& bundleName, bool 
 int32_t DlpPermissionService::InstallDlpSandbox(const std::string& bundleName, DLPFileAccess dlpFileAccess,
     int32_t userId, SandboxInfo &sandboxInfo, const std::string& uri)
 {
+    if (appStateObserver_ == nullptr) {
+        DLP_LOG_ERROR(LABEL, "Failed to get app state observer instance");
+        return DLP_SERVICE_ERROR_VALUE_INVALID;
+    }
     if (bundleName.empty() || dlpFileAccess > FULL_CONTROL || dlpFileAccess <= NO_PERMISSION) {
         DLP_LOG_ERROR(LABEL, "param is invalid");
         return DLP_SERVICE_ERROR_VALUE_INVALID;
@@ -723,7 +727,7 @@ int32_t DlpPermissionService::ClearUnreservedSandbox()
 void DlpPermissionService::RemoveUninstallInfo()
 {
     int32_t userId;
-    if (!GetUserIdByActiveAccount(&userId)) {
+    if (!GetUserIdByForegroundAccount(&userId)) {
         DLP_LOG_ERROR(LABEL, "get userID fail");
         return;
     }

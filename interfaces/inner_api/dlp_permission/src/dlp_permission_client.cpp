@@ -151,17 +151,13 @@ int32_t DlpPermissionClient::UninstallDlpSandbox(const std::string& bundleName, 
 
 static bool CheckAllowAbilityList(const std::string& bundleName)
 {
-    std::vector<int32_t> ids;
-    int32_t res = OHOS::AccountSA::OsAccountManager::QueryActiveOsAccountIds(ids);
-    if (res != ERR_OK) {
-        DLP_LOG_ERROR(LABEL, "QueryActiveOsAccountIds return not 0 %{public}d", res);
+    int32_t userId;
+    int32_t res = OHOS::AccountSA::OsAccountManager::GetForegroundOsAccountLocalId(userId);
+    if (res != 0) {
+        DLP_LOG_ERROR(LABEL, "GetForegroundOsAccountLocalId failed %{public}d", res);
         return false;
     }
-    if (ids.empty()) {
-        DLP_LOG_ERROR(LABEL, "QueryActiveOsAccountIds size not 1");
-        return false;
-    }
-    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(ids[0], bundleName, 0);
+    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(userId, bundleName, 0);
     if (tokenId == 0) {
         DLP_LOG_ERROR(LABEL, "GetHapTokenID is 0");
         return false;

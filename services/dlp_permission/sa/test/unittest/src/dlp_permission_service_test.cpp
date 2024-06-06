@@ -226,7 +226,7 @@ void DlpPermissionServiceTest::SetUp()
     ASSERT_NE(nullptr, dlpPermissionService_);
     dlpPermissionService_->appStateObserver_ = new (std::nothrow) AppStateObserver();
     ASSERT_TRUE(dlpPermissionService_->appStateObserver_ != nullptr);
-    GetUserIdByActiveAccount(&g_userId);
+    GetUserIdByForegroundAccount(&g_userId);
 }
 
 void DlpPermissionServiceTest::TearDown()
