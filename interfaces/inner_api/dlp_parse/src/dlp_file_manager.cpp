@@ -48,7 +48,8 @@ int32_t DlpFileManager::AddDlpFileNode(const std::shared_ptr<DlpFile>& filePtr)
         DLP_LOG_ERROR(LABEL, "Add dlp file node failed, too many files");
         return DLP_PARSE_ERROR_TOO_MANY_OPEN_DLP_FILE;
     }
-    if (g_DlpFileMap_.count(filePtr->dlpFd_) > 0) {
+    auto iter = g_DlpFileMap_.find(filePtr->dlpFd_);
+    if (iter != g_DlpFileMap_.end()) {
         DLP_LOG_ERROR(LABEL, "Add dlp file node fail, fd %{public}d already exist", filePtr->dlpFd_);
         return DLP_PARSE_ERROR_FILE_ALREADY_OPENED;
     }

@@ -201,7 +201,7 @@ int32_t DlpLinkManager::DeleteDlpLinkFile(std::shared_ptr<DlpFile>& filePtr)
 DlpLinkFile* DlpLinkManager::LookUpDlpLinkFile(const std::string& dlpLinkName)
 {
     Utils::UniqueReadGuard<Utils::RWLock> infoGuard(g_DlpLinkMapLock_);
-    for (auto iter = g_DlpLinkFileNameMap_.begin(); iter != g_DlpLinkFileNameMap_.end(); iter++) {
+    for (auto iter = g_DlpLinkFileNameMap_.begin(); iter != g_DlpLinkFileNameMap_.end(); ++iter) {
         if (dlpLinkName == iter->first) {
             DlpLinkFile* node = iter->second;
             if (node == nullptr) {

@@ -116,8 +116,8 @@ int32_t SandboxConfigKvDataStorage::GetKeySetByUserId(const int32_t userId, std:
     if (res != DLP_OK) {
         return res;
     }
+    std::string prefix = std::to_string(userId) + KEY_SEPATATOR;
     for (auto it = infos.begin(); it != infos.end(); ++it) {
-        std::string prefix = std::to_string(userId) + KEY_SEPATATOR;
         if (it->first.find(prefix) != std::string::npos) {
             std::string bundleName = it->first.substr(prefix.length(), it->first.length());
             bundleNameSet.emplace(bundleName);

@@ -290,7 +290,7 @@ bool SandboxJsonManager::GetUserIdByUid(int32_t& userId)
 int32_t SandboxJsonManager::GetBundleNameSetByUserId(const int32_t userId, std::set<std::string>& bundleNameSet)
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    if (infoVec_.size() == 0) {
+    if (infoVec_.empty()) {
         return DLP_OK;
     }
     for (auto iter = infoVec_.begin(); iter != infoVec_.end(); ++iter) {

@@ -82,19 +82,23 @@ static bool CheckAuthUserInfo(const AuthUserInfo& info)
             CheckAccountType(info.authAccountType));
 }
 
-static bool CheckAuthUserInfoList(const std::vector<AuthUserInfo>& authUsers_)
+static bool CheckAuthUserInfoList(const std::vector<AuthUserInfo>& authUsers)
 {
-    uint32_t userNum = authUsers_.size();
+    uint32_t userNum = authUsers.size();
     if (userNum > MAX_ACCOUNT_NUM) {
         DLP_LOG_ERROR(LABEL, "Auth users number exceeds %{public}u, total=%{public}u", MAX_ACCOUNT_NUM, userNum);
         return false;
     }
-    return (std::none_of(authUsers_.begin(), authUsers_.end(),
+    return (std::none_of(authUsers.begin(), authUsers.end(),
         [](const auto& iter) { return !CheckAuthUserInfo(iter); }));
 }
 
 static void FreeUint8Buffer(uint8_t** buff, uint32_t& buffLen)
 {
+    if (buff == nullptr) {
+        DLP_LOG_ERROR(LABEL, "Uint8 buffer is already nullptr.");
+        return;  
+    }
     if (*buff != nullptr) {
         memset_s(*buff, buffLen, 0, buffLen);
         delete[] *buff;
