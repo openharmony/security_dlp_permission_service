@@ -29,11 +29,11 @@ using namespace OHOS::Security::AccessToken;
 namespace OHOS {
 static void FuzzTest(const uint8_t* data, size_t size)
 {
-    MessageParcel datas;
-    datas.WriteInterfaceToken(IDlpPermissionService::GetDescriptor());
-    if (size <= sizeof(uint32_t)) {
+    if ((data == nullptr) || (size <= sizeof(uint32_t))) {
         return;
     }
+    MessageParcel datas;
+    datas.WriteInterfaceToken(IDlpPermissionService::GetDescriptor());
     const uint32_t* temp = reinterpret_cast<const uint32_t*>(data);
     uint32_t tokenId = temp[0];
     if (!datas.WriteUint32(tokenId)) {
@@ -48,14 +48,19 @@ static void FuzzTest(const uint8_t* data, size_t size)
 
 bool QueryDlpFileCopyableByTokenIdFuzzTest(const uint8_t* data, size_t size)
 {
-    int selfTokenId = GetSelfTokenID();
-    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(100, "com.ohos.dlpmanager", 0); // user_id = 100
-    SetSelfTokenID(tokenId);
     FuzzTest(data, size);
-    SetSelfTokenID(selfTokenId);
     return true;
 }
 } // namespace OHOS
+
+/* Fuzzer entry point */
+extern "C" int LLVMFuzzerInitialize(int *argc, char ***argv)
+{
+    int selfTokenId = GetSelfTokenID();
+    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(100, "com.ohos.dlpmanager", 0); // user_id = 100
+    SetSelfTokenID(tokenId);
+    return 0;
+}
 
 /* Fuzzer entry point */
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)

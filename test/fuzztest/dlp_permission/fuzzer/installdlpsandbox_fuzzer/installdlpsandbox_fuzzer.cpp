@@ -27,26 +27,39 @@
 using namespace OHOS::Security::DlpPermission;
 using namespace OHOS::Security::AccessToken;
 namespace OHOS {
-const std::string TEST_URI = "datashare:///media/file/8";
+const int32_t TWO = 2;
 static void FuzzTest(const uint8_t* data, size_t size)
 {
-    std::string bundleName(reinterpret_cast<const char*>(data), size);
-    DLPFileAccess dlpFileAccess = static_cast<DLPFileAccess>(size);
-    int32_t userId = static_cast<int32_t>(size);
+    if ((data == nullptr) || (size < sizeof(int32_t) + sizeof(int32_t) + sizeof(int32_t))) {
+        return;
+    }
+    uint32_t offsize = 0;
+    int32_t userId = *(reinterpret_cast<const int32_t *>(data + offsize));
+    offsize += sizeof(int32_t);
+    DLPFileAccess dlpFileAccess = *(reinterpret_cast<const DLPFileAccess *>(data + offsize));
+    uint32_t length = (size - offsize) / TWO;
+    std::string bundleName(reinterpret_cast<const char*>(data + offsize), length);
+    std::string uri(reinterpret_cast<const char*>(data + offsize + length), length);
     SandboxInfo sandboxInfo;
-    DlpPermissionKit::InstallDlpSandbox(bundleName, dlpFileAccess, userId, sandboxInfo, TEST_URI);
+    DlpPermissionKit::InstallDlpSandbox(bundleName, dlpFileAccess, userId, sandboxInfo, uri);
 }
 
 bool InstallDlpSandboxFuzzTest(const uint8_t* data, size_t size)
 {
-    int selfTokenId = GetSelfTokenID();
-    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(100, "com.ohos.dlpmanager", 0);  // user_id = 100
-    SetSelfTokenID(tokenId);
     FuzzTest(data, size);
-    SetSelfTokenID(selfTokenId);
     return true;
 }
-}  // namespace OHOS
+} // namespace OHOS
+
+/* Fuzzer entry point */
+extern "C" int LLVMFuzzerInitialize(int *argc, char ***argv)
+{
+    int selfTokenId = GetSelfTokenID();
+    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(100, "com.ohos.dlpmanager", 0); // user_id = 100
+    SetSelfTokenID(tokenId);
+    return 0;
+}
+
 
 /* Fuzzer entry point */
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)

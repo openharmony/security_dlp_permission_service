@@ -32,21 +32,26 @@ static void FuzzTest(const uint8_t* data, size_t size)
     DlpPermissionKit::RemoveMDMPolicy();
 }
 
-bool GetMDMPolicyFuzzTest(const uint8_t* data, size_t size)
+bool RemoveMDMPolicyFuzzTest(const uint8_t* data, size_t size)
 {
-    int selfTokenId = GetSelfTokenID();
-    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(100, "com.ohos.dlpmanager", 0); // user_id = 100
-    SetSelfTokenID(tokenId);
     FuzzTest(data, size);
-    SetSelfTokenID(selfTokenId);
     return true;
 }
 } // namespace OHOS
 
 /* Fuzzer entry point */
+extern "C" int LLVMFuzzerInitialize(int *argc, char ***argv)
+{
+    int selfTokenId = GetSelfTokenID();
+    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(100, "com.ohos.dlpmanager", 0); // user_id = 100
+    SetSelfTokenID(tokenId);
+    return 0;
+}
+
+/* Fuzzer entry point */
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 {
     /* Run your code on data */
-    OHOS::GetMDMPolicyFuzzTest(data, size);
+    OHOS::RemoveMDMPolicyFuzzTest(data, size);
     return 0;
 }

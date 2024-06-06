@@ -28,25 +28,41 @@
 using namespace OHOS::Security::DlpPermission;
 using namespace OHOS::Security::AccessToken;
 namespace OHOS {
+const int32_t APPID_LENGTH = 30;
+const int32_t TWO = 2;
 static void FuzzTest(const uint8_t* data, size_t size)
 {
+    if ((data == nullptr) || (size < sizeof(int32_t) + sizeof(int32_t) + sizeof(char) * APPID_LENGTH)) {
+        return;
+    }
+    uint32_t offsize = 0;
+    bool flag = *(reinterpret_cast<const int32_t *>(data + offsize)) % TWO == 0;
+    offsize += sizeof(int32_t);
+    std::string appId(reinterpret_cast<const char*>(data + offsize), APPID_LENGTH);
+    offsize += sizeof(char) * APPID_LENGTH;
     sptr<CertParcel> certParcel = new (std::nothrow) CertParcel();
-    std::vector<uint8_t> cert(data, data + size);
+    std::vector<uint8_t> cert((data + offsize), data + size);
     certParcel->cert = cert;
     PermissionPolicy policy;
-    DlpPermissionKit::ParseDlpCertificate(certParcel, policy, "", true);
+    DlpPermissionKit::ParseDlpCertificate(certParcel, policy, appId, flag);
 }
 
 bool ParseCertFuzzTest(const uint8_t* data, size_t size)
 {
-    int selfTokenId = GetSelfTokenID();
-    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(100, "com.ohos.dlpmanager", 0);  // user_id = 100
-    SetSelfTokenID(tokenId);
     FuzzTest(data, size);
-    SetSelfTokenID(selfTokenId);
     return true;
 }
-}  // namespace OHOS
+} // namespace OHOS
+
+/* Fuzzer entry point */
+extern "C" int LLVMFuzzerInitialize(int *argc, char ***argv)
+{
+    int selfTokenId = GetSelfTokenID();
+    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(100, "com.ohos.dlpmanager", 0); // user_id = 100
+    SetSelfTokenID(tokenId);
+    return 0;
+}
+
 
 /* Fuzzer entry point */
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)

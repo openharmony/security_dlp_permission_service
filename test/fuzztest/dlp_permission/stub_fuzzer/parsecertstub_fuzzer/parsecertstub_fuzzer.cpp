@@ -35,11 +35,16 @@ const std::string ENC_DATA_LEN = "encDataLen";
 const std::string ENC_DATA = "encData";
 const std::string ENC_ACCOUNT_TYPE = "accountType";
 constexpr int BYTE_TO_HEX_OPER_LENGTH = 2;
+const uint32_t BUFFER_LENGTH = 30;
+
 static void InitCertJson(const uint8_t* data, size_t size, Json &certJson)
 {
     certJson[ENC_DATA_LEN] = size;
     char hexStrBuffer[64] = {0};
-    uint8_t byteBuffer[30] = {0x1, 0x9, 0xf};
+    uint8_t byteBuffer[30] = {0};
+    for (uint32_t i = 0; i < BUFFER_LENGTH; i++) {
+        byteBuffer[i] = *(reinterpret_cast<const uint8_t*>(data + i));
+    }
     int res = ByteToHexString(byteBuffer, sizeof(byteBuffer), hexStrBuffer, sizeof(hexStrBuffer));
     if (res != DLP_OK) {
         return;
@@ -50,14 +55,14 @@ static void InitCertJson(const uint8_t* data, size_t size, Json &certJson)
 
 static void FuzzTest(const uint8_t* data, size_t size)
 {
+    if ((data == nullptr) || (size < BUFFER_LENGTH)) {
+        return;
+    }
     MessageParcel datas;
     if (!datas.WriteInterfaceToken(DlpPermissionStub::GetDescriptor())) {
         return;
     }
-    std::string appId(reinterpret_cast<const char*>(data), size);
-    if (!datas.WriteString(appId)) {
-        return;
-    }
+
     Json certJson;
     InitCertJson(data, size, certJson);
     std::string certStr = certJson.dump();
@@ -66,6 +71,10 @@ static void FuzzTest(const uint8_t* data, size_t size)
     cert.assign(certStr.begin(), certStr.end());
     certParcel->cert = cert;
     if (!datas.WriteParcelable(certParcel)) {
+        return;
+    }
+    std::string appId(reinterpret_cast<const char*>(data + BUFFER_LENGTH), size - BUFFER_LENGTH);
+    if (!datas.WriteString(appId)) {
         return;
     }
     std::shared_ptr<ParseDlpCertificateCallback> callback = std::make_shared<ClientParseDlpCertificateCallback>();
@@ -86,14 +95,19 @@ static void FuzzTest(const uint8_t* data, size_t size)
 
 bool ParseCertFuzzTest(const uint8_t* data, size_t size)
 {
-    int selfTokenId = GetSelfTokenID();
-    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(100, "com.ohos.dlpmanager", 0); // user_id = 100
-    SetSelfTokenID(tokenId);
     FuzzTest(data, size);
-    SetSelfTokenID(selfTokenId);
     return true;
 }
 } // namespace OHOS
+
+/* Fuzzer entry point */
+extern "C" int LLVMFuzzerInitialize(int *argc, char ***argv)
+{
+    int selfTokenId = GetSelfTokenID();
+    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(100, "com.ohos.dlpmanager", 0); // user_id = 100
+    SetSelfTokenID(tokenId);
+    return 0;
+}
 
 /* Fuzzer entry point */
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
