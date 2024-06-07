@@ -28,19 +28,21 @@ using namespace OHOS::Security::DlpPermission;
 using namespace OHOS::Security::AccessToken;
 namespace OHOS {
 const std::string TEST_URI = "datashare:///media/file/8";
+constexpr uint32_t MIN_SIZE = 4 * sizeof(int32_t);
 static void FuzzTest(const uint8_t* data, size_t size)
 {
-    if ((data == nullptr) || (size == 0)) {
+    if ((data == nullptr) || (size < MIN_SIZE)) {
         return;
     }
-    std::string bundleName(reinterpret_cast<const char*>(data), size);
-    DLPFileAccess dlpFileAccess = static_cast<DLPFileAccess>(size);
-    int32_t userId = static_cast<int32_t>(size);
-    std::string uri(reinterpret_cast<const char*>(data), size);
-
+    uint32_t offsize = 0;
+    int32_t userId = *(reinterpret_cast<const int32_t *>(data + offsize));
+    offsize += sizeof(int32_t);
+    DLPFileAccess dlpFileAccess = *(reinterpret_cast<const DLPFileAccess *>(data + offsize));
+    offsize += sizeof(int32_t);
+    std::string uri(reinterpret_cast<const char*>(data + offsize), size - offsize);
     MessageParcel datas;
     datas.WriteInterfaceToken(IDlpPermissionService::GetDescriptor());
-    bundleName = "com.ohos.dlpmanager";
+    std::string  bundleName = "com.ohos.dlpmanager";
     if (!datas.WriteString(bundleName)) {
         return;
     }
@@ -63,14 +65,19 @@ static void FuzzTest(const uint8_t* data, size_t size)
 
 bool InstallDlpSandboxFuzzTest(const uint8_t* data, size_t size)
 {
-    int selfTokenId = GetSelfTokenID();
-    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(100, "com.ohos.dlpmanager", 0); // user_id = 100
-    SetSelfTokenID(tokenId);
     FuzzTest(data, size);
-    SetSelfTokenID(selfTokenId);
     return true;
 }
 } // namespace OHOS
+
+/* Fuzzer entry point */
+extern "C" int LLVMFuzzerInitialize(int *argc, char ***argv)
+{
+    int selfTokenId = GetSelfTokenID();
+    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(100, "com.ohos.dlpmanager", 0); // user_id = 100
+    SetSelfTokenID(tokenId);
+    return 0;
+}
 
 /* Fuzzer entry point */
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)

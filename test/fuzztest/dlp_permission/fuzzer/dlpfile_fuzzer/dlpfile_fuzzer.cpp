@@ -33,11 +33,24 @@ using namespace OHOS::Security::DlpPermission;
 using namespace OHOS::Security::AccessToken;
 namespace {
 static const int ACCOUNT_NAME_SIZE = 20;
+static const uint8_t ARRAY_CHAR_SIZE = 62;
+static const char CHAR_ARRAY[] = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+static std::string g_accountName = "ohosAnonymousName";
 }
+
+static void GenerateRandStr(uint32_t len, const uint8_t *data, std::string& res)
+{
+    for (uint32_t i = 0; i < len; i++) {
+        uint32_t index = data[i] % ARRAY_CHAR_SIZE;
+        res.push_back(CHAR_ARRAY[index]);
+    }
+}
+
 bool IsAccountLogIn(uint32_t osAccountId, AccountType accountType, const DlpBlob* accountId)
 {
     return true;
 }
+
 int8_t GetLocalAccountName(char** account, uint32_t userId)
 {
     if (account == nullptr) {
@@ -47,48 +60,50 @@ int8_t GetLocalAccountName(char** account, uint32_t userId)
     strcpy_s(*account, sizeof(**account), "ohosAnonymousName");
     return 0;
 }
+
 namespace OHOS {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = { LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION,
                                                        "DlpFileFuzzTest" };
-static const std::string DEFAULT_CURRENT_ACCOUNT = "ohosAnonymousName";
-static const std::string TEST_ACCOUNT_NAME = "testaccountName";
 static const int32_t TEST_USER_COUNT = 1;
 static const int32_t EXPIRT_TIME = 10000;
 static std::shared_ptr<DlpFile> g_Dlpfile = nullptr;
 static const std::string DLP_TEST_DIR = "/data";
-static const std::string TEST_APPID = "test_appId_passed";
-static std::string g_accountName = DEFAULT_CURRENT_ACCOUNT;
-static std::string g_accountId = DEFAULT_CURRENT_ACCOUNT;
 static const int32_t ARRRY_SIZE = 3;
 static const std::string LOGIN_EVENT = "Ohos.account.event.LOGIN";
 static const std::string LOGOUT_EVENT = "Ohos.account.event.LOGOUT";
 static const int32_t TWO = 2;
 static const int32_t FIVE = 5;
-
+const int32_t TEXT_LENGTH = 5;
+const int32_t ACCOUNT_LENGTH = 10;
+const int32_t APPID_LENGTH = 30;
 static void GenerateRandProperty(struct DlpProperty& encProp, const uint8_t* data, size_t size)
 {
     uint64_t curTime = static_cast<uint64_t>(
         std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count());
-    AccountSA::OhosAccountKits::GetInstance().UpdateOhosAccountInfo(g_accountName, g_accountId, LOGOUT_EVENT);
-    encProp.ownerAccount = DEFAULT_CURRENT_ACCOUNT;
-    encProp.ownerAccountId = DEFAULT_CURRENT_ACCOUNT;
-    std::string contactAccount  = DEFAULT_CURRENT_ACCOUNT;
+    std::string account;
+    GenerateRandStr(ACCOUNT_LENGTH, data, account);
+    AccountSA::OhosAccountKits::GetInstance().UpdateOhosAccountInfo(account, account, LOGOUT_EVENT);
+    uint32_t offset = ACCOUNT_LENGTH;
+    encProp.ownerAccount = account;
+    encProp.ownerAccountId = account;
+    std::string contactAccount = account;
     encProp.contactAccount = strdup(const_cast<char *>(contactAccount.c_str()));
     if (size % TWO == 0) {
-        g_accountName = TEST_ACCOUNT_NAME;
-        g_accountId = TEST_ACCOUNT_NAME;
+        std::string testAccount;
+        GenerateRandStr(ACCOUNT_LENGTH, data + offset, testAccount);
+        offset += ACCOUNT_LENGTH;
+        g_accountName = testAccount;
     } else {
-        g_accountName = DEFAULT_CURRENT_ACCOUNT;
-        g_accountName = DEFAULT_CURRENT_ACCOUNT;
+        g_accountName = account;
     }
-    AccountSA::OhosAccountKits::GetInstance().UpdateOhosAccountInfo(g_accountName, g_accountId, LOGIN_EVENT);
+    AccountSA::OhosAccountKits::GetInstance().UpdateOhosAccountInfo(g_accountName, g_accountName, LOGIN_EVENT);
     encProp.ownerAccountType = DlpAccountType::CLOUD_ACCOUNT;
     if (size % FIVE == 0) {
         encProp.supportEveryone = true;
         encProp.everyonePerm = CONTENT_EDIT;
     }
     for (uint32_t user = 0; user < TEST_USER_COUNT; ++user) {
-        std::string accountName = TEST_ACCOUNT_NAME + std::to_string(user);
+        std::string accountName = account + std::to_string(user);
         AuthUserInfo perminfo = {.authAccount = strdup(const_cast<char *>(accountName.c_str())),
             .authPerm = READ_ONLY,
             .permExpiryTime = curTime + EXPIRT_TIME,
@@ -99,12 +114,20 @@ static void GenerateRandProperty(struct DlpProperty& encProp, const uint8_t* dat
 
 static void FuzzTest(const uint8_t* data, size_t size)
 {
+    if ((data == nullptr) || (size <= sizeof(char) * (TEXT_LENGTH + APPID_LENGTH + ACCOUNT_LENGTH + ACCOUNT_LENGTH))) {
+        return;
+    }
     int plainFileFd = open("/data/file_test.txt", O_CREAT | O_RDWR | O_TRUNC, S_IRWXU | S_IRWXG | S_IRWXO);
     int dlpFileFd = open("/data/file_test.txt.dlp", O_CREAT | O_RDWR | O_TRUNC, S_IRWXU | S_IRWXG | S_IRWXO);
-    char buffer[] = "123456";
-    write(plainFileFd, buffer, sizeof(buffer));
+    std::string text;
+    GenerateRandStr(TEXT_LENGTH, data, text);
+    uint32_t offset = ACCOUNT_LENGTH;
+    std::string appId;
+    GenerateRandStr(APPID_LENGTH, data + offset, appId);
+    offset += APPID_LENGTH;
+    write(plainFileFd, text.c_str(), text.length());
     struct DlpProperty prop;
-    GenerateRandProperty(prop, data, size);
+    GenerateRandProperty(prop, data + offset, size - offset);
     int32_t res = DlpFileManager::GetInstance().GenerateDlpFile(plainFileFd,
         dlpFileFd, prop, g_Dlpfile, DLP_TEST_DIR);
     DLP_LOG_INFO(LABEL, "GenerateDlpFile res=%{public}d", res);
@@ -112,9 +135,9 @@ static void FuzzTest(const uint8_t* data, size_t size)
         O_CREAT | O_RDWR | O_TRUNC, S_IRWXU | S_IRWXG | S_IRWXO);
     DlpFileManager::GetInstance().RecoverDlpFile(g_Dlpfile, recoveryFileFd);
     DlpFileManager::GetInstance().CloseDlpFile(g_Dlpfile);
-    res = DlpFileManager::GetInstance().OpenDlpFile(dlpFileFd, g_Dlpfile, DLP_TEST_DIR, TEST_APPID);
+    res = DlpFileManager::GetInstance().OpenDlpFile(dlpFileFd, g_Dlpfile, DLP_TEST_DIR, appId);
     DLP_LOG_INFO(LABEL, "OpenDlpFile res=%{public}d", res);
-    g_Dlpfile->DlpFileWrite(0, const_cast<void*>(reinterpret_cast<const void*>(data)), size);
+    g_Dlpfile->DlpFileWrite(0, const_cast<char *>(text.c_str()), text.length());
     uint8_t writeBuffer[ARRRY_SIZE] = {0x1};
     g_Dlpfile->DlpFileRead(0, writeBuffer, ARRRY_SIZE);
     g_Dlpfile->Truncate(ARRRY_SIZE);
@@ -122,14 +145,19 @@ static void FuzzTest(const uint8_t* data, size_t size)
 
 bool DlpFileFuzzTest(const uint8_t* data, size_t size)
 {
-    int selfTokenId = GetSelfTokenID();
-    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(100, "com.ohos.dlpmanager", 0);  // user_id = 100
-    SetSelfTokenID(tokenId);
     FuzzTest(data, size);
-    SetSelfTokenID(selfTokenId);
     return true;
 }
-}  // namespace OHOS
+} // namespace OHOS
+
+/* Fuzzer entry point */
+extern "C" int LLVMFuzzerInitialize(int *argc, char ***argv)
+{
+    int selfTokenId = GetSelfTokenID();
+    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(100, "com.ohos.dlpmanager", 0); // user_id = 100
+    SetSelfTokenID(tokenId);
+    return 0;
+}
 
 /* Fuzzer entry point */
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)

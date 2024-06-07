@@ -27,7 +27,7 @@
 using namespace OHOS::Security::DlpPermission;
 using namespace OHOS::Security::AccessToken;
 namespace OHOS {
-constexpr const int32_t EDM_UID = 3057;
+const int32_t EDM_UID = 3057;
 static void FuzzTest(const uint8_t* data, size_t size)
 {
     MessageParcel datas;
@@ -41,13 +41,18 @@ static void FuzzTest(const uint8_t* data, size_t size)
 
 bool GetMDMPolicyFuzzTest(const uint8_t* data, size_t size)
 {
-    int uid = getuid();
-    setuid(EDM_UID);
     FuzzTest(data, size);
-    setuid(uid);
     return true;
 }
 } // namespace OHOS
+
+/* Fuzzer entry point */
+extern "C" int LLVMFuzzerInitialize(int *argc, char ***argv)
+{
+    int uid = getuid();
+    setuid(OHOS::EDM_UID);
+    return 0;
+}
 
 /* Fuzzer entry point */
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)

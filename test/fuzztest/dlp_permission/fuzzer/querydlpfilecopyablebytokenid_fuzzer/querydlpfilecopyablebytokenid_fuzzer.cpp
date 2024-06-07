@@ -29,21 +29,30 @@ using namespace OHOS::Security::AccessToken;
 namespace OHOS {
 static void FuzzTest(const uint8_t* data, size_t size)
 {
-    uint32_t tokenId = static_cast<uint32_t>(size);
+    if ((data == nullptr) || (size < sizeof(uint32_t))) {
+        return;
+    }
+    uint32_t tokenId = *(reinterpret_cast<const uint32_t *>(data));
     bool copyable;
     DlpPermissionKit::QueryDlpFileCopyableByTokenId(copyable, tokenId);
 }
 
 bool QueryDlpFileCopyableByTokenIdFuzzTest(const uint8_t* data, size_t size)
 {
-    int selfTokenId = GetSelfTokenID();
-    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(100, "com.ohos.dlpmanager", 0);  // user_id = 100
-    SetSelfTokenID(tokenId);
     FuzzTest(data, size);
-    SetSelfTokenID(selfTokenId);
     return true;
 }
-}  // namespace OHOS
+} // namespace OHOS
+
+/* Fuzzer entry point */
+extern "C" int LLVMFuzzerInitialize(int *argc, char ***argv)
+{
+    int selfTokenId = GetSelfTokenID();
+    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(100, "com.ohos.dlpmanager", 0); // user_id = 100
+    SetSelfTokenID(tokenId);
+    return 0;
+}
+
 
 /* Fuzzer entry point */
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)

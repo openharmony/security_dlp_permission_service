@@ -56,10 +56,13 @@ const int32_t TWO = 2;
 const int32_t HUNDRED = 100;
 static void FuzzTest(const uint8_t* data, size_t size)
 {
+    if ((data == nullptr) || (size < sizeof(uint32_t))) {
+        return;
+    }
     int fd = open("/data/fuse_test.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
-
-    DlpFile testFile(fd, "abc", 0, false);
-    uint32_t txtSize = static_cast<uint32_t>(size) % HUNDRED;
+    uint32_t txtSize = *(reinterpret_cast<const uint32_t*>(data));
+    std::string workDir(reinterpret_cast<const char*>(data + sizeof(uint32_t)), size - sizeof(uint32_t));
+    DlpFile testFile(fd, workDir, 0, false);
     uint32_t certSize = txtSize;
     uint32_t contactAccountSize = txtSize;
     if (size > ONE) {
@@ -88,14 +91,19 @@ static void FuzzTest(const uint8_t* data, size_t size)
 
 bool ParseCertFuzzTest(const uint8_t* data, size_t size)
 {
-    int selfTokenId = GetSelfTokenID();
-    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(100, "com.ohos.dlpmanager", 0); // user_id = 100
-    SetSelfTokenID(tokenId);
     FuzzTest(data, size);
-    SetSelfTokenID(selfTokenId);
     return true;
 }
 } // namespace OHOS
+
+/* Fuzzer entry point */
+extern "C" int LLVMFuzzerInitialize(int *argc, char ***argv)
+{
+    int selfTokenId = GetSelfTokenID();
+    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(100, "com.ohos.dlpmanager", 0); // user_id = 100
+    SetSelfTokenID(tokenId);
+    return 0;
+}
 
 /* Fuzzer entry point */
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)

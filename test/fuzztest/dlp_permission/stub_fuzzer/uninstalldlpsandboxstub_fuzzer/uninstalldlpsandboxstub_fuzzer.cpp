@@ -29,9 +29,15 @@ using namespace OHOS::Security::AccessToken;
 namespace OHOS {
 static void FuzzTest(const uint8_t* data, size_t size)
 {
-    std::string bundleName(reinterpret_cast<const char*>(data), size);
-    int32_t userId = static_cast<int32_t>(size);
-    int32_t appIndex = static_cast<int32_t>(size);
+    if ((data == nullptr) || (size < sizeof(int32_t) + sizeof(int32_t) + sizeof(char))) {
+        return;
+    }
+    uint32_t offsize = 0;
+    int32_t userId = *(reinterpret_cast<const int32_t *>(data + offsize));
+    offsize += sizeof(int32_t);
+    int32_t appIndex = *(reinterpret_cast<const int32_t *>(data + offsize));
+    offsize += sizeof(int32_t);
+    std::string bundleName(reinterpret_cast<const char*>(data + offsize), size - offsize);
     MessageParcel datas;
     datas.WriteInterfaceToken(IDlpPermissionService::GetDescriptor());
     if (!datas.WriteString(bundleName)) {
@@ -52,14 +58,19 @@ static void FuzzTest(const uint8_t* data, size_t size)
 
 bool UninstallDlpSandboxFuzzTest(const uint8_t* data, size_t size)
 {
-    int selfTokenId = GetSelfTokenID();
-    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(100, "com.ohos.dlpmanager", 0); // user_id = 100
-    SetSelfTokenID(tokenId);
     FuzzTest(data, size);
-    SetSelfTokenID(selfTokenId);
     return true;
 }
 } // namespace OHOS
+
+/* Fuzzer entry point */
+extern "C" int LLVMFuzzerInitialize(int *argc, char ***argv)
+{
+    int selfTokenId = GetSelfTokenID();
+    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(100, "com.ohos.dlpmanager", 0); // user_id = 100
+    SetSelfTokenID(tokenId);
+    return 0;
+}
 
 /* Fuzzer entry point */
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
