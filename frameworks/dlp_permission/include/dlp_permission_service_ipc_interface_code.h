@@ -20,7 +20,7 @@
 namespace OHOS {
 namespace Security {
 namespace DlpPermission {
-enum DlpPermissionServiceInterfaceCode {
+enum class DlpPermissionServiceInterfaceCode {
     GENERATE_DLP_CERTIFICATE = 0,
     PARSE_DLP_CERTIFICATE,
     INSTALL_DLP_SANDBOX,
