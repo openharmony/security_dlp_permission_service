@@ -97,7 +97,7 @@ static void FreeUint8Buffer(uint8_t** buff, uint32_t& buffLen)
 {
     if (buff == nullptr) {
         DLP_LOG_ERROR(LABEL, "Uint8 buffer is already nullptr.");
-        return;  
+        return;
     }
     if (*buff != nullptr) {
         memset_s(*buff, buffLen, 0, buffLen);
