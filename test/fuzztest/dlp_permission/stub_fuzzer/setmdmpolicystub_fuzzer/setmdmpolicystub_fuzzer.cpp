@@ -57,7 +57,6 @@ bool SetMDMPolicyFuzzTest(const uint8_t* data, size_t size)
 /* Fuzzer entry point */
 extern "C" int LLVMFuzzerInitialize(int *argc, char ***argv)
 {
-    int uid = getuid();
     setuid(OHOS::EDM_UID);
     return 0;
 }

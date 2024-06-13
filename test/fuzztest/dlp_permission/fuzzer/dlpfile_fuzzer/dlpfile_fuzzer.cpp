@@ -91,7 +91,6 @@ static void GenerateRandProperty(struct DlpProperty& encProp, const uint8_t* dat
     if (size % TWO == 0) {
         std::string testAccount;
         GenerateRandStr(ACCOUNT_LENGTH, data + offset, testAccount);
-        offset += ACCOUNT_LENGTH;
         g_accountName = testAccount;
     } else {
         g_accountName = account;
@@ -153,7 +152,6 @@ bool DlpFileFuzzTest(const uint8_t* data, size_t size)
 /* Fuzzer entry point */
 extern "C" int LLVMFuzzerInitialize(int *argc, char ***argv)
 {
-    int selfTokenId = GetSelfTokenID();
     AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(100, "com.ohos.dlpmanager", 0); // user_id = 100
     SetSelfTokenID(tokenId);
     return 0;
