@@ -51,8 +51,8 @@ using namespace OHOS::Security::AccessToken;
 using namespace std;
 namespace OHOS {
 static const uint32_t BUFFERSIZE = 40;
-const int32_t ONE = 1;
-const int32_t TWO = 2;
+const int32_t ONE = 10;
+const int32_t TWO = 20;
 const int32_t HUNDRED = 100;
 static void FuzzTest(const uint8_t* data, size_t size)
 {
@@ -99,7 +99,6 @@ bool ParseCertFuzzTest(const uint8_t* data, size_t size)
 /* Fuzzer entry point */
 extern "C" int LLVMFuzzerInitialize(int *argc, char ***argv)
 {
-    int selfTokenId = GetSelfTokenID();
     AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(100, "com.ohos.dlpmanager", 0); // user_id = 100
     SetSelfTokenID(tokenId);
     return 0;

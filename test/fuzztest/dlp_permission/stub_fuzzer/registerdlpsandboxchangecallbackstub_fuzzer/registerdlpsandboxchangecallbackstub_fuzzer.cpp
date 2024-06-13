@@ -64,7 +64,6 @@ bool RegisterRegisterDlpSandboxChangeCallbackStubFuzzer(const uint8_t* data, siz
 /* Fuzzer entry point */
 extern "C" int LLVMFuzzerInitialize(int *argc, char ***argv)
 {
-    int selfTokenId = GetSelfTokenID();
     AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(100, "com.ohos.dlpmanager", 0); // user_id = 100
     SetSelfTokenID(tokenId);
     return 0;
