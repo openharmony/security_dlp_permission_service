@@ -367,7 +367,6 @@ int32_t DlpPermissionStub::RegisterDlpSandboxChangeCallbackInner(MessageParcel &
     sptr<IRemoteObject> callback = data.ReadRemoteObject();
     if (callback == nullptr) {
         DLP_LOG_ERROR(LABEL, "read callback fail");
-        reply.WriteInt32(DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL);
         return DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL;
     }
     int32_t result = this->RegisterDlpSandboxChangeCallback(callback);
@@ -406,7 +405,6 @@ int32_t DlpPermissionStub::RegisterOpenDlpFileCallbackInner(MessageParcel &data,
     sptr<IRemoteObject> callback = data.ReadRemoteObject();
     if (callback == nullptr) {
         DLP_LOG_ERROR(LABEL, "read callback fail");
-        reply.WriteInt32(DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL);
         return DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL;
     }
     int32_t result = this->RegisterOpenDlpFileCallback(callback);
@@ -427,7 +425,6 @@ int32_t DlpPermissionStub::UnRegisterOpenDlpFileCallbackInner(MessageParcel &dat
     sptr<IRemoteObject> callback = data.ReadRemoteObject();
     if (callback == nullptr) {
         DLP_LOG_ERROR(LABEL, "read callback fail");
-        reply.WriteInt32(DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL);
         return DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL;
     }
     int32_t result = this->UnRegisterOpenDlpFileCallback(callback);

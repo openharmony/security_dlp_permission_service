@@ -151,7 +151,7 @@ void DlpPermissionService::UnregisterAppStateObserver()
 }
 
 int32_t DlpPermissionService::GenerateDlpCertificate(
-    const sptr<DlpPolicyParcel>& policyParcel, sptr<IDlpPermissionCallback>& callback)
+    const sptr<DlpPolicyParcel>& policyParcel, const sptr<IDlpPermissionCallback>& callback)
 {
     if (callback == nullptr) {
         DLP_LOG_ERROR(LABEL, "Callback is null");
@@ -195,8 +195,8 @@ static bool GetApplicationInfo(std::string appId, AppExecFwk::ApplicationInfo& a
     return true;
 }
 
-int32_t DlpPermissionService::ParseDlpCertificate(sptr<CertParcel>& certParcel, sptr<IDlpPermissionCallback>& callback,
-    const std::string& appId, const bool& offlineAccess)
+int32_t DlpPermissionService::ParseDlpCertificate(sptr<CertParcel>& certParcel,
+    const sptr<IDlpPermissionCallback>& callback, const std::string& appId, const bool& offlineAccess)
 {
     if (callback == nullptr) {
         DLP_LOG_ERROR(LABEL, "Callback is null");

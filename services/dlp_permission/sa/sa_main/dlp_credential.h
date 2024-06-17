@@ -40,8 +40,8 @@ public:
     static DlpCredential& GetInstance();
     int32_t GenerateDlpCertificate(
         const std::string& policy, const std::string& accountInfo, DlpAccountType accountType,
-        sptr<IDlpPermissionCallback>& callback);
-    int32_t ParseDlpCertificate(sptr<CertParcel>& certParcel, sptr<IDlpPermissionCallback>& callback,
+        const sptr<IDlpPermissionCallback>& callback);
+    int32_t ParseDlpCertificate(sptr<CertParcel>& certParcel, const sptr<IDlpPermissionCallback>& callback,
         const std::string& appId, const bool& offlineAccess, AppExecFwk::ApplicationInfo& applicationInfo);
     int32_t SetMDMPolicy(const std::vector<std::string>& appIdList);
     int32_t GetMDMPolicy(std::vector<std::string>& appIdList);
