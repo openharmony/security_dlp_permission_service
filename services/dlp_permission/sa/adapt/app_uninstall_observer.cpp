@@ -41,12 +41,6 @@ void AppUninstallObserver::OnReceiveEvent(const EventFwk::CommonEventData& data)
     if (RetentionFileManager::GetInstance().HasRetentionSandboxInfo(bundleName)) {
         RetentionFileManager::GetInstance().RemoveRetentionState(bundleName, -1);
     }
-    int32_t userId;
-    if (!GetUserIdByForegroundAccount(&userId)) {
-        DLP_LOG_ERROR(LABEL, "get userId error");
-        return;
-    }
-    SandboxConfigKvDataStorage::GetInstance().DeleteSandboxConfigFromDataStorage(userId, bundleName);
 }
 
 DlpEventSubSubscriber::DlpEventSubSubscriber()

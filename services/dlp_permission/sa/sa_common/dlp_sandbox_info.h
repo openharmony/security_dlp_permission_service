@@ -17,6 +17,7 @@
 #define DLP_PERMISSION_SANDBOX_INFO_H
 
 #include "permission_policy.h"
+#include "access_token.h"
 
 namespace OHOS {
 namespace Security {
@@ -26,7 +27,7 @@ public:
     int uid = -1;
     int32_t userId = -1;
     int32_t appIndex = -1;
-    unsigned int tokenId = 0;
+    AccessToken::AccessTokenID tokenId = 0;
     DLPFileAccess dlpFileAccess = NO_PERMISSION;
     std::string bundleName;
     int32_t pid = 0;

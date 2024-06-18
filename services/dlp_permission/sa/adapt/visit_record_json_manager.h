@@ -19,6 +19,7 @@
 #include <string>
 #include <list>
 #include <mutex>
+#include "access_token.h"
 #include "i_json_operator.h"
 #include "nlohmann/json.hpp"
 #include "visited_dlp_file_info.h"
@@ -26,11 +27,14 @@
 namespace OHOS {
 namespace Security {
 namespace DlpPermission {
+using namespace Security::AccessToken;
+
 struct VisitRecordInfo {
     std::string bundleName = "";
     std::string docUri = "";
     int32_t userId = -1;
     int64_t timestamp = -1;
+    AccessTokenID originalTokenId = 0;
 };
 
 class VisitRecordJsonManager : public IJsonOperator {
@@ -48,7 +52,7 @@ public:
 
 private:
     int32_t AddVisitRecord(const std::string& bundleName, const int32_t& userId, const std::string& docUri,
-        int64_t timestamp);
+        const int64_t timestamp, const AccessTokenID originalTokenId);
     void VisitRecordInfoToJson(Json& json, const VisitRecordInfo& info) const;
     bool VisitRecordInfoFromJson(const Json& json, VisitRecordInfo& info) const;
     mutable std::mutex mutex_;

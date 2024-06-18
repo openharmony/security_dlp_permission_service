@@ -42,10 +42,10 @@ SandboxConfigKvDataStorage::~SandboxConfigKvDataStorage()
 {}
 
 int32_t SandboxConfigKvDataStorage::GetSandboxConfigFromDataStorage(const int32_t userId, const std::string& bundleName,
-    std::string& configInfo)
+    std::string& configInfo, const std::string tokenId)
 {
     std::string key;
-    bool res = GenerateKey(userId, bundleName, key);
+    bool res = GenerateKey(userId, bundleName, key, tokenId);
     if (!res) {
         DLP_LOG_ERROR(LABEL, "generate key error");
         return DLP_SERVICE_ERROR_VALUE_INVALID;
@@ -63,10 +63,10 @@ int32_t SandboxConfigKvDataStorage::GetSandboxConfigFromDataStorage(const int32_
 }
 
 int32_t SandboxConfigKvDataStorage::AddSandboxConfigIntoDataStorage(const int32_t userId, const std::string& bundleName,
-    const std::string& configInfo)
+    const std::string& configInfo, const std::string tokenId)
 {
     std::string key;
-    bool res = GenerateKey(userId, bundleName, key);
+    bool res = GenerateKey(userId, bundleName, key, tokenId);
     if (!res) {
         DLP_LOG_ERROR(LABEL, "generate key error");
         return DLP_SERVICE_ERROR_VALUE_INVALID;
@@ -79,10 +79,10 @@ int32_t SandboxConfigKvDataStorage::AddSandboxConfigIntoDataStorage(const int32_
 }
 
 int32_t SandboxConfigKvDataStorage::DeleteSandboxConfigFromDataStorage(const int32_t userId,
-    const std::string& bundleName)
+    const std::string& bundleName, const std::string tokenId)
 {
     std::string key;
-    bool res = GenerateKey(userId, bundleName, key);
+    bool res = GenerateKey(userId, bundleName, key, tokenId);
     if (!res) {
         DLP_LOG_ERROR(LABEL, "generate key error");
         return DLP_SERVICE_ERROR_VALUE_INVALID;
@@ -99,17 +99,18 @@ int32_t SandboxConfigKvDataStorage::DeleteSandboxConfigFromDataStorage(const int
     return ret;
 }
 
-bool SandboxConfigKvDataStorage::GenerateKey(const int32_t userId, const std::string& bundleName, std::string& key)
+bool SandboxConfigKvDataStorage::GenerateKey(const int32_t userId, const std::string& bundleName, std::string& key,
+    const std::string tokenId)
 {
     if (bundleName.empty()) {
         DLP_LOG_ERROR(LABEL, "bundleName is empty");
         return false;
     }
-    key = std::to_string(userId) + KEY_SEPATATOR + bundleName;
+    key = std::to_string(userId) + KEY_SEPATATOR + bundleName + KEY_SEPATATOR + tokenId;
     return true;
 }
 
-int32_t SandboxConfigKvDataStorage::GetKeySetByUserId(const int32_t userId, std::set<std::string>& bundleNameSet)
+int32_t SandboxConfigKvDataStorage::GetKeyMapByUserId(const int32_t userId, std::map<std::string, std::string>& keyMap)
 {
     std::map<std::string, std::string> infos;
     int32_t res = LoadAllData(infos);
@@ -118,9 +119,12 @@ int32_t SandboxConfigKvDataStorage::GetKeySetByUserId(const int32_t userId, std:
     }
     std::string prefix = std::to_string(userId) + KEY_SEPATATOR;
     for (auto it = infos.begin(); it != infos.end(); ++it) {
-        if (it->first.find(prefix) != std::string::npos) {
-            std::string bundleName = it->first.substr(prefix.length(), it->first.length());
-            bundleNameSet.emplace(bundleName);
+        std::size_t first = it->first.find_first_of(KEY_SEPATATOR);
+        std::size_t second = it->first.find_last_of(KEY_SEPATATOR);
+        if (it->first.find(prefix) != std::string::npos && first != second) {
+            std::string bundleName = it->first.substr(prefix.length(), second - first - 1);
+            std::string tokenId = it->first.substr(second + 1, it->first.length() - second - 1);
+            keyMap[bundleName] = tokenId;
         }
     }
     return DLP_OK;
