@@ -120,10 +120,14 @@ int32_t DlpFileManager::GenerateCertBlob(const std::vector<uint8_t>& cert, struc
 
     if (memcpy_s(certBuffer, certSize, &cert[0], certSize) != EOK) {
         DLP_LOG_ERROR(LABEL, "Copy dlp cert fail, memcpy_s fail");
+        (void)memset_s(certBuffer, certSize, 0, certSize);
         delete[] certBuffer;
         return DLP_PARSE_ERROR_MEMORY_OPERATE_FAIL;
     }
-
+    if (certData.data != nullptr) {
+        (void)memset_s(certData.data, certData.size, 0, certData.size);
+        delete[] certData.data;
+    }
     certData.data = certBuffer;
     certData.size = static_cast<uint32_t>(certSize);
     return DLP_OK;
@@ -226,10 +230,15 @@ int32_t DlpFileManager::UpdateDlpFile(bool isNeedAdapter, uint32_t oldCertSize, 
 #else
     return DLP_OK;
 #endif
+    int32_t res = DLP_OK;
     if (isNeedAdapter || oldCertSize != certBlob.size) {
-        return filePtr->UpdateCertAndText(cert, workDir, certBlob);
+        res = filePtr->UpdateCertAndText(cert, workDir, certBlob);
+    } else {
+        res = filePtr->UpdateCert(certBlob);
     }
-    return filePtr->UpdateCert(certBlob);
+    (void)memset_s(certBlob.data, certBlob.size, 0, certBlob.size);
+    delete[] certBlob.data;
+    return res;
 }
 
 int32_t DlpFileManager::ParseDlpFileFormat(std::shared_ptr<DlpFile>& filePtr, const std::string& workDir,
@@ -287,26 +296,22 @@ void DlpFileManager::FreeChiperBlob(struct DlpBlob& key, struct DlpBlob& certDat
     struct DlpUsageSpec& usage, struct DlpBlob& hmacKey) const
 {
     if (key.data != nullptr) {
-        delete[] key.data;
-        key.data = nullptr;
+        CleanBlobParam(key);
     }
 
     if (certData.data != nullptr) {
-        delete[] certData.data;
-        certData.data = nullptr;
+        CleanBlobParam(certData);
     }
     if (usage.algParam != nullptr) {
         if (usage.algParam->iv.data != nullptr) {
-            delete[] usage.algParam->iv.data;
-            usage.algParam->iv.data = nullptr;
+            CleanBlobParam(usage.algParam->iv);
         }
         delete usage.algParam;
         usage.algParam = nullptr;
     }
 
     if (hmacKey.data != nullptr) {
-        delete[] hmacKey.data;
-        hmacKey.data = nullptr;
+        CleanBlobParam(hmacKey);
     }
 }
 

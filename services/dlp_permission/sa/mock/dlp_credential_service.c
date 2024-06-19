@@ -154,6 +154,7 @@ static int CheckAccount(const uint8_t* data, uint32_t len, uint32_t accountType,
         DLP_LOG_ERROR("No permission to parse policy");
     }
 end:
+    (void)memset_s(policy, len + 1, 0, len + 1);
     free(account);
     free(policy);
     return res;

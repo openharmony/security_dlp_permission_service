@@ -231,6 +231,19 @@ static int32_t DlpRestorePolicyCallbackCheck(sptr<IDlpPermissionCallback> callba
     return DLP_OK;
 }
 
+static void FreeBuffer(char** buff, uint32_t buffLen)
+{
+    if (buff == nullptr) {
+        DLP_LOG_ERROR(LABEL, "Uint8 buffer is already nullptr.");
+        return;
+    }
+    if (*buff != nullptr) {
+        memset_s(*buff, buffLen, 0, buffLen);
+        delete[] *buff;
+        *buff = nullptr;
+    }
+}
+
 static bool SetPermissionPolicy(DLP_RestorePolicyData* outParams, sptr<IDlpPermissionCallback> callback,
     PermissionPolicy& policyInfo, unordered_json& jsonObj)
 {
@@ -242,7 +255,7 @@ static bool SetPermissionPolicy(DLP_RestorePolicyData* outParams, sptr<IDlpPermi
     }
     if (memcpy_s(policyStr, outParams->dataLen + 1, outParams->data, outParams->dataLen) != EOK) {
         DLP_LOG_ERROR(LABEL, "Memcpy_s fail");
-        delete[] policyStr;
+        FreeBuffer(&policyStr, outParams->dataLen + 1);
         callback->OnParseDlpCertificate(DLP_SERVICE_ERROR_MEMORY_OPERATE_FAIL, policyInfo, {});
         return false;
     }
@@ -250,12 +263,11 @@ static bool SetPermissionPolicy(DLP_RestorePolicyData* outParams, sptr<IDlpPermi
     jsonObj = unordered_json::parse(policyStr, policyStr + outParams->dataLen + 1, nullptr, false);
     if (jsonObj.is_discarded() || (!jsonObj.is_object())) {
         DLP_LOG_ERROR(LABEL, "JsonObj is discarded");
-        delete[] policyStr;
+        FreeBuffer(&policyStr, outParams->dataLen + 1);
         callback->OnParseDlpCertificate(DLP_SERVICE_ERROR_JSON_OPERATE_FAIL, policyInfo, {});
         return false;
     }
-    delete[] policyStr;
-    policyStr = nullptr;
+    FreeBuffer(&policyStr, outParams->dataLen + 1);
     auto res = DlpPermissionSerializer::GetInstance().DeserializeDlpPermission(jsonObj, policyInfo);
     if (res != DLP_OK) {
         callback->OnParseDlpCertificate(res, policyInfo, {});
@@ -359,6 +371,7 @@ int32_t DlpCredential::GenerateDlpCertificate(
         .options = encAndDecOptions,
         .accountType = static_cast<AccountType>(accountType),
         .senderAccountInfo = accountCfg,
+        .reserved = {0},
     };
     int res = 0;
     {
@@ -500,6 +513,20 @@ static int32_t AdapterData(const std::vector<uint8_t>& offlineCert, bool isOwner
     return DLP_OK;
 }
 
+static void InitEncPolicyData(EncAndDecOptions& options, DLP_EncPolicyData& encPolicy, const bool offlineAccess,
+    const std::string& appId)
+{
+    options = {.opt = CloudEncOption::RECEIVER_DECRYPT_MUST_USE_CLOUD, .extraInfo = nullptr};
+    if (offlineAccess) {
+        options.opt = CloudEncOption::RECEIVER_DECRYPT_MUST_USE_CLOUD_AND_RETURN_ENCRYPTION_VALUE;
+    }
+    encPolicy = {
+        .featureName = strdup(const_cast<char *>(appId.c_str())),
+        .options = options,
+        .reserved = {0},
+    };
+}
+
 int32_t DlpCredential::ParseDlpCertificate(sptr<CertParcel>& certParcel, const sptr<IDlpPermissionCallback>& callback,
     const std::string& appId, const bool& offlineAccess, AppExecFwk::ApplicationInfo& applicationInfo)
 {
@@ -509,11 +536,9 @@ int32_t DlpCredential::ParseDlpCertificate(sptr<CertParcel>& certParcel, const s
         DLP_LOG_ERROR(LABEL, "JsonObj is discarded");
         return DLP_SERVICE_ERROR_JSON_OPERATE_FAIL;
     }
-    EncAndDecOptions options = {.opt = CloudEncOption::RECEIVER_DECRYPT_MUST_USE_CLOUD, .extraInfo = nullptr};
-    if (offlineAccess) {
-        options.opt = CloudEncOption::RECEIVER_DECRYPT_MUST_USE_CLOUD_AND_RETURN_ENCRYPTION_VALUE;
-    }
-    DLP_EncPolicyData encPolicy = {.featureName = strdup(const_cast<char *>(appId.c_str())), .options = options};
+    EncAndDecOptions options;
+    DLP_EncPolicyData encPolicy;
+    InitEncPolicyData(options, encPolicy, offlineAccess, appId);
     int32_t result =
         DlpPermissionSerializer::GetInstance().DeserializeEncPolicyData(jsonObj, encPolicy, certParcel->isNeedAdapter);
     auto accountType = static_cast<DlpAccountType>(encPolicy.accountType);
