@@ -29,7 +29,7 @@ namespace Security {
 namespace DlpPermission {
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "DlpPermissionClient"};
-static const int32_t DLP_PERMISSION_LOAD_SA_TIMEOUT_MS = 1000;
+static const int32_t DLP_PERMISSION_LOAD_SA_TIMEOUT_MS = 4000;
 static const uint32_t MAX_CALLBACK_MAP_SIZE = 100;
 static const std::string ALLOW_ABILITY[] = {"com.ohos.permissionmanager"};
 static int32_t CheckSandboxFlag(AccessToken::AccessTokenID tokenId, bool& sandboxFlag)
@@ -602,6 +602,7 @@ void DlpPermissionClient::GetProxyFromRemoteObject(const sptr<IRemoteObject>& re
         DLP_LOG_ERROR(LABEL, "iface_cast get null");
         return;
     }
+    std::unique_lock<std::mutex> lock(proxyMutex_);
     proxy_ = proxy;
     serviceDeathObserver_ = serviceDeathObserver;
     DLP_LOG_INFO(LABEL, "GetSystemAbility %{public}d success", SA_ID_DLP_PERMISSION_SERVICE);
@@ -610,15 +611,18 @@ void DlpPermissionClient::GetProxyFromRemoteObject(const sptr<IRemoteObject>& re
 
 sptr<IDlpPermissionService> DlpPermissionClient::GetProxy(bool doLoadSa)
 {
-    std::unique_lock<std::mutex> lock(proxyMutex_);
-    if (proxy_ != nullptr) {
-        return proxy_;
+    {
+        std::unique_lock<std::mutex> lock(proxyMutex_);
+        if (proxy_ != nullptr) {
+            return proxy_;
+        }
     }
     if (doLoadSa) {
         LoadDlpPermissionSa();
     } else {
         GetDlpPermissionSa();
     }
+    std::unique_lock<std::mutex> lock(proxyMutex_);
     return proxy_;
 }
 }  // namespace DlpPermission
