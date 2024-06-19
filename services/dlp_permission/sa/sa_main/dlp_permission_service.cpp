@@ -72,7 +72,6 @@ REGISTER_SYSTEM_ABILITY_BY_ID(DlpPermissionService, SA_ID_DLP_PERMISSION_SERVICE
 DlpPermissionService::DlpPermissionService(int saId, bool runOnCreate)
     : SystemAbility(saId, runOnCreate), state_(ServiceRunningState::STATE_NOT_START)
 {
-    thread_ = nullptr;
     DLP_LOG_INFO(LABEL, "DlpPermissionService()");
 }
 
