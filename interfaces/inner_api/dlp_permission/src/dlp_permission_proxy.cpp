@@ -37,7 +37,7 @@ DlpPermissionProxy::~DlpPermissionProxy()
 {}
 
 int32_t DlpPermissionProxy::GenerateDlpCertificate(
-    const sptr<DlpPolicyParcel>& policyParcel, sptr<IDlpPermissionCallback>& callback)
+    const sptr<DlpPolicyParcel>& policyParcel, const sptr<IDlpPermissionCallback>& callback)
 {
     MessageParcel data;
     if (!data.WriteInterfaceToken(DlpPermissionProxy::GetDescriptor())) {
@@ -77,7 +77,7 @@ int32_t DlpPermissionProxy::GenerateDlpCertificate(
 }
 
 int32_t DlpPermissionProxy::ParseDlpCertificate(sptr<CertParcel>& certParcel,
-    sptr<IDlpPermissionCallback>& callback, const std::string& appId, const bool& offlineAccess)
+    const sptr<IDlpPermissionCallback>& callback, const std::string& appId, const bool& offlineAccess)
 {
     MessageParcel data;
     if (!data.WriteInterfaceToken(DlpPermissionProxy::GetDescriptor())) {

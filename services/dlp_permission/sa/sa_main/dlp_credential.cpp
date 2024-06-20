@@ -339,7 +339,7 @@ DlpCredential::DlpCredential()
 
 int32_t DlpCredential::GenerateDlpCertificate(
     const std::string& policy, const std::string& accountInfo,
-    DlpAccountType accountType, sptr<IDlpPermissionCallback>& callback)
+    DlpAccountType accountType, const sptr<IDlpPermissionCallback>& callback)
 {
     EncAndDecOptions encAndDecOptions = {
         .opt = RECEIVER_DECRYPT_MUST_USE_CLOUD,
@@ -500,7 +500,7 @@ static int32_t AdapterData(const std::vector<uint8_t>& offlineCert, bool isOwner
     return DLP_OK;
 }
 
-int32_t DlpCredential::ParseDlpCertificate(sptr<CertParcel>& certParcel, sptr<IDlpPermissionCallback>& callback,
+int32_t DlpCredential::ParseDlpCertificate(sptr<CertParcel>& certParcel, const sptr<IDlpPermissionCallback>& callback,
     const std::string& appId, const bool& offlineAccess, AppExecFwk::ApplicationInfo& applicationInfo)
 {
     std::string encDataJsonStr(certParcel->cert.begin(), certParcel->cert.end());

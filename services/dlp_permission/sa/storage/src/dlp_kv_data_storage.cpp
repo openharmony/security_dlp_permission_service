@@ -130,8 +130,7 @@ int32_t DlpKvDataStorage::AddOrUpdateValue(const std::string &key, const std::st
 
 int32_t DlpKvDataStorage::RemoveValueFromKvStore(const std::string &keyStr)
 {
-    bool res = CheckKvStore();
-    if (!res) {
+    if (!CheckKvStore()) {
         DLP_LOG_ERROR(LABEL, "kvStore is nullptr");
         return DLP_COMMON_CHECK_KVSTORE_ERROR;
     }

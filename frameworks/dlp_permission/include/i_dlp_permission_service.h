@@ -37,9 +37,9 @@ public:
     DECLARE_INTERFACE_DESCRIPTOR(u"ohos.security.IDlpPermissionService");
 
     virtual int32_t GenerateDlpCertificate(
-        const sptr<DlpPolicyParcel>& policyParcel, sptr<IDlpPermissionCallback>& callback) = 0;
+        const sptr<DlpPolicyParcel>& policyParcel, const sptr<IDlpPermissionCallback>& callback) = 0;
 
-    virtual int32_t ParseDlpCertificate(sptr<CertParcel>& certParcel, sptr<IDlpPermissionCallback>& callback,
+    virtual int32_t ParseDlpCertificate(sptr<CertParcel>& certParcel, const sptr<IDlpPermissionCallback>& callback,
         const std::string& appId, const bool& offlineAccess) = 0;
 
     virtual int32_t InstallDlpSandbox(const std::string& bundleName, DLPFileAccess dlpFileAccess, int32_t userId,

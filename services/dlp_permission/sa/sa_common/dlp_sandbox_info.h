@@ -21,7 +21,7 @@
 namespace OHOS {
 namespace Security {
 namespace DlpPermission {
-class DlpSandboxInfo {
+struct DlpSandboxInfo {
 public:
     int uid = -1;
     int32_t userId = -1;

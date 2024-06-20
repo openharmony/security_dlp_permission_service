@@ -21,6 +21,8 @@
 namespace OHOS {
 namespace Security {
 namespace DlpPermission {
+static const int32_t MAX_HEX = 16;
+
 static char HexToChar(uint8_t hex)
 {
     return (hex > 9) ? (hex + 0x37) : (hex + 0x30);  // numbers greater than 9 are represented by letters in hex.
@@ -59,7 +61,7 @@ static uint8_t CharToHex(char c)
     if ((c >= '0') && (c <= '9')) {
         return (c - '0');
     }
-    return 16;  // max hex must < 16
+    return MAX_HEX;  // max hex must < 16
 }
 
 int32_t HexStringToByte(const char *hexStr, uint32_t hexStrLen, uint8_t *byte, uint32_t byteLen)
@@ -75,7 +77,7 @@ int32_t HexStringToByte(const char *hexStr, uint32_t hexStrLen, uint8_t *byte, u
     for (uint32_t i = 0; i < hexStrLen / BYTE_TO_HEX_OPER_LENGTH; i++) {
         uint8_t high = CharToHex(hexStr[i * BYTE_TO_HEX_OPER_LENGTH]);
         uint8_t low = CharToHex(hexStr[i * BYTE_TO_HEX_OPER_LENGTH + 1]);
-        if (high == 16 || low == 16) {  // max hex must < 16
+        if (high == MAX_HEX || low == MAX_HEX) {  // max hex must < 16
             return DLP_SERVICE_ERROR_VALUE_INVALID;
         }
         byte[i] = high << 4;  // 4: Set the high nibble
