@@ -21,7 +21,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include "accesstoken_kit.h"
-#include "base_object.h"
+#include "base_obj.h"
 #include "dlp_file_kits.h"
 #include "dlp_permission.h"
 #include "dlp_permission_log.h"
