@@ -96,8 +96,8 @@
 
       ],
       "test": [
-        "//base/security/dlp_permission_service:dlp_permission_build_module_test",
-        "//base/security/dlp_permission_service:dlp_permission_build_fuzz_test"
+        "//base/security/dlp_permission_service/test:dlp_permission_build_module_test",
+        "//base/security/dlp_permission_service/test:dlp_permission_build_fuzz_test"
       ]
     }
   }
