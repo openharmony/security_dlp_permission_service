@@ -17,6 +17,7 @@
 #include "dlp_permission_log.h"
 #include "hex_string.h"
 #include "nlohmann/json.hpp"
+#include "securec.h"
 
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = { LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "MockUtil" };
@@ -35,6 +36,7 @@ bool ModifyParseData(uint8_t** data, uint32_t* dataLen, uint8_t* dataIn, uint32_
     }
     int32_t res = OHOS::Security::DlpPermission::ByteToHexString(dataIn, dataInLen, encDataHex, encDataHexLen);
     if (res != 0) {
+        memset_s(encDataHex, encDataHexLen, 0, encDataHexLen);
         delete[] encDataHex;
         return false;
     }
@@ -43,8 +45,9 @@ bool ModifyParseData(uint8_t** data, uint32_t* dataLen, uint8_t* dataIn, uint32_
     json[TEXT_CERT] = txtStr;
     json[POLICY_CERT] = unordered_json::parse(dataIn, dataIn + dataInLen + 1, nullptr, false);
     std::string certStr = json.dump();
-    delete[] encDataHex;
     *data = reinterpret_cast<uint8_t *>(strdup(const_cast<char *>(certStr.c_str())));
     *dataLen = certStr.length();
+    memset_s(encDataHex, encDataHexLen, 0, encDataHexLen);
+    delete[] encDataHex;
     return true;
 }

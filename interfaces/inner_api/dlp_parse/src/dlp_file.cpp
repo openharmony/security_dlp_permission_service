@@ -183,6 +183,11 @@ int32_t DlpFile::CopyBlobParam(const struct DlpBlob& src, struct DlpBlob& dst) c
         return DLP_PARSE_ERROR_MEMORY_OPERATE_FAIL;
     }
 
+    if (dst.data != nullptr) {
+        (void)memcpy_s(dst.data, dst.size, 0, dst.size);
+        delete[] dst.data;
+        dst.data = nullptr;
+    }
     dst.data = blobData;
     dst.size = src.size;
     return DLP_OK;
@@ -466,12 +471,13 @@ bool DlpFile::ParseDlpInfo()
             DLP_LOG_ERROR(LABEL, "hmac_.size is invalid");
             return false;
         }
+        CleanBlobParam(hmac_);
         hmac_.data = new (std::nothrow)uint8_t[hmac_.size];
         if (hmac_.data == nullptr) {
             DLP_LOG_ERROR(LABEL, "New memory fail");
             return false;
         }
-        HexStringToByte(params.hmacVal.c_str(), params.hmacVal.length(), hmac_.data, hmac_.size);
+        return HexStringToByte(params.hmacVal.c_str(), params.hmacVal.length(), hmac_.data, hmac_.size) == DLP_OK;
     }
     return true;
 }
@@ -483,10 +489,7 @@ bool DlpFile::ParseCert()
         DLP_LOG_ERROR(LABEL, "ParseCert failed, %{public}s", strerror(errno));
         return false;
     }
-    if (cert_.data != nullptr) {
-        free(cert_.data);
-        cert_.data = nullptr;
-    }
+    CleanBlobParam(cert_);
     if (fz.st_size == 0 || fz.st_size > DLP_MAX_CERT_SIZE) {
         DLP_LOG_ERROR(LABEL, "Cert size is too large or equit to 0.");
         return false;
@@ -626,6 +629,7 @@ int32_t DlpFile::ParseDlpHeaderInRaw()
         DLP_LOG_ERROR(LABEL, "can not read dlp file cert, %{public}s", strerror(errno));
         return DLP_PARSE_ERROR_FILE_FORMAT_ERROR;
     }
+    CleanBlobParam(cert_);
     cert_.data = buf;
     cert_.size = head_.certSize;
 
@@ -656,6 +660,7 @@ int32_t DlpFile::ParseDlpHeaderInRaw()
             DLP_LOG_ERROR(LABEL, "can not read dlp contact account, %{public}s", strerror(errno));
             return DLP_PARSE_ERROR_FILE_FORMAT_ERROR;
         }
+        CleanBlobParam(offlineCert_);
         offlineCert_.data = tmpBuf;
         offlineCert_.size = head_.offlineCertSize;
     }
@@ -1375,7 +1380,7 @@ int32_t DlpFile::WriteFirstBlockData(uint32_t offset, void* buf, uint32_t size)
         }
     } while (false);
 
-    if (memcpy_s(deBuf + prefixingSize, DLP_BLOCK_SIZE, buf, requestSize) != EOK) {
+    if (memcpy_s(deBuf + prefixingSize, DLP_BLOCK_SIZE - prefixingSize, buf, requestSize) != EOK) {
         DLP_LOG_ERROR(LABEL, "copy write buffer first block failed, %{public}s", strerror(errno));
         return DLP_PARSE_ERROR_MEMORY_OPERATE_FAIL;
     }

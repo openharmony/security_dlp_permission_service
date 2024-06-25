@@ -252,18 +252,7 @@ void PermissionPolicy::CopyPolicyHmac(const PermissionPolicy& srcPolicy)
     if (srcPolicy.hmacKeyLen_ == 0 || srcPolicy.hmacKey_ == nullptr) {
         return;
     }
-    FreeUint8Buffer(&hmacKey_, hmacKeyLen_);
-    hmacKeyLen_ = srcPolicy.hmacKeyLen_;
-    hmacKey_ = new (std::nothrow) uint8_t[hmacKeyLen_];
-    if (hmacKey_ == nullptr) {
-        DLP_LOG_ERROR(LABEL, "Alloc %{public}u buff for hmacKey fail", hmacKeyLen_);
-        FreePermissionPolicyMem();
-        return;
-    }
-    if (memcpy_s(hmacKey_, hmacKeyLen_, srcPolicy.hmacKey_, srcPolicy.hmacKeyLen_) != EOK) {
-        DLP_LOG_ERROR(LABEL, "Memcpy hmacKey buff fail");
-        FreePermissionPolicyMem();
-    }
+    SetHmacKey(srcPolicy.hmacKey_, srcPolicy.hmacKeyLen_);
 }
 
 void PermissionPolicy::CopyPermissionPolicy(const PermissionPolicy& srcPolicy)
@@ -283,29 +272,8 @@ void PermissionPolicy::CopyPermissionPolicy(const PermissionPolicy& srcPolicy)
     everyonePerm_ = srcPolicy.everyonePerm_;
     expireTime_ = srcPolicy.expireTime_;
     needOnline_ = srcPolicy.needOnline_;
-    aeskeyLen_ = srcPolicy.aeskeyLen_;
-    aeskey_ = new (std::nothrow) uint8_t[aeskeyLen_];
-    if (aeskey_ == nullptr) {
-        DLP_LOG_ERROR(LABEL, "Alloc %{public}u buff for aes key fail", aeskeyLen_);
-        return;
-    }
-    if (memcpy_s(aeskey_, aeskeyLen_, srcPolicy.aeskey_, srcPolicy.aeskeyLen_) != EOK) {
-        DLP_LOG_ERROR(LABEL, "Memcpy aes key buff fail");
-        FreePermissionPolicyMem();
-        return;
-    }
-    ivLen_ = srcPolicy.ivLen_;
-    iv_ = new (std::nothrow) uint8_t[ivLen_];
-    if (iv_ == nullptr) {
-        DLP_LOG_ERROR(LABEL, "Alloc %{public}u buff for iv fail", ivLen_);
-        FreePermissionPolicyMem();
-        return;
-    }
-    if (memcpy_s(iv_, ivLen_, srcPolicy.iv_, srcPolicy.ivLen_) != EOK) {
-        DLP_LOG_ERROR(LABEL, "Memcpy iv buff fail");
-        FreePermissionPolicyMem();
-        return;
-    }
+    SetAeskey(srcPolicy.aeskey_, srcPolicy.aeskeyLen_);
+    SetIv(srcPolicy.iv_, srcPolicy.ivLen_);
     CopyPolicyHmac(srcPolicy);
     dlpVersion_ = srcPolicy.dlpVersion_;
 }
