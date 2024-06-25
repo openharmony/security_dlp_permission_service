@@ -57,6 +57,7 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
 const std::string TEST_URI = "/data/service/el1/public/dlp_permission_service1/retention_sandbox_info_test.json";
 static const int32_t DEFAULT_USERID = 100;
 static const std::string DLP_MANAGER_APP = "com.ohos.dlpmanager";
+static const std::string PERMISSION_APP = "com.ohos.permissionmanager";
 const uint32_t ACCOUNT_LENGTH = 20;
 const uint32_t USER_NUM = 1;
 const int AUTH_PERM = 1;
@@ -732,28 +733,26 @@ HWTEST_F(DlpPermissionServiceTest, VisitRecordJsonManager001, TestSize.Level1)
 {
     std::shared_ptr<VisitRecordJsonManager> visitRecordJsonManager_ = std::make_shared<VisitRecordJsonManager>();
     std::vector<VisitedDLPFileInfo> infoVec;
-    int32_t res = visitRecordJsonManager_->GetVisitRecordList("test.bundleName", 100, infoVec);
+    int32_t res = visitRecordJsonManager_->GetVisitRecordList(DLP_MANAGER_APP, 100, infoVec);
     ASSERT_EQ(DLP_FILE_NO_NEED_UPDATE, res);
-    res = visitRecordJsonManager_->AddVisitRecord("test.bundleName", 100, "testuri");
+    res = visitRecordJsonManager_->AddVisitRecord(DLP_MANAGER_APP, 100, "testuri");
     ASSERT_EQ(DLP_OK, res);
-    res = visitRecordJsonManager_->AddVisitRecord("test.bundleName", 100, "testuri");
+    res = visitRecordJsonManager_->AddVisitRecord(DLP_MANAGER_APP, 100, "testuri");
     ASSERT_EQ(DLP_OK, res);
-    res = visitRecordJsonManager_->AddVisitRecord("test.bundleName", 100, "testur");
+    res = visitRecordJsonManager_->AddVisitRecord(DLP_MANAGER_APP, 100, "testur");
     ASSERT_EQ(DLP_OK, res);
-    res = visitRecordJsonManager_->AddVisitRecord("test.bundleName", 1001, "testuri");
+    res = visitRecordJsonManager_->AddVisitRecord(DLP_MANAGER_APP, 1001, "testuri", 0, 1001);
     ASSERT_EQ(DLP_OK, res);
-    res = visitRecordJsonManager_->AddVisitRecord("test.bundleName1", 100, "testuri");
+    res = visitRecordJsonManager_->AddVisitRecord(PERMISSION_APP, 100, "testuri");
     ASSERT_EQ(DLP_OK, res);
-    res = visitRecordJsonManager_->GetVisitRecordList("test.bundleName", 100, infoVec);
+    res = visitRecordJsonManager_->GetVisitRecordList(DLP_MANAGER_APP, 100, infoVec);
     ASSERT_EQ(DLP_OK, res);
-    res = visitRecordJsonManager_->GetVisitRecordList("test.bundleName1", 1001, infoVec);
-    ASSERT_EQ(DLP_FILE_NO_NEED_UPDATE, res);
+    res = visitRecordJsonManager_->GetVisitRecordList(PERMISSION_APP, 1001, infoVec);
+    ASSERT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, res);
     for (int32_t i = 1; i <= 1024; i++) {
-        res = visitRecordJsonManager_->AddVisitRecord("test.bundleName1", 100 + i, "testuri");
+        res = visitRecordJsonManager_->AddVisitRecord(PERMISSION_APP, 100 + i, "testuri", 0, 100 + i);
     }
     ASSERT_EQ(DLP_JSON_UPDATE_ERROR, res);
-    res = visitRecordJsonManager_->GetVisitRecordList("test.bundleName1", 2000, infoVec);
-    ASSERT_EQ(DLP_FILE_NO_NEED_UPDATE, res);
 }
 
 /**
@@ -794,6 +793,11 @@ HWTEST_F(DlpPermissionServiceTest, VisitRecordJsonManager002, TestSize.Level1)
     ASSERT_TRUE(visitRecordJsonManager_->infoList_.size() == 0);
     jsonStr = "{\"recordList\":[{\"bundleName\":\"com.example.ohnotes\",\"docUri\":\"file://media/file/"
         "12\",\"userId\":100,\"timestamp\":1686844687}]}";
+    callbackInfoJson = Json::parse(jsonStr, nullptr, false);
+    visitRecordJsonManager_->FromJson(callbackInfoJson);
+    ASSERT_TRUE(visitRecordJsonManager_->infoList_.size() == 0);
+    jsonStr = "{\"recordList\":[{\"bundleName\":\"com.example.ohnotes\",\"docUri\":\"file://media/file/"
+        "12\",\"userId\":100,\"timestamp\":1686844687,\"originalTokenId\":100}]}";
     callbackInfoJson = Json::parse(jsonStr, nullptr, false);
     visitRecordJsonManager_->FromJson(callbackInfoJson);
     ASSERT_TRUE(visitRecordJsonManager_->infoList_.size() == 1);
@@ -849,7 +853,7 @@ HWTEST_F(DlpPermissionServiceTest, VisitRecordFileManager001, TestSize.Level1)
 {
     std::shared_ptr<VisitRecordFileManager> visitRecordFileManager = std::make_shared<VisitRecordFileManager>();
     std::vector<VisitedDLPFileInfo> infoVec;
-    int32_t res = visitRecordFileManager->GetVisitRecordList("test.bundleName", 100, infoVec);
+    int32_t res = visitRecordFileManager->GetVisitRecordList(DLP_MANAGER_APP, 100, infoVec);
     ASSERT_EQ(DLP_OK, res);
     visitRecordFileManager->hasInit = true;
     ASSERT_EQ(true, visitRecordFileManager->Init());
@@ -858,9 +862,9 @@ HWTEST_F(DlpPermissionServiceTest, VisitRecordFileManager001, TestSize.Level1)
     ASSERT_EQ(DLP_OK, visitRecordFileManager->UpdateFile(DLP_FILE_NO_NEED_UPDATE));
     ASSERT_EQ(DLP_JSON_UPDATE_ERROR, visitRecordFileManager->UpdateFile(DLP_JSON_UPDATE_ERROR));
     visitRecordFileManager->hasInit = false;
-    ASSERT_EQ(DLP_OK, visitRecordFileManager->AddVisitRecord("test.bundleName", 100, "testuri"));
+    ASSERT_EQ(DLP_OK, visitRecordFileManager->AddVisitRecord(DLP_MANAGER_APP, 100, "testuri"));
     visitRecordFileManager->hasInit = false;
-    res = visitRecordFileManager->GetVisitRecordList("test.bundleName", 100, infoVec);
+    res = visitRecordFileManager->GetVisitRecordList(DLP_MANAGER_APP, 100, infoVec);
     ASSERT_EQ(DLP_OK, res);
 }
 

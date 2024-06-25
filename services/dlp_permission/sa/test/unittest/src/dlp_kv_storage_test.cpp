@@ -30,6 +30,7 @@ namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
     LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "DlpKvStorageTest"};
 static const std::string BUNDLE_NAME = "test";
+static const std::string TOKENID = "123456";
 static const std::string CONFIG = "testConfig";
 static const std::string APP_CONFIG_STORE_ID = "sandbox_app_config_info";
 KvDataStorageOptions options = { .autoSync = false };
@@ -52,20 +53,23 @@ void DlpKvStorageTest::TearDown() {}
 HWTEST_F(DlpKvStorageTest, DlpKvStorageTest001, TestSize.Level1)
 {
     std::string configInfo;
-    int32_t res = SandboxConfigKvDataStorage::GetInstance().AddSandboxConfigIntoDataStorage(100, BUNDLE_NAME, CONFIG);
+    int32_t res = SandboxConfigKvDataStorage::GetInstance().AddSandboxConfigIntoDataStorage(100,
+        BUNDLE_NAME, CONFIG, TOKENID);
     ASSERT_EQ(res, DLP_OK);
-    res = SandboxConfigKvDataStorage::GetInstance().GetSandboxConfigFromDataStorage(100, BUNDLE_NAME, configInfo);
+    res = SandboxConfigKvDataStorage::GetInstance().GetSandboxConfigFromDataStorage(100,
+        BUNDLE_NAME, configInfo, TOKENID);
     ASSERT_EQ(res, DLP_OK);
-    res = SandboxConfigKvDataStorage::GetInstance().GetSandboxConfigFromDataStorage(1000, BUNDLE_NAME, configInfo);
+    res = SandboxConfigKvDataStorage::GetInstance().GetSandboxConfigFromDataStorage(1000,
+        BUNDLE_NAME, configInfo, TOKENID);
     ASSERT_EQ(res, DLP_KV_GET_DATA_NOT_FOUND);
-    std::set<std::string> keySet;
-    res = SandboxConfigKvDataStorage::GetInstance().GetKeySetByUserId(100, keySet);
+    std::map<std::string, std::string> keyMap;
+    res = SandboxConfigKvDataStorage::GetInstance().GetKeyMapByUserId(100, keyMap);
     ASSERT_EQ(res, DLP_OK);
-    res = SandboxConfigKvDataStorage::GetInstance().GetKeySetByUserId(101, keySet);
+    res = SandboxConfigKvDataStorage::GetInstance().GetKeyMapByUserId(101, keyMap);
     ASSERT_EQ(res, DLP_OK);
-    res = SandboxConfigKvDataStorage::GetInstance().DeleteSandboxConfigFromDataStorage(1000, BUNDLE_NAME);
+    res = SandboxConfigKvDataStorage::GetInstance().DeleteSandboxConfigFromDataStorage(1000, BUNDLE_NAME, TOKENID);
     ASSERT_EQ(res, DLP_OK);
-    res = SandboxConfigKvDataStorage::GetInstance().DeleteSandboxConfigFromDataStorage(100, BUNDLE_NAME);
+    res = SandboxConfigKvDataStorage::GetInstance().DeleteSandboxConfigFromDataStorage(100, BUNDLE_NAME, TOKENID);
     ASSERT_EQ(res, DLP_OK);
     res = SandboxConfigKvDataStorage::GetInstance().RemoveValueFromKvStore("testKey");
     ASSERT_EQ(res, DLP_OK);
@@ -103,11 +107,11 @@ HWTEST_F(DlpKvStorageTest, DlpKvStorageTest003, TestSize.Level1)
 {
     DLP_LOG_INFO(LABEL, "DlpKvStorageTest003");
     std::string config;
-    int32_t res = SandboxConfigKvDataStorage::GetInstance().GetSandboxConfigFromDataStorage(100, "", config);
+    int32_t res = SandboxConfigKvDataStorage::GetInstance().GetSandboxConfigFromDataStorage(100, "", config, TOKENID);
     ASSERT_NE(res, DLP_OK);
-    res = SandboxConfigKvDataStorage::GetInstance().AddSandboxConfigIntoDataStorage(100, "", config);
+    res = SandboxConfigKvDataStorage::GetInstance().AddSandboxConfigIntoDataStorage(100, "", config, TOKENID);
     ASSERT_NE(res, DLP_OK);
-    res = SandboxConfigKvDataStorage::GetInstance().DeleteSandboxConfigFromDataStorage(100, "");
+    res = SandboxConfigKvDataStorage::GetInstance().DeleteSandboxConfigFromDataStorage(100, "", TOKENID);
     ASSERT_NE(res, DLP_OK);
 }
 }  // namespace DlpPermission

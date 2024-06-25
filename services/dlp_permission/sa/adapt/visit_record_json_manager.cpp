@@ -15,12 +15,14 @@
 
 #include "visit_record_json_manager.h"
 
+#include "accesstoken_kit.h"
 #include "dlp_permission_log.h"
 #include "dlp_permission.h"
 
 namespace OHOS {
 namespace Security {
 namespace DlpPermission {
+using namespace Security::AccessToken;
 using Json = nlohmann::json;
 using namespace OHOS;
 namespace {
@@ -29,6 +31,7 @@ const std::string DOCURI = "docUri";
 const std::string USERID = "userId";
 const std::string TIMESTAMP = "timestamp";
 const std::string RECORDLIST = "recordList";
+const std::string ORIGINAL_TOKENID = "originalTokenId";
 static const uint32_t MAX_RETENTION_SIZE = 1024;
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = { LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION,
                                                        "VisitRecordJsonManager" };
@@ -45,7 +48,7 @@ VisitRecordJsonManager::~VisitRecordJsonManager()
 }
 
 int32_t VisitRecordJsonManager::AddVisitRecord(const std::string& bundleName, const int32_t& userId,
-    const std::string& docUri, int64_t timestamp)
+    const std::string& docUri, const int64_t timestamp, const AccessTokenID originalTokenId)
 {
     std::lock_guard<std::mutex> lock(mutex_);
     if (infoList_.size() > MAX_RETENTION_SIZE) {
@@ -63,6 +66,7 @@ int32_t VisitRecordJsonManager::AddVisitRecord(const std::string& bundleName, co
     info.userId = userId;
     info.docUri = docUri;
     info.timestamp = timestamp;
+    info.originalTokenId = originalTokenId;
     infoList_.emplace_back(info);
     return DLP_OK;
 }
@@ -73,7 +77,12 @@ int32_t VisitRecordJsonManager::AddVisitRecord(const std::string& bundleName, co
     int64_t time =
         std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch())
             .count();
-    return AddVisitRecord(bundleName, userId, docUri, time);
+    AccessTokenID originalTokenId = AccessToken::AccessTokenKit::GetHapTokenID(userId, bundleName, 0);
+    if (originalTokenId == 0) {
+        DLP_LOG_ERROR(LABEL, "Get normal tokenId error.");
+        return DLP_SERVICE_ERROR_VALUE_INVALID;
+    }
+    return AddVisitRecord(bundleName, userId, docUri, time, originalTokenId);
 }
 
 int32_t VisitRecordJsonManager::GetVisitRecordList(const std::string& bundleName, const int32_t& userId,
@@ -83,18 +92,25 @@ int32_t VisitRecordJsonManager::GetVisitRecordList(const std::string& bundleName
     if (infoList_.empty()) {
         return DLP_FILE_NO_NEED_UPDATE;
     }
+    AccessTokenID originalTokenId = AccessToken::AccessTokenKit::GetHapTokenID(userId, bundleName, 0);
+    if (originalTokenId == 0) {
+        DLP_LOG_ERROR(LABEL, "Get normal tokenId error.");
+        return DLP_SERVICE_ERROR_VALUE_INVALID;
+    }
     bool isFind = false;
     for (auto iter = infoList_.begin(); iter != infoList_.end();) {
-        if (iter->bundleName == bundleName && iter->userId == userId) {
+        if (iter->bundleName != bundleName || iter->userId != userId) {
+            ++iter;
+            continue;
+        }
+        if (iter->originalTokenId == originalTokenId) {
             VisitedDLPFileInfo info;
             info.docUri = iter->docUri;
             info.visitTimestamp = iter->timestamp;
             infoVec.emplace_back(info);
-            iter = infoList_.erase(iter);
-            isFind = true;
-        } else {
-            ++iter;
         }
+        iter = infoList_.erase(iter);
+        isFind = true;
     }
     if (!isFind) {
         DLP_LOG_INFO(LABEL, "not find bundleName:%{public}s,userId:%{public}d", bundleName.c_str(), userId);
@@ -109,7 +125,8 @@ void VisitRecordJsonManager::VisitRecordInfoToJson(Json& json, const VisitRecord
     json = Json { { BUNDLENAME, info.bundleName },
         { USERID, info.userId },
         { DOCURI, info.docUri },
-        { TIMESTAMP, info.timestamp } };
+        { TIMESTAMP, info.timestamp },
+        { ORIGINAL_TOKENID, info.originalTokenId} };
 }
 
 bool VisitRecordJsonManager::VisitRecordInfoFromJson(const Json& json, VisitRecordInfo& info) const
@@ -118,6 +135,7 @@ bool VisitRecordJsonManager::VisitRecordInfoFromJson(const Json& json, VisitReco
     std::string docUri = "";
     int32_t userId = -1;
     int64_t timestamp = -1;
+    AccessTokenID originalTokenId = 0;
     if (json.contains(BUNDLENAME) && json.at(BUNDLENAME).is_string()) {
         json.at(BUNDLENAME).get_to(bundleName);
     }
@@ -130,7 +148,10 @@ bool VisitRecordJsonManager::VisitRecordInfoFromJson(const Json& json, VisitReco
     if (json.contains(TIMESTAMP) && json.at(TIMESTAMP).is_number()) {
         json.at(TIMESTAMP).get_to(timestamp);
     }
-    if (bundleName.empty() || userId < 0 || docUri.empty() || timestamp < 0) {
+    if (json.contains(ORIGINAL_TOKENID) && json.at(ORIGINAL_TOKENID).is_number()) {
+        json.at(ORIGINAL_TOKENID).get_to(originalTokenId);
+    }
+    if (bundleName.empty() || userId < 0 || docUri.empty() || timestamp < 0 || originalTokenId == 0) {
         DLP_LOG_ERROR(LABEL, "param is invalid");
         return false;
     }
@@ -138,6 +159,7 @@ bool VisitRecordJsonManager::VisitRecordInfoFromJson(const Json& json, VisitReco
     info.userId = userId;
     info.docUri = docUri;
     info.timestamp = timestamp;
+    info.originalTokenId = originalTokenId;
     return true;
 }
 
@@ -166,7 +188,7 @@ void VisitRecordJsonManager::FromJson(const Json& jsonObject)
     for (const auto& json : jsonObject[RECORDLIST]) {
         VisitRecordInfo info;
         if (VisitRecordInfoFromJson(json, info)) {
-            AddVisitRecord(info.bundleName, info.userId, info.docUri);
+            AddVisitRecord(info.bundleName, info.userId, info.docUri, info.timestamp, info.originalTokenId);
         }
     }
 }
