@@ -27,6 +27,7 @@ namespace DlpPermission {
     int32_t AddFileContextToZip(int32_t fd, const char *nameInZip, const char *zipName);
     int32_t UnzipSpecificFile(int32_t fd, const char *nameInZip, const char *unZipName);
     bool IsZipFile(int32_t fd);
+    bool CheckUnzipFileInfo(int32_t fd);
 }  // namespace DlpPermission
 }  // namespace Security
 }  // namespace OHOS
