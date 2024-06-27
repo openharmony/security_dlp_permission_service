@@ -17,6 +17,7 @@
 #define FUSE_DAEMON_H
 
 #include <condition_variable>
+#include <fuse_i.h>
 #include <fuse_lowlevel.h>
 #include <mutex>
 #include <string>

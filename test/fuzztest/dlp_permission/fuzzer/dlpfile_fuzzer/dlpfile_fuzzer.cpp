@@ -139,7 +139,8 @@ static void FuzzTest(const uint8_t* data, size_t size)
     DLP_LOG_INFO(LABEL, "OpenDlpFile res=%{public}d", res);
     g_Dlpfile->DlpFileWrite(0, const_cast<char *>(text.c_str()), text.length());
     uint8_t writeBuffer[ARRRY_SIZE] = {0x1};
-    g_Dlpfile->DlpFileRead(0, writeBuffer, ARRRY_SIZE);
+    bool hasRead = true;
+    g_Dlpfile->DlpFileRead(0, writeBuffer, ARRRY_SIZE, hasRead, 0);
     g_Dlpfile->Truncate(ARRRY_SIZE);
 }
 

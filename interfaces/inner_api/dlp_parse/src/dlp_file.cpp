@@ -24,6 +24,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include "dlp_permission.h"
+#include "dlp_permission_kit.h"
 #include "dlp_permission_public_interface.h"
 #include "dlp_permission_log.h"
 #include "dlp_zip.h"
@@ -1306,7 +1307,7 @@ int32_t DlpFile::RemoveDlpPermission(int32_t outPlainFileFd)
     }
 }
 
-int32_t DlpFile::DlpFileRead(uint32_t offset, void* buf, uint32_t size)
+int32_t DlpFile::DlpFileRead(uint32_t offset, void* buf, uint32_t size, bool& hasRead, int32_t uid)
 {
     int32_t opFd = isZip_ ? encDataFd_ : dlpFd_;
     if (buf == nullptr || size == 0 || size > DLP_FUSE_MAX_BUFFLEN ||
@@ -1348,6 +1349,14 @@ int32_t DlpFile::DlpFileRead(uint32_t offset, void* buf, uint32_t size)
         DLP_LOG_ERROR(LABEL, "copy decrypt result failed");
         return DLP_PARSE_ERROR_MEMORY_OPERATE_FAIL;
     }
+    if (hasRead) {
+        return message2.size - prefixingSize;
+    }
+    int32_t res = DlpPermissionKit::SetReadFlag(uid);
+    if (res != DLP_OK) {
+        return res;
+    }
+    hasRead = true;
     return message2.size - prefixingSize;
 }
 

@@ -1376,43 +1376,44 @@ HWTEST_F(DlpFileTest, DlpFileRead001, TestSize.Level1)
 
     DlpFile testFile(fdDlp, DLP_TEST_DIR, 0, false);
     initDlpFileCiper(testFile);
-
+    int32_t uid = getuid();
+    bool hasRead = true;
     // isFuseLink_ true
-    EXPECT_EQ(DLP_PARSE_ERROR_VALUE_INVALID, testFile.DlpFileRead(0, nullptr, 10));
+    EXPECT_EQ(DLP_PARSE_ERROR_VALUE_INVALID, testFile.DlpFileRead(0, nullptr, 10, hasRead, uid));
 
     uint8_t buffer[16] = {};
-    EXPECT_EQ(DLP_PARSE_ERROR_VALUE_INVALID, testFile.DlpFileRead(0, buffer, 0));
-    EXPECT_EQ(DLP_PARSE_ERROR_VALUE_INVALID, testFile.DlpFileRead(DLP_MAX_CONTENT_SIZE, buffer, 1));
-    EXPECT_EQ(DLP_PARSE_ERROR_VALUE_INVALID, testFile.DlpFileRead(0, buffer, DLP_FUSE_MAX_BUFFLEN + 1));
+    EXPECT_EQ(DLP_PARSE_ERROR_VALUE_INVALID, testFile.DlpFileRead(0, buffer, 0, hasRead, uid));
+    EXPECT_EQ(DLP_PARSE_ERROR_VALUE_INVALID, testFile.DlpFileRead(DLP_MAX_CONTENT_SIZE, buffer, 1, hasRead, uid));
+    EXPECT_EQ(DLP_PARSE_ERROR_VALUE_INVALID, testFile.DlpFileRead(0, buffer, DLP_FUSE_MAX_BUFFLEN + 1, hasRead, uid));
 
     testFile.dlpFd_ = -1;
-    EXPECT_EQ(DLP_PARSE_ERROR_VALUE_INVALID, testFile.DlpFileRead(0, buffer, 16));
+    EXPECT_EQ(DLP_PARSE_ERROR_VALUE_INVALID, testFile.DlpFileRead(0, buffer, 16, hasRead, uid));
     testFile.dlpFd_ = fdDlp;
 
     testFile.cipher_.encKey.size = 0;
-    EXPECT_EQ(DLP_PARSE_ERROR_VALUE_INVALID, testFile.DlpFileRead(0, buffer, 16));
+    EXPECT_EQ(DLP_PARSE_ERROR_VALUE_INVALID, testFile.DlpFileRead(0, buffer, 16, hasRead, uid));
     testFile.cipher_.encKey.size = 16;
 
     DlpCMockCondition condition;
     condition.mockSequence = { true };
     SetMockConditions("lseek", condition);
-    EXPECT_EQ(DLP_PARSE_ERROR_FILE_OPERATE_FAIL, testFile.DlpFileRead(0, buffer, 16));
+    EXPECT_EQ(DLP_PARSE_ERROR_FILE_OPERATE_FAIL, testFile.DlpFileRead(0, buffer, 16, hasRead, uid));
     CleanMockConditions();
 
     // read size 0
-    EXPECT_EQ(0, testFile.DlpFileRead(0, buffer, 16));
+    EXPECT_EQ(0, testFile.DlpFileRead(0, buffer, 16, hasRead, uid));
 
     // do crypt failed
     write(fdDlp, "1111", 4);
     lseek(fdDlp, 0, SEEK_SET);
     condition.mockSequence = { true };
     SetMockConditions("EVP_CIPHER_CTX_new", condition);
-    EXPECT_EQ(DLP_PARSE_ERROR_FILE_OPERATE_FAIL, testFile.DlpFileRead(0, buffer, 16));
+    EXPECT_EQ(DLP_PARSE_ERROR_FILE_OPERATE_FAIL, testFile.DlpFileRead(0, buffer, 16, hasRead, uid));
     CleanMockConditions();
 
     condition.mockSequence = { false, true };
     SetMockConditions("memcpy_s", condition);
-    EXPECT_EQ(DLP_PARSE_ERROR_MEMORY_OPERATE_FAIL, testFile.DlpFileRead(0, buffer, 16));
+    EXPECT_EQ(DLP_PARSE_ERROR_MEMORY_OPERATE_FAIL, testFile.DlpFileRead(0, buffer, 16, hasRead, uid));
     CleanMockConditions();
 
     close(fdPlain);

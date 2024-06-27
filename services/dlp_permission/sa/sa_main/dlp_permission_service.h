@@ -82,7 +82,7 @@ public:
     int32_t CleanSandboxAppConfig() override;
     int32_t GetSandboxAppConfig(std::string& configInfo) override;
     int32_t IsDLPFeatureProvided(bool& isProvideDLPFeature) override;
-
+    int32_t SetReadFlag(uint32_t uid) override;
     int32_t SetMDMPolicy(const std::vector<std::string>& appIdList) override;
     int32_t GetMDMPolicy(std::vector<std::string>& appIdList) override;
     int32_t RemoveMDMPolicy() override;
@@ -95,6 +95,8 @@ private:
     bool GetCallerBundleName(const uint32_t tokenId, std::string& bundleName);
     bool RemoveRetentionInfo(std::vector<RetentionSandBoxInfo>& retentionSandBoxInfoVec, RetentionInfo& info);
     int32_t UninstallDlpSandboxApp(const std::string& bundleName, int32_t appIndex, int32_t userId);
+    int32_t SandConfigOperateCheck(SandboxConfigOperationEnum operationEnum, std::string& bundleName,
+        int32_t& userId, AccessToken::AccessTokenID& normalTokenId);
     int32_t SandboxConfigOperate(std::string& configInfo, SandboxConfigOperationEnum operationEnum);
     void TerminalService();
     void GetCfgFilesList(std::vector<std::string> &cfgFilesList);

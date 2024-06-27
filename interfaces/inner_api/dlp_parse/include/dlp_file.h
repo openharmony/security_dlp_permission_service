@@ -157,7 +157,7 @@ public:
     bool GetOfflineAccess();
     int32_t GenFile(int32_t inPlainFileFd);
     int32_t RemoveDlpPermission(int outPlainFileFd);
-    int32_t DlpFileRead(uint32_t offset, void* buf, uint32_t size);
+    int32_t DlpFileRead(uint32_t offset, void* buf, uint32_t size, bool& hasRead, int32_t uid);
     int32_t DlpFileWrite(uint32_t offset, void* buf, uint32_t size);
     uint32_t GetFsContentSize() const;
     void UpdateDlpFilePermission();

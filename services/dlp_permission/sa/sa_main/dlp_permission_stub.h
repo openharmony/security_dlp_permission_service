@@ -65,6 +65,7 @@ private:
     int32_t GetMDMPolicyInner(MessageParcel& data, MessageParcel& reply);
     int32_t RemoveMDMPolicyInner(MessageParcel& data, MessageParcel& reply);
     int32_t IsDLPFeatureProvidedInner(MessageParcel& data, MessageParcel& reply);
+    int32_t SetReadFlagInner(MessageParcel& data, MessageParcel& reply);
 
     using RequestFuncType = int32_t (DlpPermissionStub::*)(MessageParcel& data, MessageParcel& reply);
     typedef struct FuncInfo {

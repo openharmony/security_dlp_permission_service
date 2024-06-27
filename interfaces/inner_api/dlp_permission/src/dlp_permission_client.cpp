@@ -538,14 +538,6 @@ int32_t DlpPermissionClient::RemoveMDMPolicy()
 
 int32_t DlpPermissionClient::SetSandboxAppConfig(const std::string& configInfo)
 {
-    bool sandboxFlag;
-    if (CheckSandboxFlag(GetSelfTokenID(), sandboxFlag) != DLP_OK) {
-        return DLP_SERVICE_ERROR_VALUE_INVALID;
-    }
-    if (sandboxFlag) {
-        DLP_LOG_ERROR(LABEL, "Forbid called by a sandbox app");
-        return DLP_SERVICE_ERROR_API_NOT_FOR_SANDBOX_ERROR;
-    }
     auto proxy = GetProxy(true);
     if (proxy == nullptr) {
         DLP_LOG_ERROR(LABEL, "Proxy is null");
@@ -556,14 +548,6 @@ int32_t DlpPermissionClient::SetSandboxAppConfig(const std::string& configInfo)
 
 int32_t DlpPermissionClient::CleanSandboxAppConfig()
 {
-    bool sandboxFlag;
-    if (CheckSandboxFlag(GetSelfTokenID(), sandboxFlag) != DLP_OK) {
-        return DLP_SERVICE_ERROR_VALUE_INVALID;
-    }
-    if (sandboxFlag) {
-        DLP_LOG_ERROR(LABEL, "Forbid called by a sandbox app");
-        return DLP_SERVICE_ERROR_API_NOT_FOR_SANDBOX_ERROR;
-    }
     auto proxy = GetProxy(true);
     if (proxy == nullptr) {
         DLP_LOG_ERROR(LABEL, "Proxy is null");
@@ -590,6 +574,16 @@ int32_t DlpPermissionClient::IsDLPFeatureProvided(bool& isProvideDLPFeature)
         return DLP_SERVICE_ERROR_SERVICE_NOT_EXIST;
     }
     return proxy->IsDLPFeatureProvided(isProvideDLPFeature);
+}
+
+int32_t DlpPermissionClient::SetReadFlag(uint32_t uid)
+{
+    auto proxy = GetProxy(false);
+    if (proxy == nullptr) {
+        DLP_LOG_ERROR(LABEL, "Proxy is null");
+        return DLP_CALLBACK_SA_WORK_ABNORMAL;
+    }
+    return proxy->SetReadFlag(uid);
 }
 
 bool DlpPermissionClient::StartLoadDlpPermissionSa()

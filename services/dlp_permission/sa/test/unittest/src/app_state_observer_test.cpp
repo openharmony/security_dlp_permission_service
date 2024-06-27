@@ -91,7 +91,7 @@ HWTEST_F(AppStateObserverTest, CheckSandboxInfo001, TestSize.Level1)
     DlpSandboxInfo appInfo;
     appInfo.bundleName = "com.ohos.dlpmanager";
     appInfo.uid = 1;
-    appInfo.appIndex = 0;
+    appInfo.appIndex = 1001;
     appInfo.tokenId = 1;
     appInfo.userId = 1;
 
@@ -213,4 +213,5 @@ HWTEST_F(AppStateObserverTest, GetOpeningReadOnlySandbox001, TestSize.Level1)
     observer.sandboxInfo_[DEFAULT_NUM] = appInfo;
     observer.GetOpeningReadOnlySandbox(DLP_BUNDLENAME, DEFAULT_USERID, appIndex);
     ASSERT_EQ(appIndex, -1);
+    observer.sandboxInfo_.clear();
 }

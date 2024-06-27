@@ -340,15 +340,15 @@ HWTEST_F(DlpPermissionKitTest, SetRetentionState01, TestSize.Level1)
     ASSERT_TRUE(0 == retentionSandBoxInfoVec.size());
     ASSERT_EQ(DLP_SERVICE_ERROR_API_ONLY_FOR_SANDBOX_ERROR, DlpPermissionKit::SetRetentionState(docUriVec));
     ASSERT_TRUE(TestSetSelfTokenId(tokenId));
-    ASSERT_EQ(DLP_OK, DlpPermissionKit::SetRetentionState(docUriVec));
+    ASSERT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, DlpPermissionKit::SetRetentionState(docUriVec));
     TestMockApp(DLP_MANAGER_APP, 0, DEFAULT_USERID);
     ASSERT_TRUE(TestSetSelfTokenId(normalTokenId));
     retentionSandBoxInfoVec.clear();
     ASSERT_EQ(DLP_OK, DlpPermissionKit::GetRetentionSandboxList(DLP_MANAGER_APP, retentionSandBoxInfoVec));
-    ASSERT_TRUE(0 != retentionSandBoxInfoVec.size());
+    ASSERT_TRUE(0 == retentionSandBoxInfoVec.size());
     retentionSandBoxInfoVec.clear();
     ASSERT_EQ(DLP_OK, DlpPermissionKit::GetRetentionSandboxList(DLP_MANAGER_APP, retentionSandBoxInfoVec));
-    ASSERT_TRUE(0 != retentionSandBoxInfoVec.size());
+    ASSERT_TRUE(0 == retentionSandBoxInfoVec.size());
     ASSERT_EQ(DLP_OK, DlpPermissionKit::UninstallDlpSandbox(DLP_MANAGER_APP, sandboxInfo.appIndex, DEFAULT_USERID));
     TestRecoverProcessInfo(uid, selfTokenId);
 }
@@ -412,7 +412,7 @@ HWTEST_F(DlpPermissionKitTest, SetRetentionState03, TestSize.Level1)
     docUriVec.push_back(TEST_URI);
     res = DlpPermissionKit::SetRetentionState(docUriVec);
     DLP_LOG_INFO(LABEL, "SetRetentionState03 res %{public}d", res);
-    ASSERT_EQ(DLP_OK, res);
+    ASSERT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, res);
     TestUninstallDlpSandbox(DLP_MANAGER_APP, sandboxInfo.appIndex, DEFAULT_USERID);
     TestRecoverProcessInfo(uid, tokenId);
 }

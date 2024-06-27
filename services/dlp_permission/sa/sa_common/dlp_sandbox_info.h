@@ -33,6 +33,7 @@ public:
     int32_t pid = 0;
     std::string uri = "";
     uint64_t timeStamp = 0;
+    bool hasRead = false;
 };
 }  // namespace DlpPermission
 }  // namespace Security

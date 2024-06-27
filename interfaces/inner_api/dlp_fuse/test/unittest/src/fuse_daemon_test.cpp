@@ -332,7 +332,8 @@ HWTEST_F(FuseDaemonTest, FuseDaemonOpen001, TestSize.Level1)
 HWTEST_F(FuseDaemonTest, FuseDaemonRead001, TestSize.Level1)
 {
     DLP_LOG_INFO(LABEL, "FuseDaemonRead001");
-    fuse_req_t req = nullptr;
+    fuse_req req;
+    req.ctx.uid = getuid();
 
     // offset < 0
     DlpCMockCondition condition;
@@ -340,7 +341,7 @@ HWTEST_F(FuseDaemonTest, FuseDaemonRead001, TestSize.Level1)
     SetMockConditions("fuse_reply_err", condition);
     SetMockCallback("fuse_reply_err", reinterpret_cast<CommonMockFuncT>(FuseReplyErrMock));
     g_fuseReplyErr = 0;
-    FuseDaemon::fuseDaemonOper_.read(req, ROOT_INODE, 1, -1, nullptr);
+    FuseDaemon::fuseDaemonOper_.read(&req, ROOT_INODE, 1, -1, nullptr);
     EXPECT_EQ(EINVAL, g_fuseReplyErr);
     CleanMockConditions();
 
@@ -349,7 +350,7 @@ HWTEST_F(FuseDaemonTest, FuseDaemonRead001, TestSize.Level1)
     SetMockConditions("fuse_reply_err", condition);
     SetMockCallback("fuse_reply_err", reinterpret_cast<CommonMockFuncT>(FuseReplyErrMock));
     g_fuseReplyErr = 0;
-    FuseDaemon::fuseDaemonOper_.read(req, ROOT_INODE, 1, DLP_MAX_CONTENT_SIZE + 1, nullptr);
+    FuseDaemon::fuseDaemonOper_.read(&req, ROOT_INODE, 1, DLP_MAX_CONTENT_SIZE + 1, nullptr);
     EXPECT_EQ(EINVAL, g_fuseReplyErr);
     CleanMockConditions();
 
@@ -358,7 +359,7 @@ HWTEST_F(FuseDaemonTest, FuseDaemonRead001, TestSize.Level1)
     SetMockConditions("fuse_reply_err", condition);
     SetMockCallback("fuse_reply_err", reinterpret_cast<CommonMockFuncT>(FuseReplyErrMock));
     g_fuseReplyErr = 0;
-    FuseDaemon::fuseDaemonOper_.read(req, ROOT_INODE, MAX_FUSE_READ_BUFF_SIZE + 1, 0, nullptr);
+    FuseDaemon::fuseDaemonOper_.read(&req, ROOT_INODE, MAX_FUSE_READ_BUFF_SIZE + 1, 0, nullptr);
     EXPECT_EQ(EINVAL, g_fuseReplyErr);
     CleanMockConditions();
 }
@@ -372,7 +373,8 @@ HWTEST_F(FuseDaemonTest, FuseDaemonRead001, TestSize.Level1)
 HWTEST_F(FuseDaemonTest, FuseDaemonRead002, TestSize.Level1)
 {
     DLP_LOG_INFO(LABEL, "FuseDaemonRead002");
-    fuse_req_t req = nullptr;
+    fuse_req req;
+    req.ctx.uid = getuid();
 
     // ino ROOT_INODE
     DlpCMockCondition condition;
@@ -380,7 +382,7 @@ HWTEST_F(FuseDaemonTest, FuseDaemonRead002, TestSize.Level1)
     SetMockConditions("fuse_reply_err", condition);
     SetMockCallback("fuse_reply_err", reinterpret_cast<CommonMockFuncT>(FuseReplyErrMock));
     g_fuseReplyErr = 0;
-    FuseDaemon::fuseDaemonOper_.read(req, ROOT_INODE, 10, 0, nullptr);
+    FuseDaemon::fuseDaemonOper_.read(&req, ROOT_INODE, 10, 0, nullptr);
     EXPECT_EQ(ENOENT, g_fuseReplyErr);
     CleanMockConditions();
 
@@ -389,7 +391,7 @@ HWTEST_F(FuseDaemonTest, FuseDaemonRead002, TestSize.Level1)
     SetMockConditions("fuse_reply_err", condition);
     SetMockCallback("fuse_reply_err", reinterpret_cast<CommonMockFuncT>(FuseReplyErrMock));
     g_fuseReplyErr = 0;
-    FuseDaemon::fuseDaemonOper_.read(req, 0, 10, 0, nullptr);
+    FuseDaemon::fuseDaemonOper_.read(&req, 0, 10, 0, nullptr);
     EXPECT_EQ(EBADF, g_fuseReplyErr);
     CleanMockConditions();
 
@@ -403,7 +405,7 @@ HWTEST_F(FuseDaemonTest, FuseDaemonRead002, TestSize.Level1)
     SetMockConditions("fuse_reply_err", condition);
     SetMockCallback("fuse_reply_err", reinterpret_cast<CommonMockFuncT>(FuseReplyErrMock));
     g_fuseReplyErr = 0;
-    FuseDaemon::fuseDaemonOper_.read(req, ino, 10, 0, nullptr);
+    FuseDaemon::fuseDaemonOper_.read(&req, ino, 10, 0, nullptr);
     EXPECT_EQ(EIO, g_fuseReplyErr);
     CleanMockConditions();
 }

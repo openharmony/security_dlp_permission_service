@@ -182,6 +182,16 @@ int32_t RetentionFileManager::RemoveRetentionInfoByUserId(const int32_t userId,
     int32_t res = sandboxJsonManager_->RemoveRetentionInfoByUserId(userId, bundleNameSet);
     return UpdateFile(res);
 }
+
+int32_t RetentionFileManager::UpdateReadFlag(uint32_t tokenId)
+{
+    if (!hasInit && !Init()) {
+        DLP_LOG_ERROR(LABEL, "Init failed!");
+        return DLP_RETENTION_UPDATE_ERROR;
+    }
+    int32_t res = sandboxJsonManager_->UpdateReadFlag(tokenId);
+    return UpdateFile(res);
+}
 } // namespace DlpPermission
 } // namespace Security
 } // namespace OHOS
