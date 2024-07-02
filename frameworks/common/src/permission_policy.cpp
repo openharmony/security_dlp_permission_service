@@ -176,7 +176,11 @@ void PermissionPolicy::SetDebug(bool debug)
 
 static void SetKey(const uint8_t* originalKey, uint32_t originalKeyLen, uint8_t** key, uint32_t& keyLen)
 {
-    if (originalKey == nullptr || key == nullptr) {
+    if (key == nullptr) {
+        DLP_LOG_ERROR(LABEL, "key is null.");
+        return;
+    }
+    if (originalKey == nullptr) {
         DLP_LOG_INFO(LABEL, "Set key to null");
         FreeUint8Buffer(key, keyLen);
         return;
