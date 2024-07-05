@@ -201,6 +201,10 @@ int32_t DlpPermissionService::ParseDlpCertificate(sptr<CertParcel>& certParcel,
         DLP_LOG_ERROR(LABEL, "Callback is null");
         return DLP_SERVICE_ERROR_VALUE_INVALID;
     }
+    if (appId.empty()) {
+        DLP_LOG_ERROR(LABEL, "AppId is empty");
+        return DLP_CREDENTIAL_ERROR_APPID_NOT_AUTHORIZED;
+    }
     AppExecFwk::ApplicationInfo applicationInfo;
     if (!GetApplicationInfo(appId, applicationInfo)) {
         DLP_LOG_ERROR(LABEL, "Permission check fail.");

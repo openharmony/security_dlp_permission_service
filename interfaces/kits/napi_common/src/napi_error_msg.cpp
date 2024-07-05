@@ -49,7 +49,6 @@ static const std::unordered_map<int32_t, std::string> JS_ERROR_MSG_MAP = {
     { ERR_JS_DLP_CREDENTIAL_NO_INTERNET_ERROR, "DLP credential need internet, please check your connection" },
     { ERR_JS_URI_NOT_EXIST, "uri missing in want." },
     { ERR_JS_PARAM_DISPLAY_NAME_NOT_EXIST, "displayName missing in want." },
-    { ERR_JS_APPLICATION_NOT_AUTHORIZED, "Application not authorized" },
 };
 
 static const std::unordered_map<int32_t, int32_t> NATIVE_CODE_TO_JS_CODE_MAP = {
