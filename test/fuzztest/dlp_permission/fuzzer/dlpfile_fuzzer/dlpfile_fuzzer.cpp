@@ -76,6 +76,7 @@ static const int32_t FIVE = 5;
 const int32_t TEXT_LENGTH = 5;
 const int32_t ACCOUNT_LENGTH = 10;
 const int32_t APPID_LENGTH = 30;
+constexpr int32_t MIN_LENGTH = APPID_LENGTH + TEXT_LENGTH + ACCOUNT_LENGTH * 2 + 100;
 static void GenerateRandProperty(struct DlpProperty& encProp, const uint8_t* data, size_t size)
 {
     uint64_t curTime = static_cast<uint64_t>(
@@ -113,14 +114,14 @@ static void GenerateRandProperty(struct DlpProperty& encProp, const uint8_t* dat
 
 static void FuzzTest(const uint8_t* data, size_t size)
 {
-    if ((data == nullptr) || (size <= sizeof(char) * (TEXT_LENGTH + APPID_LENGTH + ACCOUNT_LENGTH + ACCOUNT_LENGTH))) {
+    if ((data == nullptr) || (size <= sizeof(uint8_t) * MIN_LENGTH)) {
         return;
     }
     int plainFileFd = open("/data/file_test.txt", O_CREAT | O_RDWR | O_TRUNC, S_IRWXU | S_IRWXG | S_IRWXO);
     int dlpFileFd = open("/data/file_test.txt.dlp", O_CREAT | O_RDWR | O_TRUNC, S_IRWXU | S_IRWXG | S_IRWXO);
     std::string text;
     GenerateRandStr(TEXT_LENGTH, data, text);
-    uint32_t offset = ACCOUNT_LENGTH;
+    uint32_t offset = TEXT_LENGTH;
     std::string appId;
     GenerateRandStr(APPID_LENGTH, data + offset, appId);
     offset += APPID_LENGTH;
