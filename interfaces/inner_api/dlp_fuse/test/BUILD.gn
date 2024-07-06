@@ -127,7 +127,7 @@ ohos_unittest("dlp_fuse_test") {
     "ability_base:want",
     "ability_base:zuri",
     "access_token:libaccesstoken_sdk",
-    "access_token:libtoken_setproc",
+    "access_token:libtokensetproc_shared",
     "app_file_service:fileuri_native",
     "c_utils:utils",
     "hilog:libhilog",
