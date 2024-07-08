@@ -685,7 +685,7 @@ void DlpPermissionService::StartTimer()
         DLP_LOG_ERROR(LABEL, "thread is active");
         return;
     }
-    thread_ = std::make_shared<std::thread>(&DlpPermissionService::TerminalService, this);
+    thread_ = std::make_shared<std::thread>([this] { this->TerminalService(); });
     thread_->detach();
     return;
 }

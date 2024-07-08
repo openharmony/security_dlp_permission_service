@@ -83,7 +83,7 @@ int32_t DlpPermissionStub::OnRemoteRequest(
     if (itFunc != requestFuncMap_.end()) {
         auto requestFunc = itFunc->second.funcType;
         if (requestFunc != nullptr) {
-            int32_t res = (this->*requestFunc)(data, reply);
+            int32_t res = requestFunc(data, reply);
 #ifndef DLP_FUZZ_TEST
             if (itFunc->second.isNeedStartTimer) {
                 DLP_LOG_DEBUG(LABEL, "enter StartTimer");
@@ -698,66 +698,75 @@ int32_t DlpPermissionStub::IsDLPFeatureProvidedInner(MessageParcel& data, Messag
 
 void DlpPermissionStub::InitMDMPolicy()
 {
-    requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::SET_MDM_POLICY)] =
-        {.funcType = &DlpPermissionStub::SetMDMPolicyInner};
-    requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::GET_MDM_POLICY)] =
-        {.funcType = &DlpPermissionStub::GetMDMPolicyInner};
-    requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::REMOVE_MDM_POLICY)] =
-        {.funcType = &DlpPermissionStub::RemoveMDMPolicyInner};
+    requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::SET_MDM_POLICY)] = {
+        [this](MessageParcel &data, MessageParcel &reply) { return SetMDMPolicyInner(data, reply); }};
+    requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::GET_MDM_POLICY)] = {
+        [this](MessageParcel &data, MessageParcel &reply) { return GetMDMPolicyInner(data, reply); }};
+    requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::REMOVE_MDM_POLICY)] = {
+        [this](MessageParcel &data, MessageParcel &reply) { return RemoveMDMPolicyInner(data, reply); }};
 }
 
 void DlpPermissionStub::InitTimerFuncMap()
 {
-    requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::SET_SANDBOX_APP_CONFIG)] =
-        {.funcType = &DlpPermissionStub::SetSandboxAppConfigInner, .isNeedStartTimer = true};
-    requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::CLEAN_SANDBOX_APP_CONFIG)] =
-        {.funcType = &DlpPermissionStub::CleanSandboxAppConfigInner, .isNeedStartTimer = true};
-    requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::GET_SANDBOX_APP_CONFIG)] =
-        {.funcType = &DlpPermissionStub::GetSandboxAppConfigInner, .isNeedStartTimer = true};
-    requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::GET_DLP_SUPPORT_FILE_TYPE)] =
-        {.funcType = &DlpPermissionStub::GetDlpSupportFileTypeInner, .isNeedStartTimer = true};
-    requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::UN_REGISTER_OPEN_DLP_FILE_CALLBACK)] =
-        {.funcType = &DlpPermissionStub::UnRegisterOpenDlpFileCallbackInner, .isNeedStartTimer = true};
-    requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::SET_NOT_RETENTION_STATE)] =
-        {.funcType = &DlpPermissionStub::CancelRetentionStateInner, .isNeedStartTimer = true};
-    requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::CLEAR_UNRESERVED_SANDBOX)] =
-        {.funcType = &DlpPermissionStub::ClearUnreservedSandboxInner, .isNeedStartTimer = true};
-    requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::GET_VISTI_FILE_RECORD_LIST)] =
-        {.funcType = &DlpPermissionStub::GetDLPFileVisitRecordInner, .isNeedStartTimer = true};
-    requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::IS_DLP_FEATURE_PROVIDED)] =
-        {.funcType = &DlpPermissionStub::IsDLPFeatureProvidedInner, .isNeedStartTimer = true};
+    requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::SET_SANDBOX_APP_CONFIG)] = {
+        [this](MessageParcel &data, MessageParcel &reply) { return SetSandboxAppConfigInner(data, reply); }, true};
+    requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::CLEAN_SANDBOX_APP_CONFIG)] = {
+        [this](MessageParcel &data, MessageParcel &reply) { return CleanSandboxAppConfigInner(data, reply); }, true};
+    requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::GET_SANDBOX_APP_CONFIG)] = {
+        [this](MessageParcel &data, MessageParcel &reply) { return GetSandboxAppConfigInner(data, reply); }, true};
+    requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::GET_DLP_SUPPORT_FILE_TYPE)] = {
+        [this](MessageParcel &data, MessageParcel &reply) { return GetDlpSupportFileTypeInner(data, reply); }, true};
+    requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::UN_REGISTER_OPEN_DLP_FILE_CALLBACK)] = {
+        [this](MessageParcel &data, MessageParcel &reply) { return UnRegisterOpenDlpFileCallbackInner(data, reply); },
+        true};
+    requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::SET_NOT_RETENTION_STATE)] = {
+        [this](MessageParcel &data, MessageParcel &reply) { return CancelRetentionStateInner(data, reply); }, true};
+    requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::CLEAR_UNRESERVED_SANDBOX)] = {
+        [this](MessageParcel &data, MessageParcel &reply) { return ClearUnreservedSandboxInner(data, reply); }, true};
+    requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::GET_VISTI_FILE_RECORD_LIST)] = {
+        [this](MessageParcel &data, MessageParcel &reply) { return GetDLPFileVisitRecordInner(data, reply); }, true};
+    requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::IS_DLP_FEATURE_PROVIDED)] = {
+        [this](MessageParcel &data, MessageParcel &reply) { return IsDLPFeatureProvidedInner(data, reply); }, true};
 }
 
 DlpPermissionStub::DlpPermissionStub()
 {
-    requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::GENERATE_DLP_CERTIFICATE)] =
-        {.funcType = &DlpPermissionStub::GenerateDlpCertificateInner};
-    requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::PARSE_DLP_CERTIFICATE)] =
-        {.funcType = &DlpPermissionStub::ParseDlpCertificateInner};
-    requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::INSTALL_DLP_SANDBOX)] =
-        {.funcType = &DlpPermissionStub::InstallDlpSandboxInner};
-    requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::UNINSTALL_DLP_SANDBOX)] =
-        {.funcType = &DlpPermissionStub::UninstallDlpSandboxInner};
-    requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::GET_SANDBOX_EXTERNAL_AUTH)] =
-        {.funcType = &DlpPermissionStub::GetSandboxExternalAuthorizationInner};
-    requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::QUERY_DLP_FILE_ACCESS_BY_TOKEN_ID)] =
-        {.funcType = &DlpPermissionStub::QueryDlpFileCopyableByTokenIdInner};
-    requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::QUERY_DLP_FILE_ACCESS)] =
-        {.funcType = &DlpPermissionStub::QueryDlpFileAccessInner};
-    requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::IS_IN_DLP_SANDBOX)] =
-        {.funcType = &DlpPermissionStub::IsInDlpSandboxInner};
-    requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::REGISTER_DLP_SANDBOX_CHANGE_CALLBACK)] =
-        {.funcType = &DlpPermissionStub::RegisterDlpSandboxChangeCallbackInner};
-    requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::UNREGISTER_DLP_SANDBOX_CHANGE_CALLBACK)] =
-        {.funcType = &DlpPermissionStub::UnRegisterDlpSandboxChangeCallbackInner};
-    requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::GET_DLP_GATHERING_POLICY)] =
-        {.funcType = &DlpPermissionStub::GetDlpGatheringPolicyInner};
-    requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::SET_RETENTION_STATE)] =
-        {.funcType = &DlpPermissionStub::SetRetentionStateInner};
-    requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::GET_RETENTION_SANDBOX_LIST)] =
-        {.funcType = &DlpPermissionStub::GetRetentionSandboxListInner};
-    requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::REGISTER_OPEN_DLP_FILE_CALLBACK)] =
-        {.funcType = &DlpPermissionStub::RegisterOpenDlpFileCallbackInner};
+    requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::GENERATE_DLP_CERTIFICATE)] = {
+        [this](MessageParcel &data, MessageParcel &reply) { return GenerateDlpCertificateInner(data, reply); }};
+    requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::PARSE_DLP_CERTIFICATE)] = {
+        [this](MessageParcel &data, MessageParcel &reply) { return ParseDlpCertificateInner(data, reply); }};
+    requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::INSTALL_DLP_SANDBOX)] = {
+        [this](MessageParcel &data, MessageParcel &reply) { return InstallDlpSandboxInner(data, reply); }};
+    requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::UNINSTALL_DLP_SANDBOX)] = {
+        [this](MessageParcel &data, MessageParcel &reply) { return UninstallDlpSandboxInner(data, reply); }};
+    requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::GET_SANDBOX_EXTERNAL_AUTH)] = {
+        [this](MessageParcel &data, MessageParcel &reply) { return GetSandboxExternalAuthorizationInner(data, reply); }
+    };
+    requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::QUERY_DLP_FILE_ACCESS_BY_TOKEN_ID)] = {
+        [this](MessageParcel &data, MessageParcel &reply) { return QueryDlpFileCopyableByTokenIdInner(data, reply); }};
+    requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::QUERY_DLP_FILE_ACCESS)] = {
+        [this](MessageParcel &data, MessageParcel &reply) { return QueryDlpFileAccessInner(data, reply); }};
+    requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::IS_IN_DLP_SANDBOX)] = {
+        [this](MessageParcel &data, MessageParcel &reply) { return IsInDlpSandboxInner(data, reply); }};
+    requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::REGISTER_DLP_SANDBOX_CHANGE_CALLBACK)] = {
+        [this](MessageParcel &data, MessageParcel &reply) { return RegisterDlpSandboxChangeCallbackInner(data, reply); }
+    };
+    requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::UNREGISTER_DLP_SANDBOX_CHANGE_CALLBACK)]
+        = {
+            [this](MessageParcel &data, MessageParcel &reply) {
+                return UnRegisterDlpSandboxChangeCallbackInner(data, reply);
+            }
+        };
+    requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::GET_DLP_GATHERING_POLICY)] = {
+        [this](MessageParcel &data, MessageParcel &reply) { return GetDlpGatheringPolicyInner(data, reply); }};
+    requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::SET_RETENTION_STATE)] = {
+        [this](MessageParcel &data, MessageParcel &reply) { return SetRetentionStateInner(data, reply); }};
+    requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::GET_RETENTION_SANDBOX_LIST)] = {
+        [this](MessageParcel &data, MessageParcel &reply) { return GetRetentionSandboxListInner(data, reply); }};
+    requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::REGISTER_OPEN_DLP_FILE_CALLBACK)] = {
+        [this](MessageParcel &data, MessageParcel &reply) { return RegisterOpenDlpFileCallbackInner(data, reply); }};
+    requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::SET_READ_FLAG)] = {
+        [this](MessageParcel& data, MessageParcel& reply) { return SetReadFlagInner(data, reply); }};
     InitMDMPolicy();
     InitTimerFuncMap();
 }

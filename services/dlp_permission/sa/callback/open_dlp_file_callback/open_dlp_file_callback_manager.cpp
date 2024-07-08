@@ -159,7 +159,7 @@ int32_t OpenDlpFileCallbackManager::RemoveCallback(int32_t pid, const sptr<IRemo
 }
 
 bool OpenDlpFileCallbackManager::OnOpenDlpFile(
-    sptr<IRemoteObject>& subscribeRecordPtr, const DlpSandboxInfo& dlpSandboxInfo)
+    const sptr<IRemoteObject>& subscribeRecordPtr, const DlpSandboxInfo& dlpSandboxInfo)
 {
     auto callback = iface_cast<IOpenDlpFileCallback>(subscribeRecordPtr);
     if (callback != nullptr) {
@@ -192,7 +192,7 @@ void OpenDlpFileCallbackManager::ExecuteCallbackAsync(const DlpSandboxInfo& dlpS
     }
     uint32_t sendCnt = 0;
     for (auto& iter : callbackList) {
-        auto task = std::bind(&OpenDlpFileCallbackManager::OnOpenDlpFile, this, iter, dlpSandboxInfo);
+        auto task = [this, iter, dlpSandboxInfo] { this->OnOpenDlpFile(iter, dlpSandboxInfo); };
         std::thread taskThread(task);
         pthread_setname_np(taskThread.native_handle(), THREAD_EVENT);
         taskThread.detach();
