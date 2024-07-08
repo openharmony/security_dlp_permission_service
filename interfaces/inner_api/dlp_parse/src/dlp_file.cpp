@@ -184,7 +184,7 @@ int32_t DlpFile::CopyBlobParam(const struct DlpBlob& src, struct DlpBlob& dst) c
     }
 
     if (dst.data != nullptr) {
-        (void)memcpy_s(dst.data, dst.size, 0, dst.size);
+        (void)memset_s(dst.data, dst.size, 0, dst.size);
         delete[] dst.data;
         dst.data = nullptr;
     }
@@ -594,7 +594,9 @@ int32_t DlpFile::UnzipDlpFile()
     CHDIR_AND_CHECK(workDir_.c_str(), DLP_PARSE_ERROR_FILE_OPERATE_FAIL, LABEL);
     MKDIR_AND_CHECK(dirIndex_.c_str(), S_IRWXU, DLP_PARSE_ERROR_FILE_OPERATE_FAIL, LABEL);
     CHDIR_AND_CHECK(dirIndex_.c_str(), DLP_PARSE_ERROR_FILE_OPERATE_FAIL, LABEL);
-
+    if (!CheckUnzipFileInfo(dlpFd_)) {
+        return DLP_PARSE_ERROR_FILE_FORMAT_ERROR;
+    }
     UnzipSpecificFile(dlpFd_, DLP_GENERAL_INFO.c_str(), DLP_GENERAL_INFO.c_str());
     if (!ParseDlpInfo()) {
         return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;

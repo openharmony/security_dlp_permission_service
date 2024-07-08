@@ -19,6 +19,7 @@
 #include <cstdio>
 #include <fcntl.h>
 #include <memory>
+#include <set>
 #include <string>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -36,7 +37,10 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_
 const uint32_t ZIP_BUFF_SIZE = 1024;
 const int32_t DLP_ZIP_FAIL = -1;
 const int32_t DLP_ZIP_OK = 0;
+const int32_t FILE_COUNT = 3;
+const int32_t MAX_PATH = 30;
 const std::string DLP_GENERAL_INFO = "dlp_general_info";
+const std::set<std::string> FILE_NAME_SET = {"dlp_cert", "dlp_general_info", "encrypted_data"};
 }
 
 int32_t AddBuffToZip(const void *buf, uint32_t size, const char *nameInZip, const char *zipName)
@@ -205,6 +209,56 @@ static zipFile OpenZipFile(int fd)
         return nullptr;
     }
     return uf;
+}
+
+bool CheckUnzipFileInfo(int32_t fd)
+{
+    zipFile uf = OpenZipFile(fd);
+    if (uf == nullptr) {
+        DLP_LOG_ERROR(LABEL, "OpenZipFile fail errno %{public}d", errno);
+        return false;
+    }
+    unz_global_info64 globalnfo;
+    int res = unzGetGlobalInfo64(uf, &globalnfo);
+    if (res != UNZ_OK) {
+        DLP_LOG_ERROR(LABEL, "Call unzGetGloabalInfo64 fail res=%{public}d errno=%{public}d", res, errno);
+        (void)unzClose(uf);
+        return false;
+    }
+    //The number of files is equal to 3
+    if (globalnfo.number_entry != FILE_COUNT) {
+        DLP_LOG_ERROR(LABEL, "File count=%{public}llu", globalnfo.number_entry);
+        (void)unzClose(uf);
+        return false;
+    }
+    unz_file_info64 fileInfo;
+    char fileName[MAX_PATH + 1] = {0};
+    for (int32_t i = 0; i < FILE_COUNT; i++) {
+        res = unzGetCurrentFileInfo64(uf, &fileInfo, fileName, MAX_PATH, nullptr, 0, nullptr, 0);
+        if (res != UNZ_OK) {
+            DLP_LOG_ERROR(LABEL, "Call unzGetCurrentFileInfo64 fail res=%{public}d errno=%{public}d", res, errno);
+            (void)unzClose(uf);
+            return false;
+        }
+        fileName[MAX_PATH] = '\0';
+        //The file name has not been changed
+        auto it = FILE_NAME_SET.find(fileName);
+        if (it == FILE_NAME_SET.end()) {
+            DLP_LOG_ERROR(LABEL, "FileName=%{public}s do not found", fileName);
+            (void)unzClose(uf);
+            return false;
+        }
+        //The file has not been compressed
+        if (fileInfo.compressed_size != fileInfo.uncompressed_size) {
+            DLP_LOG_ERROR(LABEL, "Compressed_size=%{public}llu is not equal uncompress_size=%{public}llu",
+                fileInfo.compressed_size, fileInfo.uncompressed_size);
+            (void)unzClose(uf);
+            return false;
+        }
+        unzGoToNextFile(uf);
+    }
+    (void)unzClose(uf);
+    return true;
 }
 
 int32_t UnzipSpecificFile(int32_t fd, const char*nameInZip, const char *unZipName)

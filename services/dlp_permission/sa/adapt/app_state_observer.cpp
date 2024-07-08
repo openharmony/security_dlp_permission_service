@@ -64,10 +64,10 @@ void AppStateObserver::UninstallAllDlpSandboxForUser(int32_t userId)
             UninstallDlpSandbox(appInfo);
         }
         EraseUidTokenIdMap(appInfo.tokenId);
-        iter = sandboxInfo_.erase(iter);
         DLP_LOG_INFO(LABEL, "ExecuteCallbackAsync appInfo bundleName:%{public}s,appIndex:%{public}d,pid:%{public}d",
             appInfo.bundleName.c_str(), appInfo.appIndex, appInfo.pid);
         DlpSandboxChangeCallbackManager::GetInstance().ExecuteCallbackAsync(appInfo);
+        iter = sandboxInfo_.erase(iter);
     }
 }
 

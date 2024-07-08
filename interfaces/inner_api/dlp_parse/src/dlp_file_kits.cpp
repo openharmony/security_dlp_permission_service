@@ -127,7 +127,7 @@ bool DlpFileKits::IsDlpFile(int32_t dlpFd)
     }
 
     if (IsZipFile(dlpFd)) {
-        return true;
+        return CheckUnzipFileInfo(dlpFd);
     }
 
     off_t curPos = lseek(dlpFd, 0, SEEK_CUR);
