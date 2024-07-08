@@ -57,7 +57,7 @@ public:
     int32_t ParseDlpCertificate(sptr<CertParcel>& certParcel, const sptr<IDlpPermissionCallback>& callback,
         const std::string& appId, const bool& offlineAccess) override;
     int32_t InstallDlpSandbox(const std::string& bundleName, DLPFileAccess dlpFileAccess, int32_t userId,
-        SandboxInfo &sandboxInfo, const std::string& uri) override;
+        SandboxInfo& sandboxInfo, const std::string& uri) override;
     int32_t UninstallDlpSandbox(const std::string& bundleName, int32_t appIndex, int32_t userId) override;
     int32_t GetSandboxExternalAuthorization(
         int sandboxUid, const AAFwk::Want& want, SandBoxExternalAuthorType& authType) override;
@@ -97,8 +97,8 @@ private:
     int32_t UninstallDlpSandboxApp(const std::string& bundleName, int32_t appIndex, int32_t userId);
     int32_t SandboxConfigOperate(std::string& configInfo, SandboxConfigOperationEnum operationEnum);
     void TerminalService();
-    void GetCfgFilesList(std::vector<std::string> &cfgFilesList);
-    void GetConfigFileValue(const std::string &cfgFile, std::vector<std::string> &typeList);
+    void GetCfgFilesList(std::vector<std::string>& cfgFilesList);
+    void GetConfigFileValue(const std::string& cfgFile, std::vector<std::string>& typeList);
     std::vector<std::string> InitConfig();
 
     std::atomic<int32_t> repeatTime_;

@@ -244,7 +244,7 @@ OHOS::DistributedKv::Status DlpKvDataStorage::GetEntries(
     return status;
 }
 
-bool DlpKvDataStorage::IsKeyExists(const std::string keyStr)
+bool DlpKvDataStorage::IsKeyExists(const std::string &keyStr)
 {
     if (keyStr.empty()) {
         DLP_LOG_ERROR(LABEL, "param is empty!");

@@ -39,11 +39,11 @@ public:
     int32_t LoadAllData(std::map<std::string, std::string> &infos);
     int32_t AddOrUpdateValue(const std::string &key, const std::string &value);
     int DeleteKvStore();
-    bool IsKeyExists(const std::string keyStr);
+    bool IsKeyExists(const std::string &keyStr);
     int32_t PutValueToKvStore(const std::string &keyStr, const std::string &valueStr);
     int32_t GetValueFromKvStore(const std::string &keyStr, std::string &valueStr);
     int32_t RemoveValueFromKvStore(const std::string &keyStr);
-    virtual void SaveEntries(std::vector<OHOS::DistributedKv::Entry> allEntries,
+    virtual void SaveEntries(const std::vector<OHOS::DistributedKv::Entry> &allEntries,
         std::map<std::string, std::string> &infos) = 0;
 
 protected:

@@ -30,20 +30,20 @@ typedef enum SandboxConfigOperationEnum : uint8_t {
 class SandboxConfigKvDataStorage  : public DlpKvDataStorage {
 public:
     static SandboxConfigKvDataStorage& GetInstance();
-    int32_t GetSandboxConfigFromDataStorage(const int32_t userId, const std::string& bundleName,
+    int32_t GetSandboxConfigFromDataStorage(int32_t userId, const std::string& bundleName,
         std::string& configInfo, const std::string tokenId);
-    int32_t AddSandboxConfigIntoDataStorage(const int32_t userId, const std::string& bundleName,
+    int32_t AddSandboxConfigIntoDataStorage(int32_t userId, const std::string& bundleName,
         const std::string& configInfo, const std::string tokenId);
-    int32_t DeleteSandboxConfigFromDataStorage(const int32_t userId, const std::string& bundleName,
+    int32_t DeleteSandboxConfigFromDataStorage(int32_t userId, const std::string& bundleName,
         const std::string tokenId);
-    int32_t GetKeyMapByUserId(const int32_t userId, std::map<std::string, std::string>& keyMap);
-    void SaveEntries(std::vector<OHOS::DistributedKv::Entry> allEntries,
+    int32_t GetKeyMapByUserId(int32_t userId, std::map<std::string, std::string>& keyMap);
+    void SaveEntries(const std::vector<OHOS::DistributedKv::Entry>& allEntries,
         std::map<std::string, std::string>& infos) override;
 private:
     SandboxConfigKvDataStorage() = delete;
-    SandboxConfigKvDataStorage(const KvDataStorageOptions &options);
+    SandboxConfigKvDataStorage(const KvDataStorageOptions& options);
     ~SandboxConfigKvDataStorage() override;
-    bool GenerateKey(const int32_t userId, const std::string& bundleName, std::string& key, const std::string tokenId);
+    bool GenerateKey(int32_t userId, const std::string& bundleName, std::string& key, const std::string tokenId);
 };
 }  // namespace DlpPermission
 }  // namespace Security
