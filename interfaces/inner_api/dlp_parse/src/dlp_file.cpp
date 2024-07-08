@@ -222,15 +222,9 @@ int32_t DlpFile::GetLocalAccountName(std::string& account) const
 int32_t DlpFile::GetDomainAccountName(std::string& account) const
 {
 #ifdef DLP_PARSE_INNER
-    int32_t userId;
-    int32_t res = OHOS::AccountSA::OsAccountManager::GetForegroundOsAccountLocalId(userId);
-    if (res != 0) {
-        DLP_LOG_ERROR(LABEL, "GetForegroundOsAccountLocalId failed %{public}d", res);
-        return DLP_PARSE_ERROR_ACCOUNT_INVALID;
-    }
     AccountSA::OsAccountInfo osAccountInfo;
-    if (OHOS::AccountSA::OsAccountManager::QueryOsAccountById(userId, osAccountInfo) != 0) {
-        DLP_LOG_ERROR(LABEL, "GetOsAccountLocalIdFromDomain return not 0");
+    if (OHOS::AccountSA::OsAccountManager::QueryCurrentOsAccount(osAccountInfo) != 0) {
+        DLP_LOG_ERROR(LABEL, "QueryCurrentOsAccount return not 0");
         return DLP_PARSE_ERROR_ACCOUNT_INVALID;
     }
     AccountSA::DomainAccountInfo domainInfo;
@@ -244,18 +238,18 @@ int32_t DlpFile::GetDomainAccountName(std::string& account) const
     return DLP_OK;
 }
 
-void DlpFile::UpdateDlpFilePermission()
+bool DlpFile::UpdateDlpFilePermission()
 {
     std::string accountName;
     if (policy_.ownerAccountType_ == DOMAIN_ACCOUNT) {
         if (GetDomainAccountName(accountName) != DLP_OK) {
             DLP_LOG_ERROR(LABEL, "query GetDomainAccountName failed");
-            return;
+            return false;
         }
     } else {
         if (GetLocalAccountName(accountName) != DLP_OK) {
             DLP_LOG_ERROR(LABEL, "query GetLocalAccountName failed");
-            return;
+            return false;
         }
     }
 
@@ -264,7 +258,7 @@ void DlpFile::UpdateDlpFilePermission()
     if (accountName == policy_.ownerAccount_) {
         DLP_LOG_DEBUG(LABEL, "current account is owner, it has full permission");
         authPerm_ = FULL_CONTROL;
-        return;
+        return true;
     }
 
     if (policy_.supportEveryone_) {
@@ -281,6 +275,7 @@ void DlpFile::UpdateDlpFilePermission()
                 authPerm_);
         }
     }
+    return true;
 }
 
 int32_t DlpFile::SetCipher(const struct DlpBlob& key, const struct DlpUsageSpec& spec, const struct DlpBlob& hmacKey)

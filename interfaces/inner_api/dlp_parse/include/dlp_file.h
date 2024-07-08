@@ -160,7 +160,7 @@ public:
     int32_t DlpFileRead(uint32_t offset, void* buf, uint32_t size);
     int32_t DlpFileWrite(uint32_t offset, void* buf, uint32_t size);
     uint32_t GetFsContentSize() const;
-    void UpdateDlpFilePermission();
+    bool UpdateDlpFilePermission();
     int32_t CheckDlpFile();
     bool NeedAdapter();
     bool CleanTmpFile();
