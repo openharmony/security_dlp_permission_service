@@ -1020,6 +1020,37 @@ int32_t DlpPermissionProxy::IsDLPFeatureProvided(bool& isProvideDLPFeature)
     }
     return requestResult;
 }
+
+int32_t DlpPermissionProxy::SetReadFlag(uint32_t uid)
+{
+    MessageParcel data;
+    if (!data.WriteInterfaceToken(DlpPermissionProxy::GetDescriptor())) {
+        DLP_LOG_ERROR(LABEL, "Write descriptor fail.");
+        return DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL;
+    }
+    if (!data.WriteUint32(uid)) {
+        DLP_LOG_ERROR(LABEL, "Write uid fail.");
+        return DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL;
+    }
+    MessageParcel reply;
+    MessageOption option(MessageOption::TF_SYNC);
+    sptr<IRemoteObject> remote = Remote();
+    if (remote == nullptr) {
+        DLP_LOG_ERROR(LABEL, "Remote service is null.");
+        return DLP_SERVICE_ERROR_SERVICE_NOT_EXIST;
+    }
+    int32_t requestResult = remote->SendRequest(
+        static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::SET_READ_FLAG), data, reply, option);
+    if (requestResult != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "Request fail, requestResult=%{public}d.", requestResult);
+        return requestResult;
+    }
+    if (!reply.ReadInt32(requestResult)) {
+        DLP_LOG_ERROR(LABEL, "Read requestResult fail.");
+        return DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL;
+    }
+    return requestResult;
+}
 }  // namespace DlpPermission
 }  // namespace Security
 }  // namespace OHOS

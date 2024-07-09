@@ -73,7 +73,7 @@ void DlpFileTest::SetUpTestCase()
 void DlpFileTest::TearDownTestCase()
 {
     int ret = umount(MOUNT_POINT_DIR.c_str());
-    DLP_LOG_INFO(LABEL, "umount ret %{public}d", ret);
+    DLP_LOG_INFO(LABEL, "umount ret=%{public}d error=%{public}s", ret, strerror(errno));
     rmdir(MOUNT_POINT_DIR.c_str());
     rmdir(DLP_TEST_DIR.c_str());
 }

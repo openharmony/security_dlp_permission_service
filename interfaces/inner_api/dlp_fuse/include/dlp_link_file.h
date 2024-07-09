@@ -43,7 +43,7 @@ public:
     void UpdateAtimeStat();
     void UpdateMtimeStat();
     int32_t Write(uint32_t offset, void* buf, uint32_t size);
-    int32_t Read(uint32_t offset, void* buf, uint32_t size);
+    int32_t Read(uint32_t offset, void* buf, uint32_t size, uint32_t uid);
     std::shared_ptr<DlpFile> GetDlpFilePtr()
     {
         return dlpFile_;
@@ -83,6 +83,7 @@ private:
     std::atomic<int> refcount_;
     std::mutex refLock_;
     bool stopLinkFlag_;
+    bool hasRead_;
 };
 }  // namespace DlpPermission
 }  // namespace Security

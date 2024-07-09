@@ -38,9 +38,16 @@ const std::string DOCURISET = "docUriSet";
 const std::string USERID = "userId";
 const std::string TOKENID = "tokenId";
 const std::string DLPFILEACCESS = "dlpFileAccess";
+const std::string HAS_READ = "hasRead";
 static const uint32_t MAX_RETENTION_SIZE = 1024;
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = { LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "SandboxJsonManager" };
 }
+
+typedef enum KeyType {
+    NUMBER,
+    STRING,
+    ARRAY,
+} KeyType;
 
 SandboxJsonManager::SandboxJsonManager()
 {
@@ -69,6 +76,13 @@ bool SandboxJsonManager::HasRetentionSandboxInfo(const std::string& bundleName)
 
 int32_t SandboxJsonManager::AddSandboxInfo(const RetentionInfo& retentionInfo)
 {
+    if (retentionInfo.bundleName.empty() || retentionInfo.appIndex < 0 || retentionInfo.userId < 0 ||
+        retentionInfo.tokenId == 0) {
+            DLP_LOG_ERROR(LABEL, "Param is invalid, bundleName.empty=%{public}d, appIndex=%{public}d, userId=%{public}d"
+                ", userId=%{public}d.", retentionInfo.bundleName.empty(), retentionInfo.appIndex, retentionInfo.userId,
+                retentionInfo.tokenId);
+            return DLP_INSERT_FILE_ERROR;
+    }
     if (InsertSandboxInfo(retentionInfo)) {
         return DLP_OK;
     }
@@ -177,12 +191,29 @@ int32_t SandboxJsonManager::UpdateRetentionState(const std::set<std::string>& ne
         if (update(*iter, newSet)) {
             isUpdate = true;
         }
+        if (info.hasRead == true) {
+            iter->hasRead = true;
+            isUpdate = true;
+        }
     }
     if (!isUpdate) {
         DLP_LOG_ERROR(LABEL, "not update : %{public}s", info.bundleName.c_str());
         return DLP_FILE_NO_NEED_UPDATE;
     }
     return DLP_OK;
+}
+
+int32_t SandboxJsonManager::UpdateReadFlag(uint32_t tokenId)
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    for (auto iter = infoVec_.begin(); iter != infoVec_.end(); ++iter) {
+        if (tokenId == iter->tokenId && !iter->docUriSet.empty()) {
+            iter->hasRead = true;
+            return DLP_OK;
+        }
+    }
+    DLP_LOG_ERROR(LABEL, "Not update tokenId=%{public}u", tokenId);
+    return DLP_FILE_NO_NEED_UPDATE;
 }
 
 int32_t SandboxJsonManager::RemoveRetentionState(const std::string& bundleName, const int32_t& appIndex)
@@ -242,6 +273,7 @@ int32_t SandboxJsonManager::GetRetentionSandboxList(const std::string& bundleNam
         info.appIndex_ = iter->appIndex;
         info.docUriSet_ = iter->docUriSet;
         info.dlpFileAccess_ = iter->dlpFileAccess;
+        info.hasRead_ = iter->hasRead;
         retentionSandBoxInfoVec.push_back(info);
     }
     return DLP_OK;
@@ -363,7 +395,8 @@ void SandboxJsonManager::RetentionInfoToJson(Json& json, const RetentionInfo& in
         { BUNDLENAME, info.bundleName },
         { USERID, info.userId },
         { DLPFILEACCESS, info.dlpFileAccess },
-        { DOCURISET, info.docUriSet } };
+        { DOCURISET, info.docUriSet },
+        { HAS_READ, info.hasRead } };
 }
 
 Json SandboxJsonManager::ToJson() const
@@ -378,6 +411,21 @@ Json SandboxJsonManager::ToJson() const
     return jsonObject;
 }
 
+static bool CheckJsonElement(const std::string& key, const Json& retentionJson, const KeyType& keyType)
+{
+    switch (keyType) {
+        case KeyType::NUMBER:
+            return retentionJson.contains(key) && retentionJson.at(key).is_number();
+        case KeyType::STRING:
+            return retentionJson.contains(key) && retentionJson.at(key).is_string();
+        case KeyType::ARRAY:
+            return retentionJson.contains(key) && retentionJson.at(key).is_array();
+        default:
+            return false;
+    }
+    return false;
+}
+
 void SandboxJsonManager::FromJson(const Json& jsonObject)
 {
     if (jsonObject.is_null() || jsonObject.is_discarded()) {
@@ -386,13 +434,15 @@ void SandboxJsonManager::FromJson(const Json& jsonObject)
     }
     for (auto& retentionJson : jsonObject["retention"]) {
         RetentionInfo info;
-        if (!retentionJson.contains(APPINDEX) || !retentionJson.at(APPINDEX).is_number() ||
-            !retentionJson.contains(BUNDLENAME) || !retentionJson.at(BUNDLENAME).is_string() ||
-            !retentionJson.contains(DOCURISET) || !retentionJson.at(DOCURISET).is_array() ||
-            !retentionJson.contains(TOKENID) || !retentionJson.at(TOKENID).is_number() ||
-            !retentionJson.contains(DLPFILEACCESS) || !retentionJson.at(DLPFILEACCESS).is_number() ||
-            !retentionJson.contains(USERID) || !retentionJson.at(USERID).is_number()) {
+        if (!CheckJsonElement(APPINDEX, retentionJson, KeyType::NUMBER) ||
+            !CheckJsonElement(BUNDLENAME, retentionJson, KeyType::STRING) ||
+            !CheckJsonElement(TOKENID, retentionJson, KeyType::NUMBER) ||
+            !CheckJsonElement(DOCURISET, retentionJson, KeyType::ARRAY) ||
+            !CheckJsonElement(USERID, retentionJson, KeyType::NUMBER) ||
+            !CheckJsonElement(DLPFILEACCESS, retentionJson, KeyType::NUMBER) ||
+            !CheckJsonElement(HAS_READ, retentionJson, KeyType::NUMBER)) {
             DLP_LOG_ERROR(LABEL, "json contains error");
+            continue;
         }
         retentionJson.at(APPINDEX).get_to(info.appIndex);
         retentionJson.at(BUNDLENAME).get_to(info.bundleName);
@@ -400,6 +450,7 @@ void SandboxJsonManager::FromJson(const Json& jsonObject)
         retentionJson.at(TOKENID).get_to(info.tokenId);
         retentionJson.at(DLPFILEACCESS).get_to(info.dlpFileAccess);
         retentionJson.at(USERID).get_to(info.userId);
+        retentionJson.at(HAS_READ).get_to(info.hasRead);
         if (info.bundleName.empty() || info.appIndex < 0 || info.userId < 0 || info.tokenId == 0) {
             DLP_LOG_ERROR(LABEL, "param is invalid");
             return;

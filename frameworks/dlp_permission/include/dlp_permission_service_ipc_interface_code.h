@@ -47,6 +47,7 @@ enum class DlpPermissionServiceInterfaceCode {
     CLEAN_SANDBOX_APP_CONFIG,
     GET_SANDBOX_APP_CONFIG,
     IS_DLP_FEATURE_PROVIDED,
+    SET_READ_FLAG,
 };
 
 enum DlpPermissionCallbackInterfaceCode {

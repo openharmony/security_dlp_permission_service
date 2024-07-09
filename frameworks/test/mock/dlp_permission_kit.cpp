@@ -53,6 +53,11 @@ int32_t DlpPermissionKit::ParseDlpCertificate(sptr<CertParcel>& certParcel, Perm
     certParcel->offlineCert = certParcel->cert;
     return DlpPermissionSerializer::GetInstance().DeserializeDlpPermission(jsonObj, policy);
 }
+
+int32_t DlpPermissionKit::SetReadFlag(uint32_t uid)
+{
+    return true;
+}
 }  // namespace DlpPermission
 }  // namespace Security
 }  // namespace OHOS
