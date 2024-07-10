@@ -35,6 +35,7 @@ public:
     int32_t appIndex_;
     std::string bundleName_;
     DLPFileAccess dlpFileAccess_;
+    bool hasRead_;
     std::set<std::string> docUriSet_;
 };
 } // namespace DlpPermission

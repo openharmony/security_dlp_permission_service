@@ -237,6 +237,11 @@ int32_t DlpPermissionKit::IsDLPFeatureProvided(bool& isProvideDLPFeature)
 {
     return DlpPermissionClient::GetInstance().IsDLPFeatureProvided(isProvideDLPFeature);
 }
+
+int32_t DlpPermissionKit::SetReadFlag(uint32_t uid)
+{
+    return DlpPermissionClient::GetInstance().SetReadFlag(uid);
+}
 }  // namespace DlpPermission
 }  // namespace Security
 }  // namespace OHOS

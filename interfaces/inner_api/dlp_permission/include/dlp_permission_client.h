@@ -69,6 +69,7 @@ public:
     int32_t CleanSandboxAppConfig();
     int32_t GetSandboxAppConfig(std::string& configInfo);
     int32_t IsDLPFeatureProvided(bool& isProvideDLPFeature);
+    int32_t SetReadFlag(uint32_t uid);
     void FinishStartSASuccess(const sptr<IRemoteObject>& remoteObject);
     void FinishStartSAFail();
     void OnRemoteDiedHandle();

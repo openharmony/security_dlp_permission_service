@@ -32,7 +32,7 @@ ohos_fuzztest("RegisterOpenDlpFileCallbackFuzzTest") {
   external_deps = [
     "ability_base:want",
     "access_token:libaccesstoken_sdk",
-    "access_token:libtoken_setproc",
+    "access_token:libtokensetproc_shared",
     "c_utils:utils",
     "hilog:libhilog",
   ]

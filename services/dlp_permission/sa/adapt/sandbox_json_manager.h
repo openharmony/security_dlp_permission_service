@@ -40,6 +40,7 @@ struct RetentionInfo {
     DLPFileAccess dlpFileAccess = DLPFileAccess::NO_PERMISSION;
     std::set<std::string> docUriSet;
     int32_t userId = -1;
+    bool hasRead = false;
 };
 
 class SandboxJsonManager : public IJsonOperator {
@@ -51,7 +52,7 @@ public:
     int32_t DelSandboxInfo(const uint32_t& tokenId);
     bool CanUninstall(const uint32_t& tokenId);
     int32_t UpdateRetentionState(const std::set<std::string>& docUriSet, RetentionInfo& info, bool isRetention);
-
+    int32_t UpdateReadFlag(uint32_t tokenId);
     int32_t RemoveRetentionState(const std::string& bundleName, const int32_t& appIndex);
     bool HasRetentionSandboxInfo(const std::string& bundleName);
     int32_t GetRetentionSandboxList(const std::string& bundleName,

@@ -38,7 +38,7 @@ ohos_fuzztest("CancelRetentionStateStubFuzzTest") {
     "ability_base:want",
     "ability_runtime:app_manager",
     "access_token:libaccesstoken_sdk",
-    "access_token:libtoken_setproc",
+    "access_token:libtokensetproc_shared",
     "bundle_framework:appexecfwk_base",
     "bundle_framework:appexecfwk_core",
     "c_utils:utils",

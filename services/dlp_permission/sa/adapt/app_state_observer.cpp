@@ -132,6 +132,15 @@ bool AppStateObserver::GetSandboxInfo(int32_t uid, DlpSandboxInfo& appInfo)
     return false;
 }
 
+void AppStateObserver::UpdatReadFlag(int32_t uid)
+{
+    std::lock_guard<std::mutex> lock(sandboxInfoLock_);
+    auto iter = sandboxInfo_.find(uid);
+    if (iter != sandboxInfo_.end()) {
+        iter->second.hasRead = true;
+    }
+}
+
 bool AppStateObserver::CheckSandboxInfo(const std::string& bundleName, int32_t appIndex, int32_t userId)
 {
     std::lock_guard<std::mutex> lock(sandboxInfoLock_);
@@ -158,8 +167,8 @@ void AppStateObserver::AddSandboxInfo(const DlpSandboxInfo& appInfo)
 {
     std::lock_guard<std::mutex> lock(sandboxInfoLock_);
     if (sandboxInfo_.count(appInfo.uid) > 0) {
-        DLP_LOG_WARN(LABEL, "sandbox app %{public}s%{public}d is already insert, ignore it", appInfo.bundleName.c_str(),
-            appInfo.appIndex);
+        DLP_LOG_ERROR(LABEL, "sandbox app %{public}s%{public}d is already insert, ignore it",
+            appInfo.bundleName.c_str(), appInfo.appIndex);
     } else {
         sandboxInfo_[appInfo.uid] = appInfo;
         DLP_LOG_INFO(LABEL, "sandbox app %{public}s%{public}d info insert success, uid: %{public}d",
@@ -170,6 +179,10 @@ void AppStateObserver::AddSandboxInfo(const DlpSandboxInfo& appInfo)
 
 void AppStateObserver::AddDlpSandboxInfo(const DlpSandboxInfo& appInfo)
 {
+    if (appInfo.bundleName.empty() || appInfo.tokenId <= 0 || appInfo.appIndex <= 0) {
+        DLP_LOG_ERROR(LABEL, "Param is error");
+        return;
+    }
     int32_t userId;
     if (GetUserIdFromUid(appInfo.uid, &userId) != 0) {
         DLP_LOG_WARN(LABEL, "has uid:%{public}d", appInfo.uid);

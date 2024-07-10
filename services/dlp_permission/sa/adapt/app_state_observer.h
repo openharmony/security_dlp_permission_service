@@ -46,7 +46,8 @@ public:
     void AddCallbackListener(int32_t pid);
     bool RemoveCallbackListener(int32_t pid);
     bool CallbackListenerEmpty();
-
+    bool GetSandboxInfo(int32_t uid, DlpSandboxInfo& appInfo);
+    void UpdatReadFlag(int32_t uid);
 private:
     void UninstallDlpSandbox(DlpSandboxInfo& appInfo);
     void UninstallAllDlpSandboxForUser(int32_t userId);
@@ -56,14 +57,11 @@ private:
     void AddUserId(int32_t userId);
 
     void AddSandboxInfo(const DlpSandboxInfo& appInfo);
-    bool GetSandboxInfo(int32_t uid, DlpSandboxInfo& appInfo);
     void EraseSandboxInfo(int32_t uid);
 
     void AddUidWithTokenId(uint32_t tokenId, int32_t uid);
     bool GetUidByTokenId(uint32_t tokenId, int32_t& uid);
     void EraseUidTokenIdMap(uint32_t tokenId);
-
-    void UpdateSandboxAppStatus(int32_t uid, int32_t state);
 
     std::unordered_map<uint32_t, int32_t> tokenIdToUidMap_;
     std::mutex tokenIdToUidMapLock_;

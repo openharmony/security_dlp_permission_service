@@ -225,7 +225,7 @@ bool DlpPermissionService::InsertDlpSandboxInfo(DlpSandboxInfo& sandboxInfo, boo
     AppExecFwk::BundleMgrClient bundleMgrClient;
     if (bundleMgrClient.GetSandboxBundleInfo(sandboxInfo.bundleName, sandboxInfo.appIndex, sandboxInfo.userId, info) !=
         DLP_OK) {
-        DLP_LOG_ERROR(LABEL, "Get sandbox bundle info fail");
+        DLP_LOG_ERROR(LABEL, "Get sandbox bundle info fail appIndex=%{public}d", sandboxInfo.appIndex);
         if (hasRetention) {
             RetentionFileManager::GetInstance().ClearUnreservedSandbox();
         }
@@ -240,7 +240,7 @@ bool DlpPermissionService::InsertDlpSandboxInfo(DlpSandboxInfo& sandboxInfo, boo
 }
 
 static int32_t GetAppIndexFromRetentionInfo(const std::string& bundleName, bool isReadOnly, const std::string& uri,
-    int32_t& appIndex, bool& isNeedInstall)
+    DlpSandboxInfo& dlpSandBoxInfo, bool& isNeedInstall)
 {
     std::vector<RetentionSandBoxInfo> infoVec;
     auto res = RetentionFileManager::GetInstance().GetRetentionSandboxList(bundleName, infoVec, true);
@@ -251,7 +251,8 @@ static int32_t GetAppIndexFromRetentionInfo(const std::string& bundleName, bool 
     }
     for (auto iter = infoVec.begin(); iter != infoVec.end(); ++iter) {
         if (isReadOnly && iter->dlpFileAccess_ == DLPFileAccess::READ_ONLY) {
-            appIndex = iter->appIndex_;
+            dlpSandBoxInfo.appIndex = iter->appIndex_;
+            dlpSandBoxInfo.hasRead = iter->hasRead_;
             isNeedInstall = false;
             break;
         }
@@ -260,7 +261,8 @@ static int32_t GetAppIndexFromRetentionInfo(const std::string& bundleName, bool 
         }
         auto setIter = iter->docUriSet_.find(uri);
         if (setIter != iter->docUriSet_.end()) {
-            appIndex = iter->appIndex_;
+            dlpSandBoxInfo.appIndex = iter->appIndex_;
+            dlpSandBoxInfo.hasRead = iter->hasRead_;
             isNeedInstall = false;
             break;
         }
@@ -281,21 +283,23 @@ int32_t DlpPermissionService::InstallDlpSandbox(const std::string& bundleName, D
     }
     bool isReadOnly = dlpFileAccess == DLPFileAccess::READ_ONLY;
     bool isNeedInstall = true;
-    int32_t appIndex = -1;
-    int32_t res = GetAppIndexFromRetentionInfo(bundleName, isReadOnly, uri, appIndex, isNeedInstall);
+    DlpSandboxInfo dlpSandboxInfo;
+    dlpSandboxInfo.bundleName = bundleName;
+    int32_t res = GetAppIndexFromRetentionInfo(bundleName, isReadOnly, uri, dlpSandboxInfo, isNeedInstall);
     if (res != DLP_OK) {
         return res;
     }
     if (isNeedInstall && isReadOnly) {
-        appStateObserver_->GetOpeningReadOnlySandbox(bundleName, userId, appIndex);
-        if (appIndex != -1) {
+        appStateObserver_->GetOpeningReadOnlySandbox(bundleName, userId, dlpSandboxInfo.appIndex);
+        if (dlpSandboxInfo.appIndex != -1) {
             isNeedInstall = false;
         }
     }
     if (isNeedInstall) {
         AppExecFwk::BundleMgrClient bundleMgrClient;
         DLPFileAccess permForBMS = (dlpFileAccess == READ_ONLY) ? READ_ONLY : CONTENT_EDIT;
-        int32_t bundleClientRes = bundleMgrClient.InstallSandboxApp(bundleName, permForBMS, userId, appIndex);
+        int32_t bundleClientRes = bundleMgrClient.InstallSandboxApp(bundleName, permForBMS, userId,
+            dlpSandboxInfo.appIndex);
         if (bundleClientRes != DLP_OK) {
             DLP_LOG_ERROR(LABEL, "install sandbox %{public}s fail, error=%{public}d", bundleName.c_str(),
                 bundleClientRes);
@@ -303,11 +307,9 @@ int32_t DlpPermissionService::InstallDlpSandbox(const std::string& bundleName, D
         }
     }
     int32_t pid = IPCSkeleton::GetCallingRealPid();
-    DlpSandboxInfo dlpSandboxInfo;
+
     dlpSandboxInfo.dlpFileAccess = dlpFileAccess;
-    dlpSandboxInfo.bundleName = bundleName;
     dlpSandboxInfo.userId = userId;
-    dlpSandboxInfo.appIndex = appIndex;
     dlpSandboxInfo.pid = pid;
     dlpSandboxInfo.uri = uri;
     dlpSandboxInfo.timeStamp = static_cast<uint64_t>(
@@ -315,9 +317,8 @@ int32_t DlpPermissionService::InstallDlpSandbox(const std::string& bundleName, D
     if (!InsertDlpSandboxInfo(dlpSandboxInfo, !isNeedInstall)) {
         return DLP_SERVICE_ERROR_INSTALL_SANDBOX_FAIL;
     }
-    sandboxInfo.appIndex = appIndex;
+    sandboxInfo.appIndex = dlpSandboxInfo.appIndex;
     sandboxInfo.tokenId = dlpSandboxInfo.tokenId;
-
     return DLP_OK;
 }
 
@@ -613,6 +614,14 @@ int32_t DlpPermissionService::SetRetentionState(const std::vector<std::string>& 
     RetentionInfo info;
     info.tokenId = IPCSkeleton::GetCallingTokenID();
     std::set<std::string> docUriSet(docUriVec.begin(), docUriVec.end());
+    int32_t uid = IPCSkeleton::GetCallingUid();
+    DlpSandboxInfo sandboxInfo;
+    bool result = appStateObserver_->GetSandboxInfo(uid, sandboxInfo);
+    if (!result) {
+        DLP_LOG_ERROR(LABEL, "Can not found sandbox info, tokenId=%{public}u", info.tokenId);
+        return DLP_SERVICE_ERROR_VALUE_INVALID;
+    }
+    info.hasRead = sandboxInfo.hasRead;
     return RetentionFileManager::GetInstance().UpdateSandboxInfo(docUriSet, info, true);
 }
 
@@ -852,25 +861,50 @@ int32_t DlpPermissionService::IsDLPFeatureProvided(bool& isProvideDLPFeature)
     return DLP_OK;
 }
 
-int32_t DlpPermissionService::SandboxConfigOperate(std::string& configInfo, SandboxConfigOperationEnum operationEnum)
+int32_t DlpPermissionService::SandConfigOperateCheck(SandboxConfigOperationEnum operationEnum, std::string& bundleName,
+    int32_t& userId, AccessToken::AccessTokenID& originalTokenId)
 {
-    std::string callerBundleName;
     uint32_t tokenId = IPCSkeleton::GetCallingTokenID();
-    bool result = GetCallerBundleName(tokenId, callerBundleName);
+    bool result = GetCallerBundleName(tokenId, bundleName);
     if (!result) {
         return DLP_SERVICE_ERROR_VALUE_INVALID;
     }
-    int32_t userId = GetCallingUserId();
+    userId = GetCallingUserId();
     if (userId < 0) {
         DLP_LOG_ERROR(LABEL, "get userId error");
         return DLP_SERVICE_ERROR_VALUE_INVALID;
     }
-    AccessTokenID originalTokenId = AccessToken::AccessTokenKit::GetHapTokenID(userId, callerBundleName, 0);
+    originalTokenId = AccessToken::AccessTokenKit::GetHapTokenID(userId, bundleName, 0);
     if (originalTokenId == 0) {
         DLP_LOG_ERROR(LABEL, "Get normal tokenId error.");
         return DLP_SERVICE_ERROR_VALUE_INVALID;
     }
-    int32_t res = DlpCredential::GetInstance().CheckMdmPermission(callerBundleName, userId);
+    if (operationEnum == ADD && originalTokenId != tokenId) {
+        int32_t uid = IPCSkeleton::GetCallingUid();
+        DlpSandboxInfo info;
+        result = appStateObserver_->GetSandboxInfo(uid, info);
+        if (!result) {
+            DLP_LOG_ERROR(LABEL, "Can not found sandbox info, tokenId=%{public}u", tokenId);
+            return DLP_SERVICE_ERROR_VALUE_INVALID;
+        }
+        if (info.hasRead) {
+            DLP_LOG_ERROR(LABEL, "Sandbox has read dlp file, tokenId=%{public}u", tokenId);
+            return DLP_SERVICE_ERROR_API_NOT_FOR_SANDBOX_ERROR;
+        }
+    }
+    return DLP_OK;
+}
+
+int32_t DlpPermissionService::SandboxConfigOperate(std::string& configInfo, SandboxConfigOperationEnum operationEnum)
+{
+    std::string callerBundleName;
+    int32_t userId;
+    AccessTokenID originalTokenId;
+    int32_t res = SandConfigOperateCheck(operationEnum, callerBundleName, userId, originalTokenId);
+    if (res != DLP_OK) {
+        return res;
+    }
+    res = DlpCredential::GetInstance().CheckMdmPermission(callerBundleName, userId);
     if (res != DLP_OK) {
         return res;
     }
@@ -892,6 +926,18 @@ int32_t DlpPermissionService::SandboxConfigOperate(std::string& configInfo, Sand
             break;
     }
     return res;
+}
+
+int32_t DlpPermissionService::SetReadFlag(uint32_t uid)
+{
+    DlpSandboxInfo info;
+    appStateObserver_->GetSandboxInfo(uid, info);
+    int32_t res = RetentionFileManager::GetInstance().UpdateReadFlag(info.tokenId);
+    if (res != 0) {
+        return res;
+    }
+    appStateObserver_->UpdatReadFlag(uid);
+    return DLP_OK;
 }
 
 int DlpPermissionService::Dump(int fd, const std::vector<std::u16string>& args)

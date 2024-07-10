@@ -96,7 +96,7 @@ void DlpFuseTest::TearDownTestCase()
 {
     g_mountFd = -1;
     int ret = umount(MOUNT_POINT_DIR.c_str());
-    DLP_LOG_INFO(LABEL, "umount ret %{public}d", ret);
+    DLP_LOG_INFO(LABEL, "umount ret=%{public}d error=%{public}s", ret, strerror(errno));
     rmdir(MOUNT_POINT_DIR.c_str());
     rmdir(DLP_TEST_DIR.c_str());
 
@@ -147,10 +147,8 @@ static void GenerateRandStr(uint32_t len, std::string& res)
 {
     for (uint32_t i = 0; i < len; i++) {
         uint32_t index = GetRandNum() % ARRAY_CHAR_SIZE;
-        DLP_LOG_INFO(LABEL, "%{public}u", index);
         res.push_back(CHAR_ARRAY[index]);
     }
-    DLP_LOG_INFO(LABEL, "%{public}s", res.c_str());
 }
 
 static void GenerateRandProperty(struct DlpProperty& encProp)
@@ -334,7 +332,7 @@ HWTEST_F(DlpFuseTest, AddDlpLinkFile001, TestSize.Level1)
         g_dlpFileFd, prop, g_Dlpfile, DLP_TEST_DIR), 0);
     ASSERT_NE(g_Dlpfile, nullptr);
     ASSERT_EQ(DlpLinkManager::GetInstance().AddDlpLinkFile(g_Dlpfile, TEST_LINK_FILE_NAME), 0);
-
+    DlpLinkManager::GetInstance().g_DlpLinkFileNameMap_[TEST_LINK_FILE_NAME]->hasRead_ = true;
     // open link file
     int32_t linkfd = open(TEST_LINK_FILE_PATH.c_str(), O_RDWR);
     ASSERT_GE(linkfd, 0);
@@ -988,15 +986,15 @@ HWTEST_F(DlpFuseTest, LinkFileRead001, TestSize.Level1)
     DLP_LOG_INFO(LABEL, "LinkFileRead001");
     std::shared_ptr<DlpFile> filePtr = nullptr;
     DlpLinkFile linkFile("linkfile", filePtr);
-
+    linkFile.hasRead_ = true;
     uint8_t buffer[16] = {0};
-    EXPECT_EQ(linkFile.Read(0, buffer, 15), DLP_FUSE_ERROR_DLP_FILE_NULL);
+    EXPECT_EQ(linkFile.Read(0, buffer, 15, 0), DLP_FUSE_ERROR_DLP_FILE_NULL);
 
     filePtr = std::make_shared<DlpFile>(-1, DLP_TEST_DIR, 0, false);
     ASSERT_NE(filePtr, nullptr);
 
     DlpLinkFile linkFile1("linkfile1", filePtr);
-    EXPECT_EQ(linkFile1.Read(0, buffer, 15), DLP_PARSE_ERROR_VALUE_INVALID);
+    EXPECT_EQ(linkFile1.Read(0, buffer, 15, 0), DLP_PARSE_ERROR_VALUE_INVALID);
 }
 
 /**
@@ -1012,8 +1010,9 @@ HWTEST_F(DlpFuseTest, Truncate001, TestSize.Level1)
     linkFile.stopLinkFlag_ = true;
     EXPECT_EQ(linkFile.Truncate(-1), DLP_LINK_FILE_NOT_ALLOW_OPERATE);
     uint8_t buffer[16] = {0};
+    linkFile.hasRead_ = true;
     EXPECT_EQ(linkFile.Write(0, buffer, 15), DLP_LINK_FILE_NOT_ALLOW_OPERATE);
-    EXPECT_EQ(linkFile.Read(0, buffer, 15), DLP_LINK_FILE_NOT_ALLOW_OPERATE);
+    EXPECT_EQ(linkFile.Read(0, buffer, 15, 0), DLP_LINK_FILE_NOT_ALLOW_OPERATE);
 }
 
 /**

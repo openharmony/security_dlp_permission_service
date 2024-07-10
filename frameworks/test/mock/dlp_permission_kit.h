@@ -29,6 +29,7 @@ public:
     static int32_t GenerateDlpCertificate(const PermissionPolicy& policy, std::vector<uint8_t>& cert);
     static int32_t ParseDlpCertificate(sptr<CertParcel>& certParcel, PermissionPolicy& policy,
         const std::string& appId, const bool& offlineAccess);
+    static int32_t SetReadFlag(uint32_t uid);
 };
 }  // namespace DlpPermission
 }  // namespace Security

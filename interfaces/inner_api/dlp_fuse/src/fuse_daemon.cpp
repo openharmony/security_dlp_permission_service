@@ -168,6 +168,11 @@ static DlpLinkFile* GetValidFileNode(fuse_req_t req, fuse_ino_t ino)
 static void FuseDaemonRead(fuse_req_t req, fuse_ino_t ino, size_t size, off_t offset, struct fuse_file_info* fi)
 {
     (void)fi;
+    if (req == nullptr) {
+        DLP_LOG_ERROR(LABEL, "Fuse_req_t is nullptr");
+        fuse_reply_err(req, EINVAL);
+        return;
+    }
     if (offset < 0 || offset > DLP_MAX_CONTENT_SIZE) {
         fuse_reply_err(req, EINVAL);
         return;
@@ -190,8 +195,7 @@ static void FuseDaemonRead(fuse_req_t req, fuse_ino_t ino, size_t size, off_t of
         return;
     }
     (void)memset_s(buf, size, 0, size);
-
-    int32_t res = dlp->Read(static_cast<uint32_t>(offset), buf, static_cast<uint32_t>(size));
+    int32_t res = dlp->Read(static_cast<uint32_t>(offset), buf, static_cast<uint32_t>(size), req->ctx.uid);
     if (res < 0) {
         fuse_reply_err(req, EIO);
     } else {

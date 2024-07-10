@@ -30,7 +30,7 @@ static const int DEFAULT_INODE_RW_ACCESS = 0640;
 } // namespace
 
 DlpLinkFile::DlpLinkFile(std::string dlpLinkName, std::shared_ptr<DlpFile> dlpFile)
-    : dlpLinkName_(dlpLinkName), dlpFile_(dlpFile), refcount_(1), stopLinkFlag_(false)
+    : dlpLinkName_(dlpLinkName), dlpFile_(dlpFile), refcount_(1), stopLinkFlag_(false), hasRead_(false)
 {
     (void)memset_s(&fileStat_, sizeof(fileStat_), 0, sizeof(fileStat_));
     fileStat_.st_ino = GetFileInode(this);
@@ -148,7 +148,7 @@ int32_t DlpLinkFile::Write(uint32_t offset, void* buf, uint32_t size)
     return res;
 }
 
-int32_t DlpLinkFile::Read(uint32_t offset, void* buf, uint32_t size)
+int32_t DlpLinkFile::Read(uint32_t offset, void* buf, uint32_t size, uint32_t uid)
 {
     if (stopLinkFlag_) {
         DLP_LOG_INFO(LABEL, "linkFile is stopping link");
@@ -160,7 +160,7 @@ int32_t DlpLinkFile::Read(uint32_t offset, void* buf, uint32_t size)
         return DLP_FUSE_ERROR_DLP_FILE_NULL;
     }
     UpdateAtimeStat();
-    int32_t res = dlpFile_->DlpFileRead(offset, buf, size);
+    int32_t res = dlpFile_->DlpFileRead(offset, buf, size, hasRead_, uid);
     if (res < 0) {
         DLP_LOG_ERROR(LABEL, "Read link file failed, res %{public}d.", res);
     }

@@ -628,14 +628,6 @@ int32_t DlpPermissionStub::RemoveMDMPolicyInner(MessageParcel& data, MessageParc
 
 int32_t DlpPermissionStub::SetSandboxAppConfigInner(MessageParcel& data, MessageParcel& reply)
 {
-    bool sandboxFlag;
-    if (CheckSandboxFlag(GetCallingTokenID(), sandboxFlag) != DLP_OK) {
-        return DLP_SERVICE_ERROR_VALUE_INVALID;
-    }
-    if (sandboxFlag) {
-        DLP_LOG_ERROR(LABEL, "Forbid called by a sandbox app");
-        return DLP_SERVICE_ERROR_API_NOT_FOR_SANDBOX_ERROR;
-    }
     std::string configInfo;
     if (!data.ReadString(configInfo)) {
         DLP_LOG_ERROR(LABEL, "Read configInfo fail");
@@ -694,6 +686,25 @@ int32_t DlpPermissionStub::IsDLPFeatureProvidedInner(MessageParcel& data, Messag
         return DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL;
     }
     return DLP_OK;
+}
+
+int32_t DlpPermissionStub::SetReadFlagInner(MessageParcel& data, MessageParcel& reply)
+{
+    if (!CheckPermission(PERMISSION_ACCESS_DLP_FILE)) {
+        return DLP_SERVICE_ERROR_PERMISSION_DENY;
+    }
+
+    uint32_t uid;
+    if (!data.ReadUint32(uid)) {
+        DLP_LOG_ERROR(LABEL, "Read uid fail.");
+        return DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL;
+    }
+    int32_t res = SetReadFlag(uid);
+    if (!reply.WriteInt32(res)) {
+        DLP_LOG_ERROR(LABEL, "Write result fail.");
+        return DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL;
+    }
+    return res;
 }
 
 void DlpPermissionStub::InitMDMPolicy()
