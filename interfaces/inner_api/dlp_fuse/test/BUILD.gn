@@ -62,6 +62,7 @@ ohos_unittest("dlp_file_test") {
     "hilog:libhilog",
     "hitrace:hitrace_meter",
     "ipc:ipc_core",
+    "json:nlohmann_json_static",
     "openssl:libcrypto_shared",
     "zlib:shared_libz",
   ]
