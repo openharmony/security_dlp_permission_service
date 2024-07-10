@@ -50,7 +50,7 @@ public:
     bool IsCallbackEmpty();
 
 private:
-    bool OnOpenDlpFile(sptr<IRemoteObject> &subscribeRecordPtr, const DlpSandboxInfo &dlpSandboxInfo);
+    bool OnOpenDlpFile(const sptr<IRemoteObject> &subscribeRecordPtr, const DlpSandboxInfo &dlpSandboxInfo);
     std::mutex mutex_;
     std::map<int32_t, std::vector<OpenDlpFileCallbackRecord>> openDlpFileCallbackMap_;
     sptr<IRemoteObject::DeathRecipient> callbackDeathRecipient_;

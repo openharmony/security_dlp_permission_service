@@ -25,6 +25,7 @@ namespace OHOS {
 namespace Security {
 namespace DlpPermission {
 
+using RequestFuncType = std::function<int32_t(MessageParcel&, MessageParcel&)>;
 class DlpPermissionStub : public IRemoteStub<IDlpPermissionService> {
 public:
     DlpPermissionStub();
@@ -67,7 +68,6 @@ private:
     int32_t IsDLPFeatureProvidedInner(MessageParcel& data, MessageParcel& reply);
     int32_t SetReadFlagInner(MessageParcel& data, MessageParcel& reply);
 
-    using RequestFuncType = int32_t (DlpPermissionStub::*)(MessageParcel& data, MessageParcel& reply);
     typedef struct FuncInfo {
         RequestFuncType funcType;
         bool isNeedStartTimer = false;

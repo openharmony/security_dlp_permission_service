@@ -1785,13 +1785,15 @@ void StartUIExtensionAbility(std::shared_ptr<UIExtensionRequestContext> asyncCon
 
     auto uiExtCallback = std::make_shared<UIExtensionCallback>(asyncContext);
     OHOS::Ace::ModalUIExtensionCallbacks extensionCallbacks = {
-        std::bind(&UIExtensionCallback::OnRelease, uiExtCallback, std::placeholders::_1),
-        std::bind(&UIExtensionCallback::OnResult, uiExtCallback, std::placeholders::_1, std::placeholders::_2),
-        std::bind(&UIExtensionCallback::OnReceive, uiExtCallback, std::placeholders::_1),
-        std::bind(&UIExtensionCallback::OnError, uiExtCallback, std::placeholders::_1,
-            std::placeholders::_2, std::placeholders::_3),
-        std::bind(&UIExtensionCallback::OnRemoteReady, uiExtCallback, std::placeholders::_1),
-        std::bind(&UIExtensionCallback::OnDestroy, uiExtCallback)
+        [uiExtCallback](int32_t releaseCode) { uiExtCallback->OnRelease(releaseCode); },
+        [uiExtCallback](int32_t resultCode, const OHOS::AAFwk::Want& result) {
+            uiExtCallback->OnResult(resultCode, result); },
+        [uiExtCallback](const OHOS::AAFwk::WantParams& request) { uiExtCallback->OnReceive(request); },
+        [uiExtCallback](int32_t errorCode, const std::string& name, const std::string& message) {
+            uiExtCallback->OnError(errorCode, name, message); },
+        [uiExtCallback](const std::shared_ptr<OHOS::Ace::ModalUIExtensionProxy>& uiProxy) {
+            uiExtCallback->OnRemoteReady(uiProxy); },
+        [uiExtCallback]() { uiExtCallback->OnDestroy(); }
     };
 
     OHOS::Ace::ModalUIExtensionConfig uiExtConfig;
