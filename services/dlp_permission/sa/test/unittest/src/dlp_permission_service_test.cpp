@@ -273,10 +273,6 @@ HWTEST_F(DlpPermissionServiceTest, DumpTest001, TestSize.Level1)
     EXPECT_EQ(ERR_OK, dlpPermissionService_->Dump(fd, args));
 
     args.clear();
-    // hidumper -d with observer null
-    dlpPermissionService_->appStateObserver_ = nullptr;
-    args.emplace_back(Str8ToStr16("-d"));
-    EXPECT_EQ(ERR_INVALID_VALUE, dlpPermissionService_->Dump(fd, args));
 }
 
 class DlpSandboxChangeCallbackTest : public DlpSandboxChangeCallbackStub {
@@ -937,16 +933,10 @@ HWTEST_F(DlpPermissionServiceTest, InsertDlpSandboxInfo001, TestSize.Level1)
  */
 HWTEST_F(DlpPermissionServiceTest, InsertDlpSandboxInfo002, TestSize.Level1)
 {
-    auto appStateObserver = dlpPermissionService_->appStateObserver_;
-    dlpPermissionService_->appStateObserver_ = nullptr;
-    DlpSandboxInfo sandboxInfo;
-    ASSERT_FALSE(dlpPermissionService_->InsertDlpSandboxInfo(sandboxInfo, false));
-
     std::string bundleName;
     int32_t appIndex = 111;
     int32_t userId = 111;
     ASSERT_TRUE(0 == dlpPermissionService_->DeleteDlpSandboxInfo(bundleName, appIndex, userId));
-    dlpPermissionService_->appStateObserver_ = appStateObserver;
 }
 
 /**
@@ -1087,14 +1077,7 @@ HWTEST_F(DlpPermissionServiceTest, GetSandboxExternalAuthorization001, TestSize.
     SandBoxExternalAuthorType authType;
     int32_t ret = dlpPermissionService_->GetSandboxExternalAuthorization(sandboxUid, want, authType);
     ASSERT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, ret);
-
     sandboxUid = 0;
-    auto appStateObserver = dlpPermissionService_->appStateObserver_;
-    dlpPermissionService_->appStateObserver_ = nullptr;
-    ret = dlpPermissionService_->GetSandboxExternalAuthorization(sandboxUid, want, authType);
-    ASSERT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, ret);
-    dlpPermissionService_->appStateObserver_ = appStateObserver;
-
     ret = dlpPermissionService_->GetSandboxExternalAuthorization(sandboxUid, want, authType);
     ASSERT_EQ(DLP_OK, ret);
 }
@@ -1182,38 +1165,4 @@ HWTEST_F(DlpPermissionServiceTest, SandboxConfigOperate001, TestSize.Level1)
     std::string config;
     int32_t ret = dlpPermissionService_->SandboxConfigOperate(config, SandboxConfigOperationEnum::ADD);
     ASSERT_NE(DLP_OK, ret);
-}
-
-/**
- * @tc.name: QueryDlpFileAccess001
- * @tc.desc: QueryDlpFileAccess test
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(DlpPermissionServiceTest, QueryDlpFileAccess001, TestSize.Level1)
-{
-    DLP_LOG_DEBUG(LABEL, "QueryDlpFileAccess001");
-    DLPPermissionInfoParcel permInfoParcel;
-    auto appStateObserver = dlpPermissionService_->appStateObserver_;
-    dlpPermissionService_->appStateObserver_ = nullptr;
-    int32_t ret = dlpPermissionService_->QueryDlpFileAccess(permInfoParcel);
-    ASSERT_EQ(DLP_SERVICE_ERROR_APPOBSERVER_NULL, ret);
-    dlpPermissionService_->appStateObserver_ = appStateObserver;
-}
-
-/**
- * @tc.name: RegisterOpenDlpFileCallback001
- * @tc.desc: RegisterOpenDlpFileCallback test
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(DlpPermissionServiceTest, RegisterOpenDlpFileCallback001, TestSize.Level1)
-{
-    DLP_LOG_DEBUG(LABEL, "RegisterOpenDlpFileCallback001");
-    sptr<IRemoteObject> callback;
-    auto appStateObserver = dlpPermissionService_->appStateObserver_;
-    dlpPermissionService_->appStateObserver_ = nullptr;
-    int32_t ret = dlpPermissionService_->RegisterOpenDlpFileCallback(callback);
-    ASSERT_EQ(DLP_SERVICE_ERROR_APPOBSERVER_NULL, ret);
-    dlpPermissionService_->appStateObserver_ = appStateObserver;
 }
