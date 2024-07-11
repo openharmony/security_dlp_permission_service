@@ -618,7 +618,7 @@ int32_t DlpPermissionService::SetRetentionState(const std::vector<std::string>& 
     DlpSandboxInfo sandboxInfo;
     bool result = appStateObserver_->GetSandboxInfo(uid, sandboxInfo);
     if (!result) {
-        DLP_LOG_ERROR(LABEL, "Can not found sandbox info, tokenId=%{public}u", info.tokenId);
+        DLP_LOG_ERROR(LABEL, "Can not found sandbox info");
         return DLP_SERVICE_ERROR_VALUE_INVALID;
     }
     info.hasRead = sandboxInfo.hasRead;

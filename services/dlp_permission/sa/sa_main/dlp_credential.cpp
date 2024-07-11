@@ -193,6 +193,10 @@ static int32_t GetNewCert(const unordered_json& plainPolicyJson, std::vector<uin
     std::string encData = json.dump();
     DLP_EncPolicyData params;
     params.data = reinterpret_cast<uint8_t*>(strdup(encData.c_str()));
+    if (params.data == nullptr) {
+        DLP_LOG_ERROR(LABEL, "Strdup failed.");
+        return DLP_CREDENTIAL_ERROR_VALUE_INVALID;
+    }
     params.dataLen = encData.length();
     params.accountType = static_cast<AccountType>(ownerAccountType);
     unordered_json encDataJson;
@@ -349,8 +353,25 @@ static void FreeDlpPackPolicyParams(DLP_PackPolicyParams& packPolicy)
 DlpCredential::DlpCredential()
 {}
 
-int32_t DlpCredential::GenerateDlpCertificate(
-    const std::string& policy, const std::string& accountInfo,
+static int32_t PackPolicy(DLP_PackPolicyParams &packPolicy, DlpAccountType accountType,
+    const sptr<IDlpPermissionCallback>& callback)
+{
+    uint64_t requestId;
+    int32_t res = DLP_PackPolicy(GetCallingUserId(), &packPolicy, DlpPackPolicyCallback, &requestId);
+    if (res != 0) {
+        DLP_LOG_ERROR(LABEL, "Start request fail, error: %{public}d", res);
+        return ConvertCredentialError(res);
+    }
+    DLP_LOG_INFO(
+        LABEL, "Start request success, requestId: %{public}llu", static_cast<unsigned long long>(requestId));
+    RequestInfo info = {
+        .callback = callback,
+        .accountType = accountType
+    };
+    return InsertCallbackToRequestMap(requestId, info);
+}
+
+int32_t DlpCredential::GenerateDlpCertificate(const std::string& policy, const std::string& accountInfo,
     DlpAccountType accountType, const sptr<IDlpPermissionCallback>& callback)
 {
     EncAndDecOptions encAndDecOptions = {
@@ -363,6 +384,10 @@ int32_t DlpCredential::GenerateDlpCertificate(
         .accountId = reinterpret_cast<uint8_t*>(strdup(accountInfo.c_str())),
         .accountIdLen = accountInfo.size(),
     };
+    if (accountCfg.accountId == nullptr) {
+        DLP_LOG_ERROR(LABEL, "Strdup failed.");
+        return DLP_PARSE_ERROR_ACCOUNT_INVALID;
+    }
 
     DLP_PackPolicyParams packPolicy = {
         .featureName = strdup("dlp_permission_service"),
@@ -373,7 +398,14 @@ int32_t DlpCredential::GenerateDlpCertificate(
         .senderAccountInfo = accountCfg,
         .reserved = {0},
     };
-    int res = 0;
+    if (packPolicy.featureName == nullptr || packPolicy.data == nullptr) {
+        DLP_LOG_ERROR(LABEL, "Strdup failed.");
+        free(accountCfg.accountId);
+        accountCfg.accountId = nullptr;
+        FreeDlpPackPolicyParams(packPolicy);
+        return DLP_PARSE_ERROR_ACCOUNT_INVALID;
+    }
+    int32_t res = 0;
     {
         std::lock_guard<std::mutex> lock(g_lockRequest);
         int32_t status = QueryRequestIdle();
@@ -381,27 +413,10 @@ int32_t DlpCredential::GenerateDlpCertificate(
             FreeDlpPackPolicyParams(packPolicy);
             return status;
         }
-
-        uint64_t requestId;
-        res = DLP_PackPolicy(GetCallingUserId(), &packPolicy, DlpPackPolicyCallback, &requestId);
-        if (res == 0) {
-            DLP_LOG_INFO(
-                LABEL, "Start request success, requestId: %{public}llu", static_cast<unsigned long long>(requestId));
-            RequestInfo info = {
-                .callback = callback,
-                .accountType = accountType
-            };
-            res = InsertCallbackToRequestMap(requestId, info);
-            if (res != DLP_OK) {
-                FreeDlpPackPolicyParams(packPolicy);
-                return res;
-            }
-        } else {
-            DLP_LOG_ERROR(LABEL, "Start request fail, error: %{public}d", res);
-        }
+        res = PackPolicy(packPolicy, accountType, callback);
     }
     FreeDlpPackPolicyParams(packPolicy);
-    return ConvertCredentialError(res);
+    return res;
 }
 
 static void FreeDLPEncPolicyData(DLP_EncPolicyData& encPolicy)
@@ -464,19 +479,19 @@ static int32_t GetDomainAccountName(std::string& account, const std::string& con
     return DLP_OK;
 }
 
-static void GetAccoutInfo(DlpAccountType accountType, AccountInfo& accountCfg,
+static int32_t GetAccoutInfo(DlpAccountType accountType, AccountInfo& accountCfg,
     const std::string& contactAccount, bool* isOwner)
 {
     std::string account;
     if (accountType == DOMAIN_ACCOUNT) {
         if (GetDomainAccountName(account, contactAccount, isOwner) != DLP_OK) {
             DLP_LOG_ERROR(LABEL, "query GetDomainAccountName failed");
-            return;
+            return DLP_PARSE_ERROR_ACCOUNT_INVALID;
         }
     } else {
         if (GetLocalAccountName(account, contactAccount, isOwner) != DLP_OK) {
             DLP_LOG_ERROR(LABEL, "query GetLocalAccountName failed");
-            return;
+            return DLP_PARSE_ERROR_ACCOUNT_INVALID;
         }
     }
 
@@ -484,6 +499,11 @@ static void GetAccoutInfo(DlpAccountType accountType, AccountInfo& accountCfg,
         .accountId = reinterpret_cast<uint8_t*>(strdup(account.c_str())),
         .accountIdLen = account.size(),
     };
+    if (accountCfg.accountId == nullptr) {
+        DLP_LOG_ERROR(LABEL, "Strdup failed.");
+        return DLP_CREDENTIAL_ERROR_VALUE_INVALID;
+    }
+    return DLP_OK;
 }
 
 static int32_t AdapterData(const std::vector<uint8_t>& offlineCert, bool isOwner, unordered_json jsonObj,
@@ -513,7 +533,7 @@ static int32_t AdapterData(const std::vector<uint8_t>& offlineCert, bool isOwner
     return DLP_OK;
 }
 
-static void InitEncPolicyData(EncAndDecOptions& options, DLP_EncPolicyData& encPolicy, const bool offlineAccess,
+static int32_t InitEncPolicyData(EncAndDecOptions& options, DLP_EncPolicyData& encPolicy, const bool offlineAccess,
     const std::string& appId)
 {
     options = {.opt = CloudEncOption::RECEIVER_DECRYPT_MUST_USE_CLOUD, .extraInfo = nullptr};
@@ -525,6 +545,30 @@ static void InitEncPolicyData(EncAndDecOptions& options, DLP_EncPolicyData& encP
         .options = options,
         .reserved = {0},
     };
+    if (encPolicy.featureName == nullptr) {
+        DLP_LOG_ERROR(LABEL, "Strdup failed.");
+        return DLP_CREDENTIAL_ERROR_VALUE_INVALID;
+    }
+    return DLP_OK;
+}
+
+static int32_t RestorePolicy(DLP_EncPolicyData &encPolicy, AppExecFwk::ApplicationInfo& applicationInfo,
+    const sptr<IDlpPermissionCallback>& callback, DlpAccountType accountType)
+{
+    uint64_t requestId;
+    int32_t res = DLP_RestorePolicy(GetCallingUserId(), &encPolicy, DlpRestorePolicyCallback, &requestId);
+    if (res != 0) {
+        DLP_LOG_ERROR(LABEL, "Start request fail, error: %{public}d", res);
+        return ConvertCredentialError(res);
+    }
+    DLP_LOG_INFO(
+        LABEL, "Start request success, requestId: %{public}llu", static_cast<unsigned long long>(requestId));
+    RequestInfo info = {
+        .callback = callback,
+        .accountType = accountType,
+        .appProvisionType = applicationInfo.appProvisionType
+    };
+    return InsertCallbackToRequestMap(requestId, info);
 }
 
 int32_t DlpCredential::ParseDlpCertificate(sptr<CertParcel>& certParcel, const sptr<IDlpPermissionCallback>& callback,
@@ -538,7 +582,10 @@ int32_t DlpCredential::ParseDlpCertificate(sptr<CertParcel>& certParcel, const s
     }
     EncAndDecOptions options;
     DLP_EncPolicyData encPolicy;
-    InitEncPolicyData(options, encPolicy, offlineAccess, appId);
+    int32_t ret = InitEncPolicyData(options, encPolicy, offlineAccess, appId);
+    if (ret != DLP_OK) {
+        return ret;
+    }
     int32_t result =
         DlpPermissionSerializer::GetInstance().DeserializeEncPolicyData(jsonObj, encPolicy, certParcel->isNeedAdapter);
     auto accountType = static_cast<DlpAccountType>(encPolicy.accountType);
@@ -547,11 +594,15 @@ int32_t DlpCredential::ParseDlpCertificate(sptr<CertParcel>& certParcel, const s
         return DLP_SERVICE_ERROR_JSON_OPERATE_FAIL;
     }
     bool isOwner = false;
-    GetAccoutInfo(accountType, encPolicy.receiverAccountInfo, certParcel->contactAccount, &isOwner);
+    int32_t infoRet = GetAccoutInfo(accountType, encPolicy.receiverAccountInfo, certParcel->contactAccount, &isOwner);
+    if (infoRet != DLP_OK) {
+        FreeDLPEncPolicyData(encPolicy);
+        return infoRet;
+    }
     if (certParcel->isNeedAdapter) {
         AdapterData(certParcel->offlineCert, isOwner, jsonObj, encPolicy);
     }
-    int res = 0;
+    int32_t res = 0;
     {
         std::lock_guard<std::mutex> lock(g_lockRequest);
         int32_t status = QueryRequestIdle();
@@ -559,22 +610,10 @@ int32_t DlpCredential::ParseDlpCertificate(sptr<CertParcel>& certParcel, const s
             FreeDLPEncPolicyData(encPolicy);
             return status;
         }
-        uint64_t requestId;
-        res = DLP_RestorePolicy(GetCallingUserId(), &encPolicy, DlpRestorePolicyCallback, &requestId);
-        if (res == 0) {
-            RequestInfo info = {.callback = callback, .accountType = accountType,
-                .appProvisionType = applicationInfo.appProvisionType};
-            res = InsertCallbackToRequestMap(requestId, info);
-            if (res != DLP_OK) {
-                FreeDLPEncPolicyData(encPolicy);
-                return res;
-            }
-        } else {
-            DLP_LOG_ERROR(LABEL, "Start request fail, error: %{public}d", res);
-        }
+        res = RestorePolicy(encPolicy, applicationInfo, callback, accountType);
     }
     FreeDLPEncPolicyData(encPolicy);
-    return ConvertCredentialError(res);
+    return res;
 }
 
 int32_t ParseStringVectorToUint8TypedArray(const std::vector<std::string>& appIdList, uint8_t *policy,
@@ -734,8 +773,11 @@ int32_t DlpCredential::CheckMdmPermission(const std::string& bundleName, int32_t
         return DLP_SERVICE_ERROR_IPC_REQUEST_FAIL;
     }
     std::string appId = bundleInfo.appId;
-    DLP_LOG_DEBUG(LABEL, "appId:%{public}s", appId.c_str());
     PolicyHandle handle = {.id = strdup(const_cast<char *>(bundleInfo.appId.c_str()))};
+    if (handle.id == nullptr) {
+        DLP_LOG_ERROR(LABEL, "Strdup failed.");
+        return DLP_CREDENTIAL_ERROR_SERVER_ERROR;
+    }
     int32_t res = DLP_CheckPermission(PolicyType::AUTHORIZED_APPLICATION_LIST, handle);
     if (res != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "DLP_CheckPermission error:%{public}d", res);

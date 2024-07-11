@@ -537,11 +537,9 @@ int32_t DlpPermissionStub::GetRetentionSandboxListInner(MessageParcel& data, Mes
 int32_t DlpPermissionStub::ClearUnreservedSandboxInner(MessageParcel& data, MessageParcel& reply)
 {
     Security::AccessToken::AccessTokenID callingToken = IPCSkeleton::GetCallingTokenID();
-    Security::AccessToken::AccessTokenID bmsTokon =
+    Security::AccessToken::AccessTokenID bmsToken =
         Security::AccessToken::AccessTokenKit::GetNativeTokenId(FOUNDATION_SERVICE_NAME);
-    DLP_LOG_ERROR(LABEL, "callingToken:%{public}d bmsTokon:%{public}d", callingToken, bmsTokon);
-    if (callingToken != bmsTokon) {
-        DLP_LOG_ERROR(LABEL, "callingToken:%{public}d bmsTokon:%{public}d", callingToken, bmsTokon);
+    if (callingToken != bmsToken) {
         return DLP_SERVICE_ERROR_PERMISSION_DENY;
     }
     this->ClearUnreservedSandbox();
