@@ -216,11 +216,6 @@ int32_t DlpPermissionService::ParseDlpCertificate(sptr<CertParcel>& certParcel,
 
 bool DlpPermissionService::InsertDlpSandboxInfo(DlpSandboxInfo& sandboxInfo, bool hasRetention)
 {
-    if (appStateObserver_ == nullptr) {
-        DLP_LOG_WARN(LABEL, "Failed to get app state observer instance");
-        return false;
-    }
-
     AppExecFwk::BundleInfo info;
     AppExecFwk::BundleMgrClient bundleMgrClient;
     if (bundleMgrClient.GetSandboxBundleInfo(sandboxInfo.bundleName, sandboxInfo.appIndex, sandboxInfo.userId, info) !=
@@ -273,10 +268,6 @@ static int32_t GetAppIndexFromRetentionInfo(const std::string& bundleName, bool 
 int32_t DlpPermissionService::InstallDlpSandbox(const std::string& bundleName, DLPFileAccess dlpFileAccess,
     int32_t userId, SandboxInfo &sandboxInfo, const std::string& uri)
 {
-    if (appStateObserver_ == nullptr) {
-        DLP_LOG_ERROR(LABEL, "Failed to get app state observer instance");
-        return DLP_SERVICE_ERROR_VALUE_INVALID;
-    }
     if (bundleName.empty() || dlpFileAccess > FULL_CONTROL || dlpFileAccess <= NO_PERMISSION) {
         DLP_LOG_ERROR(LABEL, "param is invalid");
         return DLP_SERVICE_ERROR_VALUE_INVALID;
@@ -324,11 +315,6 @@ int32_t DlpPermissionService::InstallDlpSandbox(const std::string& bundleName, D
 
 uint32_t DlpPermissionService::DeleteDlpSandboxInfo(const std::string& bundleName, int32_t appIndex, int32_t userId)
 {
-    if (appStateObserver_ == nullptr) {
-        DLP_LOG_WARN(LABEL, "Failed to get app state observer instance");
-        return 0;
-    }
-
     AppExecFwk::BundleMgrClient bundleMgrClient;
     AppExecFwk::BundleInfo info;
     int32_t result = bundleMgrClient.GetSandboxBundleInfo(bundleName, appIndex, userId, info);
@@ -390,12 +376,6 @@ int32_t DlpPermissionService::GetSandboxExternalAuthorization(
         DLP_LOG_ERROR(LABEL, "param is invalid");
         return DLP_SERVICE_ERROR_VALUE_INVALID;
     }
-
-    if (appStateObserver_ == nullptr) {
-        DLP_LOG_ERROR(LABEL, "Failed to get app state observer instance");
-        return DLP_SERVICE_ERROR_VALUE_INVALID;
-    }
-
     bool isSandbox = false;
 
     appStateObserver_->IsInDlpSandbox(isSandbox, sandboxUid);
@@ -412,10 +392,6 @@ int32_t DlpPermissionService::QueryDlpFileCopyableByTokenId(bool& copyable, uint
 {
     if (tokenId == 0) {
         return DLP_SERVICE_ERROR_VALUE_INVALID;
-    }
-    if (appStateObserver_ == nullptr) {
-        DLP_LOG_WARN(LABEL, "Failed to get app state observer instance");
-        return DLP_SERVICE_ERROR_APPOBSERVER_NULL;
     }
     return appStateObserver_->QueryDlpFileCopyableByTokenId(copyable, tokenId);
 }
@@ -442,10 +418,6 @@ static ActionFlags GetDlpActionFlag(DLPFileAccess dlpFileAccess)
 
 int32_t DlpPermissionService::QueryDlpFileAccess(DLPPermissionInfoParcel& permInfoParcel)
 {
-    if (appStateObserver_ == nullptr) {
-        DLP_LOG_WARN(LABEL, "Failed to get app state observer instance");
-        return DLP_SERVICE_ERROR_APPOBSERVER_NULL;
-    }
     int32_t uid = IPCSkeleton::GetCallingUid();
     DLPFileAccess dlpFileAccess = NO_PERMISSION;
     int32_t res = appStateObserver_->QueryDlpFileAccessByUid(dlpFileAccess, uid);
@@ -456,10 +428,6 @@ int32_t DlpPermissionService::QueryDlpFileAccess(DLPPermissionInfoParcel& permIn
 
 int32_t DlpPermissionService::IsInDlpSandbox(bool& inSandbox)
 {
-    if (appStateObserver_ == nullptr) {
-        DLP_LOG_WARN(LABEL, "Failed to get app state observer instance");
-        return DLP_SERVICE_ERROR_APPOBSERVER_NULL;
-    }
     int32_t uid = IPCSkeleton::GetCallingUid();
     return appStateObserver_->IsInDlpSandbox(inSandbox, uid);
 }
@@ -544,10 +512,6 @@ int32_t DlpPermissionService::UnRegisterDlpSandboxChangeCallback(bool &result)
 
 int32_t DlpPermissionService::RegisterOpenDlpFileCallback(const sptr<IRemoteObject>& callback)
 {
-    if (appStateObserver_ == nullptr) {
-        DLP_LOG_WARN(LABEL, "Failed to get app state observer instance");
-        return DLP_SERVICE_ERROR_APPOBSERVER_NULL;
-    }
     std::string callerBundleName;
     if (!GetCallerBundleName(IPCSkeleton::GetCallingTokenID(), callerBundleName)) {
         DLP_LOG_ERROR(LABEL, "get callerBundleName error");
