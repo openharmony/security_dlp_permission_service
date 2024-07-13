@@ -18,6 +18,8 @@
 
 #define FUZZ_PROJECT_NAME "getdlpgatheringpolicystub_fuzzer"
 
+#define private public
 #include "dlp_permission_service.h"
+#undef private
 
 #endif // TEST_FUZZTEST_GET_DLP_GATHERING_POLICY_STUB_FUZZER_H

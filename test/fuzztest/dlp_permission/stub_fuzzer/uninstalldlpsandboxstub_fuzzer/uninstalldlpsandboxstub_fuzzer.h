@@ -18,6 +18,8 @@
 
 #define FUZZ_PROJECT_NAME "uninstalldlpsandboxstub_fuzzer"
 
+#define private public
 #include "dlp_permission_service.h"
+#undef private
 
 #endif // TEST_FUZZTEST_UNINSTALL_DLP_SANDBOX_FUZZER_H

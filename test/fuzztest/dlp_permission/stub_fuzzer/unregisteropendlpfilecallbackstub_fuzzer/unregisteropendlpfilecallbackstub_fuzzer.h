@@ -19,7 +19,9 @@
 #define FUZZ_PROJECT_NAME "unregisteropendlpfilecallbackstub_fuzzer"
 
 #define private public
+#define private public
 #include "dlp_permission_service.h"
+#undef private
 #undef private
 
 #endif // TEST_FUZZTEST_UNREGISTER_OPEN_DLP_FILE_CALLBACK_STUB_FUZZER_H

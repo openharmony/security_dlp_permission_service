@@ -18,6 +18,8 @@
 
 #define FUZZ_PROJECT_NAME "clearunreservedsandboxstub_fuzzer"
 
+#define private public
 #include "dlp_permission_service.h"
+#undef private
 
 #endif // TEST_FUZZTEST_CLEAR_UNRESERVEDSANDBOX_STUB_FUZZER_H

@@ -18,15 +18,15 @@
 #include <string>
 #include <vector>
 #include <thread>
-#include "accesstoken_kit.h"
 #include "dlp_permission_log.h"
 #include "dlp_permission.h"
+#include "mock_sandbox_init.h"
 #include "securec.h"
-#include "token_setproc.h"
 
 using namespace OHOS::Security::DlpPermission;
-using namespace OHOS::Security::AccessToken;
 namespace OHOS {
+static pthread_once_t g_callOnce = PTHREAD_ONCE_INIT;
+
 static void FuzzTest(const uint8_t* data, size_t size)
 {
     bool inSandbox;
@@ -35,19 +35,11 @@ static void FuzzTest(const uint8_t* data, size_t size)
 
 bool IsInDlpSandboxFuzzTest(const uint8_t* data, size_t size)
 {
+    pthread_once(&g_callOnce, InitTokenId);
     FuzzTest(data, size);
     return true;
 }
 } // namespace OHOS
-
-/* Fuzzer entry point */
-extern "C" int LLVMFuzzerInitialize(int *argc, char ***argv)
-{
-    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(100, "com.ohos.dlpmanager", 0); // user_id = 100
-    SetSelfTokenID(tokenId);
-    return 0;
-}
-
 
 /* Fuzzer entry point */
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)

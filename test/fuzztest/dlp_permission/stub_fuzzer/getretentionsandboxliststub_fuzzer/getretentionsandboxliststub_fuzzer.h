@@ -18,6 +18,8 @@
 
 #define FUZZ_PROJECT_NAME "getretentionsandboxliststub_fuzzer"
 
+#define private public
 #include "dlp_permission_service.h"
+#undef private
 
 #endif // TEST_FUZZTEST_GET_RETENTION_SANDBOX_LIST_STUB_FUZZER_H
