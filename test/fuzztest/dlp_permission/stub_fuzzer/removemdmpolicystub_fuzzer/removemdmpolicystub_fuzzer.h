@@ -18,6 +18,8 @@
 
 #define FUZZ_PROJECT_NAME "removemdmpolicystub_fuzzer"
 
+#define private public
 #include "dlp_permission_service.h"
+#undef private
 
 #endif // TEST_FUZZTEST_REMOVE_MDM_POLICY_STUB_FUZZER_H

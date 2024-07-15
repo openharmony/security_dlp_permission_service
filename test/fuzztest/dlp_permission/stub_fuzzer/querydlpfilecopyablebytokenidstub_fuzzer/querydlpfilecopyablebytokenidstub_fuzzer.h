@@ -18,6 +18,8 @@
 
 #define FUZZ_PROJECT_NAME "querydlpfilecopyablebytokenidstub_fuzzer"
 
+#define private public
 #include "dlp_permission_service.h"
+#undef private
 
 #endif // TEST_FUZZTEST_QUERY_DLP_FILE_COPYABLE_BY_TOKENID_STUB_FUZZER_H

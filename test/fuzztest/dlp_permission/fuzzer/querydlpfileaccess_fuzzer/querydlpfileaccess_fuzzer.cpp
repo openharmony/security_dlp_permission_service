@@ -18,61 +18,14 @@
 #include <string>
 #include <vector>
 #include <thread>
-#include "accesstoken_kit.h"
 #include "dlp_permission_log.h"
 #include "dlp_permission.h"
+#include "mock_sandbox_init.h"
 #include "securec.h"
-#include "token_setproc.h"
 
 using namespace OHOS::Security::DlpPermission;
-using namespace OHOS::Security::AccessToken;
 namespace OHOS {
 static pthread_once_t g_callOnce = PTHREAD_ONCE_INIT;
-const int32_t DEFAULT_API_VERSION = 8;
-const PermissionDef INFO_MANAGER_TEST_PERM_DEF1 = {
-    .permissionName = "open the door",
-    .bundleName = "osaccount_test",
-    .grantMode = 1,
-    .availableLevel = APL_NORMAL,
-    .provisionEnable = false,
-    .distributedSceneEnable = false,
-    .label = "label",
-    .labelId = 1,
-    .description = "open the door",
-    .descriptionId = 1
-};
-
-const PermissionStateFull INFO_MANAGER_TEST_STATE1 = {
-    .permissionName = "open the door",
-    .isGeneral = true,
-    .resDeviceID = {"local"},
-    .grantStatus = {1},
-    .grantFlags = {1}
-};
-
-static void InitTokenId()
-{
-    HapPolicyParams hapPolicyParams = {
-        .apl = APL_NORMAL,
-        .domain = "test.domain",
-        .permList = {INFO_MANAGER_TEST_PERM_DEF1},
-        .permStateList = {INFO_MANAGER_TEST_STATE1}
-    };
-    HapInfoParams hapInfoParams = {
-        .userID = 100,
-        .bundleName = "com.ohos.dlpmanager",
-        .instIndex = 1,
-        .dlpType = 1,
-        .appIDDesc = "com.ohos.dlpmanager",
-        .apiVersion = DEFAULT_API_VERSION,
-        .isSystemApp = false
-    };
-
-    AccessTokenIDEx tokenIdEx = {0};
-    tokenIdEx = AccessTokenKit::AllocHapToken(hapInfoParams, hapPolicyParams);
-    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
-    SetSelfTokenID(tokenId);
-}
 
 static void FuzzTest(const uint8_t* data, size_t size)
 {

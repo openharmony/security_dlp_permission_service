@@ -18,6 +18,8 @@
 
 #define FUZZ_PROJECT_NAME "getsandboxexternalauthorizationstub_fuzzer"
 
+#define private public
 #include "dlp_permission_service.h"
+#undef private
 
 #endif // TEST_FUZZTEST_GET_SANDBOX_EXTERNAL_AUTHORIZATION_STUB_FUZZER_H

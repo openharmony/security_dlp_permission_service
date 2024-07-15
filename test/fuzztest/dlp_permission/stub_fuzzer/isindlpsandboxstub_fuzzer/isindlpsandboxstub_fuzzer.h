@@ -18,6 +18,8 @@
 
 #define FUZZ_PROJECT_NAME "isindlpsandboxstub_fuzzer"
 
+#define private public
 #include "dlp_permission_service.h"
+#undef private
 
 #endif // TEST_FUZZTEST_IS_IN_DLP_SANDBOX_STUB_FUZZER_H

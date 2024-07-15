@@ -18,6 +18,8 @@
 
 #define FUZZ_PROJECT_NAME "cancelretentionstatestub_fuzzer"
 
+#define private public
 #include "dlp_permission_service.h"
+#undef private
 
 #endif // TEST_FUZZTEST_CANCEL_RETENTION_STATE_STUB_FUZZER_H

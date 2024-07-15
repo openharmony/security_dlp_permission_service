@@ -18,6 +18,8 @@
 
 #define FUZZ_PROJECT_NAME "isdlpfeatureprovidedstub_fuzzer"
 
+#define private public
 #include "dlp_permission_service.h"
+#undef private
 
 #endif  // TEST_FUZZTEST_IS_DLP_FEATURE_PROVIDED_STUB_FUZZER_H

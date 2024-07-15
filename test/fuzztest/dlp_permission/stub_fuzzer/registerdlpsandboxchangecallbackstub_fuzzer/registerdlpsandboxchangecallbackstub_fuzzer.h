@@ -18,6 +18,8 @@
 
 #define FUZZ_PROJECT_NAME "registerdlpsandboxchangecallbackstub_fuzzer"
 
+#define private public
 #include "dlp_permission_service.h"
+#undef private
 
 #endif // TEST_FUZZTEST_REGISTER_DLP_SANBOX_CHANGE_CALLBACK_STUB_FUZZER_H

@@ -52,6 +52,7 @@ static void FuzzTest(const uint8_t* data, size_t size)
     MessageOption option;
     auto service = std::make_shared<DlpPermissionService>(SA_ID_DLP_PERMISSION_SERVICE, true);
     service->appStateObserver_ = new (std::nothrow) AppStateObserver();
+    service->appStateObserver_ = new (std::nothrow) AppStateObserver();
     service->OnRemoteRequest(code, datas, reply, option);
 }
 

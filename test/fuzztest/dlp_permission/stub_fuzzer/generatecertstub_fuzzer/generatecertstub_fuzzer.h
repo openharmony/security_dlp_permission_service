@@ -18,6 +18,8 @@
 
 #define FUZZ_PROJECT_NAME "generatecertstub_fuzzer"
 
+#define private public
 #include "dlp_permission_service.h"
+#undef private
 
 #endif // TEST_FUZZTEST_GENERATE_CERT_STUB_FUZZER_H
