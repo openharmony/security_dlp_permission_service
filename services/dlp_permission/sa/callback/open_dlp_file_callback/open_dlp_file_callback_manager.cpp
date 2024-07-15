@@ -191,7 +191,7 @@ void OpenDlpFileCallbackManager::ExecuteCallbackAsync(const DlpSandboxInfo& dlpS
         return;
     }
     uint32_t sendCnt = 0;
-    for (auto& iter : callbackList) {
+    for (const auto& iter : callbackList) {
         auto task = [this, iter, dlpSandboxInfo] { this->OnOpenDlpFile(iter, dlpSandboxInfo); };
         std::thread taskThread(task);
         pthread_setname_np(taskThread.native_handle(), THREAD_EVENT);

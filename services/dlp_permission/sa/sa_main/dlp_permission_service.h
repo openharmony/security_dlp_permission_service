@@ -96,7 +96,7 @@ private:
     bool RemoveRetentionInfo(std::vector<RetentionSandBoxInfo>& retentionSandBoxInfoVec, RetentionInfo& info);
     int32_t UninstallDlpSandboxApp(const std::string& bundleName, int32_t appIndex, int32_t userId);
     int32_t SandConfigOperateCheck(SandboxConfigOperationEnum operationEnum, std::string& bundleName,
-        int32_t& userId, AccessToken::AccessTokenID& normalTokenId);
+        int32_t& userId, AccessToken::AccessTokenID& originalTokenId);
     int32_t SandboxConfigOperate(std::string& configInfo, SandboxConfigOperationEnum operationEnum);
     void TerminalService();
     void GetCfgFilesList(std::vector<std::string> &cfgFilesList);

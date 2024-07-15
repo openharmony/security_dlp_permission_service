@@ -379,8 +379,8 @@ bool SandboxJsonManager::InsertSandboxInfo(const RetentionInfo& info)
     std::lock_guard<std::mutex> lock(mutex_);
     for (auto iter = infoVec_.begin(); iter != infoVec_.end(); ++iter) {
         if (iter->tokenId == info.tokenId) {
-            DLP_LOG_ERROR(LABEL, "docUri exist tokenId:%{public}d,bundleName:%{public}s,int32_t:%{public}d",
-                info.tokenId, info.bundleName.c_str(), info.appIndex);
+            DLP_LOG_ERROR(LABEL, "docUri exist bundleName:%{public}s, appIndex:%{public}d",
+                info.bundleName.c_str(), info.appIndex);
             return false;
         }
     }
