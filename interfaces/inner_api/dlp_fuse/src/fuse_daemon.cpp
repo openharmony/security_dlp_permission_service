@@ -560,7 +560,7 @@ int FuseDaemon::InitFuseFs(int fuseDevFd)
     }
     daemonStatus_ = DAEMON_UNDEF;
 
-    std::thread daemonThread(FuseFsDaemonThread, fuseDevFd);
+    std::thread daemonThread([fuseDevFd] { FuseFsDaemonThread(fuseDevFd); });
     pthread_setname_np(daemonThread.native_handle(), THREAD_OS_DLP_FUSE);
     daemonThread.detach();
     return WaitDaemonEnable();

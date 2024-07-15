@@ -4,7 +4,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -13,13 +13,17 @@
  * limitations under the License.
  */
 
-#ifndef TEST_FUZZTEST_QUERY_DLP_FILE_ACCESS_STUB_FUZZER_H
-#define TEST_FUZZTEST_QUERY_DLP_FILE_ACCESS_STUB_FUZZER_H
+#ifndef DLP_MOCK_SANDBOX_INIT_H
+#define DLP_MOCK_SANDBOX_INIT_H
 
-#define FUZZ_PROJECT_NAME "querydlpfileaccessstub_fuzzer"
+#include "accesstoken_kit.h"
+#include "token_setproc.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
+void InitTokenId();
+#ifdef __cplusplus
+}
+#endif
 
-#define private public
-#include "dlp_permission_service.h"
-#undef private
-
-#endif // TEST_FUZZTEST_QUERY_DLP_FILE_ACCESS_STUB_FUZZER_H
+#endif
