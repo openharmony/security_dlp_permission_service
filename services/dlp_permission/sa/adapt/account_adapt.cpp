@@ -36,7 +36,7 @@ using OHOS::AccountSA::DomainAccountInfo;
 
 int32_t GetCallingUserId(void)
 {
-    std::int32_t callingUid = OHOS::IPCSkeleton::GetCallingUid();
+    int32_t callingUid = OHOS::IPCSkeleton::GetCallingUid();
     return (callingUid / UID_TRANSFORM_DIVISOR);
 }
 
@@ -106,24 +106,26 @@ bool IsAccountLogIn(uint32_t osAccountId, AccountType accountType, const DlpBlob
         }
         return true;
     }
-    if (accountType == DOMAIN_ACCOUNT) {
-        DomainAccountInfo info;
-        std::string account(reinterpret_cast<char*>(accountId->data), accountId->size);
-        info.accountId_ = account;
-        DLP_LOG_DEBUG(LABEL, "accountId:%{public}s", info.accountId_.c_str());
-        DomainAccountStatus status;
-        res = DomainAccountClient::GetInstance().GetAccountStatus(info, status);
-        if (res != OHOS::ERR_OK) {
-            DLP_LOG_ERROR(LABEL, "GetAccountStatus from OsAccountKits failed, res:%{public}d.", res);
-            return false;
-        }
-        if (status != DomainAccountStatus::LOGIN) {
-            DLP_LOG_ERROR(LABEL, "Domain account status is not login.");
-            return false;
-        }
+
+    if (accountType != DOMAIN_ACCOUNT) {
+        // app account status default value is true
         return true;
     }
-    // app account status default value is true
+
+    DomainAccountInfo info;
+    std::string account(reinterpret_cast<char*>(accountId->data), accountId->size);
+    info.accountId_ = account;
+    DLP_LOG_INFO(LABEL, "Get accountType:%{public}d", accountType);
+    DomainAccountStatus status;
+    res = DomainAccountClient::GetInstance().GetAccountStatus(info, status);
+    if (res != OHOS::ERR_OK) {
+        DLP_LOG_ERROR(LABEL, "GetAccountStatus from OsAccountKits failed, res:%{public}d.", res);
+        return false;
+    }
+    if (status != DomainAccountStatus::LOGIN) {
+        DLP_LOG_ERROR(LABEL, "Domain account status is not login.");
+        return false;
+    }
     return true;
 }
 

@@ -41,6 +41,7 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_
 static const size_t MAX_REQUEST_NUM = 100;
 static const uint32_t MAX_APPID_LIST_NUM = 250;
 static const uint32_t MAX_APPID_LENGTH = 200;
+static const uint32_t DLP_RESTOREPOLICYDATA_DATALEN = 1024 * 200;
 static const std::string POLICY_CERT = "policyCert";
 static const std::string DLP_MANAGER_BUNDLE_NAME = "com.ohos.dlpmanager";
 static std::unordered_map<uint64_t, RequestInfo> g_requestMap;
@@ -251,6 +252,10 @@ static void FreeBuffer(char** buff, uint32_t buffLen)
 static bool SetPermissionPolicy(DLP_RestorePolicyData* outParams, sptr<IDlpPermissionCallback> callback,
     PermissionPolicy& policyInfo, unordered_json& jsonObj)
 {
+    if (outParams->dataLen > DLP_RESTOREPOLICYDATA_DATALEN) {
+        DLP_LOG_ERROR(LABEL, "outParams->dataLen is out of size.");
+        return false;
+    }
     auto policyStr = new (std::nothrow) char[outParams->dataLen + 1];
     if (policyStr == nullptr) {
         DLP_LOG_ERROR(LABEL, "New memory fail");
@@ -652,6 +657,9 @@ int32_t ParseStringVectorToUint8TypedArray(const std::vector<std::string>& appId
 
 int32_t ParseUint8TypedArrayToStringVector(uint8_t *policy, uint32_t *policyLen, std::vector<std::string>& appIdList)
 {
+    if (*policyLen <= MAX_APPID_LIST_NUM * MAX_APPID_LENGTH) {
+        return DLP_SERVICE_ERROR_VALUE_INVALID;
+    }
     uint32_t count = reinterpret_cast<uint32_t *>(policy)[0];
     if (count < 0 || count > MAX_APPID_LIST_NUM) {
         DLP_LOG_ERROR(LABEL, "get appId List too large");
@@ -681,9 +689,8 @@ int32_t PresetDLPPolicy(const std::vector<std::string>& srcList, std::vector<std
         DLP_LOG_ERROR(LABEL, "get appId error");
         return DLP_SERVICE_ERROR_IPC_REQUEST_FAIL;
     }
-    std::string appId = bundleInfo.appId;
     dstList.assign(srcList.begin(), srcList.end());
-    dstList.push_back(appId);
+    dstList.push_back(bundleInfo.appId);
     return DLP_OK;
 }
 

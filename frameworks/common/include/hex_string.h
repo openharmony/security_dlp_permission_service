@@ -21,7 +21,7 @@
 namespace OHOS {
 namespace Security {
 namespace DlpPermission {
-constexpr int BYTE_TO_HEX_OPER_LENGTH = 2;
+constexpr uint32_t BYTE_TO_HEX_OPER_LENGTH = 2;
 int32_t ByteToHexString(const uint8_t *byte, uint32_t byteLen, char *hexStr, uint32_t hexLen);
 int32_t HexStringToByte(const char *hexStr, uint32_t hexStrLen, uint8_t *byte, uint32_t byteLen);
 }  // namespace DlpPermission

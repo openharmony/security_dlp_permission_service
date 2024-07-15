@@ -34,14 +34,14 @@ SandboxConfigKvDataStorage& SandboxConfigKvDataStorage::GetInstance()
     return *instance;
 }
 
-SandboxConfigKvDataStorage::SandboxConfigKvDataStorage(const KvDataStorageOptions &options)
+SandboxConfigKvDataStorage::SandboxConfigKvDataStorage(const KvDataStorageOptions& options)
     : DlpKvDataStorage(APP_CONFIG_STORE_ID, options)
 {}
 
 SandboxConfigKvDataStorage::~SandboxConfigKvDataStorage()
 {}
 
-int32_t SandboxConfigKvDataStorage::GetSandboxConfigFromDataStorage(const int32_t userId, const std::string& bundleName,
+int32_t SandboxConfigKvDataStorage::GetSandboxConfigFromDataStorage(int32_t userId, const std::string& bundleName,
     std::string& configInfo, const std::string tokenId)
 {
     std::string key;
@@ -62,7 +62,7 @@ int32_t SandboxConfigKvDataStorage::GetSandboxConfigFromDataStorage(const int32_
     return result;
 }
 
-int32_t SandboxConfigKvDataStorage::AddSandboxConfigIntoDataStorage(const int32_t userId, const std::string& bundleName,
+int32_t SandboxConfigKvDataStorage::AddSandboxConfigIntoDataStorage(int32_t userId, const std::string& bundleName,
     const std::string& configInfo, const std::string tokenId)
 {
     std::string key;
@@ -78,7 +78,7 @@ int32_t SandboxConfigKvDataStorage::AddSandboxConfigIntoDataStorage(const int32_
     return result;
 }
 
-int32_t SandboxConfigKvDataStorage::DeleteSandboxConfigFromDataStorage(const int32_t userId,
+int32_t SandboxConfigKvDataStorage::DeleteSandboxConfigFromDataStorage(int32_t userId,
     const std::string& bundleName, const std::string tokenId)
 {
     std::string key;
@@ -99,7 +99,7 @@ int32_t SandboxConfigKvDataStorage::DeleteSandboxConfigFromDataStorage(const int
     return ret;
 }
 
-bool SandboxConfigKvDataStorage::GenerateKey(const int32_t userId, const std::string& bundleName, std::string& key,
+bool SandboxConfigKvDataStorage::GenerateKey(int32_t userId, const std::string& bundleName, std::string& key,
     const std::string tokenId)
 {
     if (bundleName.empty()) {
@@ -131,10 +131,10 @@ int32_t SandboxConfigKvDataStorage::GetKeyMapByUserId(const int32_t userId, std:
 }
 
 void SandboxConfigKvDataStorage::SaveEntries(
-    std::vector<OHOS::DistributedKv::Entry> allEntries, std::map<std::string, std::string> &infos)
+    const std::vector<OHOS::DistributedKv::Entry>& allEntries, std::map<std::string, std::string>& infos)
 {
     DLP_LOG_DEBUG(LABEL, "start, allEntries size is: %{public}zu", allEntries.size());
-    for (auto const &item : allEntries) {
+    for (auto const& item : allEntries) {
         infos.emplace(item.key.ToString(), item.value.ToString());
     }
 }

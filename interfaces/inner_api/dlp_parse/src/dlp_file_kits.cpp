@@ -109,11 +109,14 @@ static bool IsValidDlpHeader(const struct DlpHeader& head)
 {
     if (head.magic != DLP_FILE_MAGIC || head.certSize == 0 || head.certSize > DLP_MAX_CERT_SIZE ||
         head.contactAccountSize == 0 || head.contactAccountSize > DLP_MAX_CERT_SIZE ||
-        head.certOffset != sizeof(struct DlpHeader) ||
-        head.contactAccountOffset != (sizeof(struct DlpHeader) + head.certSize) ||
+        head.certOffset != sizeof(struct DlpHeader)) {
+        DLP_LOG_ERROR(LABEL, "Parse dlp file header error.");
+        return false;
+    }
+    if (head.contactAccountOffset != (sizeof(struct DlpHeader) + head.certSize) ||
         head.txtOffset != (sizeof(struct DlpHeader) + head.certSize + head.contactAccountSize + head.offlineCertSize) ||
         head.txtSize > DLP_MAX_CONTENT_SIZE || head.offlineCertSize > DLP_MAX_CERT_SIZE) {
-        DLP_LOG_ERROR(LABEL, "parse dlp file header error.");
+        DLP_LOG_ERROR(LABEL, "Parse dlp file header error.");
         return false;
     }
     return true;

@@ -28,7 +28,7 @@ const std::string DLP_VISIT_RECORD_JSON_PATH = USER_INFO_BASE + PATH_SEPARATOR +
 }
 
 VisitRecordFileManager::VisitRecordFileManager()
-    : hasInit(false),
+    : hasInit_(false),
       fileOperator_(std::make_shared<FileOperator>()),
       visitRecordJsonManager_(std::make_shared<VisitRecordJsonManager>())
 {
@@ -46,7 +46,7 @@ VisitRecordFileManager& VisitRecordFileManager::GetInstance()
 bool VisitRecordFileManager::Init()
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
-    if (hasInit) {
+    if (hasInit_) {
         return true;
     }
     if (fileOperator_->IsExistFile(DLP_VISIT_RECORD_JSON_PATH)) {
@@ -63,7 +63,7 @@ bool VisitRecordFileManager::Init()
             visitRecordJsonManager_->FromJson(callbackInfoJson);
         }
     }
-    hasInit = true;
+    hasInit_ = true;
     return true;
 }
 
@@ -87,7 +87,7 @@ int32_t VisitRecordFileManager::UpdateFile(const int32_t& jsonRes)
 int32_t VisitRecordFileManager::AddVisitRecord(const std::string& bundleName, const int32_t& userId,
     const std::string& docUri)
 {
-    if (!hasInit && !Init()) {
+    if (!hasInit_ && !Init()) {
         DLP_LOG_ERROR(LABEL, "Init failed!");
         return DLP_RETENTION_UPDATE_ERROR;
     }
@@ -98,7 +98,7 @@ int32_t VisitRecordFileManager::AddVisitRecord(const std::string& bundleName, co
 int32_t VisitRecordFileManager::GetVisitRecordList(const std::string& bundleName, const int32_t& userId,
     std::vector<VisitedDLPFileInfo>& infoVec)
 {
-    if (!hasInit && !Init()) {
+    if (!hasInit_ && !Init()) {
         DLP_LOG_ERROR(LABEL, "Init failed!");
         return DLP_RETENTION_UPDATE_ERROR;
     }

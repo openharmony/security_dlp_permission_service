@@ -31,7 +31,7 @@ using Json = nlohmann::json;
 
 class VisitRecordFileManager {
 public:
-    explicit VisitRecordFileManager();
+    VisitRecordFileManager();
     virtual ~VisitRecordFileManager();
     static VisitRecordFileManager& GetInstance();
 
@@ -42,7 +42,7 @@ public:
 private:
     bool Init();
     int32_t UpdateFile(const int32_t& jsonRes);
-    bool hasInit;
+    bool hasInit_;
     std::shared_ptr<FileOperator> fileOperator_;
     std::recursive_mutex mutex_;
     std::shared_ptr<VisitRecordJsonManager> visitRecordJsonManager_;

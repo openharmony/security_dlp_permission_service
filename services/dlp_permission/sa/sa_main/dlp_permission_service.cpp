@@ -115,30 +115,28 @@ bool DlpPermissionService::RegisterAppStateObserver()
         DLP_LOG_INFO(LABEL, "AppStateObserver instance already create");
         return true;
     }
-    appStateObserver_ = new (std::nothrow) AppStateObserver();
-    if (appStateObserver_ == nullptr) {
+    sptr<AppStateObserver> tempAppStateObserver = new (std::nothrow) AppStateObserver();
+    if (tempAppStateObserver == nullptr) {
         DLP_LOG_ERROR(LABEL, "Failed to create AppStateObserver instance");
         return false;
     }
     sptr<ISystemAbilityManager> samgrClient = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
     if (samgrClient == nullptr) {
         DLP_LOG_ERROR(LABEL, "Failed to get system ability manager");
-        appStateObserver_ = nullptr;
         return false;
     }
     iAppMgr_ = iface_cast<AppExecFwk::IAppMgr>(samgrClient->GetSystemAbility(APP_MGR_SERVICE_ID));
     if (iAppMgr_ == nullptr) {
         DLP_LOG_ERROR(LABEL, "Failed to get ability manager service");
-        appStateObserver_ = nullptr;
         return false;
     }
-    int32_t result = iAppMgr_->RegisterApplicationStateObserver(appStateObserver_);
+    int32_t result = iAppMgr_->RegisterApplicationStateObserver(tempAppStateObserver);
     if (result != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "Failed to Register app state observer");
         iAppMgr_ = nullptr;
-        appStateObserver_ = nullptr;
         return false;
     }
+    appStateObserver_ = tempAppStateObserver;
     return true;
 }
 
@@ -266,7 +264,7 @@ static int32_t GetAppIndexFromRetentionInfo(const std::string& bundleName, bool 
 }
 
 int32_t DlpPermissionService::InstallDlpSandbox(const std::string& bundleName, DLPFileAccess dlpFileAccess,
-    int32_t userId, SandboxInfo &sandboxInfo, const std::string& uri)
+    int32_t userId, SandboxInfo& sandboxInfo, const std::string& uri)
 {
     if (bundleName.empty() || dlpFileAccess > FULL_CONTROL || dlpFileAccess <= NO_PERMISSION) {
         DLP_LOG_ERROR(LABEL, "param is invalid");
@@ -432,11 +430,11 @@ int32_t DlpPermissionService::IsInDlpSandbox(bool& inSandbox)
     return appStateObserver_->IsInDlpSandbox(inSandbox, uid);
 }
 
-void DlpPermissionService::GetCfgFilesList(std::vector<std::string> &cfgFilesList)
+void DlpPermissionService::GetCfgFilesList(std::vector<std::string>& cfgFilesList)
 {
     CfgFiles *cfgFiles = GetCfgFiles(DLP_CONFIG.c_str()); // need free
     if (cfgFiles != nullptr) {
-        for (auto &cfgPath : cfgFiles->paths) {
+        for (auto& cfgPath : cfgFiles->paths) {
             if (cfgPath != nullptr) {
                 cfgFilesList.emplace_back(cfgPath);
             }
@@ -446,7 +444,7 @@ void DlpPermissionService::GetCfgFilesList(std::vector<std::string> &cfgFilesLis
     std::reverse(cfgFilesList.begin(), cfgFilesList.end()); // priority from low to high, need reverse
 }
 
-void DlpPermissionService::GetConfigFileValue(const std::string &cfgFile, std::vector<std::string> &typeList)
+void DlpPermissionService::GetConfigFileValue(const std::string& cfgFile, std::vector<std::string>& typeList)
 {
     std::string content;
     (void)FileOperator().GetFileContentByPath(cfgFile, content);
@@ -473,7 +471,7 @@ std::vector<std::string> DlpPermissionService::InitConfig()
         cfgInit = false;
         std::vector<std::string> cfgFilesList;
         GetCfgFilesList(cfgFilesList);
-        for (const auto &cfgFile : cfgFilesList) {
+        for (const auto& cfgFile : cfgFilesList) {
             GetConfigFileValue(cfgFile, typeList);
             if (!typeList.empty()) {
                 break;
@@ -496,14 +494,14 @@ int32_t DlpPermissionService::GetDlpSupportFileType(std::vector<std::string>& su
     return DLP_OK;
 }
 
-int32_t DlpPermissionService::RegisterDlpSandboxChangeCallback(const sptr<IRemoteObject> &callback)
+int32_t DlpPermissionService::RegisterDlpSandboxChangeCallback(const sptr<IRemoteObject>& callback)
 {
     int32_t pid = IPCSkeleton::GetCallingRealPid();
     DLP_LOG_INFO(LABEL, "GetCallingRealPid,%{public}d", pid);
     return DlpSandboxChangeCallbackManager::GetInstance().AddCallback(pid, callback);
 }
 
-int32_t DlpPermissionService::UnRegisterDlpSandboxChangeCallback(bool &result)
+int32_t DlpPermissionService::UnRegisterDlpSandboxChangeCallback(bool& result)
 {
     int32_t pid = IPCSkeleton::GetCallingRealPid();
     DLP_LOG_INFO(LABEL, "GetCallingRealPid,%{public}d", pid);

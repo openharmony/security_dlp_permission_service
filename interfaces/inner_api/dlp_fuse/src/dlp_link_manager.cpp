@@ -93,7 +93,7 @@ int32_t DlpLinkManager::AddDlpLinkFile(std::shared_ptr<DlpFile>& filePtr, const 
     return DLP_OK;
 }
 
-int32_t DlpLinkManager::StopDlpLinkFile(std::shared_ptr<DlpFile> &filePtr)
+int32_t DlpLinkManager::StopDlpLinkFile(std::shared_ptr<DlpFile>& filePtr)
 {
     if (filePtr == nullptr) {
         DLP_LOG_ERROR(LABEL, "Stop link file fail, dlp file is null");
@@ -118,7 +118,7 @@ int32_t DlpLinkManager::StopDlpLinkFile(std::shared_ptr<DlpFile> &filePtr)
     return DLP_FUSE_ERROR_LINKFILE_NOT_EXIST;
 }
 
-int32_t DlpLinkManager::RestartDlpLinkFile(std::shared_ptr<DlpFile> &filePtr)
+int32_t DlpLinkManager::RestartDlpLinkFile(std::shared_ptr<DlpFile>& filePtr)
 {
     if (filePtr == nullptr) {
         DLP_LOG_ERROR(LABEL, "Restart link file fail, dlp file is null");
@@ -143,7 +143,7 @@ int32_t DlpLinkManager::RestartDlpLinkFile(std::shared_ptr<DlpFile> &filePtr)
     return DLP_FUSE_ERROR_LINKFILE_NOT_EXIST;
 }
 
-int32_t DlpLinkManager::ReplaceDlpLinkFile(std::shared_ptr<DlpFile> &filePtr, const std::string &dlpLinkName)
+int32_t DlpLinkManager::ReplaceDlpLinkFile(std::shared_ptr<DlpFile>& filePtr, const std::string& dlpLinkName)
 {
     if (filePtr == nullptr) {
         DLP_LOG_ERROR(LABEL, "Replace link file fail, dlp file is null");

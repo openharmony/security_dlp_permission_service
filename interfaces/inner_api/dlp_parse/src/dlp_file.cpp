@@ -247,11 +247,9 @@ bool DlpFile::UpdateDlpFilePermission()
             DLP_LOG_ERROR(LABEL, "query GetDomainAccountName failed");
             return false;
         }
-    } else {
-        if (GetLocalAccountName(accountName) != DLP_OK) {
-            DLP_LOG_ERROR(LABEL, "query GetLocalAccountName failed");
-            return false;
-        }
+    } else if (GetLocalAccountName(accountName) != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "query GetLocalAccountName failed");
+        return false;
     }
 
     DLP_LOG_DEBUG(LABEL, "current account Name %{private}s", accountName.c_str());

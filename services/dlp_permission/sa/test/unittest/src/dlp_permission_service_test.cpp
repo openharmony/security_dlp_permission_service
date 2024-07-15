@@ -851,15 +851,15 @@ HWTEST_F(DlpPermissionServiceTest, VisitRecordFileManager001, TestSize.Level1)
     std::vector<VisitedDLPFileInfo> infoVec;
     int32_t res = visitRecordFileManager->GetVisitRecordList(DLP_MANAGER_APP, 100, infoVec);
     ASSERT_EQ(DLP_OK, res);
-    visitRecordFileManager->hasInit = true;
+    visitRecordFileManager->hasInit_ = true;
     ASSERT_EQ(true, visitRecordFileManager->Init());
-    visitRecordFileManager->hasInit = false;
+    visitRecordFileManager->hasInit_ = false;
     ASSERT_EQ(true, visitRecordFileManager->Init());
     ASSERT_EQ(DLP_OK, visitRecordFileManager->UpdateFile(DLP_FILE_NO_NEED_UPDATE));
     ASSERT_EQ(DLP_JSON_UPDATE_ERROR, visitRecordFileManager->UpdateFile(DLP_JSON_UPDATE_ERROR));
-    visitRecordFileManager->hasInit = false;
+    visitRecordFileManager->hasInit_ = false;
     ASSERT_EQ(DLP_OK, visitRecordFileManager->AddVisitRecord(DLP_MANAGER_APP, 100, "testuri"));
-    visitRecordFileManager->hasInit = false;
+    visitRecordFileManager->hasInit_ = false;
     res = visitRecordFileManager->GetVisitRecordList(DLP_MANAGER_APP, 100, infoVec);
     ASSERT_EQ(DLP_OK, res);
 }
