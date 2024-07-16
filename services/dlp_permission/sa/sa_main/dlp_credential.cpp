@@ -657,7 +657,7 @@ int32_t ParseStringVectorToUint8TypedArray(const std::vector<std::string>& appId
 
 int32_t ParseUint8TypedArrayToStringVector(uint8_t *policy, uint32_t *policyLen, std::vector<std::string>& appIdList)
 {
-    if (*policyLen <= MAX_APPID_LIST_NUM * MAX_APPID_LENGTH) {
+    if (*policyLen > MAX_APPID_LIST_NUM * MAX_APPID_LENGTH) {
         return DLP_SERVICE_ERROR_VALUE_INVALID;
     }
     uint32_t count = reinterpret_cast<uint32_t *>(policy)[0];
