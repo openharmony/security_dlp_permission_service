@@ -125,7 +125,8 @@ bool DlpPermissionService::RegisterAppStateObserver()
         DLP_LOG_ERROR(LABEL, "Failed to get system ability manager");
         return false;
     }
-    iAppMgr_ = iface_cast<AppExecFwk::IAppMgr>(samgrClient->GetSystemAbility(APP_MGR_SERVICE_ID));
+    auto obj = samgrClient->GetSystemAbility(APP_MGR_SERVICE_ID);
+    iAppMgr_ = iface_cast<AppExecFwk::IAppMgr>(obj);
     if (iAppMgr_ == nullptr) {
         DLP_LOG_ERROR(LABEL, "Failed to get ability manager service");
         return false;
@@ -136,7 +137,14 @@ bool DlpPermissionService::RegisterAppStateObserver()
         iAppMgr_ = nullptr;
         return false;
     }
+    sptr<AppExecFwk::AppMgrProxy> proxy = new (std::nothrow)AppExecFwk::AppMgrProxy(obj);
+    if (proxy == nullptr) {
+        DLP_LOG_ERROR(LABEL, "Failed to create AppMgrProxy instance");
+        iAppMgr_ = nullptr;
+        return false;
+    }
     appStateObserver_ = tempAppStateObserver;
+    appStateObserver_->SetAppProxy(proxy);
     return true;
 }
 
@@ -269,6 +277,9 @@ int32_t DlpPermissionService::InstallDlpSandbox(const std::string& bundleName, D
     if (bundleName.empty() || dlpFileAccess > FULL_CONTROL || dlpFileAccess <= NO_PERMISSION) {
         DLP_LOG_ERROR(LABEL, "param is invalid");
         return DLP_SERVICE_ERROR_VALUE_INVALID;
+    }
+    if (appStateObserver_->GetOpeningSandboxInfo(bundleName, uri, userId, sandboxInfo)) {
+        return DLP_OK;
     }
     bool isReadOnly = dlpFileAccess == DLPFileAccess::READ_ONLY;
     bool isNeedInstall = true;

@@ -27,6 +27,7 @@
 namespace OHOS {
 namespace Security {
 namespace DlpPermission {
+using OHOS::AppExecFwk::AppProcessState;
 namespace {
 constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "AppStateObserver"};
 }
@@ -203,6 +204,56 @@ void AppStateObserver::AddDlpSandboxInfo(const DlpSandboxInfo& appInfo)
     return;
 }
 
+void AppStateObserver::SetAppProxy(const sptr<AppExecFwk::AppMgrProxy>& appProxy)
+{
+    appProxy_ = appProxy;
+}
+
+bool AppStateObserver::GetRunningProcessesInfo(std::vector<RunningProcessInfo>& infoVec)
+{
+    if (appProxy_ == nullptr) {
+        DLP_LOG_ERROR(LABEL, "AppProxy_ is nullptr");
+        return false;
+    }
+    int32_t ret = appProxy_->GetAllRunningProcesses(infoVec);
+    if (ret != ERR_OK) {
+        DLP_LOG_ERROR(LABEL, "GetAllRunningProcesses failed, errorCode=%{public}d", ret);
+        return false;
+    }
+    return true;
+}
+
+bool AppStateObserver::GetOpeningSandboxInfo(const std::string& bundleName, const std::string& uri,
+    int32_t userId, SandboxInfo& sandboxInfo)
+{
+    std::lock_guard<std::mutex> lock(sandboxInfoLock_);
+    for (auto iter = sandboxInfo_.begin(); iter != sandboxInfo_.end(); iter++) {
+        DlpSandboxInfo appInfo = iter->second;
+        if (appInfo.userId != userId || appInfo.bundleName != bundleName || appInfo.uri != uri) {
+            continue;
+        }
+        std::vector<RunningProcessInfo> infoVec;
+        (void)GetRunningProcessesInfo(infoVec);
+        for (auto it = infoVec.begin(); it != infoVec.end(); it++) {
+            if (it->uid_ != appInfo.uid) {
+                continue;
+            }
+            if (it->state_ == AppProcessState::APP_STATE_END || it->state_ == AppProcessState::APP_STATE_TERMINATED) {
+                DLP_LOG_INFO(LABEL, "APP is dead, appName:%{public}s, state=%{public}d", it->processName_.c_str(),
+                    it->state_);
+                return false;
+            }
+            DLP_LOG_INFO(LABEL, "APP is running, appName:%{public}s, state=%{public}d", it->processName_.c_str(),
+                it->state_);
+            sandboxInfo.appIndex = appInfo.appIndex;
+            sandboxInfo.tokenId = appInfo.tokenId;
+            return true;
+        }
+        break;
+    }
+    return false;
+}
+
 void AppStateObserver::GetOpeningReadOnlySandbox(const std::string& bundleName, int32_t userId, int32_t& appIndex)
 {
     std::lock_guard<std::mutex> lock(sandboxInfoLock_);
@@ -236,7 +287,8 @@ void AppStateObserver::OnProcessDied(const AppExecFwk::ProcessData& processData)
 
     // current died process is dlpmanager
     if (processData.bundleName == "com.ohos.dlpmanager" &&
-        processData.processName != "com.ohos.dlpmanager:sys/commonUI") {
+        processData.processName != "com.ohos.dlpmanager:sys/commonUI" &&
+        processData.processName != "com.ohos.dlpmanager:action") {
         int32_t userId;
         if (GetUserIdFromUid(processData.uid, &userId) != 0) {
             return;

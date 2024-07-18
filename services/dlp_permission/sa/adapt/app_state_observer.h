@@ -19,7 +19,6 @@
 #include <unordered_map>
 #include <mutex>
 #include "application_state_observer_stub.h"
-#include "app_mgr_interface.h"
 #include "app_mgr_proxy.h"
 #include "dlp_sandbox_info.h"
 #include "iremote_object.h"
@@ -28,6 +27,7 @@
 namespace OHOS {
 namespace Security {
 namespace DlpPermission {
+using OHOS::AppExecFwk::RunningProcessInfo;
 class AppStateObserver : public AppExecFwk::ApplicationStateObserverStub {
 public:
     explicit AppStateObserver();
@@ -48,6 +48,9 @@ public:
     bool CallbackListenerEmpty();
     bool GetSandboxInfo(int32_t uid, DlpSandboxInfo& appInfo);
     void UpdatReadFlag(int32_t uid);
+    bool GetOpeningSandboxInfo(const std::string& bundleName, const std::string& uri,
+        int32_t userId, SandboxInfo& sandboxInfo);
+    void SetAppProxy(const sptr<AppExecFwk::AppMgrProxy>& appProxy);
 private:
     void UninstallDlpSandbox(DlpSandboxInfo& appInfo);
     void UninstallAllDlpSandboxForUser(int32_t userId);
@@ -62,6 +65,7 @@ private:
     void AddUidWithTokenId(uint32_t tokenId, int32_t uid);
     bool GetUidByTokenId(uint32_t tokenId, int32_t& uid);
     void EraseUidTokenIdMap(uint32_t tokenId);
+    bool GetRunningProcessesInfo(std::vector<RunningProcessInfo>& infoVec);
 
     std::unordered_map<uint32_t, int32_t> tokenIdToUidMap_;
     std::mutex tokenIdToUidMapLock_;
@@ -71,6 +75,7 @@ private:
     std::mutex userIdListLock_;
     std::map<int32_t, int32_t> callbackList_;
     std::mutex callbackListLock_;
+    sptr<AppExecFwk::AppMgrProxy> appProxy_ = nullptr;
 };
 }  // namespace DlpPermission
 }  // namespace Security
