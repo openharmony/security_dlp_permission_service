@@ -185,6 +185,7 @@ bool DlpFileKits::GetSandboxFlag(Want& want)
         return false;
     }
     close(fd);
+    fd = -1;
     std::string realSuffix = GetDlpFileRealSuffix(fileName);
     if (realSuffix != DEFAULT_STRING) {
         DLP_LOG_DEBUG(LABEL, "Real suffix is %{public}s", realSuffix.c_str());

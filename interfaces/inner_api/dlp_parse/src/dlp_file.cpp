@@ -494,7 +494,7 @@ bool DlpFile::ParseCert()
         return false;
     }
     cert_.size = static_cast<uint32_t>(fz.st_size);
-    int32_t fd = open(DLP_CERT.c_str(), O_RDWR);
+    int32_t fd = open(DLP_CERT.c_str(), O_RDONLY);
     if (fd == -1) {
         DLP_LOG_ERROR(LABEL, "open failed, %{public}s", strerror(errno));
         return false;
@@ -502,6 +502,7 @@ bool DlpFile::ParseCert()
 
     uint32_t size = static_cast<uint32_t>(read(fd, cert_.data, cert_.size));
     (void)close(fd);
+    fd = -1;
     if (size != cert_.size) {
         DLP_LOG_ERROR(LABEL, "read failed, %{public}s", strerror(errno));
         return false;
@@ -527,7 +528,7 @@ bool DlpFile::CleanTmpFile()
     }
 
     close(encDataFd_);
-
+    encDataFd_ = -1;
     std::lock_guard<std::mutex> lock(g_fileOpLock_);
     char cwd[DLP_CWD_MAX] = {0};
     GETCWD_AND_CHECK(cwd, DLP_CWD_MAX, DLP_PARSE_ERROR_FILE_OPERATE_FAIL, LABEL);
@@ -1225,7 +1226,7 @@ int32_t DlpFile::RemoveDlpPermissionInZip(int32_t outPlainFileFd)
     CHDIR_AND_CHECK(workDir_.c_str(), DLP_PARSE_ERROR_FILE_OPERATE_FAIL, LABEL);
     CHDIR_AND_CHECK(dirIndex_.c_str(), DLP_PARSE_ERROR_FILE_OPERATE_FAIL, LABEL);
 
-    int32_t encFd = open(DLP_OPENING_ENC_DATA.c_str(), O_RDWR, S_IRWXU);
+    int32_t encFd = open(DLP_OPENING_ENC_DATA.c_str(), O_RDWR, S_IRUSR | S_IWUSR);
     Defer p2(nullptr, [&](...) {
         if (close(encFd) != 0) {
             DLP_LOG_ERROR(LABEL, "close failed, %{public}s", strerror(errno));
