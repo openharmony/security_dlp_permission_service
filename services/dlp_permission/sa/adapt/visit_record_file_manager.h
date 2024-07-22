@@ -42,7 +42,7 @@ public:
 private:
     bool Init();
     int32_t UpdateFile(const int32_t& jsonRes);
-    bool hasInit_;
+    bool hasInit_ = false;
     std::shared_ptr<FileOperator> fileOperator_;
     std::recursive_mutex mutex_;
     std::shared_ptr<VisitRecordJsonManager> visitRecordJsonManager_;

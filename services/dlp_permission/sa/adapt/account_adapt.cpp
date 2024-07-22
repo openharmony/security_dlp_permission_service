@@ -123,7 +123,7 @@ bool IsAccountLogIn(uint32_t osAccountId, AccountType accountType, const DlpBlob
         return false;
     }
     if (status != DomainAccountStatus::LOGIN) {
-        DLP_LOG_ERROR(LABEL, "Domain account status is not login.");
+        DLP_LOG_ERROR(LABEL, "Domain account status is not login. status=%{public}d.", status);
         return false;
     }
     return true;
