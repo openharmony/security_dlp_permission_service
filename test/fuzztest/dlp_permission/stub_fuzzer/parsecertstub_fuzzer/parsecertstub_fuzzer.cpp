@@ -36,7 +36,7 @@ const std::string ENC_DATA = "encData";
 const std::string ENC_ACCOUNT_TYPE = "accountType";
 constexpr int BYTE_TO_HEX_OPER_LENGTH = 2;
 const uint32_t BUFFER_LENGTH = 30;
-
+const std::string DLP_MANAGER_BUNDLE_NAME = "com.ohos.dlpmanager_";
 static void InitCertJson(const uint8_t* data, size_t size, Json &certJson)
 {
     certJson[ENC_DATA_LEN] = size;
@@ -62,7 +62,10 @@ static void FuzzTest(const uint8_t* data, size_t size)
     if (!datas.WriteInterfaceToken(DlpPermissionStub::GetDescriptor())) {
         return;
     }
-
+    std::string appId(reinterpret_cast<const char*>(data + BUFFER_LENGTH), size - BUFFER_LENGTH);
+    if (!datas.WriteString(DLP_MANAGER_BUNDLE_NAME + appId)) {
+        return;
+    }
     Json certJson;
     InitCertJson(data, size, certJson);
     std::string certStr = certJson.dump();
@@ -71,10 +74,6 @@ static void FuzzTest(const uint8_t* data, size_t size)
     cert.assign(certStr.begin(), certStr.end());
     certParcel->cert = cert;
     if (!datas.WriteParcelable(certParcel)) {
-        return;
-    }
-    std::string appId(reinterpret_cast<const char*>(data + BUFFER_LENGTH), size - BUFFER_LENGTH);
-    if (!datas.WriteString(appId)) {
         return;
     }
     std::shared_ptr<ParseDlpCertificateCallback> callback = std::make_shared<ClientParseDlpCertificateCallback>();

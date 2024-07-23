@@ -29,6 +29,11 @@
 
 using namespace OHOS::Security::DlpPermission;
 using namespace OHOS::Security::AccessToken;
+const int32_t DEFAULT_USERID = 100;
+int32_t GetCallingUserId(void)
+{
+    return DEFAULT_USERID;
+}
 namespace OHOS {
 namespace Security {
 namespace DlpPermission {
