@@ -41,7 +41,7 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_
 static const size_t MAX_REQUEST_NUM = 100;
 static const uint32_t MAX_APPID_LIST_NUM = 250;
 static const uint32_t MAX_APPID_LENGTH = 200;
-static const uint32_t DLP_RESTOREPOLICYDATA_DATALEN = 1024 * 200;
+static const uint32_t DLP_RESTORE_POLICY_DATA_LEN = 1024 * 200;
 static const std::string POLICY_CERT = "policyCert";
 static const std::string DLP_MANAGER_BUNDLE_NAME = "com.ohos.dlpmanager";
 static std::unordered_map<uint64_t, RequestInfo> g_requestMap;
@@ -252,7 +252,7 @@ static void FreeBuffer(char** buff, uint32_t buffLen)
 static bool SetPermissionPolicy(DLP_RestorePolicyData* outParams, sptr<IDlpPermissionCallback> callback,
     PermissionPolicy& policyInfo, unordered_json& jsonObj)
 {
-    if (outParams->dataLen > DLP_RESTOREPOLICYDATA_DATALEN) {
+    if (outParams->dataLen > DLP_RESTORE_POLICY_DATA_LEN) {
         DLP_LOG_ERROR(LABEL, "outParams->dataLen is out of size.");
         return false;
     }
@@ -655,7 +655,8 @@ int32_t ParseStringVectorToUint8TypedArray(const std::vector<std::string>& appId
     return offset;
 }
 
-int32_t ParseUint8TypedArrayToStringVector(uint8_t *policy, uint32_t *policyLen, std::vector<std::string>& appIdList)
+int32_t ParseUint8TypedArrayToStringVector(uint8_t *policy, const uint32_t *policyLen,
+    std::vector<std::string>& appIdList)
 {
     if (*policyLen > MAX_APPID_LIST_NUM * MAX_APPID_LENGTH) {
         return DLP_SERVICE_ERROR_VALUE_INVALID;
@@ -779,7 +780,6 @@ int32_t DlpCredential::CheckMdmPermission(const std::string& bundleName, int32_t
         DLP_LOG_ERROR(LABEL, "get appId error");
         return DLP_SERVICE_ERROR_IPC_REQUEST_FAIL;
     }
-    std::string appId = bundleInfo.appId;
     PolicyHandle handle = {.id = strdup(const_cast<char *>(bundleInfo.appId.c_str()))};
     if (handle.id == nullptr) {
         DLP_LOG_ERROR(LABEL, "Strdup failed.");
