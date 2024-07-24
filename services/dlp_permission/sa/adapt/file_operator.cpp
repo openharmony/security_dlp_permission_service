@@ -77,6 +77,7 @@ int32_t FileOperator::InputFileByPathAndContent(const std::string& path, const s
         return DLP_RETENTION_COMMON_FILE_OPEN_FAILED;
     }
     fclose(fp);
+    fp = nullptr;
     // change mode
     if (!ChangeModeFile(path, S_IRUSR | S_IWUSR)) {
         DLP_LOG_INFO(LABEL, "failed to change mode for file %{public}s, errno %{public}d.", path.c_str(), errno);

@@ -36,11 +36,13 @@ DlpLinkManager::DlpLinkManager()
 DlpLinkManager::~DlpLinkManager()
 {
     Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(g_DlpLinkMapLock_);
-    for (auto iter = g_DlpLinkFileNameMap_.begin(); iter != g_DlpLinkFileNameMap_.end(); iter++) {
+    for (auto iter = g_DlpLinkFileNameMap_.begin(); iter != g_DlpLinkFileNameMap_.end();) {
         DlpLinkFile* tmp = iter->second;
         if (tmp != nullptr) {
             iter = g_DlpLinkFileNameMap_.erase(iter);
             delete tmp;
+        } else {
+            iter++;
         }
     }
 }
