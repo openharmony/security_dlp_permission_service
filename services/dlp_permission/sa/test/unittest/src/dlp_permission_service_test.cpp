@@ -1166,3 +1166,17 @@ HWTEST_F(DlpPermissionServiceTest, SandboxConfigOperate001, TestSize.Level1)
     int32_t ret = dlpPermissionService_->SandboxConfigOperate(config, SandboxConfigOperationEnum::ADD);
     ASSERT_NE(DLP_OK, ret);
 }
+
+/**
+ * @tc.name: SetReadFlag001
+ * @tc.desc: SetReadFlag test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionServiceTest, SetReadFlag001, TestSize.Level1)
+{
+    DLP_LOG_DEBUG(LABEL, "SetReadFlag001");
+    uint32_t uid = 0;
+    int32_t ret = dlpPermissionService_->SetReadFlag(uid);
+    ASSERT_EQ(DLP_OK, ret);
+}
