@@ -16,7 +16,7 @@ import("../../dlp_permission_service.gni")
 
 group("napi_packages") {
   deps = []
-  if (support_jsapi) {
+  if (support_jsapi && !ohos_indep_compiler_enable) {
     deps += [
       "${dlp_root_dir}/interfaces/kits/dlp_permission:libdlppermission_napi",
     ]
