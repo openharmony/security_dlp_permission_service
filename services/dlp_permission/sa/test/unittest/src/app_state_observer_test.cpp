@@ -215,3 +215,32 @@ HWTEST_F(AppStateObserverTest, GetOpeningReadOnlySandbox001, TestSize.Level1)
     ASSERT_EQ(appIndex, -1);
     observer.sandboxInfo_.clear();
 }
+
+/**
+ * @tc.name: AddSandboxInfo001
+ * @tc.desc: AddSandboxInfo test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AppStateObserverTest, AddSandboxInfo001, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL, "AddSandboxInfo001");
+    AppStateObserver observer;
+    int32_t uid = 1;
+
+    DlpSandboxInfo appInfo;
+    observer.AddSandboxInfo(appInfo);
+    observer.UpdatReadFlag(uid);
+    ASSERT_FALSE(observer.sandboxInfo_[appInfo.uid].hasRead);
+
+    appInfo = {
+        .uid = 1,
+        .userId = 123,
+        .appIndex = 0,
+        .bundleName = "testbundle1",
+        .hasRead = false
+    };
+    observer.AddSandboxInfo(appInfo);
+    observer.UpdatReadFlag(uid);
+    ASSERT_TRUE(observer.sandboxInfo_[appInfo.uid].hasRead);
+}

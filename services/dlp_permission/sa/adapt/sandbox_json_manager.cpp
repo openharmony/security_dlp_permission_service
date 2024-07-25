@@ -47,6 +47,7 @@ typedef enum KeyType {
     NUMBER,
     STRING,
     ARRAY,
+    BOOL,
 } KeyType;
 
 SandboxJsonManager::SandboxJsonManager()
@@ -420,6 +421,8 @@ static bool CheckJsonElement(const std::string& key, const Json& retentionJson, 
             return retentionJson.contains(key) && retentionJson.at(key).is_string();
         case KeyType::ARRAY:
             return retentionJson.contains(key) && retentionJson.at(key).is_array();
+        case KeyType::BOOL:
+            return retentionJson.contains(key) && retentionJson.at(key).is_boolean();
         default:
             return false;
     }
@@ -440,7 +443,7 @@ void SandboxJsonManager::FromJson(const Json& jsonObject)
             !CheckJsonElement(DOCURISET, retentionJson, KeyType::ARRAY) ||
             !CheckJsonElement(USERID, retentionJson, KeyType::NUMBER) ||
             !CheckJsonElement(DLPFILEACCESS, retentionJson, KeyType::NUMBER) ||
-            !CheckJsonElement(HAS_READ, retentionJson, KeyType::NUMBER)) {
+            !CheckJsonElement(HAS_READ, retentionJson, KeyType::BOOL)) {
             DLP_LOG_ERROR(LABEL, "json contains error");
             continue;
         }

@@ -88,6 +88,8 @@ ohos_unittest("dlp_permission_service_test") {
     "unittest/src/dlp_permission_service_test.cpp",
     "unittest/src/hex_string_test.cpp",
     "unittest/src/permission_policy_test.cpp",
+    "unittest/src/retention_file_manager_test.cpp",
+    "unittest/src/sandbox_json_manager_test.cpp",
   ]
 
   configs = [ "${dlp_root_dir}/config:coverage_flags" ]

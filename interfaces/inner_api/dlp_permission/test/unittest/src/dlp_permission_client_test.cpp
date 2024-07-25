@@ -161,3 +161,19 @@ HWTEST_F(DlpPermissionClientTest, GetProxyFromRemoteObject001, TestSize.Level1)
     DlpPermissionClient::GetInstance().GetProxyFromRemoteObject(remoteObject);
     ASSERT_EQ(nullptr, remoteObject);
 }
+
+/**
+ * @tc.name: SetReadFlag001
+ * @tc.desc: SetReadFlag test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionClientTest, SetReadFlag001, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL, "SetReadFlag001");
+
+    sptr<IRemoteObject> remoteObject;
+    uint32_t uid = 0;
+    int32_t ret = DlpPermissionClient::GetInstance().SetReadFlag(uid);
+    ASSERT_TRUE(ret != DLP_CALLBACK_SA_WORK_ABNORMAL);
+}
