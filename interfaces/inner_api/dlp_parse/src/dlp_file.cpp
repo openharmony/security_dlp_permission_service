@@ -252,8 +252,6 @@ bool DlpFile::UpdateDlpFilePermission()
         return false;
     }
 
-    DLP_LOG_DEBUG(LABEL, "current account Name %{private}s", accountName.c_str());
-
     if (accountName == policy_.ownerAccount_) {
         DLP_LOG_DEBUG(LABEL, "current account is owner, it has full permission");
         authPerm_ = FULL_CONTROL;
