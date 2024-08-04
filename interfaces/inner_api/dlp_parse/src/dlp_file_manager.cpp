@@ -424,7 +424,10 @@ int32_t DlpFileManager::GenerateDlpFile(
 
     std::string cache = workDir + PATH_CACHE;
     PrepareDirs(cache);
-    filePtr = std::make_shared<DlpFile>(dlpFileFd, cache, ++index_, true);
+    int64_t timeStamp =
+        std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch())
+            .count();
+    filePtr = std::make_shared<DlpFile>(dlpFileFd, cache, timeStamp, true);
 
     int32_t result = SetDlpFileParams(filePtr, property);
     if (result != DLP_OK) {
@@ -457,7 +460,10 @@ int32_t DlpFileManager::OpenDlpFile(int32_t dlpFileFd, std::shared_ptr<DlpFile>&
 
     std::string cache = workDir + PATH_CACHE;
     PrepareDirs(cache);
-    filePtr = std::make_shared<DlpFile>(dlpFileFd, cache, ++index_, false);
+    int64_t timeStamp =
+        std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch())
+            .count();
+    filePtr = std::make_shared<DlpFile>(dlpFileFd, cache, timeStamp, false);
 
     int32_t result = ParseDlpFileFormat(filePtr, workDir, appId);
     if (result != DLP_OK) {

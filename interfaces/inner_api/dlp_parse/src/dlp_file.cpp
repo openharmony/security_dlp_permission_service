@@ -53,7 +53,7 @@ const std::string DLP_GEN_FILE = "gen_dlp_file";
 } // namespace
 std::mutex g_fileOpLock_;
 
-DlpFile::DlpFile(int32_t dlpFd, const std::string &workDir, int32_t index, bool isZip) : dlpFd_(dlpFd),
+DlpFile::DlpFile(int32_t dlpFd, const std::string &workDir, int64_t index, bool isZip) : dlpFd_(dlpFd),
     workDir_(workDir), dirIndex_(std::to_string(index)), isZip_(isZip), isFuseLink_(false), authPerm_(READ_ONLY)
 {
     head_.magic = DLP_FILE_MAGIC;
