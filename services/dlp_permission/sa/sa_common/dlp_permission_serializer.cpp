@@ -64,12 +64,19 @@ constexpr uint64_t  VALID_TIME_STAMP = 2147483647;
 
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
     LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "DlpPermissionSerializer"};
+std::recursive_mutex instanceMutex_;
 }  // namespace
 
 DlpPermissionSerializer& DlpPermissionSerializer::GetInstance()
 {
-    static DlpPermissionSerializer instance;
-    return instance;
+    static DlpPermissionSerializer* instance = nullptr;
+    if (instance == nullptr) {
+        std::lock_guard<std::recursive_mutex> lock(instanceMutex_);
+        if (instance == nullptr) {
+            instance = new DlpPermissionSerializer();
+        }
+    }
+    return *instance;
 }
 
 static int32_t ReadUint8ArrayFromJson(const unordered_json& permJson, uint8_t** buff, uint32_t& buffLen,

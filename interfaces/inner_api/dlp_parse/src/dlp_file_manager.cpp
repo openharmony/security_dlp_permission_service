@@ -35,6 +35,7 @@ namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "DlpFileManager"};
 static constexpr uint32_t MAX_DLP_FILE_SIZE = 1000; // max open dlp file
 const std::string PATH_CACHE = "/cache";
+std::recursive_mutex instanceMutex_;
 }
 
 int32_t DlpFileManager::AddDlpFileNode(const std::shared_ptr<DlpFile>& filePtr)
@@ -500,8 +501,14 @@ int32_t DlpFileManager::RecoverDlpFile(std::shared_ptr<DlpFile>& filePtr, int32_
 
 DlpFileManager& DlpFileManager::GetInstance()
 {
-    static DlpFileManager instance;
-    return instance;
+    static DlpFileManager* instance = nullptr;
+    if (instance == nullptr) {
+        std::lock_guard<std::recursive_mutex> lock(instanceMutex_);
+        if (instance == nullptr) {
+            instance = new DlpFileManager();
+        }
+    }
+    return *instance;
 }
 }  // namespace DlpPermission
 }  // namespace Security

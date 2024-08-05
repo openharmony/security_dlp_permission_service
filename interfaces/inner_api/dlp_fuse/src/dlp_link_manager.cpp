@@ -26,6 +26,7 @@ namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "DlpLinkManager"};
 static const int MAX_FILE_NAME_LEN = 256;
 static constexpr uint32_t MAX_DLP_LINK_SIZE = 1000; // max open link file
+std::recursive_mutex instanceMutex_;
 }
 
 DlpLinkManager::DlpLinkManager()
@@ -236,8 +237,14 @@ void DlpLinkManager::DumpDlpLinkFile(std::vector<DlpLinkFileInfo>& linkList)
 
 DlpLinkManager& DlpLinkManager::GetInstance()
 {
-    static DlpLinkManager instance;
-    return instance;
+    static DlpLinkManager* instance = nullptr;
+    if (instance == nullptr) {
+        std::lock_guard<std::recursive_mutex> lock(instanceMutex_);
+        if (instance == nullptr) {
+            instance = new DlpLinkManager();
+        }
+    }
+    return *instance;
 }
 }  // namespace DlpPermission
 }  // namespace Security
