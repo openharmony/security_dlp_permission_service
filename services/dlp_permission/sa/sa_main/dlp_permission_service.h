@@ -34,12 +34,6 @@ namespace Security {
 namespace DlpPermission {
 enum class ServiceRunningState { STATE_NOT_START, STATE_RUNNING };
 
-#ifdef DLP_GATHERING_SANDBOX
-#define GATHERING_POLICY true
-#else
-#define GATHERING_POLICY false
-#endif
-
 class DlpPermissionService final : public SystemAbility, public DlpPermissionStub {
     DECLARE_DELAYED_SINGLETON(DlpPermissionService);
     DECLEAR_SYSTEM_ABILITY(DlpPermissionService);
@@ -107,7 +101,6 @@ private:
     std::shared_ptr<std::thread> thread_ = nullptr;
     std::mutex mutex_;
     std::mutex terminalMutex_;
-    bool isGathering_ = GATHERING_POLICY;
     ServiceRunningState state_;
     sptr<AppExecFwk::IAppMgr> iAppMgr_;
     sptr<AppStateObserver> appStateObserver_;

@@ -467,9 +467,9 @@ void DlpPermissionService::GetConfigFileValue(const std::string& cfgFile, std::v
         DLP_LOG_WARN(LABEL, "JsonObj is discarded");
         return ;
     }
-    if (jsonObj.find(SUPPORT_FILE_TYPE) != jsonObj.end() && jsonObj.at(SUPPORT_FILE_TYPE).is_array()
-        && !jsonObj.at(SUPPORT_FILE_TYPE).empty() && jsonObj.at(SUPPORT_FILE_TYPE).at(0).is_string()) {
-        typeList = jsonObj.at(SUPPORT_FILE_TYPE).get<std::vector<std::string>>();
+    auto result = jsonObj.find(SUPPORT_FILE_TYPE);
+    if (result != jsonObj.end() && result->is_array() && !result->empty() && (*result)[0].is_string()) {
+        typeList = result->get<std::vector<std::string>>();
     }
 }
 
@@ -555,7 +555,7 @@ int32_t DlpPermissionService::UnRegisterOpenDlpFileCallback(const sptr<IRemoteOb
 
 int32_t DlpPermissionService::GetDlpGatheringPolicy(bool& isGathering)
 {
-    isGathering = isGathering_;
+    isGathering = true;
 #if defined(DLP_DEBUG_ENABLE) && DLP_DEBUG_ENABLE == 1
     const char* PARAM_KEY = "dlp.permission.gathering.policy";
     const int32_t VALUE_MAX_LEN = 32;

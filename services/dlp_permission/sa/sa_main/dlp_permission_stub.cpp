@@ -346,7 +346,7 @@ int32_t DlpPermissionStub::GetDlpSupportFileTypeInner(MessageParcel& data, Messa
         return DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL;
     }
     size_t listNum = supportFileType.size();
-    if (!reply.WriteUint32(listNum)) {
+    if (!reply.WriteUint32(static_cast<uint32_t>(listNum))) {
         DLP_LOG_ERROR(LABEL, "Write support dlp file type list num fail");
         return DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL;
     }
@@ -522,7 +522,8 @@ int32_t DlpPermissionStub::GetRetentionSandboxListInner(MessageParcel& data, Mes
         DLP_LOG_ERROR(LABEL, "Write sandbox query result fail");
         return DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL;
     }
-    if (!reply.WriteUint32(retentionSandBoxInfoVec.size())) {
+    size_t infoVecSize = retentionSandBoxInfoVec.size();
+    if (!reply.WriteUint32(static_cast<uint32_t>(infoVecSize))) {
         DLP_LOG_ERROR(LABEL, "Write sandbox size result fail");
         return DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL;
     }
@@ -566,7 +567,7 @@ int32_t DlpPermissionStub::GetDLPFileVisitRecordInner(MessageParcel& data, Messa
         return DLP_OK;
     }
     size_t listNum = infoVec.size();
-    if (!reply.WriteUint32(listNum)) {
+    if (!reply.WriteUint32(static_cast<uint32_t>(listNum))) {
         DLP_LOG_ERROR(LABEL, "Write support visit file record list num fail");
         return DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL;
     }
@@ -603,7 +604,7 @@ int32_t DlpPermissionStub::GetMDMPolicyInner(MessageParcel& data, MessageParcel&
         return DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL;
     }
     size_t listNum = appIdList.size();
-    if (!reply.WriteUint32(listNum)) {
+    if (!reply.WriteUint32(static_cast<uint32_t>(listNum))) {
         DLP_LOG_ERROR(LABEL, "Write appId list num fail");
         return DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL;
     }
