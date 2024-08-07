@@ -28,6 +28,7 @@ namespace DlpPermission {
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "DlpPermissionKit"};
 const int64_t TIME_WAIT_TIME_OUT = 10;
+const int64_t PARSE_WAIT_TIME_OUT = 5;
 }  // namespace
 
 void ClientGenerateDlpCertificateCallback::OnGenerateDlpCertificate(int32_t result, const std::vector<uint8_t>& cert)
@@ -98,12 +99,12 @@ int32_t DlpPermissionKit::ParseDlpCertificate(sptr<CertParcel>& certParcel, Perm
     {
         std::unique_lock<std::mutex> lck(callback->parseMtx_);
         if (!callback->isCallBack_) {
-            callback->parseCv_.wait_for(lck, std::chrono::seconds(TIME_WAIT_TIME_OUT));
+            callback->parseCv_.wait_for(lck, std::chrono::seconds(PARSE_WAIT_TIME_OUT));
         }
     }
 
     if (!callback->isCallBack_) {
-        return DLP_SERVICE_ERROR_CREDENTIAL_TASK_TIMEOUT;
+        return DLP_CREDENTIAL_ERROR_NO_INTERNET;
     }
 
     if (callback->result_ == DLP_OK) {
