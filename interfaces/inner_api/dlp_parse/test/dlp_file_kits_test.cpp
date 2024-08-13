@@ -430,7 +430,7 @@ HWTEST_F(DlpFileKitsTest, GetSandboxFlag013, TestSize.Level1)
  * @tc.name: IsDlpFile001
  * @tc.desc: test param whether dlpFd is valid.
  * @tc.type: FUNC
- * @tc.require:
+ * @tc.require:issue：IAIFTY
  */
 HWTEST_F(DlpFileKitsTest, IsDlpFile001, TestSize.Level1)
 {
