@@ -247,9 +247,10 @@ bool DlpFile::UpdateDlpFilePermission()
             DLP_LOG_ERROR(LABEL, "query GetDomainAccountName failed");
             return false;
         }
-    } else if (GetLocalAccountName(accountName) != DLP_OK) {
-        DLP_LOG_ERROR(LABEL, "query GetLocalAccountName failed");
-        return false;
+    } else {
+        DLP_LOG_DEBUG(LABEL, "AuthPerm_ is readonly");
+        authPerm_ = READ_ONLY;
+        return true;
     }
 
     if (accountName == policy_.ownerAccount_) {
