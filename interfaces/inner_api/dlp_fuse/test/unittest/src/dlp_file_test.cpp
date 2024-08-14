@@ -24,7 +24,9 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <thread>
+#define private public
 #include "dlp_file.h"
+#undef private
 #include "dlp_file_manager.h"
 #include "dlp_permission.h"
 #include "dlp_permission_log.h"
@@ -150,7 +152,7 @@ HWTEST_F(DlpFileTest, GenerateDlpFile001, TestSize.Level1)
 
     g_recoveryFileFd = open("/data/fuse_test.txt.recovery", O_CREAT | O_RDWR | O_TRUNC, S_IRWXU | S_IRWXG | S_IRWXO);
     ASSERT_GE(g_recoveryFileFd, 0);
-
+    g_Dlpfile->authPerm_ = FULL_CONTROL;
     result = DlpFileManager::GetInstance().RecoverDlpFile(g_Dlpfile, g_recoveryFileFd);
     ASSERT_EQ(result, 0);
 
@@ -212,11 +214,11 @@ HWTEST_F(DlpFileTest, OpenDlpFile001, TestSize.Level1)
     ASSERT_EQ(contactAccount, prop.contactAccount);
     g_recoveryFileFd = open("/data/fuse_test.txt.recovery", O_CREAT | O_RDWR | O_TRUNC, S_IRWXU | S_IRWXG | S_IRWXO);
     ASSERT_GE(g_recoveryFileFd, 0);
+    g_Dlpfile->authPerm_ = FULL_CONTROL;
     ASSERT_EQ(DlpFileManager::GetInstance().RecoverDlpFile(g_Dlpfile, g_recoveryFileFd), 0);
     lseek(g_recoveryFileFd, 0, SEEK_SET);
     char buffer2[16] = {0};
-    result = read(g_recoveryFileFd, buffer2, 16);
-    ASSERT_GE(result, 0);
+    ASSERT_GE(read(g_recoveryFileFd, buffer2, 16), 0);
     result = memcmp(buffer, buffer2, result);
     ASSERT_EQ(result, 0);
     ASSERT_EQ(DlpFileManager::GetInstance().CloseDlpFile(g_Dlpfile), 0);
@@ -265,6 +267,7 @@ HWTEST_F(DlpFileTest, OpenDlpFile002, TestSize.Level1)
     ASSERT_EQ(contactAccount, prop.contactAccount);
     g_recoveryFileFd = open("/data/fuse_test.txt.recovery", O_CREAT | O_RDWR | O_TRUNC, S_IRWXU | S_IRWXG | S_IRWXO);
     ASSERT_GE(g_recoveryFileFd, 0);
+    g_Dlpfile->authPerm_ = FULL_CONTROL;
     ASSERT_EQ(DlpFileManager::GetInstance().RecoverDlpFile(g_Dlpfile, g_recoveryFileFd), 0);
     lseek(g_recoveryFileFd, 0, SEEK_SET);
     char buffer2[16] = {0};

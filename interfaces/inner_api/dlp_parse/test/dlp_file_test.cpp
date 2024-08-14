@@ -296,11 +296,11 @@ HWTEST_F(DlpFileTest, UpdateDlpFilePermission001, TestSize.Level1)
     DlpFile testFile(1000, DLP_TEST_DIR, 0, false);
     testFile.policy_.ownerAccount_ = "ohosAnonymousName";
     testFile.policy_.ownerAccountId_ = "ohosAnonymousName";
-    testFile.policy_.ownerAccountType_ = CLOUD_ACCOUNT;
+    testFile.policy_.ownerAccountType_ = DOMAIN_ACCOUNT;
     testFile.authPerm_ = NO_PERMISSION;
 
     testFile.UpdateDlpFilePermission();
-    ASSERT_EQ(testFile.authPerm_, FULL_CONTROL);
+    ASSERT_EQ(testFile.authPerm_, NO_PERMISSION);
 }
 
 /**
@@ -328,7 +328,7 @@ HWTEST_F(DlpFileTest, UpdateDlpFilePermission002, TestSize.Level1)
 
 /**
  * @tc.name: UpdateDlpFilePermission003
- * @tc.desc: test update dlp permission, current account is in authUser, permission is Full
+ * @tc.desc: test update dlp permission, current account is in authUser, permission is CONTENT_EDIT
  * @tc.type: FUNC
  * @tc.require:
  */
@@ -337,21 +337,20 @@ HWTEST_F(DlpFileTest, UpdateDlpFilePermission003, TestSize.Level1)
     DLP_LOG_INFO(LABEL, "UpdateDlpFilePermission003");
 
     DlpFile testFile(1000, DLP_TEST_DIR, 0, false);
-    AuthUserInfo user = {
-        .authAccount = "ohosAnonymousName",
-        .authPerm = FULL_CONTROL
-    };
-
-    testFile.policy_.authUsers_.emplace_back(user);
+    testFile.policy_.ownerAccount_ = "ohosAnonymousName";
+    testFile.policy_.ownerAccountId_ = "ohosAnonymousName";
+    testFile.policy_.ownerAccountType_ = DOMAIN_ACCOUNT;
+    testFile.policy_.supportEveryone_ = true;
+    testFile.policy_.everyonePerm_ = CONTENT_EDIT;
     testFile.authPerm_ = NO_PERMISSION;
 
     testFile.UpdateDlpFilePermission();
-    ASSERT_EQ(testFile.authPerm_, FULL_CONTROL);
+    ASSERT_EQ(testFile.authPerm_, CONTENT_EDIT);
 }
 
 /**
  * @tc.name: UpdateDlpFilePermission004
- * @tc.desc: test update dlp permission, current account is in not authUser
+ * @tc.desc: test update dlp permission, current account is owner, it has full permission
  * @tc.type: FUNC
  * @tc.require:
  */
@@ -364,11 +363,11 @@ HWTEST_F(DlpFileTest, UpdateDlpFilePermission004, TestSize.Level1)
         .authAccount = "noExistUser",
         .authPerm = FULL_CONTROL
     };
-
+    testFile.policy_.ownerAccountType_ = DOMAIN_ACCOUNT;
     testFile.policy_.authUsers_.emplace_back(user);
     testFile.authPerm_ = NO_PERMISSION;
     testFile.UpdateDlpFilePermission();
-    ASSERT_EQ(testFile.authPerm_, NO_PERMISSION);
+    ASSERT_EQ(testFile.authPerm_, FULL_CONTROL);
 }
 
 /**
