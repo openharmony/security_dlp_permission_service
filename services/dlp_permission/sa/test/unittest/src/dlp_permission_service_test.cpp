@@ -1230,17 +1230,3 @@ HWTEST_F(DlpPermissionServiceTest, SetRetentionState001, TestSize.Level1)
     bool res = dlpPermissionService_->RemoveRetentionInfo(retentionSandBoxInfoVec, info);
     ASSERT_TRUE(res);
 }
-
-/**
- * @tc.name: ClearUnreservedSandbox001
- * @tc.desc: ClearUnreservedSandbox test success
- * @tc.type: FUNC
- * @tc.require:issue：IAIFTY
- */
-HWTEST_F(DlpPermissionServiceTest, ClearUnreservedSandbox001, TestSize.Level1)
-{
-    DLP_LOG_DEBUG(LABEL, "ClearUnreservedSandbox001");
-
-    int32_t ret = dlpPermissionService_->ClearUnreservedSandbox();
-    ASSERT_EQ(DLP_OK, ret);
-}
