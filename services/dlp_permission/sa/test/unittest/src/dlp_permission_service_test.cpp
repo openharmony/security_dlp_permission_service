@@ -1194,7 +1194,7 @@ HWTEST_F(DlpPermissionServiceTest, SetReadFlag001, TestSize.Level1)
  * @tc.name: SetRetentionState001
  * @tc.desc: SetRetentionState test success
  * @tc.type: FUNC
- * @tc.require:
+ * @tc.require:issue：IAIFTY
  */
 HWTEST_F(DlpPermissionServiceTest, SetRetentionState001, TestSize.Level1)
 {
@@ -1235,7 +1235,7 @@ HWTEST_F(DlpPermissionServiceTest, SetRetentionState001, TestSize.Level1)
  * @tc.name: ClearUnreservedSandbox001
  * @tc.desc: ClearUnreservedSandbox test success
  * @tc.type: FUNC
- * @tc.require:
+ * @tc.require:issue：IAIFTY
  */
 HWTEST_F(DlpPermissionServiceTest, ClearUnreservedSandbox001, TestSize.Level1)
 {
