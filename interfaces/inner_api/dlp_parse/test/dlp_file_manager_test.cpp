@@ -14,14 +14,14 @@
  */
 
 #include "dlp_file_manager_test.h"
-#include "c_mock_common.h"
 #include <cstddef>
-#define private public
-#include "dlp_file_manager.h"
-#undef private
 #include <cstdio>
 #include <cstring>
 #include <fcntl.h>
+#include "c_mock_common.h"
+#define private public
+#include "dlp_file_manager.h"
+#undef private
 #include "dlp_permission.h"
 #include "dlp_permission_log.h"
 
