@@ -445,5 +445,5 @@ HWTEST_F(DlpFileKitsTest, IsDlpFile001, TestSize.Level1)
     dlpFd = open("/data/fuse_test.txt", O_CREAT | O_RDWR | O_TRUNC, 0777);
     ASSERT_GE(dlpFd, 0);
     ASSERT_FALSE(DlpFileKits::IsDlpFile(dlpFd));
-    ASSERT_EQ(close(plainFileFd), 0);
+    ASSERT_EQ(close(dlpFd), 0);
 }
