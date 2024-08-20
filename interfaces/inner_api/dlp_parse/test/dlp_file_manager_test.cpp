@@ -667,7 +667,7 @@ HWTEST_F(DlpFileManagerTest, RecoverDlpFile001, TestSize.Level1)
 
 /**
  * @tc.name: CleanTempBlob001
- * @tc.desc: test param whether is empty
+ * @tc.desc: test param tagIv whether pointer is null
  * @tc.type: FUNC
  * @tc.require:issue：IAIFTY
  */
@@ -696,7 +696,7 @@ HWTEST_F(DlpFileManagerTest, CleanTempBlob001, TestSize.Level1)
 
 /**
  * @tc.name: GenerateCertBlob001
- * @tc.desc: test param whether is empty 
+ * @tc.desc: test param whether cert and certData are empty
  * @tc.type: FUNC
  * @tc.require:issue：IAIFTY
  */
