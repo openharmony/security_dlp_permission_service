@@ -33,6 +33,7 @@
 #include "dlp_sandbox_change_callback_stub.h"
 #include "dlp_sandbox_change_callback_death_recipient.h"
 #include "file_operator.h"
+#include "ipc_skeleton.h"
 #include "open_dlp_file_callback_proxy.h"
 #include "open_dlp_file_callback_stub.h"
 #include "open_dlp_file_callback_death_recipient.h"
@@ -903,8 +904,14 @@ HWTEST_F(DlpPermissionServiceTest, ParseDlpCertificate001, TestSize.Level1)
 {
     sptr<CertParcel> certParcel = new (std::nothrow) CertParcel();
     sptr<IDlpPermissionCallback> callback = nullptr;
-    ASSERT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID,
-        dlpPermissionService_->ParseDlpCertificate(certParcel, callback, "", true));
+    int32_t ret = dlpPermissionService_->ParseDlpCertificate(certParcel, callback, "", true);
+    ASSERT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, ret);
+
+    std::shared_ptr<GenerateDlpCertificateCallback> callback1 =
+        std::make_shared<ClientGenerateDlpCertificateCallback>();
+    callback = new (std::nothrow) DlpPermissionAsyncStub(callback1);
+    ret = dlpPermissionService_->ParseDlpCertificate(certParcel, callback, "", true);
+    ASSERT_EQ(DLP_CREDENTIAL_ERROR_APPID_NOT_AUTHORIZED, ret);
 }
 
 /**
@@ -923,6 +930,8 @@ HWTEST_F(DlpPermissionServiceTest, InsertDlpSandboxInfo001, TestSize.Level1)
     int32_t userId = 111;
     ASSERT_TRUE(0 == dlpPermissionService_->DeleteDlpSandboxInfo(bundleName, appIndex, userId));
     dlpPermissionService_->appStateObserver_ = appStateObserver;
+
+    dlpPermissionService_->InsertDlpSandboxInfo(sandboxInfo, true);
 }
 
 /**
@@ -1179,4 +1188,45 @@ HWTEST_F(DlpPermissionServiceTest, SetReadFlag001, TestSize.Level1)
     uint32_t uid = 0;
     int32_t ret = dlpPermissionService_->SetReadFlag(uid);
     ASSERT_EQ(DLP_OK, ret);
+}
+
+/**
+ * @tc.name: SetRetentionState001
+ * @tc.desc: SetRetentionState test success
+ * @tc.type: FUNC
+ * @tc.require:issue：IAIFTY
+ */
+HWTEST_F(DlpPermissionServiceTest, SetRetentionState001, TestSize.Level1)
+{
+    DLP_LOG_DEBUG(LABEL, "SetRetentionState001");
+
+    std::vector<std::string> docUriVec;
+    docUriVec.push_back("hh");
+    int32_t uid = IPCSkeleton::GetCallingUid();
+    int32_t userId;
+    GetUserIdFromUid(uid, &userId);
+    DlpSandboxInfo appInfo;
+    appInfo = {
+        .uid = uid,
+        .userId = userId,
+        .appIndex = 0,
+        .bundleName = "testbundle1",
+        .hasRead = false
+    };
+    dlpPermissionService_->appStateObserver_->AddSandboxInfo(appInfo);
+    int32_t ret = dlpPermissionService_->SetRetentionState(docUriVec);
+    ASSERT_EQ(ret, DLP_OK);
+
+    std::vector<RetentionSandBoxInfo> retentionSandBoxInfoVec;
+    RetentionSandBoxInfo retentionSandBoxInfo;
+    retentionSandBoxInfo.appIndex_ = appInfo.appIndex;
+    retentionSandBoxInfoVec.push_back(retentionSandBoxInfo);
+    RetentionSandBoxInfo retentionSandBoxInfo1;
+    retentionSandBoxInfo1.appIndex_ = appInfo.appIndex + 1;
+    retentionSandBoxInfoVec.push_back(retentionSandBoxInfo1);
+
+    RetentionInfo info;
+    info.bundleName = appInfo.bundleName;
+    bool res = dlpPermissionService_->RemoveRetentionInfo(retentionSandBoxInfoVec, info);
+    ASSERT_TRUE(res);
 }

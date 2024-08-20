@@ -425,3 +425,25 @@ HWTEST_F(DlpFileKitsTest, GetSandboxFlag013, TestSize.Level1)
     want.SetUri(DLP_FILE_URI_2);
     ASSERT_FALSE(DlpFileKits::GetSandboxFlag(want));
 }
+
+/**
+ * @tc.name: IsDlpFile001
+ * @tc.desc: test param whether dlpFd is valid.
+ * @tc.type: FUNC
+ * @tc.require:issue：IAIFTY
+ */
+HWTEST_F(DlpFileKitsTest, IsDlpFile001, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL, "IsDlpFile001");
+
+    int32_t dlpFd = -1;
+    ASSERT_FALSE(DlpFileKits::IsDlpFile(dlpFd));
+
+    dlpFd = 1;
+    ASSERT_FALSE(DlpFileKits::IsDlpFile(dlpFd));
+
+    dlpFd = open("/data/fuse_test.txt", O_CREAT | O_RDWR | O_TRUNC, 0777);
+    ASSERT_GE(dlpFd, 0);
+    ASSERT_FALSE(DlpFileKits::IsDlpFile(dlpFd));
+    ASSERT_EQ(close(dlpFd), 0);
+}
