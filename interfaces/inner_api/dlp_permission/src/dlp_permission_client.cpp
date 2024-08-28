@@ -558,7 +558,7 @@ int32_t DlpPermissionClient::CleanSandboxAppConfig()
 
 int32_t DlpPermissionClient::GetSandboxAppConfig(std::string& configInfo)
 {
-    auto proxy = GetProxy(false);
+    auto proxy = GetProxy(true);
     if (proxy == nullptr) {
         DLP_LOG_ERROR(LABEL, "Proxy is null");
         return DLP_CALLBACK_SA_WORK_ABNORMAL;
