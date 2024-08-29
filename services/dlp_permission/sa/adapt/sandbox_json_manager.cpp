@@ -385,7 +385,7 @@ bool SandboxJsonManager::InsertSandboxInfo(const RetentionInfo& info)
             return false;
         }
     }
-    infoVec_.push_back(info);
+    infoVec_.emplace_back(info);
     return true;
 }
 
@@ -407,7 +407,7 @@ Json SandboxJsonManager::ToJson() const
     for (auto iter = infoVec_.begin(); iter != infoVec_.end(); ++iter) {
         Json infoJson;
         RetentionInfoToJson(infoJson, *iter);
-        jsonObject["retention"].push_back(infoJson);
+        jsonObject["retention"].emplace_back(infoJson);
     }
     return jsonObject;
 }

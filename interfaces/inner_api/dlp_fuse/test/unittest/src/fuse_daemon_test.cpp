@@ -617,7 +617,7 @@ HWTEST_F(FuseDaemonTest, FuseDaemonReadDir004, TestSize.Level1)
     fuse_req_t req = nullptr;
     std::shared_ptr<DlpFile> filePtr = std::make_shared<DlpFile>(-1, DLP_TEST_DIR, 0, false);
     ASSERT_NE(filePtr, nullptr);
-    DlpLinkManager::GetInstance().g_DlpLinkFileNameMap_.clear();
+    DlpLinkManager::GetInstance().dlpLinkFileNameMap_.clear();
     DlpLinkManager::GetInstance().AddDlpLinkFile(filePtr, "test");
 
     DlpCMockCondition condition;

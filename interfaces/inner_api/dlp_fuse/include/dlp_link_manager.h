@@ -43,8 +43,8 @@ private:
     DlpLinkManager();
     DISALLOW_COPY_AND_MOVE(DlpLinkManager);
 
-    OHOS::Utils::RWLock g_DlpLinkMapLock_;
-    std::unordered_map<std::string, DlpLinkFile*> g_DlpLinkFileNameMap_;
+    OHOS::Utils::RWLock dlpLinkMapLock_;
+    std::unordered_map<std::string, DlpLinkFile*> dlpLinkFileNameMap_;
 };
 }  // namespace DlpPermission
 }  // namespace Security

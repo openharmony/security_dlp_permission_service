@@ -35,11 +35,11 @@ DlpLinkManager::DlpLinkManager()
 
 DlpLinkManager::~DlpLinkManager()
 {
-    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(g_DlpLinkMapLock_);
-    for (auto iter = g_DlpLinkFileNameMap_.begin(); iter != g_DlpLinkFileNameMap_.end();) {
+    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(dlpLinkMapLock_);
+    for (auto iter = dlpLinkFileNameMap_.begin(); iter != dlpLinkFileNameMap_.end();) {
         DlpLinkFile* tmp = iter->second;
         if (tmp != nullptr) {
-            iter = g_DlpLinkFileNameMap_.erase(iter);
+            iter = dlpLinkFileNameMap_.erase(iter);
             delete tmp;
         } else {
             iter++;
@@ -64,18 +64,19 @@ int32_t DlpLinkManager::AddDlpLinkFile(std::shared_ptr<DlpFile>& filePtr, const 
         return DLP_FUSE_ERROR_VALUE_INVALID;
     }
 
-    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(g_DlpLinkMapLock_);
-    if (g_DlpLinkFileNameMap_.size() >= MAX_DLP_LINK_SIZE) {
+    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(dlpLinkMapLock_);
+    if (dlpLinkFileNameMap_.size() >= MAX_DLP_LINK_SIZE) {
         DLP_LOG_ERROR(LABEL, "Add link file fail, too many links");
         return DLP_FUSE_ERROR_TOO_MANY_LINK_FILE;
     }
 
-    if (g_DlpLinkFileNameMap_.count(dlpLinkName) > 0) {
+    auto iter = dlpLinkFileNameMap_.find(dlpLinkName);
+    if (iter != dlpLinkFileNameMap_.end()) {
         DLP_LOG_ERROR(LABEL, "Add link file fail, link file %{public}s exist", dlpLinkName.c_str());
         return DLP_FUSE_ERROR_LINKFILE_EXIST;
     }
 
-    for (auto iter = g_DlpLinkFileNameMap_.begin(); iter != g_DlpLinkFileNameMap_.end(); iter++) {
+    for (auto iter = dlpLinkFileNameMap_.begin(); iter != dlpLinkFileNameMap_.end(); iter++) {
         DlpLinkFile* linkFileNode = iter->second;
         if ((linkFileNode != nullptr) && (filePtr == linkFileNode->GetDlpFilePtr())) {
             DLP_LOG_ERROR(LABEL, "Add link file fail, this dlp file already has link file");
@@ -90,7 +91,7 @@ int32_t DlpLinkManager::AddDlpLinkFile(std::shared_ptr<DlpFile>& filePtr, const 
     }
 
     DLP_LOG_INFO(LABEL, "Add link file succ, file name %{public}s", dlpLinkName.c_str());
-    g_DlpLinkFileNameMap_[dlpLinkName] = node;
+    dlpLinkFileNameMap_[dlpLinkName] = node;
     filePtr->SetLinkStatus();
     return DLP_OK;
 }
@@ -102,8 +103,8 @@ int32_t DlpLinkManager::StopDlpLinkFile(std::shared_ptr<DlpFile>& filePtr)
         return DLP_FUSE_ERROR_DLP_FILE_NULL;
     }
 
-    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(g_DlpLinkMapLock_);
-    for (auto iter = g_DlpLinkFileNameMap_.begin(); iter != g_DlpLinkFileNameMap_.end(); iter++) {
+    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(dlpLinkMapLock_);
+    for (auto iter = dlpLinkFileNameMap_.begin(); iter != dlpLinkFileNameMap_.end(); iter++) {
         DlpLinkFile* node = iter->second;
         if (node == nullptr) {
             DLP_LOG_ERROR(LABEL, "Stop link file fail, file ptr is null");
@@ -127,8 +128,8 @@ int32_t DlpLinkManager::RestartDlpLinkFile(std::shared_ptr<DlpFile>& filePtr)
         return DLP_FUSE_ERROR_DLP_FILE_NULL;
     }
 
-    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(g_DlpLinkMapLock_);
-    for (auto iter = g_DlpLinkFileNameMap_.begin(); iter != g_DlpLinkFileNameMap_.end(); iter++) {
+    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(dlpLinkMapLock_);
+    for (auto iter = dlpLinkFileNameMap_.begin(); iter != dlpLinkFileNameMap_.end(); iter++) {
         DlpLinkFile* node = iter->second;
         if (node == nullptr) {
             DLP_LOG_ERROR(LABEL, "Restart link file fail, file ptr is null");
@@ -156,8 +157,8 @@ int32_t DlpLinkManager::ReplaceDlpLinkFile(std::shared_ptr<DlpFile>& filePtr, co
         return DLP_FUSE_ERROR_VALUE_INVALID;
     }
 
-    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(g_DlpLinkMapLock_);
-    for (auto iter = g_DlpLinkFileNameMap_.begin(); iter != g_DlpLinkFileNameMap_.end(); iter++) {
+    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(dlpLinkMapLock_);
+    for (auto iter = dlpLinkFileNameMap_.begin(); iter != dlpLinkFileNameMap_.end(); iter++) {
         if (dlpLinkName == iter->first) {
             DlpLinkFile *node = iter->second;
             if (node == nullptr) {
@@ -180,12 +181,12 @@ int32_t DlpLinkManager::DeleteDlpLinkFile(std::shared_ptr<DlpFile>& filePtr)
         return DLP_FUSE_ERROR_DLP_FILE_NULL;
     }
 
-    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(g_DlpLinkMapLock_);
-    for (auto iter = g_DlpLinkFileNameMap_.begin(); iter != g_DlpLinkFileNameMap_.end(); iter++) {
+    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(dlpLinkMapLock_);
+    for (auto iter = dlpLinkFileNameMap_.begin(); iter != dlpLinkFileNameMap_.end(); iter++) {
         DlpLinkFile* tmp = iter->second;
         if (tmp != nullptr && filePtr == tmp->GetDlpFilePtr()) {
             filePtr->RemoveLinkStatus();
-            g_DlpLinkFileNameMap_.erase(iter);
+            dlpLinkFileNameMap_.erase(iter);
             if (tmp->SubAndCheckZeroRef(1)) {
                 DLP_LOG_INFO(LABEL, "Delete link file %{private}s ok", tmp->GetLinkName().c_str());
                 delete tmp;
@@ -202,8 +203,8 @@ int32_t DlpLinkManager::DeleteDlpLinkFile(std::shared_ptr<DlpFile>& filePtr)
 
 DlpLinkFile* DlpLinkManager::LookUpDlpLinkFile(const std::string& dlpLinkName)
 {
-    Utils::UniqueReadGuard<Utils::RWLock> infoGuard(g_DlpLinkMapLock_);
-    for (auto iter = g_DlpLinkFileNameMap_.begin(); iter != g_DlpLinkFileNameMap_.end(); ++iter) {
+    Utils::UniqueReadGuard<Utils::RWLock> infoGuard(dlpLinkMapLock_);
+    for (auto iter = dlpLinkFileNameMap_.begin(); iter != dlpLinkFileNameMap_.end(); ++iter) {
         if (dlpLinkName == iter->first) {
             DlpLinkFile* node = iter->second;
             if (node == nullptr) {
@@ -221,8 +222,8 @@ DlpLinkFile* DlpLinkManager::LookUpDlpLinkFile(const std::string& dlpLinkName)
 
 void DlpLinkManager::DumpDlpLinkFile(std::vector<DlpLinkFileInfo>& linkList)
 {
-    Utils::UniqueReadGuard<Utils::RWLock> infoGuard(g_DlpLinkMapLock_);
-    for (auto iter = g_DlpLinkFileNameMap_.begin(); iter != g_DlpLinkFileNameMap_.end(); iter++) {
+    Utils::UniqueReadGuard<Utils::RWLock> infoGuard(dlpLinkMapLock_);
+    for (auto iter = dlpLinkFileNameMap_.begin(); iter != dlpLinkFileNameMap_.end(); iter++) {
         DlpLinkFile* filePtr = iter->second;
         if (filePtr == nullptr) {
             continue;
