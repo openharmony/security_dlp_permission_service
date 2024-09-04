@@ -76,8 +76,8 @@ int32_t DlpLinkManager::AddDlpLinkFile(std::shared_ptr<DlpFile>& filePtr, const 
         return DLP_FUSE_ERROR_LINKFILE_EXIST;
     }
 
-    for (auto iter = dlpLinkFileNameMap_.begin(); iter != dlpLinkFileNameMap_.end(); iter++) {
-        DlpLinkFile* linkFileNode = iter->second;
+    for (auto it = dlpLinkFileNameMap_.begin(); it != dlpLinkFileNameMap_.end(); it++) {
+        DlpLinkFile* linkFileNode = it->second;
         if ((linkFileNode != nullptr) && (filePtr == linkFileNode->GetDlpFilePtr())) {
             DLP_LOG_ERROR(LABEL, "Add link file fail, this dlp file already has link file");
             return DLP_FUSE_ERROR_LINKFILE_EXIST;
