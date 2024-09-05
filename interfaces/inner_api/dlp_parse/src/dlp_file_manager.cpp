@@ -152,16 +152,17 @@ void DlpFileManager::CleanTempBlob(struct DlpBlob& key, struct DlpCipherParam** 
     if (key.data != nullptr) {
         CleanBlobParam(key);
     }
-    if ((*tagIv) != nullptr) {
-        if ((*tagIv)->iv.data != nullptr) {
-            CleanBlobParam((*tagIv)->iv);
-        }
-        delete (*tagIv);
-        (*tagIv) = nullptr;
-    }
     if (hmacKey.data != nullptr) {
         CleanBlobParam(hmacKey);
     }
+    if (tagIv == nullptr || (*tagIv) == nullptr) {
+        return;
+    }
+    if ((*tagIv)->iv.data != nullptr) {
+        CleanBlobParam((*tagIv)->iv);
+    }
+    delete (*tagIv);
+    (*tagIv) = nullptr;
 }
 
 int32_t DlpFileManager::PrepareDlpEncryptParms(PermissionPolicy& policy, struct DlpBlob& key,

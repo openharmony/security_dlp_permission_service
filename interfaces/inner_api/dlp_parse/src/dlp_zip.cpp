@@ -187,7 +187,6 @@ static void FillFdOpenFileFunc(zlib_filefunc_def *pzlibFilefuncDef, int fd)
     pzlibFilefuncDef->zclose_file = FdCloseFileFunc;
     int *ptrFd = static_cast<int *>(malloc(sizeof(fd)));
     if (ptrFd == nullptr) {
-        free(ptrFd);
         return;
     }
     *ptrFd = fd;
@@ -249,8 +248,8 @@ bool CheckUnzipFileInfo(int32_t fd)
             return false;
         }
         //The file has not been compressed
-        if (fileInfo.compressed_size != fileInfo.uncompressed_size) {
-            DLP_LOG_ERROR(LABEL, "Compressed_size=%{public}llu is not equal uncompress_size=%{public}llu",
+        if (fileInfo.compressed_size < fileInfo.uncompressed_size) {
+            DLP_LOG_ERROR(LABEL, "Compressed_size=%{public}llu is less uncompress_size=%{public}llu",
                 fileInfo.compressed_size, fileInfo.uncompressed_size);
             (void)unzClose(uf);
             return false;

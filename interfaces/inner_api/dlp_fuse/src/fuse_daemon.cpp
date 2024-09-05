@@ -516,11 +516,11 @@ void FuseDaemon::FuseFsDaemonThread(int fuseFd)
         return;
     }
 
-    struct fuse_args args = FUSE_ARGS_INIT(0, NULL);
+    struct fuse_args args = FUSE_ARGS_INIT(0, nullptr);
     fuse_opt_add_arg(&args, mountPoint);
 
-    struct fuse_session* se = fuse_session_new(&args, &fuseDaemonOper_, sizeof(fuseDaemonOper_), NULL);
-    if (se == NULL) {
+    struct fuse_session* se = fuse_session_new(&args, &fuseDaemonOper_, sizeof(fuseDaemonOper_), nullptr);
+    if (se == nullptr) {
         DLP_LOG_ERROR(LABEL, "Fuse fs daemon exit, create fuse session fail");
         NotifyDaemonDisable();
         fuse_opt_free_args(&args);
