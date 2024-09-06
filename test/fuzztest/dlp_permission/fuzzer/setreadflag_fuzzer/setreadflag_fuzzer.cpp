@@ -26,7 +26,7 @@ using namespace OHOS::Security::AccessToken;
 namespace OHOS {
 static void FuzzTest(const uint8_t* data, size_t size)
 {
-    if ((data == nullptr) || (size == 0)) {
+    if ((data == nullptr) || (size < sizeof(uint32_t))) {
         return;
     }
     uint32_t uid = *(reinterpret_cast<const uint32_t *>(data));
