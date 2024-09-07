@@ -27,8 +27,8 @@ namespace DlpPermission {
 class DlpPermissionAsyncStub : public IRemoteStub<IDlpPermissionCallback> {
 public:
     DISALLOW_COPY_AND_MOVE(DlpPermissionAsyncStub);
-    explicit DlpPermissionAsyncStub(std::shared_ptr<GenerateDlpCertificateCallback>& impl);
-    explicit DlpPermissionAsyncStub(std::shared_ptr<ParseDlpCertificateCallback>& impl);
+    explicit DlpPermissionAsyncStub(const std::shared_ptr<GenerateDlpCertificateCallback>& impl);
+    explicit DlpPermissionAsyncStub(const std::shared_ptr<ParseDlpCertificateCallback>& impl);
     ~DlpPermissionAsyncStub() override = default;
 
     int32_t OnRemoteRequest(uint32_t code, MessageParcel& data, MessageParcel& reply, MessageOption& option) override;

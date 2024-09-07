@@ -23,6 +23,7 @@ namespace Security {
 namespace DlpPermission {
 namespace {
 constexpr OHOS::HiviewDFX::HiLogLabel LABEL = { LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "AppUninstallObserver" };
+const int32_t INVALID_APPINDEX = -1;
 }
 
 AppUninstallObserver::AppUninstallObserver(const EventFwk::CommonEventSubscribeInfo& subscribeInfo)
@@ -39,7 +40,7 @@ void AppUninstallObserver::OnReceiveEvent(const EventFwk::CommonEventData& data)
         return;
     }
     if (RetentionFileManager::GetInstance().HasRetentionSandboxInfo(bundleName)) {
-        RetentionFileManager::GetInstance().RemoveRetentionState(bundleName, -1);
+        RetentionFileManager::GetInstance().RemoveRetentionState(bundleName, INVALID_APPINDEX);
     }
 }
 
