@@ -69,7 +69,7 @@ static int32_t CheckSandboxFlag(AccessToken::AccessTokenID tokenId, bool& sandbo
 int32_t DlpPermissionStub::OnRemoteRequest(
     uint32_t code, MessageParcel& data, MessageParcel& reply, MessageOption& option)
 {
-    DLP_LOG_INFO(LABEL, "Called, code: 0x%{public}x, pid: %{public}d, uid: %{public}d", code,
+    DLP_LOG_INFO(LABEL, "Called, code: %{public}x, pid: %{public}d, uid: %{public}d", code,
         IPCSkeleton::GetCallingRealPid(), IPCSkeleton::GetCallingUid());
 
     std::u16string descripter = DlpPermissionStub::GetDescriptor();
