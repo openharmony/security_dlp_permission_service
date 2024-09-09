@@ -35,12 +35,19 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
 static const uint32_t MAX_CALLBACK_SIZE = 100;
 static const uint32_t MAX_CALLBACKS = 100;
 const char THREAD_EVENT[] = "openDlpFile";
+std::recursive_mutex instanceMutex_;
 }  // namespace
 
 OpenDlpFileCallbackManager& OpenDlpFileCallbackManager::GetInstance()
 {
-    static OpenDlpFileCallbackManager instance;
-    return instance;
+    static OpenDlpFileCallbackManager* instance = nullptr;
+    if (instance == nullptr) {
+        std::lock_guard<std::recursive_mutex> lock(instanceMutex_);
+        if (instance == nullptr) {
+            instance = new OpenDlpFileCallbackManager();
+        }
+    }
+    return *instance;
 }
 
 OpenDlpFileCallbackManager::OpenDlpFileCallbackManager()

@@ -25,12 +25,19 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_
     "SandboxConfigKvDataStorage"};
 static const std::string APP_CONFIG_STORE_ID = "sandbox_app_config_info";
 static const std::string KEY_SEPATATOR = "_";
+std::recursive_mutex instanceMutex_;
 }
 
 SandboxConfigKvDataStorage& SandboxConfigKvDataStorage::GetInstance()
 {
-    KvDataStorageOptions options = { .autoSync = false };
-    static SandboxConfigKvDataStorage *instance = new (std::nothrow) SandboxConfigKvDataStorage(options);
+    static SandboxConfigKvDataStorage* instance = nullptr;
+    if (instance == nullptr) {
+        std::lock_guard<std::recursive_mutex> lock(instanceMutex_);
+        if (instance == nullptr) {
+            KvDataStorageOptions options = { .autoSync = false };
+            instance = new (std::nothrow) SandboxConfigKvDataStorage(options);
+        }
+    }
     return *instance;
 }
 

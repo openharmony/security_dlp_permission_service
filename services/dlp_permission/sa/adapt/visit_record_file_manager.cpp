@@ -25,6 +25,7 @@ constexpr OHOS::HiviewDFX::HiLogLabel LABEL = { LOG_CORE, SECURITY_DOMAIN_DLP_PE
 const std::string PATH_SEPARATOR = "/";
 const std::string USER_INFO_BASE = "/data/service/el1/public/dlp_permission_service";
 const std::string DLP_VISIT_RECORD_JSON_PATH = USER_INFO_BASE + PATH_SEPARATOR + "dlp_file_visit_record_info.json";
+std::recursive_mutex instanceMutex_;
 }
 
 VisitRecordFileManager::VisitRecordFileManager()
@@ -38,8 +39,14 @@ VisitRecordFileManager::~VisitRecordFileManager() {}
 
 VisitRecordFileManager& VisitRecordFileManager::GetInstance()
 {
-    static VisitRecordFileManager instance;
-    return instance;
+    static VisitRecordFileManager* instance = nullptr;
+    if (instance == nullptr) {
+        std::lock_guard<std::recursive_mutex> lock(instanceMutex_);
+        if (instance == nullptr) {
+            instance = new VisitRecordFileManager();
+        }
+    }
+    return *instance;
 }
 
 bool VisitRecordFileManager::Init()
