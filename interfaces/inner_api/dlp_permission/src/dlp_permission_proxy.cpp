@@ -26,7 +26,7 @@ namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "DlpPermissionProxy"};
 static const uint32_t MAX_SUPPORT_FILE_TYPE_NUM = 1024;
 static const uint32_t MAX_RETENTION_SIZE = 1024;
-static const uint32_t MAX_FIEL_RECORD_SIZE = 1024;
+static const uint32_t MAX_FILE_RECORD_SIZE = 1024;
 static const uint32_t MAX_APPID_LIST_SIZE = 250;
 }
 
@@ -779,7 +779,7 @@ int32_t DlpPermissionProxy::GetDLPFileVisitRecord(std::vector<VisitedDLPFileInfo
         DLP_LOG_ERROR(LABEL, "Read uint32 fail");
         return DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL;
     }
-    if (listNum > MAX_FIEL_RECORD_SIZE) {
+    if (listNum > MAX_FILE_RECORD_SIZE) {
         DLP_LOG_ERROR(LABEL, "listNum larger than 1024");
         return DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL;
     }

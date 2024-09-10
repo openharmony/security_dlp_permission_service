@@ -28,11 +28,11 @@ namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
     LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "DlpPermissionAsyncStub"};
 }
-DlpPermissionAsyncStub::DlpPermissionAsyncStub(std::shared_ptr<GenerateDlpCertificateCallback>& impl)
+DlpPermissionAsyncStub::DlpPermissionAsyncStub(const std::shared_ptr<GenerateDlpCertificateCallback>& impl)
     : generateDlpCertificateCallback_(impl)
 {}
 
-DlpPermissionAsyncStub::DlpPermissionAsyncStub(std::shared_ptr<ParseDlpCertificateCallback>& impl)
+DlpPermissionAsyncStub::DlpPermissionAsyncStub(const std::shared_ptr<ParseDlpCertificateCallback>& impl)
     : parseDlpCertificateCallback_(impl)
 {}
 

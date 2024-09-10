@@ -31,11 +31,13 @@ const std::string DLP_EXTRA_INFO_LOW_CAMEL_CASE = "extraInfo";
 const std::string DLP_HMAC_VALUE = "hmacValue";
 static bool checkParams(GenerateInfoParams& params, nlohmann::json jsonObj, std::string versionKey, std::string infoKey)
 {
-    if (jsonObj.find(versionKey) == jsonObj.end() || !jsonObj.at(versionKey).is_number_integer()) {
+    auto iter = jsonObj.find(versionKey);
+    if (iter == jsonObj.end() || !iter->is_number_integer()) {
         return false;
     }
-    if (jsonObj.find(infoKey) != jsonObj.end() && jsonObj.at(infoKey).is_array() &&
-        !jsonObj.at(infoKey).empty() && jsonObj.at(infoKey).at(0).is_string()) {
+    iter = jsonObj.find(infoKey);
+    if (iter != jsonObj.end() && iter->is_array() &&
+        !iter->empty() && iter->at(0).is_string()) {
         return true;
     }
     return false;
@@ -86,22 +88,22 @@ int32_t ParseDlpGeneralInfo(const std::string& generalInfo, GenerateInfoParams& 
     } else {
         return DLP_PARSE_ERROR_VALUE_INVALID;
     }
-
-    if (jsonObj.find(DLP_OFFLINE_FLAG) != jsonObj.end() && jsonObj.at(DLP_OFFLINE_FLAG).is_boolean()) {
-        params.offlineAccessFlag = jsonObj.at(DLP_OFFLINE_FLAG).get<bool>();
+    auto iter = jsonObj.find(DLP_OFFLINE_FLAG);
+    if (iter != jsonObj.end() && iter->is_boolean()) {
+        params.offlineAccessFlag = iter->get<bool>();
     } else {
         return DLP_PARSE_ERROR_VALUE_INVALID;
     }
-
-    if (jsonObj.find(DLP_CONTACT_ACCOUNT) != jsonObj.end() && jsonObj.at(DLP_CONTACT_ACCOUNT).is_string()) {
-        params.contactAccount = jsonObj.at(DLP_CONTACT_ACCOUNT).get<std::string>();
+    iter = jsonObj.find(DLP_CONTACT_ACCOUNT);
+    if (iter != jsonObj.end() && iter->is_string()) {
+        params.contactAccount = iter->get<std::string>();
         if (params.contactAccount == "") {
             return DLP_PARSE_ERROR_VALUE_INVALID;
         }
     }
-
-    if (jsonObj.find(DLP_HMAC_VALUE) != jsonObj.end() && jsonObj.at(DLP_HMAC_VALUE).is_string()) {
-        params.hmacVal = jsonObj.at(DLP_HMAC_VALUE).get<std::string>();
+    iter = jsonObj.find(DLP_HMAC_VALUE);
+    if (iter != jsonObj.end() && iter->is_string()) {
+        params.hmacVal = iter->get<std::string>();
     } else if (params.version >= HMAC_VERSION) {
         return DLP_PARSE_ERROR_VALUE_INVALID;
     }

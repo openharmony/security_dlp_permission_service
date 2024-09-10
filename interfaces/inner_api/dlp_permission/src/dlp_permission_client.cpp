@@ -66,6 +66,7 @@ DlpPermissionClient::DlpPermissionClient()
 
 DlpPermissionClient::~DlpPermissionClient()
 {
+    std::unique_lock<std::mutex> lock(proxyMutex_);
     if (proxy_ == nullptr) {
         return;
     }
