@@ -14,6 +14,8 @@
  */
 
 #include "bundle_manager_adapter.h"
+#include "accesstoken_kit.h"
+#include "account_adapt.h"
 #include "dlp_permission_log.h"
 #include "dlp_permission.h"
 #include "iservice_registry.h"
@@ -22,6 +24,7 @@
 namespace OHOS {
 namespace Security {
 namespace DlpPermission {
+using namespace Security::AccessToken;
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = { LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION,
     "BundleManagerAdapter" };
@@ -44,6 +47,27 @@ BundleManagerAdapter::BundleManagerAdapter() :proxy_(nullptr)
 
 BundleManagerAdapter::~BundleManagerAdapter()
 {}
+
+bool BundleManagerAdapter::CheckHapPermission(const std::string & bundleName, const std::string & permission)
+{
+    int32_t userId = -1;
+    if (!GetUserIdByForegroundAccount(&userId)) {
+        DLP_LOG_ERROR(LABEL, "GetUserIdByForegroundAccount error");
+        return false;
+    }
+    AccessTokenID tokenId = AccessToken::AccessTokenKit::GetHapTokenID(userId, bundleName, 0);
+    if (tokenId == 0) {
+        DLP_LOG_ERROR(LABEL, "Get normal tokenId error.");
+        return false;
+    }
+    int res = AccessToken::AccessTokenKit::VerifyAccessToken(tokenId, permission);
+    if (res == AccessToken::PermissionState::PERMISSION_GRANTED) {
+        DLP_LOG_INFO(LABEL, "Check permission %{public}s pass", permission.c_str());
+        return true;
+    }
+    DLP_LOG_ERROR(LABEL, "Check permission %{public}s fail", permission.c_str());
+    return false;
+}
 
 bool BundleManagerAdapter::GetBundleInfo(const std::string &bundleName, int32_t flag,
     AppExecFwk::BundleInfo &bundleInfo, int32_t userId)
