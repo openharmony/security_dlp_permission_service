@@ -71,7 +71,7 @@ HWTEST_F(HexStringTest, ByteToHexString001, TestSize.Level1)
  */
 HWTEST_F(HexStringTest, HexStringToByte001, TestSize.Level1)
 {
-    DLP_LOG_INFO(LABEL, "ByteToHexString001");
+    DLP_LOG_INFO(LABEL, "HexStringToByte001");
     uint8_t byteBuffer[30] = {0};
 
     // hexStr is nullptr
@@ -104,7 +104,7 @@ HWTEST_F(HexStringTest, HexStringToByte001, TestSize.Level1)
  */
 HWTEST_F(HexStringTest, HexStringToByte002, TestSize.Level1)
 {
-    DLP_LOG_INFO(LABEL, "ByteToHexString001");
+    DLP_LOG_INFO(LABEL, "HexStringToByte002");
     uint8_t byteBuffer[30] = {0};
     // normal branch
     std::string test = "1d2c4";
