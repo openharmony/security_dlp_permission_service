@@ -53,7 +53,7 @@ using namespace OHOS::AppExecFwk;
 namespace {
 constexpr OHOS::HiviewDFX::HiLogLabel LABEL = { LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "DlpPermissionService" };
 constexpr const int32_t EDM_UID = 3057;
-static const std::string ALLOW_ABILITY[] = {"com.ohos.dlpmanager"};
+const std::string PERMISSION_ACCESS_DLP_FILE = "ohos.permission.ACCESS_DLP_FILE";
 static const std::string ALLOW_ACTION[] = {"ohos.want.action.CREATE_FILE"};
 static const std::string DLP_MANAGER = "com.ohos.dlpmanager";
 static const std::chrono::seconds SLEEP_TIME(120);
@@ -371,8 +371,8 @@ static bool CheckAllowAbilityList(const AAFwk::Want& want)
     std::string bundleName = want.GetBundle();
     std::string actionName = want.GetAction();
     DLP_LOG_DEBUG(LABEL, "CheckAllowAbilityList %{public}s %{public}s", bundleName.c_str(), actionName.c_str());
-    bool bundleCheck = std::any_of(std::begin(ALLOW_ABILITY), std::end(ALLOW_ABILITY),
-        [bundleName](const std::string& bundle) { return bundle == bundleName; });
+    bool bundleCheck = (bundleName == DLP_MANAGER) &&
+        BundleManagerAdapter::GetInstance().CheckHapPermission(bundleName, PERMISSION_ACCESS_DLP_FILE);
     bool actionCheck = std::any_of(std::begin(ALLOW_ACTION), std::end(ALLOW_ACTION),
         [actionName](const std::string& action) { return action == actionName; });
     return actionCheck || bundleCheck;
@@ -692,7 +692,8 @@ int32_t DlpPermissionService::GetRetentionSandboxList(const std::string& bundleN
     std::string callerBundleName;
     uint32_t tokenId = IPCSkeleton::GetCallingTokenID();
     GetCallerBundleName(tokenId, callerBundleName);
-    if (callerBundleName == DLP_MANAGER) {
+    if (callerBundleName == DLP_MANAGER &&
+        BundleManagerAdapter::GetInstance().CheckHapPermission(callerBundleName, PERMISSION_ACCESS_DLP_FILE)) {
         callerBundleName = bundleName;
     }
     if (callerBundleName.empty()) {

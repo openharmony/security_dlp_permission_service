@@ -16,6 +16,7 @@
 #include "app_state_observer.h"
 #include <unistd.h>
 #include "account_adapt.h"
+#include "bundle_manager_adapter.h"
 #include "dlp_permission.h"
 #include "dlp_permission_log.h"
 #include "bundle_mgr_client.h"
@@ -30,6 +31,8 @@ namespace DlpPermission {
 using OHOS::AppExecFwk::AppProcessState;
 namespace {
 constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "AppStateObserver"};
+const std::string PERMISSION_ACCESS_DLP_FILE = "ohos.permission.ACCESS_DLP_FILE";
+const std::string DLP_MANAGER_BUNDLE_NAME = "com.ohos.dlpmanager";
 }
 AppStateObserver::AppStateObserver()
 {}
@@ -286,8 +289,9 @@ void AppStateObserver::OnProcessDied(const AppExecFwk::ProcessData& processData)
     DLP_LOG_INFO(LABEL, "%{public}s is died, uid: %{public}d", processData.bundleName.c_str(), processData.uid);
 
     // current died process is dlpmanager
-    if (processData.bundleName == "com.ohos.dlpmanager" &&
-        processData.processName == "com.ohos.dlpmanager") {
+    if (processData.bundleName == DLP_MANAGER_BUNDLE_NAME &&
+        processData.processName == DLP_MANAGER_BUNDLE_NAME &&
+        BundleManagerAdapter::GetInstance().CheckHapPermission(processData.bundleName, PERMISSION_ACCESS_DLP_FILE)) {
         int32_t userId;
         if (GetUserIdFromUid(processData.uid, &userId) != 0) {
             return;
