@@ -553,18 +553,18 @@ HWTEST_F(DlpPermissionServiceTest, RetentionFileManager001, TestSize.Level1)
     setuid(10031);
     ASSERT_TRUE(!RetentionFileManager::GetInstance().HasRetentionSandboxInfo("testbundle1"));
     setuid(20010031);
-    RetentionFileManager::GetInstance().hasInit = false;
+    RetentionFileManager::GetInstance().hasInit_ = false;
     ASSERT_EQ(DLP_OK, RetentionFileManager::GetInstance().AddSandboxInfo(retentionInfo));
-    RetentionFileManager::GetInstance().hasInit = false;
+    RetentionFileManager::GetInstance().hasInit_ = false;
     ASSERT_EQ(DLP_RETENTION_SERVICE_ERROR, RetentionFileManager::GetInstance().DelSandboxInfo(8888));
-    RetentionFileManager::GetInstance().hasInit = false;
+    RetentionFileManager::GetInstance().hasInit_ = false;
     ASSERT_TRUE(RetentionFileManager::GetInstance().CanUninstall(8888));
-    RetentionFileManager::GetInstance().hasInit = false;
+    RetentionFileManager::GetInstance().hasInit_ = false;
     ASSERT_EQ(DLP_RETENTION_GET_DATA_FROM_BASE_CONSTRAINTS_FILE_EMPTY,
         RetentionFileManager::GetInstance().RemoveRetentionState("testbundle1", -1));
-    RetentionFileManager::GetInstance().hasInit = false;
+    RetentionFileManager::GetInstance().hasInit_ = false;
     ASSERT_EQ(DLP_OK, RetentionFileManager::GetInstance().ClearUnreservedSandbox());
-    RetentionFileManager::GetInstance().hasInit = false;
+    RetentionFileManager::GetInstance().hasInit_ = false;
     std::vector<RetentionSandBoxInfo> vec;
     ASSERT_EQ(DLP_OK, RetentionFileManager::GetInstance().GetRetentionSandboxList("testbundle1", vec, false));
 

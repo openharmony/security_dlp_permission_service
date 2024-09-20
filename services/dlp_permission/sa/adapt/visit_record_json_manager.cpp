@@ -170,7 +170,7 @@ Json VisitRecordJsonManager::ToJson() const
     for (auto iter = infoList_.begin(); iter != infoList_.end(); ++iter) {
         Json infoJson;
         VisitRecordInfoToJson(infoJson, *iter);
-        jsonObject[RECORDLIST].push_back(infoJson);
+        jsonObject[RECORDLIST].emplace_back(infoJson);
     }
     return jsonObject;
 }

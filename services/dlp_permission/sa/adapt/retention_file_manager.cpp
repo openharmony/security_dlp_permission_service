@@ -29,7 +29,7 @@ std::recursive_mutex instanceMutex_;
 }
 
 RetentionFileManager::RetentionFileManager()
-    : hasInit(false),
+    : hasInit_(false),
       fileOperator_(std::make_shared<FileOperator>()),
       sandboxJsonManager_(std::make_shared<SandboxJsonManager>())
 {
@@ -64,7 +64,7 @@ bool RetentionFileManager::Init()
             return false;
         }
         if (constraintsConfigStr.empty()) {
-            hasInit = true;
+            hasInit_ = true;
             return true;
         }
         Json callbackInfoJson = Json::parse(constraintsConfigStr, nullptr, false);
@@ -79,7 +79,7 @@ bool RetentionFileManager::Init()
             return false;
         }
     }
-    hasInit = true;
+    hasInit_ = true;
     return true;
 }
 
@@ -102,7 +102,7 @@ int32_t RetentionFileManager::UpdateFile(const int32_t& jsonRes)
 
 int32_t RetentionFileManager::AddSandboxInfo(const RetentionInfo& retentionInfo)
 {
-    if (!hasInit && !Init()) {
+    if (!hasInit_ && !Init()) {
         DLP_LOG_ERROR(LABEL, "Init failed!");
         return DLP_RETENTION_UPDATE_ERROR;
     }
@@ -112,7 +112,7 @@ int32_t RetentionFileManager::AddSandboxInfo(const RetentionInfo& retentionInfo)
 
 int32_t RetentionFileManager::DelSandboxInfo(uint32_t tokenId)
 {
-    if (!hasInit && !Init()) {
+    if (!hasInit_ && !Init()) {
         DLP_LOG_ERROR(LABEL, "Init failed!");
         return DLP_RETENTION_UPDATE_ERROR;
     }
@@ -122,7 +122,7 @@ int32_t RetentionFileManager::DelSandboxInfo(uint32_t tokenId)
 
 bool RetentionFileManager::CanUninstall(const uint32_t& tokenId)
 {
-    if (!hasInit && !Init()) {
+    if (!hasInit_ && !Init()) {
         DLP_LOG_ERROR(LABEL, "Init failed!");
         return DLP_RETENTION_UPDATE_ERROR;
     }
@@ -132,7 +132,7 @@ bool RetentionFileManager::CanUninstall(const uint32_t& tokenId)
 int32_t RetentionFileManager::UpdateSandboxInfo(const std::set<std::string>& docUriSet, RetentionInfo& info,
     bool isRetention)
 {
-    if (!hasInit && !Init()) {
+    if (!hasInit_ && !Init()) {
         DLP_LOG_ERROR(LABEL, "Init failed!");
         return DLP_RETENTION_UPDATE_ERROR;
     }
@@ -142,7 +142,7 @@ int32_t RetentionFileManager::UpdateSandboxInfo(const std::set<std::string>& doc
 
 int32_t RetentionFileManager::RemoveRetentionState(const std::string& bundleName, const int32_t& appIndex)
 {
-    if (!hasInit && !Init()) {
+    if (!hasInit_ && !Init()) {
         DLP_LOG_ERROR(LABEL, "Init failed!");
         return DLP_RETENTION_UPDATE_ERROR;
     }
@@ -152,7 +152,7 @@ int32_t RetentionFileManager::RemoveRetentionState(const std::string& bundleName
 
 int32_t RetentionFileManager::ClearUnreservedSandbox()
 {
-    if (!hasInit && !Init()) {
+    if (!hasInit_ && !Init()) {
         DLP_LOG_ERROR(LABEL, "Init failed!");
         return DLP_RETENTION_UPDATE_ERROR;
     }
@@ -163,7 +163,7 @@ int32_t RetentionFileManager::ClearUnreservedSandbox()
 int32_t RetentionFileManager::GetRetentionSandboxList(const std::string& bundleName,
     std::vector<RetentionSandBoxInfo>& retentionSandBoxInfoVec, bool isRetention)
 {
-    if (!hasInit && !Init()) {
+    if (!hasInit_ && !Init()) {
         DLP_LOG_ERROR(LABEL, "Init failed!");
         return DLP_RETENTION_UPDATE_ERROR;
     }
@@ -172,7 +172,7 @@ int32_t RetentionFileManager::GetRetentionSandboxList(const std::string& bundleN
 
 int32_t RetentionFileManager::GetBundleNameSetByUserId(const int32_t userId, std::set<std::string>& bundleNameSet)
 {
-    if (!hasInit && !Init()) {
+    if (!hasInit_ && !Init()) {
         DLP_LOG_ERROR(LABEL, "Init failed!");
         return DLP_RETENTION_UPDATE_ERROR;
     }
@@ -182,7 +182,7 @@ int32_t RetentionFileManager::GetBundleNameSetByUserId(const int32_t userId, std
 int32_t RetentionFileManager::RemoveRetentionInfoByUserId(const int32_t userId,
     const std::set<std::string>& bundleNameSet)
 {
-    if (!hasInit && !Init()) {
+    if (!hasInit_ && !Init()) {
         DLP_LOG_ERROR(LABEL, "Init failed!");
         return DLP_RETENTION_UPDATE_ERROR;
     }
@@ -192,7 +192,7 @@ int32_t RetentionFileManager::RemoveRetentionInfoByUserId(const int32_t userId,
 
 int32_t RetentionFileManager::UpdateReadFlag(uint32_t tokenId)
 {
-    if (!hasInit && !Init()) {
+    if (!hasInit_ && !Init()) {
         DLP_LOG_ERROR(LABEL, "Init failed!");
         return DLP_RETENTION_UPDATE_ERROR;
     }
