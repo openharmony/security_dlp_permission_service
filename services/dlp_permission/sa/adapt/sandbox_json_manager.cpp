@@ -160,13 +160,13 @@ bool SandboxJsonManager::UpdateDocUriSetByUnion(RetentionInfo& info, const std::
     std::set<std::string> temp;
     std::set_union(info.docUriSet.begin(), info.docUriSet.end(), newSet.begin(), newSet.end(),
         std::insert_iterator<std::set<std::string>>(temp, temp.begin()));
-    if (temp.size() > MAX_RETENTION_SIZE) {
+    size_t size = temp.size();
+    if (size > MAX_RETENTION_SIZE) {
         DLP_LOG_ERROR(LABEL, "size bigger than MAX_RETENTION_SIZE");
         return false;
     }
-    bool isUpdate = info.docUriSet.size() != temp.size();
     info.docUriSet = temp;
-    return isUpdate;
+    return info.docUriSet.size() != size;
 }
 
 bool SandboxJsonManager::ClearDocUriSet(RetentionInfo& info, const std::set<std::string>& newSet)
@@ -275,7 +275,7 @@ int32_t SandboxJsonManager::GetRetentionSandboxList(const std::string& bundleNam
         info.docUriSet_ = iter->docUriSet;
         info.dlpFileAccess_ = iter->dlpFileAccess;
         info.hasRead_ = iter->hasRead;
-        retentionSandBoxInfoVec.push_back(info);
+        retentionSandBoxInfoVec.emplace_back(info);
     }
     return DLP_OK;
 }
@@ -435,7 +435,7 @@ void SandboxJsonManager::FromJson(const Json& jsonObject)
         DLP_LOG_ERROR(LABEL, "json error");
         return;
     }
-    for (auto& retentionJson : jsonObject["retention"]) {
+    for (const auto& retentionJson : jsonObject["retention"]) {
         RetentionInfo info;
         if (!CheckJsonElement(APPINDEX, retentionJson, KeyType::NUMBER) ||
             !CheckJsonElement(BUNDLENAME, retentionJson, KeyType::STRING) ||

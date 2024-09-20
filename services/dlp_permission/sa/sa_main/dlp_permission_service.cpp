@@ -823,15 +823,7 @@ int32_t DlpPermissionService::GetSandboxAppConfig(std::string& configInfo)
 int32_t DlpPermissionService::IsDLPFeatureProvided(bool& isProvideDLPFeature)
 {
     std::string value = OHOS::system::GetParameter(DLP_ENABLE, "");
-    if (value == TRUE_VALUE) {
-        isProvideDLPFeature = true;
-        return DLP_OK;
-    }
-    if (value == FALSE_VALUE) {
-        isProvideDLPFeature = false;
-        return DLP_OK;
-    }
-    isProvideDLPFeature = false;
+    isProvideDLPFeature = (value == TRUE_VALUE);
     return DLP_OK;
 }
 
