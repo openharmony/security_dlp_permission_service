@@ -14,12 +14,12 @@
  */
 
 #include "dlp_permission_async_stub_test.h"
+#include "dlp_permission_callback.h"
+#include "dlp_permission_kit.h"
 #include <cerrno>
 #include <gtest/gtest.h>
 #include <securec.h>
 #include "dlp_permission.h"
-#include "dlp_permission_callback.h"
-#include "dlp_permission_kit.h"
 #include "dlp_permission_log.h"
 
 using namespace testing::ext;

@@ -76,9 +76,9 @@ static int32_t g_selfUid = 0;
 const std::string DLP_MANAGER_APP = "com.ohos.dlpmanager";
 const std::string TEST_URI = "datashare:///media/file/8";
 const std::string TEST_UNEXIST_URI = "datashare:///media/file/1";
+static const std::string DLP_ENABEL = "const.dlp.dlp_enable";
 static const uint8_t ARRAY_CHAR_SIZE = 62;
 static const char CHAR_ARRAY[] = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-static const std::string DLP_ENABEL = "const.dlp.dlp_enable";
 }  // namespace
 
 static uint8_t GetRandNum()
