@@ -264,7 +264,9 @@ void PermissionPolicy::CopyPermissionPolicy(const PermissionPolicy& srcPolicy)
     if (!srcPolicy.IsValid()) {
         return;
     }
-    DLP_LOG_DEBUG(LABEL, "accountType %{public}u needOnline %{public}u expireTime %{private}" PRId64,
+    DLP_LOG_DEBUG(LABEL, "ownerAccount_ %{private}s ownerAccountId %{private}s"
+        " accountType %{public}u needOnline %{public}u expireTime %{private}" PRId64,
+        srcPolicy.ownerAccount_.c_str(), srcPolicy.ownerAccountId_.c_str(),
         srcPolicy.ownerAccountType_, srcPolicy.needOnline_, srcPolicy.expireTime_);
     ownerAccount_ = srcPolicy.ownerAccount_;
     ownerAccountId_ = srcPolicy.ownerAccountId_;
