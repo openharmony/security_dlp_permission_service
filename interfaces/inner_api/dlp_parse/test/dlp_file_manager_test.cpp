@@ -14,13 +14,14 @@
  */
 
 #include "dlp_file_manager_test.h"
+#include <cstddef>
+#include <cstdio>
+#include <cstring>
+#include <fcntl.h>
 #include "c_mock_common.h"
 #define private public
 #include "dlp_file_manager.h"
 #undef private
-#include <cstdio>
-#include <cstring>
-#include <fcntl.h>
 #include "dlp_permission.h"
 #include "dlp_permission_log.h"
 
@@ -76,11 +77,16 @@ HWTEST_F(DlpFileManagerTest, OperDlpFileNode001, TestSize.Level1)
 {
     DLP_LOG_INFO(LABEL, "OperDlpFileNode001");
 
-    std::shared_ptr<DlpFile> filePtr = std::make_shared<DlpFile>(1, DLP_TEST_DIR, 0, false);
+    std::shared_ptr<DlpFile> filePtr;
+    EXPECT_EQ(filePtr, nullptr);
+    EXPECT_EQ(DlpFileManager::GetInstance().AddDlpFileNode(filePtr), DLP_PARSE_ERROR_VALUE_INVALID);
+    EXPECT_EQ(DlpFileManager::GetInstance().RemoveDlpFileNode(filePtr), DLP_PARSE_ERROR_VALUE_INVALID);
+    filePtr = std::make_shared<DlpFile>(1, DLP_TEST_DIR, 0, false);
     ASSERT_NE(filePtr, nullptr);
     EXPECT_EQ(DlpFileManager::GetInstance().AddDlpFileNode(filePtr), DLP_OK);
     EXPECT_EQ(DlpFileManager::GetInstance().AddDlpFileNode(filePtr), DLP_PARSE_ERROR_FILE_ALREADY_OPENED);
     EXPECT_NE(DlpFileManager::GetInstance().GetDlpFile(1), nullptr);
+    EXPECT_EQ(DlpFileManager::GetInstance().GetDlpFile(2), nullptr);
     EXPECT_EQ(DlpFileManager::GetInstance().RemoveDlpFileNode(filePtr), DLP_OK);
     EXPECT_EQ(DlpFileManager::GetInstance().GetDlpFile(1), nullptr);
     DlpFileManager::GetInstance().g_DlpFileMap_[1] = filePtr;
@@ -657,6 +663,57 @@ HWTEST_F(DlpFileManagerTest, RecoverDlpFile001, TestSize.Level1)
     ASSERT_NE(filePtr, nullptr);
     EXPECT_EQ(DLP_PARSE_ERROR_FD_ERROR,
         DlpFileManager::GetInstance().RecoverDlpFile(filePtr, -1));
+}
+
+/**
+ * @tc.name: CleanTempBlob001
+ * @tc.desc: test param tagIv whether pointer is null
+ * @tc.type: FUNC
+ * @tc.require:issue：IAIFTY
+ */
+HWTEST_F(DlpFileManagerTest, CleanTempBlob001, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL, "CleanTempBlob001");
+
+    DlpBlob key;
+    DlpCipherParam* tagIv;
+    DlpBlob hmacKey;
+    uint8_t g_iv[2] = { 0x90, 0xd5 };
+    hmacKey.data = g_iv;
+    ASSERT_TRUE(hmacKey.data != nullptr);
+
+    DlpFileManager::GetInstance().CleanTempBlob(key, &tagIv, hmacKey);
+    ASSERT_TRUE(key.data == nullptr);
+    ASSERT_TRUE(tagIv == nullptr);
+
+    tagIv = new (std::nothrow) struct DlpCipherParam;
+    ASSERT_NE(tagIv, nullptr);
+    tagIv->iv.data = g_iv;
+    ASSERT_TRUE(tagIv->iv.data != nullptr);
+    DlpFileManager::GetInstance().CleanTempBlob(key, &tagIv, hmacKey);
+    ASSERT_TRUE(tagIv == nullptr);
+}
+
+/**
+ * @tc.name: GenerateCertBlob001
+ * @tc.desc: test param whether cert and certData are empty
+ * @tc.type: FUNC
+ * @tc.require:issue：IAIFTY
+ */
+HWTEST_F(DlpFileManagerTest, GenerateCertBlob001, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL, "GenerateCertBlob001");
+
+    std::vector<uint8_t> cert;
+    struct DlpBlob certData;
+    certData.data = new (std::nothrow) uint8_t[15];
+    ASSERT_TRUE(cert.size() == 0);
+    EXPECT_EQ(DLP_PARSE_ERROR_VALUE_INVALID,
+        DlpFileManager::GetInstance().GenerateCertBlob(cert, certData));
+
+    cert.push_back(1);
+    ASSERT_TRUE(certData.data != nullptr);
+    EXPECT_EQ(DLP_OK, DlpFileManager::GetInstance().GenerateCertBlob(cert, certData));
 }
 }  // namespace DlpPermission
 }  // namespace Security
