@@ -95,7 +95,7 @@ private:
     void TerminalService();
     void GetCfgFilesList(std::vector<std::string>& cfgFilesList);
     void GetConfigFileValue(const std::string& cfgFile, std::vector<std::string>& typeList);
-    std::vector<std::string> InitConfig();
+    void InitConfig(std::vector<std::string>& typeList);
 
     std::atomic<int32_t> repeatTime_;
     std::shared_ptr<std::thread> thread_ = nullptr;

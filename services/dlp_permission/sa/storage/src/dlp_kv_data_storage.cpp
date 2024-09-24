@@ -240,8 +240,7 @@ OHOS::DistributedKv::Status DlpKvDataStorage::GetEntries(
 {
     OHOS::DistributedKv::Key allEntryKeyPrefix(subId);
     std::lock_guard<std::mutex> lock(kvStorePtrMutex_);
-    OHOS::DistributedKv::Status status = kvStorePtr_->GetEntries(allEntryKeyPrefix, allEntries);
-    return status;
+    return kvStorePtr_->GetEntries(allEntryKeyPrefix, allEntries);
 }
 
 bool DlpKvDataStorage::IsKeyExists(const std::string &keyStr)
