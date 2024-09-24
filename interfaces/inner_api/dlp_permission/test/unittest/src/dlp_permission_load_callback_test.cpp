@@ -56,6 +56,7 @@ HWTEST_F(DlpPermissionLoadCallbackTest, OnLoadSystemAbilityFail001, TestSize.Lev
     ASSERT_NE(SA_ID_DLP_PERMISSION_SERVICE, systemAbilityId);
 
     systemAbilityId = SA_ID_DLP_PERMISSION_SERVICE;
+    callback_.OnLoadSystemAbilityFail(systemAbilityId);
     ASSERT_EQ(SA_ID_DLP_PERMISSION_SERVICE, systemAbilityId);
 }
 
@@ -77,6 +78,7 @@ HWTEST_F(DlpPermissionLoadCallbackTest, OnLoadSystemAbilitySuccess001, TestSize.
     ASSERT_NE(SA_ID_DLP_PERMISSION_SERVICE, systemAbilityId);
 
     systemAbilityId = SA_ID_DLP_PERMISSION_SERVICE;
+    callback_.OnLoadSystemAbilitySuccess(systemAbilityId, remoteObject);
     ASSERT_EQ(nullptr, remoteObject);
 }
 

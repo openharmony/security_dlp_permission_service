@@ -61,7 +61,6 @@ private:
     int32_t SetDlpFileParams(std::shared_ptr<DlpFile>& filePtr, const DlpProperty& property) const;
     std::mutex g_offlineLock_;
     OHOS::Utils::RWLock g_DlpMapLock_;
-    std::atomic<int> index_ = 0;
     std::unordered_map<int32_t, std::shared_ptr<DlpFile>> g_DlpFileMap_;
 };
 }  // namespace DlpPermission
