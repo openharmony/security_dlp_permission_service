@@ -35,7 +35,7 @@ typedef struct DlpLinkFileInfo {
 
 class DlpLinkFile final {
 public:
-    DlpLinkFile(std::string dlpLinkName, std::shared_ptr<DlpFile> dlpFile);
+    DlpLinkFile(const std::string& dlpLinkName, const std::shared_ptr<DlpFile>& dlpFile);
     ~DlpLinkFile();
     bool SubAndCheckZeroRef(int ref);
     void IncreaseRef();
@@ -49,7 +49,7 @@ public:
         return dlpFile_;
     };
 
-    void setDlpFilePtr(std::shared_ptr<DlpFile> dlpFile)
+    void setDlpFilePtr(const std::shared_ptr<DlpFile>& dlpFile)
     {
         dlpFile_ = dlpFile;
     };

@@ -29,7 +29,7 @@ static const int DEFAULT_INODE_RO_ACCESS = 0440;
 static const int DEFAULT_INODE_RW_ACCESS = 0640;
 } // namespace
 
-DlpLinkFile::DlpLinkFile(std::string dlpLinkName, std::shared_ptr<DlpFile> dlpFile)
+DlpLinkFile::DlpLinkFile(const std::string& dlpLinkName, const std::shared_ptr<DlpFile>& dlpFile)
     : dlpLinkName_(dlpLinkName), dlpFile_(dlpFile), refcount_(1), stopLinkFlag_(false), hasRead_(false)
 {
     (void)memset_s(&fileStat_, sizeof(fileStat_), 0, sizeof(fileStat_));

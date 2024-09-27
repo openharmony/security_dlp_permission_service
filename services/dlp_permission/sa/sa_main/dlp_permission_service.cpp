@@ -473,9 +473,9 @@ void DlpPermissionService::GetConfigFileValue(const std::string& cfgFile, std::v
     }
 }
 
-std::vector<std::string> DlpPermissionService::InitConfig()
+void DlpPermissionService::InitConfig(std::vector<std::string>& typeList)
 {
-    static std::vector<std::string> typeList;
+    static std::vector<std::string> typeListTemp;
     static bool cfgInit = true;
     std::lock_guard<std::mutex> lock(mutex_);
     if (cfgInit) {
@@ -483,25 +483,24 @@ std::vector<std::string> DlpPermissionService::InitConfig()
         std::vector<std::string> cfgFilesList;
         GetCfgFilesList(cfgFilesList);
         for (const auto& cfgFile : cfgFilesList) {
-            GetConfigFileValue(cfgFile, typeList);
-            if (!typeList.empty()) {
-                break;
+            GetConfigFileValue(cfgFile, typeListTemp);
+            if (!typeListTemp.empty()) {
+                typeList = typeListTemp;
+                return;
             }
         }
-        if (typeList.empty()) {
-            DLP_LOG_INFO(LABEL, "get config value failed, use default file path");
-            GetConfigFileValue(DEAULT_DLP_CONFIG, typeList);
-            if (typeList.empty()) {
-                DLP_LOG_ERROR(LABEL, "support file type list is empty");
-            }
+        DLP_LOG_INFO(LABEL, "get config value failed, use default file path");
+        GetConfigFileValue(DEAULT_DLP_CONFIG, typeListTemp);
+        if (typeListTemp.empty()) {
+            DLP_LOG_ERROR(LABEL, "support file type list is empty");
         }
     }
-    return typeList;
+    typeList = typeListTemp;
 }
 
 int32_t DlpPermissionService::GetDlpSupportFileType(std::vector<std::string>& supportFileType)
 {
-    supportFileType = InitConfig();
+    InitConfig(supportFileType);
     return DLP_OK;
 }
 
