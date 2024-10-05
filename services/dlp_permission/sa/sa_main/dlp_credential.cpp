@@ -159,11 +159,7 @@ static void DlpPackPolicyCallback(uint64_t requestId, int errorCode, DLP_EncPoli
 
     if (errorCode != 0) {
         DLP_LOG_ERROR(LABEL, "Pack Policy error, errorCode: %{public}d", errorCode);
-
-        // split DLP_CREDENTIAL error code by different situations
-        errorCode = (errorCode == DLP_ERR_TOKEN_CONNECTION_FAIL) ?
-            DLP_CREDENTIAL_ERROR_SERVER_ERROR : ConvertCredentialError(errorCode);
-        info.callback->OnGenerateDlpCertificate(errorCode, std::vector<uint8_t>());
+        info.callback->OnGenerateDlpCertificate(ConvertCredentialError(errorCode), std::vector<uint8_t>());
         return;
     }
 
