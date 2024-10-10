@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -19,6 +19,7 @@
 #include <string>
 #include "dlp_file_manager.h"
 #include "want.h"
+#include "ability_info.h"
 
 namespace OHOS {
 namespace Security {
@@ -41,6 +42,8 @@ class DlpFileKits {
 public:
     static bool GetSandboxFlag(AAFwk::Want &want);
     static bool IsDlpFile(int32_t dlpFd);
+    static void ConvertAbilityInfoWithSupportDlp(const AAFwk::Want& want,
+        std::vector<AppExecFwk::AbilityInfo> &abilityInfos);
 };
 }  // namespace DlpPermission
 }  // namespace Security

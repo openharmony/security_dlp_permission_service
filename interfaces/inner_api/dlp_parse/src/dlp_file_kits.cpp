@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -25,6 +25,8 @@
 #include "dlp_zip.h"
 #include "file_uri.h"
 #include "securec.h"
+#include "dlp_utils.h"
+#include "dlp_permission.h"
 
 namespace OHOS {
 namespace Security {
@@ -80,20 +82,6 @@ static bool IsDlpFileName(const std::string& dlpFileName)
         return false;
     }
     return true;
-}
-
-static std::string GetDlpFileRealSuffix(const std::string& dlpFileName)
-{
-    uint32_t dlpSuffixLen = DLP_FILE_SUFFIX.size();
-    std::string realFileName = dlpFileName.substr(0, dlpFileName.size() - dlpSuffixLen);
-    char escape = '.';
-    std::size_t escapeLocate = realFileName.find_last_of(escape);
-    if (escapeLocate >= realFileName.size()) {
-        DLP_LOG_ERROR(LABEL, "Get file suffix fail, no '.' in file name");
-        return DEFAULT_STRING;
-    }
-
-    return realFileName.substr(escapeLocate + 1);
 }
 
 static std::string GetMimeTypeBySuffix(const std::string& suffix)
@@ -187,7 +175,7 @@ bool DlpFileKits::GetSandboxFlag(Want& want)
     }
     close(fd);
     fd = -1;
-    std::string realSuffix = GetDlpFileRealSuffix(fileName);
+    std::string realSuffix = DlpUtils::GetDlpFileRealSuffix(fileName);
     if (realSuffix != DEFAULT_STRING) {
         DLP_LOG_DEBUG(LABEL, "Real suffix is %{public}s", realSuffix.c_str());
         std::string realType = GetMimeTypeBySuffix(realSuffix);
@@ -200,6 +188,97 @@ bool DlpFileKits::GetSandboxFlag(Want& want)
     }
     DLP_LOG_INFO(LABEL, "Sanbox flag is true");
     return true;
+}
+
+static int32_t ConvertAbilityInfoWithBundleName(const std::string &abilityName, const std::string &bundleName,
+    std::vector<AppExecFwk::AbilityInfo> &abilityInfos)
+{
+    Want want;
+    AppExecFwk::ElementName name;
+    name.SetAbilityName(abilityName);
+    name.SetBundleName(bundleName);
+    want.SetElement(name);
+
+    int32_t flags = static_cast<int32_t>(AppExecFwk::GetAbilityInfoFlag::GET_ABILITY_INFO_DEFAULT);
+    int32_t userId = 0;
+    int32_t ret = AccountSA::OsAccountManager::GetForegroundOsAccountLocalId(userId);
+    if (ret != ERR_OK) {
+        DLP_LOG_ERROR(LABEL, "Get os account localId error, %{public}d", ret);
+        return DLP_PARSE_ERROR_GET_ACCOUNT_FAIL;
+    }
+
+    auto bundleMgrProxy = DlpUtils::GetBundleMgrProxy();
+    if (bundleMgrProxy == nullptr) {
+        return DLP_SERVICE_ERROR_IPC_REQUEST_FAIL;
+    }
+    ret = bundleMgrProxy->QueryAbilityInfosV9(want, flags, userId, abilityInfos);
+    if (ret != ERR_OK) {
+        DLP_LOG_ERROR(LABEL, "Get ability info error, %{public}d", ret);
+        return DLP_PARSE_ERROR_BMS_ERROR;
+    }
+    return DLP_OK;
+}
+
+static bool IsSupportDlp(const std::vector<std::string> &whitelist,
+    const std::string &bundleName, const std::string &fileType)
+{
+    auto it = std::find(whitelist.begin(), whitelist.end(), bundleName);
+    if (it != whitelist.end()) {
+        return true;
+    }
+    return false;
+}
+
+void DlpFileKits::ConvertAbilityInfoWithSupportDlp(const AAFwk::Want &want,
+    std::vector<AppExecFwk::AbilityInfo> &abilityInfos)
+{
+    if (abilityInfos.size() == 0) {
+        DLP_LOG_INFO(LABEL, "ability size is zero.");
+        return;
+    }
+
+    std::string uri = want.GetUriString();
+    AppFileService::ModuleFileUri::FileUri fileUri(uri);
+    std::string fileName = fileUri.GetName();
+    if (fileName.empty() || !IsDlpFileName(fileName)) {
+        DLP_LOG_ERROR(LABEL, "File name is not exist or not dlp, name=%{private}s", fileName.c_str());
+        return;
+    }
+
+    std::string realSuffix = DlpUtils::GetDlpFileRealSuffix(fileName);
+    if (realSuffix == DEFAULT_STRING) {
+        return;
+    }
+    std::string fileType = DlpUtils::GetFileTypeBySuffix(realSuffix);
+    if (fileType == DEFAULT_STRING) {
+        DLP_LOG_ERROR(LABEL, "%{public}s is not support dlp.", realSuffix.c_str());
+        return;
+    }
+    std::vector<std::string> whitelist;
+    if (!DlpUtils::GetWhitelistWithType(DLP_WHITELIST, fileType, whitelist)) {
+        return;
+    }
+
+    for (auto it = abilityInfos.begin(); it != abilityInfos.end();) {
+        if (!IsSupportDlp(whitelist, it->bundleName, fileType)) {
+            abilityInfos.erase(it);
+        } else {
+            ++it;
+        }
+    }
+
+    if (abilityInfos.size() != 0) {
+        return;
+    }
+    std::vector<std::string> defalutWhitelist;
+    if (!DlpUtils::GetWhitelistWithType(DLP_WHITELIST, DLP_DEFAULT_WHITELIST, defalutWhitelist) ||
+        defalutWhitelist.size() <= 1) {
+        return;
+    }
+    int32_t ret = ConvertAbilityInfoWithBundleName(defalutWhitelist[0], defalutWhitelist[1], abilityInfos);
+    if (ret != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "Query ability info with bundleName error.");
+    }
 }
 }  // namespace DlpPermission
 }  // namespace Security
