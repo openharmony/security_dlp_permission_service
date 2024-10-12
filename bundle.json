@@ -84,6 +84,15 @@
           }
         },
         {
+          "name": "//base/security/dlp_permission_service/interfaces/inner_api/dlp_fuse:libdlp_fuse",
+          "header": {
+            "header_files": [
+              "dlp_fuse_fd.h"
+            ],
+            "header_base": "//base/security/dlp_permission_service/interfaces/inner_api/dlp_fuse/include"
+          }
+        },
+        {
           "name": "//base/security/dlp_permission_service/interfaces/inner_api/dlp_parse:libdlpparse_inner",
           "header": {
             "header_files": [

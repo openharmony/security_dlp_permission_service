@@ -1,4 +1,4 @@
-# Copyright (c) 2023 Huawei Device Co., Ltd.
+# Copyright (c) 2023-2024 Huawei Device Co., Ltd.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -13,6 +13,11 @@
 
 import("//build/ohos.gni")
 import("../../../dlp_permission_service.gni")
+
+config("dlp_fuse_config") {
+  visibility = [ ":*" ]
+  include_dirs = [ "include" ]
+}
 
 ohos_shared_library("libdlp_fuse") {
   branch_protector_ret = "pac_ret"
@@ -36,10 +41,13 @@ ohos_shared_library("libdlp_fuse") {
   ]
 
   sources = [
+    "src/dlp_fuse_fd.c",
     "src/dlp_link_file.cpp",
     "src/dlp_link_manager.cpp",
     "src/fuse_daemon.cpp",
   ]
+
+  public_configs = [ ":dlp_fuse_config" ]
 
   configs = [ "${dlp_root_dir}/config:coverage_flags" ]
 
@@ -55,4 +63,6 @@ ohos_shared_library("libdlp_fuse") {
     "-DHILOG_ENABLE",
     "-DFUSE_USE_VERSION=35",
   ]
+
+  cflags = [ "-DHILOG_ENABLE" ]
 }
