@@ -495,7 +495,11 @@ static int32_t GetAccoutInfo(DlpAccountType accountType, AccountInfo& accountCfg
     if (accountType == DOMAIN_ACCOUNT) {
         if (GetDomainAccountName(account, contactAccount, isOwner) != DLP_OK) {
             DLP_LOG_ERROR(LABEL, "query GetDomainAccountName failed");
-            return DLP_PARSE_ERROR_ACCOUNT_INVALID;
+            accountCfg = {
+                .accountId = nullptr,
+                .accountIdLen = 0,
+            };
+            return DLP_OK;
         }
     } else {
         if (GetLocalAccountName(account, contactAccount, isOwner) != DLP_OK) {
