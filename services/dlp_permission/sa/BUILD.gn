@@ -78,6 +78,7 @@ ohos_static_library("dlp_permission_serializer_static") {
     "c_utils:utils",
     "hilog:libhilog",
     "json:nlohmann_json_static",
+    "os_account:os_account_innerkits",
   ]
 
   if (dlp_credential_enable == true) {
