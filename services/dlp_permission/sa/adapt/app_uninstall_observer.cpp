@@ -50,8 +50,13 @@ DlpEventSubSubscriber::DlpEventSubSubscriber()
     matchingSkills.AddEvent(EventFwk::CommonEventSupport::COMMON_EVENT_PACKAGE_REMOVED);
     matchingSkills.AddEvent(EventFwk::CommonEventSupport::COMMON_EVENT_PACKAGE_FULLY_REMOVED);
     EventFwk::CommonEventSubscribeInfo subscribeInfo(matchingSkills);
-    auto appUninstallObserver = std::make_shared<AppUninstallObserver>(subscribeInfo);
-    EventFwk::CommonEventManager::SubscribeCommonEvent(appUninstallObserver);
+    subscriber_ = std::make_shared<AppUninstallObserver>(subscribeInfo);
+    EventFwk::CommonEventManager::SubscribeCommonEvent(subscriber_);
+}
+
+DlpEventSubSubscriber::~DlpEventSubSubscriber()
+{
+    EventFwk::CommonEventManager::UnSubscribeCommonEvent(subscriber_);
 }
 } // namespace DlpPermission
 } // namespace Security
