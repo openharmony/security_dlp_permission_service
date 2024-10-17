@@ -87,6 +87,7 @@ static void FuzzTest(const uint8_t* data, size_t size)
     uint8_t buffer[BUFFERSIZE] = {0};
     write(fd, buffer, BUFFERSIZE);
     testFile.ParseDlpHeader();
+    close(fd);
 }
 
 bool ParseCertFuzzTest(const uint8_t* data, size_t size)

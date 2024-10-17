@@ -142,6 +142,9 @@ static void FuzzTest(const uint8_t* data, size_t size)
     bool hasRead = true;
     g_Dlpfile->DlpFileRead(0, writeBuffer, ARRRY_SIZE, hasRead, 0);
     g_Dlpfile->Truncate(ARRRY_SIZE);
+    close(plainFileFd);
+    close(dlpFileFd);
+    close(recoveryFileFd);
 }
 
 bool DlpFileFuzzTest(const uint8_t* data, size_t size)
