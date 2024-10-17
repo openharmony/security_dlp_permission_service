@@ -36,24 +36,31 @@ ohos_shared_library("libdlpparse") {
 
   sources = [
     "$ROOT_DIR/src/dlp_file_kits.cpp",
+    "$ROOT_DIR/src/dlp_utils.cpp",
     "$ROOT_DIR/src/dlp_zip.cpp",
+    "${dlp_root_dir}/services/dlp_permission/sa/adapt/file_operator.cpp",
   ]
 
   include_dirs = [
     "$ROOT_DIR/include",
     "${dlp_root_dir}/frameworks/common/include",
     "${dlp_root_dir}/interfaces/inner_api/dlp_permission/include/",
+    "${dlp_root_dir}/services/dlp_permission/sa/adapt",
   ]
 
   external_deps = [
     "ability_base:want",
     "ability_base:zuri",
     "app_file_service:fileuri_native",
+    "bundle_framework:appexecfwk_base",
+    "bundle_framework:appexecfwk_core",
     "c_utils:utils",
     "hilog:libhilog",
     "hitrace:hitrace_meter",
     "ipc:ipc_core",
     "openssl:libcrypto_shared",
+    "os_account:os_account_innerkits",
+    "samgr:samgr_proxy",
     "zlib:shared_libz",
   ]
 
@@ -79,13 +86,16 @@ ohos_shared_library("libdlpparse_inner") {
     "$ROOT_DIR/src/dlp_file.cpp",
     "$ROOT_DIR/src/dlp_file_kits.cpp",
     "$ROOT_DIR/src/dlp_file_manager.cpp",
+    "$ROOT_DIR/src/dlp_utils.cpp",
     "$ROOT_DIR/src/dlp_zip.cpp",
+    "${dlp_root_dir}/services/dlp_permission/sa/adapt/file_operator.cpp",
   ]
 
   include_dirs = [
     "$ROOT_DIR/include",
     "${dlp_root_dir}/frameworks/common/include",
     "${dlp_root_dir}/interfaces/inner_api/dlp_permission/include/",
+    "${dlp_root_dir}/services/dlp_permission/sa/adapt",
   ]
 
   deps = [
@@ -98,12 +108,15 @@ ohos_shared_library("libdlpparse_inner") {
     "ability_base:want",
     "ability_base:zuri",
     "app_file_service:fileuri_native",
+    "bundle_framework:appexecfwk_base",
+    "bundle_framework:appexecfwk_core",
     "c_utils:utils",
     "hilog:libhilog",
     "hitrace:hitrace_meter",
     "ipc:ipc_core",
     "openssl:libcrypto_shared",
     "os_account:libaccountkits",
+    "samgr:samgr_proxy",
     "zlib:shared_libz",
   ]
 
