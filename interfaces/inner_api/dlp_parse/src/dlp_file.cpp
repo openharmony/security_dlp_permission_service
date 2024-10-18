@@ -241,6 +241,11 @@ int32_t DlpFile::GetDomainAccountName(std::string& account) const
 
 bool DlpFile::UpdateDlpFilePermission()
 {
+    if (!policy_.accountName_.empty()) {
+        DLP_LOG_INFO(LABEL, "AccountName_ is not empty, perm is  %{public}d", policy_.perm_);
+        authPerm_ = policy_.perm_;
+        return true;
+    }
     std::string accountName;
     if (policy_.ownerAccountType_ == DOMAIN_ACCOUNT) {
         if (GetDomainAccountName(accountName) != DLP_OK) {

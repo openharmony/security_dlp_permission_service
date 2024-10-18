@@ -27,6 +27,11 @@ typedef enum {
 } AccountType;
 
 typedef enum {
+    READ_ONLY = 1,
+    USE_PERM_IN_POLICY,
+} OpenMode;
+
+typedef enum {
     RECEIVER_DECRYPT_MUST_USE_CLOUD_AND_RETURN_ENCRYPTION_VALUE = 0,
     RECEIVER_DECRYPT_MUST_USE_CLOUD = 1,
     ALLOW_RECEIVER_DECRYPT_WITHOUT_USE_CLOUD = 2,
