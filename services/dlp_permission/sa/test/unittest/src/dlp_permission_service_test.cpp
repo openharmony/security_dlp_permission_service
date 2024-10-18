@@ -163,13 +163,13 @@ struct GeneratePolicyParam {
     uint32_t hmacKeyLen;
 };
 
-void GeneratePolicy(PermissionPolicy& encPolicy, GeneratePolicyParam param)
+void GeneratePolicy(PermissionPolicy& encPolicy, GeneratePolicyParam param, DlpAccountType accountType)
 {
     uint64_t curTime = static_cast<uint64_t>(
         std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count());
     GenerateRandStr(param.ownerAccountLen, encPolicy.ownerAccount_);
     encPolicy.ownerAccountId_ = encPolicy.ownerAccount_;
-    encPolicy.ownerAccountType_ = OHOS::Security::DlpPermission::DlpAccountType::DOMAIN_ACCOUNT;
+    encPolicy.ownerAccountType_ = accountType;
     uint8_t* key = GenerateRandArray(param.aeskeyLen);
     encPolicy.SetAeskey(key, param.aeskeyLen);
     if (key != nullptr) {
@@ -995,7 +995,30 @@ HWTEST_F(DlpPermissionServiceTest, GenerateDlpCertificate002, TestSize.Level1)
     PermissionPolicy policy;
     GeneratePolicyParam param = {ACCOUNT_LENGTH, AESKEY_LEN, AESKEY_LEN, USER_NUM, ACCOUNT_LENGTH, AUTH_PERM,
         DELTA_EXPIRY_TIME, HMACKEY_LEN};
-    GeneratePolicy(policy, param);
+    GeneratePolicy(policy, param, OHOS::Security::DlpPermission::DlpAccountType::DOMAIN_ACCOUNT);
+    policyParcel->policyParams_.CopyPermissionPolicy(policy);
+    int32_t res = dlpPermissionService_->GenerateDlpCertificate(policyParcel, callback);
+    ASSERT_EQ(DLP_PARSE_ERROR_ACCOUNT_INVALID, res);
+}
+
+/**
+ * @tc.name: GenerateDlpCertificate003
+ * @tc.desc: GenerateDlpCertificate test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionServiceTest, GenerateDlpCertificate003, TestSize.Level1)
+{
+    DLP_LOG_DEBUG(LABEL, "GenerateDlpCertificate003");
+    sptr<DlpPolicyParcel> policyParcel = new (std::nothrow) DlpPolicyParcel();
+    std::shared_ptr<GenerateDlpCertificateCallback> callback1 =
+        std::make_shared<ClientGenerateDlpCertificateCallback>();
+    sptr<IDlpPermissionCallback> callback = new (std::nothrow) DlpPermissionAsyncStub(callback1);
+
+    PermissionPolicy policy;
+    GeneratePolicyParam param = {ACCOUNT_LENGTH, AESKEY_LEN, AESKEY_LEN, USER_NUM, ACCOUNT_LENGTH, AUTH_PERM,
+        DELTA_EXPIRY_TIME, HMACKEY_LEN};
+    GeneratePolicy(policy, param, OHOS::Security::DlpPermission::DlpAccountType::CLOUD_ACCOUNT);
     policyParcel->policyParams_.CopyPermissionPolicy(policy);
     int32_t res = dlpPermissionService_->GenerateDlpCertificate(policyParcel, callback);
     ASSERT_EQ(DLP_OK, res);

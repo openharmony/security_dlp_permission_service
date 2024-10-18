@@ -18,6 +18,8 @@
 #include "dlp_permission.h"
 #include "dlp_permission_log.h"
 #include "hex_string.h"
+#include "ohos_account_kits.h"
+#include "os_account_manager.h"
 #include "permission_policy.h"
 #include "securec.h"
 
@@ -30,6 +32,7 @@ const std::string OWNER_ACCOUNT_NAME = "ownerAccountName";
 const std::string OWNER_ACCOUNT_ID = "ownerAccountId";
 const std::string VERSION_INDEX = "version";
 const std::string PERM_EXPIRY_TIME = "expireTime";
+const std::string PERM_DOMAIN = "domain";
 const std::string ACCOUNT_INDEX = "account";
 const std::string AESKEY = "filekey";
 const std::string AESKEY_LEN = "filekeyLen";
@@ -64,6 +67,8 @@ const std::string OPEN_MODE = "openMode";
 const std::string ACCOUNT_NAME = "accountName";
 const std::string ACCOUNT_ID = "accountId";
 constexpr uint64_t  VALID_TIME_STAMP = 2147483647;
+static const uint32_t DOMAIN_VERSION = 2;
+static const uint32_t CLOUD_VERSION = 1;
 
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
     LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "DlpPermissionSerializer"};
@@ -238,6 +243,41 @@ int32_t DlpPermissionSerializer::DeserializeAuthUserList(
     return DLP_OK;
 }
 
+static int32_t SerializeDomainInfo(const PermissionPolicy& policy, unordered_json& permInfoJson)
+{
+    if (policy.ownerAccountType_ != DOMAIN_ACCOUNT) {
+        permInfoJson[VERSION_INDEX] = CLOUD_VERSION;
+        return DLP_OK;
+    }
+
+    int32_t userId;
+    int32_t res = OHOS::AccountSA::OsAccountManager::GetForegroundOsAccountLocalId(userId);
+    if (res != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "GetForegroundOsAccountLocalId failed, res = %{public}d", res);
+        return DLP_PARSE_ERROR_ACCOUNT_INVALID;
+    }
+    AccountSA::OsAccountInfo osAccountInfo;
+    res = OHOS::AccountSA::OsAccountManager::QueryOsAccountById(userId, osAccountInfo);
+    if (res != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "QueryOsAccountById failed, res = %{public}d", res);
+        return DLP_PARSE_ERROR_ACCOUNT_INVALID;
+    }
+
+    AccountSA::DomainAccountInfo domainInfo;
+    osAccountInfo.GetDomainInfo(domainInfo);
+
+    size_t pos = domainInfo.serverConfigId_.find(":");
+    if (pos == std::string::npos) {
+        DLP_LOG_ERROR(LABEL, "Get serverConfigId or domain failed");
+        return DLP_PARSE_ERROR_ACCOUNT_INVALID;
+    }
+    std::string domainStr = domainInfo.serverConfigId_.substr(0, pos);
+    permInfoJson[PERM_DOMAIN] = domainStr;
+    permInfoJson[VERSION_INDEX] = DOMAIN_VERSION;
+
+    return DLP_OK;
+}
+
 static void SerializeEveryoneInfo(const PermissionPolicy& policy, unordered_json& permInfoJson)
 {
     if (policy.supportEveryone_) {
@@ -306,7 +346,11 @@ int32_t DlpPermissionSerializer::SerializeDlpPermission(const PermissionPolicy& 
     policyJson[KIA_INDEX] = "";
     policyJson[OWNER_ACCOUNT_NAME] = policy.ownerAccount_;
     policyJson[OWNER_ACCOUNT_ID] = policy.ownerAccountId_;
-    policyJson[VERSION_INDEX] = 1;
+    res = SerializeDomainInfo(policy, policyJson);
+    if (res != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "Serialize domain info failed, res = %{public}d", res);
+        return res;
+    }
     policyJson[PERM_EXPIRY_TIME] = policy.expireTime_;
     policyJson[NEED_ONLINE] = policy.needOnline_;
     policyJson[DLP_FILE_DEBUG_FLAG] = policy.debug_;
