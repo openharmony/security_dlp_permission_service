@@ -30,6 +30,7 @@
 #undef private
 #include "dlp_file_manager.h"
 #define private public
+#include "dlp_fuse_fd.h"
 #include "dlp_link_file.h"
 #include "dlp_link_manager.h"
 #undef private
@@ -199,9 +200,7 @@ void PrepareDlpFuseFsMount()
         }
         return;
     }
-
-    dup2(g_mountFd, FUSE_DEV_FD);
-
+    SetDlpFuseFd(g_mountFd);
     std::string source = FUSE_DEV;
     std::string mnt = MOUNT_POINT_DIR;
     std::string type = FUSE_TYPE;

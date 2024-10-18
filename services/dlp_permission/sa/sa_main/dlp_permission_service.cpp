@@ -89,6 +89,11 @@ void DlpPermissionService::OnStart()
         DLP_LOG_INFO(LABEL, "DlpPermissionService has already started!");
         return;
     }
+    bool ret = Publish(this);
+    if (!ret) {
+        DLP_LOG_ERROR(LABEL, "Failed to publish service!");
+        return;
+    }
     DLP_LOG_INFO(LABEL, "DlpPermissionService is starting");
     if (!RegisterAppStateObserver()) {
         DLP_LOG_ERROR(LABEL, "Failed to register app state observer!");
@@ -96,11 +101,6 @@ void DlpPermissionService::OnStart()
     }
     dlpEventSubSubscriber_ = std::make_shared<DlpEventSubSubscriber>();
     state_ = ServiceRunningState::STATE_RUNNING;
-    bool ret = Publish(this);
-    if (!ret) {
-        DLP_LOG_ERROR(LABEL, "Failed to publish service!");
-        return;
-    }
     DLP_LOG_INFO(LABEL, "Congratulations, DlpPermissionService start successfully!");
 }
 

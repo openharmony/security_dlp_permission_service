@@ -49,7 +49,7 @@ fuse_ino_t GetFileInode(DlpLinkFile* node);
 
 class FuseDaemon {
 public:
-    static int InitFuseFs(int fuseDevFd);
+    static int InitFuseFs();
     static struct stat* GetRootFileStat();
     static int WaitDaemonEnable(void);
     static void NotifyDaemonEnable(void);

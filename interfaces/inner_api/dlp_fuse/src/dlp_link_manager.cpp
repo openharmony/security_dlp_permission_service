@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -15,6 +15,7 @@
 #include "dlp_link_manager.h"
 
 #include "dlp_file.h"
+#include "dlp_fuse_fd.h"
 #include "dlp_permission.h"
 #include "dlp_permission_log.h"
 #include "fuse_daemon.h"
@@ -31,7 +32,7 @@ std::recursive_mutex instanceMutex_;
 
 DlpLinkManager::DlpLinkManager()
 {
-    FuseDaemon::InitFuseFs(FUSE_DEV_FD);
+    FuseDaemon::InitFuseFs();
 }
 
 DlpLinkManager::~DlpLinkManager()
@@ -46,6 +47,7 @@ DlpLinkManager::~DlpLinkManager()
             iter++;
         }
     }
+    CloseDlpFuseFd();
 }
 
 static bool IsLinkNameValid(const std::string& linkName)

@@ -105,7 +105,7 @@ static void GenerateRandProperty(struct DlpProperty& encProp, const uint8_t* dat
     for (uint32_t user = 0; user < TEST_USER_COUNT; ++user) {
         std::string accountName = account + std::to_string(user);
         AuthUserInfo perminfo = {.authAccount = strdup(const_cast<char *>(accountName.c_str())),
-            .authPerm = READ_ONLY,
+            .authPerm = DLPFileAccess::READ_ONLY,
             .permExpiryTime = curTime + EXPIRT_TIME,
             .authAccountType = DlpAccountType::CLOUD_ACCOUNT};
         encProp.authUsers.emplace_back(perminfo);
@@ -142,6 +142,9 @@ static void FuzzTest(const uint8_t* data, size_t size)
     bool hasRead = true;
     g_Dlpfile->DlpFileRead(0, writeBuffer, ARRRY_SIZE, hasRead, 0);
     g_Dlpfile->Truncate(ARRRY_SIZE);
+    close(plainFileFd);
+    close(dlpFileFd);
+    close(recoveryFileFd);
 }
 
 bool DlpFileFuzzTest(const uint8_t* data, size_t size)
