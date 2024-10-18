@@ -807,13 +807,13 @@ HWTEST_F(FuseDaemonTest, InitFuseFs001, TestSize.Level1)
 {
     DLP_LOG_INFO(LABEL, "InitFuseFs001");
     FuseDaemon::init_ = false;
-    EXPECT_EQ(-1, FuseDaemon::InitFuseFs(-1));
+    EXPECT_EQ(-1, FuseDaemon::InitFuseFs());
     // second init will fail whatever last init result is.
-    EXPECT_EQ(-1, FuseDaemon::InitFuseFs(-1));
+    EXPECT_EQ(-1, FuseDaemon::InitFuseFs());
 
     // fuse fd is wrong
     FuseDaemon::init_ = false;
-    EXPECT_EQ(-1, FuseDaemon::InitFuseFs(1000));
+    EXPECT_EQ(-1, FuseDaemon::InitFuseFs());
 }
 
 /**
