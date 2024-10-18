@@ -439,7 +439,7 @@ HWTEST_F(DlpFileManagerTest, SetDlpFileParams001, TestSize.Level1)
     property.ownerAccount = "owner";
     property.ownerAccountId = "owner";
     property.contactAccount = "owner";
-    property.ownerAccountType = DOMAIN_ACCOUNT;
+    property.ownerAccountType = CLOUD_ACCOUNT;
 
     condition.mockSequence = { false, false, false, false, false, false, false, false, false,
         false, false, false, false, false, false, false, false, false,
@@ -468,7 +468,7 @@ HWTEST_F(DlpFileManagerTest, SetDlpFileParams002, TestSize.Level1)
     property.ownerAccount = "";
     property.ownerAccountId = "";
     property.contactAccount = "owner";
-    property.ownerAccountType = DOMAIN_ACCOUNT;
+    property.ownerAccountType = CLOUD_ACCOUNT;
 
     EXPECT_EQ(DLP_PARSE_ERROR_VALUE_INVALID,
         DlpFileManager::GetInstance().SetDlpFileParams(filePtr, property));
@@ -521,7 +521,7 @@ HWTEST_F(DlpFileManagerTest, SetDlpFileParams004, TestSize.Level1)
     property.ownerAccount = "owner";
     property.ownerAccountId = "owner";
     property.contactAccount = "";
-    property.ownerAccountType = DOMAIN_ACCOUNT;
+    property.ownerAccountType = CLOUD_ACCOUNT;
 
     EXPECT_EQ(DLP_PARSE_ERROR_VALUE_INVALID,
         DlpFileManager::GetInstance().SetDlpFileParams(filePtr, property));
@@ -571,7 +571,7 @@ HWTEST_F(DlpFileManagerTest, GenerateDlpFile002, TestSize.Level1)
     property.ownerAccount = "";
     property.ownerAccountId = "";
     property.contactAccount = "owner";
-    property.ownerAccountType = DOMAIN_ACCOUNT;
+    property.ownerAccountType = CLOUD_ACCOUNT;
 
     EXPECT_EQ(DLP_PARSE_ERROR_VALUE_INVALID,
         DlpFileManager::GetInstance().GenerateDlpFile(1000, 1000, property, filePtr, DLP_TEST_DIR));
@@ -591,7 +591,7 @@ HWTEST_F(DlpFileManagerTest, GenerateDlpFile003, TestSize.Level1)
     property.ownerAccount = "owner";
     property.ownerAccountId = "owner";
     property.contactAccount = "owner";
-    property.ownerAccountType = DOMAIN_ACCOUNT;
+    property.ownerAccountType = CLOUD_ACCOUNT;
 
     EXPECT_EQ(DLP_PARSE_ERROR_FILE_OPERATE_FAIL,
         DlpFileManager::GetInstance().GenerateDlpFile(1000, 1000, property, filePtr, DLP_TEST_DIR));
