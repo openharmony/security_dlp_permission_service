@@ -24,59 +24,24 @@ namespace DlpPermission {
 
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "DlpUtils"};
-static constexpr uint32_t MAX_DLP_FILE_SIZE = 1000;
 static const std::string DLP_FILE_SUFFIXS = ".dlp";
 static const std::string DEFAULT_STRINGS = "";
 }
 
 sptr<AppExecFwk::IBundleMgr> DlpUtils::GetBundleMgrProxy(void)
 {
-    sptr<ISystemAbilityManager> systemAbilityManager =
-        SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
-    if (systemAbilityManager == nullptr) {
-        DLP_LOG_ERROR(LABEL, "failed to get system ability manager");
-        return nullptr;
-    }
-
-    sptr<IRemoteObject> remoteObj = systemAbilityManager->CheckSystemAbility(BUNDLE_MGR_SERVICE_SYS_ABILITY_ID);
-    if (remoteObj == nullptr) {
-        DLP_LOG_ERROR(LABEL, "Fail to connect bundle manager service.");
-        return nullptr;
-    }
-
-    return iface_cast<AppExecFwk::IBundleMgr>(remoteObj);
+    return nullptr;
 }
 
 bool DlpUtils::GetWhitelistWithType(const std::string &cfgFile, const std::string &type,
     std::vector<std::string> &whitelist)
 {
-    std::string content;
-    (void)FileOperator().GetFileContentByPath(cfgFile, content);
-    if (content.empty()) {
-        return false;
-    }
-    auto jsonObj = nlohmann::json::parse(content, nullptr, false);
-    if (jsonObj.is_discarded() || (!jsonObj.is_object())) {
-        DLP_LOG_WARN(LABEL, "JsonObj is discarded");
-        return false;
-    }
-    auto result = jsonObj.find(type);
-    if (result != jsonObj.end() && result->is_array() && !result->empty() && (*result)[0].is_string()) {
-        whitelist = result->get<std::vector<std::string>>();
-    }
-    if (whitelist.size() != 0) {
-        return true;
-    }
     return false;
 }
 
 std::string DlpUtils::GetFileTypeBySuffix(const std::string& suffix)
 {
-    auto iter = FILE_TYPE_MAP.find(suffix);
-    if (iter != FILE_TYPE_MAP.end()) {
-        return iter->second;
-    }
-    return DEFAULT_STRINGS;
+    return "test.txt.dlp";
 }
 
 std::string DlpUtils::GetDlpFileRealSuffix(const std::string& dlpFileName)
@@ -95,23 +60,7 @@ std::string DlpUtils::GetDlpFileRealSuffix(const std::string& dlpFileName)
 
 int32_t DlpUtils::GetFileNameWithFd(const int32_t &fd, std::string &srcFileName)
 {
-    char *fileName = new (std::nothrow) char[MAX_DLP_FILE_SIZE + 1];
-    if (fileName == nullptr) {
-        return DLP_PARSE_ERROR_MEMORY_OPERATE_FAIL;
-    }
-
-    std::string path = "/proc/self/fd/" + std::to_string(fd);
-
-    int readLinkRes = readlink(path.c_str(), fileName, MAX_DLP_FILE_SIZE);
-    if (readLinkRes < 0) {
-        DLP_LOG_ERROR(LABEL, "fail to readlink uri");
-        delete[] fileName;
-        return DLP_PARSE_ERROR_FD_ERROR;
-    }
-    fileName[readLinkRes] = '\0';
-
-    srcFileName = std::string(fileName);
-    delete[] fileName;
+    srcFileName = "test.txt.dlp";
     return DLP_OK;
 }
 }  // namespace DlpPermission

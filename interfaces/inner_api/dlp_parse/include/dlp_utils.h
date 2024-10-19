@@ -48,6 +48,7 @@ public:
         std::vector<std::string> &whitelist);
     static std::string GetFileTypeBySuffix(const std::string& suffix);
     static std::string GetDlpFileRealSuffix(const std::string& dlpFileName);
+    static int32_t GetFileNameWithFd(const int32_t &fd, std::string &srcFileName);
 };
 }  // namespace DlpPermission
 }  // namespace Security
