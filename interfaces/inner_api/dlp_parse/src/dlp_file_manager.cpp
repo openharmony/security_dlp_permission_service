@@ -448,28 +448,6 @@ int32_t DlpFileManager::GenerateDlpFile(
     return AddDlpFileNode(filePtr);
 }
 
-static int32_t GetFileNameWithFd(const int32_t &fd, std::string &srcFileName)
-{
-    char *fileName = new (std::nothrow) char[MAX_DLP_FILE_SIZE + 1];
-    if (fileName == nullptr) {
-        return DLP_PARSE_ERROR_MEMORY_OPERATE_FAIL;
-    }
-
-    std::string path = "/proc/self/fd/" + std::to_string(fd);
-
-    int readLinkRes = readlink(path.c_str(), fileName, MAX_DLP_FILE_SIZE);
-    if (readLinkRes < 0) {
-        DLP_LOG_ERROR(LABEL, "fail to readlink uri");
-        delete[] fileName;
-        return DLP_PARSE_ERROR_FD_ERROR;
-    }
-    fileName[readLinkRes] = '\0';
-
-    srcFileName = std::string(fileName);
-    delete[] fileName;
-    return DLP_OK;
-}
-
 static bool GetBundleInfoWithBundleName(const std::string &bundleName, int32_t flag,
     AppExecFwk::BundleInfo &bundleInfo, int32_t userId)
 {
@@ -535,7 +513,7 @@ int32_t DlpFileManager::OpenDlpFile(int32_t dlpFileFd, std::shared_ptr<DlpFile>&
     }
 
     std::string fileName;
-    int32_t ret = GetFileNameWithFd(dlpFileFd, fileName);
+    int32_t ret = DlpUtils::GetFileNameWithFd(dlpFileFd, fileName);
     if (ret != DLP_OK) {
         return ret;
     }
