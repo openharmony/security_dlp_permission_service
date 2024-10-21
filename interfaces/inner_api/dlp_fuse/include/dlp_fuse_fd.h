@@ -20,9 +20,9 @@
 extern "C" {
 #endif
 
-int GetDlpFuseFd();
+int GetDlpFuseFd(void);
 void SetDlpFuseFd(int fd);
-void CloseDlpFuseFd();
+void CloseDlpFuseFd(void);
 
 #ifdef __cplusplus
 }
