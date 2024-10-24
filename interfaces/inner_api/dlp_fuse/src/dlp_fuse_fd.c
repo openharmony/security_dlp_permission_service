@@ -27,7 +27,7 @@ static const int TIME_WAIT_TIME_OUT = 3;;
 static int g_dlpFuseFd = -1;
 static pthread_mutex_t g_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t g_cond = PTHREAD_COND_INITIALIZER;
-int GetDlpFuseFd()
+int GetDlpFuseFd(void)
 {
     struct timespec ts;
     clock_gettime(CLOCK_REALTIME, &ts);
@@ -45,8 +45,8 @@ void SetDlpFuseFd(int fd)
 {
     pthread_mutex_lock(&g_mutex);
     if (g_dlpFuseFd != -1) {
-        close(g_dlpFuseFd);
         DLP_LOG_DEBUG("close fuseFd: %d first\n", g_dlpFuseFd);
+        close(g_dlpFuseFd);
     }
     g_dlpFuseFd = fd;
     DLP_LOG_DEBUG("fuseFd: %d\n", g_dlpFuseFd);
@@ -54,7 +54,7 @@ void SetDlpFuseFd(int fd)
     pthread_mutex_unlock(&g_mutex);
 }
 
-void CloseDlpFuseFd()
+void CloseDlpFuseFd(void)
 {
     pthread_mutex_lock(&g_mutex);
     if (g_dlpFuseFd == -1) {
