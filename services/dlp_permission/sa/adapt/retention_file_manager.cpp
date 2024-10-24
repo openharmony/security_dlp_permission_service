@@ -58,6 +58,9 @@ bool RetentionFileManager::HasRetentionSandboxInfo(const std::string& bundleName
 bool RetentionFileManager::Init()
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
+    if (hasInit_) {
+        return true;
+    }
     if (fileOperator_->IsExistFile(DLP_RETENTION_JSON_PATH)) {
         std::string constraintsConfigStr;
         if (fileOperator_->GetFileContentByPath(DLP_RETENTION_JSON_PATH, constraintsConfigStr) != DLP_OK) {
@@ -102,7 +105,7 @@ int32_t RetentionFileManager::UpdateFile(const int32_t& jsonRes)
 
 int32_t RetentionFileManager::AddSandboxInfo(const RetentionInfo& retentionInfo)
 {
-    if (!hasInit_ && !Init()) {
+    if (!Init()) {
         DLP_LOG_ERROR(LABEL, "Init failed!");
         return DLP_RETENTION_UPDATE_ERROR;
     }
@@ -112,7 +115,7 @@ int32_t RetentionFileManager::AddSandboxInfo(const RetentionInfo& retentionInfo)
 
 int32_t RetentionFileManager::DelSandboxInfo(uint32_t tokenId)
 {
-    if (!hasInit_ && !Init()) {
+    if (!Init()) {
         DLP_LOG_ERROR(LABEL, "Init failed!");
         return DLP_RETENTION_UPDATE_ERROR;
     }
@@ -122,7 +125,7 @@ int32_t RetentionFileManager::DelSandboxInfo(uint32_t tokenId)
 
 bool RetentionFileManager::CanUninstall(const uint32_t& tokenId)
 {
-    if (!hasInit_ && !Init()) {
+    if (!Init()) {
         DLP_LOG_ERROR(LABEL, "Init failed!");
         return DLP_RETENTION_UPDATE_ERROR;
     }
@@ -132,7 +135,7 @@ bool RetentionFileManager::CanUninstall(const uint32_t& tokenId)
 int32_t RetentionFileManager::UpdateSandboxInfo(const std::set<std::string>& docUriSet, RetentionInfo& info,
     bool isRetention)
 {
-    if (!hasInit_ && !Init()) {
+    if (!Init()) {
         DLP_LOG_ERROR(LABEL, "Init failed!");
         return DLP_RETENTION_UPDATE_ERROR;
     }
@@ -142,7 +145,7 @@ int32_t RetentionFileManager::UpdateSandboxInfo(const std::set<std::string>& doc
 
 int32_t RetentionFileManager::RemoveRetentionState(const std::string& bundleName, const int32_t& appIndex)
 {
-    if (!hasInit_ && !Init()) {
+    if (!Init()) {
         DLP_LOG_ERROR(LABEL, "Init failed!");
         return DLP_RETENTION_UPDATE_ERROR;
     }
@@ -152,7 +155,7 @@ int32_t RetentionFileManager::RemoveRetentionState(const std::string& bundleName
 
 int32_t RetentionFileManager::ClearUnreservedSandbox()
 {
-    if (!hasInit_ && !Init()) {
+    if (!Init()) {
         DLP_LOG_ERROR(LABEL, "Init failed!");
         return DLP_RETENTION_UPDATE_ERROR;
     }
@@ -163,7 +166,7 @@ int32_t RetentionFileManager::ClearUnreservedSandbox()
 int32_t RetentionFileManager::GetRetentionSandboxList(const std::string& bundleName,
     std::vector<RetentionSandBoxInfo>& retentionSandBoxInfoVec, bool isRetention)
 {
-    if (!hasInit_ && !Init()) {
+    if (!Init()) {
         DLP_LOG_ERROR(LABEL, "Init failed!");
         return DLP_RETENTION_UPDATE_ERROR;
     }
@@ -172,7 +175,7 @@ int32_t RetentionFileManager::GetRetentionSandboxList(const std::string& bundleN
 
 int32_t RetentionFileManager::GetBundleNameSetByUserId(const int32_t userId, std::set<std::string>& bundleNameSet)
 {
-    if (!hasInit_ && !Init()) {
+    if (!Init()) {
         DLP_LOG_ERROR(LABEL, "Init failed!");
         return DLP_RETENTION_UPDATE_ERROR;
     }
@@ -182,7 +185,7 @@ int32_t RetentionFileManager::GetBundleNameSetByUserId(const int32_t userId, std
 int32_t RetentionFileManager::RemoveRetentionInfoByUserId(const int32_t userId,
     const std::set<std::string>& bundleNameSet)
 {
-    if (!hasInit_ && !Init()) {
+    if (!Init()) {
         DLP_LOG_ERROR(LABEL, "Init failed!");
         return DLP_RETENTION_UPDATE_ERROR;
     }
@@ -192,7 +195,7 @@ int32_t RetentionFileManager::RemoveRetentionInfoByUserId(const int32_t userId,
 
 int32_t RetentionFileManager::UpdateReadFlag(uint32_t tokenId)
 {
-    if (!hasInit_ && !Init()) {
+    if (!Init()) {
         DLP_LOG_ERROR(LABEL, "Init failed!");
         return DLP_RETENTION_UPDATE_ERROR;
     }
