@@ -35,6 +35,7 @@ public:
 class DlpEventSubSubscriber {
 public:
     DlpEventSubSubscriber();
+    ~DlpEventSubSubscriber();
 private:
     std::shared_ptr<AppUninstallObserver> subscriber_ = nullptr;
 };

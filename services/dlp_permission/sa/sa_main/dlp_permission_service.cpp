@@ -107,6 +107,7 @@ void DlpPermissionService::OnStart()
 void DlpPermissionService::OnStop()
 {
     DLP_LOG_INFO(LABEL, "Stop service");
+    dlpEventSubSubscriber_ = nullptr;
 }
 
 bool DlpPermissionService::RegisterAppStateObserver()
