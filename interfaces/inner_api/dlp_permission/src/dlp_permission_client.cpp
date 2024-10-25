@@ -66,6 +66,11 @@ DlpPermissionClient::DlpPermissionClient()
 
 DlpPermissionClient::~DlpPermissionClient()
 {
+    CleanUpResource();
+}
+
+void DlpPermissionClient::CleanUpResource()
+{
     std::unique_lock<std::mutex> lock(proxyMutex_);
     if (proxy_ == nullptr) {
         return;
@@ -77,6 +82,11 @@ DlpPermissionClient::~DlpPermissionClient()
     if (serviceDeathObserver_ != nullptr) {
         remoteObj->RemoveDeathRecipient(serviceDeathObserver_);
     }
+}
+
+extern "C" __attribute__((destructor)) void CleanUp()
+{
+    DlpPermissionClient::GetInstance().CleanUpResource();
 }
 
 int32_t DlpPermissionClient::GenerateDlpCertificate(
