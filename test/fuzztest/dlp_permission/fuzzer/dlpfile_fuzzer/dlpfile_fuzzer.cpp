@@ -38,7 +38,7 @@ static const uint8_t ARRAY_CHAR_SIZE = 62;
 static const char CHAR_ARRAY[] = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 static std::string g_accountName = "ohosAnonymousName";
 }
- 
+
 static void GenerateRandStr(uint32_t len, const uint8_t *data, std::string& res)
 {
     for (uint32_t i = 0; i < len; i++) {
