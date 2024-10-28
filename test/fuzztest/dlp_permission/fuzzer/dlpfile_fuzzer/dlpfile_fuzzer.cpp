@@ -46,6 +46,33 @@ static void GenerateRandStr(uint32_t len, const uint8_t *data, std::string& res)
     }
 }
 
+static DlpAccountType GenerateDlpAccountType(const uint8_t *data)
+{
+    int8_t typeNum = data[0] % (sizeof(DlpAccountType) / sizeof(INVALID_ACCOUNT));
+    if (typeNum == 0) {
+        return INVALID_ACCOUNT;
+    } else if (typeNum == 1) {
+        return CLOUD_ACCOUNT;
+    } else if (typeNum == 2) {
+        return DOMAIN_ACCOUNT;
+    } else {
+        return APPLICATION_ACCOUNT;
+    }
+}
+
+static DLPFileAccess GenerateDLPFileAccess(const uint8_t *data) {
+    int8_t FileAccess = data[0] % (sizeof(DLPFileAccess) / sizeof(NO_PERMISSION));
+    if (FileAccess == 0) {
+        return NO_PERMISSION;
+    } else if (FileAccess == 1) {
+        return READ_ONLY;
+    } else if (FileAccess == 2) {
+        return CONTENT_EDIT;
+    } else {
+        return FULL_CONTROL;
+    }
+}
+
 bool IsAccountLogIn(uint32_t osAccountId, AccountType accountType, const DlpBlob* accountId)
 {
     return true;
@@ -97,7 +124,7 @@ static void GenerateRandProperty(struct DlpProperty& encProp, const uint8_t* dat
         g_accountName = account;
     }
     AccountSA::OhosAccountKits::GetInstance().UpdateOhosAccountInfo(g_accountName, g_accountName, LOGIN_EVENT);
-    encProp.ownerAccountType = DlpAccountType::CLOUD_ACCOUNT;
+    encProp.ownerAccountType = GenerateDlpAccountType(data);
     if (size % FIVE == 0) {
         encProp.supportEveryone = true;
         encProp.everyonePerm = CONTENT_EDIT;
@@ -105,9 +132,9 @@ static void GenerateRandProperty(struct DlpProperty& encProp, const uint8_t* dat
     for (uint32_t user = 0; user < TEST_USER_COUNT; ++user) {
         std::string accountName = account + std::to_string(user);
         AuthUserInfo perminfo = {.authAccount = strdup(const_cast<char *>(accountName.c_str())),
-            .authPerm = DLPFileAccess::READ_ONLY,
+            .authPerm = GenerateDLPFileAccess(data),
             .permExpiryTime = curTime + EXPIRT_TIME,
-            .authAccountType = DlpAccountType::CLOUD_ACCOUNT};
+            .authAccountType = GenerateDlpAccountType(data)};
         encProp.authUsers.emplace_back(perminfo);
     }
 }
@@ -120,6 +147,7 @@ static void FuzzTest(const uint8_t* data, size_t size)
     int plainFileFd = open("/data/file_test.txt", O_CREAT | O_RDWR | O_TRUNC, S_IRWXU | S_IRWXG | S_IRWXO);
     int dlpFileFd = open("/data/file_test.txt.dlp", O_CREAT | O_RDWR | O_TRUNC, S_IRWXU | S_IRWXG | S_IRWXO);
     std::string text;
+    std::string account;
     GenerateRandStr(TEXT_LENGTH, data, text);
     uint32_t offset = TEXT_LENGTH;
     std::string appId;
@@ -136,12 +164,22 @@ static void FuzzTest(const uint8_t* data, size_t size)
     DlpFileManager::GetInstance().RecoverDlpFile(g_Dlpfile, recoveryFileFd);
     DlpFileManager::GetInstance().CloseDlpFile(g_Dlpfile);
     res = DlpFileManager::GetInstance().OpenDlpFile(dlpFileFd, g_Dlpfile, DLP_TEST_DIR, appId);
+    g_Dlpfile = DlpFileManager::GetInstance().GetDlpFile(dlpFileFd);
     DLP_LOG_INFO(LABEL, "OpenDlpFile res=%{public}d", res);
     g_Dlpfile->DlpFileWrite(0, const_cast<char *>(text.c_str()), text.length());
     uint8_t writeBuffer[ARRRY_SIZE] = {0x1};
     bool hasRead = true;
-    g_Dlpfile->DlpFileRead(0, writeBuffer, ARRRY_SIZE, hasRead, 0);
+    g_Dlpfile->DlpFileR  ead(0, writeBuffer, ARRRY_SIZE, hasRead, 0);
+    g_Dlpfile->ParseDlpInfo();
     g_Dlpfile->Truncate(ARRRY_SIZE);
+    g_Dlpfile->GetLocalAccountName(account);
+    g_Dlpfile->GetDomainAccountName(account);
+    g_Dlpfile->UnzipDlpFile();
+    g_Dlpfile->ParseCert();
+    g_Dlpfile->ParseEncData();
+    g_Dlpfile->GenFileInRaw(dlpFileFd);
+    g_Dlpfile->RemoveDlpPermissionInZip(plainFileFd);
+    g_Dlpfile->RemoveDlpPermissionInRaw(plainFileFd);
     close(plainFileFd);
     close(dlpFileFd);
     close(recoveryFileFd);
