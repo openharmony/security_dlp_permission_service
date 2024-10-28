@@ -1092,6 +1092,18 @@ HWTEST_F(DlpFuseTest, ReplaceDlpLinkFile001, TestSize.Level1)
     EXPECT_EQ(DlpLinkManager::GetInstance().ReplaceDlpLinkFile(filePtr, "linkfile"), DLP_FUSE_ERROR_DLP_FILE_NULL);
     delete (node);
 }
+
+/**
+ * @tc.name: CloseDlpFuseFile001
+ * @tc.desc: CloseDlpFuseFile
+ * @tc.type: FUNC
+ * @tc.require:AR000GVIGC
+ */
+HWTEST_F(DlpFuseTest, CloseDlpFuseFile001, TestSize.Level1)
+{
+    GetDlpFuseFd();
+    CloseDlpFuseFd();
+}
 }  // namespace DlpPermission
 }  // namespace Security
 }  // namespace OHOS
