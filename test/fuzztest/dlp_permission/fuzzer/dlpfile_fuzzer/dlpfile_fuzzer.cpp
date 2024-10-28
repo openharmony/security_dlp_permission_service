@@ -93,9 +93,10 @@ static DlpAccountType GenerateDlpAccountType(const uint8_t *data)
     }
 }
 
-static DLPFileAccess GenerateDLPFileAccess(const uint8_t *data) {
+static DLPFileAccess GenerateDLPFileAccess(const uint8_t *data)
+{
     int8_t FileAccess = data[0] % (sizeof(DLPFileAccess) / sizeof(NO_PERMISSION));
-    if (FileAccess == 0) {
+    if (fileAccess == 0) {
         return DLPFileAccess::NO_PERMISSION;
     } else if (FileAccess == 1) {
         return DLPFileAccess::READ_ONLY;
@@ -186,10 +187,10 @@ static void FuzzTest(const uint8_t* data, size_t size)
     g_Dlpfile->NeedAdapter();
     g_Dlpfile->UpdateCert(cert);
     g_Dlpfile->GetFsContentSize();
-    g_Dlpfile->HmacCheck(); 
+    g_Dlpfile->HmacCheck();
     g_Dlpfile->DlpFileRead(0, writeBuffer, ARRRY_SIZE, hasRead, 0);
     g_Dlpfile->Truncate(ARRRY_SIZE);
-    UpdateCertAndTextFuzzTest(offlineCert);  
+    UpdateCertAndTextFuzzTest(offlineCert);
     close(plainFileFd);
     close(dlpFileFd);
     close(recoveryFileFd);
