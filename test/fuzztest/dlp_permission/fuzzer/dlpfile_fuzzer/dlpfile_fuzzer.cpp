@@ -98,9 +98,9 @@ static DLPFileAccess GenerateDLPFileAccess(const uint8_t *data)
     int8_t fileAccess = data[0] % (sizeof(DLPFileAccess) / sizeof(NO_PERMISSION));
     if (fileAccess == 0) {
         return DLPFileAccess::NO_PERMISSION;
-    } else if (FileAccess == 1) {
+    } else if (fileAccess == 1) {
         return DLPFileAccess::READ_ONLY;
-    } else if (FileAccess == TWO) {
+    } else if (fileAccess == TWO) {
         return DLPFileAccess::CONTENT_EDIT;
     } else {
         return DLPFileAccess::FULL_CONTROL;
