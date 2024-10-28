@@ -28,6 +28,7 @@
 #include "ohos_account_kits.h"
 #include "securec.h"
 #include "token_setproc.h"
+#include "dlp_zip.h"
 
 using namespace OHOS::Security::DlpPermission;
 using namespace OHOS::Security::AccessToken;
@@ -37,39 +38,12 @@ static const uint8_t ARRAY_CHAR_SIZE = 62;
 static const char CHAR_ARRAY[] = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 static std::string g_accountName = "ohosAnonymousName";
 }
-
+ 
 static void GenerateRandStr(uint32_t len, const uint8_t *data, std::string& res)
 {
     for (uint32_t i = 0; i < len; i++) {
         uint32_t index = data[i] % ARRAY_CHAR_SIZE;
         res.push_back(CHAR_ARRAY[index]);
-    }
-}
-
-static DlpAccountType GenerateDlpAccountType(const uint8_t *data)
-{
-    int8_t typeNum = data[0] % (sizeof(DlpAccountType) / sizeof(INVALID_ACCOUNT));
-    if (typeNum == 0) {
-        return INVALID_ACCOUNT;
-    } else if (typeNum == 1) {
-        return CLOUD_ACCOUNT;
-    } else if (typeNum == 2) {
-        return DOMAIN_ACCOUNT;
-    } else {
-        return APPLICATION_ACCOUNT;
-    }
-}
-
-static DLPFileAccess GenerateDLPFileAccess(const uint8_t *data) {
-    int8_t FileAccess = data[0] % (sizeof(DLPFileAccess) / sizeof(NO_PERMISSION));
-    if (FileAccess == 0) {
-        return NO_PERMISSION;
-    } else if (FileAccess == 1) {
-        return READ_ONLY;
-    } else if (FileAccess == 2) {
-        return CONTENT_EDIT;
-    } else {
-        return FULL_CONTROL;
     }
 }
 
@@ -104,6 +78,34 @@ const int32_t TEXT_LENGTH = 5;
 const int32_t ACCOUNT_LENGTH = 10;
 const int32_t APPID_LENGTH = 30;
 constexpr int32_t MIN_LENGTH = APPID_LENGTH + TEXT_LENGTH + ACCOUNT_LENGTH * 2 + 100;
+
+static DlpAccountType GenerateDlpAccountType(const uint8_t *data)
+{
+    int8_t typeNum = data[0] % (sizeof(DlpAccountType) / sizeof(INVALID_ACCOUNT));
+    if (typeNum == 0) {
+        return DlpAccountType::INVALID_ACCOUNT;
+    } else if (typeNum == 1) {
+        return DlpAccountType::CLOUD_ACCOUNT;
+    } else if (typeNum == TWO) {
+        return DlpAccountType::DOMAIN_ACCOUNT;
+    } else {
+        return DlpAccountType::APPLICATION_ACCOUNT;
+    }
+}
+
+static DLPFileAccess GenerateDLPFileAccess(const uint8_t *data) {
+    int8_t FileAccess = data[0] % (sizeof(DLPFileAccess) / sizeof(NO_PERMISSION));
+    if (FileAccess == 0) {
+        return DLPFileAccess::NO_PERMISSION;
+    } else if (FileAccess == 1) {
+        return DLPFileAccess::READ_ONLY;
+    } else if (FileAccess == TWO) {
+        return DLPFileAccess::CONTENT_EDIT;
+    } else {
+        return DLPFileAccess::FULL_CONTROL;
+    }
+}
+
 static void GenerateRandProperty(struct DlpProperty& encProp, const uint8_t* data, size_t size)
 {
     uint64_t curTime = static_cast<uint64_t>(
@@ -139,6 +141,13 @@ static void GenerateRandProperty(struct DlpProperty& encProp, const uint8_t* dat
     }
 }
 
+static void UpdateCertAndTextFuzzTest(DlpBlob offlineCert)
+{
+    vector<uint8_t> cert;
+    string workDir;
+    g_Dlpfile->UpdateC  ertAndText(cert, workDir, offlineCert);
+}
+
 static void FuzzTest(const uint8_t* data, size_t size)
 {
     if ((data == nullptr) || (size <= sizeof(uint8_t) * MIN_LENGTH)) {
@@ -148,6 +157,8 @@ static void FuzzTest(const uint8_t* data, size_t size)
     int dlpFileFd = open("/data/file_test.txt.dlp", O_CREAT | O_RDWR | O_TRUNC, S_IRWXU | S_IRWXG | S_IRWXO);
     std::string text;
     std::string account;
+    DlpBlob cert;
+    DlpBlob offlineCert;
     GenerateRandStr(TEXT_LENGTH, data, text);
     uint32_t offset = TEXT_LENGTH;
     std::string appId;
@@ -164,22 +175,21 @@ static void FuzzTest(const uint8_t* data, size_t size)
     DlpFileManager::GetInstance().RecoverDlpFile(g_Dlpfile, recoveryFileFd);
     DlpFileManager::GetInstance().CloseDlpFile(g_Dlpfile);
     res = DlpFileManager::GetInstance().OpenDlpFile(dlpFileFd, g_Dlpfile, DLP_TEST_DIR, appId);
-    g_Dlpfile = DlpFileManager::GetInstance().GetDlpFile(dlpFileFd);
     DLP_LOG_INFO(LABEL, "OpenDlpFile res=%{public}d", res);
     g_Dlpfile->DlpFileWrite(0, const_cast<char *>(text.c_str()), text.length());
     uint8_t writeBuffer[ARRRY_SIZE] = {0x1};
     bool hasRead = true;
-    g_Dlpfile->DlpFileR  ead(0, writeBuffer, ARRRY_SIZE, hasRead, 0);
-    g_Dlpfile->ParseDlpInfo();
+    Security::DlpPermission::checkUnzipFileInfo(dlpFileFd);
+    g_Dlpfile->GetEncryptCert(cert);
+    g_Dlpfile->GetOfflineCert(offlineCert);
+    g_Dlpfile->GetOfflineAccess();
+    g_Dlpfile->NeedAdapter();
+    g_Dlpfile->UpdateCert(cert);
+    g_Dlpfile->GetFsContentSize();
+    g_Dlpfile->HmacCheck(); 
+    g_Dlpfile->DlpFileRead(0, writeBuffer, ARRRY_SIZE, hasRead, 0);
     g_Dlpfile->Truncate(ARRRY_SIZE);
-    g_Dlpfile->GetLocalAccountName(account);
-    g_Dlpfile->GetDomainAccountName(account);
-    g_Dlpfile->UnzipDlpFile();
-    g_Dlpfile->ParseCert();
-    g_Dlpfile->ParseEncData();
-    g_Dlpfile->GenFileInRaw(dlpFileFd);
-    g_Dlpfile->RemoveDlpPermissionInZip(plainFileFd);
-    g_Dlpfile->RemoveDlpPermissionInRaw(plainFileFd);
+    UpdateCertAndTextFuzzTest(offlineCert);  
     close(plainFileFd);
     close(dlpFileFd);
     close(recoveryFileFd);

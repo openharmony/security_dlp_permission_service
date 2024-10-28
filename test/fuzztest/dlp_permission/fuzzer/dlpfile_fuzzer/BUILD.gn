@@ -53,5 +53,6 @@ ohos_fuzztest("DlpFileFuzzTest") {
     "openssl:libcrypto_shared",
     "os_account:libaccountkits",
     "os_account:os_account_innerkits",
+    "zlib:shared_libz",
   ]
 }
