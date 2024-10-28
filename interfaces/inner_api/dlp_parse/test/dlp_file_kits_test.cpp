@@ -20,10 +20,13 @@
 #include <iostream>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <vector>
+#include "ability_info.h"
 #include "accesstoken_kit.h"
 #include "dlp_file_kits.h"
 #include "dlp_permission.h"
 #include "dlp_permission_log.h"
+#include "dlp_utils.h"
 #include "int_wrapper.h"
 #include "string_wrapper.h"
 #include "want_params_wrapper.h"
@@ -66,6 +69,8 @@ static const std::string DLP_FILE_NAME_2 = "/data/test/fuse_test2.txt.dlp";
 static const std::string DLP_FILE_URI = "file://data/test/fuse_test.txt.dlp";
 static const std::string DLP_FILE_URI_2 = "file://data/test/fuse_test2.txt.dlp";
 static const std::string PLAIN_FILE_URI = "file://data/test/fuse_test.txt";
+static const std::string DLP_FILE_ERR_SUFFIX_URI = "file://data/test/fuse_test..txt";
+static const std::string DLP_FILE_ERR_SUFFIX_URI_2 = "file://data/test/fuse_test.aaa.txt";
 static const std::string DLP_TEST_DIR = "/data/test/dlpTest/";
 static const int DLP_FILE_PERMISSION = 0777;
 
@@ -446,4 +451,40 @@ HWTEST_F(DlpFileKitsTest, IsDlpFile001, TestSize.Level1)
     ASSERT_GE(dlpFd, 0);
     ASSERT_FALSE(DlpFileKits::IsDlpFile(dlpFd));
     ASSERT_EQ(close(dlpFd), 0);
+}
+
+/**
+ * @tc.name: ConvertAbilityInfoWithSupportDlp
+ * @tc.desc: test ConvertAbilityInfoWithSupportDlp param.
+ * @tc.type: FUNC
+ * @tc.require:issue：IAIFTY
+ */
+HWTEST_F(DlpFileKitsTest, ConvertAbilityInfoWithSupportDlp001, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL, "ConvertAbilityInfoWithSupportDlp001");
+
+    OHOS::AAFwk::Want want;
+    std::vector<OHOS::AppExecFwk::AbilityInfo> abilityInfos;
+    DlpFileKits::ConvertAbilityInfoWithSupportDlp(want, abilityInfos);
+
+    std::vector<std::string> whitelist;
+    std::string fileType = DlpUtils::GetFileTypeBySuffix("txt");
+    DlpUtils::GetWhitelistWithType(DLP_WHITELIST, fileType, whitelist);
+    OHOS::AppExecFwk::AbilityInfo abilityInfo;
+    for(const string& bundleName : whitelist) {
+        abilityInfo.bundleName = bundleName;
+        abilityInfos.push_back(abilityInfo);
+    }
+
+    want.SetUri(PLAIN_FILE_URI);
+    DlpFileKits::ConvertAbilityInfoWithSupportDlp(want, abilityInfos);
+    
+    want.SetUri(DLP_FILE_ERR_SUFFIX_URI);
+    DlpFileKits::ConvertAbilityInfoWithSupportDlp(want, abilityInfos);
+
+    want.SetUri(DLP_FILE_ERR_SUFFIX_URI_2);
+    DlpFileKits::ConvertAbilityInfoWithSupportDlp(want, abilityInfos);
+
+    want.SetUri(DLP_FILE_URI);
+    DlpFileKits::ConvertAbilityInfoWithSupportDlp(want, abilityInfos);
 }
