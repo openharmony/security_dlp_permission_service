@@ -471,7 +471,7 @@ HWTEST_F(DlpFileKitsTest, ConvertAbilityInfoWithSupportDlp001, TestSize.Level1)
     std::string fileType = DlpUtils::GetFileTypeBySuffix("txt");
     DlpUtils::GetWhitelistWithType(DLP_WHITELIST, fileType, whitelist);
     OHOS::AppExecFwk::AbilityInfo abilityInfo;
-    for(const string& bundleName : whitelist) {
+    for (const string& bundleName : whitelist) {
         abilityInfo.bundleName = bundleName;
         abilityInfos.push_back(abilityInfo);
     }
