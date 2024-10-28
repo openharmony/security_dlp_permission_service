@@ -470,7 +470,7 @@ static std::string GetAppIdWithBundleName(const std::string &bundleName, const i
     return bundleInfo.appId;
 }
 
-static int32_t  SupportDlpWithAppId(const std::string &appId, const std::string &fileName)
+static int32_t SupportDlpWithAppId(const std::string &appId, const std::string &fileName)
 {
     std::string realSuffix = DlpUtils::GetDlpFileRealSuffix(fileName);
     if (realSuffix == DEFAULT_STRING) {
