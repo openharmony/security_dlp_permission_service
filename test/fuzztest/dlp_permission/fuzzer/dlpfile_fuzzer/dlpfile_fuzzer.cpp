@@ -95,7 +95,7 @@ static DlpAccountType GenerateDlpAccountType(const uint8_t *data)
 
 static DLPFileAccess GenerateDLPFileAccess(const uint8_t *data)
 {
-    int8_t FileAccess = data[0] % (sizeof(DLPFileAccess) / sizeof(NO_PERMISSION));
+    int8_t fileAccess = data[0] % (sizeof(DLPFileAccess) / sizeof(NO_PERMISSION));
     if (fileAccess == 0) {
         return DLPFileAccess::NO_PERMISSION;
     } else if (FileAccess == 1) {
