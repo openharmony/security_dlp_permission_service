@@ -49,7 +49,7 @@ static void FuzzTest(const uint8_t* data, size_t size)
     uint32_t code = static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::GET_SANDBOX_EXTERNAL_AUTH);
     MessageParcel reply;
     MessageOption option;
-    auto service = std::make_shared<DlpPermissionService>(SA_ID_DLP_PERMISSION_SERVICE, true);
+    static auto service = std::make_shared<DlpPermissionService>(SA_ID_DLP_PERMISSION_SERVICE, true);
     service->OnStart();
     service->appStateObserver_ = new (std::nothrow) AppStateObserver();
     service->OnRemoteRequest(code, datas, reply, option);
