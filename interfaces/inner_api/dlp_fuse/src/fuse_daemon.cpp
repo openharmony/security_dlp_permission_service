@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -21,7 +21,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <vector>
-
+#include "dlp_fuse_fd.h"
 #include "dlp_link_file.h"
 #include "dlp_link_manager.h"
 #include "dlp_permission.h"
@@ -546,14 +546,14 @@ void FuseDaemon::FuseFsDaemonThread(int fuseFd)
     fuse_opt_free_args(&args);
 }
 
-int FuseDaemon::InitFuseFs(int fuseDevFd)
+int FuseDaemon::InitFuseFs()
 {
     if (init_) {
         DLP_LOG_ERROR(LABEL, "Fuse fs has init already!");
         return -1;
     }
     init_ = true;
-
+    int fuseDevFd = GetDlpFuseFd();
     if (fuseDevFd < 0) {
         DLP_LOG_ERROR(LABEL, "Init fuse fs fail: dev fd is error");
         return -1;
