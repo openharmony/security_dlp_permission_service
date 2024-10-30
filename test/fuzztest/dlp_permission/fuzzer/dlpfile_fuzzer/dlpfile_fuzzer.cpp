@@ -38,7 +38,7 @@ static const uint8_t ARRAY_CHAR_SIZE = 62;
 static const char CHAR_ARRAY[] = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 static std::string g_accountName = "ohosAnonymousName";
 }
- 
+
 static void GenerateRandStr(uint32_t len, const uint8_t *data, std::string& res)
 {
     for (uint32_t i = 0; i < len; i++) {
@@ -95,12 +95,12 @@ static DlpAccountType GenerateDlpAccountType(const uint8_t *data)
 
 static DLPFileAccess GenerateDLPFileAccess(const uint8_t *data)
 {
-    int8_t FileAccess = data[0] % (sizeof(DLPFileAccess) / sizeof(NO_PERMISSION));
+    int8_t fileAccess = data[0] % (sizeof(DLPFileAccess) / sizeof(NO_PERMISSION));
     if (fileAccess == 0) {
         return DLPFileAccess::NO_PERMISSION;
-    } else if (FileAccess == 1) {
+    } else if (fileAccess == 1) {
         return DLPFileAccess::READ_ONLY;
-    } else if (FileAccess == TWO) {
+    } else if (fileAccess == TWO) {
         return DLPFileAccess::CONTENT_EDIT;
     } else {
         return DLPFileAccess::FULL_CONTROL;
