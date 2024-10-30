@@ -73,6 +73,7 @@ public:
     void FinishStartSASuccess(const sptr<IRemoteObject>& remoteObject);
     void FinishStartSAFail();
     void OnRemoteDiedHandle();
+    void CleanUpResource();
 
 private:
     DlpPermissionClient();
