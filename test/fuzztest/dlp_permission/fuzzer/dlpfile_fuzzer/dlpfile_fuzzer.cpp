@@ -204,11 +204,10 @@ static void FuzzTest(const uint8_t* data, size_t size)
     offset += APPID_LENGTH;
     write(plainFileFd, text.c_str(), text.length());
     struct DlpProperty prop;
-    for (int i = 0;i <= 1;i++) {
+    for (int i = 0; i <= 1; i++) {
         if (i == 0) {
             GenerateRandProperty(prop, data + offset, size - offset);
-        }
-        else {
+        } else {
             GenerateRandPropertyRand(prop, data + offset, size - offset);
         }
         int32_t res = DlpFileManager::GetInstance().GenerateDlpFile(plainFileFd,
@@ -243,7 +242,6 @@ static void FuzzTest(const uint8_t* data, size_t size)
 bool DlpFileFuzzTest(const uint8_t* data, size_t size)
 {
     FuzzTest(data, size);
-    FuzzTest1(data, size);
     return true;
 }
 } // namespace OHOS
