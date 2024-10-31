@@ -23,21 +23,17 @@
 #define LOG_TAG "DlFuseFd"
 #endif
 
-static const int TIME_WAIT_TIME_OUT = 3;;
 static int g_dlpFuseFd = -1;
 static pthread_mutex_t g_mutex = PTHREAD_MUTEX_INITIALIZER;
-static pthread_cond_t g_cond = PTHREAD_COND_INITIALIZER;
+
 int GetDlpFuseFd(void)
 {
-    struct timespec ts;
-    clock_gettime(CLOCK_REALTIME, &ts);
-    ts.tv_sec += TIME_WAIT_TIME_OUT;
     pthread_mutex_lock(&g_mutex);
     if (g_dlpFuseFd == -1) {
-        pthread_cond_timedwait(&g_cond, &g_mutex, &ts);
+        DLP_LOG_ERROR("Fuse fd not set!");
     }
-    pthread_mutex_unlock(&g_mutex);
     DLP_LOG_DEBUG("fuseFd: %d\n", g_dlpFuseFd);
+    pthread_mutex_unlock(&g_mutex);
     return g_dlpFuseFd;
 }
 
@@ -50,7 +46,6 @@ void SetDlpFuseFd(int fd)
     }
     g_dlpFuseFd = fd;
     DLP_LOG_DEBUG("fuseFd: %d\n", g_dlpFuseFd);
-    pthread_cond_signal(&g_cond);
     pthread_mutex_unlock(&g_mutex);
 }
 
@@ -59,6 +54,7 @@ void CloseDlpFuseFd(void)
     pthread_mutex_lock(&g_mutex);
     if (g_dlpFuseFd == -1) {
         DLP_LOG_DEBUG("fuseFd: %d\n", g_dlpFuseFd);
+        pthread_mutex_unlock(&g_mutex);
         return;
     }
     close(g_dlpFuseFd);
