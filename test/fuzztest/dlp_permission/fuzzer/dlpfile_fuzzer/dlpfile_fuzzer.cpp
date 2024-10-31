@@ -81,7 +81,7 @@ constexpr int32_t MIN_LENGTH = APPID_LENGTH + TEXT_LENGTH + ACCOUNT_LENGTH * 2 +
 
 static DlpAccountType GenerateDlpAccountType()
 {
-	srand((unsigned)time(NULL));
+    srand((unsigned)time(NULL));
     int8_t typeNum = rand() % (sizeof(DlpAccountType) / sizeof(INVALID_ACCOUNT));
     if (typeNum == 0) {
         return DlpAccountType::INVALID_ACCOUNT;
