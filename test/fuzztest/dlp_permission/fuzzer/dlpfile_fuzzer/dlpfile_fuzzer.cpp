@@ -79,10 +79,9 @@ const int32_t ACCOUNT_LENGTH = 10;
 const int32_t APPID_LENGTH = 30;
 constexpr int32_t MIN_LENGTH = APPID_LENGTH + TEXT_LENGTH + ACCOUNT_LENGTH * 2 + 100;
 
-static DlpAccountType GenerateDlpAccountType()
+static DlpAccountType GenerateDlpAccountType(const uint8_t* data)
 {
-    srand((unsigned)time(NULL));
-    int8_t typeNum = rand() % (sizeof(DlpAccountType) / sizeof(INVALID_ACCOUNT));
+    int8_t typeNum = (data[0]/TWO + data[1]/TWO) % (sizeof(DlpAccountType) / sizeof(INVALID_ACCOUNT));
     if (typeNum == 0) {
         return DlpAccountType::INVALID_ACCOUNT;
     } else if (typeNum == 1) {
@@ -94,10 +93,10 @@ static DlpAccountType GenerateDlpAccountType()
     }
 }
 
-static DLPFileAccess GenerateDLPFileAccess()
+static DLPFileAccess GenerateDLPFileAccess(const uint8_t* data)
 {
-    srand((unsigned)time(NULL));
-    int8_t fileAccess = rand() % (sizeof(DLPFileAccess) / sizeof(NO_PERMISSION));
+
+    int8_t fileAccess = (data[0]/TWO + data[1]/TWO) % (sizeof(DLPFileAccess) / sizeof(NO_PERMISSION));
     if (fileAccess == 0) {
         return DLPFileAccess::NO_PERMISSION;
     } else if (fileAccess == 1) {
@@ -164,7 +163,7 @@ static void GenerateRandPropertyRand(struct DlpProperty& encProp, const uint8_t*
         g_accountName = account;
     }
     AccountSA::OhosAccountKits::GetInstance().UpdateOhosAccountInfo(g_accountName, g_accountName, LOGIN_EVENT);
-    encProp.ownerAccountType = GenerateDlpAccountType();
+    encProp.ownerAccountType = GenerateDlpAccountType(data);
     if (size % FIVE == 0) {
         encProp.supportEveryone = true;
         encProp.everyonePerm = CONTENT_EDIT;
@@ -172,9 +171,9 @@ static void GenerateRandPropertyRand(struct DlpProperty& encProp, const uint8_t*
     for (uint32_t user = 0; user < TEST_USER_COUNT; ++user) {
         std::string accountName = account + std::to_string(user);
         AuthUserInfo perminfo = {.authAccount = strdup(const_cast<char *>(accountName.c_str())),
-            .authPerm = GenerateDLPFileAccess(),
+            .authPerm = GenerateDLPFileAccess(data),
             .permExpiryTime = curTime + EXPIRT_TIME,
-            .authAccountType = GenerateDlpAccountType()};
+            .authAccountType = GenerateDlpAccountType(data)};
         encProp.authUsers.emplace_back(perminfo);
     }
 }
