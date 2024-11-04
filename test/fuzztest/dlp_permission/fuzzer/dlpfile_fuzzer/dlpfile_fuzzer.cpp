@@ -95,7 +95,6 @@ static DlpAccountType GenerateDlpAccountType(const uint8_t* data)
 
 static DLPFileAccess GenerateDLPFileAccess(const uint8_t* data)
 {
-
     int8_t fileAccess = (data[0]/TWO + data[1]/TWO) % (sizeof(DLPFileAccess) / sizeof(NO_PERMISSION));
     if (fileAccess == 0) {
         return DLPFileAccess::NO_PERMISSION;
@@ -185,6 +184,13 @@ static void UpdateCertAndTextFuzzTest(DlpBlob offlineCert)
     g_Dlpfile->UpdateCertAndText(cert, workDir, offlineCert);
 }
 
+static void GDlpFileFuzzTest() {
+    g_Dlpfile->GetOfflineAccess();
+    g_Dlpfile->NeedAdapter();
+    g_Dlpfile->GetFsContentSize();
+    g_Dlpfile->HmacCheck();
+}
+
 static void FuzzTest(const uint8_t* data, size_t size)
 {
     if ((data == nullptr) || (size <= sizeof(uint8_t) * MIN_LENGTH)) {
@@ -222,13 +228,10 @@ static void FuzzTest(const uint8_t* data, size_t size)
         uint8_t writeBuffer[ARRRY_SIZE] = {0x1};
         bool hasRead = true;
         Security::DlpPermission::CheckUnzipFileInfo(dlpFileFd);
+        GDlpFileFuzzTest();
         g_Dlpfile->GetEncryptCert(cert);
         g_Dlpfile->GetOfflineCert(offlineCert);
-        g_Dlpfile->GetOfflineAccess();
-        g_Dlpfile->NeedAdapter();
         g_Dlpfile->UpdateCert(cert);
-        g_Dlpfile->GetFsContentSize();
-        g_Dlpfile->HmacCheck();
         g_Dlpfile->DlpFileRead(0, writeBuffer, ARRRY_SIZE, hasRead, 0);
         g_Dlpfile->Truncate(ARRRY_SIZE);
         UpdateCertAndTextFuzzTest(offlineCert);
