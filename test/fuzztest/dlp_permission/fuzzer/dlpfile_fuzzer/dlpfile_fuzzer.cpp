@@ -184,7 +184,8 @@ static void UpdateCertAndTextFuzzTest(DlpBlob offlineCert)
     g_Dlpfile->UpdateCertAndText(cert, workDir, offlineCert);
 }
 
-static void GDlpFileFuzzTest() {
+static void GDlpFileFuzzTest()
+{
     g_Dlpfile->GetOfflineAccess();
     g_Dlpfile->NeedAdapter();
     g_Dlpfile->GetFsContentSize();
