@@ -19,6 +19,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <string>
 
 #include "dlp_crypt.h"
 #include "dlp_file.h"
@@ -27,6 +28,8 @@
 #include "dlp_permission_log.h"
 #include "hitrace_meter.h"
 #include "securec.h"
+#include "dlp_utils.h"
+#include "dlp_file_kits.h"
 
 namespace OHOS {
 namespace Security {
@@ -408,7 +411,6 @@ static void PrepareDirs(const std::string& path)
     }
 }
 
-
 int32_t DlpFileManager::GenerateDlpFile(
     int32_t plainFileFd, int32_t dlpFileFd, const DlpProperty& property, std::shared_ptr<DlpFile>& filePtr,
     const std::string& workDir)
@@ -445,12 +447,79 @@ int32_t DlpFileManager::GenerateDlpFile(
     return AddDlpFileNode(filePtr);
 }
 
+static bool GetBundleInfoWithBundleName(const std::string &bundleName, int32_t flag,
+    AppExecFwk::BundleInfo &bundleInfo, int32_t userId)
+{
+    auto bundleMgrProxy = DlpUtils::GetBundleMgrProxy();
+    if (bundleMgrProxy == nullptr) {
+        return false;
+    }
+    return bundleMgrProxy->GetBundleInfo(bundleName, flag, bundleInfo, userId);
+}
+
+static std::string GetAppIdWithBundleName(const std::string &bundleName, const int32_t &userId)
+{
+    AppExecFwk::BundleInfo bundleInfo;
+    bool result = GetBundleInfoWithBundleName(bundleName,
+        static_cast<int32_t>(AppExecFwk::GetBundleInfoFlag::GET_BUNDLE_INFO_WITH_SIGNATURE_INFO), bundleInfo, userId);
+    if (!result) {
+        DLP_LOG_ERROR(LABEL, "get appId error");
+        return DEFAULT_STRING;
+    }
+    return bundleInfo.appId;
+}
+
+static int32_t SupportDlpWithAppId(const std::string &appId, const std::string &fileName)
+{
+    std::string realSuffix = DlpUtils::GetDlpFileRealSuffix(fileName);
+    if (realSuffix == DEFAULT_STRING) {
+        DLP_LOG_ERROR(LABEL, "get realSuffix error.");
+        return DLP_PARSE_ERROR_VALUE_INVALID;
+    }
+    std::string fileType = DlpUtils::GetFileTypeBySuffix(realSuffix);
+    if (fileType == DEFAULT_STRING) {
+        DLP_LOG_ERROR(LABEL, "get fileType error.");
+        return DLP_PARSE_ERROR_VALUE_INVALID;
+    }
+
+    int32_t userId = 0;
+    int32_t ret = AccountSA::OsAccountManager::GetForegroundOsAccountLocalId(userId);
+    if (ret != ERR_OK) {
+        DLP_LOG_ERROR(LABEL, "Get os account localId error, %{public}d", ret);
+        return DLP_PARSE_ERROR_GET_ACCOUNT_FAIL;
+    }
+
+    std::vector<std::string> whitelist;
+    if (!DlpUtils::GetWhitelistWithType(DLP_WHITELIST, fileType, whitelist)) {
+        DLP_LOG_DEBUG(LABEL, "not have white list.");
+        return DLP_OK;
+    }
+    for (size_t i = 0; i < whitelist.size(); i++) {
+        if (appId == GetAppIdWithBundleName(whitelist[i], userId)) {
+            return DLP_OK;
+        }
+    }
+    DLP_LOG_ERROR(LABEL, "Check DLP whitelist error.");
+    return DLP_CREDENTIAL_ERROR_APPID_NOT_AUTHORIZED;
+}
+
 int32_t DlpFileManager::OpenDlpFile(int32_t dlpFileFd, std::shared_ptr<DlpFile>& filePtr, const std::string& workDir,
     const std::string& appId)
 {
     if (dlpFileFd < 0) {
         DLP_LOG_ERROR(LABEL, "Open dlp file fail, fd %{public}d is invalid", dlpFileFd);
         return DLP_PARSE_ERROR_FD_ERROR;
+    }
+
+    std::string fileName;
+    int32_t ret = DlpUtils::GetFileNameWithFd(dlpFileFd, fileName);
+    if (ret != DLP_OK) {
+        return ret;
+    }
+
+    ret = SupportDlpWithAppId(appId, fileName);
+    if (ret != DLP_OK) {
+        return ret;
     }
 
     filePtr = GetDlpFile(dlpFileFd);
