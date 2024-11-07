@@ -33,8 +33,8 @@ sptr<AppExecFwk::IBundleMgr> DlpUtils::GetBundleMgrProxy(void)
     return nullptr;
 }
 
-bool DlpUtils::GetWhitelistWithType(const std::string &cfgFile, const std::string &type,
-    std::vector<std::string> &whitelist)
+bool DlpUtils::GetAuthPolicyWithType(const std::string &cfgFile, const std::string &type,
+    std::vector<std::string> &authPolicy)
 {
     return false;
 }
