@@ -492,7 +492,7 @@ static int32_t SupportDlpWithAppId(const std::string &appId, const std::string &
 
     std::vector<std::string> authPolicy;
     if (!DlpUtils::GetAuthPolicyWithType(DLP_AUTH_POLICY, fileType, authPolicy)) {
-        DLP_LOG_DEBUG(LABEL, "not have white list.");
+        DLP_LOG_DEBUG(LABEL, "not have auth policy.");
         return DLP_OK;
     }
     for (size_t i = 0; i < authPolicy.size(); i++) {
