@@ -47,8 +47,8 @@ sptr<AppExecFwk::IBundleMgr> DlpUtils::GetBundleMgrProxy(void)
     return iface_cast<AppExecFwk::IBundleMgr>(remoteObj);
 }
 
-bool DlpUtils::GetWhitelistWithType(const std::string &cfgFile, const std::string &type,
-    std::vector<std::string> &whitelist)
+bool DlpUtils::GetAuthPolicyWithType(const std::string &cfgFile, const std::string &type,
+    std::vector<std::string> &authPolicy)
 {
     std::string content;
     (void)FileOperator().GetFileContentByPath(cfgFile, content);
@@ -62,9 +62,9 @@ bool DlpUtils::GetWhitelistWithType(const std::string &cfgFile, const std::strin
     }
     auto result = jsonObj.find(type);
     if (result != jsonObj.end() && result->is_array() && !result->empty() && (*result)[0].is_string()) {
-        whitelist = result->get<std::vector<std::string>>();
+        authPolicy = result->get<std::vector<std::string>>();
     }
-    if (whitelist.size() != 0) {
+    if (authPolicy.size() != 0) {
         return true;
     }
     return false;

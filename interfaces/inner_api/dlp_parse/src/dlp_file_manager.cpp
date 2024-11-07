@@ -490,17 +490,17 @@ static int32_t SupportDlpWithAppId(const std::string &appId, const std::string &
         return DLP_PARSE_ERROR_GET_ACCOUNT_FAIL;
     }
 
-    std::vector<std::string> whitelist;
-    if (!DlpUtils::GetWhitelistWithType(DLP_WHITELIST, fileType, whitelist)) {
+    std::vector<std::string> authPolicy;
+    if (!DlpUtils::GetAuthPolicyWithType(DLP_AUTH_POLICY, fileType, authPolicy)) {
         DLP_LOG_DEBUG(LABEL, "not have white list.");
         return DLP_OK;
     }
-    for (size_t i = 0; i < whitelist.size(); i++) {
-        if (appId == GetAppIdWithBundleName(whitelist[i], userId)) {
+    for (size_t i = 0; i < authPolicy.size(); i++) {
+        if (appId == GetAppIdWithBundleName(authPolicy[i], userId)) {
             return DLP_OK;
         }
     }
-    DLP_LOG_ERROR(LABEL, "Check DLP whitelist error.");
+    DLP_LOG_ERROR(LABEL, "Check DLP auth policy error.");
     return DLP_CREDENTIAL_ERROR_APPID_NOT_AUTHORIZED;
 }
 

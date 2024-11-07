@@ -219,11 +219,11 @@ static int32_t ConvertAbilityInfoWithBundleName(const std::string &abilityName, 
     return DLP_OK;
 }
 
-static bool IsSupportDlp(const std::vector<std::string> &whitelist,
+static bool IsSupportDlp(const std::vector<std::string> &authPolicy,
     const std::string &bundleName, const std::string &fileType)
 {
-    auto it = std::find(whitelist.begin(), whitelist.end(), bundleName);
-    if (it != whitelist.end()) {
+    auto it = std::find(authPolicy.begin(), authPolicy.end(), bundleName);
+    if (it != authPolicy.end()) {
         return true;
     }
     return false;
@@ -254,13 +254,13 @@ void DlpFileKits::ConvertAbilityInfoWithSupportDlp(const AAFwk::Want &want,
         DLP_LOG_ERROR(LABEL, "%{public}s is not support dlp.", realSuffix.c_str());
         return;
     }
-    std::vector<std::string> whitelist;
-    if (!DlpUtils::GetWhitelistWithType(DLP_WHITELIST, fileType, whitelist)) {
+    std::vector<std::string> authPolicy;
+    if (!DlpUtils::GetAuthPolicyWithType(DLP_AUTH_POLICY, fileType, authPolicy)) {
         return;
     }
 
     for (auto it = abilityInfos.begin(); it != abilityInfos.end();) {
-        if (!IsSupportDlp(whitelist, it->bundleName, fileType)) {
+        if (!IsSupportDlp(authPolicy, it->bundleName, fileType)) {
             abilityInfos.erase(it);
         } else {
             ++it;
@@ -270,12 +270,12 @@ void DlpFileKits::ConvertAbilityInfoWithSupportDlp(const AAFwk::Want &want,
     if (abilityInfos.size() != 0) {
         return;
     }
-    std::vector<std::string> defalutWhitelist;
-    if (!DlpUtils::GetWhitelistWithType(DLP_WHITELIST, DLP_DEFAULT_WHITELIST, defalutWhitelist) ||
-        defalutWhitelist.size() <= 1) {
+    std::vector<std::string> defalutAuthPolicy;
+    if (!DlpUtils::GetAuthPolicyWithType(DLP_AUTH_POLICY, DLP_DEFAULT_AUTH_POLICY, defalutAuthPolicy) ||
+        defalutAuthPolicy.size() <= 1) {
         return;
     }
-    int32_t ret = ConvertAbilityInfoWithBundleName(defalutWhitelist[0], defalutWhitelist[1], abilityInfos);
+    int32_t ret = ConvertAbilityInfoWithBundleName(defalutAuthPolicy[0], defalutAuthPolicy[1], abilityInfos);
     if (ret != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "Query ability info with bundleName error.");
     }

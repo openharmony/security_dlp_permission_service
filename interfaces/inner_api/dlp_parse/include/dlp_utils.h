@@ -27,8 +27,8 @@ namespace OHOS {
 namespace Security {
 namespace DlpPermission {
 
-static const std::string DLP_WHITELIST = "/system/etc/dlp_whitelist.json";
-static const std::string DLP_DEFAULT_WHITELIST = "default";
+static const std::string DLP_AUTH_POLICY = "/system/etc/dlp_auth_policy.json";
+static const std::string DLP_DEFAULT_AUTH_POLICY = "default";
 
 static const std::unordered_map<std::string, std::string> FILE_TYPE_MAP = {
     {"txt", "support_txt_dlp"},
@@ -44,8 +44,8 @@ static const std::unordered_map<std::string, std::string> FILE_TYPE_MAP = {
 class DlpUtils {
 public:
     static sptr<AppExecFwk::IBundleMgr> GetBundleMgrProxy(void);
-    static bool GetWhitelistWithType(const std::string &cfgFile, const std::string &type,
-        std::vector<std::string> &whitelist);
+    static bool GetAuthPolicyWithType(const std::string &cfgFile, const std::string &type,
+        std::vector<std::string> &authPolicy);
     static std::string GetFileTypeBySuffix(const std::string& suffix);
     static std::string GetDlpFileRealSuffix(const std::string& dlpFileName);
     static int32_t GetFileNameWithFd(const int32_t &fd, std::string &srcFileName);
