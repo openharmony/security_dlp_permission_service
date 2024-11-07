@@ -467,11 +467,11 @@ HWTEST_F(DlpFileKitsTest, ConvertAbilityInfoWithSupportDlp001, TestSize.Level1)
     std::vector<OHOS::AppExecFwk::AbilityInfo> abilityInfos;
     DlpFileKits::ConvertAbilityInfoWithSupportDlp(want, abilityInfos);
 
-    std::vector<std::string> whitelist;
+    std::vector<std::string> authPolicy;
     std::string fileType = DlpUtils::GetFileTypeBySuffix("txt");
-    DlpUtils::GetWhitelistWithType(DLP_WHITELIST, fileType, whitelist);
+    DlpUtils::GetAuthPolicyWithType(DLP_AUTH_POLICY, fileType, authPolicy);
     OHOS::AppExecFwk::AbilityInfo abilityInfo;
-    for (const string& bundleName : whitelist) {
+    for (const string& bundleName : authPolicy) {
         abilityInfo.bundleName = bundleName;
         abilityInfos.push_back(abilityInfo);
     }
