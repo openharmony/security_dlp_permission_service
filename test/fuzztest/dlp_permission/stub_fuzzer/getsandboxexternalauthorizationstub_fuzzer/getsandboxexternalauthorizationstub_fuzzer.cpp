@@ -27,7 +27,7 @@
 using namespace OHOS::Security::DlpPermission;
 using namespace OHOS::Security::AccessToken;
 namespace OHOS {
-static void FuzzTest(const uint8_t* data, size_t size, std::shared_ptr<DlpPermissionService> service)
+static void FuzzTest(const uint8_t* data, size_t size)
 {
     if ((data == nullptr) || (size < sizeof(int32_t) + sizeof(int32_t))) {
         return;
@@ -49,6 +49,7 @@ static void FuzzTest(const uint8_t* data, size_t size, std::shared_ptr<DlpPermis
     uint32_t code = static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::GET_SANDBOX_EXTERNAL_AUTH);
     MessageParcel reply;
     MessageOption option;
+    auto service = std::make_shared<DlpPermissionService>(SA_ID_DLP_PERMISSION_SERVICE, true);
     service->OnStart();
     service->appStateObserver_ = new (std::nothrow) AppStateObserver();
     service->OnRemoteRequest(code, datas, reply, option);
@@ -57,8 +58,7 @@ static void FuzzTest(const uint8_t* data, size_t size, std::shared_ptr<DlpPermis
 
 bool GetSandboxExternalAuthorizationFuzzTest(const uint8_t* data, size_t size)
 {
-    auto service = std::make_shared<DlpPermissionService>(SA_ID_DLP_PERMISSION_SERVICE, true);
-    FuzzTest(data, size, service);
+    FuzzTest(data, size);
     return true;
 }
 } // namespace OHOS
