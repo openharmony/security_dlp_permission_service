@@ -28,11 +28,14 @@ bool DlpPolicyParcel::Marshalling(Parcel& out) const
 {
     const std::vector<AuthUserInfo>& userList = this->policyParams_.authUsers_;
     uint32_t listSize = userList.size();
+    if (listSize > MAX_ACCOUNT_NUM) {
+        DLP_LOG_ERROR(LABEL, "Auth users number exceeds %{public}u, total=%{public}u", MAX_ACCOUNT_NUM, listSize);
+        return false;
+    }
     if (!(out.WriteUint32(listSize))) {
         DLP_LOG_ERROR(LABEL, "Write auth user num fail");
         return false;
     }
-
     for (uint32_t i = 0; i < listSize; i++) {
         sptr<AuthUserInfoParcel> authUserInfoParcel = new (std::nothrow) AuthUserInfoParcel();
         if (authUserInfoParcel == nullptr) {

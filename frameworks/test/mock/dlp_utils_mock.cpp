@@ -47,6 +47,10 @@ std::string DlpUtils::GetFileTypeBySuffix(const std::string& suffix)
 std::string DlpUtils::GetDlpFileRealSuffix(const std::string& dlpFileName)
 {
     uint32_t dlpSuffixLen = DLP_FILE_SUFFIXS.size();
+    if (dlpFileName.size() <= dlpSuffixLen) {
+        DLP_LOG_ERROR(LABEL, "invalid fileName!");
+        return DEFAULT_STRINGS;
+    }
     std::string realFileName = dlpFileName.substr(0, dlpFileName.size() - dlpSuffixLen);
     char escape = '.';
     std::size_t escapeLocate = realFileName.find_last_of(escape);
