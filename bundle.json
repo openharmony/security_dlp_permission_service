@@ -68,19 +68,31 @@
           "name": "//base/security/dlp_permission_service/interfaces/inner_api/dlp_permission:libdlp_permission_sdk",
           "header": {
             "header_files": [
-              "dlp_permission_kit.h"
+              "interfaces/inner_api/dlp_permission/include/dlp_permission_callback.h",
+              "interfaces/inner_api/dlp_permission/include/dlp_permission_kit.h",
+              "interfaces/inner_api/dlp_permission/include/dlp_sandbox_callback_info.h",
+              "interfaces/inner_api/dlp_permission/include/dlp_sandbox_change_callback_customize.h",
+              "interfaces/inner_api/dlp_permission/include/open_dlp_file_callback_customize.h",
+              "interfaces/inner_api/dlp_permission/include/open_dlp_file_callback_info.h",
+              "frameworks/common/include/cert_parcel.h",
+              "frameworks/common/include/permission_policy.h",
+              "frameworks/common/include/retention_sandbox_info.h",
+              "frameworks/common/include/visited_dlp_file_info.h"
             ],
-            "header_base": "//base/security/dlp_permission_service/interfaces/inner_api/dlp_permission/include"
+            "header_base": "//base/security/dlp_permission_service"
           }
         },
         {
           "name": "//base/security/dlp_permission_service/interfaces/inner_api/dlp_parse:libdlpparse",
           "header": {
             "header_files": [
-              "dlp_crypt.h",
-              "dlp_file_kits.h"
+              "interfaces/inner_api/dlp_parse/include/dlp_crypt.h",
+              "interfaces/inner_api/dlp_parse/include/dlp_file_kits.h",
+              "interfaces/inner_api/dlp_parse/include/dlp_file_manager.h",
+              "interfaces/inner_api/dlp_parse/include/dlp_file.h",
+              "frameworks/common/include/permission_policy.h"
             ],
-            "header_base": "//base/security/dlp_permission_service/interfaces/inner_api/dlp_parse/include"
+            "header_base": "//base/security/dlp_permission_service"
           }
         },
         {
@@ -96,10 +108,13 @@
           "name": "//base/security/dlp_permission_service/interfaces/inner_api/dlp_parse:libdlpparse_inner",
           "header": {
             "header_files": [
-              "dlp_crypt.h",
-              "dlp_file_kits.h"
+              "interfaces/inner_api/dlp_parse/include/dlp_crypt.h",
+              "interfaces/inner_api/dlp_parse/include/dlp_file_kits.h",
+              "interfaces/inner_api/dlp_parse/include/dlp_file_manager.h",
+              "interfaces/inner_api/dlp_parse/include/dlp_file.h",
+              "frameworks/common/include/permission_policy.h"
             ],
-            "header_base": "//base/security/dlp_permission_service/interfaces/inner_api/dlp_parse/include"
+            "header_base": "//base/security/dlp_permission_service"
           }
         }
 
