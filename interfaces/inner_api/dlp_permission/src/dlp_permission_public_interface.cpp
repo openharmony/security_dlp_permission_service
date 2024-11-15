@@ -29,7 +29,8 @@ const std::string DLP_OFFLINE_FLAG = "offlineAccess";
 const std::string DLP_EXTRA_INFO = "extra_info";
 const std::string DLP_EXTRA_INFO_LOW_CAMEL_CASE = "extraInfo";
 const std::string DLP_HMAC_VALUE = "hmacValue";
-static bool checkParams(GenerateInfoParams& params, nlohmann::json jsonObj, std::string versionKey, std::string infoKey)
+static bool checkParams(GenerateInfoParams& params, const nlohmann::json& jsonObj,
+                        const std::string& versionKey, const std::string& infoKey)
 {
     auto iter = jsonObj.find(versionKey);
     if (iter == jsonObj.end() || !iter->is_number_integer()) {

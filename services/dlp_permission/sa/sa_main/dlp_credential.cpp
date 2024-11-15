@@ -49,7 +49,7 @@ static std::unordered_map<uint64_t, RequestInfo> g_requestMap;
 static std::unordered_map<uint64_t, DlpAccountType> g_requestAccountTypeMap;
 static const std::string DEVELOPER_MODE = "const.security.developermode.state";
 std::mutex g_lockRequest;
-std::recursive_mutex instanceMutex_;
+std::mutex instanceMutex_;
 }  // namespace
 
 static bool IsDlpCredentialHuksError(int errorCode)
@@ -335,7 +335,7 @@ DlpCredential& DlpCredential::GetInstance()
 {
     static DlpCredential* instance = nullptr;
     if (instance == nullptr) {
-        std::lock_guard<std::recursive_mutex> lock(instanceMutex_);
+        std::lock_guard<std::mutex> lock(instanceMutex_);
         if (instance == nullptr) {
             instance = new DlpCredential();
         }

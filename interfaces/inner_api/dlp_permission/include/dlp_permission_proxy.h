@@ -62,6 +62,9 @@ public:
     int32_t GetSandboxAppConfig(std::string& configInfo) override;
     int32_t IsDLPFeatureProvided(bool& isProvideDLPFeature) override;
     int32_t SetReadFlag(uint32_t uid) override;
+private:
+    int32_t CheckRemoteAndSendRequest(uint32_t code, MessageParcel& data,
+        MessageParcel& reply, MessageOption& option);
 
 private:
     static inline BrokerDelegator<DlpPermissionProxy> delegator_;

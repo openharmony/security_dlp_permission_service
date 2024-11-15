@@ -35,7 +35,7 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_
 static const int32_t DLP_PERMISSION_LOAD_SA_TIMEOUT_MS = 4000;
 static const uint32_t MAX_CALLBACK_MAP_SIZE = 100;
 static const std::string GRANT_SENSITIVE_PERMISSIONS = "ohos.permission.GRANT_SENSITIVE_PERMISSIONS";
-std::recursive_mutex instanceMutex_;
+std::mutex instanceMutex_;
 
 static int32_t CheckSandboxFlag(AccessToken::AccessTokenID tokenId, bool& sandboxFlag)
 {
@@ -53,7 +53,7 @@ DlpPermissionClient& DlpPermissionClient::GetInstance()
 {
     static DlpPermissionClient* instance = nullptr;
     if (instance == nullptr) {
-        std::lock_guard<std::recursive_mutex> lock(instanceMutex_);
+        std::lock_guard<std::mutex> lock(instanceMutex_);
         if (instance == nullptr) {
             instance = new DlpPermissionClient();
         }
