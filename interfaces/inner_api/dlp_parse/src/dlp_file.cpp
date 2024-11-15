@@ -475,7 +475,11 @@ bool DlpFile::ParseDlpInfo()
             DLP_LOG_ERROR(LABEL, "New memory fail");
             return false;
         }
-        return HexStringToByte(params.hmacVal.c_str(), params.hmacVal.length(), hmac_.data, hmac_.size) == DLP_OK;
+        int32_t ret = HexStringToByte(params.hmacVal.c_str(), params.hmacVal.length(), hmac_.data, hmac_.size);
+        (void)memset_s(hmac_.data, hmac_.size, 0, hmac_.size);
+        delete[] hmac_.data;
+        hmac_.data = nullptr;
+        return ret == DLP_OK;
     }
     return true;
 }

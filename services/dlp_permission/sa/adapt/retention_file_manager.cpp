@@ -25,7 +25,7 @@ constexpr OHOS::HiviewDFX::HiLogLabel LABEL = { LOG_CORE, SECURITY_DOMAIN_DLP_PE
 const std::string PATH_SEPARATOR = "/";
 const std::string USER_INFO_BASE = "/data/service/el1/public/dlp_permission_service";
 const std::string DLP_RETENTION_JSON_PATH = USER_INFO_BASE + PATH_SEPARATOR + "retention_sandbox_info.json";
-std::recursive_mutex instanceMutex_;
+std::mutex instanceMutex_;
 }
 
 RetentionFileManager::RetentionFileManager()
@@ -42,7 +42,7 @@ RetentionFileManager& RetentionFileManager::GetInstance()
 {
     static RetentionFileManager* instance = nullptr;
     if (instance == nullptr) {
-        std::lock_guard<std::recursive_mutex> lock(instanceMutex_);
+        std::lock_guard<std::mutex> lock(instanceMutex_);
         if (instance == nullptr) {
             instance = new RetentionFileManager();
         }

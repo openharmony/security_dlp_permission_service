@@ -36,6 +36,17 @@ DlpPermissionProxy::DlpPermissionProxy(const sptr<IRemoteObject>& impl) : IRemot
 DlpPermissionProxy::~DlpPermissionProxy()
 {}
 
+int32_t DlpPermissionProxy::CheckRemoteAndSendRequest(uint32_t code, MessageParcel& data,
+        MessageParcel& reply, MessageOption& option)
+{
+    sptr<IRemoteObject> remote = Remote();
+    if (remote == nullptr) {
+        DLP_LOG_ERROR(LABEL, "Remote service is null");
+        return DLP_SERVICE_ERROR_SERVICE_NOT_EXIST;
+    }
+    return remote->SendRequest(code, data, reply, option);
+}
+
 int32_t DlpPermissionProxy::GenerateDlpCertificate(
     const sptr<DlpPolicyParcel>& policyParcel, const sptr<IDlpPermissionCallback>& callback)
 {
@@ -57,12 +68,7 @@ int32_t DlpPermissionProxy::GenerateDlpCertificate(
 
     MessageParcel reply;
     MessageOption option(MessageOption::TF_SYNC);
-    sptr<IRemoteObject> remote = Remote();
-    if (remote == nullptr) {
-        DLP_LOG_ERROR(LABEL, "Remote service is null");
-        return DLP_SERVICE_ERROR_SERVICE_NOT_EXIST;
-    }
-    int32_t requestResult = remote->SendRequest(
+    int32_t requestResult = CheckRemoteAndSendRequest(
         static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::GENERATE_DLP_CERTIFICATE), data, reply, option);
     if (requestResult != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "Request fail, result: %{public}d", requestResult);
@@ -103,13 +109,7 @@ int32_t DlpPermissionProxy::ParseDlpCertificate(sptr<CertParcel>& certParcel,
 
     MessageParcel reply;
     MessageOption option(MessageOption::TF_SYNC);
-    sptr<IRemoteObject> remote = Remote();
-    if (remote == nullptr) {
-        DLP_LOG_ERROR(LABEL, "Remote service is null");
-        return DLP_SERVICE_ERROR_SERVICE_NOT_EXIST;
-    }
-
-    int32_t requestResult = remote->SendRequest(
+    int32_t requestResult = CheckRemoteAndSendRequest(
         static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::PARSE_DLP_CERTIFICATE),
         data, reply, option);
     if (requestResult != DLP_OK) {
@@ -156,12 +156,7 @@ int32_t DlpPermissionProxy::InstallDlpSandbox(const std::string& bundleName, DLP
 
     MessageParcel reply;
     MessageOption option(MessageOption::TF_SYNC);
-    sptr<IRemoteObject> remote = Remote();
-    if (remote == nullptr) {
-        DLP_LOG_ERROR(LABEL, "Remote service is null");
-        return DLP_SERVICE_ERROR_SERVICE_NOT_EXIST;
-    }
-    int32_t requestResult = remote->SendRequest(
+    int32_t requestResult = CheckRemoteAndSendRequest(
         static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::INSTALL_DLP_SANDBOX), data, reply, option);
     if (requestResult != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "Request fail, result: %{public}d", requestResult);
@@ -210,12 +205,7 @@ int32_t DlpPermissionProxy::UninstallDlpSandbox(const std::string& bundleName, i
 
     MessageParcel reply;
     MessageOption option(MessageOption::TF_SYNC);
-    sptr<IRemoteObject> remote = Remote();
-    if (remote == nullptr) {
-        DLP_LOG_ERROR(LABEL, "Remote service is null");
-        return DLP_SERVICE_ERROR_SERVICE_NOT_EXIST;
-    }
-    int32_t requestResult = remote->SendRequest(
+    int32_t requestResult = CheckRemoteAndSendRequest(
         static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::UNINSTALL_DLP_SANDBOX), data, reply, option);
     if (requestResult != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "Request fail, result: %{public}d", requestResult);
@@ -250,12 +240,7 @@ int32_t DlpPermissionProxy::GetSandboxExternalAuthorization(int sandboxUid,
 
     MessageParcel reply;
     MessageOption option(MessageOption::TF_SYNC);
-    sptr<IRemoteObject> remote = Remote();
-    if (remote == nullptr) {
-        DLP_LOG_ERROR(LABEL, "Remote service is null");
-        return DLP_SERVICE_ERROR_SERVICE_NOT_EXIST;
-    }
-    int32_t requestResult = remote->SendRequest(
+    int32_t requestResult = CheckRemoteAndSendRequest(
         static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::GET_SANDBOX_EXTERNAL_AUTH), data, reply, option);
     if (requestResult != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "Request fail, result: %{public}d", requestResult);
@@ -289,12 +274,7 @@ int32_t DlpPermissionProxy::QueryDlpFileCopyableByTokenId(bool& copyable, uint32
 
     MessageParcel reply;
     MessageOption option(MessageOption::TF_SYNC);
-    sptr<IRemoteObject> remote = Remote();
-    if (remote == nullptr) {
-        DLP_LOG_ERROR(LABEL, "Remote service is null");
-        return DLP_SERVICE_ERROR_SERVICE_NOT_EXIST;
-    }
-    int32_t requestResult = remote->SendRequest(
+    int32_t requestResult = CheckRemoteAndSendRequest(
         static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::QUERY_DLP_FILE_ACCESS_BY_TOKEN_ID), data, reply,
         option);
     if (requestResult != DLP_OK) {
@@ -323,12 +303,7 @@ int32_t DlpPermissionProxy::QueryDlpFileAccess(DLPPermissionInfoParcel& permInfo
 
     MessageParcel reply;
     MessageOption option(MessageOption::TF_SYNC);
-    sptr<IRemoteObject> remote = Remote();
-    if (remote == nullptr) {
-        DLP_LOG_ERROR(LABEL, "Remote service is null");
-        return DLP_SERVICE_ERROR_SERVICE_NOT_EXIST;
-    }
-    int32_t requestResult = remote->SendRequest(
+    int32_t requestResult = CheckRemoteAndSendRequest(
         static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::QUERY_DLP_FILE_ACCESS), data, reply, option);
     if (requestResult != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "Request fail, result: %{public}d", requestResult);
@@ -358,12 +333,7 @@ int32_t DlpPermissionProxy::IsInDlpSandbox(bool& inSandbox)
 
     MessageParcel reply;
     MessageOption option(MessageOption::TF_SYNC);
-    sptr<IRemoteObject> remote = Remote();
-    if (remote == nullptr) {
-        DLP_LOG_ERROR(LABEL, "Remote service is null");
-        return DLP_SERVICE_ERROR_SERVICE_NOT_EXIST;
-    }
-    int32_t requestResult = remote->SendRequest(
+    int32_t requestResult = CheckRemoteAndSendRequest(
         static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::IS_IN_DLP_SANDBOX), data, reply, option);
     if (requestResult != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "Request fail, result: %{public}d", requestResult);
@@ -391,12 +361,7 @@ int32_t DlpPermissionProxy::GetDlpSupportFileType(std::vector<std::string>& supp
 
     MessageParcel reply;
     MessageOption option(MessageOption::TF_SYNC);
-    sptr<IRemoteObject> remote = Remote();
-    if (remote == nullptr) {
-        DLP_LOG_ERROR(LABEL, "Remote service is null");
-        return DLP_SERVICE_ERROR_SERVICE_NOT_EXIST;
-    }
-    int32_t requestResult = remote->SendRequest(
+    int32_t requestResult = CheckRemoteAndSendRequest(
         static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::GET_DLP_SUPPORT_FILE_TYPE), data, reply, option);
     if (requestResult != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "Request fail, result: %{public}d", requestResult);
@@ -442,12 +407,7 @@ int32_t DlpPermissionProxy::RegisterDlpSandboxChangeCallback(const sptr<IRemoteO
 
     MessageParcel reply;
     MessageOption option(MessageOption::TF_SYNC);
-    sptr<IRemoteObject> remote = Remote();
-    if (remote == nullptr) {
-        DLP_LOG_ERROR(LABEL, "Remote service is null");
-        return DLP_SERVICE_ERROR_SERVICE_NOT_EXIST;
-    }
-    int32_t requestResult = remote->SendRequest(
+    int32_t requestResult = CheckRemoteAndSendRequest(
         static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::REGISTER_DLP_SANDBOX_CHANGE_CALLBACK), data, reply,
         option);
     if (requestResult != DLP_OK) {
@@ -473,12 +433,7 @@ int32_t DlpPermissionProxy::UnRegisterDlpSandboxChangeCallback(bool &result)
 
     MessageParcel reply;
     MessageOption option(MessageOption::TF_SYNC);
-    sptr<IRemoteObject> remote = Remote();
-    if (remote == nullptr) {
-        DLP_LOG_ERROR(LABEL, "Remote service is null");
-        return DLP_SERVICE_ERROR_SERVICE_NOT_EXIST;
-    }
-    int32_t requestResult = remote->SendRequest(
+    int32_t requestResult = CheckRemoteAndSendRequest(
         static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::UNREGISTER_DLP_SANDBOX_CHANGE_CALLBACK), data,
         reply, option);
     if (requestResult != DLP_OK) {
@@ -512,12 +467,7 @@ int32_t DlpPermissionProxy::RegisterOpenDlpFileCallback(const sptr<IRemoteObject
 
     MessageParcel reply;
     MessageOption option(MessageOption::TF_SYNC);
-    sptr<IRemoteObject> remote = Remote();
-    if (remote == nullptr) {
-        DLP_LOG_ERROR(LABEL, "Remote service is null");
-        return DLP_SERVICE_ERROR_SERVICE_NOT_EXIST;
-    }
-    int32_t requestResult = remote->SendRequest(
+    int32_t requestResult = CheckRemoteAndSendRequest(
         static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::REGISTER_OPEN_DLP_FILE_CALLBACK), data, reply,
         option);
     if (requestResult != DLP_OK) {
@@ -547,12 +497,7 @@ int32_t DlpPermissionProxy::UnRegisterOpenDlpFileCallback(const sptr<IRemoteObje
 
     MessageParcel reply;
     MessageOption option(MessageOption::TF_SYNC);
-    sptr<IRemoteObject> remote = Remote();
-    if (remote == nullptr) {
-        DLP_LOG_ERROR(LABEL, "Remote service is null");
-        return DLP_SERVICE_ERROR_SERVICE_NOT_EXIST;
-    }
-    int32_t requestResult = remote->SendRequest(
+    int32_t requestResult = CheckRemoteAndSendRequest(
         static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::UN_REGISTER_OPEN_DLP_FILE_CALLBACK), data,
         reply, option);
     if (requestResult != DLP_OK) {
@@ -578,12 +523,7 @@ int32_t DlpPermissionProxy::GetDlpGatheringPolicy(bool& isGathering)
 
     MessageParcel reply;
     MessageOption option(MessageOption::TF_SYNC);
-    sptr<IRemoteObject> remote = Remote();
-    if (remote == nullptr) {
-        DLP_LOG_ERROR(LABEL, "Remote service is null");
-        return DLP_SERVICE_ERROR_SERVICE_NOT_EXIST;
-    }
-    int32_t requestResult = remote->SendRequest(
+    int32_t requestResult = CheckRemoteAndSendRequest(
         static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::GET_DLP_GATHERING_POLICY), data, reply, option);
     if (requestResult != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "Request fail, result: %{public}d", requestResult);
@@ -616,12 +556,7 @@ int32_t DlpPermissionProxy::SetRetentionState(const std::vector<std::string>& do
 
     MessageParcel reply;
     MessageOption option(MessageOption::TF_SYNC);
-    sptr<IRemoteObject> remote = Remote();
-    if (remote == nullptr) {
-        DLP_LOG_ERROR(LABEL, "Remote service is null");
-        return DLP_SERVICE_ERROR_SERVICE_NOT_EXIST;
-    }
-    int32_t requestResult = remote->SendRequest(
+    int32_t requestResult = CheckRemoteAndSendRequest(
         static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::SET_RETENTION_STATE), data, reply, option);
     if (requestResult != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "Request fail, result: %{public}d", requestResult);
@@ -650,12 +585,7 @@ int32_t DlpPermissionProxy::CancelRetentionState(const std::vector<std::string>&
 
     MessageParcel reply;
     MessageOption option(MessageOption::TF_SYNC);
-    sptr<IRemoteObject> remote = Remote();
-    if (remote == nullptr) {
-        DLP_LOG_ERROR(LABEL, "Remote service is null");
-        return DLP_SERVICE_ERROR_SERVICE_NOT_EXIST;
-    }
-    int32_t requestResult = remote->SendRequest(
+    int32_t requestResult = CheckRemoteAndSendRequest(
         static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::SET_NOT_RETENTION_STATE), data, reply, option);
     if (requestResult != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "Request fail, result: %{public}d", requestResult);
@@ -685,12 +615,7 @@ int32_t DlpPermissionProxy::GetRetentionSandboxList(const std::string& bundleNam
 
     MessageParcel reply;
     MessageOption option(MessageOption::TF_SYNC);
-    sptr<IRemoteObject> remote = Remote();
-    if (remote == nullptr) {
-        DLP_LOG_ERROR(LABEL, "Remote service is null");
-        return DLP_SERVICE_ERROR_SERVICE_NOT_EXIST;
-    }
-    int32_t requestResult = remote->SendRequest(
+    int32_t requestResult = CheckRemoteAndSendRequest(
         static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::GET_RETENTION_SANDBOX_LIST), data, reply, option);
     if (requestResult != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "Request fail, result: %{public}d", requestResult);
@@ -731,12 +656,7 @@ int32_t DlpPermissionProxy::ClearUnreservedSandbox()
 
     MessageParcel reply;
     MessageOption option(MessageOption::TF_SYNC);
-    sptr<IRemoteObject> remote = Remote();
-    if (remote == nullptr) {
-        DLP_LOG_ERROR(LABEL, "Remote service is null");
-        return DLP_SERVICE_ERROR_SERVICE_NOT_EXIST;
-    }
-    int32_t requestResult = remote->SendRequest(
+    int32_t requestResult = CheckRemoteAndSendRequest(
         static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::CLEAR_UNRESERVED_SANDBOX), data, reply, option);
     if (requestResult != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "Request fail, result: %{public}d", requestResult);
@@ -754,12 +674,7 @@ int32_t DlpPermissionProxy::GetDLPFileVisitRecord(std::vector<VisitedDLPFileInfo
 
     MessageParcel reply;
     MessageOption option(MessageOption::TF_SYNC);
-    sptr<IRemoteObject> remote = Remote();
-    if (remote == nullptr) {
-        DLP_LOG_ERROR(LABEL, "Remote service is null");
-        return DLP_SERVICE_ERROR_SERVICE_NOT_EXIST;
-    }
-    int32_t requestResult = remote->SendRequest(
+    int32_t requestResult = CheckRemoteAndSendRequest(
         static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::GET_VISTI_FILE_RECORD_LIST), data, reply, option);
     if (requestResult != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "Request fail, result: %{public}d", requestResult);
@@ -809,12 +724,7 @@ int32_t DlpPermissionProxy::SetMDMPolicy(const std::vector<std::string>& appIdLi
 
     MessageParcel reply;
     MessageOption option(MessageOption::TF_SYNC);
-    sptr<IRemoteObject> remote = Remote();
-    if (remote == nullptr) {
-        DLP_LOG_ERROR(LABEL, "Remote service is null");
-        return DLP_SERVICE_ERROR_SERVICE_NOT_EXIST;
-    }
-    int32_t requestResult = remote->SendRequest(
+    int32_t requestResult = CheckRemoteAndSendRequest(
         static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::SET_MDM_POLICY), data, reply, option);
     if (requestResult != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "Request fail, result: %{public}d", requestResult);
@@ -838,12 +748,7 @@ int32_t DlpPermissionProxy::GetMDMPolicy(std::vector<std::string>& appIdList)
 
     MessageParcel reply;
     MessageOption option(MessageOption::TF_SYNC);
-    sptr<IRemoteObject> remote = Remote();
-    if (remote == nullptr) {
-        DLP_LOG_ERROR(LABEL, "Remote service is null");
-        return DLP_SERVICE_ERROR_SERVICE_NOT_EXIST;
-    }
-    int32_t requestResult = remote->SendRequest(
+    int32_t requestResult = CheckRemoteAndSendRequest(
         static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::GET_MDM_POLICY), data, reply, option);
     if (requestResult != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "Request fail, result: %{public}d", requestResult);
@@ -880,12 +785,7 @@ int32_t DlpPermissionProxy::RemoveMDMPolicy()
 
     MessageParcel reply;
     MessageOption option(MessageOption::TF_SYNC);
-    sptr<IRemoteObject> remote = Remote();
-    if (remote == nullptr) {
-        DLP_LOG_ERROR(LABEL, "Remote service is null");
-        return DLP_SERVICE_ERROR_SERVICE_NOT_EXIST;
-    }
-    int32_t requestResult = remote->SendRequest(
+    int32_t requestResult = CheckRemoteAndSendRequest(
         static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::REMOVE_MDM_POLICY), data, reply, option);
     if (requestResult != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "Request fail, result: %{public}d", requestResult);
@@ -912,12 +812,7 @@ int32_t DlpPermissionProxy::SetSandboxAppConfig(const std::string& configInfo)
     }
     MessageParcel reply;
     MessageOption option(MessageOption::TF_SYNC);
-    sptr<IRemoteObject> remote = Remote();
-    if (remote == nullptr) {
-        DLP_LOG_ERROR(LABEL, "Remote service is null");
-        return DLP_SERVICE_ERROR_SERVICE_NOT_EXIST;
-    }
-    int32_t requestResult = remote->SendRequest(
+    int32_t requestResult = CheckRemoteAndSendRequest(
         static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::SET_SANDBOX_APP_CONFIG), data, reply, option);
     if (requestResult != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "Request fail, result: %{public}d", requestResult);
@@ -939,12 +834,7 @@ int32_t DlpPermissionProxy::CleanSandboxAppConfig()
     }
     MessageParcel reply;
     MessageOption option(MessageOption::TF_SYNC);
-    sptr<IRemoteObject> remote = Remote();
-    if (remote == nullptr) {
-        DLP_LOG_ERROR(LABEL, "Remote service is null");
-        return DLP_SERVICE_ERROR_SERVICE_NOT_EXIST;
-    }
-    int32_t requestResult = remote->SendRequest(
+    int32_t requestResult = CheckRemoteAndSendRequest(
         static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::CLEAN_SANDBOX_APP_CONFIG), data, reply, option);
     if (requestResult != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "Request fail, result: %{public}d", requestResult);
@@ -966,12 +856,7 @@ int32_t DlpPermissionProxy::GetSandboxAppConfig(std::string& configInfo)
     }
     MessageParcel reply;
     MessageOption option(MessageOption::TF_SYNC);
-    sptr<IRemoteObject> remote = Remote();
-    if (remote == nullptr) {
-        DLP_LOG_ERROR(LABEL, "Remote service is null");
-        return DLP_SERVICE_ERROR_SERVICE_NOT_EXIST;
-    }
-    int32_t requestResult = remote->SendRequest(
+    int32_t requestResult = CheckRemoteAndSendRequest(
         static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::GET_SANDBOX_APP_CONFIG), data, reply, option);
     if (requestResult != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "Request fail, result: %{public}d", requestResult);
@@ -1003,12 +888,7 @@ int32_t DlpPermissionProxy::IsDLPFeatureProvided(bool& isProvideDLPFeature)
     }
     MessageParcel reply;
     MessageOption option(MessageOption::TF_SYNC);
-    sptr<IRemoteObject> remote = Remote();
-    if (remote == nullptr) {
-        DLP_LOG_ERROR(LABEL, "Remote service is null.");
-        return DLP_SERVICE_ERROR_SERVICE_NOT_EXIST;
-    }
-    int32_t requestResult = remote->SendRequest(
+    int32_t requestResult = CheckRemoteAndSendRequest(
         static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::IS_DLP_FEATURE_PROVIDED), data, reply, option);
     if (requestResult != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "Request fail, result=%{public}d.", requestResult);
@@ -1034,12 +914,7 @@ int32_t DlpPermissionProxy::SetReadFlag(uint32_t uid)
     }
     MessageParcel reply;
     MessageOption option(MessageOption::TF_SYNC);
-    sptr<IRemoteObject> remote = Remote();
-    if (remote == nullptr) {
-        DLP_LOG_ERROR(LABEL, "Remote service is null.");
-        return DLP_SERVICE_ERROR_SERVICE_NOT_EXIST;
-    }
-    int32_t requestResult = remote->SendRequest(
+    int32_t requestResult = CheckRemoteAndSendRequest(
         static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::SET_READ_FLAG), data, reply, option);
     if (requestResult != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "Request fail, requestResult=%{public}d.", requestResult);

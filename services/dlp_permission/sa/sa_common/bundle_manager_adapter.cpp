@@ -28,13 +28,13 @@ using namespace Security::AccessToken;
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = { LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION,
     "BundleManagerAdapter" };
-std::recursive_mutex instanceMutex_;
+std::mutex instanceMutex_;
 }
 BundleManagerAdapter& BundleManagerAdapter::GetInstance()
 {
     static BundleManagerAdapter* instance = nullptr;
     if (instance == nullptr) {
-        std::lock_guard<std::recursive_mutex> lock(instanceMutex_);
+        std::lock_guard<std::mutex> lock(instanceMutex_);
         if (instance == nullptr) {
             instance = new BundleManagerAdapter();
         }

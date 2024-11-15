@@ -35,14 +35,14 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
 static const time_t MAX_TIMEOUT_SEC = 30;
 static const uint32_t MAX_CALLBACK_SIZE = 1024;
 static const int MAX_PTHREAD_NAME_LEN = 15; // pthread name max length
-std::recursive_mutex instanceMutex_;
+std::mutex instanceMutex_;
 }
 
 DlpSandboxChangeCallbackManager &DlpSandboxChangeCallbackManager::GetInstance()
 {
     static DlpSandboxChangeCallbackManager* instance = nullptr;
     if (instance == nullptr) {
-        std::lock_guard<std::recursive_mutex> lock(instanceMutex_);
+        std::lock_guard<std::mutex> lock(instanceMutex_);
         if (instance == nullptr) {
             instance = new DlpSandboxChangeCallbackManager();
         }
