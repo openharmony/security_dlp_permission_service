@@ -37,7 +37,7 @@ DlpPermissionProxy::~DlpPermissionProxy()
 {}
 
 int32_t DlpPermissionProxy::CheckRemoteAndSendRequest(uint32_t code, MessageParcel& data,
-        MessageParcel& reply, MessageOption& option)
+                                                      MessageParcel& reply, MessageOption& option)
 {
     sptr<IRemoteObject> remote = Remote();
     if (remote == nullptr) {
