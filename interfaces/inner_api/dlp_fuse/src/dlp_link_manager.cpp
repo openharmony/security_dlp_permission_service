@@ -242,7 +242,7 @@ DlpLinkManager& DlpLinkManager::GetInstance()
 {
     static DlpLinkManager* instance = nullptr;
     if (instance == nullptr) {
-        std::lock_guard<std::：mutex> lock(instanceMutex_);
+        std::lock_guard<std::mutex> lock(instanceMutex_);
         if (instance == nullptr) {
             instance = new DlpLinkManager();
         }
