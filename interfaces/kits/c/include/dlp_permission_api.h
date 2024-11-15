@@ -19,7 +19,7 @@
  *
  * @brief Provides the capability to access the data loss prevention (DLP) files.
  *
- * @since 13
+ * @since 14
  */
 
 /**
@@ -30,7 +30,7 @@
  * @library libohdlp_permission.so
  * @kit DataProtectionKit
  * @syscap SystemCapability.Security.DataLossPrevention
- * @since 13
+ * @since 14
  */
 
 #ifndef DLP_PERMISSION_API_H
@@ -46,7 +46,7 @@ extern "C" {
 /**
  * @brief Enumerates the error codes.
  *
- * @since 13
+ * @since 14
  */
 typedef enum {
     /** @error The operation is successful. */
@@ -68,7 +68,7 @@ typedef enum {
 /**
  * @brief Enumerates the access permissions for a DLP file.
  *
- * @since 13
+ * @since 14
  */
 typedef enum {
     /** No permission. */
@@ -93,7 +93,7 @@ typedef enum {
  *         {@link DLP_ErrCode#ERR_OH_SYSTEM_SERVICE_EXCEPTION} 19100011 - If the system ability
  *             works abnormally.
  *         {@link DLP_ErrCode#ERR_OH_OUT_OF_MEMORY} 19100012 - If the memory error.
- * @since 13
+ * @since 14
  */
 DLP_ErrCode OH_DLP_GetDlpPermissionInfo(DLP_FileAccess *dlpFileAccess, uint32_t *flags);
 
@@ -106,7 +106,7 @@ DLP_ErrCode OH_DLP_GetDlpPermissionInfo(DLP_FileAccess *dlpFileAccess, uint32_t 
  * @return {@link DLP_ErrCode#ERR_OH_SUCCESS} 0 - If the operation is successful.
  *         {@link DLP_ErrCode#ERR_OH_INVALID_PARAMS} 19100001 - If the parameter value is invalid.
  *         {@link DLP_ErrCode#ERR_OH_OUT_OF_MEMORY} 19100012 - If the memory error.
- * @since 13
+ * @since 14
  */
 DLP_ErrCode OH_DLP_GetOriginalFileName(const char *fileName, char **originalFileName);
 
@@ -119,7 +119,7 @@ DLP_ErrCode OH_DLP_GetOriginalFileName(const char *fileName, char **originalFile
  *         {@link DLP_ErrCode#ERR_OH_SYSTEM_SERVICE_EXCEPTION} 19100011 - If the system ability
  *             works abnormally.
  *         {@link DLP_ErrCode#ERR_OH_OUT_OF_MEMORY} 19100012 - If the memory error.
- * @since 13
+ * @since 14
  */
 DLP_ErrCode OH_DLP_IsInSandbox(bool *isInSandbox);
 
@@ -134,7 +134,7 @@ DLP_ErrCode OH_DLP_IsInSandbox(bool *isInSandbox);
  *         {@link DLP_ErrCode#ERR_OH_SYSTEM_SERVICE_EXCEPTION} 19100011 - If the system ability
  *             works abnormally.
  *         {@link DLP_ErrCode#ERR_OH_APPLICATION_NOT_AUTHORIZED} 19100018 - If not authorized application.
- * @since 13
+ * @since 14
  */
 DLP_ErrCode OH_DLP_SetSandboxAppConfig(const char *configInfo);
 
@@ -147,7 +147,7 @@ DLP_ErrCode OH_DLP_SetSandboxAppConfig(const char *configInfo);
  *             works abnormally.
  *         {@link DLP_ErrCode#ERR_OH_OUT_OF_MEMORY} 19100012 - If the memory error.
  *         {@link DLP_ErrCode#ERR_OH_APPLICATION_NOT_AUTHORIZED} 19100018 - If not authorized application.
- * @since 13
+ * @since 14
  */
 DLP_ErrCode OH_DLP_GetSandboxAppConfig(char **configInfo);
 
@@ -160,7 +160,7 @@ DLP_ErrCode OH_DLP_GetSandboxAppConfig(char **configInfo);
  *         {@link DLP_ErrCode#ERR_OH_SYSTEM_SERVICE_EXCEPTION} 19100011 - If the system ability
  *             works abnormally.
  *         {@link DLP_ErrCode#ERR_OH_APPLICATION_NOT_AUTHORIZED} 19100018 - If not authorized application.
- * @since 13
+ * @since 14
  */
 DLP_ErrCode OH_DLP_CleanSandboxAppConfig();
 
