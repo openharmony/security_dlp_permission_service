@@ -21,6 +21,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <unordered_map>
+#include "dlp_file.h"
 #include "dlp_permission_log.h"
 #include "dlp_zip.h"
 #include "file_uri.h"

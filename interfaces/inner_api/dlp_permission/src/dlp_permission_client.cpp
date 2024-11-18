@@ -36,6 +36,7 @@ static const int32_t DLP_PERMISSION_LOAD_SA_TIMEOUT_MS = 4000;
 static const uint32_t MAX_CALLBACK_MAP_SIZE = 100;
 static const std::string GRANT_SENSITIVE_PERMISSIONS = "ohos.permission.GRANT_SENSITIVE_PERMISSIONS";
 std::mutex instanceMutex_;
+static constexpr int32_t DLP_PERMISSION_SERVICE_SA_ID = 3521;
 
 static int32_t CheckSandboxFlag(AccessToken::AccessTokenID tokenId, bool& sandboxFlag)
 {
@@ -622,12 +623,12 @@ bool DlpPermissionClient::StartLoadDlpPermissionSa()
         return false;
     }
 
-    int32_t result = sam->LoadSystemAbility(SA_ID_DLP_PERMISSION_SERVICE, ptrDlpPermissionLoadCallback);
+    int32_t result = sam->LoadSystemAbility(DLP_PERMISSION_SERVICE_SA_ID, ptrDlpPermissionLoadCallback);
     if (result != DLP_OK) {
-        DLP_LOG_ERROR(LABEL, "LoadSystemAbility %{public}d failed", SA_ID_DLP_PERMISSION_SERVICE);
+        DLP_LOG_ERROR(LABEL, "LoadSystemAbility %{public}d failed", DLP_PERMISSION_SERVICE_SA_ID);
         return false;
     }
-    DLP_LOG_INFO(LABEL, "Notify samgr load sa %{public}d success", SA_ID_DLP_PERMISSION_SERVICE);
+    DLP_LOG_INFO(LABEL, "Notify samgr load sa %{public}d success", DLP_PERMISSION_SERVICE_SA_ID);
     return true;
 }
 
@@ -652,9 +653,9 @@ void DlpPermissionClient::GetDlpPermissionSa()
         return;
     }
 
-    auto dlpPermissionSa = sam->GetSystemAbility(SA_ID_DLP_PERMISSION_SERVICE);
+    auto dlpPermissionSa = sam->GetSystemAbility(DLP_PERMISSION_SERVICE_SA_ID);
     if (dlpPermissionSa == nullptr) {
-        DLP_LOG_ERROR(LABEL, "GetSystemAbility %{public}d is null", SA_ID_DLP_PERMISSION_SERVICE);
+        DLP_LOG_ERROR(LABEL, "GetSystemAbility %{public}d is null", DLP_PERMISSION_SERVICE_SA_ID);
         return;
     }
 
@@ -728,7 +729,7 @@ void DlpPermissionClient::GetProxyFromRemoteObject(const sptr<IRemoteObject>& re
     std::unique_lock<std::mutex> lock(proxyMutex_);
     proxy_ = proxy;
     serviceDeathObserver_ = serviceDeathObserver;
-    DLP_LOG_INFO(LABEL, "GetSystemAbility %{public}d success", SA_ID_DLP_PERMISSION_SERVICE);
+    DLP_LOG_INFO(LABEL, "GetSystemAbility %{public}d success", DLP_PERMISSION_SERVICE_SA_ID);
     return;
 }
 

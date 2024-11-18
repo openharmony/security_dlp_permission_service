@@ -45,6 +45,8 @@ ohos_shared_library("libdlp_fuse") {
     "src/dlp_link_file.cpp",
     "src/dlp_link_manager.cpp",
     "src/fuse_daemon.cpp",
+    "src/dlp_fuse_adapter.cpp",
+    "src/dlp_fuse_utils.cpp",
   ]
 
   public_configs = [ ":dlp_fuse_config" ]

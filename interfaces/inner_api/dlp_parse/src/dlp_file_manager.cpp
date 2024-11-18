@@ -29,7 +29,6 @@
 #include "hitrace_meter.h"
 #include "securec.h"
 #include "dlp_utils.h"
-#include "dlp_file_kits.h"
 
 namespace OHOS {
 namespace Security {
@@ -39,6 +38,7 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_
 static constexpr uint32_t MAX_DLP_FILE_SIZE = 1000; // max open dlp file
 const std::string PATH_CACHE = "/cache";
 std::mutex instanceMutex_;
+static const std::string DEFAULT_STRING = "";
 }
 
 int32_t DlpFileManager::AddDlpFileNode(const std::shared_ptr<DlpFile>& filePtr)

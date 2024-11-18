@@ -43,10 +43,6 @@ enum DaemonStatus {
     DAEMON_DISABLE,
 };
 
-fuse_ino_t GetFileInode(struct DlpFuseFileNode* node);
-void UpdateCurrTimeStat(struct timespec* ts);
-fuse_ino_t GetFileInode(DlpLinkFile* node);
-
 class FuseDaemon {
 public:
     static int InitFuseFs();

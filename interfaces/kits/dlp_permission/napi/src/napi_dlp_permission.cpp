@@ -18,8 +18,8 @@
 #include <string>
 #include "accesstoken_kit.h"
 #include "application_context.h"
+#include "dlp_fuse_adapter.h"
 #include "dlp_file_kits.h"
-#include "dlp_link_manager.h"
 #include "dlp_permission.h"
 #include "dlp_permission_log.h"
 #include "dlp_permission_kit.h"
@@ -408,7 +408,7 @@ void NapiDlpPermission::AddDlpLinkFileExcute(napi_env env, void* data)
     }
 
     asyncContext->errCode =
-        DlpLinkManager::GetInstance().AddDlpLinkFile(asyncContext->dlpFileNative, asyncContext->linkFileName);
+        DlpFuseAdapter::GetDlpLinkManagerInstance().AddDlpLinkFile(asyncContext->dlpFileNative, asyncContext->linkFileName);
 }
 
 void NapiDlpPermission::AddDlpLinkFileComplete(napi_env env, napi_status status, void* data)
@@ -471,7 +471,7 @@ void NapiDlpPermission::StopDlpLinkFileExcute(napi_env env, void* data)
         return;
     }
 
-    asyncContext->errCode = DlpLinkManager::GetInstance().StopDlpLinkFile(asyncContext->dlpFileNative);
+    asyncContext->errCode = DlpFuseAdapter::GetDlpLinkManagerInstance().StopDlpLinkFile(asyncContext->dlpFileNative);
 }
 
 void NapiDlpPermission::StopDlpLinkFileComplete(napi_env env, napi_status status, void* data)
@@ -534,7 +534,7 @@ void NapiDlpPermission::RestartDlpLinkFileExcute(napi_env env, void* data)
         return;
     }
 
-    asyncContext->errCode = DlpLinkManager::GetInstance().RestartDlpLinkFile(asyncContext->dlpFileNative);
+    asyncContext->errCode = DlpFuseAdapter::GetDlpLinkManagerInstance().RestartDlpLinkFile(asyncContext->dlpFileNative);
 }
 
 void NapiDlpPermission::RestartDlpLinkFileComplete(napi_env env, napi_status status, void* data)
@@ -598,7 +598,7 @@ void NapiDlpPermission::ReplaceDlpLinkFileExcute(napi_env env, void* data)
     }
 
     asyncContext->errCode =
-        DlpLinkManager::GetInstance().ReplaceDlpLinkFile(asyncContext->dlpFileNative, asyncContext->linkFileName);
+        DlpFuseAdapter::GetDlpLinkManagerInstance().ReplaceDlpLinkFile(asyncContext->dlpFileNative, asyncContext->linkFileName);
 }
 
 void NapiDlpPermission::ReplaceDlpLinkFileComplete(napi_env env, napi_status status, void* data)
@@ -661,7 +661,7 @@ void NapiDlpPermission::DeleteDlpLinkFileExcute(napi_env env, void* data)
         return;
     }
 
-    asyncContext->errCode = DlpLinkManager::GetInstance().DeleteDlpLinkFile(asyncContext->dlpFileNative);
+    asyncContext->errCode = DlpFuseAdapter::GetDlpLinkManagerInstance().DeleteDlpLinkFile(asyncContext->dlpFileNative);
 }
 
 void NapiDlpPermission::DeleteDlpLinkFileComplete(napi_env env, napi_status status, void* data)

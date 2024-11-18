@@ -17,7 +17,6 @@
 #define INTERFACES_INNER_API_DLP_FILE_KITS_H
 #include <cstdint>
 #include <string>
-#include "dlp_file_manager.h"
 #include "want.h"
 #include "ability_info.h"
 

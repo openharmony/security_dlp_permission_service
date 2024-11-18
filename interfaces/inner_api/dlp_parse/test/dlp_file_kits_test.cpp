@@ -23,11 +23,14 @@
 #include <vector>
 #include "ability_info.h"
 #include "accesstoken_kit.h"
+#include "dlp_file.h"
 #include "dlp_file_kits.h"
+#include "dlp_file_manager.h"
 #include "dlp_permission.h"
 #include "dlp_permission_log.h"
 #include "dlp_utils.h"
 #include "int_wrapper.h"
+#include "permission_policy.h"
 #include "string_wrapper.h"
 #include "want_params_wrapper.h"
 
