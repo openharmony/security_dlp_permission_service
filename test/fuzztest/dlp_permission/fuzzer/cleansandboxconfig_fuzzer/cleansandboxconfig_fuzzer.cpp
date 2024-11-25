@@ -32,6 +32,8 @@ static void FuzzTest(const uint8_t* data, size_t size)
         return;
     }
     DlpPermissionKit::CleanSandboxAppConfig();
+    std::string testStr(reinterpret_cast<const char*>(data), size);
+    DlpPermissionKit::SetSandboxAppConfig(testStr);
 }
 
 bool SetSandboxConfigFuzzTest(const uint8_t* data, size_t size)
