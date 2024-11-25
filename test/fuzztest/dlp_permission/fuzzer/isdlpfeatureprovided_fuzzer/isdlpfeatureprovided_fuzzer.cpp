@@ -15,11 +15,13 @@
 
 #include "isdlpfeatureprovided_fuzzer.h"
 
+constexpr uint8_t STATUS_NUM = 2;
+
 using namespace OHOS::Security::DlpPermission;
 namespace OHOS {
 bool IsDlpFeatureProvidedFuzzTest(const uint8_t* data, size_t size)
 {
-    bool inSandbisDLPFeatureProvided;
+    bool inSandbisDLPFeatureProvided = data[0] % STATUS_NUM;
     DlpPermissionKit::IsDLPFeatureProvided(inSandbisDLPFeatureProvided);
     return true;
 }

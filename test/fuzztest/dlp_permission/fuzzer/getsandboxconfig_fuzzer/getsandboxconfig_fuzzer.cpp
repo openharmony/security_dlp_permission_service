@@ -26,12 +26,22 @@
 using namespace OHOS::Security::DlpPermission;
 using namespace OHOS::Security::AccessToken;
 namespace OHOS {
+
+static std::string Uint8ArrayToString(const uint8_t* buff, size_t size)
+{
+    std::string str = "";
+    for (size_t i = 0; i < size; i++) {
+        str += (33 + buff[i] % (126 - 33));  // Visible Character Range 33 - 126
+    }
+    return str;
+}
+
 static void FuzzTest(const uint8_t* data, size_t size)
 {
     if ((data == nullptr) || (size == 0)) {
         return;
     }
-    std::string testStr;
+    std::string testStr = Uint8ArrayToString(data, size);
     DlpPermissionKit::GetSandboxAppConfig(testStr);
 }
 

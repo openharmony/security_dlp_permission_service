@@ -40,6 +40,8 @@ static void FuzzTest(const uint8_t* data, size_t size)
 {
     std::shared_ptr<OpenDlpFileCallbackCustomize> callback = std::make_shared<RegisterOpenDlpFileCallbackFuzzer>();
     DlpPermissionKit::RegisterOpenDlpFileCallback(callback);
+    std::string testStr(reinterpret_cast<const char*>(data), size);
+    DlpPermissionKit::SetSandboxAppConfig(testStr);
 }
 
 bool RegisterRegisterOpenDlpFileCallbackFuzzer(const uint8_t* data, size_t size)

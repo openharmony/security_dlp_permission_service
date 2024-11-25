@@ -30,6 +30,8 @@ namespace OHOS {
 static void FuzzTest(const uint8_t* data, size_t size)
 {
     DlpPermissionKit::RemoveMDMPolicy();
+    std::string testStr(reinterpret_cast<const char*>(data), size);
+    DlpPermissionKit::SetSandboxAppConfig(testStr);
 }
 
 bool RemoveMDMPolicyFuzzTest(const uint8_t* data, size_t size)

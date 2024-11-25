@@ -30,6 +30,7 @@ namespace OHOS {
 static void FuzzTest(const uint8_t* data, size_t size)
 {
     std::vector<VisitedDLPFileInfo> infoVec;
+    infoVec.resize(data[0]);
     DlpPermissionKit::GetDLPFileVisitRecord(infoVec);
 }
 
