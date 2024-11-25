@@ -26,10 +26,12 @@
 using namespace OHOS::Security::DlpPermission;
 namespace OHOS {
 static pthread_once_t g_callOnce = PTHREAD_ONCE_INIT;
+constexpr uint8_t DLP_FILE_ACCESS_TYPE_NUM = 4;
 
 static void FuzzTest(const uint8_t* data, size_t size)
 {
     DLPPermissionInfo permInfo;
+    perInfo.dlpFileAccess = data[0] % DLP_FILE_ACCESS_TYPE_NUM;
     DlpPermissionKit::QueryDlpFileAccess(permInfo);
 }
 

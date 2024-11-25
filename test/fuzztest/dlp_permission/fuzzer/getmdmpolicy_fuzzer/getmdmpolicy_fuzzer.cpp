@@ -30,6 +30,7 @@ namespace OHOS {
 static void FuzzTest(const uint8_t* data, size_t size)
 {
     std::vector<std::string> appIdList;
+    appIdlist.resize(data[0]);
     DlpPermissionKit::GetMDMPolicy(appIdList);
 }
 
