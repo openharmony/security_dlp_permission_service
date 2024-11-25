@@ -41,6 +41,7 @@ static void FuzzTest(const uint8_t* data, size_t size)
     service->OnRemoteRequest(code, datas, reply, option);
 
     MessageParcel datas1;
+    datas1.WriteInterfaceToken(IDlpPermissionService::GetDescriptor());
     MessageParcel reply1;
     MessageOption option1;
     auto service1 = std::make_shared<DlpPermissionService>(SA_ID_DLP_PERMISSION_SERVICE, data[0] % STATUS_NUM);
