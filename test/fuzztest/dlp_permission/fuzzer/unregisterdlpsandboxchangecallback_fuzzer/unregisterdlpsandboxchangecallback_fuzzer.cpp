@@ -30,8 +30,7 @@ using namespace OHOS::Security::AccessToken;
 namespace OHOS {
 static void FuzzTest(const uint8_t* data, size_t size)
 {
-    bool result;
-    result = data[0] % STATUS_NUM;
+    bool result = data[0] % STATUS_NUM;
     DlpPermissionKit::UnregisterDlpSandboxChangeCallback(result);
 }
 
