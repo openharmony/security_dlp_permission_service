@@ -31,7 +31,7 @@ constexpr uint8_t DLP_FILE_ACCESS_TYPE_NUM = 4;
 static void FuzzTest(const uint8_t* data, size_t size)
 {
     DLPPermissionInfo permInfo;
-    permInfo.dlpFileAccess = data[0] % DLP_FILE_ACCESS_TYPE_NUM;
+    permInfo.dlpFileAccess = static_cast<DLPFileAccess>(data[0] % DLP_FILE_ACCESS_TYPE_NUM);
     DlpPermissionKit::QueryDlpFileAccess(permInfo);
 }
 
