@@ -68,7 +68,7 @@ static void FuzzTest(const uint8_t* data, size_t size)
     MessageOption option1;
     auto service1 = std::make_shared<DlpPermissionService>(SA_ID_DLP_PERMISSION_SERVICE, data[0] % STATUS_NUM);
     service1->appStateObserver_ = new (std::nothrow) AppStateObserver();
-    service1->OnRemoteRequest(code, datas, reply1, option1);
+    service1->OnRemoteRequest(code, datas1, reply1, option1);
 }
 
 bool RegisterRegisterDlpSandboxChangeCallbackStubFuzzer(const uint8_t* data, size_t size)
