@@ -41,6 +41,8 @@ static void FuzzTest(const uint8_t* data, size_t size)
     std::shared_ptr<DlpSandboxChangeCallbackCustomize> callback =
         std::make_shared<RegisterDlpSandboxChangeCallbackFuzzer>();
     DlpPermissionKit::RegisterDlpSandboxChangeCallback(callback);
+    std::string testStr(reinterpret_cast<const char*>(data), size);
+    DlpPermissionKit::SetSandboxAppConfig(testStr);
 }
 
 bool RegisterRegisterDlpSandboxChangeCallbackFuzzer(const uint8_t* data, size_t size)
