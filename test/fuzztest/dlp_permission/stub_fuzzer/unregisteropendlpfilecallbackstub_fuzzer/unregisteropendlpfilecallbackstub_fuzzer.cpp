@@ -25,6 +25,8 @@
 #include "securec.h"
 #include "token_setproc.h"
 
+constexpr uint8_t STATUS_NUM = 2;
+
 using namespace OHOS::Security::DlpPermission;
 using namespace OHOS::Security::AccessToken;
 
@@ -52,8 +54,21 @@ static void FuzzTest(const uint8_t* data, size_t size)
     MessageOption option;
     auto service = std::make_shared<DlpPermissionService>(SA_ID_DLP_PERMISSION_SERVICE, true);
     service->appStateObserver_ = new (std::nothrow) AppStateObserver();
-    service->appStateObserver_ = new (std::nothrow) AppStateObserver();
     service->OnRemoteRequest(code, datas, reply, option);
+
+    MessageParcel datas1;
+    datas1.WriteInterfaceToken(IDlpPermissionService::GetDescriptor());
+    std::shared_ptr<OpenDlpFileCallbackCustomize> callback1 =
+        std::make_shared<UnregisterOpenDlpFileCallbackStubFuzzer>();
+    sptr<OpenDlpFileCallback> asyncStub1 = new (std::nothrow) OpenDlpFileCallback(callback1);
+    if (!datas1.WriteRemoteObject(asyncStub1->AsObject())) {
+        return;
+    }
+    MessageParcel reply1;
+    MessageOption option1;
+    auto service1 = std::make_shared<DlpPermissionService>(SA_ID_DLP_PERMISSION_SERVICE, data[0] % STATUS_NUM);
+    service1->appStateObserver_ = new (std::nothrow) AppStateObserver();
+    service1->OnRemoteRequest(code, datas1, reply1, option1);
 }
 
 bool UnRegisterUnregisterOpenDlpFileCallbackStubFuzzer(const uint8_t* data, size_t size)

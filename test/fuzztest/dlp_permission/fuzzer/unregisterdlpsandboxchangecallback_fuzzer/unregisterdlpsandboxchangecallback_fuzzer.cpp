@@ -23,6 +23,7 @@
 #include "dlp_permission_log.h"
 #include "securec.h"
 #include "token_setproc.h"
+constexpr u_int8_t STATUS_NUM = 2;
 
 using namespace OHOS::Security::DlpPermission;
 using namespace OHOS::Security::AccessToken;
@@ -30,6 +31,7 @@ namespace OHOS {
 static void FuzzTest(const uint8_t* data, size_t size)
 {
     bool result;
+    result = data[0] % STATUS_NUM;
     DlpPermissionKit::UnregisterDlpSandboxChangeCallback(result);
 }
 

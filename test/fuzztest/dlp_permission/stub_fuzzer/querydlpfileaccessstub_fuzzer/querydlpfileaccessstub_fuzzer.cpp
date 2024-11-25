@@ -50,6 +50,8 @@ const PermissionStateFull INFO_MANAGER_TEST_STATE1 = {
     .grantFlags = {1}
 };
 
+constexpr uint8_t STATUS_NUM = 2;
+
 static void InitTokenId()
 {
     HapPolicyParams hapPolicyParams = {
@@ -84,6 +86,14 @@ static void FuzzTest(const uint8_t* data, size_t size)
     auto service = std::make_shared<DlpPermissionService>(SA_ID_DLP_PERMISSION_SERVICE, true);
     service->appStateObserver_ = new (std::nothrow) AppStateObserver();
     service->OnRemoteRequest(code, datas, reply, option);
+
+    MessageParcel datas1;
+    datas1.WriteInterfaceToken(IDlpPermissionService::GetDescriptor());
+    MessageParcel reply1;
+    MessageOption option1;
+    auto service1 = std::make_shared<DlpPermissionService>(SA_ID_DLP_PERMISSION_SERVICE, data[0] % STATUS_NUM);
+    service1->appStateObserver_ = new (std::nothrow) AppStateObserver();
+    service1->OnRemoteRequest(code, datas1, reply1, option1);
 }
 
 bool QueryDlpFileAccessFuzzTest(const uint8_t* data, size_t size)
