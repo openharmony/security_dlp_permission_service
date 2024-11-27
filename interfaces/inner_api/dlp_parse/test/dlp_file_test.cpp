@@ -2458,6 +2458,8 @@ HWTEST_F(DlpFileTest, UpdateCertAndText001, TestSize.Level1)
 {
     DLP_LOG_INFO(LABEL, "UpdateCertAndText001");
 
+    int fdDlp = open("/data/fuse_test_dlp.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
+    EXPECT_NE(fdDlp, -1);
     DlpFile testFile(fdDlp, DLP_TEST_DIR, 0, false);
     initDlpFileCiper(testFile);
 
@@ -2478,6 +2480,8 @@ HWTEST_F(DlpFileTest, GetOfflineAccess001, TestSize.Level1)
 {
     DLP_LOG_INFO(LABEL, "GetOfflineAccess001");
 
+    int fdDlp = open("/data/fuse_test_dlp.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
+    EXPECT_NE(fdDlp, -1);
     DlpFile testFile(fdDlp, DLP_TEST_DIR, 0, false);
     initDlpFileCiper(testFile);
 
