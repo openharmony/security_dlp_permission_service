@@ -2447,3 +2447,39 @@ HWTEST_F(DlpFileTest, GenEncData001, TestSize.Level1)
     unlink("/data/fuse_test_plain.txt");
     unlink("/data/fuse_test_dlp.txt");
 }
+
+/**
+ * @tc.name: UpdateCertAndText001
+ * @tc.desc: test update cert and text 
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpFileTest, UpdateCertAndText001, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL, "UpdateCertAndText001");
+
+    DlpFile testFile(fdDlp, DLP_TEST_DIR, 0, false);
+    initDlpFileCiper(testFile);
+
+    std::vector<uint8_t> cert;
+    std::string workDir = "";
+    DlpBlob certBlob;
+
+    EXPECT_EQ(DLP_PARSE_ERROR_MEMORY_OPERATE_FAIL, testFile.UpdateCertAndText(cert, workDir, certBlob));
+}
+
+/**
+ * @tc.name: GetOfflineAccess001
+ * @tc.desc: test get offline access
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpFileTest, GetOfflineAccess001, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL, "GetOfflineAccess001");
+
+    DlpFile testFile(fdDlp, DLP_TEST_DIR, 0, false);
+    initDlpFileCiper(testFile);
+
+    EXPECT_EQ(false, testFile.GetOfflineAccess());
+}
