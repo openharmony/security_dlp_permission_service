@@ -2450,7 +2450,7 @@ HWTEST_F(DlpFileTest, GenEncData001, TestSize.Level1)
 
 /**
  * @tc.name: UpdateCertAndText001
- * @tc.desc: test update cert and text 
+ * @tc.desc: test update cert and text
  * @tc.type: FUNC
  * @tc.require:
  */
