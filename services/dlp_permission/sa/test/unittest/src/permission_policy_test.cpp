@@ -102,6 +102,12 @@ HWTEST_F(PermissionPolicyTest, IsValid001, TestSize.Level1)
     InitNormalPolicy(policy);
 
     ASSERT_TRUE(policy->IsValid());
+    delete[] policy->iv_;
+    policy->iv_ = nullptr;
+    policy->ivLen_ = 0;
+    delete[] policy->aeskey_;
+    policy->aeskey_ = nullptr;
+    policy->aeskeyLen_ = 0;
 }
 
 /**
@@ -126,6 +132,12 @@ HWTEST_F(PermissionPolicyTest, IsValid002, TestSize.Level1)
     std::string invalidPerm(MAX_ACCOUNT_SIZE + 1, 'a');
     policy->ownerAccount_ = invalidPerm;
     ASSERT_FALSE(policy->IsValid());
+    delete[] policy->iv_;
+    policy->iv_ = nullptr;
+    policy->ivLen_ = 0;
+    delete[] policy->aeskey_;
+    policy->aeskey_ = nullptr;
+    policy->aeskeyLen_ = 0;
 }
 
 /**
@@ -149,6 +161,12 @@ HWTEST_F(PermissionPolicyTest, IsValid003, TestSize.Level1)
     // account APPLICATION_ACCOUNT + 1
     policy->ownerAccountType_ = static_cast<DlpAccountType>(APPLICATION_ACCOUNT + 1);
     ASSERT_FALSE(policy->IsValid());
+    delete[] policy->iv_;
+    policy->iv_ = nullptr;
+    policy->ivLen_ = 0;
+    delete[] policy->aeskey_;
+    policy->aeskey_ = nullptr;
+    policy->aeskeyLen_ = 0;
 }
 
 /**
@@ -170,9 +188,13 @@ HWTEST_F(PermissionPolicyTest, IsValid004, TestSize.Level1)
     ASSERT_FALSE(policy->IsValid());
 
     // aeskey is null
+    delete[] policy->aeskey_;
     policy->aeskey_ = nullptr;
     policy->aeskeyLen_ = AES_KEY_LEN;
     ASSERT_FALSE(policy->IsValid());
+    delete[] policy->iv_;
+    policy->iv_ = nullptr;
+    policy->ivLen_ = 0;
 }
 
 /**
@@ -194,9 +216,13 @@ HWTEST_F(PermissionPolicyTest, IsValid005, TestSize.Level1)
     ASSERT_FALSE(policy->IsValid());
 
     // iv is null
+    delete[] policy->iv_;
     policy->iv_ = nullptr;
     policy->ivLen_ = AES_KEY_LEN;
     ASSERT_FALSE(policy->IsValid());
+    delete[] policy->aeskey_;
+    policy->aeskey_ = nullptr;
+    policy->aeskeyLen_ = 0;
 }
 
 /**
@@ -251,6 +277,12 @@ HWTEST_F(PermissionPolicyTest, IsValid006, TestSize.Level1)
         policy->authUsers_.emplace_back(user);
     }
     EXPECT_FALSE(policy->IsValid());
+    delete[] policy->iv_;
+    policy->iv_ = nullptr;
+    policy->ivLen_ = 0;
+    delete[] policy->aeskey_;
+    policy->aeskey_ = nullptr;
+    policy->aeskeyLen_ = 0;
 }
 
 /**
@@ -275,6 +307,12 @@ HWTEST_F(PermissionPolicyTest, IsValid007, TestSize.Level1)
     std::string invalidPerm(MAX_ACCOUNT_SIZE + 1, 'a');
     policy->ownerAccountId_ = invalidPerm;
     ASSERT_FALSE(policy->IsValid());
+    delete[] policy->iv_;
+    policy->iv_ = nullptr;
+    policy->ivLen_ = 0;
+    delete[] policy->aeskey_;
+    policy->aeskey_ = nullptr;
+    policy->aeskeyLen_ = 0;
 }
 
 /**
@@ -300,6 +338,9 @@ HWTEST_F(PermissionPolicyTest, SetAesKey001, TestSize.Level1)
     // set aes key null
     policy->SetAeskey(nullptr, AES_KEY_LEN);
     ASSERT_EQ(policy->aeskey_, nullptr);
+    delete[] policy->iv_;
+    policy->iv_ = nullptr;
+    policy->ivLen_ = 0;
 }
 
 /**
@@ -324,6 +365,9 @@ HWTEST_F(PermissionPolicyTest, SetIv001, TestSize.Level1)
     // set iv null
     policy->SetIv(nullptr, IV_LEN);
     ASSERT_EQ(policy->iv_, nullptr);
+    delete[] policy->aeskey_;
+    policy->aeskey_ = nullptr;
+    policy->aeskeyLen_ = 0;
 }
 
 /**
@@ -351,6 +395,18 @@ HWTEST_F(PermissionPolicyTest, CopyPermissionPolicy001, TestSize.Level1)
     policySrc->ownerAccount_ = "testAccount";
     policyDest->CopyPermissionPolicy(*policySrc);
     ASSERT_NE(policyDest->aeskey_, nullptr);
+    delete[] policySrc->iv_;
+    policySrc->iv_ = nullptr;
+    policySrc->ivLen_ = 0;
+    delete[] policySrc->aeskey_;
+    policySrc->aeskey_ = nullptr;
+    policySrc->aeskeyLen_ = 0;
+    delete[] policyDest->iv_;
+    policyDest->iv_ = nullptr;
+    policyDest->ivLen_ = 0;
+    delete[] policyDest->aeskey_;
+    policyDest->aeskey_ = nullptr;
+    policyDest->aeskeyLen_ = 0;
 }
 }  // namespace DlpPermission
 }  // namespace Security
