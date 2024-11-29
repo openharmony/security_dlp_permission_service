@@ -89,7 +89,7 @@ bool IsAccountLogIn(uint32_t osAccountId, AccountType accountType, const DlpBlob
 {
     if (accountId == nullptr) {
         DLP_LOG_ERROR(LABEL, "Invalid input params.");
-        return DLP_ERR_INVALID_PARAMS;
+        return false;
     }
 
     int32_t res;
