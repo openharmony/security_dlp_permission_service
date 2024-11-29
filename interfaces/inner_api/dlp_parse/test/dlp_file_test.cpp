@@ -2468,6 +2468,8 @@ HWTEST_F(DlpFileTest, UpdateCertAndText001, TestSize.Level1)
     DlpBlob certBlob;
 
     EXPECT_EQ(DLP_PARSE_ERROR_MEMORY_OPERATE_FAIL, testFile.UpdateCertAndText(cert, workDir, certBlob));
+
+    close(fdDlp);
 }
 
 /**
@@ -2486,4 +2488,6 @@ HWTEST_F(DlpFileTest, GetOfflineAccess001, TestSize.Level1)
     initDlpFileCiper(testFile);
 
     EXPECT_EQ(false, testFile.GetOfflineAccess());
+
+    close(fdDlp);
 }

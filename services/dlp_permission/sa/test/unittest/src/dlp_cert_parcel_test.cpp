@@ -51,6 +51,7 @@ HWTEST_F(DlpCertParcelTest, CertParcel001, TestSize.Level1)
     EXPECT_EQ(true, info.Marshalling(out));
     auto result =  CertParcel::Unmarshalling(out);
     ASSERT_NE(result, nullptr);
+    delete result;
 }
 
 /**
@@ -69,6 +70,7 @@ HWTEST_F(DlpCertParcelTest, DlpCertParcelTest002, TestSize.Level1)
     EXPECT_EQ(true, info.Marshalling(out));
     auto result =  CertParcel::Unmarshalling(out);
     ASSERT_NE(result, nullptr);
+    delete result;
 }
 
 /**
@@ -87,6 +89,7 @@ HWTEST_F(DlpCertParcelTest, DlpCertParcelTest003, TestSize.Level1)
     EXPECT_EQ(true, info.Marshalling(out));
     auto result = CertParcel::Unmarshalling(out);
     ASSERT_NE(result, nullptr);
+    delete result;
 }
 }  // namespace DlpPermission
 }  // namespace Security

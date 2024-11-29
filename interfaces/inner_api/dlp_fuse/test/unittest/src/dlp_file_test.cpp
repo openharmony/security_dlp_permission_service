@@ -114,7 +114,7 @@ static void GenerateRandProperty(struct DlpProperty& encProp)
     for (uint32_t user = 0; user < TEST_USER_COUNT; ++user) {
         std::string accountName;
         GenerateRandStr(RAND_STR_SIZE, accountName);
-        AuthUserInfo perminfo = {.authAccount = strdup(const_cast<char *>(accountName.c_str())),
+        AuthUserInfo perminfo = {.authAccount = accountName,
             .authPerm = READ_ONLY,
             .permExpiryTime = curTime + EXPIRT_TIME,
             .authAccountType = CLOUD_ACCOUNT};
@@ -122,7 +122,7 @@ static void GenerateRandProperty(struct DlpProperty& encProp)
     }
     std::string accountName;
     GenerateRandStr(RAND_STR_SIZE, accountName);
-    encProp.contactAccount = strdup(const_cast<char *>(accountName.c_str()));
+    encProp.contactAccount = accountName;
 }
 }
 /**
