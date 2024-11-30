@@ -535,12 +535,7 @@ bool DlpFile::CleanTmpFile()
     encDataFd_ = -1;
     std::lock_guard<std::mutex> lock(g_fileOpLock_);
     char cwd[DLP_CWD_MAX] = {0};
-    do {
-        if (getcwd(cwd, DLP_CWD_MAX) == nullptr) {
-            DLP_LOG_ERROR(LABEL, "getcwd fail errno %{public}s", strerror(errno));
-            return false;
-        }
-    } while (0);
+    GETCWD_AND_CHECK(cwd, DLP_CWD_MAX, false, LABEL);
     Defer p(nullptr, [&](...) {
         if (chdir(cwd) != 0) {
             DLP_LOG_ERROR(LABEL, "chdir failed, %{public}s", strerror(errno));
