@@ -46,7 +46,7 @@ int8_t GetLocalAccountName(char** account, uint32_t userId)
         return -1;
     }
     std::pair<bool, OHOS::AccountSA::OhosAccountInfo> accountInfo =
-        OHOS::AccountSA::OhosAccountKits::GetInstance().QueryOhosAccountInfoByUserId(userId);
+        OHOS::AccountSA::OhosAccountKits::GetInstance().QueryOsAccountDistributedInfo(userId);
     if (accountInfo.first) {
         *account = strdup(accountInfo.second.name_.c_str());
         return 0;
@@ -67,7 +67,7 @@ bool GetUserIdByForegroundAccount(int32_t* userId)
 int32_t GetLocalAccountUid(std::string& accountUid)
 {
     OHOS::AccountSA::OhosAccountInfo accountInfo;
-    int32_t ret = OHOS::AccountSA::OhosAccountKits::GetInstance().GetOhosAccountInfoByUserId(GetCallingUserId(),
+    int32_t ret = OHOS::AccountSA::OhosAccountKits::GetInstance().GetOsAccountDistributedInfo(GetCallingUserId(),
         accountInfo);
     if (ret != 0) {
         return ret;
@@ -95,13 +95,13 @@ bool IsAccountLogIn(uint32_t osAccountId, AccountType accountType, const DlpBlob
     int32_t res;
     if (accountType == CLOUD_ACCOUNT) {
         OhosAccountInfo accountInfo;
-        res = OhosAccountKits::GetInstance().GetOhosAccountInfoByUserId(osAccountId, accountInfo);
+        res = OhosAccountKits::GetInstance().GetOsAccountDistributedInfo(osAccountId, accountInfo);
         if (res != DLP_SUCCESS) {
-            DLP_LOG_ERROR(LABEL, "GetOhosAccountInfoByUserId from OhosAccountKits failed, res:%{public}d.", res);
+            DLP_LOG_ERROR(LABEL, "GetOsAccountDistributedInfo from OhosAccountKits failed, res:%{public}d.", res);
             return false;
         }
         if (accountInfo.status_ == ACCOUNT_STATE_UNBOUND) {
-            DLP_LOG_ERROR(LABEL, "GetOhosAccountInfoByUserId from OhosAccountKits is not login.");
+            DLP_LOG_ERROR(LABEL, "GetOsAccountDistributedInfo from OhosAccountKits is not login.");
             return false;
         }
         return true;
