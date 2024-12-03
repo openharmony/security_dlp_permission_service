@@ -89,6 +89,9 @@ void initDlpFileCiper(DlpFile &testFile)
         .size = 16
     };
     testFile.SetEncryptCert(certKey);
+    delete[] certKey.data;
+    certKey.data = nullptr;
+    certKey.size = 0;
 }
 }
 
@@ -2488,6 +2491,26 @@ HWTEST_F(DlpFileTest, GetOfflineAccess001, TestSize.Level1)
     initDlpFileCiper(testFile);
 
     EXPECT_EQ(false, testFile.GetOfflineAccess());
+
+    close(fdDlp);
+}
+
+/**
+ * @tc.name: GetOfflineCert
+ * @tc.desc: test get offline cert
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpFileTest, GetOfflineCert001, TestSize.Level1)
+{
+    DlpBlob offlineCert = { 0 };
+
+    int fdDlp = open("/data/fuse_test_dlp.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
+    EXPECT_NE(fdDlp, -1);
+    DlpFile testFile(fdDlp, DLP_TEST_DIR, 0, false);
+    initDlpFileCiper(testFile);
+
+    testFile.GetOfflineCert(offlineCert);
 
     close(fdDlp);
 }
