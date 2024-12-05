@@ -53,6 +53,8 @@ enum DLP_DIGEST_LEN {
 
 #define BIT_NUM_OF_UINT8 8
 
+#define DLP_RANDOM_MAX_SIZE 1024
+
 enum DlpKeySize {
     DLP_AES_KEY_SIZE_128 = 128,
     DLP_AES_KEY_SIZE_192 = 192,
@@ -95,6 +97,8 @@ enum DlpKeyPadding {
     }
 
 #define DLP_FREE_PTR(p) SELF_FREE_PTR(p, free)
+
+int32_t DlpOpensslGenerateRandom(uint32_t keySize, struct DlpBlob* key);
 
 int32_t DlpOpensslGenerateRandomKey(uint32_t keySize, struct DlpBlob* key);
 

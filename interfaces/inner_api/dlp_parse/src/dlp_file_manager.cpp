@@ -412,6 +412,25 @@ static void PrepareDirs(const std::string& path)
     }
 }
 
+static int32_t GenerateRandomWorkDir(std::string &workDir)
+{
+    DlpBlob dir;
+    int32_t res = DlpOpensslGenerateRandom(sizeof(uint64_t) * BIT_NUM_OF_UINT8, &dir);
+    if (res != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "Generate dir fail, errno=%{public}d", res);
+        return res;
+    }
+
+    workDir = std::to_string(*reinterpret_cast<uint64_t *>(dir.data));
+    delete[] dir.data;
+    return DLP_OK;
+}
+
+static void PrepareWorkDir(const std::string& path)
+{
+    mkdir(path.c_str(), S_IRWXU);
+}
+
 int32_t DlpFileManager::GenerateDlpFile(
     int32_t plainFileFd, int32_t dlpFileFd, const DlpProperty& property, std::shared_ptr<DlpFile>& filePtr,
     const std::string& workDir)
@@ -428,12 +447,23 @@ int32_t DlpFileManager::GenerateDlpFile(
 
     std::string cache = workDir + PATH_CACHE;
     PrepareDirs(cache);
+
+    std::string randomWorkDir;
+    int32_t result = GenerateRandomWorkDir(randomWorkDir);
+    if (result != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "Generate dir fail, errno=%{public}d", result);
+        return result;
+    }
+
+    std::string realWorkDir = cache + '/' + randomWorkDir;
+    PrepareWorkDir(realWorkDir);
+
     int64_t timeStamp =
         std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch())
             .count();
-    filePtr = std::make_shared<DlpFile>(dlpFileFd, cache, timeStamp, true);
+    filePtr = std::make_shared<DlpFile>(dlpFileFd, realWorkDir, timeStamp, true);
 
-    int32_t result = SetDlpFileParams(filePtr, property);
+    result = SetDlpFileParams(filePtr, property);
     if (result != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "Generate dlp file fail, set dlp obj params error, errno=%{public}d", result);
         return result;
@@ -531,12 +561,23 @@ int32_t DlpFileManager::OpenDlpFile(int32_t dlpFileFd, std::shared_ptr<DlpFile>&
 
     std::string cache = workDir + PATH_CACHE;
     PrepareDirs(cache);
+
+    std::string randomWorkDir;
+    int32_t result = GenerateRandomWorkDir(randomWorkDir);
+    if (result != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "Generate dir fail, errno=%{public}d", result);
+        return result;
+    }
+
+    std::string realWorkDir = cache + '/' + randomWorkDir;
+    PrepareWorkDir(realWorkDir);
+
     int64_t timeStamp =
         std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch())
             .count();
-    filePtr = std::make_shared<DlpFile>(dlpFileFd, cache, timeStamp, false);
+    filePtr = std::make_shared<DlpFile>(dlpFileFd, realWorkDir, timeStamp, false);
 
-    int32_t result = ParseDlpFileFormat(filePtr, workDir, appId);
+    result = ParseDlpFileFormat(filePtr, workDir, appId);
     if (result != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "Open dlp file fail, parse dlp file error, errno=%{public}d", result);
         return result;

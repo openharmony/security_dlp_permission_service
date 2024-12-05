@@ -574,6 +574,10 @@ bool DlpFile::CleanTmpFile()
         return false;
     }
 
+    if (rmdir(workDir_.c_str()) != 0) {
+        DLP_LOG_ERROR(LABEL, "rmdir failed, %{public}s errno %{public}s", workDir_.c_str(), strerror(errno));
+    }
+
     return true;
 }
 

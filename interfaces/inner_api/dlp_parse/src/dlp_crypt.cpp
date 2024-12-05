@@ -59,18 +59,13 @@ inline bool DlpOpensslCheckBlobZero(const struct DlpBlob* blob)
     return true;
 }
 
-static bool AesGenKeyCheckParam(uint32_t keySize)
-{
-    return (keySize == DLP_AES_KEY_SIZE_128) || (keySize == DLP_AES_KEY_SIZE_192) || (keySize == DLP_AES_KEY_SIZE_256);
-}
-
-int32_t DlpOpensslGenerateRandomKey(uint32_t keySize, struct DlpBlob* key)
+int32_t DlpOpensslGenerateRandom(uint32_t keySize, struct DlpBlob* key)
 {
     if (key == nullptr) {
         DLP_LOG_ERROR(LABEL, "Generate key fail, blob is nullptr");
         return DLP_PARSE_ERROR_VALUE_INVALID;
     }
-    if (!AesGenKeyCheckParam(keySize)) {
+    if ((keySize < BIT_NUM_OF_UINT8) || (keySize > DLP_RANDOM_MAX_SIZE)) {
         DLP_LOG_ERROR(LABEL, "Generate key fail, key size %{public}u is invalid", keySize);
         return DLP_PARSE_ERROR_VALUE_INVALID;
     }
@@ -93,6 +88,24 @@ int32_t DlpOpensslGenerateRandomKey(uint32_t keySize, struct DlpBlob* key)
         key->size = keySizeByte;
     }
     return DLP_OK;
+}
+
+static bool AesGenKeyCheckParam(uint32_t keySize)
+{
+    return (keySize == DLP_AES_KEY_SIZE_128) || (keySize == DLP_AES_KEY_SIZE_192) || (keySize == DLP_AES_KEY_SIZE_256);
+}
+
+int32_t DlpOpensslGenerateRandomKey(uint32_t keySize, struct DlpBlob* key)
+{
+    if (key == nullptr) {
+        DLP_LOG_ERROR(LABEL, "Generate key fail, blob is nullptr");
+        return DLP_PARSE_ERROR_VALUE_INVALID;
+    }
+    if (!AesGenKeyCheckParam(keySize)) {
+        DLP_LOG_ERROR(LABEL, "Generate key fail, key size %{public}u is invalid", keySize);
+        return DLP_PARSE_ERROR_VALUE_INVALID;
+    }
+    return DlpOpensslGenerateRandom(keySize, key);
 }
 
 static const EVP_CIPHER* GetCtrCipherType(uint32_t keySize)
