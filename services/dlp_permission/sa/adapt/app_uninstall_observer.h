@@ -38,7 +38,6 @@ public:
     ~DlpEventSubSubscriber();
 private:
     std::shared_ptr<AppUninstallObserver> subscriber_ = nullptr;
-    std::mutex subscriberLock_;
 };
 } // namespace DlpPermission
 } // namespace Security
