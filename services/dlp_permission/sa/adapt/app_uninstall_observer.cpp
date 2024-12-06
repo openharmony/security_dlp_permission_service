@@ -46,7 +46,6 @@ void AppUninstallObserver::OnReceiveEvent(const EventFwk::CommonEventData& data)
 
 DlpEventSubSubscriber::DlpEventSubSubscriber()
 {
-    std::lock_guard<std::mutex> lock(subscriberLock_);
     if (subscriber_ == nullptr) {
         EventFwk::MatchingSkills matchingSkills;
         matchingSkills.AddEvent(EventFwk::CommonEventSupport::COMMON_EVENT_PACKAGE_REMOVED);
@@ -59,7 +58,6 @@ DlpEventSubSubscriber::DlpEventSubSubscriber()
 
 DlpEventSubSubscriber::~DlpEventSubSubscriber()
 {
-    std::lock_guard<std::mutex> lock(subscriberLock_);
     if (subscriber_ != nullptr) {
         EventFwk::CommonEventManager::UnSubscribeCommonEvent(subscriber_);
         subscriber_ = nullptr;
