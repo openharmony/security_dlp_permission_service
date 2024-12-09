@@ -21,8 +21,8 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <vector>
-#include "dlp_fuse_adapter.h"
 #include "dlp_fuse_fd.h"
+#include "dlp_fuse_helper.h"
 #include "dlp_fuse_utils.h"
 #include "dlp_link_file.h"
 #include "dlp_permission.h"
@@ -85,7 +85,7 @@ static void FuseDaemonLookup(fuse_req_t req, fuse_ino_t parent, const char* name
     }
 
     std::string nameStr = name;
-    DlpLinkFile* node = DlpFuseAdapter::GetDlpLinkManagerInstance().LookUpDlpLinkFile(nameStr);
+    DlpLinkFile* node = DlpFuseHelper::GetDlpLinkManagerInstance().LookUpDlpLinkFile(nameStr);
     if (node == nullptr) {
         DLP_LOG_ERROR(LABEL, "Look up link file fail, file %{public}s can not found", name);
         fuse_reply_err(req, ENOENT);
@@ -290,7 +290,7 @@ static int AddRootDirentry(DirAddParams& params)
 static int AddLinkFilesDirentry(DirAddParams& params)
 {
     std::vector<DlpLinkFileInfo> linkList;
-    DlpFuseAdapter::GetDlpLinkManagerInstance().DumpDlpLinkFile(linkList);
+    DlpFuseHelper::GetDlpLinkManagerInstance().DumpDlpLinkFile(linkList);
     int listSize = static_cast<int>(linkList.size());
     for (int i = 0; i < listSize; i++) {
         params.entryName = linkList[i].dlpLinkName;

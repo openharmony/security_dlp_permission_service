@@ -72,14 +72,14 @@ static const uint32_t CLOUD_VERSION = 1;
 
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
     LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "DlpPermissionSerializer"};
-std::mutex instanceMutex_;
+std::mutex g_instanceMutex;
 }  // namespace
 
 DlpPermissionSerializer& DlpPermissionSerializer::GetInstance()
 {
     static DlpPermissionSerializer* instance = nullptr;
     if (instance == nullptr) {
-        std::lock_guard<std::mutex> lock(instanceMutex_);
+        std::lock_guard<std::mutex> lock(g_instanceMutex);
         if (instance == nullptr) {
             instance = new DlpPermissionSerializer();
         }

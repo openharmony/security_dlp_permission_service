@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef DLP_FUSE_ADAPTER_H
-#define DLP_FUSE_ADAPTER_H
+#ifndef DLP_FUSE_HELPER_H
+#define DLP_FUSE_HELPER_H
 
 #include "dlp_link_manager.h"
 
@@ -22,7 +22,7 @@ namespace OHOS {
 namespace Security {
 namespace DlpPermission {
 
-class DlpFuseAdapter {
+class DlpFuseHelper {
 public:
     static DlpLinkManager& GetDlpLinkManagerInstance();
 };
