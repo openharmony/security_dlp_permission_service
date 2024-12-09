@@ -159,6 +159,15 @@ HWTEST_F(DlpFileManagerTest, GenerateCertData001, TestSize.Level1)
     EXPECT_TRUE(res == DLP_OK || res == DLP_PARSE_ERROR_MEMORY_OPERATE_FAIL);
     DLP_LOG_INFO(LABEL, "GenerateCertData001 %{public}d", GetMockConditionCounts("memcpy_s"));
     CleanMockConditions();
+    delete[] policy.aeskey_;
+    policy.aeskey_ = nullptr;
+    policy.aeskeyLen_ = 0;
+    delete[] policy.iv_;
+    policy.iv_ = nullptr;
+    policy.ivLen_ = 0;
+    delete[] policy.hmacKey_;
+    policy.hmacKey_ = nullptr;
+    policy.hmacKeyLen_ = 0;
 }
 
 /**
@@ -213,6 +222,15 @@ HWTEST_F(DlpFileManagerTest, PrepareDlpEncryptParms001, TestSize.Level1)
     EXPECT_TRUE(res == DLP_OK || res == DLP_PARSE_ERROR_MEMORY_OPERATE_FAIL);
     DLP_LOG_INFO(LABEL, "PrepareDlpEncryptParms001 %{public}d", GetMockConditionCounts("memcpy_s"));
     CleanMockConditions();
+    delete[] policy.aeskey_;
+    policy.aeskey_ = nullptr;
+    policy.aeskeyLen_ = 0;
+    delete[] policy.iv_;
+    policy.iv_ = nullptr;
+    policy.ivLen_ = 0;
+    delete[] policy.hmacKey_;
+    policy.hmacKey_ = nullptr;
+    policy.hmacKeyLen_ = 0;
 }
 
 /**
@@ -714,6 +732,9 @@ HWTEST_F(DlpFileManagerTest, GenerateCertBlob001, TestSize.Level1)
     cert.push_back(1);
     ASSERT_TRUE(certData.data != nullptr);
     EXPECT_EQ(DLP_OK, DlpFileManager::GetInstance().GenerateCertBlob(cert, certData));
+    delete[] certData.data;
+    certData.data = nullptr;
+    certData.size = 0;
 }
 }  // namespace DlpPermission
 }  // namespace Security

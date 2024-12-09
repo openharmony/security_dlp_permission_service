@@ -475,11 +475,7 @@ bool DlpFile::ParseDlpInfo()
             DLP_LOG_ERROR(LABEL, "New memory fail");
             return false;
         }
-        int32_t ret = HexStringToByte(params.hmacVal.c_str(), params.hmacVal.length(), hmac_.data, hmac_.size);
-        (void)memset_s(hmac_.data, hmac_.size, 0, hmac_.size);
-        delete[] hmac_.data;
-        hmac_.data = nullptr;
-        return ret == DLP_OK;
+        return HexStringToByte(params.hmacVal.c_str(), params.hmacVal.length(), hmac_.data, hmac_.size) == DLP_OK;
     }
     return true;
 }
@@ -539,7 +535,7 @@ bool DlpFile::CleanTmpFile()
     encDataFd_ = -1;
     std::lock_guard<std::mutex> lock(g_fileOpLock_);
     char cwd[DLP_CWD_MAX] = {0};
-    GETCWD_AND_CHECK(cwd, DLP_CWD_MAX, DLP_PARSE_ERROR_FILE_OPERATE_FAIL, LABEL);
+    GETCWD_AND_CHECK(cwd, DLP_CWD_MAX, false, LABEL);
     Defer p(nullptr, [&](...) {
         if (chdir(cwd) != 0) {
             DLP_LOG_ERROR(LABEL, "chdir failed, %{public}s", strerror(errno));

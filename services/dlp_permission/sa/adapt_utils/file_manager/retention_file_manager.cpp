@@ -127,7 +127,7 @@ bool RetentionFileManager::CanUninstall(const uint32_t& tokenId)
 {
     if (!Init()) {
         DLP_LOG_ERROR(LABEL, "Init failed!");
-        return DLP_RETENTION_UPDATE_ERROR;
+        return false;
     }
     return sandboxJsonManager_->CanUninstall(tokenId);
 }

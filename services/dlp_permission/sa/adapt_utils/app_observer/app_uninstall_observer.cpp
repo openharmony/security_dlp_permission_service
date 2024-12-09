@@ -46,17 +46,22 @@ void AppUninstallObserver::OnReceiveEvent(const EventFwk::CommonEventData& data)
 
 DlpEventSubSubscriber::DlpEventSubSubscriber()
 {
-    EventFwk::MatchingSkills matchingSkills;
-    matchingSkills.AddEvent(EventFwk::CommonEventSupport::COMMON_EVENT_PACKAGE_REMOVED);
-    matchingSkills.AddEvent(EventFwk::CommonEventSupport::COMMON_EVENT_PACKAGE_FULLY_REMOVED);
-    EventFwk::CommonEventSubscribeInfo subscribeInfo(matchingSkills);
-    subscriber_ = std::make_shared<AppUninstallObserver>(subscribeInfo);
-    EventFwk::CommonEventManager::SubscribeCommonEvent(subscriber_);
+    if (subscriber_ == nullptr) {
+        EventFwk::MatchingSkills matchingSkills;
+        matchingSkills.AddEvent(EventFwk::CommonEventSupport::COMMON_EVENT_PACKAGE_REMOVED);
+        matchingSkills.AddEvent(EventFwk::CommonEventSupport::COMMON_EVENT_PACKAGE_FULLY_REMOVED);
+        EventFwk::CommonEventSubscribeInfo subscribeInfo(matchingSkills);
+        subscriber_ = std::make_shared<AppUninstallObserver>(subscribeInfo);
+        EventFwk::CommonEventManager::SubscribeCommonEvent(subscriber_);
+    }
 }
 
 DlpEventSubSubscriber::~DlpEventSubSubscriber()
 {
-    EventFwk::CommonEventManager::UnSubscribeCommonEvent(subscriber_);
+    if (subscriber_ != nullptr) {
+        EventFwk::CommonEventManager::UnSubscribeCommonEvent(subscriber_);
+        subscriber_ = nullptr;
+    }
 }
 } // namespace DlpPermission
 } // namespace Security

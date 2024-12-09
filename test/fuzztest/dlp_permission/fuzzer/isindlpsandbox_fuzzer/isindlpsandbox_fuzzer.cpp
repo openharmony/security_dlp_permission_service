@@ -23,13 +23,15 @@
 #include "mock_sandbox_init.h"
 #include "securec.h"
 
+constexpr uint8_t STATUS_NUM = 2;
+
 using namespace OHOS::Security::DlpPermission;
 namespace OHOS {
 static pthread_once_t g_callOnce = PTHREAD_ONCE_INIT;
 
 static void FuzzTest(const uint8_t* data, size_t size)
 {
-    bool inSandbox;
+    bool inSandbox = data[0] % STATUS_NUM;
     DlpPermissionKit::IsInDlpSandbox(inSandbox);
 }
 

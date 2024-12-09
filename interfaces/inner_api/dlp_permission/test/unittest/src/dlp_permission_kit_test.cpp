@@ -291,7 +291,7 @@ static void GeneratePolicy(PermissionPolicy& encPolicy, GeneratePolicyParam para
     for (uint32_t user = 0; user < param.userNum; ++user) {
         std::string accountName;
         GenerateRandStr(param.authAccountLen, accountName);
-        AuthUserInfo perminfo = {.authAccount = strdup(const_cast<char *>(accountName.c_str())),
+        AuthUserInfo perminfo = {.authAccount = accountName,
             .authPerm = static_cast<DLPFileAccess>(param.authPerm),
             .permExpiryTime = curTime + param.deltaTime,
             .authAccountType = DOMAIN_ACCOUNT};

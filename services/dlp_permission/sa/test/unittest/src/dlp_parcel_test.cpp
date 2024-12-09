@@ -53,6 +53,8 @@ HWTEST_F(DlpParcelTest, AuthUserInfoParcel001, TestSize.Level1)
     auto result =  AuthUserInfoParcel::Unmarshalling(out);
     ASSERT_NE(result, nullptr);
     EXPECT_EQ(0, result->authUserInfo_.authAccount.compare("abc"));
+    delete result;
+    result = nullptr;
 }
 
 /**
@@ -89,6 +91,8 @@ HWTEST_F(DlpParcelTest, DlpParcelTest003, TestSize.Level1)
     auto result = DlpSandboxCallbackInfoParcel::Unmarshalling(out);
     ASSERT_NE(result, nullptr);
     EXPECT_EQ(0, result->changeInfo.appIndex);
+    delete result;
+    result = nullptr;
 }
 
 /**
@@ -109,6 +113,8 @@ HWTEST_F(DlpParcelTest, DlpParcelTest004, TestSize.Level1)
     ASSERT_NE(result, nullptr);
     EXPECT_EQ("test", result->fileInfo.uri);
     EXPECT_EQ(1, result->fileInfo.timeStamp);
+    delete result;
+    result = nullptr;
 }
 
 /**
@@ -129,6 +135,8 @@ HWTEST_F(DlpParcelTest, RetentionSandBoxInfo001, TestSize.Level1)
     auto result = RetentionSandBoxInfo::Unmarshalling(out);
     ASSERT_NE(result, nullptr);
     EXPECT_EQ(0, result->bundleName_.compare("abc"));
+    delete result;
+    result = nullptr;
 }
 
 /**
@@ -148,6 +156,8 @@ HWTEST_F(DlpParcelTest, VisitedDLPFileInfo001, TestSize.Level1)
     auto result = VisitedDLPFileInfo::Unmarshalling(out);
     ASSERT_NE(result, nullptr);
     EXPECT_EQ(0, result->docUri.compare("abc"));
+    delete result;
+    result = nullptr;
 }
 }  // namespace DlpPermission
 }  // namespace Security
