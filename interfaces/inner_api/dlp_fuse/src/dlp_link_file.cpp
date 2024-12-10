@@ -16,6 +16,7 @@
 #include "dlp_link_file.h"
 
 #include <securec.h>
+#include "dlp_fuse_utils.h"
 #include "dlp_permission.h"
 #include "dlp_permission_log.h"
 #include "fuse_daemon.h"
@@ -33,7 +34,7 @@ DlpLinkFile::DlpLinkFile(const std::string& dlpLinkName, const std::shared_ptr<D
     : dlpLinkName_(dlpLinkName), dlpFile_(dlpFile), refcount_(1), stopLinkFlag_(false), hasRead_(false)
 {
     (void)memset_s(&fileStat_, sizeof(fileStat_), 0, sizeof(fileStat_));
-    fileStat_.st_ino = GetFileInode(this);
+    fileStat_.st_ino = static_cast<fuse_ino_t>(reinterpret_cast<uintptr_t>(this));
     if (dlpFile != nullptr) {
         uint32_t fileMode = (dlpFile->GetAuthPerm() == READ_ONLY) ? DEFAULT_INODE_RO_ACCESS : DEFAULT_INODE_RW_ACCESS;
         fileStat_.st_mode = S_IFREG | fileMode;
@@ -44,9 +45,9 @@ DlpLinkFile::DlpLinkFile(const std::string& dlpLinkName, const std::shared_ptr<D
     fileStat_.st_uid = getuid();
     fileStat_.st_gid = getgid();
 
-    UpdateCurrTimeStat(&fileStat_.st_atim);
-    UpdateCurrTimeStat(&fileStat_.st_mtim);
-    UpdateCurrTimeStat(&fileStat_.st_ctim);
+    DlpFuseUtils::UpdateCurrTimeStat(&fileStat_.st_atim);
+    DlpFuseUtils::UpdateCurrTimeStat(&fileStat_.st_mtim);
+    DlpFuseUtils::UpdateCurrTimeStat(&fileStat_.st_ctim);
 }
 
 DlpLinkFile::~DlpLinkFile()
@@ -121,12 +122,12 @@ int32_t DlpLinkFile::Truncate(uint32_t modifySize)
 
 void DlpLinkFile::UpdateAtimeStat()
 {
-    UpdateCurrTimeStat(&fileStat_.st_atim);
+    DlpFuseUtils::UpdateCurrTimeStat(&fileStat_.st_atim);
 }
 
 void DlpLinkFile::UpdateMtimeStat()
 {
-    UpdateCurrTimeStat(&fileStat_.st_mtim);
+    DlpFuseUtils::UpdateCurrTimeStat(&fileStat_.st_mtim);
 }
 
 int32_t DlpLinkFile::Write(uint32_t offset, void* buf, uint32_t size)

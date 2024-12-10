@@ -22,8 +22,9 @@
 #include <unistd.h>
 #include <vector>
 #include "dlp_fuse_fd.h"
+#include "dlp_fuse_helper.h"
+#include "dlp_fuse_utils.h"
 #include "dlp_link_file.h"
-#include "dlp_link_manager.h"
 #include "dlp_permission.h"
 #include "dlp_permission_log.h"
 
@@ -84,7 +85,7 @@ static void FuseDaemonLookup(fuse_req_t req, fuse_ino_t parent, const char* name
     }
 
     std::string nameStr = name;
-    DlpLinkFile* node = DlpLinkManager::GetInstance().LookUpDlpLinkFile(nameStr);
+    DlpLinkFile* node = DlpFuseHelper::GetDlpLinkManagerInstance().LookUpDlpLinkFile(nameStr);
     if (node == nullptr) {
         DLP_LOG_ERROR(LABEL, "Look up link file fail, file %{public}s can not found", name);
         fuse_reply_err(req, ENOENT);
@@ -94,11 +95,6 @@ static void FuseDaemonLookup(fuse_req_t req, fuse_ino_t parent, const char* name
         fep.attr = node->GetLinkStat();
         fuse_reply_entry(req, &fep);
     }
-}
-
-void UpdateCurrTimeStat(struct timespec* ts)
-{
-    clock_gettime(CLOCK_REALTIME, ts);
 }
 
 static void FuseDaemonGetattr(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info* fi)
@@ -294,7 +290,7 @@ static int AddRootDirentry(DirAddParams& params)
 static int AddLinkFilesDirentry(DirAddParams& params)
 {
     std::vector<DlpLinkFileInfo> linkList;
-    DlpLinkManager::GetInstance().DumpDlpLinkFile(linkList);
+    DlpFuseHelper::GetDlpLinkManagerInstance().DumpDlpLinkFile(linkList);
     int listSize = static_cast<int>(linkList.size());
     for (int i = 0; i < listSize; i++) {
         params.entryName = linkList[i].dlpLinkName;
@@ -361,15 +357,15 @@ bool FuseDaemonUpdateTime(fuse_req_t req, int toSet, DlpLinkFile* dlpLink)
     bool isUpdateTime = false;
     struct stat fileStat = dlpLink->GetFileStat();
     if ((static_cast<uint32_t>(toSet) & FUSE_SET_ATTR_MTIME) != 0) {
-        UpdateCurrTimeStat(&fileStat.st_mtim);
+        DlpFuseUtils::UpdateCurrTimeStat(&fileStat.st_mtim);
         isUpdateTime = true;
     }
     if ((static_cast<uint32_t>(toSet) & FUSE_SET_ATTR_CTIME) != 0) {
-        UpdateCurrTimeStat(&fileStat.st_ctim);
+        DlpFuseUtils::UpdateCurrTimeStat(&fileStat.st_ctim);
         isUpdateTime = true;
     }
     if ((static_cast<uint32_t>(toSet) & FUSE_SET_ATTR_ATIME) != 0) {
-        UpdateCurrTimeStat(&fileStat.st_atim);
+        DlpFuseUtils::UpdateCurrTimeStat(&fileStat.st_atim);
         isUpdateTime = true;
     }
     if (isUpdateTime && (static_cast<uint32_t>(toSet) & FUSE_SET_ATTR_SIZE) == 0) {
@@ -463,9 +459,9 @@ void FuseDaemon::InitRootFileStat(void)
     rootFileStat_.st_nlink = 1;
     rootFileStat_.st_uid = getuid();
     rootFileStat_.st_gid = getgid();
-    UpdateCurrTimeStat(&rootFileStat_.st_atim);
-    UpdateCurrTimeStat(&rootFileStat_.st_mtim);
-    UpdateCurrTimeStat(&rootFileStat_.st_ctim);
+    DlpFuseUtils::UpdateCurrTimeStat(&rootFileStat_.st_atim);
+    DlpFuseUtils::UpdateCurrTimeStat(&rootFileStat_.st_mtim);
+    DlpFuseUtils::UpdateCurrTimeStat(&rootFileStat_.st_ctim);
 }
 
 void FuseDaemon::NotifyDaemonEnable(void)
