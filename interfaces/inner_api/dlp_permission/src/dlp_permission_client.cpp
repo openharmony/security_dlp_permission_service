@@ -273,7 +273,7 @@ int32_t DlpPermissionClient::IsInDlpSandbox(bool& inSandbox)
     }
 
     if (!sandboxFlag) {
-        DLP_LOG_INFO(LABEL, "it is not a sandbox app");
+        DLP_LOG_DEBUG(LABEL, "it is not a sandbox app");
         inSandbox = false;
         return DLP_OK;
     }
