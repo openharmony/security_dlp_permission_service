@@ -27,7 +27,7 @@ namespace DlpPermission {
 
 class DlpLinkManager final {
 public:
-    DlpLinkManager();
+    static DlpLinkManager* GetInstance();
     ~DlpLinkManager();
 
     int32_t AddDlpLinkFile(const std::shared_ptr<DlpFile>& filePtr, const std::string& dlpLinkName);
@@ -39,6 +39,7 @@ public:
     void DumpDlpLinkFile(std::vector<DlpLinkFileInfo>& linkList);
 
 private:
+    DlpLinkManager();
     DISALLOW_COPY_AND_MOVE(DlpLinkManager);
 
     OHOS::Utils::RWLock dlpLinkMapLock_;

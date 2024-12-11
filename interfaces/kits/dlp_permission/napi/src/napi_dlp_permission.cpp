@@ -407,8 +407,13 @@ void NapiDlpPermission::AddDlpLinkFileExcute(napi_env env, void* data)
         return;
     }
 
-    asyncContext->errCode = DlpFuseHelper::GetDlpLinkManagerInstance().AddDlpLinkFile(asyncContext->dlpFileNative,
-        asyncContext->linkFileName);
+    DlpLinkManager* manager = DlpFuseHelper::GetDlpLinkManagerInstance();
+    if (!manager) {
+        DLP_LOG_ERROR(LABEL, "Get instance failed.");
+        return;
+    }
+
+    asyncContext->errCode = manager->AddDlpLinkFile(asyncContext->dlpFileNative, asyncContext->linkFileName);
 }
 
 void NapiDlpPermission::AddDlpLinkFileComplete(napi_env env, napi_status status, void* data)
@@ -471,7 +476,13 @@ void NapiDlpPermission::StopDlpLinkFileExcute(napi_env env, void* data)
         return;
     }
 
-    asyncContext->errCode = DlpFuseHelper::GetDlpLinkManagerInstance().StopDlpLinkFile(asyncContext->dlpFileNative);
+    DlpLinkManager* manager = DlpFuseHelper::GetDlpLinkManagerInstance();
+    if (!manager) {
+        DLP_LOG_ERROR(LABEL, "Get instance failed.");
+        return;
+    }
+
+    asyncContext->errCode = manager->StopDlpLinkFile(asyncContext->dlpFileNative);
 }
 
 void NapiDlpPermission::StopDlpLinkFileComplete(napi_env env, napi_status status, void* data)
@@ -533,8 +544,14 @@ void NapiDlpPermission::RestartDlpLinkFileExcute(napi_env env, void* data)
         DLP_LOG_ERROR(LABEL, "asyncContext is nullptr");
         return;
     }
+    
+    DlpLinkManager* manager = DlpFuseHelper::GetDlpLinkManagerInstance();
+    if (!manager) {
+        DLP_LOG_ERROR(LABEL, "Get instance failed.");
+        return;
+    }
 
-    asyncContext->errCode = DlpFuseHelper::GetDlpLinkManagerInstance().RestartDlpLinkFile(asyncContext->dlpFileNative);
+    asyncContext->errCode = manager->RestartDlpLinkFile(asyncContext->dlpFileNative);
 }
 
 void NapiDlpPermission::RestartDlpLinkFileComplete(napi_env env, napi_status status, void* data)
@@ -597,8 +614,13 @@ void NapiDlpPermission::ReplaceDlpLinkFileExcute(napi_env env, void* data)
         return;
     }
 
-    asyncContext->errCode = DlpFuseHelper::GetDlpLinkManagerInstance().ReplaceDlpLinkFile(asyncContext->dlpFileNative,
-        asyncContext->linkFileName);
+    DlpLinkManager* manager = DlpFuseHelper::GetDlpLinkManagerInstance();
+    if (!manager) {
+        DLP_LOG_ERROR(LABEL, "Get instance failed.");
+        return;
+    }
+
+    asyncContext->errCode = manager->ReplaceDlpLinkFile(asyncContext->dlpFileNative, asyncContext->linkFileName);
 }
 
 void NapiDlpPermission::ReplaceDlpLinkFileComplete(napi_env env, napi_status status, void* data)
@@ -661,7 +683,13 @@ void NapiDlpPermission::DeleteDlpLinkFileExcute(napi_env env, void* data)
         return;
     }
 
-    asyncContext->errCode = DlpFuseHelper::GetDlpLinkManagerInstance().DeleteDlpLinkFile(asyncContext->dlpFileNative);
+    DlpLinkManager* manager = DlpFuseHelper::GetDlpLinkManagerInstance();
+    if (!manager) {
+        DLP_LOG_ERROR(LABEL, "Get instance failed.");
+        return;
+    }
+
+    asyncContext->errCode = manager->DeleteDlpLinkFile(asyncContext->dlpFileNative);
 }
 
 void NapiDlpPermission::DeleteDlpLinkFileComplete(napi_env env, napi_status status, void* data)

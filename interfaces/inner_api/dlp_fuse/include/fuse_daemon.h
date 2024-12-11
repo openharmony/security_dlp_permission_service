@@ -58,6 +58,7 @@ public:
     static std::mutex daemonEnableMtx_;
     static struct stat rootFileStat_;
     static bool init_;
+    static std::mutex initMutex_;
     static struct fuse_lowlevel_ops fuseDaemonOper_;
 };
 }  // namespace DlpPermission

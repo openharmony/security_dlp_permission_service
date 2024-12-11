@@ -24,7 +24,7 @@ namespace DlpPermission {
 
 class DlpFuseHelper {
 public:
-    static DlpLinkManager& GetDlpLinkManagerInstance();
+    static DlpLinkManager* GetDlpLinkManagerInstance();
 };
 }  // namespace DlpPermission
 }  // namespace Security
