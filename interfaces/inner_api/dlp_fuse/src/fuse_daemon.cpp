@@ -298,14 +298,12 @@ static int AddRootDirentry(DirAddParams& params)
 static int AddLinkFilesDirentry(DirAddParams& params)
 {
     std::vector<DlpLinkFileInfo> linkList;
-    
     DlpLinkManager* manager = DlpFuseHelper::GetDlpLinkManagerInstance();
     if (!manager) {
         fuse_reply_err(params.req, EINVAL);
         return DLP_FUSE_ERROR_VALUE_INVALID;
     }
     manager->DumpDlpLinkFile(linkList);
-    
     int listSize = static_cast<int>(linkList.size());
     for (int i = 0; i < listSize; i++) {
         params.entryName = linkList[i].dlpLinkName;
