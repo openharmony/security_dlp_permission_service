@@ -18,6 +18,7 @@
 #include <iostream>
 #include <fcntl.h>
 #include <fstream>
+#include <fuzzer/FuzzedDataProvider.h>
 #include <thread>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -60,8 +61,9 @@ static void FuzzTest(const uint8_t* data, size_t size)
         return;
     }
     int fd = open("/data/fuse_test.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
-    uint32_t txtSize = *(reinterpret_cast<const uint32_t*>(data));
-    std::string workDir(reinterpret_cast<const char*>(data + sizeof(uint32_t)), size - sizeof(uint32_t));
+    FuzzedDataProvider fdp(data, size);
+    uint32_t txtSize = fdp.ConsumeIntegral<uint32_t>();
+    std::string workDir = fdp.ConsumeBytesAsString(size - sizeof(int32_t));
     DlpFile testFile(fd, workDir, 0, false);
     uint32_t certSize = txtSize;
     uint32_t contactAccountSize = txtSize;

@@ -14,6 +14,7 @@
  */
 
 #include "installdlpsandboxstub_fuzzer.h"
+#include <fuzzer/FuzzedDataProvider.h>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -34,12 +35,10 @@ static void FuzzTest(const uint8_t* data, size_t size)
     if ((data == nullptr) || (size < MIN_SIZE)) {
         return;
     }
-    uint32_t offsize = 0;
-    int32_t userId = *(reinterpret_cast<const int32_t *>(data + offsize));
-    offsize += sizeof(int32_t);
-    DLPFileAccess dlpFileAccess = *(reinterpret_cast<const DLPFileAccess *>(data + offsize));
-    offsize += sizeof(int32_t);
-    std::string uri(reinterpret_cast<const char*>(data + offsize), size - offsize);
+    FuzzedDataProvider fdp(data, size);
+    int32_t userId = fdp.ConsumeIntegral<int32_t>();
+    DLPFileAccess dlpFileAccess = static_cast<DLPFileAccess>(fdp.ConsumeIntegral<int32_t>());
+    std::string uri = fdp.ConsumeBytesAsString(size - sizeof(int32_t) - sizeof(int32_t));
     MessageParcel datas;
     datas.WriteInterfaceToken(IDlpPermissionService::GetDescriptor());
     std::string  bundleName = "com.ohos.dlpmanager";
