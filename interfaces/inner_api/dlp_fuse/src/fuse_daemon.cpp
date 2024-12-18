@@ -48,6 +48,7 @@ enum DaemonStatus FuseDaemon::daemonStatus_;
 std::mutex FuseDaemon::daemonEnableMtx_;
 struct stat FuseDaemon::rootFileStat_;
 bool FuseDaemon::init_ = false;
+std::mutex FuseDaemon::initMutex_;
 
 // caller need to check ino == ROOT_INODE
 static DlpLinkFile* GetFileNode(fuse_ino_t ino)
@@ -84,8 +85,15 @@ static void FuseDaemonLookup(fuse_req_t req, fuse_ino_t parent, const char* name
         return;
     }
 
+    DlpLinkManager* manager = DlpFuseHelper::GetDlpLinkManagerInstance();
+    if (!manager) {
+        DLP_LOG_ERROR(LABEL, "Get instance failed.");
+        fuse_reply_err(req, ENOENT);
+        return;
+    }
+
     std::string nameStr = name;
-    DlpLinkFile* node = DlpFuseHelper::GetDlpLinkManagerInstance().LookUpDlpLinkFile(nameStr);
+    DlpLinkFile* node = manager->LookUpDlpLinkFile(nameStr);
     if (node == nullptr) {
         DLP_LOG_ERROR(LABEL, "Look up link file fail, file %{public}s can not found", name);
         fuse_reply_err(req, ENOENT);
@@ -257,7 +265,7 @@ static int AddDirentry(DirAddParams& param)
 {
     size_t shouldSize = fuse_add_direntry(param.req, nullptr, 0, param.entryName.c_str(), nullptr, 0);
     if (shouldSize > param.bufLen) {
-        return -1;
+        return DLP_FUSE_ERROR_VALUE_INVALID;
     }
     param.curOff = param.nextOff;
     size_t addSize = fuse_add_direntry(param.req, param.directBuf, param.bufLen,
@@ -265,7 +273,7 @@ static int AddDirentry(DirAddParams& param)
     param.directBuf += addSize;
     param.bufLen -= addSize;
     param.nextOff += static_cast<int>(addSize);
-    return 0;
+    return DLP_OK;
 }
 
 static int AddRootDirentry(DirAddParams& params)
@@ -274,33 +282,38 @@ static int AddRootDirentry(DirAddParams& params)
     params.entryName = CUR_DIR;
     params.entryStat = rootStat;
 
-    if (AddDirentry(params) != 0) {
+    if (AddDirentry(params) != DLP_OK) {
         fuse_reply_err(params.req, EINVAL);
-        return -1;
+        return DLP_FUSE_ERROR_VALUE_INVALID;
     }
 
     params.entryName = UPPER_DIR;
-    if (AddDirentry(params) != 0) {
+    if (AddDirentry(params) != DLP_OK) {
         fuse_reply_err(params.req, EINVAL);
-        return -1;
+        return DLP_FUSE_ERROR_VALUE_INVALID;
     }
-    return 0;
+    return DLP_OK;
 }
 
 static int AddLinkFilesDirentry(DirAddParams& params)
 {
     std::vector<DlpLinkFileInfo> linkList;
-    DlpFuseHelper::GetDlpLinkManagerInstance().DumpDlpLinkFile(linkList);
+    DlpLinkManager* manager = DlpFuseHelper::GetDlpLinkManagerInstance();
+    if (!manager) {
+        fuse_reply_err(params.req, EINVAL);
+        return DLP_FUSE_ERROR_VALUE_INVALID;
+    }
+    manager->DumpDlpLinkFile(linkList);
     int listSize = static_cast<int>(linkList.size());
     for (int i = 0; i < listSize; i++) {
         params.entryName = linkList[i].dlpLinkName;
         params.entryStat = &linkList[i].fileStat;
-        if (AddDirentry(params) != 0) {
+        if (AddDirentry(params) != DLP_OK) {
             fuse_reply_err(params.req, EINVAL);
-            return -1;
+            return DLP_FUSE_ERROR_VALUE_INVALID;
         }
     }
-    return 0;
+    return DLP_OK;
 }
 
 static void FuseDaemonReadDir(fuse_req_t req, fuse_ino_t ino, size_t size, off_t off, struct fuse_file_info *fi)
@@ -333,12 +346,12 @@ static void FuseDaemonReadDir(fuse_req_t req, fuse_ino_t ino, size_t size, off_t
     params.bufLen = size;
     params.nextOff = 0;
 
-    if (AddRootDirentry(params) != 0) {
+    if (AddRootDirentry(params) != DLP_OK) {
         free(readBuf);
         return;
     }
 
-    if (AddLinkFilesDirentry(params) != 0) {
+    if (AddLinkFilesDirentry(params) != DLP_OK) {
         free(readBuf);
         return;
     }
@@ -488,11 +501,12 @@ int FuseDaemon::WaitDaemonEnable(void)
 
     if (daemonStatus_ == DAEMON_ENABLE) {
         DLP_LOG_INFO(LABEL, "Wait fuse fs daemon enable succ");
-        return 0;
+        init_ = true;
+        return DLP_OK;
     }
 
     DLP_LOG_INFO(LABEL, "Wait fuse fs daemon enable fail, time out");
-    return -1;
+    return DLP_FUSE_ERROR_OPERATE_FAIL;
 }
 
 void FuseDaemon::FuseFsDaemonThread(int fuseFd)
@@ -545,14 +559,20 @@ void FuseDaemon::FuseFsDaemonThread(int fuseFd)
 int FuseDaemon::InitFuseFs()
 {
     if (init_) {
-        DLP_LOG_ERROR(LABEL, "Fuse fs has init already!");
-        return -1;
+        DLP_LOG_INFO(LABEL, "Fuse fs has init already!");
+        return DLP_OK;
     }
-    init_ = true;
+
+    std::lock_guard<std::mutex> lock(initMutex_);
+    if (init_) {
+        DLP_LOG_INFO(LABEL, "Double check fuse fs has init already!");
+        return DLP_OK;
+    }
+
     int fuseDevFd = GetDlpFuseFd();
     if (fuseDevFd < 0) {
         DLP_LOG_ERROR(LABEL, "Init fuse fs fail: dev fd is error");
-        return -1;
+        return DLP_PARSE_ERROR_FD_ERROR;
     }
     daemonStatus_ = DAEMON_UNDEF;
 

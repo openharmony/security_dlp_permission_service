@@ -15,26 +15,20 @@
 
 #include "dlp_fuse_helper.h"
 
+#include "dlp_permission.h"
 #include "fuse_daemon.h"
 
 namespace OHOS {
 namespace Security {
 namespace DlpPermission {
-namespace {
-std::recursive_mutex g_instanceMutex;
-} // namespace
 
-DlpLinkManager &DlpFuseHelper::GetDlpLinkManagerInstance()
+DlpLinkManager* DlpFuseHelper::GetDlpLinkManagerInstance()
 {
-    static DlpLinkManager* instance = nullptr;
-    if (instance == nullptr) {
-        std::lock_guard<std::recursive_mutex> lock(g_instanceMutex);
-        if (instance == nullptr) {
-            instance = new DlpLinkManager();
-            FuseDaemon::InitFuseFs();
-        }
+    int res = FuseDaemon::InitFuseFs();
+    if (res != DLP_OK) {
+        return nullptr;
     }
-    return *instance;
+    return DlpLinkManager::GetInstance();
 }
 }  // namespace DlpPermission
 }  // namespace Security

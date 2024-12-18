@@ -13,10 +13,12 @@
  * limitations under the License.
  */
 #include <cerrno>
+#include <chrono>
 #include <gtest/gtest.h>
 #include <securec.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <thread>
 
 #include "c_mock_common.h"
 #define private public
@@ -48,6 +50,8 @@ static double g_fuseReplyAttrTimeout = 0.0F;
 static size_t g_fuseReplyBufSize = 0;
 static int g_session;
 static const std::string DLP_TEST_DIR = "/data/dlpTest/";
+static DlpLinkManager* dlpLinkManager = nullptr;
+constexpr int WAIT_SECOND = 1;
 
 static int FuseReplyErrMock(fuse_req_t req, int err)
 {
@@ -145,6 +149,19 @@ int FuseSessionMountMock(struct fuse_session *se, const char *mountpoint)
     (void)mountpoint;
     return 0;
 }
+
+static bool GetDlpLinkManager(int timeout)
+{
+    auto start = std::chrono::system_clock::now();
+    while (std::chrono::system_clock::now() - start < std::chrono::seconds(timeout)) {
+        dlpLinkManager = DlpFuseHelper::GetDlpLinkManagerInstance();
+        if (dlpLinkManager) {
+            return true;
+        }
+        std::this_thread::yield();
+    }
+    return false;
+}
 }
 
 class FuseDaemonTest : public testing::Test {
@@ -163,6 +180,11 @@ public:
                 DLP_LOG_ERROR(LABEL, "get mount point failed errno %{public}d", errno);
                 return;
             }
+        }
+
+        if (!GetDlpLinkManager(WAIT_SECOND)) {
+            DLP_LOG_ERROR(LABEL, "get dlplinkmanger instance failed");
+            return;
         }
     };
 
@@ -618,8 +640,8 @@ HWTEST_F(FuseDaemonTest, FuseDaemonReadDir004, TestSize.Level1)
     fuse_req_t req = nullptr;
     std::shared_ptr<DlpFile> filePtr = std::make_shared<DlpFile>(-1, DLP_TEST_DIR, 0, false);
     ASSERT_NE(filePtr, nullptr);
-    DlpFuseHelper::GetDlpLinkManagerInstance().dlpLinkFileNameMap_.clear();
-    DlpFuseHelper::GetDlpLinkManagerInstance().AddDlpLinkFile(filePtr, "test");
+    dlpLinkManager->dlpLinkFileNameMap_.clear();
+    dlpLinkManager->AddDlpLinkFile(filePtr, "test");
 
     DlpCMockCondition condition;
     condition.mockSequence = { true };
@@ -635,7 +657,7 @@ HWTEST_F(FuseDaemonTest, FuseDaemonReadDir004, TestSize.Level1)
     EXPECT_EQ(EINVAL, g_fuseReplyErr);
     CleanMockConditions();
 
-    DlpFuseHelper::GetDlpLinkManagerInstance().DeleteDlpLinkFile(filePtr);
+    dlpLinkManager->DeleteDlpLinkFile(filePtr);
 }
 
 /**
@@ -649,7 +671,7 @@ HWTEST_F(FuseDaemonTest, FuseDaemonReadDir005, TestSize.Level1)
     DLP_LOG_INFO(LABEL, "FuseDaemonReadDir005");
     fuse_req_t req = nullptr;
     std::shared_ptr<DlpFile> filePtr = std::make_shared<DlpFile>(-1, DLP_TEST_DIR, 0, false);
-    DlpFuseHelper::GetDlpLinkManagerInstance().AddDlpLinkFile(filePtr, "test");
+    dlpLinkManager->AddDlpLinkFile(filePtr, "test");
     DlpCMockCondition condition;
     condition.mockSequence = { true };
     SetMockConditions("fuse_reply_err", condition);
@@ -669,7 +691,7 @@ HWTEST_F(FuseDaemonTest, FuseDaemonReadDir005, TestSize.Level1)
     FuseDaemon::fuseDaemonOper_.readdir(req, ROOT_INODE, ADD_DIRENTRY_BUFF_LEN, ADD_DIRENTRY_BUFF_LEN + 1, nullptr);
     EXPECT_EQ(static_cast<size_t>(1), g_fuseReplyBufSize);
     CleanMockConditions();
-    DlpFuseHelper::GetDlpLinkManagerInstance().DeleteDlpLinkFile(filePtr);
+    dlpLinkManager->DeleteDlpLinkFile(filePtr);
 }
 
 /**
@@ -808,13 +830,13 @@ HWTEST_F(FuseDaemonTest, InitFuseFs001, TestSize.Level1)
 {
     DLP_LOG_INFO(LABEL, "InitFuseFs001");
     FuseDaemon::init_ = false;
-    EXPECT_EQ(-1, FuseDaemon::InitFuseFs());
+    EXPECT_EQ(DLP_PARSE_ERROR_FD_ERROR, FuseDaemon::InitFuseFs());
     // second init will fail whatever last init result is.
-    EXPECT_EQ(-1, FuseDaemon::InitFuseFs());
+    EXPECT_EQ(DLP_PARSE_ERROR_FD_ERROR, FuseDaemon::InitFuseFs());
 
     // fuse fd is wrong
     FuseDaemon::init_ = false;
-    EXPECT_EQ(-1, FuseDaemon::InitFuseFs());
+    EXPECT_EQ(DLP_PARSE_ERROR_FD_ERROR, FuseDaemon::InitFuseFs());
 }
 
 /**
@@ -837,7 +859,7 @@ HWTEST_F(FuseDaemonTest, FuseFsDaemonThread001, TestSize.Level1)
     condition2.mockSequence = { true };
     SetMockConditions("fuse_opt_free_args", condition2);
     FuseDaemon::FuseFsDaemonThread(1);
-    EXPECT_EQ(-1, FuseDaemon::WaitDaemonEnable());
+    EXPECT_EQ(DLP_FUSE_ERROR_OPERATE_FAIL, FuseDaemon::WaitDaemonEnable());
     CleanMockConditions();
 }
 
@@ -869,7 +891,7 @@ HWTEST_F(FuseDaemonTest, FuseFsDaemonThread002, TestSize.Level1)
     SetMockConditions("fuse_opt_free_args", condition4);
 
     FuseDaemon::FuseFsDaemonThread(1);
-    EXPECT_EQ(-1, FuseDaemon::WaitDaemonEnable());
+    EXPECT_EQ(DLP_FUSE_ERROR_OPERATE_FAIL, FuseDaemon::WaitDaemonEnable());
     CleanMockConditions();
 }
 
