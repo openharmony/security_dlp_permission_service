@@ -102,7 +102,7 @@ struct DlpSandboxChangeContext {
     int32_t errCode = 0;
     std::string changeType;
     std::shared_ptr<RegisterDlpSandboxChangeScopePtr> subscriber = nullptr;
-    void DeleteNapiRef();
+    void DeleteNapiRef(napi_env env, napi_ref ref);
 };
 
 typedef DlpSandboxChangeContext RegisterDlpSandboxChangeInfo;
@@ -141,7 +141,7 @@ struct OpenDlpFileSubscriberContext {
     napi_ref callbackRef = nullptr;
     int32_t errCode = 0;
     std::shared_ptr<OpenDlpFileSubscriberPtr> subscriber = nullptr;
-    void DeleteNapiRef();
+    void DeleteNapiRef(napi_env env, napi_ref ref);
 };
 
 struct OpenDlpFileUnSubscriberContext : public CommonAsyncContext {
@@ -222,8 +222,6 @@ struct GetDlpSupportFileTypeAsyncContext : public CommonAsyncContext {
     explicit GetDlpSupportFileTypeAsyncContext(napi_env env) : CommonAsyncContext(env) {};
     std::vector<std::string> supportFileType;
 };
-
-void UvQueueWorkDeleteRef(uv_work_t *work, int32_t status);
 
 struct GetGatheringPolicyContext : public CommonAsyncContext {
     explicit GetGatheringPolicyContext(napi_env env) : CommonAsyncContext(env) {};

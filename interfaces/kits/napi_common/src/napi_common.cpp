@@ -47,42 +47,37 @@ static bool ConvertDlpSandboxChangeInfo(napi_env env, napi_value value, const Dl
     return true;
 };
 
-static void UvQueueWorkDlpSandboxChanged(uv_work_t *work, int status)
+static void UvQueueWorkDlpSandboxChanged(RegisterDlpSandboxChangeWorker *worker)
 {
     DLP_LOG_INFO(LABEL, "enter UvQueueWorkDlpSandboxChanged");
-    if ((work == nullptr) || (work->data == nullptr)) {
-        DLP_LOG_ERROR(LABEL, "work == nullptr || work->data == nullptr");
-        return;
-    }
-    std::unique_ptr<uv_work_t> uvWorkPtr { work };
-    RegisterDlpSandboxChangeWorker *registerSandboxChangeData =
-        reinterpret_cast<RegisterDlpSandboxChangeWorker *>(work->data);
-    std::unique_ptr<RegisterDlpSandboxChangeWorker> workPtr { registerSandboxChangeData };
     napi_handle_scope scope = nullptr;
-    napi_open_handle_scope(registerSandboxChangeData->env, &scope);
+    napi_open_handle_scope(worker->env, &scope);
     if (scope == nullptr) {
         DLP_LOG_ERROR(LABEL, "scope is nullptr");
+        delete worker;
         return;
     }
     napi_value result = { nullptr };
-    NAPI_CALL_RETURN_VOID_WITH_SCOPE(registerSandboxChangeData->env,
-        napi_create_array(registerSandboxChangeData->env, &result), scope);
-    if (!ConvertDlpSandboxChangeInfo(registerSandboxChangeData->env, result, registerSandboxChangeData->result)) {
-        napi_close_handle_scope(registerSandboxChangeData->env, scope);
+    NAPI_CALL_RETURN_VOID_WITH_SCOPE(worker->env, napi_create_array(worker->env, &result), scope);
+    if (!ConvertDlpSandboxChangeInfo(worker->env, result, worker->result)) {
         DLP_LOG_ERROR(LABEL, "ConvertDlpSandboxChangeInfo failed");
+        napi_close_handle_scope(worker->env, scope);
+        delete worker;
         return;
     }
 
     napi_value undefined = nullptr;
     napi_value callback = nullptr;
     napi_value resultout = nullptr;
-    NAPI_CALL_RETURN_VOID_WITH_SCOPE(registerSandboxChangeData->env,
-        napi_get_undefined(registerSandboxChangeData->env, &undefined), scope);
-    NAPI_CALL_RETURN_VOID_WITH_SCOPE(registerSandboxChangeData->env,
-        napi_get_reference_value(registerSandboxChangeData->env, registerSandboxChangeData->ref, &callback), scope);
-    NAPI_CALL_RETURN_VOID_WITH_SCOPE(registerSandboxChangeData->env,
-        napi_call_function(registerSandboxChangeData->env, undefined, callback, 1, &result, &resultout), scope);
-    napi_close_handle_scope(registerSandboxChangeData->env, scope);
+    NAPI_CALL_RETURN_VOID_WITH_SCOPE(worker->env,
+        napi_get_undefined(worker->env, &undefined), scope);
+    NAPI_CALL_RETURN_VOID_WITH_SCOPE(worker->env,
+        napi_get_reference_value(worker->env, worker->ref, &callback), scope);
+    NAPI_CALL_RETURN_VOID_WITH_SCOPE(worker->env,
+        napi_call_function(worker->env, undefined, callback, 1, &result, &resultout), scope);
+
+    napi_close_handle_scope(worker->env, scope);
+    delete worker;
     DLP_LOG_DEBUG(LABEL, "UvQueueWorkDlpSandboxChanged end");
 };
 
@@ -97,42 +92,40 @@ static bool ConvertOpenDlpFileCallbackInfo(napi_env env, napi_value value, const
     return true;
 };
 
-static void UvQueueWorkOpenDlpFile(uv_work_t *work, int status)
+static void UvQueueWorkOpenDlpFile(OpenDlpFileSubscriberWorker *worker)
 {
     DLP_LOG_INFO(LABEL, "enter UvQueueWorkOpenDlpFile");
-    if ((work == nullptr) || (work->data == nullptr)) {
-        DLP_LOG_ERROR(LABEL, "work == nullptr || work->data == nullptr");
-        return;
-    }
-    std::unique_ptr<uv_work_t> uvWorkPtr { work };
-    OpenDlpFileSubscriberWorker *oepnDlpFileDate =
-        reinterpret_cast<OpenDlpFileSubscriberWorker *>(work->data);
-    std::unique_ptr<OpenDlpFileSubscriberWorker> workPtr { oepnDlpFileDate };
+
     napi_handle_scope scope = nullptr;
-    napi_open_handle_scope(oepnDlpFileDate->env, &scope);
+    napi_open_handle_scope(worker->env, &scope);
     if (scope == nullptr) {
         DLP_LOG_ERROR(LABEL, "scope is nullptr");
+        delete worker;
         return;
     }
+
     napi_value result = { nullptr };
-    NAPI_CALL_RETURN_VOID_WITH_SCOPE(oepnDlpFileDate->env,
-        napi_create_array(oepnDlpFileDate->env, &result), scope);
-    if (!ConvertOpenDlpFileCallbackInfo(oepnDlpFileDate->env, result, oepnDlpFileDate->result)) {
-        napi_close_handle_scope(oepnDlpFileDate->env, scope);
+    NAPI_CALL_RETURN_VOID_WITH_SCOPE(worker->env,
+        napi_create_array(worker->env, &result), scope);
+    if (!ConvertOpenDlpFileCallbackInfo(worker->env, result, worker->result)) {
         DLP_LOG_ERROR(LABEL, "ConvertOpenDlpFileCallbackInfo failed");
+        napi_close_handle_scope(worker->env, scope);
+        delete worker;
         return;
     }
 
     napi_value undefined = nullptr;
     napi_value callback = nullptr;
     napi_value resultout = nullptr;
-    NAPI_CALL_RETURN_VOID_WITH_SCOPE(oepnDlpFileDate->env,
-        napi_get_undefined(oepnDlpFileDate->env, &undefined), scope);
-    NAPI_CALL_RETURN_VOID_WITH_SCOPE(oepnDlpFileDate->env,
-        napi_get_reference_value(oepnDlpFileDate->env, oepnDlpFileDate->ref, &callback), scope);
-    NAPI_CALL_RETURN_VOID_WITH_SCOPE(oepnDlpFileDate->env,
-        napi_call_function(oepnDlpFileDate->env, undefined, callback, 1, &result, &resultout), scope);
-    napi_close_handle_scope(oepnDlpFileDate->env, scope);
+    NAPI_CALL_RETURN_VOID_WITH_SCOPE(worker->env,
+        napi_get_undefined(worker->env, &undefined), scope);
+    NAPI_CALL_RETURN_VOID_WITH_SCOPE(worker->env,
+        napi_get_reference_value(worker->env, worker->ref, &callback), scope);
+    NAPI_CALL_RETURN_VOID_WITH_SCOPE(worker->env,
+        napi_call_function(worker->env, undefined, callback, 1, &result, &resultout), scope);
+
+    napi_close_handle_scope(worker->env, scope);
+    delete worker;
     DLP_LOG_INFO(LABEL, "UvQueueWorkOpenDlpFile end");
 };
 } // namespace
@@ -149,35 +142,28 @@ void RegisterDlpSandboxChangeScopePtr::DlpSandboxChangeCallback(DlpSandboxCallba
         DLP_LOG_ERROR(LABEL, "object is invalid.");
         return;
     }
-    uv_loop_s *loop = nullptr;
-    NAPI_CALL_RETURN_VOID(env_, napi_get_uv_event_loop(env_, &loop));
-    if (loop == nullptr) {
-        DLP_LOG_ERROR(LABEL, "loop instance is nullptr");
-        return;
-    }
-    uv_work_t *work = new (std::nothrow) uv_work_t;
-    if (work == nullptr) {
-        DLP_LOG_ERROR(LABEL, "insufficient memory for work!");
-        return;
-    }
-    std::unique_ptr<uv_work_t> uvWorkPtr { work };
+
     RegisterDlpSandboxChangeWorker *registerSandboxChangeWorker = new (std::nothrow) RegisterDlpSandboxChangeWorker();
     if (registerSandboxChangeWorker == nullptr) {
         DLP_LOG_ERROR(LABEL, "insufficient memory for RegisterDlpSandboxChangeWorker!");
         return;
     }
-    std::unique_ptr<RegisterDlpSandboxChangeWorker> workPtr { registerSandboxChangeWorker };
+
     registerSandboxChangeWorker->env = env_;
     registerSandboxChangeWorker->ref = ref_;
     registerSandboxChangeWorker->result = result;
     DLP_LOG_DEBUG(LABEL, "result appIndex = %{public}d, bundleName = %{public}s", result.appIndex,
         result.bundleName.c_str());
     registerSandboxChangeWorker->subscriber = this;
-    work->data = reinterpret_cast<void *>(registerSandboxChangeWorker);
-    NAPI_CALL_RETURN_VOID(env_, uv_queue_work(
-        loop, work, [](uv_work_t *work) {}, UvQueueWorkDlpSandboxChanged));
-    uvWorkPtr.release();
-    workPtr.release();
+
+    auto task = [event]() {
+        UvQueueWorkDlpSandboxChanged(registerSandboxChangeWorker);
+    };
+
+    if (napi_send_event(env_, task, napi_eprio_immediate) != napi_status::napi_ok) {
+        DLP_LOG_ERROR("Failed to SendEvent");
+        delete registerSandboxChangeWorker;
+    }
 }
 
 void RegisterDlpSandboxChangeScopePtr::SetEnv(const napi_env &env)
@@ -198,66 +184,22 @@ void RegisterDlpSandboxChangeScopePtr::SetValid(bool valid)
 
 DlpSandboxChangeContext::~DlpSandboxChangeContext()
 {
-    if (callbackRef == nullptr) {
+    if (env == nullptr || callbackRef == nullptr) {
+        DLP_LOG_ERROR(LABEL, "invalid params!");
         return;
     }
-    DeleteNapiRef();
+    DeleteNapiRef(env, callbackRef);
 }
 
-void DlpSandboxChangeContext::DeleteNapiRef()
+void DlpSandboxChangeContext::DeleteNapiRef(napi_env env, napi_ref callbackRef)
 {
     DLP_LOG_INFO(LABEL, "enter DeleteNapiRef");
-    uv_loop_s *loop = nullptr;
-    NAPI_CALL_RETURN_VOID(env, napi_get_uv_event_loop(env, &loop));
-    if (loop == nullptr) {
-        DLP_LOG_ERROR(LABEL, "loop instance is nullptr");
-        return;
+    auto task = [env, callbackRef]() {
+        napi_delete_reference(env, callbackRef);
+    };
+    if (napi_send_event(env, task, napi_eprio_immediate) != napi_status::napi_ok) {
+        DLP_LOG_ERROR("Failed to SendEvent");
     }
-    uv_work_t *work = new (std::nothrow) uv_work_t;
-    if (work == nullptr) {
-        DLP_LOG_ERROR(LABEL, "insufficient memory for work!");
-        return;
-    }
-
-    std::unique_ptr<uv_work_t> uvWorkPtr { work };
-    RegisterDlpSandboxChangeWorker *registerSandboxChangeWorker = new (std::nothrow) RegisterDlpSandboxChangeWorker();
-    if (registerSandboxChangeWorker == nullptr) {
-        DLP_LOG_ERROR(LABEL, "insufficient memory for registerSandboxChangeWorker!");
-        return;
-    }
-    std::unique_ptr<RegisterDlpSandboxChangeWorker> workPtr { registerSandboxChangeWorker };
-    registerSandboxChangeWorker->env = env;
-    registerSandboxChangeWorker->ref = callbackRef;
-
-    work->data = reinterpret_cast<void *>(registerSandboxChangeWorker);
-    NAPI_CALL_RETURN_VOID(env, uv_queue_work(
-        loop, work, [](uv_work_t *work) {}, UvQueueWorkDeleteRef));
-    DLP_LOG_DEBUG(LABEL, "DeleteNapiRef");
-    uvWorkPtr.release();
-    workPtr.release();
-}
-
-void UvQueueWorkDeleteRef(uv_work_t *work, int32_t status)
-{
-    DLP_LOG_INFO(LABEL, "enter UvQueueWorkDeleteRef");
-    if (work == nullptr) {
-        DLP_LOG_ERROR(LABEL, "work == nullptr : %{public}d", work == nullptr);
-        return;
-    } else if (work->data == nullptr) {
-        DLP_LOG_ERROR(LABEL, "work->data == nullptr : %{public}d", work->data == nullptr);
-        return;
-    }
-    RegisterDlpSandboxChangeWorker *registerSandboxChangeWorker =
-        reinterpret_cast<RegisterDlpSandboxChangeWorker *>(work->data);
-    if (registerSandboxChangeWorker == nullptr) {
-        delete work;
-        return;
-    }
-    napi_delete_reference(registerSandboxChangeWorker->env, registerSandboxChangeWorker->ref);
-    delete registerSandboxChangeWorker;
-    registerSandboxChangeWorker = nullptr;
-    delete work;
-    DLP_LOG_DEBUG(LABEL, "UvQueueWorkDeleteRef end");
 }
 
 OpenDlpFileSubscriberPtr::OpenDlpFileSubscriberPtr() {}
@@ -272,35 +214,28 @@ void OpenDlpFileSubscriberPtr::OnOpenDlpFile(OpenDlpFileCallbackInfo &result)
         DLP_LOG_ERROR(LABEL, "object is invalid.");
         return;
     }
-    uv_loop_s *loop = nullptr;
-    NAPI_CALL_RETURN_VOID(env_, napi_get_uv_event_loop(env_, &loop));
-    if (loop == nullptr) {
-        DLP_LOG_ERROR(LABEL, "loop instance is nullptr");
-        return;
-    }
-    uv_work_t *work = new (std::nothrow) uv_work_t;
-    if (work == nullptr) {
-        DLP_LOG_ERROR(LABEL, "insufficient memory for work!");
-        return;
-    }
-    std::unique_ptr<uv_work_t> uvWorkPtr { work };
+
     OpenDlpFileSubscriberWorker *openDlpFileWorker = new (std::nothrow) OpenDlpFileSubscriberWorker();
     if (openDlpFileWorker == nullptr) {
         DLP_LOG_ERROR(LABEL, "insufficient memory for OpenDlpFileSubscriberWorker!");
         return;
     }
-    std::unique_ptr<OpenDlpFileSubscriberWorker> workPtr { openDlpFileWorker };
+
     openDlpFileWorker->env = env_;
     openDlpFileWorker->ref = ref_;
     openDlpFileWorker->result = result;
     DLP_LOG_DEBUG(LABEL, "result uri = %{public}s, openTime = %{public}" PRIu64, result.uri.c_str(),
         result.timeStamp);
     openDlpFileWorker->subscriber = this;
-    work->data = reinterpret_cast<void *>(openDlpFileWorker);
-    NAPI_CALL_RETURN_VOID(env_, uv_queue_work(
-        loop, work, [](uv_work_t *work) {}, UvQueueWorkOpenDlpFile));
-    uvWorkPtr.release();
-    workPtr.release();
+
+    auto task = [event]() {
+        UvQueueWorkOpenDlpFile(openDlpFileWorker);
+    };
+
+    if (napi_send_event(env_, task, napi_eprio_immediate) != napi_status::napi_ok) {
+        DLP_LOG_ERROR("Failed to SendEvent");
+        delete openDlpFileWorker;
+    }
 }
 
 void OpenDlpFileSubscriberPtr::SetEnv(const napi_env &env)
@@ -321,66 +256,22 @@ void OpenDlpFileSubscriberPtr::SetValid(bool valid)
 
 OpenDlpFileSubscriberContext::~OpenDlpFileSubscriberContext()
 {
-    if (callbackRef == nullptr) {
+    if (env == nullptr || callbackRef == nullptr) {
+        DLP_LOG_ERROR(LABEL, "invalid params!");
         return;
     }
-    DeleteNapiRef();
+    DeleteNapiRef(env, callbackRef);
 }
 
-void OpenDlpFileUvQueueWorkDeleteRef(uv_work_t *work, int32_t status)
-{
-    DLP_LOG_INFO(LABEL, "enter OpenDlpFileUvQueueWorkDeleteRef");
-    if (work == nullptr) {
-        DLP_LOG_ERROR(LABEL, "work == nullptr : %{public}d", work == nullptr);
-        return;
-    } else if (work->data == nullptr) {
-        DLP_LOG_ERROR(LABEL, "work->data == nullptr : %{public}d", work->data == nullptr);
-        return;
-    }
-    OpenDlpFileSubscriberWorker *openDlpFileWorker =
-        reinterpret_cast<OpenDlpFileSubscriberWorker *>(work->data);
-    if (openDlpFileWorker == nullptr) {
-        delete work;
-        return;
-    }
-    napi_delete_reference(openDlpFileWorker->env, openDlpFileWorker->ref);
-    delete openDlpFileWorker;
-    openDlpFileWorker = nullptr;
-    delete work;
-    DLP_LOG_INFO(LABEL, "OpenDlpFileUvQueueWorkDeleteRef end");
-}
-
-void OpenDlpFileSubscriberContext::DeleteNapiRef()
+void OpenDlpFileSubscriberContext::DeleteNapiRef(napi_env env, napi_ref callbackRef)
 {
     DLP_LOG_INFO(LABEL, "enter DeleteNapiRef");
-    uv_loop_s *loop = nullptr;
-    NAPI_CALL_RETURN_VOID(env, napi_get_uv_event_loop(env, &loop));
-    if (loop == nullptr) {
-        DLP_LOG_ERROR(LABEL, "loop instance is nullptr");
-        return;
+    auto task = [env, callbackRef]() {
+        napi_delete_reference(env, callbackRef);
+    };
+    if (napi_send_event(env, task, napi_eprio_immediate) != napi_status::napi_ok) {
+        DLP_LOG_ERROR("Failed to SendEvent");
     }
-    uv_work_t *work = new (std::nothrow) uv_work_t;
-    if (work == nullptr) {
-        DLP_LOG_ERROR(LABEL, "insufficient memory for work!");
-        return;
-    }
-
-    std::unique_ptr<uv_work_t> uvWorkPtr { work };
-    OpenDlpFileSubscriberWorker *openDlpFileWorker = new (std::nothrow) OpenDlpFileSubscriberWorker();
-    if (openDlpFileWorker == nullptr) {
-        DLP_LOG_ERROR(LABEL, "insufficient memory for openDlpFileWorker!");
-        return;
-    }
-    std::unique_ptr<OpenDlpFileSubscriberWorker> workPtr { openDlpFileWorker };
-    openDlpFileWorker->env = env;
-    openDlpFileWorker->ref = callbackRef;
-
-    work->data = reinterpret_cast<void *>(openDlpFileWorker);
-    NAPI_CALL_RETURN_VOID(env, uv_queue_work(
-        loop, work, [](uv_work_t *work) {}, OpenDlpFileUvQueueWorkDeleteRef));
-    DLP_LOG_DEBUG(LABEL, "DeleteNapiRef");
-    uvWorkPtr.release();
-    workPtr.release();
 }
 
 napi_value GenerateBusinessError(napi_env env, int32_t jsErrCode, const std::string &jsErrMsg)
