@@ -95,7 +95,14 @@ void initDlpFileCiper(DlpFile &testFile)
 }
 }
 
-void DlpFileTest::SetUpTestCase()
+void DlpFileTest::SetUpTestCase() {}
+
+void DlpFileTest::TearDownTestCase()
+{
+    rmdir(DLP_TEST_DIR.c_str());
+}
+
+void DlpFileTest::SetUp()
 {
     struct stat fstat;
     if (stat(DLP_TEST_DIR.c_str(), &fstat) != 0) {
@@ -111,13 +118,6 @@ void DlpFileTest::SetUpTestCase()
         }
     }
 }
-
-void DlpFileTest::TearDownTestCase()
-{
-    rmdir(DLP_TEST_DIR.c_str());
-}
-
-void DlpFileTest::SetUp() {}
 
 void DlpFileTest::TearDown() {}
 
