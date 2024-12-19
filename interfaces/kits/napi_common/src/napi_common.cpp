@@ -105,8 +105,7 @@ static void UvQueueWorkOpenDlpFile(OpenDlpFileSubscriberWorker *worker)
     }
 
     napi_value result = { nullptr };
-    NAPI_CALL_RETURN_VOID_WITH_SCOPE(worker->env,
-        napi_create_array(worker->env, &result), scope);
+    NAPI_CALL_RETURN_VOID_WITH_SCOPE(worker->env, napi_create_array(worker->env, &result), scope);
     if (!ConvertOpenDlpFileCallbackInfo(worker->env, result, worker->result)) {
         DLP_LOG_ERROR(LABEL, "ConvertOpenDlpFileCallbackInfo failed");
         napi_close_handle_scope(worker->env, scope);
@@ -156,12 +155,12 @@ void RegisterDlpSandboxChangeScopePtr::DlpSandboxChangeCallback(DlpSandboxCallba
         result.bundleName.c_str());
     registerSandboxChangeWorker->subscriber = this;
 
-    auto task = [event]() {
+    auto task = [registerSandboxChangeWorker]() {
         UvQueueWorkDlpSandboxChanged(registerSandboxChangeWorker);
     };
 
     if (napi_send_event(env_, task, napi_eprio_immediate) != napi_status::napi_ok) {
-        DLP_LOG_ERROR("Failed to SendEvent");
+        DLP_LOG_ERROR(LABEL, "Failed to SendEvent");
         delete registerSandboxChangeWorker;
     }
 }
@@ -198,7 +197,7 @@ void DlpSandboxChangeContext::DeleteNapiRef(napi_env env, napi_ref callbackRef)
         napi_delete_reference(env, callbackRef);
     };
     if (napi_send_event(env, task, napi_eprio_immediate) != napi_status::napi_ok) {
-        DLP_LOG_ERROR("Failed to SendEvent");
+        DLP_LOG_ERROR(LABEL, "Failed to SendEvent");
     }
 }
 
@@ -228,12 +227,12 @@ void OpenDlpFileSubscriberPtr::OnOpenDlpFile(OpenDlpFileCallbackInfo &result)
         result.timeStamp);
     openDlpFileWorker->subscriber = this;
 
-    auto task = [event]() {
+    auto task = [openDlpFileWorker]() {
         UvQueueWorkOpenDlpFile(openDlpFileWorker);
     };
 
     if (napi_send_event(env_, task, napi_eprio_immediate) != napi_status::napi_ok) {
-        DLP_LOG_ERROR("Failed to SendEvent");
+        DLP_LOG_ERROR(LABEL, "Failed to SendEvent");
         delete openDlpFileWorker;
     }
 }
@@ -270,7 +269,7 @@ void OpenDlpFileSubscriberContext::DeleteNapiRef(napi_env env, napi_ref callback
         napi_delete_reference(env, callbackRef);
     };
     if (napi_send_event(env, task, napi_eprio_immediate) != napi_status::napi_ok) {
-        DLP_LOG_ERROR("Failed to SendEvent");
+        DLP_LOG_ERROR(LABEL, "Failed to SendEvent");
     }
 }
 
