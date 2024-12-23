@@ -38,6 +38,7 @@ using namespace OHOS::AppExecFwk;
 namespace {
 const std::string LOCAL_ENCRYPTED_CERT = "encryptedPolicy";
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "DlpCredential"};
+const std::string PERMISSION_ACCESS_DLP_FILE = "ohos.permission.ACCESS_DLP_FILE";
 static const size_t MAX_REQUEST_NUM = 100;
 static const uint32_t MAX_APPID_LIST_NUM = 250;
 static const uint32_t MAX_APPID_LENGTH = 200;
@@ -685,7 +686,8 @@ int32_t PresetDLPPolicy(const std::vector<std::string>& srcList, std::vector<std
         DLP_LOG_ERROR(LABEL, "get userId error");
         return DLP_SERVICE_ERROR_VALUE_INVALID;
     }
-    if (!BundleManagerAdapter::GetInstance().GetBundleInfo(DLP_MANAGER_BUNDLE_NAME,
+    if (BundleManagerAdapter::GetInstance().CheckHapPermission(DLP_MANAGER_BUNDLE_NAME, PERMISSION_ACCESS_DLP_FILE) &&
+        !BundleManagerAdapter::GetInstance().GetBundleInfo(DLP_MANAGER_BUNDLE_NAME,
         static_cast<int32_t>(AppExecFwk::GetBundleInfoFlag::GET_BUNDLE_INFO_WITH_SIGNATURE_INFO), bundleInfo, userId)) {
         DLP_LOG_ERROR(LABEL, "get appId error");
         return DLP_SERVICE_ERROR_IPC_REQUEST_FAIL;
