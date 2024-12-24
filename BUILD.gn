@@ -21,6 +21,7 @@ group("dlp_permission_build_module") {
       "${dlp_root_dir}/interfaces/inner_api/dlp_fuse:libdlp_fuse",
       "${dlp_root_dir}/interfaces/inner_api/dlp_permission:libdlp_permission_common_interface",
       "${dlp_root_dir}/interfaces/inner_api/dlp_permission:libdlp_permission_sdk",
+      "${dlp_root_dir}/interfaces/kits/c:ohdlp_permission",
       "${dlp_root_dir}/services/dlp_permission/sa:dlp_permission_service",
       "${dlp_root_dir}/services/dlp_permission/sa/sa_profile:dlp_permission_sa_profile_standard",
     ]
