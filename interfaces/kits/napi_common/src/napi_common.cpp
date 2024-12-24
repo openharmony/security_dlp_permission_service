@@ -154,11 +154,9 @@ void RegisterDlpSandboxChangeScopePtr::DlpSandboxChangeCallback(DlpSandboxCallba
     DLP_LOG_DEBUG(LABEL, "result appIndex = %{public}d, bundleName = %{public}s", result.appIndex,
         result.bundleName.c_str());
     registerSandboxChangeWorker->subscriber = this;
-
     auto task = [registerSandboxChangeWorker]() {
         UvQueueWorkDlpSandboxChanged(registerSandboxChangeWorker);
     };
-
     if (napi_send_event(env_, task, napi_eprio_immediate) != napi_status::napi_ok) {
         DLP_LOG_ERROR(LABEL, "Failed to SendEvent");
         delete registerSandboxChangeWorker;
@@ -226,11 +224,9 @@ void OpenDlpFileSubscriberPtr::OnOpenDlpFile(OpenDlpFileCallbackInfo &result)
     DLP_LOG_DEBUG(LABEL, "result uri = %{public}s, openTime = %{public}" PRIu64, result.uri.c_str(),
         result.timeStamp);
     openDlpFileWorker->subscriber = this;
-
     auto task = [openDlpFileWorker]() {
         UvQueueWorkOpenDlpFile(openDlpFileWorker);
     };
-
     if (napi_send_event(env_, task, napi_eprio_immediate) != napi_status::napi_ok) {
         DLP_LOG_ERROR(LABEL, "Failed to SendEvent");
         delete openDlpFileWorker;
