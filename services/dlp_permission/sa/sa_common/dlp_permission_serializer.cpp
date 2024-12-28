@@ -60,6 +60,9 @@ const std::string ENC_POLICY = "encPolicy";
 const std::string OFFLINE_CERT = "offlineCert";
 const std::string ACCOUNT_TYPE = "accountType";
 const std::string RECEIVER_ACCOUNT_INFO = "receiverAccountInfo";
+const std::string OPEN_MODE = "openMode";
+const std::string ACCOUNT_NAME = "accountName";
+const std::string ACCOUNT_ID = "accountId";
 constexpr uint64_t  VALID_TIME_STAMP = 2147483647;
 
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
@@ -395,6 +398,18 @@ static void InitPermissionPolicy(PermissionPolicy& policy, const std::vector<Aut
     }
     if (policyJson.find(DLP_FILE_DEBUG_FLAG) != policyJson.end() && policyJson.at(DLP_FILE_DEBUG_FLAG).is_boolean()) {
         policyJson.at(DLP_FILE_DEBUG_FLAG).get_to(policy.debug_);
+    }
+    if (policyJson.find(OPEN_MODE) != policyJson.end() && policyJson.at(OPEN_MODE).is_number()) {
+        policy.perm_ = READ_ONLY;
+    }
+    if (policyJson.find(ACCOUNT_TYPE) != policyJson.end() && policyJson.at(ACCOUNT_TYPE).is_number()) {
+        policyJson.at(ACCOUNT_TYPE).get_to(policy.acountType_);
+    }
+    if (policyJson.find(ACCOUNT_NAME) != policyJson.end() && policyJson.at(ACCOUNT_NAME).is_string()) {
+        policyJson.at(ACCOUNT_NAME).get_to(policy.accountName_);
+    }
+    if (policyJson.find(ACCOUNT_ID) != policyJson.end() && policyJson.at(ACCOUNT_ID).is_string()) {
+        policyJson.at(ACCOUNT_ID).get_to(policy.acountId_);
     }
     policy.ownerAccountType_ = CLOUD_ACCOUNT;
 }
