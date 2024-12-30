@@ -14,6 +14,7 @@
  */
 
 #include "dlp_utils.h"
+#include <cctype>
 #include <unistd.h>
 #include "dlp_permission.h"
 #include "dlp_permission_log.h"
@@ -70,9 +71,19 @@ bool DlpUtils::GetAuthPolicyWithType(const std::string &cfgFile, const std::stri
     return false;
 }
 
+std::string DlpUtils::ToLowerString(const std::string& str)
+{
+    std::string lower;
+    for (char c : str) {
+        lower += std::tolower(c);
+    }
+    return lower;
+}
+
 std::string DlpUtils::GetFileTypeBySuffix(const std::string& suffix)
 {
-    auto iter = FILE_TYPE_MAP.find(suffix);
+    std::string lower = DlpUtils::ToLowerString(suffix);
+    auto iter = FILE_TYPE_MAP.find(lower);
     if (iter != FILE_TYPE_MAP.end()) {
         return iter->second;
     }
