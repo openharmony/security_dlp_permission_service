@@ -193,6 +193,7 @@ ohos_shared_library("dlp_permission_service") {
     "ipc:ipc_core",
     "json:nlohmann_json_static",
     "kv_store:distributeddata_inner",
+    "os_account:domain_account_innerkits",
     "os_account:libaccountkits",
     "os_account:os_account_innerkits",
     "safwk:system_ability_fwk",
