@@ -51,14 +51,10 @@ bool DlpPolicyParcel::Marshalling(Parcel& out) const
     if (!(out.WriteUint8(this->policyParams_.everyonePerm_))) {
         DLP_LOG_ERROR(LABEL, "Write everyonePerm_ fail");
     }
-    if (!(out.WriteString(this->policyParams_.ownerAccount_))) {
-        DLP_LOG_ERROR(LABEL, "Write owner account fail");
-    }
-    if (!(out.WriteString(this->policyParams_.ownerAccountId_))) {
-        DLP_LOG_ERROR(LABEL, "Write owner accountId fail");
-    }
-    if (!(out.WriteUint8(this->policyParams_.ownerAccountType_))) {
-        DLP_LOG_ERROR(LABEL, "Write owner account type fail");
+
+    MarshallingAccountInfo(out);
+    if (!(out.WriteUint8(this->policyParams_.perm_))) {
+        DLP_LOG_ERROR(LABEL, "Write perm fail");
     }
 
     MarshallingKey(out);
@@ -70,6 +66,28 @@ bool DlpPolicyParcel::Marshalling(Parcel& out) const
         DLP_LOG_ERROR(LABEL, "Write debug_ fail");
     }
     return true;
+}
+
+void DlpPolicyParcel::MarshallingAccountInfo(Parcel& out) const
+{
+    if (!(out.WriteString(this->policyParams_.ownerAccount_))) {
+        DLP_LOG_ERROR(LABEL, "Write owner account fail");
+    }
+    if (!(out.WriteString(this->policyParams_.ownerAccountId_))) {
+        DLP_LOG_ERROR(LABEL, "Write owner accountId fail");
+    }
+    if (!(out.WriteUint8(this->policyParams_.ownerAccountType_))) {
+        DLP_LOG_ERROR(LABEL, "Write owner account type fail");
+    }
+    if (!(out.WriteString(this->policyParams_.accountName_))) {
+        DLP_LOG_ERROR(LABEL, "Write accountName fail");
+    }
+    if (!(out.WriteString(this->policyParams_.acountId_))) {
+        DLP_LOG_ERROR(LABEL, "Write accountId fail");
+    }
+    if (!(out.WriteUint8(this->policyParams_.acountType_))) {
+        DLP_LOG_ERROR(LABEL, "Write accountType fail");
+    }
 }
 
 void DlpPolicyParcel::MarshallingKey(Parcel& out) const
@@ -180,6 +198,39 @@ static bool ReadAesParam(PermissionPolicy& policy, Parcel& in)
     return true;
 }
 
+static bool ReadAccountInfo(PermissionPolicy& policy, Parcel& in)
+{
+    if (!(in.ReadString(policy.ownerAccount_))) {
+        DLP_LOG_ERROR(LABEL, "Read owner account fail");
+        return false;
+    }
+    if (!(in.ReadString(policy.ownerAccountId_))) {
+        DLP_LOG_ERROR(LABEL, "Read owner accountId fail");
+        return false;
+    }
+    uint8_t res = 0;
+    if (!(in.ReadUint8(res))) {
+        DLP_LOG_ERROR(LABEL, "Read owner account type fail");
+        return false;
+    }
+    policy.ownerAccountType_ = static_cast<DlpAccountType>(res);
+    if (!(in.ReadString(policy.accountName_))) {
+        DLP_LOG_ERROR(LABEL, "Read accountName fail");
+        return false;
+    }
+    if (!(in.ReadString(policy.acountId_))) {
+        DLP_LOG_ERROR(LABEL, "Read accountId fail");
+        return false;
+    }
+    uint8_t type = 0;
+    if (!(in.ReadUint8(type))) {
+        DLP_LOG_ERROR(LABEL, "Read account type fail");
+        return false;
+    }
+    policy.acountType_ = static_cast<DlpAccountType>(type);
+    return true;
+}
+
 static bool ReadParcel(Parcel& in, DlpPolicyParcel* policyParcel)
 {
     uint32_t listSize;
@@ -203,26 +254,22 @@ static bool ReadParcel(Parcel& in, DlpPolicyParcel* policyParcel)
         DLP_LOG_ERROR(LABEL, "Write supportEveryone_ fail");
         return false;
     }
-    uint8_t perm;
-    if (!(in.ReadUint8(perm))) {
+    uint8_t everyonePerm;
+    if (!(in.ReadUint8(everyonePerm))) {
         DLP_LOG_ERROR(LABEL, "Write everyonePerm_ fail");
         return false;
     }
-    policyParcel->policyParams_.everyonePerm_ = static_cast<DLPFileAccess>(perm);
-    if (!(in.ReadString(policyParcel->policyParams_.ownerAccount_))) {
-        DLP_LOG_ERROR(LABEL, "Read owner account fail");
+    policyParcel->policyParams_.everyonePerm_ = static_cast<DLPFileAccess>(everyonePerm);
+    if (!ReadAccountInfo(policyParcel->policyParams_, in)) {
+        DLP_LOG_ERROR(LABEL, "Read owner info fail");
         return false;
     }
-    if (!(in.ReadString(policyParcel->policyParams_.ownerAccountId_))) {
-        DLP_LOG_ERROR(LABEL, "Read owner accountId fail");
-        return false;
-    }
-    uint8_t res = 0;
-    if (!(in.ReadUint8(res))) {
+    uint8_t perm = 0;
+    if (!(in.ReadUint8(perm))) {
         DLP_LOG_ERROR(LABEL, "Read owner account type fail");
         return false;
     }
-    policyParcel->policyParams_.ownerAccountType_ = static_cast<DlpAccountType>(res);
+    policyParcel->policyParams_.perm_ = static_cast<DLPFileAccess>(perm);
     return ReadAesParam(policyParcel->policyParams_, in);
 }
 

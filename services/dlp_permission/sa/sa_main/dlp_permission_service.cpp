@@ -95,12 +95,12 @@ void DlpPermissionService::OnStart()
         return;
     }
     dlpEventSubSubscriber_ = std::make_shared<DlpEventSubSubscriber>();
-    state_ = ServiceRunningState::STATE_RUNNING;
     bool ret = Publish(this);
     if (!ret) {
         DLP_LOG_ERROR(LABEL, "Failed to publish service!");
         return;
     }
+    state_ = ServiceRunningState::STATE_RUNNING;
     DLP_LOG_INFO(LABEL, "Congratulations, DlpPermissionService start successfully!");
 }
 

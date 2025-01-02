@@ -125,6 +125,10 @@ public:
     std::string ownerAccount_;
     std::string ownerAccountId_;
     DlpAccountType ownerAccountType_;
+    std::string accountName_ = "";
+    std::string acountId_ = "";
+    DlpAccountType acountType_ = INVALID_ACCOUNT;
+    DLPFileAccess perm_ = NO_PERMISSION;
     std::vector<AuthUserInfo> authUsers_;
     bool supportEveryone_ = false;
     DLPFileAccess everyonePerm_ = NO_PERMISSION;
