@@ -86,7 +86,8 @@ static bool IsDlpFileName(const std::string& dlpFileName)
 
 static std::string GetMimeTypeBySuffix(const std::string& suffix)
 {
-    auto iter = SUFFIX_MIMETYPE_MAP.find(suffix);
+    std::string lower = DlpUtils::ToLowerString(suffix);
+    auto iter = SUFFIX_MIMETYPE_MAP.find(lower);
     if (iter != SUFFIX_MIMETYPE_MAP.end()) {
         return iter->second;
     }

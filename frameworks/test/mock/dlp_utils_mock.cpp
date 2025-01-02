@@ -14,6 +14,7 @@
  */
 
 #include "dlp_utils.h"
+#include <cctype>
 #include <unistd.h>
 #include "dlp_permission.h"
 #include "dlp_permission_log.h"
@@ -31,6 +32,15 @@ static const std::string DEFAULT_STRINGS = "";
 sptr<AppExecFwk::IBundleMgr> DlpUtils::GetBundleMgrProxy(void)
 {
     return nullptr;
+}
+
+std::string DlpUtils::ToLowerString(const std::string& str)
+{
+    std::string lower;
+    for (char c : str) {
+        lower += std::tolower(c);
+    }
+    return lower;
 }
 
 bool DlpUtils::GetWhitelistWithType(const std::string &cfgFile, const std::string &type,
