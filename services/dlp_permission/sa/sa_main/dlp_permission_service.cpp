@@ -81,6 +81,8 @@ DlpPermissionService::~DlpPermissionService()
     UnregisterAppStateObserver();
     iAppMgr_ = nullptr;
     appStateObserver_ = nullptr;
+    std::unique_lock<std::shared_mutex> lock(dlpSandboxDataMutex_);
+    dlpSandboxData_.clear();
 }
 
 void DlpPermissionService::OnStart()
@@ -292,9 +294,7 @@ int32_t DlpPermissionService::InstallDlpSandbox(const std::string& bundleName, D
     }
     if (isNeedInstall && isReadOnly) {
         appStateObserver_->GetOpeningReadOnlySandbox(bundleName, userId, dlpSandboxInfo.appIndex);
-        if (dlpSandboxInfo.appIndex != -1) {
-            isNeedInstall = false;
-        }
+        isNeedInstall = (dlpSandboxInfo.appIndex != -1) ? false : true;
     }
     if (isNeedInstall) {
         AppExecFwk::BundleMgrClient bundleMgrClient;
@@ -307,11 +307,10 @@ int32_t DlpPermissionService::InstallDlpSandbox(const std::string& bundleName, D
             return DLP_SERVICE_ERROR_INSTALL_SANDBOX_FAIL;
         }
     }
-    int32_t pid = IPCSkeleton::GetCallingRealPid();
 
     dlpSandboxInfo.dlpFileAccess = dlpFileAccess;
     dlpSandboxInfo.userId = userId;
-    dlpSandboxInfo.pid = pid;
+    dlpSandboxInfo.pid = IPCSkeleton::GetCallingRealPid();
     dlpSandboxInfo.uri = uri;
     dlpSandboxInfo.timeStamp = static_cast<uint64_t>(
         std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count());
@@ -320,6 +319,12 @@ int32_t DlpPermissionService::InstallDlpSandbox(const std::string& bundleName, D
     }
     sandboxInfo.appIndex = dlpSandboxInfo.appIndex;
     sandboxInfo.tokenId = dlpSandboxInfo.tokenId;
+
+    std::unique_lock<std::shared_mutex> lock(dlpSandboxDataMutex_);
+    auto it = dlpSandboxData_.find(dlpSandboxInfo.uid);
+    if (it == dlpSandboxData_.end()) {
+        dlpSandboxData_.insert(std::make_pair(dlpSandboxInfo.uid, dlpSandboxInfo.dlpFileAccess));
+    }
     return DLP_OK;
 }
 
@@ -331,6 +336,12 @@ uint32_t DlpPermissionService::DeleteDlpSandboxInfo(const std::string& bundleNam
     if (result != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "Get sandbox bundle info fail");
         return 0;
+    }
+
+    std::unique_lock<std::shared_mutex> lock(dlpSandboxDataMutex_);
+    auto it = dlpSandboxData_.find(info.uid);
+    if (it != dlpSandboxData_.end()) {
+        dlpSandboxData_.erase(info.uid);
     }
 
     return appStateObserver_->EraseDlpSandboxInfo(info.uid);
@@ -389,6 +400,14 @@ int32_t DlpPermissionService::GetSandboxExternalAuthorization(
     bool isSandbox = false;
 
     appStateObserver_->IsInDlpSandbox(isSandbox, sandboxUid);
+
+    std::unique_lock<std::shared_mutex> lock(dlpSandboxDataMutex_);
+    auto it = dlpSandboxData_.find(sandboxUid);
+    if (isSandbox && it != dlpSandboxData_.end() && dlpSandboxData_[sandboxUid] != READ_ONLY) {
+        authType = ALLOW_START_ABILITY;
+        return DLP_OK;
+    }
+
     if (isSandbox && !CheckAllowAbilityList(want)) {
         authType = DENY_START_ABILITY;
     } else {

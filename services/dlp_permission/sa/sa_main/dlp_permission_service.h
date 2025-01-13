@@ -19,6 +19,7 @@
 #include <atomic>
 #include <string>
 #include <vector>
+#include <map>
 #include "app_state_observer.h"
 #include "app_uninstall_observer.h"
 #include "dlp_permission_stub.h"
@@ -101,10 +102,12 @@ private:
     std::shared_ptr<std::thread> thread_ = nullptr;
     std::mutex mutex_;
     std::mutex terminalMutex_;
+    std::shared_mutex dlpSandboxDataMutex_;
     ServiceRunningState state_;
     sptr<AppExecFwk::IAppMgr> iAppMgr_;
     sptr<AppStateObserver> appStateObserver_;
     std::shared_ptr<DlpEventSubSubscriber> dlpEventSubSubscriber_ = nullptr;
+    std::map<int, DLPFileAccess> dlpSandboxData_;
 };
 }  // namespace DlpPermission
 }  // namespace Security
