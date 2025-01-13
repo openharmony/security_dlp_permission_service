@@ -79,7 +79,8 @@ static bool IsDlpFileName(const std::string& dlpFileName)
         return false;
     }
 
-    if (dlpFileName.substr(fileNameLen - dlpSuffixLen, dlpSuffixLen) != DLP_FILE_SUFFIX) {
+    std::string fileSuffix = dlpFileName.substr(fileNameLen - dlpSuffixLen, dlpSuffixLen);
+    if (DlpUtils::ToLowerString(fileSuffix) != DLP_FILE_SUFFIX) {
         return false;
     }
     return true;
@@ -281,6 +282,16 @@ void DlpFileKits::ConvertAbilityInfoWithSupportDlp(const AAFwk::Want &want,
     if (ret != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "Query ability info with bundleName error.");
     }
+}
+
+bool DlpFileKits::IsDlpFileBySuffix(const std::string &fileSuffix)
+{
+    std::string lowerFileSuffix = DlpUtils::ToLowerString(fileSuffix);
+    if (lowerFileSuffix != DLP_FILE_SUFFIX) {
+        DLP_LOG_DEBUG(LABEL, "%{public}s is not dlp file suffix", lowerFileSuffix.c_str());
+        return false;
+    }
+    return true;
 }
 }  // namespace DlpPermission
 }  // namespace Security
