@@ -709,11 +709,11 @@ int32_t DlpPermissionStub::SetReadFlagInner(MessageParcel& data, MessageParcel& 
 void DlpPermissionStub::InitMDMPolicy()
 {
     requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::SET_MDM_POLICY)] = {
-        [this](MessageParcel &data, MessageParcel &reply) { return SetMDMPolicyInner(data, reply); }};
+        [this](MessageParcel &data, MessageParcel &reply) { return SetMDMPolicyInner(data, reply); }, true};
     requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::GET_MDM_POLICY)] = {
-        [this](MessageParcel &data, MessageParcel &reply) { return GetMDMPolicyInner(data, reply); }};
+        [this](MessageParcel &data, MessageParcel &reply) { return GetMDMPolicyInner(data, reply); }, true};
     requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::REMOVE_MDM_POLICY)] = {
-        [this](MessageParcel &data, MessageParcel &reply) { return RemoveMDMPolicyInner(data, reply); }};
+        [this](MessageParcel &data, MessageParcel &reply) { return RemoveMDMPolicyInner(data, reply); }, true};
 }
 
 void DlpPermissionStub::InitTimerFuncMap()
