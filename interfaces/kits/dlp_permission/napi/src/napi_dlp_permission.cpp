@@ -44,7 +44,6 @@ std::mutex g_lockForOpenDlpFileSubscriber;
 std::set<OpenDlpFileSubscriberContext*> g_openDlpFileSubscribers;
 RegisterDlpSandboxChangeInfo *g_dlpSandboxChangeInfoRegister = nullptr;
 const std::string PERMISSION_ACCESS_DLP_FILE = "ohos.permission.ACCESS_DLP_FILE";
-const Security::AccessToken::AccessTokenID CRED_HAP_TOKEN_ID = 537573304;
 static thread_local napi_ref dlpFileRef_;
 const std::string DLP_FILE_CLASS_NAME = "dlpFile";
 }  // namespace
@@ -52,10 +51,6 @@ const std::string DLP_FILE_CLASS_NAME = "dlpFile";
 static bool CheckPermission(napi_env env, const std::string& permission)
 {
     Security::AccessToken::AccessTokenID selfToken = GetSelfTokenID();
-    if (selfToken == CRED_HAP_TOKEN_ID) {
-        DLP_LOG_INFO(LABEL, "Check permission %{public}s pass, because authenticated hap.", permission.c_str());
-        return true;
-    }
     int res = Security::AccessToken::AccessTokenKit::VerifyAccessToken(selfToken, permission);
     if (res == Security::AccessToken::PermissionState::PERMISSION_GRANTED) {
         DLP_LOG_INFO(LABEL, "Check permission %{public}s pass", permission.c_str());
@@ -768,9 +763,6 @@ void NapiDlpPermission::RecoverDlpFileComplete(napi_env env, napi_status status,
 napi_value NapiDlpPermission::CloseDlpFile(napi_env env, napi_callback_info cbInfo)
 {
     if (!IsSystemApp(env)) {
-        return nullptr;
-    }
-    if (!CheckPermission(env, PERMISSION_ACCESS_DLP_FILE)) {
         return nullptr;
     }
     auto* asyncContext = new (std::nothrow) CloseDlpFileAsyncContext(env);
