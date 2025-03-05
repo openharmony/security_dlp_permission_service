@@ -23,6 +23,7 @@
 #include <vector>
 #include "ability_info.h"
 #include "accesstoken_kit.h"
+#include "base_obj.h"
 #include "dlp_file.h"
 #include "dlp_file_kits.h"
 #include "dlp_file_manager.h"
