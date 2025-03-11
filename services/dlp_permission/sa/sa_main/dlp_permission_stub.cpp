@@ -775,7 +775,7 @@ DlpPermissionStub::DlpPermissionStub()
     requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::REGISTER_OPEN_DLP_FILE_CALLBACK)] = {
         [this](MessageParcel &data, MessageParcel &reply) { return RegisterOpenDlpFileCallbackInner(data, reply); }};
     requestFuncMap_[static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::SET_READ_FLAG)] = {
-        [this](MessageParcel& data, MessageParcel& reply) { return SetReadFlagInner(data, reply); }};
+        [this](MessageParcel &data, MessageParcel &reply) { return SetReadFlagInner(data, reply); }};
     InitMDMPolicy();
     InitTimerFuncMap();
 }
