@@ -987,11 +987,18 @@ int32_t DlpFile::DoDlpContentCopyOperation(int32_t inFd, int32_t outFd, uint32_t
     return ret;
 }
 
-static int32_t GetFileSize(int32_t fd)
+static uint32_t GetFileSize(int32_t fd, uint32_t& fileLen)
 {
-    int32_t fileLen = lseek(fd, 0, SEEK_END);
+    int32_t ret = DLP_OK;
+    off_t readLen = lseek(fd, 0, SEEK_END);
+    if (readLen == static_cast<off_t>(-1) || readLen > UINT32_MAX) {
+        DLP_LOG_ERROR(LABEL, "get file size failed, %{public}s", strerror(errno));
+        ret = DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
+    } else {
+        fileLen = static_cast<uint32_t>(readLen);
+    }
     (void)lseek(fd, 0, SEEK_SET);
-    return fileLen;
+    return ret;
 }
 
 static void SetDlpGeneralInfo(bool accessFlag, std::string& contactAccount, const std::string& hmacStr,
@@ -1013,11 +1020,14 @@ int32_t DlpFile::GenEncData(int32_t inPlainFileFd)
     if (inPlainFileFd == -1) {
         encFile = open(DLP_OPENING_ENC_DATA.c_str(), O_RDWR);
     } else {
-        int32_t fileLen = GetFileSize(inPlainFileFd);
+        uint32_t fileLen = 0;
+        int32_t ret = GetFileSize(inPlainFileFd, fileLen);
+        CHECK_RET(ret, 0, DLP_PARSE_ERROR_FILE_OPERATE_FAIL, LABEL);
+
         OPEN_AND_CHECK(encFile, DLP_OPENING_ENC_DATA.c_str(), O_RDWR | O_CREAT | O_TRUNC,
             S_IRUSR | S_IWUSR, DLP_PARSE_ERROR_FILE_OPERATE_FAIL, LABEL);
         encDataFd_ = encFile;
-        int32_t ret = DoDlpContentCryptyOperation(inPlainFileFd, encFile, 0, fileLen, true);
+        ret = DoDlpContentCryptyOperation(inPlainFileFd, encFile, 0, fileLen, true);
         CHECK_RET(ret, 0, DLP_PARSE_ERROR_FILE_OPERATE_FAIL, LABEL);
         LSEEK_AND_CHECK(encFile, 0, SEEK_SET, DLP_PARSE_ERROR_FILE_OPERATE_FAIL, LABEL);
     }
@@ -1028,18 +1038,21 @@ int32_t DlpFile::GenerateHmacVal(int32_t encFile, struct DlpBlob& out)
 {
     lseek(encFile, 0, SEEK_SET);
     int32_t fd = dup(encFile);
-    int32_t fileLen = GetFileSize(fd);
+    uint32_t fileLen = 0;
+
+    int32_t ret = GetFileSize(fd, fileLen);
+    if (ret != DLP_OK) {
+        (void)close(fd);
+        DLP_LOG_ERROR(LABEL, "failed to get fileLen");
+        return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
+    }
     if (fileLen == 0) {
         (void)close(fd);
         CleanBlobParam(out);
         return DLP_OK;
-    } else if (fileLen < 0) {
-        (void)close(fd);
-        DLP_LOG_ERROR(LABEL, "fileLen less than 0");
-        return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
     }
 
-    int ret = DlpHmacEncode(cipher_.hmacKey, fd, out);
+    ret = DlpHmacEncode(cipher_.hmacKey, fd, out);
     (void)close(fd);
     return ret;
 }
@@ -1143,7 +1156,9 @@ int32_t DlpFile::GenFileInZip(int32_t inPlainFileFd)
     ret = AddGeneralInfoToBuff(encFile);
     CHECK_RET(ret, 0, DLP_PARSE_ERROR_FILE_OPERATE_FAIL, LABEL);
 
-    int32_t zipSize = GetFileSize(tmpFile);
+    uint32_t zipSize = 0;
+    ret = GetFileSize(tmpFile, zipSize);
+    CHECK_RET(ret, 0, DLP_PARSE_ERROR_FILE_OPERATE_FAIL, LABEL);
     LSEEK_AND_CHECK(dlpFd_, 0, SEEK_SET, DLP_PARSE_ERROR_FILE_OPERATE_FAIL, LABEL);
     ret = DoDlpContentCopyOperation(tmpFile, dlpFd_, 0, zipSize);
     CHECK_RET(ret, 0, DLP_PARSE_ERROR_FILE_OPERATE_FAIL, LABEL);
@@ -1157,10 +1172,6 @@ int32_t DlpFile::GenFileInZip(int32_t inPlainFileFd)
 int32_t DlpFile::GenFileInRaw(int32_t inPlainFileFd)
 {
     off_t fileLen = lseek(inPlainFileFd, 0, SEEK_END);
-    if (fileLen == static_cast<off_t>(-1) || fileLen > static_cast<off_t>(DLP_MAX_CONTENT_SIZE)) {
-        DLP_LOG_ERROR(LABEL, "inFd len is invalid, %{public}s", strerror(errno));
-        return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
-    }
     head_.txtSize = static_cast<uint32_t>(fileLen);
     DLP_LOG_DEBUG(LABEL, "fileLen %{private}u", head_.txtSize);
 
@@ -1209,6 +1220,13 @@ int32_t DlpFile::GenFile(int32_t inPlainFileFd)
         DLP_LOG_ERROR(LABEL, "params is error");
         return DLP_PARSE_ERROR_VALUE_INVALID;
     }
+
+    off_t fileLen = lseek(inPlainFileFd, 0, SEEK_END);
+    if (fileLen == static_cast<off_t>(-1) || fileLen > static_cast<off_t>(DLP_MAX_CONTENT_SIZE)) {
+        DLP_LOG_ERROR(LABEL, "inFd len is invalid, %{public}s", strerror(errno));
+        return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
+    }
+
     if (isZip_) {
         head_.txtOffset = 0;
         if (hmac_.size != 0) {
@@ -1241,8 +1259,10 @@ int32_t DlpFile::RemoveDlpPermissionInZip(int32_t outPlainFileFd)
         }
     });
 
-    int32_t fileSize = GetFileSize(encFd);
-    int32_t ret = DoDlpContentCryptyOperation(encFd, outPlainFileFd, 0, fileSize, false);
+    uint32_t fileSize = 0;
+    int32_t ret = GetFileSize(encFd, fileSize);
+    CHECK_RET(ret, 0, DLP_PARSE_ERROR_FILE_OPERATE_FAIL, LABEL);
+    ret = DoDlpContentCryptyOperation(encFd, outPlainFileFd, 0, fileSize, false);
     CHECK_RET(ret, 0, DLP_PARSE_ERROR_FILE_OPERATE_FAIL, LABEL);
 
     return DLP_OK;
