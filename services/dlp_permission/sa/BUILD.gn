@@ -60,6 +60,7 @@ ohos_static_library("dlp_permission_serializer_static") {
   part_name = "dlp_permission_service"
 
   include_dirs = [
+    "mock",
     "sa_common",
     "${dlp_root_dir}/interfaces/inner_api/dlp_permission/include",
     "${dlp_root_dir}/frameworks/common/include",
@@ -80,12 +81,6 @@ ohos_static_library("dlp_permission_serializer_static") {
     "json:nlohmann_json_static",
     "os_account:os_account_innerkits",
   ]
-
-  if (dlp_credential_enable == true) {
-    external_deps += [ "dlp_credential_service:dlp_credential_sdk" ]
-  } else {
-    include_dirs += [ "mock" ]
-  }
 }
 
 ohos_shared_library("dlp_permission_service") {
@@ -106,6 +101,7 @@ ohos_shared_library("dlp_permission_service") {
     "adapt_utils/file_manager",
     "callback/dlp_sandbox_change_callback",
     "callback/open_dlp_file_callback",
+    "mock",
     "sa_main",
     "sa_common",
     "storage/include",
@@ -139,6 +135,8 @@ ohos_shared_library("dlp_permission_service") {
     "callback/open_dlp_file_callback/open_dlp_file_callback_death_recipient.cpp",
     "callback/open_dlp_file_callback/open_dlp_file_callback_manager.cpp",
     "callback/open_dlp_file_callback/open_dlp_file_callback_proxy.cpp",
+    "mock/dlp_credential_service.c",
+    "mock/mock_utils.cpp",
     "sa_common/bundle_manager_adapter.cpp",
     "sa_main/dlp_credential.cpp",
     "sa_main/dlp_permission_async_proxy.cpp",
@@ -202,12 +200,5 @@ ohos_shared_library("dlp_permission_service") {
 
   if (dlp_credential_enable == true) {
     cflags_cc += [ "-DSUPPORT_DLP_CREDENTIAL" ]
-    external_deps += [ "dlp_credential_service:dlp_credential_sdk" ]
-  } else {
-    include_dirs += [ "mock" ]
-    sources += [
-      "mock/dlp_credential_service.c",
-      "mock/mock_utils.cpp",
-    ]
   }
 }

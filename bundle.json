@@ -38,7 +38,6 @@
         "bundle_framework",
         "file_api",
         "app_file_service",
-        "dlp_credential_service",
         "common_event_service",
         "init",
         "ability_base",
