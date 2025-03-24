@@ -889,21 +889,13 @@ bool FillDlpSandboxChangeInfo(const napi_env env, const napi_value *argv, const 
     registerSandboxChangeInfo.subscriber = std::make_shared<RegisterDlpSandboxChangeScopePtr>();
     registerSandboxChangeInfo.subscriber->SetEnv(env);
     registerSandboxChangeInfo.subscriber->SetCallbackRef(callback);
-    std::shared_ptr<RegisterDlpSandboxChangeScopePtr> *subscriber =
-        new (std::nothrow) std::shared_ptr<RegisterDlpSandboxChangeScopePtr>(registerSandboxChangeInfo.subscriber);
-    if (subscriber == nullptr) {
-        DLP_LOG_ERROR(LABEL, "failed to create subscriber");
-        return false;
-    }
     napi_wrap(
-        env, thisVar, reinterpret_cast<void *>(subscriber),
+        env, thisVar, reinterpret_cast<void *>(registerSandboxChangeInfo.subscriber.get()),
         [](napi_env nev, void *data, void *hint) {
             DLP_LOG_DEBUG(LABEL, "RegisterDlpSandboxChangeScopePtr delete");
-            std::shared_ptr<RegisterDlpSandboxChangeScopePtr> *subscriber =
-                static_cast<std::shared_ptr<RegisterDlpSandboxChangeScopePtr> *>(data);
-            if (subscriber != nullptr && *subscriber != nullptr) {
-                (*subscriber)->SetValid(false);
-                delete subscriber;
+            RegisterDlpSandboxChangeScopePtr *subscriber = static_cast<RegisterDlpSandboxChangeScopePtr*>(data);
+            if (subscriber != nullptr) {
+                subscriber->SetValid(false);
             }
         },
         nullptr, nullptr);
