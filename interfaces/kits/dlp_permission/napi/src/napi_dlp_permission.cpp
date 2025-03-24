@@ -1206,35 +1206,25 @@ napi_value NapiDlpPermission::SubscribeOpenDlpFile(const napi_env env, const nap
     syncContextPtr->subscriber = std::make_shared<OpenDlpFileSubscriberPtr>();
     syncContextPtr->subscriber->SetEnv(env);
     syncContextPtr->subscriber->SetCallbackRef(callback);
-    std::shared_ptr<OpenDlpFileSubscriberPtr>* subscriber =
-        new (std::nothrow) std::shared_ptr<OpenDlpFileSubscriberPtr>(syncContextPtr->subscriber);
-    if (subscriber == nullptr) {
-        DLP_LOG_ERROR(LABEL, "failed to create subscriber");
-        return nullptr;
-    }
 
     std::lock_guard<std::mutex> lock(g_lockForOpenDlpFileSubscriber);
     if (IsSubscribeExist(env, syncContext)) {
         DLP_LOG_ERROR(LABEL, "Subscribe failed. The current subscriber has been existed");
-        delete subscriber;
         return nullptr;
     }
     int32_t result = DlpPermissionKit::RegisterOpenDlpFileCallback(syncContextPtr->subscriber);
     if (result != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "RegisterSandboxChangeCallback failed");
-        delete subscriber;
         DlpNapiThrow(env, result);
         return nullptr;
     }
     napi_wrap(
-        env, thisVar, reinterpret_cast<void*>(subscriber),
+        env, thisVar, reinterpret_cast<void*>(syncContextPtr->subscriber.get()),
         [](napi_env nev, void* data, void* hint) {
             DLP_LOG_INFO(LABEL, "OpenDlpFileSubscriberPtr delete");
-            std::shared_ptr<OpenDlpFileSubscriberPtr>* subscriber =
-                static_cast<std::shared_ptr<OpenDlpFileSubscriberPtr>*>(data);
-            if (subscriber != nullptr && *subscriber != nullptr) {
-                (*subscriber)->SetValid(false);
-                delete subscriber;
+            OpenDlpFileSubscriberPtr* subscriber = static_cast<OpenDlpFileSubscriberPtr*>(data);
+            if (subscriber != nullptr) {
+                subscriber->SetValid(false);
             }
         },
         nullptr, nullptr);
