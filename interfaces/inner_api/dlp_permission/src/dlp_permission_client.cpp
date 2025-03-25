@@ -25,6 +25,8 @@
 #include "os_account_manager.h"
 #include "permission_policy.h"
 #include "token_setproc.h"
+#include "parameters.h"
+#include "param_wrapper.h"
 
 namespace OHOS {
 namespace Security {
@@ -35,6 +37,8 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_
 static const int32_t DLP_PERMISSION_LOAD_SA_TIMEOUT_MS = 4000;
 static const uint32_t MAX_CALLBACK_MAP_SIZE = 100;
 static const std::string GRANT_SENSITIVE_PERMISSIONS = "ohos.permission.GRANT_SENSITIVE_PERMISSIONS";
+static const std::string DLP_ENABLE = "const.dlp.dlp_enable";
+static const std::string TRUE_VALUE = "true";
 std::mutex g_instanceMutex;
 static constexpr int32_t DLP_PERMISSION_SERVICE_SA_ID = 3521;
 
@@ -72,6 +76,7 @@ DlpPermissionClient::~DlpPermissionClient()
 
 void DlpPermissionClient::CleanUpResource()
 {
+    DLP_LOG_INFO(LABEL, "start CleanUpResource.");
     std::unique_lock<std::mutex> lock(proxyMutex_);
     if (proxy_ == nullptr) {
         return;
@@ -81,13 +86,23 @@ void DlpPermissionClient::CleanUpResource()
         return;
     }
     if (serviceDeathObserver_ != nullptr) {
+        DLP_LOG_INFO(LABEL, "start removeDeathRecipient.");
         remoteObj->RemoveDeathRecipient(serviceDeathObserver_);
+        serviceDeathObserver_ = nullptr;
     }
+    DLP_LOG_INFO(LABEL, "CleanUpResource end.");
 }
 
 extern "C" __attribute__((destructor)) void CleanUp()
 {
+    DLP_LOG_INFO(LABEL, "start CleanUpResource with destructor.");
     DlpPermissionClient::GetInstance().CleanUpResource();
+}
+
+static bool IsFeatureProvidedWithDlp()
+{
+    std::string value = OHOS::system::GetParameter(DLP_ENABLE, "");
+    return (value == TRUE_VALUE);
 }
 
 int32_t DlpPermissionClient::GenerateDlpCertificate(
@@ -524,6 +539,10 @@ int32_t DlpPermissionClient::GetDLPFileVisitRecord(std::vector<VisitedDLPFileInf
 
 int32_t DlpPermissionClient::SetMDMPolicy(const std::vector<std::string>& appIdList)
 {
+    if (!IsFeatureProvidedWithDlp()) {
+        DLP_LOG_WARN(LABEL, "dlp not enable.");
+        return DLP_OK;
+    }
     auto proxy = GetProxy(true);
     if (proxy == nullptr) {
         DLP_LOG_ERROR(LABEL, "Proxy is null");
@@ -535,6 +554,10 @@ int32_t DlpPermissionClient::SetMDMPolicy(const std::vector<std::string>& appIdL
 
 int32_t DlpPermissionClient::GetMDMPolicy(std::vector<std::string>& appIdList)
 {
+    if (!IsFeatureProvidedWithDlp()) {
+        DLP_LOG_WARN(LABEL, "dlp not enable.");
+        return DLP_OK;
+    }
     auto proxy = GetProxy(true);
     if (proxy == nullptr) {
         DLP_LOG_ERROR(LABEL, "Proxy is null");
@@ -546,6 +569,10 @@ int32_t DlpPermissionClient::GetMDMPolicy(std::vector<std::string>& appIdList)
 
 int32_t DlpPermissionClient::RemoveMDMPolicy()
 {
+    if (!IsFeatureProvidedWithDlp()) {
+        DLP_LOG_WARN(LABEL, "dlp not enable.");
+        return DLP_OK;
+    }
     auto proxy = GetProxy(true);
     if (proxy == nullptr) {
         DLP_LOG_ERROR(LABEL, "Proxy is null");
