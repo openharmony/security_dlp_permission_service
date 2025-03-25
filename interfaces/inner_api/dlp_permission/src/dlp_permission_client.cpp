@@ -25,6 +25,8 @@
 #include "os_account_manager.h"
 #include "permission_policy.h"
 #include "token_setproc.h"
+#include "parameters.h"
+#include "param_wrapper.h"
 
 namespace OHOS {
 namespace Security {

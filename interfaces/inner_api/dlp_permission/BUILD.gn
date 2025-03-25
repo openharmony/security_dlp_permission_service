@@ -110,6 +110,7 @@ ohos_shared_library("libdlp_permission_sdk") {
     "access_token:libtokensetproc_shared",
     "c_utils:utils",
     "hilog:libhilog",
+    "init:libbegetutil",
     "ipc:ipc_core",
     "os_account:os_account_innerkits",
     "samgr:samgr_proxy",
