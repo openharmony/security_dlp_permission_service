@@ -77,6 +77,7 @@ const std::string DLP_MANAGER_APP = "com.ohos.dlpmanager";
 const std::string TEST_URI = "datashare:///media/file/8";
 const std::string TEST_UNEXIST_URI = "datashare:///media/file/1";
 static const std::string DLP_ENABEL = "const.dlp.dlp_enable";
+static const std::string TRUE_VALUE = "true";
 static const uint8_t ARRAY_CHAR_SIZE = 62;
 static const char CHAR_ARRAY[] = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 }  // namespace
@@ -306,6 +307,12 @@ static int32_t TestGenerateDlpCertWithInvalidParam(GeneratePolicyParam param)
     std::vector<uint8_t> cert;
     int32_t res = DlpPermissionKit::GenerateDlpCertificate(encPolicy, cert);
     return res;
+}
+
+static bool IsFeatureProvidedWithDlp()
+{
+    std::string value = OHOS::system::GetParameter(DLP_ENABEL, "");
+    return (value == TRUE_VALUE);
 }
 
 /**
@@ -1316,6 +1323,9 @@ HWTEST_F(DlpPermissionKitTest, SetSandboxAppConfig001, TestSize.Level1)
  */
 HWTEST_F(DlpPermissionKitTest, SetMDMPolicy001, TestSize.Level1)
 {
+    if (!IsFeatureProvidedWithDlp()) {
+        return;
+    }
     seteuid(1000);
     std::vector<std::string> appIdList;
     ASSERT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, DlpPermissionKit::SetMDMPolicy(appIdList));
@@ -1349,6 +1359,9 @@ HWTEST_F(DlpPermissionKitTest, SetMDMPolicy001, TestSize.Level1)
  */
 HWTEST_F(DlpPermissionKitTest, GetMDMPolicy001, TestSize.Level1)
 {
+    if (!IsFeatureProvidedWithDlp()) {
+        return;
+    }
     seteuid(1000);
     std::vector<std::string> appIdList;
     ASSERT_EQ(DLP_SERVICE_ERROR_PERMISSION_DENY, DlpPermissionKit::GetMDMPolicy(appIdList));
@@ -1365,6 +1378,9 @@ HWTEST_F(DlpPermissionKitTest, GetMDMPolicy001, TestSize.Level1)
  */
 HWTEST_F(DlpPermissionKitTest, RemoveMDMPolicy001, TestSize.Level1)
 {
+    if (!IsFeatureProvidedWithDlp()) {
+        return;
+    }
     seteuid(1000);
     ASSERT_EQ(DLP_SERVICE_ERROR_PERMISSION_DENY, DlpPermissionKit::RemoveMDMPolicy());
     seteuid(3057);
