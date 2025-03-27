@@ -16,6 +16,7 @@
 #include "dlp_credential.h"
 #include <thread>
 #include <unistd.h>
+#include <dlfcn.h>
 #include <unordered_map>
 #include "account_adapt.h"
 #include "bundle_manager_adapter.h"
@@ -50,6 +51,24 @@ static std::unordered_map<uint64_t, DlpAccountType> g_requestAccountTypeMap;
 static const std::string DEVELOPER_MODE = "const.security.developermode.state";
 std::mutex g_lockRequest;
 std::mutex g_instanceMutex;
+
+#ifdef SUPPORT_DLP_CREDENTIAL
+static const size_t LENGTH_FOR_64_BIT = 8;
+static const std::string DLP_CREDENTIAL_SDK_PATH_32_BIT = "/system/lib/libdlp_credential_sdk.z.so";
+static const std::string DLP_CREDENTIAL_SDK_PATH_64_BIT = "/system/lib64/libdlp_credential_sdk.z.so";
+
+typedef int32_t (*DlpAddPolicyFunction)(PolicyType type, const uint8_t *policy, uint32_t policyLen);
+typedef int32_t (*DlpRemovePolicyFunction)(PolicyType type);
+typedef int32_t (*DlpGetPolicyFunction)(PolicyType type, uint8_t *policy, uint32_t *policyLen);
+typedef int32_t (*DlpCheckPermissionFunction)(PolicyType type, PolicyHandle handle);
+typedef int32_t (*DlpPackPolicyFunction)(uint32_t osAccountId, const DLP_PackPolicyParams *params,
+    DLP_PackPolicyCallback callback, uint64_t *requestId);
+typedef int32_t (*DlpRestorePolicyFunction)(uint32_t osAccountId, const DLP_EncPolicyData *params,
+    DLP_RestorePolicyCallback callback, uint64_t *requestId);
+
+static void *g_dlpCredentialSdkHandle = nullptr;
+std::mutex g_lockDlpCredSdk;
+#endif
 }  // namespace
 
 static bool IsDlpCredentialHuksError(int errorCode)
@@ -359,14 +378,70 @@ static void FreeDlpPackPolicyParams(DLP_PackPolicyParams& packPolicy)
     }
 }
 
-DlpCredential::DlpCredential()
-{}
+#ifdef SUPPORT_DLP_CREDENTIAL
+static void *GetDlpCredSdkLibFunc(const char *funcName)
+{
+    std::lock_guard<std::mutex> lock(g_lockDlpCredSdk);
+    if (g_dlpCredentialSdkHandle == nullptr) {
+        if (sizeof(void *) == LENGTH_FOR_64_BIT) {
+            g_dlpCredentialSdkHandle = dlopen(DLP_CREDENTIAL_SDK_PATH_64_BIT.c_str(), RTLD_LAZY);
+        } else {
+            g_dlpCredentialSdkHandle = dlopen(DLP_CREDENTIAL_SDK_PATH_32_BIT.c_str(), RTLD_LAZY);
+        }
+        if (g_dlpCredentialSdkHandle == nullptr) {
+            return nullptr;
+        }
+    }
+
+    void *func = dlsym(g_dlpCredentialSdkHandle, funcName);
+    return func;
+}
+
+static void DestroyDlpCredentialSdk()
+{
+    DLP_LOG_INFO(LABEL, "start DestroyDlpCredentialSdk.");
+    std::lock_guard<std::mutex> lock(g_lockDlpCredSdk);
+    if (g_dlpCredentialSdkHandle != nullptr) {
+        dlclose(g_dlpCredentialSdkHandle);
+        g_dlpCredentialSdkHandle = nullptr;
+        DLP_LOG_INFO(LABEL, "dlclose dlpCredentialSdk end.");
+    }
+}
+#endif
+
+DlpCredential::DlpCredential() {}
+
+DlpCredential::~DlpCredential()
+{
+#ifdef SUPPORT_DLP_CREDENTIAL
+    DestroyDlpCredentialSdk();
+#endif
+}
+
+#ifdef SUPPORT_DLP_CREDENTIAL
+extern "C" __attribute__((destructor)) void CleanupDlpCredentialSdk()
+{
+    DestroyDlpCredentialSdk();
+}
+#endif
 
 static int32_t PackPolicy(DLP_PackPolicyParams &packPolicy, DlpAccountType accountType,
     const sptr<IDlpPermissionCallback>& callback)
 {
     uint64_t requestId;
+
+#ifdef SUPPORT_DLP_CREDENTIAL
+    DlpPackPolicyFunction dlpPackPolicyFunc =
+        reinterpret_cast<DlpPackPolicyFunction>(GetDlpCredSdkLibFunc("DLP_PackPolicy"));
+    if (dlpPackPolicyFunc == nullptr) {
+        DLP_LOG_ERROR(LABEL, "dlsym DLP_PackPolicy error.");
+        DestroyDlpCredentialSdk();
+        return DLP_SERVICE_ERROR_VALUE_INVALID;
+    }
+    int32_t res = (*dlpPackPolicyFunc)(GetCallingUserId(), &packPolicy, DlpPackPolicyCallback, &requestId);
+#else
     int32_t res = DLP_PackPolicy(GetCallingUserId(), &packPolicy, DlpPackPolicyCallback, &requestId);
+#endif
     if (res != 0) {
         DLP_LOG_ERROR(LABEL, "Start request fail, error: %{public}d", res);
         return ConvertCredentialError(res);
@@ -569,7 +644,18 @@ static int32_t RestorePolicy(DLP_EncPolicyData &encPolicy, AppExecFwk::Applicati
     const sptr<IDlpPermissionCallback>& callback, DlpAccountType accountType)
 {
     uint64_t requestId;
+#ifdef SUPPORT_DLP_CREDENTIAL
+    DlpRestorePolicyFunction dlpRestorePolicyFunc =
+        reinterpret_cast<DlpRestorePolicyFunction>(GetDlpCredSdkLibFunc("DLP_RestorePolicy"));
+    if (dlpRestorePolicyFunc == nullptr) {
+        DLP_LOG_ERROR(LABEL, "dlsym DLP_RestorePolicy error.");
+        DestroyDlpCredentialSdk();
+        return DLP_SERVICE_ERROR_VALUE_INVALID;
+    }
+    int32_t res = (*dlpRestorePolicyFunc)(GetCallingUserId(), &encPolicy, DlpRestorePolicyCallback, &requestId);
+#else
     int32_t res = DLP_RestorePolicy(GetCallingUserId(), &encPolicy, DlpRestorePolicyCallback, &requestId);
+#endif
     if (res != 0) {
         DLP_LOG_ERROR(LABEL, "Start request fail, error: %{public}d", res);
         return ConvertCredentialError(res);
@@ -736,7 +822,19 @@ int32_t DlpCredential::SetMDMPolicy(const std::vector<std::string>& appIdList)
         delete[] policy;
         return policyLen;
     }
+
+#ifdef SUPPORT_DLP_CREDENTIAL
+    DlpAddPolicyFunction dlpAddPolicyFunc =
+        reinterpret_cast<DlpAddPolicyFunction>(GetDlpCredSdkLibFunc("DLP_AddPolicy"));
+    if (dlpAddPolicyFunc == nullptr) {
+        DLP_LOG_ERROR(LABEL, "dlsym DLP_AddPolicy error.");
+        DestroyDlpCredentialSdk();
+        return DLP_SERVICE_ERROR_VALUE_INVALID;
+    }
+    res = (*dlpAddPolicyFunc)(PolicyType::AUTHORIZED_APPLICATION_LIST, policy, policyLen);
+#else
     res = DLP_AddPolicy(PolicyType::AUTHORIZED_APPLICATION_LIST, policy, policyLen);
+#endif
     if (res != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "SetMDMPolicy request fail, error: %{public}d", res);
     }
@@ -752,7 +850,18 @@ int32_t DlpCredential::GetMDMPolicy(std::vector<std::string>& appIdList)
         DLP_LOG_WARN(LABEL, "alloc policy failed.");
         return DLP_CREDENTIAL_ERROR_MEMORY_OPERATE_FAIL;
     }
+#ifdef SUPPORT_DLP_CREDENTIAL
+    DlpGetPolicyFunction dlpGetPolicyFunc =
+        reinterpret_cast<DlpGetPolicyFunction>(GetDlpCredSdkLibFunc("DLP_GetPolicy"));
+    if (dlpGetPolicyFunc == nullptr) {
+        DLP_LOG_ERROR(LABEL, "dlsym DLP_GetPolicy error.");
+        DestroyDlpCredentialSdk();
+        return DLP_SERVICE_ERROR_VALUE_INVALID;
+    }
+    int32_t res = (*dlpGetPolicyFunc)(PolicyType::AUTHORIZED_APPLICATION_LIST, policy, &policyLen);
+#else
     int32_t res = DLP_GetPolicy(PolicyType::AUTHORIZED_APPLICATION_LIST, policy, &policyLen);
+#endif
     if (res != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "GetMDMPolicy request fail, error: %{public}d", res);
         delete[] policy;
@@ -773,7 +882,18 @@ int32_t DlpCredential::GetMDMPolicy(std::vector<std::string>& appIdList)
 
 int32_t DlpCredential::RemoveMDMPolicy()
 {
+#ifdef SUPPORT_DLP_CREDENTIAL
+    DlpRemovePolicyFunction dlpRemovePolicyFunc =
+        reinterpret_cast<DlpRemovePolicyFunction>(GetDlpCredSdkLibFunc("DLP_RemovePolicy"));
+    if (dlpRemovePolicyFunc == nullptr) {
+        DLP_LOG_ERROR(LABEL, "dlsym DLP_RemovePolicy error.");
+        DestroyDlpCredentialSdk();
+        return DLP_SERVICE_ERROR_VALUE_INVALID;
+    }
+    int32_t res = (*dlpRemovePolicyFunc)(PolicyType::AUTHORIZED_APPLICATION_LIST);
+#else
     int32_t res = DLP_RemovePolicy(PolicyType::AUTHORIZED_APPLICATION_LIST);
+#endif
     if (res != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "RemoveMDMPolicy request fail, error: %{public}d", res);
     }
@@ -794,7 +914,18 @@ int32_t DlpCredential::CheckMdmPermission(const std::string& bundleName, int32_t
         DLP_LOG_ERROR(LABEL, "Strdup failed.");
         return DLP_CREDENTIAL_ERROR_SERVER_ERROR;
     }
+#ifdef SUPPORT_DLP_CREDENTIAL
+    DlpCheckPermissionFunction dlpCheckPermissionFunc =
+        reinterpret_cast<DlpCheckPermissionFunction>(GetDlpCredSdkLibFunc("DLP_CheckPermission"));
+    if (dlpCheckPermissionFunc == nullptr) {
+        DLP_LOG_ERROR(LABEL, "dlsym DLP_CheckPermission error.");
+        DestroyDlpCredentialSdk();
+        return DLP_SERVICE_ERROR_VALUE_INVALID;
+    }
+    int32_t res = (*dlpCheckPermissionFunc)(PolicyType::AUTHORIZED_APPLICATION_LIST, handle);
+#else
     int32_t res = DLP_CheckPermission(PolicyType::AUTHORIZED_APPLICATION_LIST, handle);
+#endif
     if (res != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "DLP_CheckPermission error:%{public}d", res);
         res = DLP_CREDENTIAL_ERROR_APPID_NOT_AUTHORIZED;

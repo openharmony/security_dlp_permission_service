@@ -36,7 +36,7 @@ typedef struct RequestInfo {
 class DlpCredential {
 public:
     DlpCredential();
-    ~DlpCredential() {};
+    ~DlpCredential();
     static DlpCredential& GetInstance();
     int32_t GenerateDlpCertificate(
         const std::string& policy, const std::string& accountInfo, DlpAccountType accountType,
