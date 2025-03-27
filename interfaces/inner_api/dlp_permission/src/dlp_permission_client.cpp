@@ -90,6 +90,7 @@ void DlpPermissionClient::CleanUpResource()
         remoteObj->RemoveDeathRecipient(serviceDeathObserver_);
         serviceDeathObserver_ = nullptr;
     }
+    proxy_ = nullptr;
     DLP_LOG_INFO(LABEL, "CleanUpResource end.");
 }
 
