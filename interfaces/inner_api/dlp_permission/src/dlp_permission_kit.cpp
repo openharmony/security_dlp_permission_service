@@ -209,7 +209,6 @@ int32_t DlpPermissionKit::SetMDMPolicy(const std::vector<std::string>& appIdList
     int32_t res = DlpPermissionClient::GetInstance().SetMDMPolicy(appIdList);
     DlpPermissionClient::GetInstance().CleanUpResource();
     return res;
-
 }
 
 int32_t DlpPermissionKit::GetMDMPolicy(std::vector<std::string>& appIdList)
