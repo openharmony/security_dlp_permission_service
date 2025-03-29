@@ -36,16 +36,16 @@ const std::string DLP_MANAGER_BUNDLENAME = "com.ohos.dlpmanager";
 const std::string DLP_MANAGER_ABILITYNAME = "MainAbilityEx";
 const std::string ON_OFF_SANDBOX = "uninstallDLPSandbox";
 
-static constexpr size_t ACCOUNT_STR_LIMIT = 255;
-static constexpr size_t APPID_STR_LOWER_LIMIT = 140;
-static constexpr size_t APPID_STR_UPPER_LIMIT = 261;
-static constexpr size_t BUNDLENAME_STR_LOWER_LIMIT = 7;
-static constexpr size_t BUNDLENAME_STR_UPPER_LIMIT = 128;
-static constexpr size_t CONFIGINFO_STR_LIMIT = 4 * 1024 * 1024;
-static constexpr size_t ERR_CONT_STR_LMT = 4095;
-static constexpr size_t FILENAME_STR_LIMIT = 255;
-static constexpr size_t TYPE_STR_LIMIT = 63;
-static constexpr size_t URI_STR_LIMIT = 4095;
+static constexpr size_t MAX_ACCOUNT_LEN = 255;
+static constexpr size_t MIN_APPID_LEN = 8;
+static constexpr size_t MAX_APPID_LEN = 261;
+static constexpr size_t MIN_BUNDLENAME_LEN = 7;
+static constexpr size_t MAX_BUNDLENAME_LEN = 128;
+static constexpr size_t MAX_CONFIGINFO_LEN = 4 * 1024 * 1024;
+static constexpr size_t MAX_ERRCONTACTER_LEN = 4095;
+static constexpr size_t MAX_FILENAME_LEN = 255;
+static constexpr size_t MAX_TYPE_LEN = 63;
+static constexpr size_t MAX_URI_LEN = 4095;
 
 static bool ConvertDlpSandboxChangeInfo(napi_env env, napi_value value, const DlpSandboxCallbackInfo &result)
 {
@@ -460,7 +460,7 @@ void ProcessCallbackOrPromise(napi_env env, const CommonAsyncContext* asyncConte
         if (data != nullptr && (asyncContext->errCode == DLP_CREDENTIAL_ERROR_NO_PERMISSION_ERROR ||
             asyncContext->errCode == DLP_CREDENTIAL_ERROR_TIME_EXPIRED)) {
             std::string errContacter;
-            if (!GetStringValue(env, data, errContacter, ERR_CONT_STR_LMT)) {
+            if (!GetStringValue(env, data, errContacter, MAX_ERRCONTACTER_LEN)) {
                 DLP_LOG_ERROR(LABEL, "js get contacter data fail");
                 ThrowParamError(env, "contacter data", "string");
                 return ;
@@ -568,7 +568,7 @@ bool GetOpenDlpFileParams(const napi_env env, const napi_callback_info info, Dlp
         return false;
     }
 
-    if (!GetStringValue(env, argv[PARAM1], asyncContext.appId, APPID_STR_UPPER_LIMIT, APPID_STR_LOWER_LIMIT)) {
+    if (!GetStringValue(env, argv[PARAM1], asyncContext.appId, MAX_APPID_LEN, MIN_APPID_LEN)) {
         DLP_LOG_ERROR(LABEL, "js get appId fail");
         ThrowParamError(env, "appId", "string");
         return false;
@@ -638,7 +638,7 @@ bool GetDlpLinkFileParams(const napi_env env, const napi_callback_info info, Dlp
         return false;
     }
 
-    if (!GetStringValue(env, argv[PARAM0], asyncContext.linkFileName, FILENAME_STR_LIMIT)) {
+    if (!GetStringValue(env, argv[PARAM0], asyncContext.linkFileName, MAX_FILENAME_LEN)) {
         DLP_LOG_ERROR(LABEL, "linkFileName is invalid");
         ThrowParamError(env, "linkFileName", "string");
         return false;
@@ -762,7 +762,7 @@ bool GetInstallDlpSandboxParams(const napi_env env, const napi_callback_info inf
         return false;
     }
 
-    if (!GetStringValue(env, argv[PARAM0], asyncContext.bundleName, BUNDLENAME_STR_UPPER_LIMIT, BUNDLENAME_STR_LOWER_LIMIT)) {
+    if (!GetStringValue(env, argv[PARAM0], asyncContext.bundleName, MAX_BUNDLENAME_LEN, MIN_BUNDLENAME_LEN)) {
         DLP_LOG_ERROR(LABEL, "js get bundle name fail");
         ThrowParamError(env, "bundleName", "string");
         return false;
@@ -780,7 +780,7 @@ bool GetInstallDlpSandboxParams(const napi_env env, const napi_callback_info inf
         return false;
     }
     asyncContext.userId = static_cast<int32_t>(res);
-    if (!GetStringValue(env, argv[PARAM3], asyncContext.uri, URI_STR_LIMIT)) {
+    if (!GetStringValue(env, argv[PARAM3], asyncContext.uri, MAX_URI_LEN)) {
         DLP_LOG_ERROR(LABEL, "js get uri fail");
         ThrowParamError(env, "uri", "string");
         return false;
@@ -809,7 +809,7 @@ bool GetUninstallDlpSandboxParams(
         return false;
     }
 
-    if (!GetStringValue(env, argv[PARAM0], asyncContext.bundleName, BUNDLENAME_STR_UPPER_LIMIT, BUNDLENAME_STR_LOWER_LIMIT)) {
+    if (!GetStringValue(env, argv[PARAM0], asyncContext.bundleName, MAX_BUNDLENAME_LEN, MIN_BUNDLENAME_LEN)) {
         DLP_LOG_ERROR(LABEL, "js get bundle name fail");
         ThrowParamError(env, "bundleName", "string");
         return false;
@@ -865,7 +865,7 @@ bool ParseInputToRegister(const napi_env env, const napi_callback_info cbInfo,
     }
     // 0: the first parameter of argv
     std::string type;
-    if (!GetStringValue(env, argv[0], type, TYPE_STR_LIMIT)) {
+    if (!GetStringValue(env, argv[0], type, MAX_TYPE_LEN)) {
         ThrowParamError(env, "type", "string");
         return false;
     }
@@ -925,7 +925,7 @@ bool GetUnregisterSandboxParams(const napi_env env, const napi_callback_info inf
         return false;
     }
 
-    if (!GetStringValue(env, argv[PARAM0], asyncContext.changeType, TYPE_STR_LIMIT)) {
+    if (!GetStringValue(env, argv[PARAM0], asyncContext.changeType, MAX_TYPE_LEN)) {
         DLP_LOG_ERROR(LABEL, "js get changeType fail");
         ThrowParamError(env, "changeType", "string");
         return false;
@@ -978,14 +978,14 @@ bool GetRetentionSandboxListParams(const napi_env env, const napi_callback_info 
             ThrowParamError(env, "callback", "function");
             return false;
         }
-        if (!GetStringValue(env, argv[PARAM0], asyncContext.bundleName, BUNDLENAME_STR_UPPER_LIMIT, BUNDLENAME_STR_LOWER_LIMIT)) {
+        if (!GetStringValue(env, argv[PARAM0], asyncContext.bundleName, MAX_BUNDLENAME_LEN, MIN_BUNDLENAME_LEN)) {
             DLP_LOG_ERROR(LABEL, "js get bundle name fail");
             ThrowParamError(env, "bundleName", "string");
             return false;
         }
     }
     if (argc == PARAM_SIZE_ONE) {
-        if (!GetStringValue(env, argv[PARAM0], asyncContext.bundleName, BUNDLENAME_STR_UPPER_LIMIT, BUNDLENAME_STR_LOWER_LIMIT) &&
+        if (!GetStringValue(env, argv[PARAM0], asyncContext.bundleName, MAX_BUNDLENAME_LEN, MIN_BUNDLENAME_LEN) &&
             !ParseCallback(env, argv[PARAM0], asyncContext.callbackRef)) {
             DLP_LOG_ERROR(LABEL, "js get bundle name or callback fail");
             ThrowParamError(env, "bundleName or callback", "string or function");
@@ -1003,7 +1003,7 @@ bool GetOriginalFilenameParams(const napi_env env, const napi_callback_info info
     NAPI_CALL_BASE(env, napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr), false);
 
     if (argc == PARAM_SIZE_ONE) {
-        if (!GetStringValue(env, argv[PARAM0], asyncContext.dlpFilename, FILENAME_STR_LIMIT)) {
+        if (!GetStringValue(env, argv[PARAM0], asyncContext.dlpFilename, MAX_FILENAME_LEN)) {
             ThrowParamError(env, "fileName", "string");
             return false;
         }
@@ -1032,7 +1032,7 @@ bool GetSandboxAppConfigParams(const napi_env env, const napi_callback_info info
     if (!NapiCheckArgc(env, argc, PARAM_SIZE_ONE)) {
         return false;
     }
-    if (!GetStringValue(env, argv[PARAM0], asyncContext->configInfo, CONFIGINFO_STR_LIMIT)) {
+    if (!GetStringValue(env, argv[PARAM0], asyncContext->configInfo, MAX_CONFIGINFO_LEN)) {
         ThrowParamError(env, "config", "string");
         return false;
     }
@@ -1071,11 +1071,11 @@ void GetDlpPropertyExpireTime(napi_env env, napi_value jsObject, DlpProperty& pr
 
 bool GetDlpProperty(napi_env env, napi_value jsObject, DlpProperty& property)
 {
-    if (!GetStringValueByKey(env, jsObject, "ownerAccount", property.ownerAccount, ACCOUNT_STR_LIMIT)) {
+    if (!GetStringValueByKey(env, jsObject, "ownerAccount", property.ownerAccount, MAX_ACCOUNT_LEN)) {
         DLP_LOG_ERROR(LABEL, "js get owner account fail");
         return false;
     }
-    if (!GetStringValueByKey(env, jsObject, "ownerAccountID", property.ownerAccountId, ACCOUNT_STR_LIMIT)) {
+    if (!GetStringValueByKey(env, jsObject, "ownerAccountID", property.ownerAccountId, MAX_ACCOUNT_LEN)) {
         DLP_LOG_ERROR(LABEL, "js get owner accountId fail");
         return false;
     }
@@ -1092,7 +1092,7 @@ bool GetDlpProperty(napi_env env, napi_value jsObject, DlpProperty& property)
             return false;
         }
     }
-    if (!GetStringValueByKey(env, jsObject, "contactAccount", property.contactAccount, ACCOUNT_STR_LIMIT)) {
+    if (!GetStringValueByKey(env, jsObject, "contactAccount", property.contactAccount, MAX_ACCOUNT_LEN)) {
         DLP_LOG_ERROR(LABEL, "js get contact account fail");
         return false;
     }
@@ -1485,7 +1485,7 @@ bool GetVectorAuthUser(napi_env env, napi_value jsObject, std::vector<AuthUserIn
         napi_value obj;
         NAPI_CALL_BASE(env, napi_get_element(env, jsObject, i, &obj), false);
         AuthUserInfo userInfo;
-        if (!GetStringValueByKey(env, obj, "authAccount", userInfo.authAccount, ACCOUNT_STR_LIMIT)) {
+        if (!GetStringValueByKey(env, obj, "authAccount", userInfo.authAccount, MAX_ACCOUNT_LEN)) {
             DLP_LOG_ERROR(LABEL, "js get auth account fail");
             resultVec.clear();
             return false;
@@ -1545,7 +1545,7 @@ bool GetVectorDocUriByKey(napi_env env, napi_value jsObject, const std::string& 
         napi_value obj;
         NAPI_CALL_BASE(env, napi_get_element(env, jsObject, i, &obj), false);
         std::string docUri;
-        if (!GetStringValue(env, obj, docUri, URI_STR_LIMIT)) {
+        if (!GetStringValue(env, obj, docUri, MAX_URI_LEN)) {
             DLP_LOG_ERROR(LABEL, "js get docUri fail");
             ThrowParamError(env, "docUri", "string");
             return false;
@@ -1610,7 +1610,7 @@ bool ParseWantReq(napi_env env, const napi_value& obj, OHOS::AAFwk::Want& reques
 {
     requestWant.SetElementName(DLP_MANAGER_BUNDLENAME, DLP_MANAGER_ABILITYNAME);
     std::string uri;
-    bool ret = GetStringValueByKey(env, obj, "uri", uri, URI_STR_LIMIT);
+    bool ret = GetStringValueByKey(env, obj, "uri", uri, MAX_URI_LEN);
     if (!ret || uri.empty()) {
         DLP_LOG_ERROR(LABEL, "get uri failed");
         DlpNapiThrow(env, ERR_JS_URI_NOT_EXIST, "uri not exist in want");
@@ -1641,7 +1641,7 @@ bool ParseWantReq(napi_env env, const napi_value& obj, OHOS::AAFwk::Want& reques
     if (result == napi_ok && ret) {
         napi_value linkFileName = GetNapiValue(env, wantParameters, "linkFileName");
         std::string linkFileNameStr;
-        ret = GetStringValueByKey(env, linkFileName, "name", linkFileNameStr, FILENAME_STR_LIMIT);
+        ret = GetStringValueByKey(env, linkFileName, "name", linkFileNameStr, MAX_FILENAME_LEN);
         if (ret && !linkFileNameStr.empty()) {
             AAFwk::WantParams linkFileNameObj;
             linkFileNameObj.SetParam("name", AAFwk::String::Box(linkFileNameStr));
