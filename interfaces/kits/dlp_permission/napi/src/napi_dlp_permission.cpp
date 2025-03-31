@@ -1305,7 +1305,6 @@ napi_value NapiDlpPermission::UnSubscribeOpenDlpFile(const napi_env env, napi_re
             break;
         }
     }
-    syncContextPtr.release();
     return nullptr;
 }
 
