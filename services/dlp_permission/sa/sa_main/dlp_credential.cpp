@@ -829,6 +829,7 @@ int32_t DlpCredential::SetMDMPolicy(const std::vector<std::string>& appIdList)
     if (dlpAddPolicyFunc == nullptr) {
         DLP_LOG_ERROR(LABEL, "dlsym DLP_AddPolicy error.");
         DestroyDlpCredentialSdk();
+        delete[] policy;
         return DLP_SERVICE_ERROR_VALUE_INVALID;
     }
     res = (*dlpAddPolicyFunc)(PolicyType::AUTHORIZED_APPLICATION_LIST, policy, policyLen);
@@ -856,6 +857,7 @@ int32_t DlpCredential::GetMDMPolicy(std::vector<std::string>& appIdList)
     if (dlpGetPolicyFunc == nullptr) {
         DLP_LOG_ERROR(LABEL, "dlsym DLP_GetPolicy error.");
         DestroyDlpCredentialSdk();
+        delete[] policy;
         return DLP_SERVICE_ERROR_VALUE_INVALID;
     }
     int32_t res = (*dlpGetPolicyFunc)(PolicyType::AUTHORIZED_APPLICATION_LIST, policy, &policyLen);
