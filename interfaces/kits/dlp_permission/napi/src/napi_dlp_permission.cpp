@@ -1268,12 +1268,6 @@ napi_value NapiDlpPermission::Subscribe(napi_env env, napi_callback_info cbInfo)
 
 napi_value NapiDlpPermission::UnSubscribeOpenDlpFile(const napi_env env, napi_ref& callback)
 {
-    std::unique_ptr<OpenDlpFileUnSubscriberContext> syncContextPtr = 
-        std::make_unique<OpenDlpFileUnSubscriberContext>(env);
-    if (syncContextPtr == nullptr) {
-        DLP_LOG_ERROR(LABEL, "insufficient memory for syncContext!");
-        return nullptr;
-    }
     std::lock_guard<std::mutex> lock(g_lockForOpenDlpFileSubscriber);
     if (callback == nullptr) {
         auto iter = g_openDlpFileSubscribers.begin();
