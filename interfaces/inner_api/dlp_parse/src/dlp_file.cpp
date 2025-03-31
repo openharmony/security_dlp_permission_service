@@ -987,15 +987,15 @@ int32_t DlpFile::DoDlpContentCopyOperation(int32_t inFd, int32_t outFd, uint32_t
     return ret;
 }
 
-static uint32_t GetFileSize(int32_t fd, uint32_t& fileLen)
+static int32_t GetFileSize(int32_t fd, uint32_t& fileLen)
 {
-    int32_t ret = DLP_OK;
+    int32_t ret = DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
     off_t readLen = lseek(fd, 0, SEEK_END);
     if (readLen == static_cast<off_t>(-1) || readLen > UINT32_MAX) {
         DLP_LOG_ERROR(LABEL, "get file size failed, %{public}s", strerror(errno));
-        ret = DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
     } else {
         fileLen = static_cast<uint32_t>(readLen);
+        ret = DLP_OK;
     }
     (void)lseek(fd, 0, SEEK_SET);
     return ret;
@@ -1224,6 +1224,10 @@ int32_t DlpFile::GenFile(int32_t inPlainFileFd)
     off_t fileLen = lseek(inPlainFileFd, 0, SEEK_END);
     if (fileLen == static_cast<off_t>(-1) || fileLen > static_cast<off_t>(DLP_MAX_CONTENT_SIZE)) {
         DLP_LOG_ERROR(LABEL, "inFd len is invalid, %{public}s", strerror(errno));
+        return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
+    }
+    if (lseek(inPlainFileFd, 0, SEEK_SET) == static_cast<off_t>(-1)) {
+        DLP_LOG_ERROR(LABEL, "seek inFd start failed, %{public}s", strerror(errno));
         return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
     }
 
