@@ -53,7 +53,7 @@ public:
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpPermissionProxyTest, SetReadFlag001, TestSize.Level1)
+HWTEST_F(DlpPermissionProxyTest, SetReadFlag001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "SetReadFlag001");
 

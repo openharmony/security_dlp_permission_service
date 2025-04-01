@@ -127,7 +127,7 @@ void DlpFileTest::TearDown() {}
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpFileTest, IsValidCipher001, TestSize.Level1)
+HWTEST_F(DlpFileTest, IsValidCipher001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "IsValidCipher001");
 
@@ -194,7 +194,7 @@ HWTEST_F(DlpFileTest, IsValidCipher001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpFileTest, CopyBlobParam001, TestSize.Level1)
+HWTEST_F(DlpFileTest, CopyBlobParam001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "CopyBlobParam001");
 
@@ -231,7 +231,7 @@ HWTEST_F(DlpFileTest, CopyBlobParam001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpFileTest, CleanBlobParam001, TestSize.Level1)
+HWTEST_F(DlpFileTest, CleanBlobParam001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "CleanBlobParam001");
 
@@ -260,7 +260,7 @@ HWTEST_F(DlpFileTest, CleanBlobParam001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpFileTest, GetLocalAccountName001, TestSize.Level1)
+HWTEST_F(DlpFileTest, GetLocalAccountName001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "GetLocalAccountName001");
 
@@ -276,7 +276,7 @@ HWTEST_F(DlpFileTest, GetLocalAccountName001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpFileTest, GetDomainAccountName001, TestSize.Level1)
+HWTEST_F(DlpFileTest, GetDomainAccountName001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "GetLocalAccountName001");
 
@@ -292,7 +292,7 @@ HWTEST_F(DlpFileTest, GetDomainAccountName001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpFileTest, UpdateDlpFilePermission001, TestSize.Level1)
+HWTEST_F(DlpFileTest, UpdateDlpFilePermission001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "UpdateDlpFilePermission001");
 
@@ -312,7 +312,7 @@ HWTEST_F(DlpFileTest, UpdateDlpFilePermission001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpFileTest, UpdateDlpFilePermission002, TestSize.Level1)
+HWTEST_F(DlpFileTest, UpdateDlpFilePermission002, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "UpdateDlpFilePermission002");
 
@@ -335,7 +335,7 @@ HWTEST_F(DlpFileTest, UpdateDlpFilePermission002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpFileTest, UpdateDlpFilePermission003, TestSize.Level1)
+HWTEST_F(DlpFileTest, UpdateDlpFilePermission003, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "UpdateDlpFilePermission003");
 
@@ -357,7 +357,7 @@ HWTEST_F(DlpFileTest, UpdateDlpFilePermission003, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpFileTest, UpdateDlpFilePermission004, TestSize.Level1)
+HWTEST_F(DlpFileTest, UpdateDlpFilePermission004, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "UpdateDlpFilePermission004");
 
@@ -379,7 +379,7 @@ HWTEST_F(DlpFileTest, UpdateDlpFilePermission004, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpFileTest, UpdateDlpFilePermission005, TestSize.Level1)
+HWTEST_F(DlpFileTest, UpdateDlpFilePermission005, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "UpdateDlpFilePermission005");
 
@@ -399,7 +399,7 @@ HWTEST_F(DlpFileTest, UpdateDlpFilePermission005, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpFileTest, UpdateDlpFilePermission006, TestSize.Level1)
+HWTEST_F(DlpFileTest, UpdateDlpFilePermission006, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "UpdateDlpFilePermission006");
 
@@ -420,7 +420,7 @@ HWTEST_F(DlpFileTest, UpdateDlpFilePermission006, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpFileTest, SetCipher001, TestSize.Level1)
+HWTEST_F(DlpFileTest, SetCipher001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "SetCipher001");
 
@@ -445,7 +445,7 @@ HWTEST_F(DlpFileTest, SetCipher001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpFileTest, SetCipher002, TestSize.Level1)
+HWTEST_F(DlpFileTest, SetCipher002, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "SetCipher001");
 
@@ -481,7 +481,7 @@ HWTEST_F(DlpFileTest, SetCipher002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpFileTest, SetCipher003, TestSize.Level1)
+HWTEST_F(DlpFileTest, SetCipher003, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "SetCipher003");
 
@@ -517,7 +517,7 @@ HWTEST_F(DlpFileTest, SetCipher003, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpFileTest, SetCipher004, TestSize.Level1)
+HWTEST_F(DlpFileTest, SetCipher004, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "SetCipher004");
 
@@ -549,7 +549,7 @@ HWTEST_F(DlpFileTest, SetCipher004, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpFileTest, SetContactAccount001, TestSize.Level1)
+HWTEST_F(DlpFileTest, SetContactAccount001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "SetContactAccount001");
     DlpFile testFile(1000, DLP_TEST_DIR, 0, false);
@@ -569,7 +569,7 @@ HWTEST_F(DlpFileTest, SetContactAccount001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpFileTest, SetPolicy001, TestSize.Level1)
+HWTEST_F(DlpFileTest, SetPolicy001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "SetPolicy001");
     DlpFile testFile(1000, DLP_TEST_DIR, 0, false);
@@ -583,7 +583,7 @@ HWTEST_F(DlpFileTest, SetPolicy001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpFileTest, IsValidDlpHeader001, TestSize.Level1)
+HWTEST_F(DlpFileTest, IsValidDlpHeader001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "IsValidDlpHeader001");
     DlpFile testFile(1000, DLP_TEST_DIR, 0, false);
@@ -652,7 +652,7 @@ HWTEST_F(DlpFileTest, IsValidDlpHeader001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpFileTest, ParseDlpHeader001, TestSize.Level1)
+HWTEST_F(DlpFileTest, ParseDlpHeader001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "ParseDlpHeader001");
     DlpFile testFile(1000, DLP_TEST_DIR, 0, false);
@@ -676,7 +676,7 @@ HWTEST_F(DlpFileTest, ParseDlpHeader001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpFileTest, ParseDlpHeader002, TestSize.Level1)
+HWTEST_F(DlpFileTest, ParseDlpHeader002, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "ParseDlpHeader002");
 
@@ -703,7 +703,7 @@ HWTEST_F(DlpFileTest, ParseDlpHeader002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpFileTest, ParseDlpHeader003, TestSize.Level1)
+HWTEST_F(DlpFileTest, ParseDlpHeader003, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "ParseDlpHeader003");
 
@@ -730,7 +730,7 @@ HWTEST_F(DlpFileTest, ParseDlpHeader003, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpFileTest, ParseDlpHeader004, TestSize.Level1)
+HWTEST_F(DlpFileTest, ParseDlpHeader004, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "ParseDlpHeader004");
 
@@ -763,7 +763,7 @@ HWTEST_F(DlpFileTest, ParseDlpHeader004, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpFileTest, ParseDlpHeader005, TestSize.Level1)
+HWTEST_F(DlpFileTest, ParseDlpHeader005, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "ParseDlpHeader005");
 
@@ -798,7 +798,7 @@ HWTEST_F(DlpFileTest, ParseDlpHeader005, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpFileTest, ParseDlpHeader006, TestSize.Level1)
+HWTEST_F(DlpFileTest, ParseDlpHeader006, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "ParseDlpHeader006");
 
@@ -833,7 +833,7 @@ HWTEST_F(DlpFileTest, ParseDlpHeader006, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpFileTest, ParseDlpHeader007, TestSize.Level1)
+HWTEST_F(DlpFileTest, ParseDlpHeader007, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "ParseDlpHeader007");
 
@@ -868,7 +868,7 @@ HWTEST_F(DlpFileTest, ParseDlpHeader007, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpFileTest, SetEncryptCert001, TestSize.Level1)
+HWTEST_F(DlpFileTest, SetEncryptCert001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "SetEncryptCert001");
 
@@ -893,7 +893,7 @@ HWTEST_F(DlpFileTest, SetEncryptCert001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpFileTest, SetEncryptCert002, TestSize.Level1)
+HWTEST_F(DlpFileTest, SetEncryptCert002, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "SetEncryptCert002");
 
@@ -918,7 +918,7 @@ HWTEST_F(DlpFileTest, SetEncryptCert002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpFileTest, SetEncryptCert003, TestSize.Level1)
+HWTEST_F(DlpFileTest, SetEncryptCert003, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "SetEncryptCert003");
 
@@ -938,7 +938,7 @@ HWTEST_F(DlpFileTest, SetEncryptCert003, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpFileTest, DupUsageSpec001, TestSize.Level1)
+HWTEST_F(DlpFileTest, DupUsageSpec001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DupUsageSpec001");
 
@@ -954,7 +954,7 @@ HWTEST_F(DlpFileTest, DupUsageSpec001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpFileTest, DupUsageSpec002, TestSize.Level1)
+HWTEST_F(DlpFileTest, DupUsageSpec002, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DupUsageSpec002");
 
@@ -987,7 +987,7 @@ HWTEST_F(DlpFileTest, DupUsageSpec002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpFileTest, DupUsageSpec003, TestSize.Level1)
+HWTEST_F(DlpFileTest, DupUsageSpec003, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DupUsageSpec003");
 
@@ -1020,7 +1020,7 @@ HWTEST_F(DlpFileTest, DupUsageSpec003, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpFileTest, DoDlpBlockCryptOperation001, TestSize.Level1)
+HWTEST_F(DlpFileTest, DoDlpBlockCryptOperation001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DoDlpBlockCryptOperation001");
 
@@ -1068,7 +1068,7 @@ HWTEST_F(DlpFileTest, DoDlpBlockCryptOperation001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpFileTest, DoDlpBlockCryptOperation002, TestSize.Level1)
+HWTEST_F(DlpFileTest, DoDlpBlockCryptOperation002, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DoDlpBlockCryptOperation002");
 
@@ -1096,7 +1096,7 @@ HWTEST_F(DlpFileTest, DoDlpBlockCryptOperation002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpFileTest, DoDlpBlockCryptOperation003, TestSize.Level1)
+HWTEST_F(DlpFileTest, DoDlpBlockCryptOperation003, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DoDlpBlockCryptOperation003");
 
@@ -1137,7 +1137,7 @@ HWTEST_F(DlpFileTest, DoDlpBlockCryptOperation003, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpFileTest, DoDlpContentCryptyOperation001, TestSize.Level1)
+HWTEST_F(DlpFileTest, DoDlpContentCryptyOperation001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DoDlpContentCryptyOperation001");
 
@@ -1165,7 +1165,7 @@ HWTEST_F(DlpFileTest, DoDlpContentCryptyOperation001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpFileTest, DoDlpContentCryptyOperation002, TestSize.Level1)
+HWTEST_F(DlpFileTest, DoDlpContentCryptyOperation002, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DoDlpContentCryptyOperation002");
     DlpFile testFile(1000, DLP_TEST_DIR, 0, false);
@@ -1199,7 +1199,7 @@ HWTEST_F(DlpFileTest, DoDlpContentCryptyOperation002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpFileTest, DoDlpContentCryptyOperation003, TestSize.Level1)
+HWTEST_F(DlpFileTest, DoDlpContentCryptyOperation003, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DoDlpContentCryptyOperation003");
     DlpFile testFile(1000, DLP_TEST_DIR, 0, false);
@@ -1222,7 +1222,7 @@ HWTEST_F(DlpFileTest, DoDlpContentCryptyOperation003, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpFileTest, GenFile001, TestSize.Level1)
+HWTEST_F(DlpFileTest, GenFile001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "GenFile001");
     DlpFile testFile(1000, DLP_TEST_DIR, 0, false);
@@ -1242,7 +1242,7 @@ HWTEST_F(DlpFileTest, GenFile001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpFileTest, GenFile002, TestSize.Level1)
+HWTEST_F(DlpFileTest, GenFile002, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "GenFile002");
     int fdPlain = open("/data/fuse_test_plain.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
@@ -1301,7 +1301,7 @@ HWTEST_F(DlpFileTest, GenFile002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpFileTest, RemoveDlpPermission001, TestSize.Level1)
+HWTEST_F(DlpFileTest, RemoveDlpPermission001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "RemoveDlpPermission001");
     int fdPlain = open("/data/fuse_test_plain.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
@@ -1368,7 +1368,7 @@ HWTEST_F(DlpFileTest, RemoveDlpPermission001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpFileTest, DlpFileRead001, TestSize.Level1)
+HWTEST_F(DlpFileTest, DlpFileRead001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DlpFileRead001");
     int fdPlain = open("/data/fuse_test_plain.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
@@ -1430,7 +1430,7 @@ HWTEST_F(DlpFileTest, DlpFileRead001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpFileTest, WriteFirstBlockData001, TestSize.Level1)
+HWTEST_F(DlpFileTest, WriteFirstBlockData001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "WriteFirstBlockData001");
     int fdPlain = open("/data/fuse_test_plain.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
@@ -1492,7 +1492,7 @@ HWTEST_F(DlpFileTest, WriteFirstBlockData001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpFileTest, DoDlpFileWrite001, TestSize.Level1)
+HWTEST_F(DlpFileTest, DoDlpFileWrite001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DoDlpFileWrite001");
     int fdPlain = open("/data/fuse_test_plain.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
@@ -1545,7 +1545,7 @@ HWTEST_F(DlpFileTest, DoDlpFileWrite001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpFileTest, GetFsContentSize001, TestSize.Level1)
+HWTEST_F(DlpFileTest, GetFsContentSize001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "GetFsContentSize001");
     int fdPlain = open("/data/fuse_test_plain.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
@@ -1570,7 +1570,7 @@ HWTEST_F(DlpFileTest, GetFsContentSize001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpFileTest, UpdateDlpFileContentSize001, TestSize.Level1)
+HWTEST_F(DlpFileTest, UpdateDlpFileContentSize001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "UpdateDlpFileContentSize001");
     int fdPlain = open("/data/fuse_test_plain.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
@@ -1607,7 +1607,7 @@ HWTEST_F(DlpFileTest, UpdateDlpFileContentSize001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpFileTest, FillHoleData001, TestSize.Level1)
+HWTEST_F(DlpFileTest, FillHoleData001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "FillHoleData001");
     DlpFile testFile(-1, DLP_TEST_DIR, 0, false);
@@ -1620,7 +1620,7 @@ HWTEST_F(DlpFileTest, FillHoleData001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpFileTest, DlpFileWrite001, TestSize.Level1)
+HWTEST_F(DlpFileTest, DlpFileWrite001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DlpFileWrite001");
     int fdPlain = open("/data/fuse_test_plain.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
@@ -1669,7 +1669,7 @@ HWTEST_F(DlpFileTest, DlpFileWrite001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpFileTest, Truncate001, TestSize.Level1)
+HWTEST_F(DlpFileTest, Truncate001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "Truncate001");
     int fdPlain = open("/data/fuse_test_plain.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
@@ -1711,7 +1711,7 @@ HWTEST_F(DlpFileTest, Truncate001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpFileTest, DoDlpContentCopyOperation001, TestSize.Level1)
+HWTEST_F(DlpFileTest, DoDlpContentCopyOperation001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DoDlpContentCopyOperation001");
     DlpFile testFile(1000, DLP_TEST_DIR, 0, false);
@@ -1747,7 +1747,7 @@ HWTEST_F(DlpFileTest, DoDlpContentCopyOperation001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpFileTest, CheckDlpFile001, TestSize.Level1)
+HWTEST_F(DlpFileTest, CheckDlpFile001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "CheckDlpFile001");
     int fdDlp = open("/data/fuse_test_dlp.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
@@ -1773,7 +1773,7 @@ HWTEST_F(DlpFileTest, CheckDlpFile001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpFileTest, NeedAdapter001, TestSize.Level1)
+HWTEST_F(DlpFileTest, NeedAdapter001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "NeedAdapter001");
     DlpFile testFile(1000, DLP_TEST_DIR, 0, false);
@@ -1790,7 +1790,7 @@ HWTEST_F(DlpFileTest, NeedAdapter001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpFileTest, WriteHeadAndCert001, TestSize.Level1)
+HWTEST_F(DlpFileTest, WriteHeadAndCert001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "WriteHeadAndCert001");
 
@@ -1807,7 +1807,7 @@ HWTEST_F(DlpFileTest, WriteHeadAndCert001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpFileTest, GenZipFile001, TestSize.Level1)
+HWTEST_F(DlpFileTest, GenZipFile001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "GenZipFile001");
     int fdPlain = open("/data/fuse_test_plain.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
@@ -1832,7 +1832,7 @@ HWTEST_F(DlpFileTest, GenZipFile001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpFileTest, CleanTmpFile001, TestSize.Level1)
+HWTEST_F(DlpFileTest, CleanTmpFile001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "CleanTmpFile001");
     int fdPlain = open("/data/fuse_test_plain.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
@@ -1859,7 +1859,7 @@ HWTEST_F(DlpFileTest, CleanTmpFile001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpFileTest, ParseDlpInfo001, TestSize.Level1)
+HWTEST_F(DlpFileTest, ParseDlpInfo001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "ParseDlpInfo001");
     int fdPlain = open("/data/fuse_test_plain.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
@@ -1916,7 +1916,7 @@ HWTEST_F(DlpFileTest, ParseDlpInfo001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpFileTest, ParseDlpInfo002, TestSize.Level1)
+HWTEST_F(DlpFileTest, ParseDlpInfo002, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "ParseDlpInfo002");
     int fdPlain = open("/data/fuse_test_plain.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
@@ -1975,7 +1975,7 @@ HWTEST_F(DlpFileTest, ParseDlpInfo002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpFileTest, ParseDlpInfo003, TestSize.Level1)
+HWTEST_F(DlpFileTest, ParseDlpInfo003, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "ParseDlpInfo003");
     int fdPlain = open("/data/fuse_test_plain.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
@@ -2034,7 +2034,7 @@ HWTEST_F(DlpFileTest, ParseDlpInfo003, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpFileTest, ParseDlpInfo004, TestSize.Level1)
+HWTEST_F(DlpFileTest, ParseDlpInfo004, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "ParseDlpInfo004");
     int fdPlain = open("/data/fuse_test_plain.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
@@ -2094,7 +2094,7 @@ HWTEST_F(DlpFileTest, ParseDlpInfo004, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpFileTest, ParseDlpInfo005, TestSize.Level1)
+HWTEST_F(DlpFileTest, ParseDlpInfo005, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "ParseDlpInfo005");
     int fdPlain = open("/data/fuse_test_plain.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
@@ -2154,7 +2154,7 @@ HWTEST_F(DlpFileTest, ParseDlpInfo005, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpFileTest, ParseCert001, TestSize.Level1)
+HWTEST_F(DlpFileTest, ParseCert001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "ParseCert001");
     int fdPlain = open("/data/fuse_test_plain.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
@@ -2205,7 +2205,7 @@ HWTEST_F(DlpFileTest, ParseCert001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpFileTest, ParseEncData001, TestSize.Level1)
+HWTEST_F(DlpFileTest, ParseEncData001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "ParseEncData001");
     int fdPlain = open("/data/fuse_test_plain.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
@@ -2247,7 +2247,7 @@ HWTEST_F(DlpFileTest, ParseEncData001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpFileTest, UnzipDlpFile001, TestSize.Level1)
+HWTEST_F(DlpFileTest, UnzipDlpFile001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "UnzipDlpFile001");
     int fdPlain = open("/data/fuse_test_plain.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
@@ -2303,7 +2303,7 @@ HWTEST_F(DlpFileTest, UnzipDlpFile001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpFileTest, GenFileZip001, TestSize.Level1)
+HWTEST_F(DlpFileTest, GenFileZip001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "GenFileZip001");
     int fdPlain = open("/data/fuse_test_plain.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
@@ -2338,7 +2338,7 @@ HWTEST_F(DlpFileTest, GenFileZip001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpFileTest, RemoveDlpPermissionZip001, TestSize.Level1)
+HWTEST_F(DlpFileTest, RemoveDlpPermissionZip001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "RemoveDlpPermissionZip001");
     int fdPlain = open("/data/fuse_test_plain.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
@@ -2380,7 +2380,7 @@ HWTEST_F(DlpFileTest, RemoveDlpPermissionZip001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpFileTest, GenFileInZip001, TestSize.Level1)
+HWTEST_F(DlpFileTest, GenFileInZip001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "GenFileInZip001");
     int fdPlain = open("/data/fuse_test_plain.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
@@ -2425,7 +2425,7 @@ HWTEST_F(DlpFileTest, GenFileInZip001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpFileTest, GenEncData001, TestSize.Level1)
+HWTEST_F(DlpFileTest, GenEncData001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "GenEncData001");
     int fdPlain = open("/data/fuse_test_plain.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
@@ -2457,7 +2457,7 @@ HWTEST_F(DlpFileTest, GenEncData001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpFileTest, UpdateCertAndText001, TestSize.Level1)
+HWTEST_F(DlpFileTest, UpdateCertAndText001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "UpdateCertAndText001");
 
@@ -2481,7 +2481,7 @@ HWTEST_F(DlpFileTest, UpdateCertAndText001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpFileTest, GetOfflineAccess001, TestSize.Level1)
+HWTEST_F(DlpFileTest, GetOfflineAccess001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "GetOfflineAccess001");
 
@@ -2501,7 +2501,7 @@ HWTEST_F(DlpFileTest, GetOfflineAccess001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpFileTest, GetOfflineCert001, TestSize.Level1)
+HWTEST_F(DlpFileTest, GetOfflineCert001, TestSize.Level0)
 {
     DlpBlob offlineCert = { 0 };
 

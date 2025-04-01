@@ -131,7 +131,7 @@ static void GenerateRandProperty(struct DlpProperty& encProp)
  * @tc.type: FUNC
  * @tc.require:AR000GVIGC
  */
-HWTEST_F(DlpFileTest, GenerateDlpFile001, TestSize.Level1)
+HWTEST_F(DlpFileTest, GenerateDlpFile001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "GenerateDlpFile001");
 
@@ -173,7 +173,7 @@ HWTEST_F(DlpFileTest, GenerateDlpFile001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:AR000GVIGC
  */
-HWTEST_F(DlpFileTest, OpenDlpFile001, TestSize.Level1)
+HWTEST_F(DlpFileTest, OpenDlpFile001, TestSize.Level0)
 {
     g_plainFileFd = open("/data/fuse_test.txt", O_CREAT | O_RDWR | O_TRUNC, S_IRWXU | S_IRWXG | S_IRWXO);
     g_dlpFileFd = open("/data/fuse_test.txt.dlp", O_CREAT | O_RDWR | O_TRUNC, S_IRWXU | S_IRWXG | S_IRWXO);
@@ -231,7 +231,7 @@ HWTEST_F(DlpFileTest, OpenDlpFile001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:AR000GVIGC
  */
-HWTEST_F(DlpFileTest, OpenDlpFile002, TestSize.Level1)
+HWTEST_F(DlpFileTest, OpenDlpFile002, TestSize.Level0)
 {
     g_plainFileFd = open("/data/fuse_test.txt", O_CREAT | O_RDWR | O_TRUNC, S_IRWXU | S_IRWXG | S_IRWXO);
     g_dlpFileFd = open("/data/fuse_test.txt.dlp", O_CREAT | O_RDWR | O_TRUNC, S_IRWXU | S_IRWXG | S_IRWXO);

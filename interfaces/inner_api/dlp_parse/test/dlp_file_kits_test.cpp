@@ -155,7 +155,7 @@ void DlpFileKitsTest::TearDown() {}
  * @tc.type: FUNC
  * @tc.require:AR000H7BOC
  */
-HWTEST_F(DlpFileKitsTest, GetSandboxFlag001, TestSize.Level1)
+HWTEST_F(DlpFileKitsTest, GetSandboxFlag001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "GetSandboxFlag001");
     OHOS::AAFwk::Want want;
@@ -172,7 +172,7 @@ HWTEST_F(DlpFileKitsTest, GetSandboxFlag001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:AR000H7BOC
  */
-HWTEST_F(DlpFileKitsTest, GetSandboxFlag002, TestSize.Level1)
+HWTEST_F(DlpFileKitsTest, GetSandboxFlag002, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "GetSandboxFlag002");
     OHOS::AAFwk::Want want;
@@ -199,7 +199,7 @@ HWTEST_F(DlpFileKitsTest, GetSandboxFlag002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:AR000H7BOC
  */
-HWTEST_F(DlpFileKitsTest, GetSandboxFlag003, TestSize.Level1)
+HWTEST_F(DlpFileKitsTest, GetSandboxFlag003, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "GetSandboxFlag003");
     OHOS::AAFwk::Want want;
@@ -222,7 +222,7 @@ HWTEST_F(DlpFileKitsTest, GetSandboxFlag003, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:AR000H7BOC
  */
-HWTEST_F(DlpFileKitsTest, GetSandboxFlag004, TestSize.Level1)
+HWTEST_F(DlpFileKitsTest, GetSandboxFlag004, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "GetSandboxFlag004");
     OHOS::AAFwk::Want want;
@@ -238,7 +238,7 @@ HWTEST_F(DlpFileKitsTest, GetSandboxFlag004, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:AR000H7BOC
  */
-HWTEST_F(DlpFileKitsTest, GetSandboxFlag005, TestSize.Level1)
+HWTEST_F(DlpFileKitsTest, GetSandboxFlag005, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "GetSandboxFlag005");
     OHOS::AAFwk::Want want;
@@ -265,7 +265,7 @@ HWTEST_F(DlpFileKitsTest, GetSandboxFlag005, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:AR000H7BOC
  */
-HWTEST_F(DlpFileKitsTest, GetSandboxFlag006, TestSize.Level1)
+HWTEST_F(DlpFileKitsTest, GetSandboxFlag006, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "GetSandboxFlag006");
     OHOS::AAFwk::Want want;
@@ -292,7 +292,7 @@ HWTEST_F(DlpFileKitsTest, GetSandboxFlag006, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:AR000H7BOC
  */
-HWTEST_F(DlpFileKitsTest, GetSandboxFlag008, TestSize.Level1)
+HWTEST_F(DlpFileKitsTest, GetSandboxFlag008, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "GetSandboxFlag008");
     OHOS::AAFwk::Want want;
@@ -314,7 +314,7 @@ HWTEST_F(DlpFileKitsTest, GetSandboxFlag008, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:AR000H7BOC
  */
-HWTEST_F(DlpFileKitsTest, GetSandboxFlag009, TestSize.Level1)
+HWTEST_F(DlpFileKitsTest, GetSandboxFlag009, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "GetSandboxFlag009");
     OHOS::AAFwk::Want want;
@@ -341,7 +341,7 @@ HWTEST_F(DlpFileKitsTest, GetSandboxFlag009, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:AR000H7BOC
  */
-HWTEST_F(DlpFileKitsTest, GetSandboxFlag010, TestSize.Level1)
+HWTEST_F(DlpFileKitsTest, GetSandboxFlag010, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "GetSandboxFlag009");
     OHOS::AAFwk::Want want;
@@ -367,7 +367,7 @@ HWTEST_F(DlpFileKitsTest, GetSandboxFlag010, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:AR000H7BOC
  */
-HWTEST_F(DlpFileKitsTest, GetSandboxFlag011, TestSize.Level1)
+HWTEST_F(DlpFileKitsTest, GetSandboxFlag011, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "GetSandboxFlag011");
     OHOS::AAFwk::Want want;
@@ -394,7 +394,7 @@ HWTEST_F(DlpFileKitsTest, GetSandboxFlag011, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:AR000H7BOC
  */
-HWTEST_F(DlpFileKitsTest, GetSandboxFlag012, TestSize.Level1)
+HWTEST_F(DlpFileKitsTest, GetSandboxFlag012, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "GetSandboxFlag012");
     int plainFileFd = open("/data/fuse_test.txt", O_CREAT | O_RDWR | O_TRUNC, 0777);
@@ -424,7 +424,7 @@ HWTEST_F(DlpFileKitsTest, GetSandboxFlag012, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:AR000H7BOC
  */
-HWTEST_F(DlpFileKitsTest, GetSandboxFlag013, TestSize.Level1)
+HWTEST_F(DlpFileKitsTest, GetSandboxFlag013, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "GetSandboxFlag004");
     OHOS::AAFwk::Want want;
@@ -441,7 +441,7 @@ HWTEST_F(DlpFileKitsTest, GetSandboxFlag013, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:issue：IAIFTY
  */
-HWTEST_F(DlpFileKitsTest, IsDlpFile001, TestSize.Level1)
+HWTEST_F(DlpFileKitsTest, IsDlpFile001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "IsDlpFile001");
 
@@ -463,7 +463,7 @@ HWTEST_F(DlpFileKitsTest, IsDlpFile001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:issue：IAIFTY
  */
-HWTEST_F(DlpFileKitsTest, ConvertAbilityInfoWithSupportDlp001, TestSize.Level1)
+HWTEST_F(DlpFileKitsTest, ConvertAbilityInfoWithSupportDlp001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "ConvertAbilityInfoWithSupportDlp001");
 
@@ -491,4 +491,5 @@ HWTEST_F(DlpFileKitsTest, ConvertAbilityInfoWithSupportDlp001, TestSize.Level1)
 
     want.SetUri(DLP_FILE_URI);
     DlpFileKits::ConvertAbilityInfoWithSupportDlp(want, abilityInfos);
+    EXPECT_EQ(abilityInfos.size(), 0);
 }

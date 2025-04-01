@@ -73,7 +73,7 @@ void DlpFileManagerTest::TearDown() {}
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpFileManagerTest, OperDlpFileNode001, TestSize.Level1)
+HWTEST_F(DlpFileManagerTest, OperDlpFileNode001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "OperDlpFileNode001");
 
@@ -101,7 +101,7 @@ HWTEST_F(DlpFileManagerTest, OperDlpFileNode001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpFileManagerTest, OperDlpFileNode002, TestSize.Level1)
+HWTEST_F(DlpFileManagerTest, OperDlpFileNode002, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "OperDlpFileNode002");
 
@@ -127,7 +127,7 @@ HWTEST_F(DlpFileManagerTest, OperDlpFileNode002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpFileManagerTest, GenerateCertData001, TestSize.Level1)
+HWTEST_F(DlpFileManagerTest, GenerateCertData001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "GenerateCertData001");
 
@@ -176,7 +176,7 @@ HWTEST_F(DlpFileManagerTest, GenerateCertData001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpFileManagerTest, PrepareDlpEncryptParms001, TestSize.Level1)
+HWTEST_F(DlpFileManagerTest, PrepareDlpEncryptParms001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "PrepareDlpEncryptParms001");
 
@@ -239,7 +239,7 @@ HWTEST_F(DlpFileManagerTest, PrepareDlpEncryptParms001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpFileManagerTest, ParseDlpFileFormat001, TestSize.Level1)
+HWTEST_F(DlpFileManagerTest, ParseDlpFileFormat001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "UpdateDlpFileContentSize001");
     g_fdDlp = open("/data/fuse_test_dlp.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
@@ -281,7 +281,7 @@ HWTEST_F(DlpFileManagerTest, ParseDlpFileFormat001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpFileManagerTest, ParseDlpFileFormat002, TestSize.Level1)
+HWTEST_F(DlpFileManagerTest, ParseDlpFileFormat002, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "ParseDlpFileFormat002");
     g_fdDlp = open("/data/fuse_test_dlp.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
@@ -325,7 +325,7 @@ HWTEST_F(DlpFileManagerTest, ParseDlpFileFormat002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpFileManagerTest, ParseDlpFileFormat003, TestSize.Level1)
+HWTEST_F(DlpFileManagerTest, ParseDlpFileFormat003, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "ParseDlpFileFormat003");
     g_fdDlp = open("/data/fuse_test_dlp.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
@@ -375,7 +375,7 @@ HWTEST_F(DlpFileManagerTest, ParseDlpFileFormat003, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpFileManagerTest, ParseDlpFileFormat004, TestSize.Level1)
+HWTEST_F(DlpFileManagerTest, ParseDlpFileFormat004, TestSize.Level0)
 {
         DLP_LOG_INFO(LABEL, "UpdateDlpFileContentSize001");
     g_fdDlp = open("/data/fuse_test_dlp.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
@@ -399,7 +399,7 @@ HWTEST_F(DlpFileManagerTest, ParseDlpFileFormat004, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpFileManagerTest, FreeChiperBlob001, TestSize.Level1)
+HWTEST_F(DlpFileManagerTest, FreeChiperBlob001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "FreeChiperBlob001");
     struct DlpBlob key = {
@@ -438,7 +438,7 @@ HWTEST_F(DlpFileManagerTest, FreeChiperBlob001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpFileManagerTest, SetDlpFileParams001, TestSize.Level1)
+HWTEST_F(DlpFileManagerTest, SetDlpFileParams001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "SetDlpFileParams001");
     std::shared_ptr<DlpFile> filePtr = std::make_shared<DlpFile>(1000, DLP_TEST_DIR, 0, false);
@@ -475,7 +475,7 @@ HWTEST_F(DlpFileManagerTest, SetDlpFileParams001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpFileManagerTest, SetDlpFileParams002, TestSize.Level1)
+HWTEST_F(DlpFileManagerTest, SetDlpFileParams002, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "SetDlpFileParams002");
     std::shared_ptr<DlpFile> filePtr = std::make_shared<DlpFile>(1000, DLP_TEST_DIR, 0, false);
@@ -498,7 +498,7 @@ HWTEST_F(DlpFileManagerTest, SetDlpFileParams002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpFileManagerTest, SetDlpFileParams003, TestSize.Level1)
+HWTEST_F(DlpFileManagerTest, SetDlpFileParams003, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "SetDlpFileParams003");
     std::shared_ptr<DlpFile> filePtr = std::make_shared<DlpFile>(1000, DLP_TEST_DIR, 0, false);
@@ -528,7 +528,7 @@ HWTEST_F(DlpFileManagerTest, SetDlpFileParams003, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpFileManagerTest, SetDlpFileParams004, TestSize.Level1)
+HWTEST_F(DlpFileManagerTest, SetDlpFileParams004, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "SetDlpFileParams004");
     std::shared_ptr<DlpFile> filePtr = std::make_shared<DlpFile>(1000, DLP_TEST_DIR, 0, false);
@@ -552,7 +552,7 @@ HWTEST_F(DlpFileManagerTest, SetDlpFileParams004, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpFileManagerTest, GenerateDlpFile001, TestSize.Level1)
+HWTEST_F(DlpFileManagerTest, GenerateDlpFile001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "GenerateDlpFile001");
     std::shared_ptr<DlpFile> filePtr = std::make_shared<DlpFile>(1000, DLP_TEST_DIR, 0, false);
@@ -581,7 +581,7 @@ HWTEST_F(DlpFileManagerTest, GenerateDlpFile001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpFileManagerTest, GenerateDlpFile002, TestSize.Level1)
+HWTEST_F(DlpFileManagerTest, GenerateDlpFile002, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "GenerateDlpFile002");
     std::shared_ptr<DlpFile> filePtr;
@@ -601,7 +601,7 @@ HWTEST_F(DlpFileManagerTest, GenerateDlpFile002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpFileManagerTest, GenerateDlpFile003, TestSize.Level1)
+HWTEST_F(DlpFileManagerTest, GenerateDlpFile003, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "GenerateDlpFile003");
     std::shared_ptr<DlpFile> filePtr;
@@ -621,7 +621,7 @@ HWTEST_F(DlpFileManagerTest, GenerateDlpFile003, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpFileManagerTest, OpenDlpFile001, TestSize.Level1)
+HWTEST_F(DlpFileManagerTest, OpenDlpFile001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "OpenDlpFile001");
     std::shared_ptr<DlpFile> filePtr;
@@ -657,7 +657,7 @@ HWTEST_F(DlpFileManagerTest, OpenDlpFile001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpFileManagerTest, CloseDlpFile001, TestSize.Level1)
+HWTEST_F(DlpFileManagerTest, CloseDlpFile001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "CloseDlpFile001");
     EXPECT_EQ(DLP_PARSE_ERROR_PTR_NULL,
@@ -670,7 +670,7 @@ HWTEST_F(DlpFileManagerTest, CloseDlpFile001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpFileManagerTest, RecoverDlpFile001, TestSize.Level1)
+HWTEST_F(DlpFileManagerTest, RecoverDlpFile001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "RecoverDlpFile001");
     std::shared_ptr<DlpFile> filePtr = nullptr;
@@ -689,7 +689,7 @@ HWTEST_F(DlpFileManagerTest, RecoverDlpFile001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:issue：IAIFTY
  */
-HWTEST_F(DlpFileManagerTest, CleanTempBlob001, TestSize.Level1)
+HWTEST_F(DlpFileManagerTest, CleanTempBlob001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "CleanTempBlob001");
 
@@ -718,7 +718,7 @@ HWTEST_F(DlpFileManagerTest, CleanTempBlob001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:issue：IAIFTY
  */
-HWTEST_F(DlpFileManagerTest, GenerateCertBlob001, TestSize.Level1)
+HWTEST_F(DlpFileManagerTest, GenerateCertBlob001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "GenerateCertBlob001");
 
