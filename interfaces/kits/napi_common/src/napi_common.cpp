@@ -43,7 +43,7 @@ static constexpr size_t MAX_BUNDLENAME_LEN = 128;
 static constexpr size_t MAX_CONFIGINFO_LEN = 4 * 1024 * 1024 - 1;
 static constexpr size_t MAX_ERRCONTACTER_LEN = 255;
 static constexpr size_t MAX_FILE_NAME_LEN = 255;
-static constexpr size_t MAX_TYPE_LEN = 63;
+static constexpr size_t MAX_TYPE_LEN = 64;
 static constexpr size_t MAX_URI_LEN = 4095;
 
 static bool ConvertDlpSandboxChangeInfo(napi_env env, napi_value value, const DlpSandboxCallbackInfo &result)
