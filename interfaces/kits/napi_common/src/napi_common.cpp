@@ -1377,7 +1377,7 @@ bool GetStringValue(napi_env env, napi_value jsObject, std::string& result, size
         DLP_LOG_ERROR(LABEL, "Can not get string size");
         return false;
     }
-    if (size >= maxLen || size <= minLen) {
+    if (size >= maxLen || size < minLen) {
         DLP_LOG_ERROR(LABEL, "Illegal string length.");
         return false;
     }
