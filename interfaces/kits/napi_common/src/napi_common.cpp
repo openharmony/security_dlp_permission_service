@@ -29,23 +29,22 @@ namespace Security {
 namespace DlpPermission {
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "DlpPermissionCommon"};
-static const int MAX_FILE_NAME_LEN = 256;
 const std::string PARAM_UI_EXTENSION_TYPE = "ability.want.params.uiExtensionType";
 const std::string SYS_COMMON_UI = "sys/commonUI";
 const std::string DLP_MANAGER_BUNDLENAME = "com.ohos.dlpmanager";
 const std::string DLP_MANAGER_ABILITYNAME = "MainAbilityEx";
 const std::string ON_OFF_SANDBOX = "uninstallDLPSandbox";
 
-static constexpr size_t MAX_ACCOUNT_LEN = 255;
+static constexpr size_t MAX_ACCOUNT_LEN = 256;
 static constexpr size_t MIN_APPID_LEN = 8;
-static constexpr size_t MAX_APPID_LEN = 261;
+static constexpr size_t MAX_APPID_LEN = 1024;
 static constexpr size_t MIN_BUNDLENAME_LEN = 7;
 static constexpr size_t MAX_BUNDLENAME_LEN = 128;
 static constexpr size_t MAX_CONFIGINFO_LEN = 4 * 1024 * 1024;
-static constexpr size_t MAX_ERRCONTACTER_LEN = 4095;
-static constexpr size_t MAX_FILENAME_LEN = 255;
-static constexpr size_t MAX_TYPE_LEN = 63;
-static constexpr size_t MAX_URI_LEN = 4095;
+static constexpr size_t MAX_ERRCONTACTER_LEN = 256;
+static constexpr size_t MAX_FILE_NAME_LEN = 256;
+static constexpr size_t MAX_TYPE_LEN = 64;
+static constexpr size_t MAX_URI_LEN = 4096;
 
 static bool ConvertDlpSandboxChangeInfo(napi_env env, napi_value value, const DlpSandboxCallbackInfo &result)
 {
@@ -638,7 +637,7 @@ bool GetDlpLinkFileParams(const napi_env env, const napi_callback_info info, Dlp
         return false;
     }
 
-    if (!GetStringValue(env, argv[PARAM0], asyncContext.linkFileName, MAX_FILENAME_LEN)) {
+    if (!GetStringValue(env, argv[PARAM0], asyncContext.linkFileName, MAX_FILE_NAME_LEN)) {
         DLP_LOG_ERROR(LABEL, "linkFileName is invalid");
         ThrowParamError(env, "linkFileName", "string");
         return false;
@@ -1003,7 +1002,7 @@ bool GetOriginalFilenameParams(const napi_env env, const napi_callback_info info
     NAPI_CALL_BASE(env, napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr), false);
 
     if (argc == PARAM_SIZE_ONE) {
-        if (!GetStringValue(env, argv[PARAM0], asyncContext.dlpFilename, MAX_FILENAME_LEN)) {
+        if (!GetStringValue(env, argv[PARAM0], asyncContext.dlpFilename, MAX_FILE_NAME_LEN)) {
             ThrowParamError(env, "fileName", "string");
             return false;
         }
@@ -1361,7 +1360,7 @@ napi_value GetNapiValue(napi_env env, napi_value jsObject, const std::string& ke
     return nullptr;
 }
 
-bool GetStringValue(napi_env env, napi_value jsObject, std::string& result, size_t upperLimit, size_t lowerLimit)
+bool GetStringValue(napi_env env, napi_value jsObject, std::string& result, size_t maxLen, size_t minLen)
 {
     napi_valuetype valueType = napi_undefined;
     if (napi_typeof(env, jsObject, &valueType) != napi_ok) {
@@ -1378,7 +1377,7 @@ bool GetStringValue(napi_env env, napi_value jsObject, std::string& result, size
         DLP_LOG_ERROR(LABEL, "Can not get string size");
         return false;
     }
-    if (size > upperLimit || size < lowerLimit) {
+    if (size >= maxLen || size <= minLen) {
         DLP_LOG_ERROR(LABEL, "Illegal string length.");
         return false;
     }
@@ -1391,10 +1390,10 @@ bool GetStringValue(napi_env env, napi_value jsObject, std::string& result, size
     return true;
 }
 
-bool GetStringValueByKey(napi_env env, napi_value jsObject, const std::string& key, std::string& result, size_t upperLimit, size_t lowerLimit)
+bool GetStringValueByKey(napi_env env, napi_value jsObject, const std::string& key, std::string& result, size_t maxLen, size_t minLen)
 {
     napi_value value = GetNapiValue(env, jsObject, key);
-    return GetStringValue(env, value, result, upperLimit, lowerLimit);
+    return GetStringValue(env, value, result, maxLen, minLen);
 }
 
 bool GetBoolValue(napi_env env, napi_value jsObject, bool& result)
@@ -1641,7 +1640,7 @@ bool ParseWantReq(napi_env env, const napi_value& obj, OHOS::AAFwk::Want& reques
     if (result == napi_ok && ret) {
         napi_value linkFileName = GetNapiValue(env, wantParameters, "linkFileName");
         std::string linkFileNameStr;
-        ret = GetStringValueByKey(env, linkFileName, "name", linkFileNameStr, MAX_FILENAME_LEN);
+        ret = GetStringValueByKey(env, linkFileName, "name", linkFileNameStr, MAX_FILE_NAME_LEN);
         if (ret && !linkFileNameStr.empty()) {
             AAFwk::WantParams linkFileNameObj;
             linkFileNameObj.SetParam("name", AAFwk::String::Box(linkFileNameStr));

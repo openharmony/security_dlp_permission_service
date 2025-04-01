@@ -325,9 +325,9 @@ bool GetDlpProperty(napi_env env, napi_value object, DlpProperty& property);
 bool ParseCallback(const napi_env& env, const napi_value& value, napi_ref& callbackRef);
 
 napi_value GetNapiValue(napi_env env, napi_value jsObject, const std::string& key);
-bool GetStringValue(napi_env env, napi_value jsObject, std::string& result, size_t upperLimit, size_t lowerLimit = 0);
+bool GetStringValue(napi_env env, napi_value jsObject, std::string& result, size_t maxLen, size_t minLen = 0);
 bool GetStringValueByKey(napi_env env, napi_value jsObject, const std::string& key,
-    std::string& result, size_t upperLimit, size_t lowerLimit = 0);
+    std::string& result, size_t maxLen, size_t minLen = 0);
 bool GetBoolValueByKey(napi_env env, napi_value jsObject, const std::string& key, bool& result);
 bool GetBoolValue(napi_env env, napi_value jsObject, bool& result);
 bool GetInt64Value(napi_env env, napi_value jsObject, int64_t& result);
