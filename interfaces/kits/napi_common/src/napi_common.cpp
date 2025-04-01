@@ -35,16 +35,16 @@ const std::string DLP_MANAGER_BUNDLENAME = "com.ohos.dlpmanager";
 const std::string DLP_MANAGER_ABILITYNAME = "MainAbilityEx";
 const std::string ON_OFF_SANDBOX = "uninstallDLPSandbox";
 
-static constexpr size_t MAX_ACCOUNT_LEN = 256;
+static constexpr size_t MAX_ACCOUNT_LEN = 255;
 static constexpr size_t MIN_APPID_LEN = 8;
 static constexpr size_t MAX_APPID_LEN = 1024;
 static constexpr size_t MIN_BUNDLENAME_LEN = 7;
 static constexpr size_t MAX_BUNDLENAME_LEN = 128;
-static constexpr size_t MAX_CONFIGINFO_LEN = 4 * 1024 * 1024;
-static constexpr size_t MAX_ERRCONTACTER_LEN = 256;
-static constexpr size_t MAX_FILE_NAME_LEN = 256;
-static constexpr size_t MAX_TYPE_LEN = 64;
-static constexpr size_t MAX_URI_LEN = 4096;
+static constexpr size_t MAX_CONFIGINFO_LEN = 4 * 1024 * 1024 - 1;
+static constexpr size_t MAX_ERRCONTACTER_LEN = 255;
+static constexpr size_t MAX_FILE_NAME_LEN = 255;
+static constexpr size_t MAX_TYPE_LEN = 63;
+static constexpr size_t MAX_URI_LEN = 4095;
 
 static bool ConvertDlpSandboxChangeInfo(napi_env env, napi_value value, const DlpSandboxCallbackInfo &result)
 {
@@ -1377,7 +1377,7 @@ bool GetStringValue(napi_env env, napi_value jsObject, std::string& result, size
         DLP_LOG_ERROR(LABEL, "Can not get string size");
         return false;
     }
-    if (size >= maxLen || size < minLen) {
+    if (size > maxLen || size < minLen) {
         DLP_LOG_ERROR(LABEL, "Illegal string length.");
         return false;
     }
@@ -1624,7 +1624,7 @@ bool ParseWantReq(napi_env env, const napi_value& obj, OHOS::AAFwk::Want& reques
         return false;
     }
     std::string displayName;
-    ret = GetStringValueByKey(env, wantParameters, "displayName", displayName);
+    ret = GetStringValueByKey(env, wantParameters, "displayName", displayName, MAX_FILE_NAME_LEN);
     if (!ret || displayName.empty()) {
         DLP_LOG_ERROR(LABEL, "get displayName failed");
         DlpNapiThrow(env, ERR_JS_PARAM_DISPLAY_NAME_NOT_EXIST, "displayName not exist in want parameters");
