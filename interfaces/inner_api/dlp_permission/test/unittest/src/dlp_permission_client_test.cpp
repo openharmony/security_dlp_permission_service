@@ -44,7 +44,7 @@ void DlpPermissionClientTest::TearDown() {}
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpPermissionClientTest, RegisterOpenDlpFileCallback001, TestSize.Level1)
+HWTEST_F(DlpPermissionClientTest, RegisterOpenDlpFileCallback001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "RegisterOpenDlpFileCallback001");
 
@@ -60,7 +60,7 @@ HWTEST_F(DlpPermissionClientTest, RegisterOpenDlpFileCallback001, TestSize.Level
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpPermissionClientTest, UnRegisterOpenDlpFileCallback001, TestSize.Level1)
+HWTEST_F(DlpPermissionClientTest, UnRegisterOpenDlpFileCallback001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "UnRegisterOpenDlpFileCallback001");
 
@@ -76,7 +76,7 @@ HWTEST_F(DlpPermissionClientTest, UnRegisterOpenDlpFileCallback001, TestSize.Lev
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpPermissionClientTest, GetRetentionSandboxList001, TestSize.Level1)
+HWTEST_F(DlpPermissionClientTest, GetRetentionSandboxList001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "GetRetentionSandboxList001");
 
@@ -93,7 +93,7 @@ HWTEST_F(DlpPermissionClientTest, GetRetentionSandboxList001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpPermissionClientTest, GetDLPFileVisitRecord001, TestSize.Level1)
+HWTEST_F(DlpPermissionClientTest, GetDLPFileVisitRecord001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "GetDLPFileVisitRecord001");
 
@@ -109,7 +109,7 @@ HWTEST_F(DlpPermissionClientTest, GetDLPFileVisitRecord001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpPermissionClientTest, GetProxy001, TestSize.Level1)
+HWTEST_F(DlpPermissionClientTest, GetProxy001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "GetProxy001");
 
@@ -125,7 +125,7 @@ HWTEST_F(DlpPermissionClientTest, GetProxy001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpPermissionClientTest, FinishStartSAFail001, TestSize.Level1)
+HWTEST_F(DlpPermissionClientTest, FinishStartSAFail001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "FinishStartSAFail001");
 
@@ -139,7 +139,7 @@ HWTEST_F(DlpPermissionClientTest, FinishStartSAFail001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpPermissionClientTest, OnRemoteDiedHandle001, TestSize.Level1)
+HWTEST_F(DlpPermissionClientTest, OnRemoteDiedHandle001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "OnRemoteDiedHandle001");
 
@@ -153,7 +153,7 @@ HWTEST_F(DlpPermissionClientTest, OnRemoteDiedHandle001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpPermissionClientTest, GetProxyFromRemoteObject001, TestSize.Level1)
+HWTEST_F(DlpPermissionClientTest, GetProxyFromRemoteObject001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "GetProxyFromRemoteObject001");
 
@@ -168,7 +168,7 @@ HWTEST_F(DlpPermissionClientTest, GetProxyFromRemoteObject001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpPermissionClientTest, SetReadFlag001, TestSize.Level1)
+HWTEST_F(DlpPermissionClientTest, SetReadFlag001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "SetReadFlag001");
 

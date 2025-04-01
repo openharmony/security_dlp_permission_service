@@ -204,7 +204,7 @@ public:
  * @tc.type: FUNC
  * @tc.require:AR000GVIGC
  */
-HWTEST_F(FuseDaemonTest, FuseDaemonLookup001, TestSize.Level1)
+HWTEST_F(FuseDaemonTest, FuseDaemonLookup001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "FuseDaemonLookup001");
     DlpLinkFile linkfile("test", nullptr);
@@ -264,7 +264,7 @@ HWTEST_F(FuseDaemonTest, FuseDaemonLookup001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:AR000GVIGC
  */
-HWTEST_F(FuseDaemonTest, FuseDaemonGetattr001, TestSize.Level1)
+HWTEST_F(FuseDaemonTest, FuseDaemonGetattr001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "FuseDaemonGetattr001");
     fuse_req_t req = nullptr;
@@ -296,7 +296,7 @@ HWTEST_F(FuseDaemonTest, FuseDaemonGetattr001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:AR000GVIGC
  */
-HWTEST_F(FuseDaemonTest, FuseDaemonOpen001, TestSize.Level1)
+HWTEST_F(FuseDaemonTest, FuseDaemonOpen001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "FuseDaemonOpen001");
     fuse_req_t req = nullptr;
@@ -352,7 +352,7 @@ HWTEST_F(FuseDaemonTest, FuseDaemonOpen001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:AR000GVIGC
  */
-HWTEST_F(FuseDaemonTest, FuseDaemonRead001, TestSize.Level1)
+HWTEST_F(FuseDaemonTest, FuseDaemonRead001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "FuseDaemonRead001");
     fuse_req req;
@@ -393,7 +393,7 @@ HWTEST_F(FuseDaemonTest, FuseDaemonRead001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:AR000GVIGC
  */
-HWTEST_F(FuseDaemonTest, FuseDaemonRead002, TestSize.Level1)
+HWTEST_F(FuseDaemonTest, FuseDaemonRead002, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "FuseDaemonRead002");
     fuse_req req;
@@ -439,7 +439,7 @@ HWTEST_F(FuseDaemonTest, FuseDaemonRead002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:AR000GVIGC
  */
-HWTEST_F(FuseDaemonTest, FuseDaemonWrite001, TestSize.Level1)
+HWTEST_F(FuseDaemonTest, FuseDaemonWrite001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "FuseDaemonWrite001");
     fuse_req_t req = nullptr;
@@ -502,7 +502,7 @@ HWTEST_F(FuseDaemonTest, FuseDaemonWrite001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:AR000GVIGC
  */
-HWTEST_F(FuseDaemonTest, FuseDaemonForget001, TestSize.Level1)
+HWTEST_F(FuseDaemonTest, FuseDaemonForget001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "FuseDaemonForget001");
     fuse_req_t req = nullptr;
@@ -532,7 +532,7 @@ HWTEST_F(FuseDaemonTest, FuseDaemonForget001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:AR000GVIGC
  */
-HWTEST_F(FuseDaemonTest, FuseDaemonReadDir001, TestSize.Level1)
+HWTEST_F(FuseDaemonTest, FuseDaemonReadDir001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "FuseDaemonReadDir001");
     fuse_req_t req = nullptr;
@@ -580,7 +580,7 @@ HWTEST_F(FuseDaemonTest, FuseDaemonReadDir001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:AR000GVIGC
  */
-HWTEST_F(FuseDaemonTest, FuseDaemonReadDir002, TestSize.Level1)
+HWTEST_F(FuseDaemonTest, FuseDaemonReadDir002, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "FuseDaemonReadDir002");
     fuse_req_t req = nullptr;
@@ -607,7 +607,7 @@ HWTEST_F(FuseDaemonTest, FuseDaemonReadDir002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:AR000GVIGC
  */
-HWTEST_F(FuseDaemonTest, FuseDaemonReadDir003, TestSize.Level1)
+HWTEST_F(FuseDaemonTest, FuseDaemonReadDir003, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "FuseDaemonReadDir003");
     fuse_req_t req = nullptr;
@@ -634,7 +634,7 @@ HWTEST_F(FuseDaemonTest, FuseDaemonReadDir003, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:AR000GVIGC
  */
-HWTEST_F(FuseDaemonTest, FuseDaemonReadDir004, TestSize.Level1)
+HWTEST_F(FuseDaemonTest, FuseDaemonReadDir004, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "FuseDaemonReadDir004");
     fuse_req_t req = nullptr;
@@ -666,7 +666,7 @@ HWTEST_F(FuseDaemonTest, FuseDaemonReadDir004, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:AR000GVIGC
  */
-HWTEST_F(FuseDaemonTest, FuseDaemonReadDir005, TestSize.Level1)
+HWTEST_F(FuseDaemonTest, FuseDaemonReadDir005, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "FuseDaemonReadDir005");
     fuse_req_t req = nullptr;
@@ -700,7 +700,7 @@ HWTEST_F(FuseDaemonTest, FuseDaemonReadDir005, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:AR000GVIGC
  */
-HWTEST_F(FuseDaemonTest, FuseDaemonReadDir006, TestSize.Level1)
+HWTEST_F(FuseDaemonTest, FuseDaemonReadDir006, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "FuseDaemonReadDir006");
     fuse_req_t req = nullptr;
@@ -732,7 +732,7 @@ HWTEST_F(FuseDaemonTest, FuseDaemonReadDir006, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:AR000GVIGC
  */
-HWTEST_F(FuseDaemonTest, FuseDaemonSetAttr001, TestSize.Level1)
+HWTEST_F(FuseDaemonTest, FuseDaemonSetAttr001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "FuseDaemonReadDir005");
     fuse_req_t req = nullptr;
@@ -788,7 +788,7 @@ HWTEST_F(FuseDaemonTest, FuseDaemonSetAttr001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:AR000GVIGC
  */
-HWTEST_F(FuseDaemonTest, FuseDaemonSetAttr002, TestSize.Level1)
+HWTEST_F(FuseDaemonTest, FuseDaemonSetAttr002, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "FuseDaemonSetAttr002");
     fuse_req_t req = nullptr;
@@ -826,7 +826,7 @@ HWTEST_F(FuseDaemonTest, FuseDaemonSetAttr002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:AR000GVIGC
  */
-HWTEST_F(FuseDaemonTest, InitFuseFs001, TestSize.Level1)
+HWTEST_F(FuseDaemonTest, InitFuseFs001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "InitFuseFs001");
     FuseDaemon::init_ = false;
@@ -845,7 +845,7 @@ HWTEST_F(FuseDaemonTest, InitFuseFs001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:AR000GVIGC
  */
-HWTEST_F(FuseDaemonTest, FuseFsDaemonThread001, TestSize.Level1)
+HWTEST_F(FuseDaemonTest, FuseFsDaemonThread001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "FuseFsDaemonThread001");
 
@@ -869,7 +869,7 @@ HWTEST_F(FuseDaemonTest, FuseFsDaemonThread001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:AR000GVIGC
  */
-HWTEST_F(FuseDaemonTest, FuseFsDaemonThread002, TestSize.Level1)
+HWTEST_F(FuseDaemonTest, FuseFsDaemonThread002, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "FuseFsDaemonThread002");
 
@@ -901,7 +901,7 @@ HWTEST_F(FuseDaemonTest, FuseFsDaemonThread002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:AR000GVIGC
  */
-HWTEST_F(FuseDaemonTest, FuseFsDaemonThread003, TestSize.Level1)
+HWTEST_F(FuseDaemonTest, FuseFsDaemonThread003, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "FuseFsDaemonThread003");
 
@@ -937,7 +937,7 @@ HWTEST_F(FuseDaemonTest, FuseFsDaemonThread003, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:AR000GVIGC
  */
-HWTEST_F(FuseDaemonTest, FuseDaemonInit001, TestSize.Level1)
+HWTEST_F(FuseDaemonTest, FuseDaemonInit001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "FuseDaemonInit001");
 

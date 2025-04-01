@@ -46,7 +46,7 @@ void DlpPermissionAsyncStubTest::TearDown() {}
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpPermissionAsyncStubTest, OnGenerateDlpCertificate001, TestSize.Level1)
+HWTEST_F(DlpPermissionAsyncStubTest, OnGenerateDlpCertificate001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "OnGenerateDlpCertificate001");
 
@@ -66,7 +66,7 @@ HWTEST_F(DlpPermissionAsyncStubTest, OnGenerateDlpCertificate001, TestSize.Level
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpPermissionAsyncStubTest, OnGenerateDlpCertificate002, TestSize.Level1)
+HWTEST_F(DlpPermissionAsyncStubTest, OnGenerateDlpCertificate002, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "OnGenerateDlpCertificate002");
 
@@ -87,7 +87,7 @@ HWTEST_F(DlpPermissionAsyncStubTest, OnGenerateDlpCertificate002, TestSize.Level
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpPermissionAsyncStubTest, OnParseDlpCertificate001, TestSize.Level1)
+HWTEST_F(DlpPermissionAsyncStubTest, OnParseDlpCertificate001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "OnParseDlpCertificate001");
 
@@ -108,7 +108,7 @@ HWTEST_F(DlpPermissionAsyncStubTest, OnParseDlpCertificate001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpPermissionAsyncStubTest, OnParseDlpCertificate002, TestSize.Level1)
+HWTEST_F(DlpPermissionAsyncStubTest, OnParseDlpCertificate002, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "OnParseDlpCertificate002");
 
@@ -130,7 +130,7 @@ HWTEST_F(DlpPermissionAsyncStubTest, OnParseDlpCertificate002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpPermissionAsyncStubTest, OnParseDlpCertificateStub001, TestSize.Level1)
+HWTEST_F(DlpPermissionAsyncStubTest, OnParseDlpCertificateStub001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "OnParseDlpCertificateStub001");
 
@@ -150,7 +150,7 @@ HWTEST_F(DlpPermissionAsyncStubTest, OnParseDlpCertificateStub001, TestSize.Leve
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpPermissionAsyncStubTest, OnRemoteRequest001, TestSize.Level1)
+HWTEST_F(DlpPermissionAsyncStubTest, OnRemoteRequest001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "OnRemoteRequest001");
 

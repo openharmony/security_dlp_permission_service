@@ -101,7 +101,7 @@ static void CheckParams(DlpUsageSpec* usage, DlpBlob* key, DlpBlob* mIn, DlpBlob
  * @tc.type: FUNC
  * @tc.require:SR000GVIG3
  */
-HWTEST_F(DlpCryptTest, DlpOpensslAesEncrypt001, TestSize.Level1)
+HWTEST_F(DlpCryptTest, DlpOpensslAesEncrypt001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DlpOpensslAesEncrypt001");
     struct DlpCipherParam tagIv = {{16, g_iv}};
@@ -123,7 +123,7 @@ HWTEST_F(DlpCryptTest, DlpOpensslAesEncrypt001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:SR000GVIG3
  */
-HWTEST_F(DlpCryptTest, DlpOpensslAesEncrypt002, TestSize.Level1)
+HWTEST_F(DlpCryptTest, DlpOpensslAesEncrypt002, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DlpOpensslAesEncrypt002");
 
@@ -144,7 +144,7 @@ HWTEST_F(DlpCryptTest, DlpOpensslAesEncrypt002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:SR000GVIG3
  */
-HWTEST_F(DlpCryptTest, DlpOpensslAesEncrypt003, TestSize.Level1)
+HWTEST_F(DlpCryptTest, DlpOpensslAesEncrypt003, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DlpOpensslAesEncrypt003");
     struct DlpCipherParam tagIv = {{16, g_iv}};
@@ -165,7 +165,7 @@ HWTEST_F(DlpCryptTest, DlpOpensslAesEncrypt003, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:SR000GVIG3
  */
-HWTEST_F(DlpCryptTest, DlpOpensslAesEncrypt004, TestSize.Level1)
+HWTEST_F(DlpCryptTest, DlpOpensslAesEncrypt004, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DlpOpensslAesEncrypt004");
     struct DlpCipherParam tagIv = {{16, g_iv}};
@@ -186,7 +186,7 @@ HWTEST_F(DlpCryptTest, DlpOpensslAesEncrypt004, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:SR000GVIG3
  */
-HWTEST_F(DlpCryptTest, DlpOpensslAesDecrypt001, TestSize.Level1)
+HWTEST_F(DlpCryptTest, DlpOpensslAesDecrypt001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DlpOpensslAesDecrypt001");
     struct DlpCipherParam tagIv = {{16, g_iv}};
@@ -208,7 +208,7 @@ HWTEST_F(DlpCryptTest, DlpOpensslAesDecrypt001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:SR000GVIG3
  */
-HWTEST_F(DlpCryptTest, DlpOpensslAesDecrypt002, TestSize.Level1)
+HWTEST_F(DlpCryptTest, DlpOpensslAesDecrypt002, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DlpOpensslAesDecrypt002");
 
@@ -229,7 +229,7 @@ HWTEST_F(DlpCryptTest, DlpOpensslAesDecrypt002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:SR000GVIG3
  */
-HWTEST_F(DlpCryptTest, DlpOpensslAesDecrypt003, TestSize.Level1)
+HWTEST_F(DlpCryptTest, DlpOpensslAesDecrypt003, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DlpOpensslAesDecrypt003");
     struct DlpCipherParam tagIv = {{16, g_iv}};
@@ -250,7 +250,7 @@ HWTEST_F(DlpCryptTest, DlpOpensslAesDecrypt003, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:SR000GVIG3
  */
-HWTEST_F(DlpCryptTest, DlpOpensslAesDecrypt004, TestSize.Level1)
+HWTEST_F(DlpCryptTest, DlpOpensslAesDecrypt004, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DlpOpensslAesDecrypt004");
     struct DlpCipherParam tagIv = {{16, g_iv}};
@@ -271,7 +271,7 @@ HWTEST_F(DlpCryptTest, DlpOpensslAesDecrypt004, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:SR000GVIG3
  */
-HWTEST_F(DlpCryptTest, DlpOpensslAesEncryptInit001, TestSize.Level1)
+HWTEST_F(DlpCryptTest, DlpOpensslAesEncryptInit001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DlpOpensslAesEncryptInit001");
     struct DlpBlob key = {32, g_key};
@@ -289,7 +289,7 @@ HWTEST_F(DlpCryptTest, DlpOpensslAesEncryptInit001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:SR000GVIG3
  */
-HWTEST_F(DlpCryptTest, DlpOpensslAesEncryptInit002, TestSize.Level1)
+HWTEST_F(DlpCryptTest, DlpOpensslAesEncryptInit002, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DlpOpensslAesEncryptInit002");
     struct DlpCipherParam tagIv = {{16, g_iv}};
@@ -307,7 +307,7 @@ HWTEST_F(DlpCryptTest, DlpOpensslAesEncryptInit002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:SR000GVIG3
  */
-HWTEST_F(DlpCryptTest, DlpOpensslAesEncryptInit003, TestSize.Level1)
+HWTEST_F(DlpCryptTest, DlpOpensslAesEncryptInit003, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DlpOpensslAesEncryptInit003");
     void* ctx = nullptr;
@@ -324,7 +324,7 @@ HWTEST_F(DlpCryptTest, DlpOpensslAesEncryptInit003, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:SR000GVIG3
  */
-HWTEST_F(DlpCryptTest, DlpOpensslAesEncryptInit004, TestSize.Level1)
+HWTEST_F(DlpCryptTest, DlpOpensslAesEncryptInit004, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DlpOpensslAesEncryptInit004");
     void* ctx = nullptr;
@@ -375,7 +375,7 @@ HWTEST_F(DlpCryptTest, DlpOpensslAesEncryptInit004, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:SR000GVIG3
  */
-HWTEST_F(DlpCryptTest, DlpOpensslAesEncryptUpdate001, TestSize.Level1)
+HWTEST_F(DlpCryptTest, DlpOpensslAesEncryptUpdate001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DlpOpensslAesEncryptUpdate001");
     struct DlpBlob message = {32, g_key};
@@ -392,7 +392,7 @@ HWTEST_F(DlpCryptTest, DlpOpensslAesEncryptUpdate001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:SR000GVIG3
  */
-HWTEST_F(DlpCryptTest, DlpOpensslAesEncryptUpdate002, TestSize.Level1)
+HWTEST_F(DlpCryptTest, DlpOpensslAesEncryptUpdate002, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DlpOpensslAesEncryptUpdate002");
     struct DlpBlob key = {32, g_key};
@@ -423,7 +423,7 @@ HWTEST_F(DlpCryptTest, DlpOpensslAesEncryptUpdate002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:SR000GVIG3
  */
-HWTEST_F(DlpCryptTest, DlpOpensslAesEncryptUpdate003, TestSize.Level1)
+HWTEST_F(DlpCryptTest, DlpOpensslAesEncryptUpdate003, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DlpOpensslAesEncryptUpdate003");
     struct DlpBlob key = {32, g_key};
@@ -448,7 +448,7 @@ HWTEST_F(DlpCryptTest, DlpOpensslAesEncryptUpdate003, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:SR000GVIG3
  */
-HWTEST_F(DlpCryptTest, DlpOpensslAesEncryptUpdate004, TestSize.Level1)
+HWTEST_F(DlpCryptTest, DlpOpensslAesEncryptUpdate004, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DlpOpensslAesEncryptUpdate004");
     struct DlpBlob key = {32, g_key};
@@ -488,7 +488,7 @@ HWTEST_F(DlpCryptTest, DlpOpensslAesEncryptUpdate004, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:SR000GVIG3
  */
-HWTEST_F(DlpCryptTest, DlpOpensslAesEncryptFinal001, TestSize.Level1)
+HWTEST_F(DlpCryptTest, DlpOpensslAesEncryptFinal001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DlpOpensslAesEncryptFinal001");
     struct DlpBlob message = {32, g_key};
@@ -515,7 +515,7 @@ HWTEST_F(DlpCryptTest, DlpOpensslAesEncryptFinal001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:SR000GVIG3
  */
-HWTEST_F(DlpCryptTest, DlpOpensslAesEncryptFinal002, TestSize.Level1)
+HWTEST_F(DlpCryptTest, DlpOpensslAesEncryptFinal002, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DlpOpensslAesEncryptFinal002");
     struct DlpBlob key = {32, g_key};
@@ -553,7 +553,7 @@ HWTEST_F(DlpCryptTest, DlpOpensslAesEncryptFinal002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:SR000GVIG3
  */
-HWTEST_F(DlpCryptTest, DlpOpensslAesEncryptFinal003, TestSize.Level1)
+HWTEST_F(DlpCryptTest, DlpOpensslAesEncryptFinal003, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DlpOpensslAesEncryptFinal003");
     struct DlpBlob key = {32, g_key};
@@ -591,7 +591,7 @@ HWTEST_F(DlpCryptTest, DlpOpensslAesEncryptFinal003, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:SR000GVIG3
  */
-HWTEST_F(DlpCryptTest, DlpOpensslAesEncryptFinal004, TestSize.Level1)
+HWTEST_F(DlpCryptTest, DlpOpensslAesEncryptFinal004, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DlpOpensslAesEncryptFinal003");
     struct DlpBlob key = {32, g_key};
@@ -631,7 +631,7 @@ HWTEST_F(DlpCryptTest, DlpOpensslAesEncryptFinal004, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:SR000GVIG3
  */
-HWTEST_F(DlpCryptTest, DlpOpensslAesEncryptFinal005, TestSize.Level1)
+HWTEST_F(DlpCryptTest, DlpOpensslAesEncryptFinal005, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DlpOpensslAesEncryptFinal005");
     struct DlpBlob key = {32, g_key};
@@ -672,7 +672,7 @@ HWTEST_F(DlpCryptTest, DlpOpensslAesEncryptFinal005, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:SR000GVIG3
  */
-HWTEST_F(DlpCryptTest, DlpOpensslAesEncryptFinal006, TestSize.Level1)
+HWTEST_F(DlpCryptTest, DlpOpensslAesEncryptFinal006, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DlpOpensslAesEncryptFinal006");
     struct DlpBlob key = {32, g_key};
@@ -713,7 +713,7 @@ HWTEST_F(DlpCryptTest, DlpOpensslAesEncryptFinal006, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:SR000GVIG3
  */
-HWTEST_F(DlpCryptTest, DlpOpensslAesDecryptInit001, TestSize.Level1)
+HWTEST_F(DlpCryptTest, DlpOpensslAesDecryptInit001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DlpOpensslAesDecryptInit001");
     struct DlpBlob key = {32, g_key};
@@ -731,7 +731,7 @@ HWTEST_F(DlpCryptTest, DlpOpensslAesDecryptInit001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:SR000GVIG3
  */
-HWTEST_F(DlpCryptTest, DlpOpensslAesDecryptInit002, TestSize.Level1)
+HWTEST_F(DlpCryptTest, DlpOpensslAesDecryptInit002, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DlpOpensslAesDecryptInit002");
     struct DlpCipherParam tagIv = {{16, g_iv}};
@@ -749,7 +749,7 @@ HWTEST_F(DlpCryptTest, DlpOpensslAesDecryptInit002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:SR000GVIG3
  */
-HWTEST_F(DlpCryptTest, DlpOpensslAesDecryptInit003, TestSize.Level1)
+HWTEST_F(DlpCryptTest, DlpOpensslAesDecryptInit003, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DlpOpensslAesDecryptInit003");
     void* ctx = nullptr;
@@ -766,7 +766,7 @@ HWTEST_F(DlpCryptTest, DlpOpensslAesDecryptInit003, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:SR000GVIG3
  */
-HWTEST_F(DlpCryptTest, DlpOpensslAesDecryptInit004, TestSize.Level1)
+HWTEST_F(DlpCryptTest, DlpOpensslAesDecryptInit004, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DlpOpensslAesDecryptInit004");
 
@@ -794,7 +794,7 @@ HWTEST_F(DlpCryptTest, DlpOpensslAesDecryptInit004, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:SR000GVIG3
  */
-HWTEST_F(DlpCryptTest, DlpOpensslAesDecryptUpdate001, TestSize.Level1)
+HWTEST_F(DlpCryptTest, DlpOpensslAesDecryptUpdate001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DlpOpensslAesDecryptUpdate001");
     struct DlpBlob message = {32, g_key};
@@ -811,7 +811,7 @@ HWTEST_F(DlpCryptTest, DlpOpensslAesDecryptUpdate001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:SR000GVIG3
  */
-HWTEST_F(DlpCryptTest, DlpOpensslAesDecryptUpdate002, TestSize.Level1)
+HWTEST_F(DlpCryptTest, DlpOpensslAesDecryptUpdate002, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DlpOpensslAesDecryptUpdate002");
     struct DlpBlob key = {32, g_key};
@@ -835,7 +835,7 @@ HWTEST_F(DlpCryptTest, DlpOpensslAesDecryptUpdate002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:SR000GVIG3
  */
-HWTEST_F(DlpCryptTest, DlpOpensslAesDecryptUpdate003, TestSize.Level1)
+HWTEST_F(DlpCryptTest, DlpOpensslAesDecryptUpdate003, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DlpOpensslAesDecryptUpdate003");
     struct DlpBlob key = {32, g_key};
@@ -859,7 +859,7 @@ HWTEST_F(DlpCryptTest, DlpOpensslAesDecryptUpdate003, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:SR000GVIG3
  */
-HWTEST_F(DlpCryptTest, DlpOpensslAesDecryptUpdate004, TestSize.Level1)
+HWTEST_F(DlpCryptTest, DlpOpensslAesDecryptUpdate004, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DlpOpensslAesDecryptUpdate004");
     struct DlpBlob key = {32, g_key};
@@ -901,7 +901,7 @@ HWTEST_F(DlpCryptTest, DlpOpensslAesDecryptUpdate004, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:SR000GVIG3
  */
-HWTEST_F(DlpCryptTest, DlpOpensslAesDecryptFinal001, TestSize.Level1)
+HWTEST_F(DlpCryptTest, DlpOpensslAesDecryptFinal001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DlpOpensslAesDecryptFinal001");
     struct DlpBlob message = {32, g_key};
@@ -918,7 +918,7 @@ HWTEST_F(DlpCryptTest, DlpOpensslAesDecryptFinal001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:SR000GVIG3
  */
-HWTEST_F(DlpCryptTest, DlpOpensslAesDecryptFinal002, TestSize.Level1)
+HWTEST_F(DlpCryptTest, DlpOpensslAesDecryptFinal002, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DlpOpensslAesDecryptFinal002");
     struct DlpBlob key = {32, g_key};
@@ -956,7 +956,7 @@ HWTEST_F(DlpCryptTest, DlpOpensslAesDecryptFinal002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:SR000GVIG3
  */
-HWTEST_F(DlpCryptTest, DlpOpensslAesDecryptFinal003, TestSize.Level1)
+HWTEST_F(DlpCryptTest, DlpOpensslAesDecryptFinal003, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DlpOpensslAesDecryptFinal003");
     struct DlpBlob key = {32, g_key};
@@ -994,7 +994,7 @@ HWTEST_F(DlpCryptTest, DlpOpensslAesDecryptFinal003, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:SR000GVIG3
  */
-HWTEST_F(DlpCryptTest, DlpOpensslAesDecryptFinal004, TestSize.Level1)
+HWTEST_F(DlpCryptTest, DlpOpensslAesDecryptFinal004, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DlpOpensslAesDecryptFinal004");
     struct DlpBlob key = {32, g_key};
@@ -1055,7 +1055,7 @@ HWTEST_F(DlpCryptTest, DlpOpensslAesDecryptFinal004, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:SR000GVIG3
  */
-HWTEST_F(DlpCryptTest, DlpOpensslAesEncryptAndDecrypt001, TestSize.Level1)
+HWTEST_F(DlpCryptTest, DlpOpensslAesEncryptAndDecrypt001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DlpOpensslAesEncryptAndDecrypt001");
     struct DlpBlob key = { 32, nullptr };
@@ -1104,7 +1104,7 @@ HWTEST_F(DlpCryptTest, DlpOpensslAesEncryptAndDecrypt001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:SR000GVIG3
  */
-HWTEST_F(DlpCryptTest, DlpOpensslAesEncryptAndDecrypt002, TestSize.Level1)
+HWTEST_F(DlpCryptTest, DlpOpensslAesEncryptAndDecrypt002, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DlpOpensslAesEncryptAndDecrypt002");
     struct DlpBlob key = { 32, nullptr };
@@ -1152,7 +1152,7 @@ HWTEST_F(DlpCryptTest, DlpOpensslAesEncryptAndDecrypt002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:SR000GVIG3
  */
-HWTEST_F(DlpCryptTest, DlpOpensslAesEncryptAndDecrypt003, TestSize.Level1)
+HWTEST_F(DlpCryptTest, DlpOpensslAesEncryptAndDecrypt003, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DlpOpensslAesEncryptAndDecrypt003");
     struct DlpBlob key = { 32, nullptr };
@@ -1212,7 +1212,7 @@ HWTEST_F(DlpCryptTest, DlpOpensslAesEncryptAndDecrypt003, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:SR000GVIG3
  */
-HWTEST_F(DlpCryptTest, DlpOpensslAesEncryptAndDecrypt004, TestSize.Level1)
+HWTEST_F(DlpCryptTest, DlpOpensslAesEncryptAndDecrypt004, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DlpOpensslAesEncryptAndDecrypt004");
     int32_t ret;
@@ -1229,7 +1229,7 @@ HWTEST_F(DlpCryptTest, DlpOpensslAesEncryptAndDecrypt004, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:SR000GVIG3
  */
-HWTEST_F(DlpCryptTest, DlpOpensslAesEncryptAndDecrypt005, TestSize.Level1)
+HWTEST_F(DlpCryptTest, DlpOpensslAesEncryptAndDecrypt005, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DlpOpensslAesEncryptAndDecrypt005");
 
@@ -1280,7 +1280,7 @@ HWTEST_F(DlpCryptTest, DlpOpensslAesEncryptAndDecrypt005, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:SR000GVIG3
  */
-HWTEST_F(DlpCryptTest, DlpOpensslAesEncryptAndDecrypt006, TestSize.Level1)
+HWTEST_F(DlpCryptTest, DlpOpensslAesEncryptAndDecrypt006, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DlpOpensslAesEncryptAndDecrypt006");
 
@@ -1337,7 +1337,7 @@ HWTEST_F(DlpCryptTest, DlpOpensslAesEncryptAndDecrypt006, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:SR000GVIG3
  */
-HWTEST_F(DlpCryptTest, DlpOpensslAesEncryptAndDecrypt007, TestSize.Level1)
+HWTEST_F(DlpCryptTest, DlpOpensslAesEncryptAndDecrypt007, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DlpOpensslAesEncryptAndDecrypt007");
     struct DlpBlob key = { 32, nullptr };
@@ -1393,7 +1393,7 @@ HWTEST_F(DlpCryptTest, DlpOpensslAesEncryptAndDecrypt007, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:SR000GVIG3
  */
-HWTEST_F(DlpCryptTest, DlpOpensslAesHalFreeCtx001, TestSize.Level1)
+HWTEST_F(DlpCryptTest, DlpOpensslAesHalFreeCtx001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DlpOpensslAesHalFreeCtx001");
     void *ctx;
@@ -1420,7 +1420,7 @@ HWTEST_F(DlpCryptTest, DlpOpensslAesHalFreeCtx001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:SR000GVIG3
  */
-HWTEST_F(DlpCryptTest, DlpOpensslAesHalFreeCtx002, TestSize.Level1)
+HWTEST_F(DlpCryptTest, DlpOpensslAesHalFreeCtx002, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DlpOpensslAesHalFreeCtx002");
     void *ctx;
@@ -1447,7 +1447,7 @@ HWTEST_F(DlpCryptTest, DlpOpensslAesHalFreeCtx002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:SR000GVIG3
  */
-HWTEST_F(DlpCryptTest, GetOpensslAlg001, TestSize.Level1)
+HWTEST_F(DlpCryptTest, GetOpensslAlg001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "GetOpensslAlg001");
     ASSERT_EQ(GetOpensslAlg(1000), nullptr);
@@ -1459,7 +1459,7 @@ HWTEST_F(DlpCryptTest, GetOpensslAlg001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:SR000GVIG3
  */
-HWTEST_F(DlpCryptTest, DlpOpensslHash001, TestSize.Level1)
+HWTEST_F(DlpCryptTest, DlpOpensslHash001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DlpOpensslHash001");
     uint8_t input[16] = "aaaaaaaaaaaaaaa";
@@ -1498,7 +1498,7 @@ HWTEST_F(DlpCryptTest, DlpOpensslHash001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:SR000GVIG3
  */
-HWTEST_F(DlpCryptTest, DlpOpensslHash002, TestSize.Level1)
+HWTEST_F(DlpCryptTest, DlpOpensslHash002, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DlpOpensslHash002");
     uint8_t input[16] = "aaaaaaaaaaaaaaa";
@@ -1521,7 +1521,7 @@ HWTEST_F(DlpCryptTest, DlpOpensslHash002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:SR000GVIG3
  */
-HWTEST_F(DlpCryptTest, DlpOpensslHash003, TestSize.Level1)
+HWTEST_F(DlpCryptTest, DlpOpensslHash003, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DlpOpensslHash003");
     uint8_t out[64] = {0};
@@ -1538,7 +1538,7 @@ HWTEST_F(DlpCryptTest, DlpOpensslHash003, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:SR000GVIG3
  */
-HWTEST_F(DlpCryptTest, DlpOpensslHash004, TestSize.Level1)
+HWTEST_F(DlpCryptTest, DlpOpensslHash004, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DlpOpensslHash004");
     uint8_t input[16] = "aaaaaaaaaaaaaaa";
@@ -1555,7 +1555,7 @@ HWTEST_F(DlpCryptTest, DlpOpensslHash004, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:SR000GVIG3
  */
-HWTEST_F(DlpCryptTest, DlpOpensslHash005, TestSize.Level1)
+HWTEST_F(DlpCryptTest, DlpOpensslHash005, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DlpOpensslHash005");
     uint8_t input[16] = "aaaaaaaaaaaaaaa";
@@ -1572,7 +1572,7 @@ HWTEST_F(DlpCryptTest, DlpOpensslHash005, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:SR000GVIG3
  */
-HWTEST_F(DlpCryptTest, DlpOpensslHash006, TestSize.Level1)
+HWTEST_F(DlpCryptTest, DlpOpensslHash006, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DlpOpensslHash006");
     uint8_t input[16] = "aaaaaaaaaaaaaaa";
@@ -1600,7 +1600,7 @@ HWTEST_F(DlpCryptTest, DlpOpensslHash006, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:SR000GVIG3
  */
-HWTEST_F(DlpCryptTest, DlpOpensslHashInit001, TestSize.Level1)
+HWTEST_F(DlpCryptTest, DlpOpensslHashInit001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DlpOpensslHashInit001");
 
@@ -1615,7 +1615,7 @@ HWTEST_F(DlpCryptTest, DlpOpensslHashInit001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:SR000GVIG3
  */
-HWTEST_F(DlpCryptTest, DlpOpensslHashInit002, TestSize.Level1)
+HWTEST_F(DlpCryptTest, DlpOpensslHashInit002, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DlpOpensslHashInit002");
 
@@ -1636,7 +1636,7 @@ HWTEST_F(DlpCryptTest, DlpOpensslHashInit002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:SR000GVIG3
  */
-HWTEST_F(DlpCryptTest, DlpOpensslHashInit003, TestSize.Level1)
+HWTEST_F(DlpCryptTest, DlpOpensslHashInit003, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DlpOpensslHashInit003");
     void* ctx = nullptr;
@@ -1667,7 +1667,7 @@ HWTEST_F(DlpCryptTest, DlpOpensslHashInit003, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:SR000GVIG3
  */
-HWTEST_F(DlpCryptTest, DlpOpensslHashUpdate001, TestSize.Level1)
+HWTEST_F(DlpCryptTest, DlpOpensslHashUpdate001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DlpOpensslHashUpdate001");
     uint8_t input[16] = "aaaaaaaaaaaaaaa";
@@ -1684,7 +1684,7 @@ HWTEST_F(DlpCryptTest, DlpOpensslHashUpdate001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:SR000GVIG3
  */
-HWTEST_F(DlpCryptTest, DlpOpensslHashUpdate002, TestSize.Level1)
+HWTEST_F(DlpCryptTest, DlpOpensslHashUpdate002, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DlpOpensslHashUpdate002");
     void* ctx = nullptr;
@@ -1703,7 +1703,7 @@ HWTEST_F(DlpCryptTest, DlpOpensslHashUpdate002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:SR000GVIG3
  */
-HWTEST_F(DlpCryptTest, DlpOpensslHashUpdate003, TestSize.Level1)
+HWTEST_F(DlpCryptTest, DlpOpensslHashUpdate003, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DlpOpensslHashUpdate003");
     void* ctx = nullptr;
@@ -1728,7 +1728,7 @@ HWTEST_F(DlpCryptTest, DlpOpensslHashUpdate003, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:SR000GVIG3
  */
-HWTEST_F(DlpCryptTest, DlpOpensslHashFinal001, TestSize.Level1)
+HWTEST_F(DlpCryptTest, DlpOpensslHashFinal001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DlpOpensslHashFinal001");
     uint8_t input[16] = "aaaaaaaaaaaaaaa";
@@ -1747,7 +1747,7 @@ HWTEST_F(DlpCryptTest, DlpOpensslHashFinal001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:SR000GVIG3
  */
-HWTEST_F(DlpCryptTest, DlpOpensslHashFinal002, TestSize.Level1)
+HWTEST_F(DlpCryptTest, DlpOpensslHashFinal002, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DlpOpensslHashFinal002");
     uint8_t input[16] = "aaaaaaaaaaaaaaa";
@@ -1780,7 +1780,7 @@ HWTEST_F(DlpCryptTest, DlpOpensslHashFinal002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:SR000GVIG3
  */
-HWTEST_F(DlpCryptTest, DlpOpensslHashFinal003, TestSize.Level1)
+HWTEST_F(DlpCryptTest, DlpOpensslHashFinal003, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DlpOpensslHashFinal003");
     uint8_t input[16] = "aaaaaaaaaaaaaaa";
@@ -1812,7 +1812,7 @@ HWTEST_F(DlpCryptTest, DlpOpensslHashFinal003, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:SR000GVIG3
  */
-HWTEST_F(DlpCryptTest, DlpOpensslHashFinal004, TestSize.Level1)
+HWTEST_F(DlpCryptTest, DlpOpensslHashFinal004, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DlpOpensslHashFinal004");
     uint8_t input[16] = "aaaaaaaaaaaaaaa";
@@ -1844,7 +1844,7 @@ HWTEST_F(DlpCryptTest, DlpOpensslHashFinal004, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:SR000GVIG3
  */
-HWTEST_F(DlpCryptTest, DlpOpensslHashFinal005, TestSize.Level1)
+HWTEST_F(DlpCryptTest, DlpOpensslHashFinal005, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DlpOpensslHashFinal005");
     uint8_t input[16] = "aaaaaaaaaaaaaaa";
@@ -1880,7 +1880,7 @@ HWTEST_F(DlpCryptTest, DlpOpensslHashFinal005, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:SR000GVIG3
  */
-HWTEST_F(DlpCryptTest, DlpOpensslHashFinal006, TestSize.Level1)
+HWTEST_F(DlpCryptTest, DlpOpensslHashFinal006, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DlpOpensslHashFinal006");
     uint8_t input[16] = "aaaaaaaaaaaaaaa";
@@ -1916,7 +1916,7 @@ HWTEST_F(DlpCryptTest, DlpOpensslHashFinal006, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:SR000GVIG3
  */
-HWTEST_F(DlpCryptTest, DlpOpensslHashFreeCtx001, TestSize.Level1)
+HWTEST_F(DlpCryptTest, DlpOpensslHashFreeCtx001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DlpOpensslHashFreeCtx001");
     ASSERT_EQ(DLP_PARSE_ERROR_VALUE_INVALID, DlpOpensslHashFreeCtx(nullptr));
@@ -1931,7 +1931,7 @@ HWTEST_F(DlpCryptTest, DlpOpensslHashFreeCtx001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:SR000GVIG3
  */
-HWTEST_F(DlpCryptTest, DlpOpensslHashFreeCtx002, TestSize.Level1)
+HWTEST_F(DlpCryptTest, DlpOpensslHashFreeCtx002, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DlpOpensslHashFreeCtx002");
     void* ctx = nullptr;
@@ -1945,7 +1945,7 @@ HWTEST_F(DlpCryptTest, DlpOpensslHashFreeCtx002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:SR000GVIG3
  */
-HWTEST_F(DlpCryptTest, DlpOpensslHashTest001, TestSize.Level1)
+HWTEST_F(DlpCryptTest, DlpOpensslHashTest001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DlpOpensslHashTest001");
     uint8_t input[16] = "aaaaaaaaaaaaaaa";
@@ -1993,7 +1993,7 @@ HWTEST_F(DlpCryptTest, DlpOpensslHashTest001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:SR000GVIG3
  */
-HWTEST_F(DlpCryptTest, DlpOpensslGenerateRandomKey001, TestSize.Level1)
+HWTEST_F(DlpCryptTest, DlpOpensslGenerateRandomKey001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DlpOpensslGenerateRandomKey001");
     int ret = 0;
@@ -2025,7 +2025,7 @@ HWTEST_F(DlpCryptTest, DlpOpensslGenerateRandomKey001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:SR000GVIG3
  */
-HWTEST_F(DlpCryptTest, DlpOpensslGenerateRandomKey002, TestSize.Level1)
+HWTEST_F(DlpCryptTest, DlpOpensslGenerateRandomKey002, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DlpOpensslGenerateRandomKey002");
     struct DlpBlob key = {32, nullptr};
@@ -2039,7 +2039,7 @@ HWTEST_F(DlpCryptTest, DlpOpensslGenerateRandomKey002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:SR000GVIG3
  */
-HWTEST_F(DlpCryptTest, DlpOpensslGenerateRandomKey003, TestSize.Level1)
+HWTEST_F(DlpCryptTest, DlpOpensslGenerateRandomKey003, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DlpOpensslGenerateRandomKey003");
 
@@ -2054,7 +2054,7 @@ HWTEST_F(DlpCryptTest, DlpOpensslGenerateRandomKey003, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:SR000GVIG3
  */
-HWTEST_F(DlpCryptTest, DlpOpensslGenerateRandomKey004, TestSize.Level1)
+HWTEST_F(DlpCryptTest, DlpOpensslGenerateRandomKey004, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DlpOpensslGenerateRandomKey004");
 
@@ -2077,7 +2077,7 @@ HWTEST_F(DlpCryptTest, DlpOpensslGenerateRandomKey004, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:SR000GVIG3
  */
-HWTEST_F(DlpCryptTest, DlpCtrModeIncreaeIvCounter001, TestSize.Level1)
+HWTEST_F(DlpCryptTest, DlpCtrModeIncreaeIvCounter001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DlpCtrModeIncreaeIvCounter001");
 

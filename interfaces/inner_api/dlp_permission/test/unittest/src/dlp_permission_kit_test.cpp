@@ -321,7 +321,7 @@ static bool IsFeatureProvidedWithDlp()
  * @tc.type: FUNC
  * @tc.require:SR000I38N7
  */
-HWTEST_F(DlpPermissionKitTest, SetRetentionState01, TestSize.Level1)
+HWTEST_F(DlpPermissionKitTest, SetRetentionState01, TestSize.Level0)
 {
     int32_t uid = getuid();
     AccessTokenID selfTokenId = GetSelfTokenID();
@@ -366,7 +366,7 @@ HWTEST_F(DlpPermissionKitTest, SetRetentionState01, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:SR000I38N7
  */
-HWTEST_F(DlpPermissionKitTest, SetRetentionState02, TestSize.Level1)
+HWTEST_F(DlpPermissionKitTest, SetRetentionState02, TestSize.Level0)
 {
     int32_t uid = getuid();
     AccessTokenID tokenId = GetSelfTokenID();
@@ -399,7 +399,7 @@ HWTEST_F(DlpPermissionKitTest, SetRetentionState02, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:SR000I38N7
  */
-HWTEST_F(DlpPermissionKitTest, SetRetentionState03, TestSize.Level1)
+HWTEST_F(DlpPermissionKitTest, SetRetentionState03, TestSize.Level0)
 {
     int32_t uid = getuid();
     SandboxInfo sandboxInfo;
@@ -430,7 +430,7 @@ HWTEST_F(DlpPermissionKitTest, SetRetentionState03, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:AR000GVIG0
  */
-HWTEST_F(DlpPermissionKitTest, OnGenerateDlpCertificate001, TestSize.Level1)
+HWTEST_F(DlpPermissionKitTest, OnGenerateDlpCertificate001, TestSize.Level0)
 {
     auto generateDlpCertificateCallback = std::make_shared<ClientGenerateDlpCertificateCallback>();
     std::vector<uint8_t> cert;
@@ -446,7 +446,7 @@ HWTEST_F(DlpPermissionKitTest, OnGenerateDlpCertificate001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:AR000GVIG0
  */
-HWTEST_F(DlpPermissionKitTest, OnParseDlpCertificate001, TestSize.Level1)
+HWTEST_F(DlpPermissionKitTest, OnParseDlpCertificate001, TestSize.Level0)
 {
     auto parseDlpCertificateCallback = std::make_shared<ClientParseDlpCertificateCallback>();
     PermissionPolicy policy;
@@ -461,7 +461,7 @@ HWTEST_F(DlpPermissionKitTest, OnParseDlpCertificate001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:AR000GVIG0
  */
-HWTEST_F(DlpPermissionKitTest, GenerateDlpCertificate001, TestSize.Level1)
+HWTEST_F(DlpPermissionKitTest, GenerateDlpCertificate001, TestSize.Level0)
 {
     GeneratePolicyParam param = {INVALID_ACCOUNT_LENGTH_UPPER, AESKEY_LEN,
                                              IV_LEN, USER_NUM, ACCOUNT_LENGTH, AUTH_PERM, DELTA_EXPIRY_TIME};
@@ -516,7 +516,7 @@ HWTEST_F(DlpPermissionKitTest, GenerateDlpCertificate001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:AR000GVIG0
  */
-HWTEST_F(DlpPermissionKitTest, ParseDlpCertificate001, TestSize.Level1)
+HWTEST_F(DlpPermissionKitTest, ParseDlpCertificate001, TestSize.Level0)
 {
     sptr<CertParcel> certParcel = new (std::nothrow) CertParcel();
     PermissionPolicy policy;
@@ -533,7 +533,7 @@ HWTEST_F(DlpPermissionKitTest, ParseDlpCertificate001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:AR000GVIG8
  */
-HWTEST_F(DlpPermissionKitTest, InstallDlpSandbox001, TestSize.Level1)
+HWTEST_F(DlpPermissionKitTest, InstallDlpSandbox001, TestSize.Level0)
 {
     SandboxInfo sandboxInfo;
     ASSERT_EQ(DLP_OK,
@@ -548,7 +548,7 @@ HWTEST_F(DlpPermissionKitTest, InstallDlpSandbox001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:AR000GVIG8
  */
-HWTEST_F(DlpPermissionKitTest, InstallDlpSandbox002, TestSize.Level1)
+HWTEST_F(DlpPermissionKitTest, InstallDlpSandbox002, TestSize.Level0)
 {
     SandboxInfo sandboxInfo;
     ASSERT_NE(
@@ -566,7 +566,7 @@ HWTEST_F(DlpPermissionKitTest, InstallDlpSandbox002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: SR000GVIGF AR000GVIGG
  */
-HWTEST_F(DlpPermissionKitTest, UninstallDlpSandbox001, TestSize.Level1)
+HWTEST_F(DlpPermissionKitTest, UninstallDlpSandbox001, TestSize.Level0)
 {
     SandboxInfo sandboxInfo;
     ASSERT_EQ(DLP_OK,
@@ -581,7 +581,7 @@ HWTEST_F(DlpPermissionKitTest, UninstallDlpSandbox001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: SR000GVIGF AR000GVIGG
  */
-HWTEST_F(DlpPermissionKitTest, UninstallDlpSandbox002, TestSize.Level1)
+HWTEST_F(DlpPermissionKitTest, UninstallDlpSandbox002, TestSize.Level0)
 {
     int32_t appIndex = 1;
     ASSERT_NE(DLP_OK, DlpPermissionKit::UninstallDlpSandbox("test.test", appIndex, DEFAULT_USERID));
@@ -594,7 +594,7 @@ HWTEST_F(DlpPermissionKitTest, UninstallDlpSandbox002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: SR000GVIR0 AR000GVIR1
  */
-HWTEST_F(DlpPermissionKitTest, GetSandboxExternalAuthorization001, TestSize.Level1)
+HWTEST_F(DlpPermissionKitTest, GetSandboxExternalAuthorization001, TestSize.Level0)
 {
     int32_t uid = getuid();
     AccessTokenID selfTokenId = GetSelfTokenID();
@@ -630,7 +630,7 @@ HWTEST_F(DlpPermissionKitTest, GetSandboxExternalAuthorization001, TestSize.Leve
  * @tc.type: FUNC
  * @tc.require: SR000GVIGL AR000GVIGM
  */
-HWTEST_F(DlpPermissionKitTest, QueryDlpFileCopyableByTokenId001, TestSize.Level1)
+HWTEST_F(DlpPermissionKitTest, QueryDlpFileCopyableByTokenId001, TestSize.Level0)
 {
     // query dlp file access with read only sandbox app tokenId
     SandboxInfo sandboxInfo;
@@ -651,7 +651,7 @@ HWTEST_F(DlpPermissionKitTest, QueryDlpFileCopyableByTokenId001, TestSize.Level1
  * @tc.type: FUNC
  * @tc.require: SR000GVIGL AR000GVIGM
  */
-HWTEST_F(DlpPermissionKitTest, QueryDlpFileCopyableByTokenId002, TestSize.Level1)
+HWTEST_F(DlpPermissionKitTest, QueryDlpFileCopyableByTokenId002, TestSize.Level0)
 {
     // query dlp file access with full control sandbox app tokenId
     SandboxInfo sandboxInfo;
@@ -672,7 +672,7 @@ HWTEST_F(DlpPermissionKitTest, QueryDlpFileCopyableByTokenId002, TestSize.Level1
  * @tc.type: FUNC
  * @tc.require: SR000GVIGL AR000GVIGM
  */
-HWTEST_F(DlpPermissionKitTest, QueryDlpFileCopyableByTokenId003, TestSize.Level1)
+HWTEST_F(DlpPermissionKitTest, QueryDlpFileCopyableByTokenId003, TestSize.Level0)
 {
     // query dlp file access with normal app tokenId
     bool copyable = false;
@@ -688,7 +688,7 @@ HWTEST_F(DlpPermissionKitTest, QueryDlpFileCopyableByTokenId003, TestSize.Level1
  * @tc.type: FUNC
  * @tc.require: SR000GVIGL AR000GVIGM
  */
-HWTEST_F(DlpPermissionKitTest, QueryDlpFileCopyableByTokenId004, TestSize.Level1)
+HWTEST_F(DlpPermissionKitTest, QueryDlpFileCopyableByTokenId004, TestSize.Level0)
 {
     // query dlp file access with invalid tokenId
     bool copyable = false;
@@ -702,7 +702,7 @@ HWTEST_F(DlpPermissionKitTest, QueryDlpFileCopyableByTokenId004, TestSize.Level1
  * @tc.type: FUNC
  * @tc.require: SR000GVIGN AR000GVIGO
  */
-HWTEST_F(DlpPermissionKitTest, QueryDlpFileAccess001, TestSize.Level1)
+HWTEST_F(DlpPermissionKitTest, QueryDlpFileAccess001, TestSize.Level0)
 {
     // query dlp file access in normal app
     int32_t uid = getuid();
@@ -721,7 +721,7 @@ HWTEST_F(DlpPermissionKitTest, QueryDlpFileAccess001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: SR000GVIGN AR000GVIGO
  */
-HWTEST_F(DlpPermissionKitTest, QueryDlpFileAccess002, TestSize.Level1)
+HWTEST_F(DlpPermissionKitTest, QueryDlpFileAccess002, TestSize.Level0)
 {
     // query dlp file access in read only sandbox app
     SandboxInfo sandboxInfo;
@@ -746,7 +746,7 @@ HWTEST_F(DlpPermissionKitTest, QueryDlpFileAccess002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: SR000GVIGN AR000GVIGO
  */
-HWTEST_F(DlpPermissionKitTest, QueryDlpFileAccess003, TestSize.Level1)
+HWTEST_F(DlpPermissionKitTest, QueryDlpFileAccess003, TestSize.Level0)
 {
     // query dlp file access in content edit sandbox app
     SandboxInfo sandboxInfo;
@@ -771,7 +771,7 @@ HWTEST_F(DlpPermissionKitTest, QueryDlpFileAccess003, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: SR000GVIGN AR000GVIGO
  */
-HWTEST_F(DlpPermissionKitTest, QueryDlpFileAccess004, TestSize.Level1)
+HWTEST_F(DlpPermissionKitTest, QueryDlpFileAccess004, TestSize.Level0)
 {
     // query dlp file access in full control sandbox app
     SandboxInfo sandboxInfo;
@@ -796,7 +796,7 @@ HWTEST_F(DlpPermissionKitTest, QueryDlpFileAccess004, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: SR000GVIGN AR000GVIGO
  */
-HWTEST_F(DlpPermissionKitTest, IsInDlpSandbox001, TestSize.Level1)
+HWTEST_F(DlpPermissionKitTest, IsInDlpSandbox001, TestSize.Level0)
 {
     // query whether in sandbox in normal app
     bool inSandbox = false;
@@ -817,7 +817,7 @@ HWTEST_F(DlpPermissionKitTest, IsInDlpSandbox001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: SR000GVIGN AR000GVIGO
  */
-HWTEST_F(DlpPermissionKitTest, IsInDlpSandbox002, TestSize.Level1)
+HWTEST_F(DlpPermissionKitTest, IsInDlpSandbox002, TestSize.Level0)
 {
     // query whether in sandbox in read only sandbox app
     SandboxInfo sandboxInfo;
@@ -840,7 +840,7 @@ HWTEST_F(DlpPermissionKitTest, IsInDlpSandbox002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: SR000GVIGN AR000GVIGO
  */
-HWTEST_F(DlpPermissionKitTest, IsInDlpSandbox003, TestSize.Level1)
+HWTEST_F(DlpPermissionKitTest, IsInDlpSandbox003, TestSize.Level0)
 {
     // query whether in sandbox in full control sandbox app
     SandboxInfo sandboxInfo;
@@ -864,7 +864,7 @@ HWTEST_F(DlpPermissionKitTest, IsInDlpSandbox003, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: SR000GVIGN AR000GVIGO
  */
-HWTEST_F(DlpPermissionKitTest, GetDlpSupportFileType001, TestSize.Level1)
+HWTEST_F(DlpPermissionKitTest, GetDlpSupportFileType001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "enter GetDlpSupportFileType001");
     // query support dlp file types in normal app
@@ -885,7 +885,7 @@ HWTEST_F(DlpPermissionKitTest, GetDlpSupportFileType001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: SR000GVIGN AR000GVIGO
  */
-HWTEST_F(DlpPermissionKitTest, GetDlpSupportFileType002, TestSize.Level1)
+HWTEST_F(DlpPermissionKitTest, GetDlpSupportFileType002, TestSize.Level0)
 {
     // query support dlp file types in read only sandbox app
     SandboxInfo sandboxInfo;
@@ -908,7 +908,7 @@ HWTEST_F(DlpPermissionKitTest, GetDlpSupportFileType002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpPermissionKitTest, GetDlpSupportFileType003, TestSize.Level1)
+HWTEST_F(DlpPermissionKitTest, GetDlpSupportFileType003, TestSize.Level0)
 {
     // query support dlp file types in context edit sandbox app
     SandboxInfo sandboxInfo;
@@ -931,7 +931,7 @@ HWTEST_F(DlpPermissionKitTest, GetDlpSupportFileType003, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: SR000GVIGN AR000GVIGO
  */
-HWTEST_F(DlpPermissionKitTest, GetDlpSupportFileType004, TestSize.Level1)
+HWTEST_F(DlpPermissionKitTest, GetDlpSupportFileType004, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "enter GetDlpSupportFileType004");
     // query support dlp file types in full control sandbox app
@@ -956,7 +956,7 @@ HWTEST_F(DlpPermissionKitTest, GetDlpSupportFileType004, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpPermissionKitTest, GetDlpGatheringPolicy001, TestSize.Level1)
+HWTEST_F(DlpPermissionKitTest, GetDlpGatheringPolicy001, TestSize.Level0)
 {
     // query gathering policy on this device
     bool isGathering = false;
@@ -971,7 +971,7 @@ HWTEST_F(DlpPermissionKitTest, GetDlpGatheringPolicy001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: SR000I38N7
  */
-HWTEST_F(DlpPermissionKitTest, ClearUnreservedSandbox001, TestSize.Level1)
+HWTEST_F(DlpPermissionKitTest, ClearUnreservedSandbox001, TestSize.Level0)
 {
     ASSERT_EQ(DLP_SERVICE_ERROR_PERMISSION_DENY, DlpPermissionKit::ClearUnreservedSandbox());
 }
@@ -1002,7 +1002,7 @@ public:
  * @tc.type: FUNC
  * @tc.require: DTS2023040302317
  */
-HWTEST_F(DlpPermissionKitTest, RegisterDlpSandboxChangeCallback001, TestSize.Level1)
+HWTEST_F(DlpPermissionKitTest, RegisterDlpSandboxChangeCallback001, TestSize.Level0)
 {
     const std::shared_ptr<DlpSandboxChangeCallbackCustomize> callbackPtr = std::make_shared<CbCustomizeTest>();
     int32_t res = DlpPermissionKit::RegisterDlpSandboxChangeCallback(callbackPtr);
@@ -1024,7 +1024,7 @@ HWTEST_F(DlpPermissionKitTest, RegisterDlpSandboxChangeCallback001, TestSize.Lev
  * @tc.type: FUNC
  * @tc.require: DTS2023040302317
  */
-HWTEST_F(DlpPermissionKitTest, RegisterDlpSandboxChangeCallback002, TestSize.Level1)
+HWTEST_F(DlpPermissionKitTest, RegisterDlpSandboxChangeCallback002, TestSize.Level0)
 {
     int32_t res = DlpPermissionKit::RegisterDlpSandboxChangeCallback(nullptr);
     ASSERT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, res);
@@ -1039,7 +1039,7 @@ HWTEST_F(DlpPermissionKitTest, RegisterDlpSandboxChangeCallback002, TestSize.Lev
  * @tc.type: FUNC
  * @tc.require: DTS2023040302317
  */
-HWTEST_F(DlpPermissionKitTest, RegisterDlpSandboxChangeCallback003, TestSize.Level1)
+HWTEST_F(DlpPermissionKitTest, RegisterDlpSandboxChangeCallback003, TestSize.Level0)
 {
     bool result;
     int32_t res = DlpPermissionKit::UnregisterDlpSandboxChangeCallback(result);
@@ -1052,7 +1052,7 @@ HWTEST_F(DlpPermissionKitTest, RegisterDlpSandboxChangeCallback003, TestSize.Lev
  * @tc.type: FUNC
  * @tc.require: DTS2023040302317
  */
-HWTEST_F(DlpPermissionKitTest, DlpSandboxChangeCallback001, TestSize.Level1)
+HWTEST_F(DlpPermissionKitTest, DlpSandboxChangeCallback001, TestSize.Level0)
 {
     std::shared_ptr<CbCustomizeTest> callbackPtr = nullptr;
     std::shared_ptr<DlpSandboxChangeCallback> callback = std::make_shared<DlpSandboxChangeCallback>(
@@ -1069,7 +1069,7 @@ HWTEST_F(DlpPermissionKitTest, DlpSandboxChangeCallback001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: DTS2023040302317
  */
-HWTEST_F(DlpPermissionKitTest, DlpSandboxChangeCallback002, TestSize.Level1)
+HWTEST_F(DlpPermissionKitTest, DlpSandboxChangeCallback002, TestSize.Level0)
 {
     std::shared_ptr<CbCustomizeTest> callbackPtr = std::make_shared<CbCustomizeTest>();
     std::shared_ptr<DlpSandboxChangeCallback> callback = std::make_shared<DlpSandboxChangeCallback>(callbackPtr);
@@ -1086,7 +1086,7 @@ HWTEST_F(DlpPermissionKitTest, DlpSandboxChangeCallback002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpPermissionKitTest, RegisterOpenDlpFileCallback001, TestSize.Level1)
+HWTEST_F(DlpPermissionKitTest, RegisterOpenDlpFileCallback001, TestSize.Level0)
 {
     int32_t uid = getuid();
     AccessTokenID tokenId = GetSelfTokenID();
@@ -1113,7 +1113,7 @@ HWTEST_F(DlpPermissionKitTest, RegisterOpenDlpFileCallback001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpPermissionKitTest, RegisterOpenDlpFileCallback002, TestSize.Level1)
+HWTEST_F(DlpPermissionKitTest, RegisterOpenDlpFileCallback002, TestSize.Level0)
 {
     EXPECT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, DlpPermissionKit::RegisterOpenDlpFileCallback(nullptr));
     EXPECT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, DlpPermissionKit::UnRegisterOpenDlpFileCallback(nullptr));
@@ -1125,7 +1125,7 @@ HWTEST_F(DlpPermissionKitTest, RegisterOpenDlpFileCallback002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpPermissionKitTest, RegisterOpenDlpFileCallback003, TestSize.Level1)
+HWTEST_F(DlpPermissionKitTest, RegisterOpenDlpFileCallback003, TestSize.Level0)
 {
     int32_t uid = getuid();
     AccessTokenID tokenId = GetSelfTokenID();
@@ -1145,7 +1145,7 @@ HWTEST_F(DlpPermissionKitTest, RegisterOpenDlpFileCallback003, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpPermissionKitTest, RegisterOpenDlpFileCallback004, TestSize.Level1)
+HWTEST_F(DlpPermissionKitTest, RegisterOpenDlpFileCallback004, TestSize.Level0)
 {
     int32_t uid = getuid();
     AccessTokenID tokenId = GetSelfTokenID();
@@ -1183,7 +1183,7 @@ HWTEST_F(DlpPermissionKitTest, RegisterOpenDlpFileCallback004, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpPermissionKitTest, OpenDlpFileCallback001, TestSize.Level1)
+HWTEST_F(DlpPermissionKitTest, OpenDlpFileCallback001, TestSize.Level0)
 {
     std::shared_ptr<TestOpenDlpFileCallbackCustomize> callbackPtr = nullptr;
     std::shared_ptr<OpenDlpFileCallback> callback = std::make_shared<OpenDlpFileCallback>(callbackPtr);
@@ -1199,7 +1199,7 @@ HWTEST_F(DlpPermissionKitTest, OpenDlpFileCallback001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpPermissionKitTest, OpenDlpFileCallback002, TestSize.Level1)
+HWTEST_F(DlpPermissionKitTest, OpenDlpFileCallback002, TestSize.Level0)
 {
     std::shared_ptr<TestOpenDlpFileCallbackCustomize> callbackPtr =
         std::make_shared<TestOpenDlpFileCallbackCustomize>();
@@ -1217,7 +1217,7 @@ HWTEST_F(DlpPermissionKitTest, OpenDlpFileCallback002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: DTS2023040302317
  */
-HWTEST_F(DlpPermissionKitTest, OnGenerateDlpCertificate002, TestSize.Level1)
+HWTEST_F(DlpPermissionKitTest, OnGenerateDlpCertificate002, TestSize.Level0)
 {
     std::vector<uint8_t> cert;
     auto generateDlpCertificateCallback = std::make_shared<ClientGenerateDlpCertificateCallback>();
@@ -1235,7 +1235,7 @@ HWTEST_F(DlpPermissionKitTest, OnGenerateDlpCertificate002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:AR000GVIG0
  */
-HWTEST_F(DlpPermissionKitTest, ParseDlpCertificate002, TestSize.Level1)
+HWTEST_F(DlpPermissionKitTest, ParseDlpCertificate002, TestSize.Level0)
 {
     sptr<CertParcel> certParcel = new (std::nothrow) CertParcel();
     certParcel->offlineCert.push_back(1);
@@ -1269,7 +1269,7 @@ HWTEST_F(DlpPermissionKitTest, ParseDlpCertificate002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: AR000I38MV
  */
-HWTEST_F(DlpPermissionKitTest, GetDLPFileVisitRecord001, TestSize.Level1)
+HWTEST_F(DlpPermissionKitTest, GetDLPFileVisitRecord001, TestSize.Level0)
 {
     int32_t uid = getuid();
     AccessTokenID selfTokenId = GetSelfTokenID();
@@ -1302,7 +1302,7 @@ HWTEST_F(DlpPermissionKitTest, GetDLPFileVisitRecord001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: SR000IEUH3
  */
-HWTEST_F(DlpPermissionKitTest, SetSandboxAppConfig001, TestSize.Level1)
+HWTEST_F(DlpPermissionKitTest, SetSandboxAppConfig001, TestSize.Level0)
 {
     int32_t uid = getuid();
     AccessTokenID tokenId = GetSelfTokenID();
@@ -1321,11 +1321,9 @@ HWTEST_F(DlpPermissionKitTest, SetSandboxAppConfig001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: SR000IEUHS
  */
-HWTEST_F(DlpPermissionKitTest, SetMDMPolicy001, TestSize.Level1)
+HWTEST_F(DlpPermissionKitTest, SetMDMPolicy001, TestSize.Level0)
 {
-    if (!IsFeatureProvidedWithDlp()) {
-        return;
-    }
+    ASSERT_EQ(IsFeatureProvidedWithDlp(), true);
     seteuid(1000);
     std::vector<std::string> appIdList;
     ASSERT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, DlpPermissionKit::SetMDMPolicy(appIdList));
@@ -1357,7 +1355,7 @@ HWTEST_F(DlpPermissionKitTest, SetMDMPolicy001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: SR000IEUHS
  */
-HWTEST_F(DlpPermissionKitTest, GetMDMPolicy001, TestSize.Level1)
+HWTEST_F(DlpPermissionKitTest, GetMDMPolicy001, TestSize.Level0)
 {
     if (!IsFeatureProvidedWithDlp()) {
         return;
@@ -1376,7 +1374,7 @@ HWTEST_F(DlpPermissionKitTest, GetMDMPolicy001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: SR000IEUHS
  */
-HWTEST_F(DlpPermissionKitTest, RemoveMDMPolicy001, TestSize.Level1)
+HWTEST_F(DlpPermissionKitTest, RemoveMDMPolicy001, TestSize.Level0)
 {
     if (!IsFeatureProvidedWithDlp()) {
         return;
@@ -1393,7 +1391,7 @@ HWTEST_F(DlpPermissionKitTest, RemoveMDMPolicy001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpPermissionKitTest, IsDLPFeatureProvided001, TestSize.Level1)
+HWTEST_F(DlpPermissionKitTest, IsDLPFeatureProvided001, TestSize.Level0)
 {
     DLP_LOG_DEBUG(LABEL, "Start IsDLPFeatureProvided001.");
     bool isProvided;

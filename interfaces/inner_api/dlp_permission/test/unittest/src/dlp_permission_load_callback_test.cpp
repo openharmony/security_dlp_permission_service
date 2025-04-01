@@ -45,7 +45,7 @@ void DlpPermissionLoadCallbackTest::TearDown() {}
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpPermissionLoadCallbackTest, OnLoadSystemAbilityFail001, TestSize.Level1)
+HWTEST_F(DlpPermissionLoadCallbackTest, OnLoadSystemAbilityFail001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "OnLoadSystemAbilityFail001");
 
@@ -66,7 +66,7 @@ HWTEST_F(DlpPermissionLoadCallbackTest, OnLoadSystemAbilityFail001, TestSize.Lev
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpPermissionLoadCallbackTest, OnLoadSystemAbilitySuccess001, TestSize.Level1)
+HWTEST_F(DlpPermissionLoadCallbackTest, OnLoadSystemAbilitySuccess001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "OnLoadSystemAbilitySuccess001");
 

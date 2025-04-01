@@ -99,7 +99,7 @@ void DlpZipTest::TearDown() {}
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpZipTest, AddBuffToZip, TestSize.Level1)
+HWTEST_F(DlpZipTest, AddBuffToZip, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "AddBuffToZip");
     std::string buf("123");
@@ -127,7 +127,7 @@ HWTEST_F(DlpZipTest, AddBuffToZip, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpZipTest, AddFileContextToZip, TestSize.Level1)
+HWTEST_F(DlpZipTest, AddFileContextToZip, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "AddFileContextToZip");
     std::string inZip("dlp_general_info");
@@ -159,7 +159,7 @@ HWTEST_F(DlpZipTest, AddFileContextToZip, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpZipTest, IsZipFile, TestSize.Level1)
+HWTEST_F(DlpZipTest, IsZipFile, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "IsZipFile");
     std::string inZip1("dlp_general_info1");

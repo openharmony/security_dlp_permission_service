@@ -56,7 +56,7 @@ void DlpSandboxChangeCallbackTest::DlpSandboxStateChangeCallback(DlpSandboxCallb
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpSandboxChangeCallbackStubTest, OnLoadSystemAbilityFail001, TestSize.Level1)
+HWTEST_F(DlpSandboxChangeCallbackStubTest, OnLoadSystemAbilityFail001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "OnLoadSystemAbilityFail001");
 
@@ -85,7 +85,7 @@ HWTEST_F(DlpSandboxChangeCallbackStubTest, OnLoadSystemAbilityFail001, TestSize.
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpSandboxChangeCallbackStubTest, OnLoadSystemAbilityFail002, TestSize.Level1)
+HWTEST_F(DlpSandboxChangeCallbackStubTest, OnLoadSystemAbilityFail002, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "OnLoadSystemAbilityFail002");
 
@@ -116,7 +116,7 @@ HWTEST_F(DlpSandboxChangeCallbackStubTest, OnLoadSystemAbilityFail002, TestSize.
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpSandboxChangeCallbackStubTest, OnLoadSystemAbilityFail003, TestSize.Level1)
+HWTEST_F(DlpSandboxChangeCallbackStubTest, OnLoadSystemAbilityFail003, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "OnLoadSystemAbilityFail003");
 

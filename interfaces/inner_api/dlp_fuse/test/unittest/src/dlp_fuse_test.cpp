@@ -340,7 +340,7 @@ void CheckRecoverFd()
  * @tc.type: FUNC
  * @tc.require:AR000GVIGC
  */
-HWTEST_F(DlpFuseTest, AddDlpLinkFile001, TestSize.Level1)
+HWTEST_F(DlpFuseTest, AddDlpLinkFile001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "AddDlpLinkFile001");
     g_plainFileFd = open("/data/fuse_test.txt", O_CREAT | O_RDWR | O_TRUNC, S_IRWXU | S_IRWXG | S_IRWXO);
@@ -398,7 +398,7 @@ HWTEST_F(DlpFuseTest, AddDlpLinkFile001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:AR000GVIGC
  */
-HWTEST_F(DlpFuseTest, AddDlpLinkFile002, TestSize.Level1)
+HWTEST_F(DlpFuseTest, AddDlpLinkFile002, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "AddDlpLinkFile002");
     g_plainFileFd = open("/data/fuse_test.txt", O_CREAT | O_RDWR | O_TRUNC, S_IRWXU | S_IRWXG | S_IRWXO);
@@ -457,7 +457,7 @@ HWTEST_F(DlpFuseTest, AddDlpLinkFile002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:AR000GVIGC
  */
-HWTEST_F(DlpFuseTest, AddDlpLinkFile003, TestSize.Level1)
+HWTEST_F(DlpFuseTest, AddDlpLinkFile003, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "AddDlpLinkFile003");
     g_plainFileFd = open("/data/fuse_test.txt", O_CREAT | O_RDWR | O_TRUNC, S_IRWXU | S_IRWXG | S_IRWXO);
@@ -514,7 +514,7 @@ HWTEST_F(DlpFuseTest, AddDlpLinkFile003, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:AR000GVIGC
  */
-HWTEST_F(DlpFuseTest, AddDlpLinkFile004, TestSize.Level1)
+HWTEST_F(DlpFuseTest, AddDlpLinkFile004, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "AddDlpLinkFile004");
     g_plainFileFd = open("/data/fuse_test.txt", O_CREAT | O_RDWR | O_TRUNC, S_IRWXU | S_IRWXG | S_IRWXO);
@@ -556,7 +556,7 @@ HWTEST_F(DlpFuseTest, AddDlpLinkFile004, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:AR000GVIGC
  */
-HWTEST_F(DlpFuseTest, AddDlpLinkFile005, TestSize.Level1)
+HWTEST_F(DlpFuseTest, AddDlpLinkFile005, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "AddDlpLinkFile005");
     g_plainFileFd = open("/data/fuse_test.txt", O_CREAT | O_RDWR | O_TRUNC, S_IRWXU | S_IRWXG | S_IRWXO);
@@ -599,7 +599,7 @@ HWTEST_F(DlpFuseTest, AddDlpLinkFile005, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:AR000GVIGC
  */
-HWTEST_F(DlpFuseTest, AddDlpLinkFile006, TestSize.Level1)
+HWTEST_F(DlpFuseTest, AddDlpLinkFile006, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "AddDlpLinkFile006");
     g_plainFileFd = open("/data/fuse_test.txt", O_CREAT | O_RDWR | O_TRUNC, S_IRWXU | S_IRWXG | S_IRWXO);
@@ -649,7 +649,7 @@ HWTEST_F(DlpFuseTest, AddDlpLinkFile006, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:AR000GVIGC
  */
-HWTEST_F(DlpFuseTest, AddDlpLinkFile007, TestSize.Level1)
+HWTEST_F(DlpFuseTest, AddDlpLinkFile007, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "AddDlpLinkFile007");
     g_plainFileFd = open("/data/fuse_test.txt", O_CREAT | O_RDWR | O_TRUNC, S_IRWXU | S_IRWXG | S_IRWXO);
@@ -707,7 +707,7 @@ HWTEST_F(DlpFuseTest, AddDlpLinkFile007, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:AR000GVIGC
  */
-HWTEST_F(DlpFuseTest, AddDlpLinkFile008, TestSize.Level1)
+HWTEST_F(DlpFuseTest, AddDlpLinkFile008, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "AddDlpLinkFile008");
     g_plainFileFd = open("/data/fuse_test.txt", O_CREAT | O_RDWR | O_TRUNC, S_IRWXU | S_IRWXG | S_IRWXO);
@@ -754,7 +754,7 @@ HWTEST_F(DlpFuseTest, AddDlpLinkFile008, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:AR000GVIGC
  */
-HWTEST_F(DlpFuseTest, AddDlpLinkFile009, TestSize.Level1)
+HWTEST_F(DlpFuseTest, AddDlpLinkFile009, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "AddDlpLinkFile009");
     std::shared_ptr<DlpFile> filePtr = nullptr;
@@ -776,7 +776,7 @@ HWTEST_F(DlpFuseTest, AddDlpLinkFile009, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:AR000GVIGC
  */
-HWTEST_F(DlpFuseTest, AddDlpLinkFile010, TestSize.Level1)
+HWTEST_F(DlpFuseTest, AddDlpLinkFile010, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "AddDlpLinkFile010");
     std::shared_ptr<DlpFile> filePtr = std::make_shared<DlpFile>(-1, DLP_TEST_DIR, 0, false);
@@ -800,7 +800,7 @@ HWTEST_F(DlpFuseTest, AddDlpLinkFile010, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:AR000GVIGC
  */
-HWTEST_F(DlpFuseTest, DeleteDlpLinkFile001, TestSize.Level1)
+HWTEST_F(DlpFuseTest, DeleteDlpLinkFile001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DeleteDlpLinkFile001");
     std::shared_ptr<DlpFile> filePtr = nullptr;
@@ -829,7 +829,7 @@ HWTEST_F(DlpFuseTest, DeleteDlpLinkFile001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:AR000GVIGC
  */
-HWTEST_F(DlpFuseTest, LookUpDlpLinkFile001, TestSize.Level1)
+HWTEST_F(DlpFuseTest, LookUpDlpLinkFile001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "LookUpDlpLinkFile001");
     EXPECT_EQ(dlpLinkManager->LookUpDlpLinkFile(""), nullptr);
@@ -845,7 +845,7 @@ HWTEST_F(DlpFuseTest, LookUpDlpLinkFile001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:AR000GVIGC
  */
-HWTEST_F(DlpFuseTest, DumpDlpLinkFile001, TestSize.Level1)
+HWTEST_F(DlpFuseTest, DumpDlpLinkFile001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DumpDlpLinkFile001");
     std::shared_ptr<DlpFile> filePtr = std::make_shared<DlpFile>(1000, DLP_TEST_DIR, 0, false);
@@ -872,7 +872,7 @@ HWTEST_F(DlpFuseTest, DumpDlpLinkFile001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:AR000GVIGC
  */
-HWTEST_F(DlpFuseTest, ReadFuseDir001, TestSize.Level1)
+HWTEST_F(DlpFuseTest, ReadFuseDir001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "ReadFuseDir001");
     g_plainFileFd = open("/data/fuse_test.txt", O_CREAT | O_RDWR | O_TRUNC, S_IRWXU | S_IRWXG | S_IRWXO);
@@ -913,7 +913,7 @@ HWTEST_F(DlpFuseTest, ReadFuseDir001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:AR000GVIGC
  */
-HWTEST_F(DlpFuseTest, DlpLinkFile001, TestSize.Level1)
+HWTEST_F(DlpFuseTest, DlpLinkFile001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DlpLinkFile001");
     std::shared_ptr<DlpFile> filePtr = nullptr;
@@ -927,7 +927,7 @@ HWTEST_F(DlpFuseTest, DlpLinkFile001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:AR000GVIGC
  */
-HWTEST_F(DlpFuseTest, SubAndCheckZeroRef001, TestSize.Level1)
+HWTEST_F(DlpFuseTest, SubAndCheckZeroRef001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "SubAndCheckZeroRef001");
     std::shared_ptr<DlpFile> filePtr = nullptr;
@@ -942,7 +942,7 @@ HWTEST_F(DlpFuseTest, SubAndCheckZeroRef001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:AR000GVIGC
  */
-HWTEST_F(DlpFuseTest, IncreaseRef001, TestSize.Level1)
+HWTEST_F(DlpFuseTest, IncreaseRef001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "IncreaseRef001");
     std::shared_ptr<DlpFile> filePtr = nullptr;
@@ -958,7 +958,7 @@ HWTEST_F(DlpFuseTest, IncreaseRef001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:AR000GVIGC
  */
-HWTEST_F(DlpFuseTest, GetLinkStat001, TestSize.Level1)
+HWTEST_F(DlpFuseTest, GetLinkStat001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "GetLinkStat001");
     std::shared_ptr<DlpFile> filePtr = nullptr;
@@ -973,7 +973,7 @@ HWTEST_F(DlpFuseTest, GetLinkStat001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:AR000GVIGC
  */
-HWTEST_F(DlpFuseTest, LinkFileTruncate001, TestSize.Level1)
+HWTEST_F(DlpFuseTest, LinkFileTruncate001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "LinkFileTruncate001");
     std::shared_ptr<DlpFile> filePtr = nullptr;
@@ -995,7 +995,7 @@ HWTEST_F(DlpFuseTest, LinkFileTruncate001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:AR000GVIGC
  */
-HWTEST_F(DlpFuseTest, LinkFileWrite001, TestSize.Level1)
+HWTEST_F(DlpFuseTest, LinkFileWrite001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "LinkFileWrite001");
     std::shared_ptr<DlpFile> filePtr = nullptr;
@@ -1017,7 +1017,7 @@ HWTEST_F(DlpFuseTest, LinkFileWrite001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:AR000GVIGC
  */
-HWTEST_F(DlpFuseTest, LinkFileRead001, TestSize.Level1)
+HWTEST_F(DlpFuseTest, LinkFileRead001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "LinkFileRead001");
     std::shared_ptr<DlpFile> filePtr = nullptr;
@@ -1039,7 +1039,7 @@ HWTEST_F(DlpFuseTest, LinkFileRead001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:AR000GVIGC
  */
-HWTEST_F(DlpFuseTest, Truncate001, TestSize.Level1)
+HWTEST_F(DlpFuseTest, Truncate001, TestSize.Level0)
 {
     std::shared_ptr<DlpFile> filePtr = nullptr;
     DlpLinkFile linkFile("linkfile", filePtr);
@@ -1057,7 +1057,7 @@ HWTEST_F(DlpFuseTest, Truncate001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:AR000GVIGC
  */
-HWTEST_F(DlpFuseTest, StopDlpLinkFile001, TestSize.Level1)
+HWTEST_F(DlpFuseTest, StopDlpLinkFile001, TestSize.Level0)
 {
     std::shared_ptr<DlpFile> filePtr = nullptr;
     std::shared_ptr<DlpFile> filePtr2 = nullptr;
@@ -1083,7 +1083,7 @@ HWTEST_F(DlpFuseTest, StopDlpLinkFile001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:AR000GVIGC
  */
-HWTEST_F(DlpFuseTest, RestartDlpLinkFile001, TestSize.Level1)
+HWTEST_F(DlpFuseTest, RestartDlpLinkFile001, TestSize.Level0)
 {
     dlpLinkManager->dlpLinkFileNameMap_.clear();
     std::shared_ptr<DlpFile> filePtr = nullptr;
@@ -1110,7 +1110,7 @@ HWTEST_F(DlpFuseTest, RestartDlpLinkFile001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:AR000GVIGC
  */
-HWTEST_F(DlpFuseTest, ReplaceDlpLinkFile001, TestSize.Level1)
+HWTEST_F(DlpFuseTest, ReplaceDlpLinkFile001, TestSize.Level0)
 {
     std::shared_ptr<DlpFile> filePtr = nullptr;
     EXPECT_EQ(dlpLinkManager->ReplaceDlpLinkFile(filePtr, "test"),
@@ -1137,9 +1137,10 @@ HWTEST_F(DlpFuseTest, ReplaceDlpLinkFile001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:AR000GVIGC
  */
-HWTEST_F(DlpFuseTest, CloseDlpFuseFile001, TestSize.Level1)
+HWTEST_F(DlpFuseTest, CloseDlpFuseFile001, TestSize.Level0)
 {
-    GetDlpFuseFd();
+    int32_t ret = GetDlpFuseFd();
+    EXPECT_NE(ret, -1);
     CloseDlpFuseFd();
 }
 }  // namespace DlpPermission
