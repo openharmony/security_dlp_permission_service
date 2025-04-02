@@ -46,6 +46,7 @@ RegisterDlpSandboxChangeInfo *g_dlpSandboxChangeInfoRegister = nullptr;
 const std::string PERMISSION_ACCESS_DLP_FILE = "ohos.permission.ACCESS_DLP_FILE";
 static thread_local napi_ref dlpFileRef_;
 const std::string DLP_FILE_CLASS_NAME = "dlpFile";
+static constexpr size_t MAX_TYPE_LEN = 64;
 }  // namespace
 
 static bool CheckPermission(napi_env env, const std::string& permission)
@@ -1244,7 +1245,7 @@ napi_value NapiDlpPermission::Subscribe(napi_env env, napi_callback_info cbInfo)
         return nullptr;
     }
     std::string type;
-    if (!GetStringValue(env, argv[PARAM0], type)) {
+    if (!GetStringValue(env, argv[PARAM0], type) || !IsStringLengthValid(type, MAX_TYPE_LEN)) {
         DLP_LOG_ERROR(LABEL, "event type is invalid");
         ThrowParamError(env, "type", "string");
         return nullptr;
@@ -1312,7 +1313,7 @@ napi_value NapiDlpPermission::UnSubscribe(napi_env env, napi_callback_info cbInf
         return nullptr;
     }
     std::string type;
-    if (!GetStringValue(env, argv[PARAM0], type)) {
+    if (!GetStringValue(env, argv[PARAM0], type) || !IsStringLengthValid(type, MAX_TYPE_LEN)) {
         DLP_LOG_ERROR(LABEL, "event type is invalid");
         ThrowParamError(env, "type", "string");
         return nullptr;
