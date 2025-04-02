@@ -1127,6 +1127,7 @@ HWTEST_F(DlpPermissionServiceTest, GetConfigFileValue001, TestSize.Level1)
     std::string cfgFile;
     std::vector<std::string> typeList;
     (void)dlpPermissionService_->GetConfigFileValue(cfgFile, typeList);
+    EXPECT_EQ(typeList.size(), 0);
 }
 
 /**
