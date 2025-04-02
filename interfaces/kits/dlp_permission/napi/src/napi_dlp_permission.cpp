@@ -1245,7 +1245,7 @@ napi_value NapiDlpPermission::Subscribe(napi_env env, napi_callback_info cbInfo)
         return nullptr;
     }
     std::string type;
-    if (!GetStringValue(env, argv[PARAM0], type) && CheckStringLength(type, MAX_TYPE_LEN)) {
+    if (!GetStringValue(env, argv[PARAM0], type) && IsStringLengthValid(type, MAX_TYPE_LEN)) {
         DLP_LOG_ERROR(LABEL, "event type is invalid");
         ThrowParamError(env, "type", "string");
         return nullptr;
@@ -1320,7 +1320,7 @@ napi_value NapiDlpPermission::UnSubscribe(napi_env env, napi_callback_info cbInf
         return nullptr;
     }
     std::string type;
-    if (!GetStringValue(env, argv[PARAM0], type) && CheckStringLength(type, MAX_TYPE_LEN)) {
+    if (!GetStringValue(env, argv[PARAM0], type) && IsStringLengthValid(type, MAX_TYPE_LEN)) {
         DLP_LOG_ERROR(LABEL, "event type is invalid");
         ThrowParamError(env, "type", "string");
         return nullptr;
