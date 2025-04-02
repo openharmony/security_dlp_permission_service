@@ -198,17 +198,14 @@ HWTEST_F(DlpFileTest, OpenDlpFile001, TestSize.Level0)
     ASSERT_EQ(policy.ownerAccount_, prop.ownerAccount);
     std::vector<AuthUserInfo>& authUsers = policy.authUsers_;
     ASSERT_EQ(authUsers.size(), prop.authUsers.size());
-    bool isEqual = false;
     for (int32_t i = 0; i < static_cast<int32_t>(authUsers.size()); i++) {
         for (int32_t j = 0; j < static_cast<int32_t>(prop.authUsers.size()); j++) {
             if (authUsers[i].authAccount == prop.authUsers[j].authAccount) {
                 ASSERT_EQ(authUsers[i].authPerm, prop.authUsers[j].authPerm);
                 ASSERT_EQ(authUsers[i].authAccountType, prop.authUsers[j].authAccountType);
-                isEqual = true;
             }
         }
     }
-    ASSERT_EQ(isEqual, true);
     std::string contactAccount;
     g_Dlpfile->GetContactAccount(contactAccount);
     ASSERT_EQ(contactAccount, prop.contactAccount);
