@@ -1390,7 +1390,8 @@ bool GetStringValue(napi_env env, napi_value jsObject, std::string& result, size
     return true;
 }
 
-bool GetStringValueByKey(napi_env env, napi_value jsObject, const std::string& key, std::string& result, size_t maxLen, size_t minLen)
+bool GetStringValueByKey(napi_env env, napi_value jsObject, const std::string& key,
+    std::string& result, size_t maxLen, size_t minLen)
 {
     napi_value value = GetNapiValue(env, jsObject, key);
     return GetStringValue(env, value, result, maxLen, minLen);
