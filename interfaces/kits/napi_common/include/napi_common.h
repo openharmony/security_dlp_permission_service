@@ -325,9 +325,8 @@ bool GetDlpProperty(napi_env env, napi_value object, DlpProperty& property);
 bool ParseCallback(const napi_env& env, const napi_value& value, napi_ref& callbackRef);
 
 napi_value GetNapiValue(napi_env env, napi_value jsObject, const std::string& key);
-bool GetStringValue(napi_env env, napi_value jsObject, std::string& result, size_t maxLen, size_t minLen = 0);
-bool GetStringValueByKey(napi_env env, napi_value jsObject, const std::string& key,
-    std::string& result, size_t maxLen, size_t minLen = 0);
+bool GetStringValue(napi_env env, napi_value jsObject, std::string& result);
+bool GetStringValueByKey(napi_env env, napi_value jsObject, const std::string& key, std::string& result);
 bool GetBoolValueByKey(napi_env env, napi_value jsObject, const std::string& key, bool& result);
 bool GetBoolValue(napi_env env, napi_value jsObject, bool& result);
 bool GetInt64Value(napi_env env, napi_value jsObject, int64_t& result);
@@ -356,6 +355,8 @@ bool ParseUIAbilityContextReq(
     napi_env env, const napi_value& obj, std::shared_ptr<OHOS::AbilityRuntime::AbilityContext>& abilityContext);
 bool ParseWantReq(napi_env env, const napi_value& obj, OHOS::AAFwk::Want& requestWant);
 void StartUIExtensionAbility(std::shared_ptr<UIExtensionRequestContext> asyncContext);
+
+bool CheckStringLength(std::string str, size_t maxLen, size_t minLen = 0);
 }  // namespace DlpPermission
 }  // namespace Security
 }  // namespace OHOS
