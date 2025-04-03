@@ -235,7 +235,7 @@ static void GenerateRandProperty(struct DlpProperty& encProp)
         std::string accountName;
         GenerateRandStr(RAND_STR_SIZE, accountName);
         AuthUserInfo perminfo = {.authAccount = accountName,
-            .authPerm = READ_ONLY,
+            .authPerm = DLPFileAccess::READ_ONLY,
             .permExpiryTime = curTime + EXPIRT_TIME,
             .authAccountType = CLOUD_ACCOUNT};
         encProp.authUsers.emplace_back(perminfo);
@@ -420,7 +420,7 @@ HWTEST_F(DlpFuseTest, AddDlpLinkFile002, TestSize.Level0)
     int32_t linkfd = open(TEST_LINK_FILE_PATH.c_str(), O_RDWR);
     ASSERT_GE(linkfd, 0);
     g_linkFdArry[0] = linkfd;
-    g_Dlpfile->authPerm_ = FULL_CONTROL;
+    g_Dlpfile->authPerm_ = DLPFileAccess::FULL_CONTROL;
     // offset 0 size 6
     ASSERT_NE(write(linkfd, "123456", strlen("123456")), -1);
     // offset 1M size 6
@@ -444,7 +444,7 @@ HWTEST_F(DlpFuseTest, AddDlpLinkFile002, TestSize.Level0)
 
     g_recoveryFileFd = open("/data/fuse_test.txt.recovery", O_CREAT | O_RDWR | O_TRUNC, S_IRWXU | S_IRWXG | S_IRWXO);
     ASSERT_GE(g_dlpFileFd, 0);
-    g_Dlpfile->authPerm_ = FULL_CONTROL;
+    g_Dlpfile->authPerm_ = DLPFileAccess::FULL_CONTROL;
     ASSERT_EQ(DlpFileManager::GetInstance().RecoverDlpFile(g_Dlpfile, g_recoveryFileFd), 0);
     ASSERT_EQ(DlpFileManager::GetInstance().CloseDlpFile(g_Dlpfile), 0);
     g_Dlpfile = nullptr;
@@ -573,7 +573,7 @@ HWTEST_F(DlpFuseTest, AddDlpLinkFile005, TestSize.Level0)
     ASSERT_EQ(DlpFileManager::GetInstance().GenerateDlpFile(g_plainFileFd,
         g_dlpFileFd, prop, g_Dlpfile, DLP_TEST_DIR), 0);
     ASSERT_NE(g_Dlpfile, nullptr);
-    g_Dlpfile->authPerm_ = FULL_CONTROL;
+    g_Dlpfile->authPerm_ = DLPFileAccess::FULL_CONTROL;
     ASSERT_EQ(dlpLinkManager->AddDlpLinkFile(g_Dlpfile, TEST_LINK_FILE_NAME), 0);
 
     // open link file
@@ -617,7 +617,7 @@ HWTEST_F(DlpFuseTest, AddDlpLinkFile006, TestSize.Level0)
         g_dlpFileFd, prop, g_Dlpfile, DLP_TEST_DIR), 0);
     ASSERT_NE(g_Dlpfile, nullptr);
     ASSERT_EQ(dlpLinkManager->AddDlpLinkFile(g_Dlpfile, TEST_LINK_FILE_NAME), 0);
-    g_Dlpfile->authPerm_ = FULL_CONTROL;
+    g_Dlpfile->authPerm_ = DLPFileAccess::FULL_CONTROL;
     // open link file
     int32_t linkfd = open(TEST_LINK_FILE_PATH.c_str(), O_RDWR | O_TRUNC);
     ASSERT_GE(linkfd, 0);
@@ -672,7 +672,7 @@ HWTEST_F(DlpFuseTest, AddDlpLinkFile007, TestSize.Level0)
     int32_t linkfd = open(TEST_LINK_FILE_PATH.c_str(), O_RDWR);
     ASSERT_GE(linkfd, 0);
     g_linkFdArry[0] = linkfd;
-    g_Dlpfile->authPerm_ = FULL_CONTROL;
+    g_Dlpfile->authPerm_ = DLPFileAccess::FULL_CONTROL;
     // truncate link file size to 3
     ASSERT_EQ(ftruncate(linkfd, 3), 0);
 
@@ -730,7 +730,7 @@ HWTEST_F(DlpFuseTest, AddDlpLinkFile008, TestSize.Level0)
     int32_t linkfd = open(TEST_LINK_FILE_PATH.c_str(), O_RDWR);
     ASSERT_GE(linkfd, 0);
     g_linkFdArry[0] = linkfd;
-    g_Dlpfile->authPerm_ = FULL_CONTROL;
+    g_Dlpfile->authPerm_ = DLPFileAccess::FULL_CONTROL;
     // truncate link file size to 3
     ASSERT_EQ(ftruncate(linkfd, 3), 0);
 

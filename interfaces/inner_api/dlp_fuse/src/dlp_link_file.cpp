@@ -36,7 +36,8 @@ DlpLinkFile::DlpLinkFile(const std::string& dlpLinkName, const std::shared_ptr<D
     (void)memset_s(&fileStat_, sizeof(fileStat_), 0, sizeof(fileStat_));
     fileStat_.st_ino = static_cast<fuse_ino_t>(reinterpret_cast<uintptr_t>(this));
     if (dlpFile != nullptr) {
-        uint32_t fileMode = (dlpFile->GetAuthPerm() == READ_ONLY) ? DEFAULT_INODE_RO_ACCESS : DEFAULT_INODE_RW_ACCESS;
+        uint32_t fileMode =
+            (dlpFile->GetAuthPerm() == DLPFileAccess::READ_ONLY) ? DEFAULT_INODE_RO_ACCESS : DEFAULT_INODE_RW_ACCESS;
         fileStat_.st_mode = S_IFREG | fileMode;
     } else {
         fileStat_.st_mode = 0;

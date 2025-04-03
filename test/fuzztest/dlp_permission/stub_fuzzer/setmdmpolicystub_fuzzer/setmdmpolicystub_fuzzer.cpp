@@ -21,6 +21,7 @@
 #include "accesstoken_kit.h"
 #include "dlp_permission.h"
 #include "dlp_permission_log.h"
+#include "dlp_permission_service_ipc_interface_code.h"
 #include "securec.h"
 #include "token_setproc.h"
 
@@ -28,6 +29,7 @@ using namespace OHOS::Security::DlpPermission;
 using namespace OHOS::Security::AccessToken;
 namespace OHOS {
 const int32_t EDM_UID = 3057;
+static constexpr int32_t SA_ID_DLP_PERMISSION_SERVICE = 3521;
 static void FuzzTest(const uint8_t* data, size_t size)
 {
     if ((data == nullptr) || (size == 0)) {

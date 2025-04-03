@@ -23,7 +23,7 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_
 }
 bool DLPPermissionInfoParcel::Marshalling(Parcel& out) const
 {
-    if (!(out.WriteUint32(this->permInfo_.dlpFileAccess))) {
+    if (!(out.WriteUint32(static_cast<uint32_t>(this->permInfo_.dlpFileAccess)))) {
         DLP_LOG_ERROR(LABEL, "Write dlp file access fail");
         return false;
     }

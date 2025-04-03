@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,25 +13,23 @@
  * limitations under the License.
  */
 
-#ifndef INTERFACES_INNER_API_DLP_PERMISSION_INCLUDE_DLP_PERMISSION_KIT_H
-#define INTERFACES_INNER_API_DLP_PERMISSION_INCLUDE_DLP_PERMISSION_KIT_H
+#ifndef PERMISSION_MANAGER_ADAPTER_H
+#define PERMISSION_MANAGER_ADAPTER_H
 
-#include <string>
-#include <vector>
-#include "cert_parcel.h"
 #include "permission_policy.h"
-
+#include "access_token.h"
+ 
 namespace OHOS {
 namespace Security {
 namespace DlpPermission {
-class DlpPermissionKit {
+
+class PermissionManagerAdapter {
 public:
-    static int32_t GenerateDlpCertificate(const PermissionPolicy& policy, std::vector<uint8_t>& cert);
-    static int32_t ParseDlpCertificate(sptr<CertParcel>& certParcel, PermissionPolicy& policy,
-        const std::string& appId, bool offlineAccess);
-    static int32_t SetReadFlag(uint32_t uid);
+    static bool CheckPermission(const std::string& permission);
+    static int32_t CheckSandboxFlagWithService(AccessToken::AccessTokenID tokenId, bool& sandboxFlag);
 };
 }  // namespace DlpPermission
 }  // namespace Security
 }  // namespace OHOS
-#endif  // INTERFACES_INNER_API_DLP_PERMISSION_INCLUDE_DLP_PERMISSION_KIT_H
+#endif  // PERMISSION_MANAGER_ADAPTER_H
+ 

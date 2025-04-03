@@ -181,7 +181,7 @@ struct CloseDlpFileAsyncContext : public CommonAsyncContext {
 struct DlpSandboxAsyncContext : public CommonAsyncContext {
     explicit DlpSandboxAsyncContext(napi_env env) : CommonAsyncContext(env) {};
     std::string bundleName;
-    DLPFileAccess dlpFileAccess = NO_PERMISSION;
+    DLPFileAccess dlpFileAccess = DLPFileAccess::NO_PERMISSION;
     int32_t userId = -1;
     SandboxInfo sandboxInfo;
     std::string uri = "";

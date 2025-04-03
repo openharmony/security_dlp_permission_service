@@ -115,7 +115,7 @@ static void GenerateRandProperty(struct DlpProperty& encProp)
         std::string accountName;
         GenerateRandStr(RAND_STR_SIZE, accountName);
         AuthUserInfo perminfo = {.authAccount = accountName,
-            .authPerm = READ_ONLY,
+            .authPerm = DLPFileAccess::READ_ONLY,
             .permExpiryTime = curTime + EXPIRT_TIME,
             .authAccountType = CLOUD_ACCOUNT};
         encProp.authUsers.emplace_back(perminfo);
@@ -152,7 +152,7 @@ HWTEST_F(DlpFileTest, GenerateDlpFile001, TestSize.Level0)
 
     g_recoveryFileFd = open("/data/fuse_test.txt.recovery", O_CREAT | O_RDWR | O_TRUNC, S_IRWXU | S_IRWXG | S_IRWXO);
     ASSERT_GE(g_recoveryFileFd, 0);
-    g_Dlpfile->authPerm_ = FULL_CONTROL;
+    g_Dlpfile->authPerm_ = DLPFileAccess::FULL_CONTROL;
     result = DlpFileManager::GetInstance().RecoverDlpFile(g_Dlpfile, g_recoveryFileFd);
     ASSERT_EQ(result, 0);
 
@@ -211,7 +211,7 @@ HWTEST_F(DlpFileTest, OpenDlpFile001, TestSize.Level0)
     ASSERT_EQ(contactAccount, prop.contactAccount);
     g_recoveryFileFd = open("/data/fuse_test.txt.recovery", O_CREAT | O_RDWR | O_TRUNC, S_IRWXU | S_IRWXG | S_IRWXO);
     ASSERT_GE(g_recoveryFileFd, 0);
-    g_Dlpfile->authPerm_ = FULL_CONTROL;
+    g_Dlpfile->authPerm_ = DLPFileAccess::FULL_CONTROL;
     ASSERT_EQ(DlpFileManager::GetInstance().RecoverDlpFile(g_Dlpfile, g_recoveryFileFd), 0);
     lseek(g_recoveryFileFd, 0, SEEK_SET);
     char buffer2[16] = {0};
@@ -239,7 +239,7 @@ HWTEST_F(DlpFileTest, OpenDlpFile002, TestSize.Level0)
     struct DlpProperty prop;
     GenerateRandProperty(prop);
     prop.supportEveryone = true;
-    prop.everyonePerm = READ_ONLY;
+    prop.everyonePerm = DLPFileAccess::READ_ONLY;
     int32_t result = DlpFileManager::GetInstance().GenerateDlpFile(g_plainFileFd,
         g_dlpFileFd, prop, g_Dlpfile, DLP_TEST_DIR);
     ASSERT_EQ(result, 0);
@@ -264,7 +264,7 @@ HWTEST_F(DlpFileTest, OpenDlpFile002, TestSize.Level0)
     ASSERT_EQ(contactAccount, prop.contactAccount);
     g_recoveryFileFd = open("/data/fuse_test.txt.recovery", O_CREAT | O_RDWR | O_TRUNC, S_IRWXU | S_IRWXG | S_IRWXO);
     ASSERT_GE(g_recoveryFileFd, 0);
-    g_Dlpfile->authPerm_ = FULL_CONTROL;
+    g_Dlpfile->authPerm_ = DLPFileAccess::FULL_CONTROL;
     ASSERT_EQ(DlpFileManager::GetInstance().RecoverDlpFile(g_Dlpfile, g_recoveryFileFd), 0);
     lseek(g_recoveryFileFd, 0, SEEK_SET);
     char buffer2[16] = {0};

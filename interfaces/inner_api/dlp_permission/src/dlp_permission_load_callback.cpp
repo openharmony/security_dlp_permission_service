@@ -16,7 +16,7 @@
 #include "dlp_permission_load_callback.h"
 #include "dlp_permission_client.h"
 #include "dlp_permission_log.h"
-#include "i_dlp_permission_service.h"
+#include "idlp_permission_service.h"
 
 namespace OHOS {
 namespace Security {

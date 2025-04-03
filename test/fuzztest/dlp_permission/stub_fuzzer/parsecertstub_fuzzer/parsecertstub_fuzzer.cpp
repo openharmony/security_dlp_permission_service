@@ -23,6 +23,7 @@
 #include "dlp_permission_async_stub.h"
 #include "dlp_permission_kit.h"
 #include "dlp_permission_log.h"
+#include "dlp_permission_service_ipc_interface_code.h"
 #include "hex_string.h"
 #include "securec.h"
 #include "token_setproc.h"
@@ -37,6 +38,8 @@ const std::string ENC_ACCOUNT_TYPE = "accountType";
 constexpr int BYTE_TO_HEX_OPER_LENGTH = 2;
 const uint32_t BUFFER_LENGTH = 30;
 const std::string DLP_MANAGER_BUNDLE_NAME = "com.ohos.dlpmanager_";
+static constexpr int32_t SA_ID_DLP_PERMISSION_SERVICE = 3521;
+
 static void InitCertJson(const uint8_t* data, size_t size, Json &certJson)
 {
     certJson[ENC_DATA_LEN] = size;
@@ -59,7 +62,7 @@ static void FuzzTest(const uint8_t* data, size_t size)
         return;
     }
     MessageParcel datas;
-    if (!datas.WriteInterfaceToken(DlpPermissionStub::GetDescriptor())) {
+    if (!datas.WriteInterfaceToken(DlpPermissionServiceStub::GetDescriptor())) {
         return;
     }
     std::string appId(reinterpret_cast<const char*>(data + BUFFER_LENGTH), size - BUFFER_LENGTH);

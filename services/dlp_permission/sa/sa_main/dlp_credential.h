@@ -21,7 +21,7 @@
 #include "application_info.h"
 #include "bundle_constants.h"
 #include "cert_parcel.h"
-#include "i_dlp_permission_callback.h"
+#include "idlp_permission_callback.h"
 #include "permission_policy.h"
 
 namespace OHOS {
@@ -41,8 +41,8 @@ public:
     int32_t GenerateDlpCertificate(
         const std::string& policy, const std::string& accountInfo, DlpAccountType accountType,
         const sptr<IDlpPermissionCallback>& callback);
-    int32_t ParseDlpCertificate(sptr<CertParcel>& certParcel, const sptr<IDlpPermissionCallback>& callback,
-        const std::string& appId, const bool& offlineAccess, AppExecFwk::ApplicationInfo& applicationInfo);
+    int32_t ParseDlpCertificate(const sptr<CertParcel>& certParcel, const sptr<IDlpPermissionCallback>& callback,
+        const std::string& appId, bool offlineAccess, AppExecFwk::ApplicationInfo& applicationInfo);
     int32_t SetMDMPolicy(const std::vector<std::string>& appIdList);
     int32_t GetMDMPolicy(std::vector<std::string>& appIdList);
     int32_t RemoveMDMPolicy();

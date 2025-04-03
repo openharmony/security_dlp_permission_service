@@ -19,7 +19,7 @@
 #include <string>
 #include <vector>
 #include "dlp_permission.h"
-#include "i_dlp_permission_callback.h"
+#include "idlp_permission_callback.h"
 #include "iremote_proxy.h"
 
 namespace OHOS {

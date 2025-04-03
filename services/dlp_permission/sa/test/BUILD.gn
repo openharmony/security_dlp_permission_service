@@ -75,7 +75,6 @@ ohos_unittest("dlp_permission_service_test") {
     "${dlp_root_dir}/services/dlp_permission/sa/sa_main/dlp_credential.cpp",
     "${dlp_root_dir}/services/dlp_permission/sa/sa_main/dlp_permission_async_proxy.cpp",
     "${dlp_root_dir}/services/dlp_permission/sa/sa_main/dlp_permission_service.cpp",
-    "${dlp_root_dir}/services/dlp_permission/sa/sa_main/dlp_permission_stub.cpp",
     "${dlp_root_dir}/services/dlp_permission/sa/storage/src/dlp_kv_data_storage.cpp",
     "${dlp_root_dir}/services/dlp_permission/sa/storage/src/sandbox_config_kv_data_storage.cpp",
     "unittest/src/account_adapt_test.cpp",
@@ -89,6 +88,7 @@ ohos_unittest("dlp_permission_service_test") {
     "unittest/src/dlp_permission_serializer_test.cpp",
     "unittest/src/dlp_permission_service_test.cpp",
     "unittest/src/hex_string_test.cpp",
+    "unittest/src/permission_manager_adapter_mock.cpp",
     "unittest/src/permission_policy_test.cpp",
     "unittest/src/retention_file_manager_test.cpp",
     "unittest/src/sandbox_json_manager_test.cpp",
@@ -103,6 +103,7 @@ ohos_unittest("dlp_permission_service_test") {
   cflags = [ "-DHILOG_ENABLE" ]
 
   deps = [
+    "${dlp_permission_public_config_path}/:dlp_permission_stub",
     "${dlp_root_dir}/interfaces/inner_api/dlp_permission:libdlp_permission_sdk",
     "${dlp_root_dir}/services/dlp_permission/sa:dlp_hex_string_static",
     "${dlp_root_dir}/services/dlp_permission/sa:dlp_permission_serializer_static",

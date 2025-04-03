@@ -336,19 +336,19 @@ napi_value CreateEnumDLPFileAccess(napi_env env)
     NAPI_CALL(env, napi_create_object(env, &authPerm));
 
     napi_value prop = nullptr;
-    NAPI_CALL(env, napi_create_int32(env, static_cast<int32_t>(NO_PERMISSION), &prop));
+    NAPI_CALL(env, napi_create_int32(env, static_cast<int32_t>(DLPFileAccess::NO_PERMISSION), &prop));
     NAPI_CALL(env, napi_set_named_property(env, authPerm, "NO_PERMISSION", prop));
 
     prop = nullptr;
-    NAPI_CALL(env, napi_create_int32(env, static_cast<int32_t>(READ_ONLY), &prop));
+    NAPI_CALL(env, napi_create_int32(env, static_cast<int32_t>(DLPFileAccess::READ_ONLY), &prop));
     NAPI_CALL(env, napi_set_named_property(env, authPerm, "READ_ONLY", prop));
 
     prop = nullptr;
-    NAPI_CALL(env, napi_create_int32(env, static_cast<int32_t>(CONTENT_EDIT), &prop));
+    NAPI_CALL(env, napi_create_int32(env, static_cast<int32_t>(DLPFileAccess::CONTENT_EDIT), &prop));
     NAPI_CALL(env, napi_set_named_property(env, authPerm, "CONTENT_EDIT", prop));
 
     prop = nullptr;
-    NAPI_CALL(env, napi_create_int32(env, static_cast<int32_t>(FULL_CONTROL), &prop));
+    NAPI_CALL(env, napi_create_int32(env, static_cast<int32_t>(DLPFileAccess::FULL_CONTROL), &prop));
     NAPI_CALL(env, napi_set_named_property(env, authPerm, "FULL_CONTROL", prop));
 
     return authPerm;
@@ -1186,7 +1186,7 @@ napi_value DlpPropertyToJs(napi_env env, const DlpProperty& property)
 
     napi_value everyoneAccessListJs = nullptr;
     if (property.supportEveryone) {
-        everyoneAccessListJs = VectorUint32ToJs(env, {property.everyonePerm});
+        everyoneAccessListJs = VectorUint32ToJs(env, {static_cast<uint32_t>(property.everyonePerm)});
     } else {
         everyoneAccessListJs = VectorUint32ToJs(env, {});
     }
@@ -1229,7 +1229,7 @@ napi_value DlpPermissionInfoToJs(napi_env env, const DLPPermissionInfo& permInfo
     NAPI_CALL(env, napi_create_object(env, &dlpPermInfoJs));
 
     napi_value accessJs;
-    NAPI_CALL(env, napi_create_uint32(env, permInfo.dlpFileAccess, &accessJs));
+    NAPI_CALL(env, napi_create_uint32(env, static_cast<uint32_t>(permInfo.dlpFileAccess), &accessJs));
     NAPI_CALL(env, napi_set_named_property(env, dlpPermInfoJs, "dlpFileAccess", accessJs));
 
     napi_value flagsJs;
@@ -1269,7 +1269,7 @@ napi_value VectorAuthUserToJs(napi_env env, const std::vector<AuthUserInfo>& use
         NAPI_CALL(env, napi_set_named_property(env, objAuthUserInfo, "authAccount", authAccountJs));
 
         napi_value authPermJs;
-        NAPI_CALL(env, napi_create_int64(env, item.authPerm, &authPermJs));
+        NAPI_CALL(env, napi_create_int32(env, static_cast<uint32_t>(item.authPerm), &authPermJs));
         NAPI_CALL(env, napi_set_named_property(env, objAuthUserInfo, "dlpFileAccess", authPermJs));
 
         napi_value permExpiryTimeJs;
