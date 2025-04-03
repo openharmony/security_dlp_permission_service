@@ -154,15 +154,15 @@ static void SerializeAuthUserInfo(unordered_json& authUsersJson,
     bool fullCtrl = false;
 
     switch (userInfo.authPerm) {
-        case READ_ONLY: {
+        case DLPFileAccess::READ_ONLY: {
             read = true;
             break;
         }
-        case CONTENT_EDIT: {
+        case DLPFileAccess::CONTENT_EDIT: {
             edit = true;
             break;
         }
-        case FULL_CONTROL: {
+        case DLPFileAccess::FULL_CONTROL: {
             read = true;
             edit = true;
             fullCtrl = true;
@@ -202,11 +202,11 @@ int32_t DlpPermissionSerializer::DeserializeAuthUserInfo(const unordered_json& a
     }
 
     if (fullCtrl) {
-        userInfo.authPerm = FULL_CONTROL;
+        userInfo.authPerm = DLPFileAccess::FULL_CONTROL;
     } else if (edit) {
-        userInfo.authPerm = CONTENT_EDIT;
+        userInfo.authPerm = DLPFileAccess::CONTENT_EDIT;
     } else {
-        userInfo.authPerm = READ_ONLY;
+        userInfo.authPerm = DLPFileAccess::READ_ONLY;
     }
 
     userInfo.permExpiryTime = VALID_TIME_STAMP;
@@ -286,15 +286,15 @@ static void SerializeEveryoneInfo(const PermissionPolicy& policy, unordered_json
         bool fullCtrl = false;
 
         switch (policy.everyonePerm_) {
-            case READ_ONLY: {
+            case DLPFileAccess::READ_ONLY: {
                 read = true;
                 break;
             }
-            case CONTENT_EDIT: {
+            case DLPFileAccess::CONTENT_EDIT: {
                 edit = true;
                 break;
             }
-            case FULL_CONTROL: {
+            case DLPFileAccess::FULL_CONTROL: {
                 read = true;
                 edit = true;
                 fullCtrl = true;
@@ -422,11 +422,11 @@ bool DlpPermissionSerializer::DeserializeEveryoneInfo(const unordered_json& poli
     }
 
     if (fullCtrl) {
-        policy.everyonePerm_ = FULL_CONTROL;
+        policy.everyonePerm_ = DLPFileAccess::FULL_CONTROL;
     } else if (edit) {
-        policy.everyonePerm_ = CONTENT_EDIT;
+        policy.everyonePerm_ = DLPFileAccess::CONTENT_EDIT;
     } else {
-        policy.everyonePerm_ = READ_ONLY;
+        policy.everyonePerm_ = DLPFileAccess::READ_ONLY;
     }
     return true;
 }
@@ -451,7 +451,7 @@ static void InitPermissionPolicy(PermissionPolicy& policy, const std::vector<Aut
         policyJson.at(DLP_FILE_DEBUG_FLAG).get_to(policy.debug_);
     }
     if (policyJson.find(OPEN_MODE) != policyJson.end() && policyJson.at(OPEN_MODE).is_number()) {
-        policy.perm_ = READ_ONLY;
+        policy.perm_ = DLPFileAccess::READ_ONLY;
     }
     if (policyJson.find(ACCOUNT_TYPE) != policyJson.end() && policyJson.at(ACCOUNT_TYPE).is_number()) {
         policyJson.at(ACCOUNT_TYPE).get_to(policy.acountType_);

@@ -25,7 +25,6 @@ ohos_fuzztest("CleanSandboxConfigStubFuzzTest") {
 
   sources = [
     "${dlp_root_dir}/services/dlp_permission/sa/sa_main/dlp_permission_service.cpp",
-    "${dlp_root_dir}/services/dlp_permission/sa/sa_main/dlp_permission_stub.cpp",
     "cleansandboxconfigstub_fuzzer.cpp",
   ]
 

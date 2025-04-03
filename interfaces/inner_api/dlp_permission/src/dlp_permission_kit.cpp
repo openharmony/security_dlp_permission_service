@@ -86,7 +86,7 @@ int32_t DlpPermissionKit::GenerateDlpCertificate(const PermissionPolicy& policy,
 }
 
 int32_t DlpPermissionKit::ParseDlpCertificate(sptr<CertParcel>& certParcel, PermissionPolicy& policy,
-    const std::string& appId, const bool& offlineAccess)
+    const std::string& appId, bool offlineAccess)
 {
     std::shared_ptr<ClientParseDlpCertificateCallback> callback = std::make_shared<ClientParseDlpCertificateCallback>();
     int32_t res = DlpPermissionClient::GetInstance().ParseDlpCertificate(certParcel, callback, appId, offlineAccess);
@@ -206,23 +206,17 @@ int32_t DlpPermissionKit::GetDLPFileVisitRecord(std::vector<VisitedDLPFileInfo>&
 
 int32_t DlpPermissionKit::SetMDMPolicy(const std::vector<std::string>& appIdList)
 {
-    int32_t res = DlpPermissionClient::GetInstance().SetMDMPolicy(appIdList);
-    DlpPermissionClient::GetInstance().CleanUpResource();
-    return res;
+    return DlpPermissionClient::GetInstance().SetMDMPolicy(appIdList);
 }
 
 int32_t DlpPermissionKit::GetMDMPolicy(std::vector<std::string>& appIdList)
 {
-    int32_t res = DlpPermissionClient::GetInstance().GetMDMPolicy(appIdList);
-    DlpPermissionClient::GetInstance().CleanUpResource();
-    return res;
+    return DlpPermissionClient::GetInstance().GetMDMPolicy(appIdList);
 }
 
 int32_t DlpPermissionKit::RemoveMDMPolicy()
 {
-    int32_t res = DlpPermissionClient::GetInstance().RemoveMDMPolicy();
-    DlpPermissionClient::GetInstance().CleanUpResource();
-    return res;
+    return DlpPermissionClient::GetInstance().RemoveMDMPolicy();
 }
 
 int32_t DlpPermissionKit::SetSandboxAppConfig(const std::string& configInfo)

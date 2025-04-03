@@ -29,7 +29,7 @@ bool AuthUserInfoParcel::Marshalling(Parcel& out) const
         DLP_LOG_ERROR(LABEL, "Write auth user account fail");
         return false;
     }
-    if (!(out.WriteUint8(this->authUserInfo_.authPerm))) {
+    if (!(out.WriteUint32(static_cast<uint32_t>(this->authUserInfo_.authPerm)))) {
         DLP_LOG_ERROR(LABEL, "Write auth user perm fail");
         return false;
     }

@@ -18,6 +18,8 @@
 
 #include <string>
 #include <vector>
+#include "parcel.h"
+#include "dlp_permission_types.h"
 
 namespace OHOS {
 namespace Security {
@@ -32,13 +34,6 @@ enum DlpAccountType : uint32_t {
     CLOUD_ACCOUNT = 1,
     DOMAIN_ACCOUNT = 2,
     APPLICATION_ACCOUNT = 3,
-};
-
-enum DLPFileAccess : uint32_t {
-    NO_PERMISSION = 0,
-    READ_ONLY = 1,
-    CONTENT_EDIT = 2,
-    FULL_CONTROL = 3,
 };
 
 enum GatheringPolicyType : uint32_t {
@@ -68,20 +63,22 @@ enum ActionFlags : uint32_t {
 };
 
 typedef struct DLPPermissionInfo {
-    DLPFileAccess dlpFileAccess = NO_PERMISSION;
+    DLPFileAccess dlpFileAccess = DLPFileAccess::NO_PERMISSION;
     ActionFlags flags = ACTION_INVALID;
 } DLPPermissionInfo;
 
 typedef struct AuthUserInfo {
     std::string authAccount;
-    DLPFileAccess authPerm = NO_PERMISSION;
+    DLPFileAccess authPerm = DLPFileAccess::NO_PERMISSION;
     uint64_t permExpiryTime = 0;
     DlpAccountType authAccountType = INVALID_ACCOUNT;
 } AuthUserInfo;
 
-typedef struct SandboxInfo {
+typedef struct SandboxInfo : public Parcelable {
     int32_t appIndex = -1;
     uint32_t tokenId = 0;
+    bool Marshalling(Parcel &parcel) const;
+    static SandboxInfo* Unmarshalling(Parcel &data);
 } SandboxInfo;
 
 struct DlpProperty {
@@ -92,14 +89,9 @@ struct DlpProperty {
     DlpAccountType ownerAccountType = INVALID_ACCOUNT;
     bool offlineAccess = false;
     bool supportEveryone = false;
-    DLPFileAccess everyonePerm = NO_PERMISSION;
+    DLPFileAccess everyonePerm = DLPFileAccess::NO_PERMISSION;
     uint64_t expireTime = 0;
 };
-
-typedef enum SandBoxExternalAuthorType {
-    DENY_START_ABILITY,
-    ALLOW_START_ABILITY,
-} SandBoxExternalAuthorType;
 
 class PermissionPolicy final {
 public:
@@ -128,10 +120,10 @@ public:
     std::string accountName_ = "";
     std::string acountId_ = "";
     DlpAccountType acountType_ = INVALID_ACCOUNT;
-    DLPFileAccess perm_ = NO_PERMISSION;
+    DLPFileAccess perm_ = DLPFileAccess::NO_PERMISSION;
     std::vector<AuthUserInfo> authUsers_;
     bool supportEveryone_ = false;
-    DLPFileAccess everyonePerm_ = NO_PERMISSION;
+    DLPFileAccess everyonePerm_ = DLPFileAccess::NO_PERMISSION;
     uint64_t expireTime_ = 0;
     uint32_t needOnline_ = 0;
     uint32_t dlpVersion_ = 0;

@@ -71,7 +71,10 @@ ohos_static_library("dlp_permission_serializer_static") {
 
   cflags_cc = [ "-DHILOG_ENABLE" ]
 
-  configs = [ "${dlp_root_dir}/config:coverage_flags" ]
+  configs = [
+    "${dlp_permission_public_config_path}/:dlp_permission_sdk_config",
+    "${dlp_root_dir}/config:coverage_flags",
+  ]
 
   deps = [ ":dlp_hex_string_static" ]
 
@@ -138,10 +141,10 @@ ohos_shared_library("dlp_permission_service") {
     "mock/dlp_credential_service.c",
     "mock/mock_utils.cpp",
     "sa_common/bundle_manager_adapter.cpp",
+    "sa_common/permission_manager_adapter.cpp",
     "sa_main/dlp_credential.cpp",
     "sa_main/dlp_permission_async_proxy.cpp",
     "sa_main/dlp_permission_service.cpp",
-    "sa_main/dlp_permission_stub.cpp",
     "storage/src/dlp_kv_data_storage.cpp",
     "storage/src/sandbox_config_kv_data_storage.cpp",
   ]
@@ -169,6 +172,7 @@ ohos_shared_library("dlp_permission_service") {
     ":dlp_hex_string_static",
     ":dlp_permission_serializer_static",
     ":dlp_permission_service.rc",
+    "${dlp_permission_public_config_path}/:dlp_permission_stub",
   ]
 
   deps += [ "etc:param_files" ]

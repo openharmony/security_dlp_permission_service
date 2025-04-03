@@ -54,7 +54,8 @@ const std::string DLP_GEN_FILE = "gen_dlp_file";
 std::mutex g_fileOpLock_;
 
 DlpFile::DlpFile(int32_t dlpFd, const std::string &workDir, int64_t index, bool isZip) : dlpFd_(dlpFd),
-    workDir_(workDir), dirIndex_(std::to_string(index)), isZip_(isZip), isFuseLink_(false), authPerm_(READ_ONLY)
+    workDir_(workDir), dirIndex_(std::to_string(index)), isZip_(isZip),
+    isFuseLink_(false), authPerm_(DLPFileAccess::READ_ONLY)
 {
     head_.magic = DLP_FILE_MAGIC;
     head_.version = CURRENT_VERSION;
@@ -254,13 +255,13 @@ bool DlpFile::UpdateDlpFilePermission()
         }
     } else {
         DLP_LOG_DEBUG(LABEL, "AuthPerm_ is readonly");
-        authPerm_ = READ_ONLY;
+        authPerm_ = DLPFileAccess::READ_ONLY;
         return true;
     }
 
     if (accountName == policy_.ownerAccount_) {
         DLP_LOG_DEBUG(LABEL, "current account is owner, it has full permission");
-        authPerm_ = FULL_CONTROL;
+        authPerm_ = DLPFileAccess::FULL_CONTROL;
         return true;
     }
 
@@ -1311,7 +1312,7 @@ int32_t DlpFile::RemoveDlpPermission(int32_t outPlainFileFd)
         return DLP_PARSE_ERROR_FILE_LINKING;
     }
 
-    if (authPerm_ != FULL_CONTROL) {
+    if (authPerm_ != DLPFileAccess::FULL_CONTROL) {
         DLP_LOG_ERROR(LABEL, "check permission fail, remove dlp permission failed.");
         return DLP_PARSE_ERROR_FILE_READ_ONLY;
     }
@@ -1562,7 +1563,7 @@ int32_t DlpFile::FillHoleData(uint32_t holeStart, uint32_t holeSize)
 
 int32_t DlpFile::DlpFileWrite(uint32_t offset, void* buf, uint32_t size)
 {
-    if (authPerm_ == READ_ONLY) {
+    if (authPerm_ == DLPFileAccess::READ_ONLY) {
         DLP_LOG_ERROR(LABEL, "Dlp file is readonly, write failed");
         return DLP_PARSE_ERROR_FILE_READ_ONLY;
     }
@@ -1595,7 +1596,7 @@ int32_t DlpFile::Truncate(uint32_t size)
 {
     DLP_LOG_INFO(LABEL, "Truncate file size %{public}u", size);
 
-    if (authPerm_ == READ_ONLY) {
+    if (authPerm_ == DLPFileAccess::READ_ONLY) {
         DLP_LOG_ERROR(LABEL, "Dlp file is readonly, truncate failed");
         return DLP_PARSE_ERROR_FILE_READ_ONLY;
     }

@@ -57,6 +57,7 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
     LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "DlpPermissionServiceTest"};
 const std::string TEST_URI = "/data/service/el1/public/dlp_permission_service1/retention_sandbox_info_test.json";
 static const int32_t DEFAULT_USERID = 100;
+static constexpr int32_t SA_ID_DLP_PERMISSION_SERVICE = 3521;
 static const std::string DLP_MANAGER_APP = "com.ohos.dlpmanager";
 static const std::string PERMISSION_APP = "com.ohos.permissionmanager";
 const uint32_t ACCOUNT_LENGTH = 20;
@@ -113,7 +114,7 @@ uint64_t GetCurrentTimeSec(void)
 void NewUserSample(AuthUserInfo& user)
 {
     user.authAccount = "allowAccountA";
-    user.authPerm = FULL_CONTROL;
+    user.authPerm = DLPFileAccess::FULL_CONTROL;
     user.permExpiryTime = GetCurrentTimeSec() + EXPIRY_TEN_MINUTE;
     user.authAccountType = OHOS::Security::DlpPermission::DlpAccountType::CLOUD_ACCOUNT;
 }
@@ -687,7 +688,7 @@ public:
  */
 HWTEST_F(DlpPermissionServiceTest, DlpPermissionStub001, TestSize.Level1)
 {
-    sptr<DlpPermissionStub> stub = new (std::nothrow) DlpPermissionService(0, 0);
+    sptr<DlpPermissionServiceStub> stub = new (std::nothrow) DlpPermissionService(0, 0);
     ASSERT_TRUE(!(stub == nullptr));
 
     sptr<DlpPolicyParcel> policyParcel = new (std::nothrow) DlpPolicyParcel();
@@ -699,7 +700,9 @@ HWTEST_F(DlpPermissionServiceTest, DlpPermissionStub001, TestSize.Level1)
     int32_t res;
     MessageParcel data;
     MessageParcel reply;
-    res = stub->GenerateDlpCertificateInner(data, reply);
+    MessageOption option;
+    res = stub->OnRemoteRequest(static_cast<uint32_t>(IDlpPermissionServiceIpcCode::COMMAND_GENERATE_DLP_CERTIFICATE),
+        data, reply, option);
     EXPECT_EQ(false, !res);
 
     res = data.WriteParcelable(policyParcel);
@@ -708,7 +711,8 @@ HWTEST_F(DlpPermissionServiceTest, DlpPermissionStub001, TestSize.Level1)
     res = data.WriteRemoteObject(callback->AsObject());
     EXPECT_EQ(false, !res);
 
-    res = stub->GenerateDlpCertificateInner(data, reply);
+    res = stub->OnRemoteRequest(static_cast<uint32_t>(IDlpPermissionServiceIpcCode::COMMAND_GENERATE_DLP_CERTIFICATE),
+        data, reply, option);
     EXPECT_EQ(false, !res);
 
     sptr<IDlpPermissionCallback> callback2 = nullptr;

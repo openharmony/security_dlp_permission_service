@@ -43,7 +43,7 @@ uint64_t GetCurrentTimeSec(void)
 void NewUserSample(AuthUserInfo& user)
 {
     user.authAccount = "allowAccountA";
-    user.authPerm = FULL_CONTROL;
+    user.authPerm = DLPFileAccess::FULL_CONTROL;
     user.permExpiryTime = GetCurrentTimeSec() + EXPIRY_TEN_MINUTE;
     user.authAccountType = CLOUD_ACCOUNT;
 }
@@ -249,11 +249,11 @@ HWTEST_F(PermissionPolicyTest, IsValid006, TestSize.Level1)
 
     // 2. test auth perm
     // auth perm DEFAULT
-    policy->authUsers_[0].authPerm = NO_PERMISSION;
+    policy->authUsers_[0].authPerm = DLPFileAccess::NO_PERMISSION;
     EXPECT_FALSE(policy->IsValid());
 
     // restore
-    policy->authUsers_[0].authPerm = FULL_CONTROL;
+    policy->authUsers_[0].authPerm = DLPFileAccess::FULL_CONTROL;
 
     // 3. test expiryTime
     // expiryTime 0

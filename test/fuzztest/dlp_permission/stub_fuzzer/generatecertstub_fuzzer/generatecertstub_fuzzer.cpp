@@ -24,6 +24,7 @@
 #include "dlp_permission_async_stub.h"
 #include "dlp_permission_kit.h"
 #include "dlp_permission_log.h"
+#include "dlp_permission_service_ipc_interface_code.h"
 #include "securec.h"
 #include "token_setproc.h"
 
@@ -39,6 +40,7 @@ const int32_t FIFTY = 50;
 constexpr int32_t DATA_LENGTH = KEY_LEN * 4;
 const uint8_t ARRAY_CHAR_SIZE = 62;
 const char CHAR_ARRAY[] = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+static constexpr int32_t SA_ID_DLP_PERMISSION_SERVICE = 3521;
 
 static int GetRandNum()
 {
@@ -92,7 +94,7 @@ static void FuzzTest(const uint8_t* data, size_t size)
     DlpPolicyParcel parcel;
     parcel.policyParams_.CopyPermissionPolicy(encPolicy);
     MessageParcel datas;
-    if (!datas.WriteInterfaceToken(DlpPermissionStub::GetDescriptor())) {
+    if (!datas.WriteInterfaceToken(DlpPermissionServiceStub::GetDescriptor())) {
         return;
     }
     if (!datas.WriteParcelable(&parcel)) {

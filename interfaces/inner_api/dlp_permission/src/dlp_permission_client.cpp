@@ -19,7 +19,7 @@
 #include "dlp_permission_async_stub.h"
 #include "dlp_permission_load_callback.h"
 #include "dlp_permission_log.h"
-#include "dlp_permission_proxy.h"
+#include "dlp_permission_service_proxy.h"
 #include "ipc_skeleton.h"
 #include "iservice_registry.h"
 #include "os_account_manager.h"
@@ -90,7 +90,6 @@ void DlpPermissionClient::CleanUpResource()
         remoteObj->RemoveDeathRecipient(serviceDeathObserver_);
         serviceDeathObserver_ = nullptr;
     }
-    proxy_ = nullptr;
     DLP_LOG_INFO(LABEL, "CleanUpResource end.");
 }
 
@@ -135,7 +134,7 @@ int32_t DlpPermissionClient::GenerateDlpCertificate(
 }
 
 int32_t DlpPermissionClient::ParseDlpCertificate(sptr<CertParcel>& certParcel,
-    std::shared_ptr<ParseDlpCertificateCallback> callback, const std::string& appId, const bool& offlineAccess)
+    std::shared_ptr<ParseDlpCertificateCallback> callback, const std::string& appId, bool offlineAccess)
 {
     if (callback == nullptr || certParcel->cert.size() == 0) {
         return DLP_SERVICE_ERROR_VALUE_INVALID;
@@ -158,7 +157,8 @@ int32_t DlpPermissionClient::ParseDlpCertificate(sptr<CertParcel>& certParcel,
 int32_t DlpPermissionClient::InstallDlpSandbox(const std::string& bundleName, DLPFileAccess dlpFileAccess,
     int32_t userId, SandboxInfo& sandboxInfo, const std::string& uri)
 {
-    if (bundleName.empty() || dlpFileAccess > FULL_CONTROL || dlpFileAccess <= NO_PERMISSION || uri.empty()) {
+    if (bundleName.empty() ||
+        dlpFileAccess > DLPFileAccess::FULL_CONTROL || dlpFileAccess <= DLPFileAccess::NO_PERMISSION || uri.empty()) {
         return DLP_SERVICE_ERROR_VALUE_INVALID;
     }
     auto proxy = GetProxy(true);
@@ -212,7 +212,7 @@ int32_t DlpPermissionClient::GetSandboxExternalAuthorization(
         return DLP_SERVICE_ERROR_API_ONLY_FOR_SANDBOX_ERROR;
     }
     if (CheckAllowAbilityList(want.GetBundle())) {
-        auth = ALLOW_START_ABILITY;
+        auth = SandBoxExternalAuthorType::ALLOW_START_ABILITY;
         return DLP_OK;
     }
     auto proxy = GetProxy(false);

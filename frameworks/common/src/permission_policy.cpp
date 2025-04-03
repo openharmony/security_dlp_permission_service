@@ -57,7 +57,8 @@ static bool CheckAccount(const std::string& account)
 
 static bool CheckPerm(uint32_t perm)
 {
-    if (perm <= NO_PERMISSION || perm > FULL_CONTROL) {
+    if (perm <= static_cast<uint32_t>(DLPFileAccess::NO_PERMISSION) ||
+        perm > static_cast<uint32_t>(DLPFileAccess::FULL_CONTROL)) {
         DLP_LOG_ERROR(LABEL, "Auth Perm invalid, perm=%{public}u", perm);
         return false;
     }
@@ -78,7 +79,9 @@ static bool CheckTime(uint64_t time)
 
 static bool CheckAuthUserInfo(const AuthUserInfo& info)
 {
-    return (CheckAccount(info.authAccount) && CheckPerm(info.authPerm) && CheckTime(info.permExpiryTime) &&
+    return (CheckAccount(info.authAccount) &&
+            CheckPerm(static_cast<uint32_t>(info.authPerm)) &&
+            CheckTime(info.permExpiryTime) &&
             CheckAccountType(info.authAccountType));
 }
 
@@ -300,6 +303,39 @@ void FreeCharBuffer(char* buff, uint32_t buffLen)
 bool CheckAesParamLen(uint32_t len)
 {
     return VALID_AESPARAM_LEN.count(len) > 0;
+}
+
+bool SandboxInfo::Marshalling(Parcel &out) const
+{
+    if (!(out.WriteInt32(appIndex))) {
+        DLP_LOG_ERROR(LABEL, "Write appIndex fail");
+        return false;
+    }
+    if (!(out.WriteUint32(tokenId))) {
+        DLP_LOG_ERROR(LABEL, "Write tokenId fail");
+        return false;
+    }
+    return true;
+}
+
+SandboxInfo* SandboxInfo::Unmarshalling(Parcel &in)
+{
+    auto *parcel = new (std::nothrow) SandboxInfo();
+    if (parcel == nullptr) {
+        DLP_LOG_ERROR(LABEL, "Alloc buff for parcel fail");
+        return nullptr;
+    }
+    if (!(in.ReadInt32(parcel->appIndex))) {
+        DLP_LOG_ERROR(LABEL, "Read appIndex fail");
+        delete parcel;
+        return nullptr;
+    }
+    if (!(in.ReadUint32(parcel->tokenId))) {
+        DLP_LOG_ERROR(LABEL, "Read tokenId fail");
+        delete parcel;
+        return nullptr;
+    }
+    return parcel;
 }
 }  // namespace DlpPermission
 }  // namespace Security

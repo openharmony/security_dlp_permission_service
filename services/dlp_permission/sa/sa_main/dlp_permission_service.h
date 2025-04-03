@@ -22,7 +22,7 @@
 #include <map>
 #include "app_state_observer.h"
 #include "app_uninstall_observer.h"
-#include "dlp_permission_stub.h"
+#include "dlp_permission_service_stub.h"
 #include "iremote_object.h"
 #include "nocopyable.h"
 #include "retention_file_manager.h"
@@ -35,7 +35,7 @@ namespace Security {
 namespace DlpPermission {
 enum class ServiceRunningState { STATE_NOT_START, STATE_RUNNING };
 
-class DlpPermissionService final : public SystemAbility, public DlpPermissionStub {
+class DlpPermissionService final : public SystemAbility, public DlpPermissionServiceStub {
     DECLARE_DELAYED_SINGLETON(DlpPermissionService);
     DECLEAR_SYSTEM_ABILITY(DlpPermissionService);
 
@@ -49,8 +49,8 @@ public:
 
     int32_t GenerateDlpCertificate(
         const sptr<DlpPolicyParcel>& policyParcel, const sptr<IDlpPermissionCallback>& callback) override;
-    int32_t ParseDlpCertificate(sptr<CertParcel>& certParcel, const sptr<IDlpPermissionCallback>& callback,
-        const std::string& appId, const bool& offlineAccess) override;
+    int32_t ParseDlpCertificate(const sptr<CertParcel>& certParcel, const sptr<IDlpPermissionCallback>& callback,
+        const std::string& appId, bool offlineAccess) override;
     int32_t InstallDlpSandbox(const std::string& bundleName, DLPFileAccess dlpFileAccess, int32_t userId,
         SandboxInfo& sandboxInfo, const std::string& uri) override;
     int32_t UninstallDlpSandbox(const std::string& bundleName, int32_t appIndex, int32_t userId) override;
@@ -81,7 +81,7 @@ public:
     int32_t SetMDMPolicy(const std::vector<std::string>& appIdList) override;
     int32_t GetMDMPolicy(std::vector<std::string>& appIdList) override;
     int32_t RemoveMDMPolicy() override;
-    void StartTimer() override;
+    void StartTimer();
     int Dump(int fd, const std::vector<std::u16string>& args) override;
 
 private:
@@ -97,6 +97,7 @@ private:
     void GetCfgFilesList(std::vector<std::string>& cfgFilesList);
     void GetConfigFileValue(const std::string& cfgFile, std::vector<std::string>& typeList);
     void InitConfig(std::vector<std::string>& typeList);
+    void SetTimer(bool isNeedStartTimer);
 
     std::atomic<int32_t> repeatTime_;
     std::shared_ptr<std::thread> thread_ = nullptr;

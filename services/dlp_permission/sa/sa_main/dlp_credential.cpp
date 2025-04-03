@@ -670,8 +670,10 @@ static int32_t RestorePolicy(DLP_EncPolicyData &encPolicy, AppExecFwk::Applicati
     return InsertCallbackToRequestMap(requestId, info);
 }
 
-int32_t DlpCredential::ParseDlpCertificate(sptr<CertParcel>& certParcel, const sptr<IDlpPermissionCallback>& callback,
-    const std::string& appId, const bool& offlineAccess, AppExecFwk::ApplicationInfo& applicationInfo)
+int32_t DlpCredential::ParseDlpCertificate(const sptr<CertParcel>& certParcel,
+    const sptr<IDlpPermissionCallback>& callback,
+    const std::string& appId, bool offlineAccess,
+    AppExecFwk::ApplicationInfo& applicationInfo)
 {
     std::string encDataJsonStr(certParcel->cert.begin(), certParcel->cert.end());
     auto jsonObj = unordered_json::parse(encDataJsonStr, nullptr, false);
