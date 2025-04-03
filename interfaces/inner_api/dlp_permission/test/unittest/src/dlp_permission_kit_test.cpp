@@ -330,8 +330,8 @@ HWTEST_F(DlpPermissionKitTest, SetRetentionState01, TestSize.Level0)
     SandboxInfo sandboxInfo;
 
     ASSERT_TRUE(TestSetSelfTokenId(g_dlpManagerTokenId));
-    ASSERT_EQ(DLP_OK,
-        DlpPermissionKit::InstallDlpSandbox(DLP_MANAGER_APP, FULL_CONTROL, DEFAULT_USERID, sandboxInfo, TEST_URI));
+    ASSERT_EQ(DLP_OK, DlpPermissionKit::InstallDlpSandbox(DLP_MANAGER_APP,
+        DLPFileAccess::FULL_CONTROL, DEFAULT_USERID, sandboxInfo, TEST_URI));
     ASSERT_TRUE(sandboxInfo.appIndex != 0);
     AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(100, DLP_MANAGER_APP, sandboxInfo.appIndex);
     AccessTokenID normalTokenId = AccessTokenKit::GetHapTokenID(100, DLP_MANAGER_APP, 0);
@@ -374,8 +374,8 @@ HWTEST_F(DlpPermissionKitTest, SetRetentionState02, TestSize.Level0)
     std::vector<std::string> docUriVec;
     std::vector<RetentionSandBoxInfo> retentionSandBoxInfoVec;
     SandboxInfo sandboxInfo;
-    ASSERT_EQ(DLP_OK,
-        DlpPermissionKit::InstallDlpSandbox(DLP_MANAGER_APP, FULL_CONTROL, DEFAULT_USERID, sandboxInfo, TEST_URI));
+    ASSERT_EQ(DLP_OK, DlpPermissionKit::InstallDlpSandbox(DLP_MANAGER_APP,
+        DLPFileAccess::FULL_CONTROL, DEFAULT_USERID, sandboxInfo, TEST_URI));
     docUriVec.clear();
     ASSERT_TRUE(TestSetSelfTokenId(tokenId));
     ASSERT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, DlpPermissionKit::CancelRetentionState(docUriVec));
@@ -406,8 +406,8 @@ HWTEST_F(DlpPermissionKitTest, SetRetentionState03, TestSize.Level0)
     AccessTokenID tokenId = GetSelfTokenID();
     DLP_LOG_INFO(LABEL, "SetRetentionState03  tokenId from %{public}u", static_cast<unsigned int>(GetSelfTokenID()));
 
-    ASSERT_EQ(DLP_OK,
-        DlpPermissionKit::InstallDlpSandbox(DLP_MANAGER_APP, FULL_CONTROL, DEFAULT_USERID, sandboxInfo, TEST_URI));
+    ASSERT_EQ(DLP_OK, DlpPermissionKit::InstallDlpSandbox(DLP_MANAGER_APP,
+        DLPFileAccess::FULL_CONTROL, DEFAULT_USERID, sandboxInfo, TEST_URI));
     ASSERT_TRUE(sandboxInfo.appIndex != 0);
     AccessTokenID sandboxTokenId = AccessTokenKit::GetHapTokenID(DEFAULT_USERID, DLP_MANAGER_APP, sandboxInfo.appIndex);
     DLP_LOG_INFO(LABEL, "SetRetentionState03 sandboxTokenId  tokenId from %{public}d ", sandboxTokenId);
@@ -536,8 +536,8 @@ HWTEST_F(DlpPermissionKitTest, ParseDlpCertificate001, TestSize.Level0)
 HWTEST_F(DlpPermissionKitTest, InstallDlpSandbox001, TestSize.Level0)
 {
     SandboxInfo sandboxInfo;
-    ASSERT_EQ(DLP_OK,
-        DlpPermissionKit::InstallDlpSandbox(DLP_MANAGER_APP, READ_ONLY, DEFAULT_USERID, sandboxInfo, TEST_URI));
+    ASSERT_EQ(DLP_OK, DlpPermissionKit::InstallDlpSandbox(DLP_MANAGER_APP,
+        DLPFileAccess::READ_ONLY, DEFAULT_USERID, sandboxInfo, TEST_URI));
     ASSERT_TRUE(sandboxInfo.appIndex != 0);
     ASSERT_EQ(DLP_OK, DlpPermissionKit::UninstallDlpSandbox(DLP_MANAGER_APP, sandboxInfo.appIndex, DEFAULT_USERID));
 }
@@ -551,10 +551,10 @@ HWTEST_F(DlpPermissionKitTest, InstallDlpSandbox001, TestSize.Level0)
 HWTEST_F(DlpPermissionKitTest, InstallDlpSandbox002, TestSize.Level0)
 {
     SandboxInfo sandboxInfo;
-    ASSERT_NE(
-        DLP_OK, DlpPermissionKit::InstallDlpSandbox("test.test", READ_ONLY, DEFAULT_USERID, sandboxInfo, TEST_URI));
+    ASSERT_NE(DLP_OK, DlpPermissionKit::InstallDlpSandbox("test.test",
+        DLPFileAccess::READ_ONLY, DEFAULT_USERID, sandboxInfo, TEST_URI));
     ASSERT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID,
-        DlpPermissionKit::InstallDlpSandbox("", READ_ONLY, DEFAULT_USERID, sandboxInfo, TEST_URI));
+        DlpPermissionKit::InstallDlpSandbox("", DLPFileAccess::READ_ONLY, DEFAULT_USERID, sandboxInfo, TEST_URI));
     ASSERT_EQ(
         DLP_SERVICE_ERROR_VALUE_INVALID, DlpPermissionKit::InstallDlpSandbox(DLP_MANAGER_APP,
                                              static_cast<DLPFileAccess>(100), DEFAULT_USERID, sandboxInfo, TEST_URI));
@@ -569,8 +569,8 @@ HWTEST_F(DlpPermissionKitTest, InstallDlpSandbox002, TestSize.Level0)
 HWTEST_F(DlpPermissionKitTest, UninstallDlpSandbox001, TestSize.Level0)
 {
     SandboxInfo sandboxInfo;
-    ASSERT_EQ(DLP_OK,
-        DlpPermissionKit::InstallDlpSandbox(DLP_MANAGER_APP, READ_ONLY, DEFAULT_USERID, sandboxInfo, TEST_URI));
+    ASSERT_EQ(DLP_OK, DlpPermissionKit::InstallDlpSandbox(DLP_MANAGER_APP,
+        DLPFileAccess::READ_ONLY, DEFAULT_USERID, sandboxInfo, TEST_URI));
     ASSERT_TRUE(sandboxInfo.appIndex != 0);
     ASSERT_EQ(DLP_OK, DlpPermissionKit::UninstallDlpSandbox(DLP_MANAGER_APP, sandboxInfo.appIndex, DEFAULT_USERID));
 }
@@ -605,8 +605,8 @@ HWTEST_F(DlpPermissionKitTest, GetSandboxExternalAuthorization001, TestSize.Leve
 
     // sandboxUid is ok
     SandboxInfo sandboxInfo;
-    ASSERT_EQ(DLP_OK,
-        DlpPermissionKit::InstallDlpSandbox(DLP_MANAGER_APP, READ_ONLY, DEFAULT_USERID, sandboxInfo, TEST_URI));
+    ASSERT_EQ(DLP_OK, DlpPermissionKit::InstallDlpSandbox(DLP_MANAGER_APP,
+        DLPFileAccess::READ_ONLY, DEFAULT_USERID, sandboxInfo, TEST_URI));
     int sandboxUid;
     ASSERT_TRUE(TestGetAppUid(DLP_MANAGER_APP, sandboxInfo.appIndex, DEFAULT_USERID, sandboxUid));
     ASSERT_EQ(DLP_SERVICE_ERROR_API_ONLY_FOR_SANDBOX_ERROR,
@@ -614,13 +614,13 @@ HWTEST_F(DlpPermissionKitTest, GetSandboxExternalAuthorization001, TestSize.Leve
     ASSERT_EQ(DLP_SERVICE_ERROR_API_ONLY_FOR_SANDBOX_ERROR,
         DlpPermissionKit::GetSandboxExternalAuthorization(sandboxUid, want, authType));
     TestMockApp(DLP_MANAGER_APP, sandboxInfo.appIndex, DEFAULT_USERID);
-    ASSERT_TRUE(authType == DENY_START_ABILITY);
+    ASSERT_TRUE(authType == SandBoxExternalAuthorType::DENY_START_ABILITY);
     ASSERT_EQ(DLP_OK, DlpPermissionKit::UninstallDlpSandbox(DLP_MANAGER_APP, sandboxInfo.appIndex, DEFAULT_USERID));
 
     // uid is not sandbox
     ASSERT_EQ(DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL,
         DlpPermissionKit::GetSandboxExternalAuthorization(1000, want, authType));
-    ASSERT_TRUE(authType == DENY_START_ABILITY);
+    ASSERT_TRUE(authType == SandBoxExternalAuthorType::DENY_START_ABILITY);
     TestRecoverProcessInfo(uid, selfTokenId);
 }
 
@@ -634,8 +634,8 @@ HWTEST_F(DlpPermissionKitTest, QueryDlpFileCopyableByTokenId001, TestSize.Level0
 {
     // query dlp file access with read only sandbox app tokenId
     SandboxInfo sandboxInfo;
-    ASSERT_EQ(DLP_OK,
-        DlpPermissionKit::InstallDlpSandbox(DLP_MANAGER_APP, READ_ONLY, DEFAULT_USERID, sandboxInfo, TEST_URI));
+    ASSERT_EQ(DLP_OK, DlpPermissionKit::InstallDlpSandbox(DLP_MANAGER_APP,
+        DLPFileAccess::READ_ONLY, DEFAULT_USERID, sandboxInfo, TEST_URI));
     ASSERT_TRUE(sandboxInfo.appIndex != 0);
     AccessTokenID sandboxTokenId;
     ASSERT_TRUE(TestGetTokenId(DEFAULT_USERID, DLP_MANAGER_APP, sandboxInfo.appIndex, sandboxTokenId));
@@ -655,8 +655,8 @@ HWTEST_F(DlpPermissionKitTest, QueryDlpFileCopyableByTokenId002, TestSize.Level0
 {
     // query dlp file access with full control sandbox app tokenId
     SandboxInfo sandboxInfo;
-    ASSERT_EQ(DLP_OK,
-        DlpPermissionKit::InstallDlpSandbox(DLP_MANAGER_APP, FULL_CONTROL, DEFAULT_USERID, sandboxInfo, TEST_URI));
+    ASSERT_EQ(DLP_OK, DlpPermissionKit::InstallDlpSandbox(DLP_MANAGER_APP,
+        DLPFileAccess::FULL_CONTROL, DEFAULT_USERID, sandboxInfo, TEST_URI));
     ASSERT_TRUE(sandboxInfo.appIndex != 0);
     AccessTokenID sandboxTokenId;
     ASSERT_TRUE(TestGetTokenId(DEFAULT_USERID, DLP_MANAGER_APP, sandboxInfo.appIndex, sandboxTokenId));
@@ -725,7 +725,7 @@ HWTEST_F(DlpPermissionKitTest, QueryDlpFileAccess002, TestSize.Level0)
 {
     // query dlp file access in read only sandbox app
     SandboxInfo sandboxInfo;
-    TestInstallDlpSandbox(DLP_MANAGER_APP, READ_ONLY, DEFAULT_USERID, sandboxInfo);
+    TestInstallDlpSandbox(DLP_MANAGER_APP, DLPFileAccess::READ_ONLY, DEFAULT_USERID, sandboxInfo);
 
     int32_t uid = getuid();
     AccessTokenID tokenId = GetSelfTokenID();
@@ -733,7 +733,7 @@ HWTEST_F(DlpPermissionKitTest, QueryDlpFileAccess002, TestSize.Level0)
 
     DLPPermissionInfo permInfo;
     ASSERT_EQ(DLP_OK, DlpPermissionKit::QueryDlpFileAccess(permInfo));
-    ASSERT_EQ(permInfo.dlpFileAccess, READ_ONLY);
+    ASSERT_EQ(permInfo.dlpFileAccess, DLPFileAccess::READ_ONLY);
     ASSERT_EQ(permInfo.flags, ACTION_VIEW);
 
     TestUninstallDlpSandbox(DLP_MANAGER_APP, sandboxInfo.appIndex, DEFAULT_USERID);
@@ -750,7 +750,7 @@ HWTEST_F(DlpPermissionKitTest, QueryDlpFileAccess003, TestSize.Level0)
 {
     // query dlp file access in content edit sandbox app
     SandboxInfo sandboxInfo;
-    TestInstallDlpSandbox(DLP_MANAGER_APP, CONTENT_EDIT, DEFAULT_USERID, sandboxInfo);
+    TestInstallDlpSandbox(DLP_MANAGER_APP, DLPFileAccess::CONTENT_EDIT, DEFAULT_USERID, sandboxInfo);
 
     int32_t uid = getuid();
     AccessTokenID tokenId = GetSelfTokenID();
@@ -758,7 +758,7 @@ HWTEST_F(DlpPermissionKitTest, QueryDlpFileAccess003, TestSize.Level0)
 
     DLPPermissionInfo permInfo;
     ASSERT_EQ(DLP_OK, DlpPermissionKit::QueryDlpFileAccess(permInfo));
-    ASSERT_EQ(permInfo.dlpFileAccess, CONTENT_EDIT);
+    ASSERT_EQ(permInfo.dlpFileAccess, DLPFileAccess::CONTENT_EDIT);
     ASSERT_EQ(permInfo.flags, ACTION_SET_EDIT);
 
     TestUninstallDlpSandbox(DLP_MANAGER_APP, sandboxInfo.appIndex, DEFAULT_USERID);
@@ -775,7 +775,7 @@ HWTEST_F(DlpPermissionKitTest, QueryDlpFileAccess004, TestSize.Level0)
 {
     // query dlp file access in full control sandbox app
     SandboxInfo sandboxInfo;
-    TestInstallDlpSandbox(DLP_MANAGER_APP, FULL_CONTROL, DEFAULT_USERID, sandboxInfo);
+    TestInstallDlpSandbox(DLP_MANAGER_APP, DLPFileAccess::FULL_CONTROL, DEFAULT_USERID, sandboxInfo);
 
     int32_t uid = getuid();
     AccessTokenID tokenId = GetSelfTokenID();
@@ -783,7 +783,7 @@ HWTEST_F(DlpPermissionKitTest, QueryDlpFileAccess004, TestSize.Level0)
 
     DLPPermissionInfo permInfo;
     ASSERT_EQ(DLP_OK, DlpPermissionKit::QueryDlpFileAccess(permInfo));
-    ASSERT_EQ(permInfo.dlpFileAccess, FULL_CONTROL);
+    ASSERT_EQ(permInfo.dlpFileAccess, DLPFileAccess::FULL_CONTROL);
     ASSERT_EQ(permInfo.flags, ACTION_SET_FC);
 
     TestUninstallDlpSandbox(DLP_MANAGER_APP, sandboxInfo.appIndex, DEFAULT_USERID);
@@ -820,7 +820,7 @@ HWTEST_F(DlpPermissionKitTest, IsInDlpSandbox002, TestSize.Level0)
 {
     // query whether in sandbox in read only sandbox app
     SandboxInfo sandboxInfo;
-    TestInstallDlpSandbox(DLP_MANAGER_APP, READ_ONLY, DEFAULT_USERID, sandboxInfo);
+    TestInstallDlpSandbox(DLP_MANAGER_APP, DLPFileAccess::READ_ONLY, DEFAULT_USERID, sandboxInfo);
 
     int32_t uid = getuid();
     AccessTokenID tokenId = GetSelfTokenID();
@@ -843,7 +843,7 @@ HWTEST_F(DlpPermissionKitTest, IsInDlpSandbox003, TestSize.Level0)
 {
     // query whether in sandbox in full control sandbox app
     SandboxInfo sandboxInfo;
-    TestInstallDlpSandbox(DLP_MANAGER_APP, FULL_CONTROL, DEFAULT_USERID, sandboxInfo);
+    TestInstallDlpSandbox(DLP_MANAGER_APP, DLPFileAccess::FULL_CONTROL, DEFAULT_USERID, sandboxInfo);
 
     int32_t uid = getuid();
     AccessTokenID tokenId = GetSelfTokenID();
@@ -888,7 +888,7 @@ HWTEST_F(DlpPermissionKitTest, GetDlpSupportFileType002, TestSize.Level0)
 {
     // query support dlp file types in read only sandbox app
     SandboxInfo sandboxInfo;
-    TestInstallDlpSandbox(DLP_MANAGER_APP, READ_ONLY, DEFAULT_USERID, sandboxInfo);
+    TestInstallDlpSandbox(DLP_MANAGER_APP, DLPFileAccess::READ_ONLY, DEFAULT_USERID, sandboxInfo);
 
     int32_t uid = getuid();
     AccessTokenID tokenId = GetSelfTokenID();
@@ -911,7 +911,7 @@ HWTEST_F(DlpPermissionKitTest, GetDlpSupportFileType003, TestSize.Level0)
 {
     // query support dlp file types in context edit sandbox app
     SandboxInfo sandboxInfo;
-    TestInstallDlpSandbox(DLP_MANAGER_APP, CONTENT_EDIT, DEFAULT_USERID, sandboxInfo);
+    TestInstallDlpSandbox(DLP_MANAGER_APP, DLPFileAccess::CONTENT_EDIT, DEFAULT_USERID, sandboxInfo);
 
     int32_t uid = getuid();
     AccessTokenID tokenId = GetSelfTokenID();
@@ -935,7 +935,7 @@ HWTEST_F(DlpPermissionKitTest, GetDlpSupportFileType004, TestSize.Level0)
     DLP_LOG_INFO(LABEL, "enter GetDlpSupportFileType004");
     // query support dlp file types in full control sandbox app
     SandboxInfo sandboxInfo;
-    TestInstallDlpSandbox(DLP_MANAGER_APP, FULL_CONTROL, DEFAULT_USERID, sandboxInfo);
+    TestInstallDlpSandbox(DLP_MANAGER_APP, DLPFileAccess::FULL_CONTROL, DEFAULT_USERID, sandboxInfo);
 
     int32_t uid = getuid();
     AccessTokenID tokenId = GetSelfTokenID();
@@ -1010,8 +1010,8 @@ HWTEST_F(DlpPermissionKitTest, RegisterDlpSandboxChangeCallback001, TestSize.Lev
     ASSERT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, res);
     bool result;
     SandboxInfo sandboxInfo;
-    ASSERT_EQ(DLP_OK,
-        DlpPermissionKit::InstallDlpSandbox(DLP_MANAGER_APP, FULL_CONTROL, DEFAULT_USERID, sandboxInfo, TEST_URI));
+    ASSERT_EQ(DLP_OK, DlpPermissionKit::InstallDlpSandbox(DLP_MANAGER_APP,
+        DLPFileAccess::FULL_CONTROL, DEFAULT_USERID, sandboxInfo, TEST_URI));
     ASSERT_EQ(DLP_OK, DlpPermissionKit::UninstallDlpSandbox(DLP_MANAGER_APP, sandboxInfo.appIndex, DEFAULT_USERID));
     res = DlpPermissionKit::UnregisterDlpSandboxChangeCallback(result);
     ASSERT_EQ(DLP_OK, res);
@@ -1096,8 +1096,8 @@ HWTEST_F(DlpPermissionKitTest, RegisterOpenDlpFileCallback001, TestSize.Level0)
     ASSERT_NE(callbackPtr, nullptr);
     EXPECT_EQ(DLP_OK, DlpPermissionKit::RegisterOpenDlpFileCallback(callbackPtr));
     SandboxInfo sandboxInfo;
-    EXPECT_EQ(DLP_OK,
-        DlpPermissionKit::InstallDlpSandbox(DLP_MANAGER_APP, FULL_CONTROL, DEFAULT_USERID, sandboxInfo, TEST_URI));
+    EXPECT_EQ(DLP_OK, DlpPermissionKit::InstallDlpSandbox(DLP_MANAGER_APP,
+        DLPFileAccess::FULL_CONTROL, DEFAULT_USERID, sandboxInfo, TEST_URI));
     usleep(50000); // sleep 50ms
     EXPECT_EQ(true, callbackPtr->called);
     EXPECT_EQ(DLP_OK, DlpPermissionKit::UninstallDlpSandbox(DLP_MANAGER_APP, sandboxInfo.appIndex, DEFAULT_USERID));
@@ -1248,7 +1248,7 @@ HWTEST_F(DlpPermissionKitTest, ParseDlpCertificate002, TestSize.Level0)
     std::vector<AuthUserInfo> authUsers_;
     AuthUserInfo info;
     info.authAccount = "test";
-    info.authPerm = FULL_CONTROL;
+    info.authPerm = DLPFileAccess::FULL_CONTROL;
     info.permExpiryTime = 1784986283;
     info.authAccountType = CLOUD_ACCOUNT;
     authUsers_.push_back(info);
@@ -1274,8 +1274,8 @@ HWTEST_F(DlpPermissionKitTest, GetDLPFileVisitRecord001, TestSize.Level0)
     AccessTokenID selfTokenId = GetSelfTokenID();
     std::vector<VisitedDLPFileInfo> infoVec;
     SandboxInfo sandboxInfo;
-    ASSERT_EQ(DLP_OK,
-        DlpPermissionKit::InstallDlpSandbox(DLP_MANAGER_APP, FULL_CONTROL, DEFAULT_USERID, sandboxInfo, TEST_URI));
+    ASSERT_EQ(DLP_OK, DlpPermissionKit::InstallDlpSandbox(DLP_MANAGER_APP,
+        DLPFileAccess::FULL_CONTROL, DEFAULT_USERID, sandboxInfo, TEST_URI));
     ASSERT_TRUE(sandboxInfo.appIndex != 0);
     TestMockApp(DLP_MANAGER_APP, 0, DEFAULT_USERID);
     ASSERT_TRUE(TestSetSelfTokenId(g_dlpManagerTokenId));

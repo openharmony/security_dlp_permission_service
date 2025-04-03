@@ -11,14 +11,28 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import("//build/config/components/idl_tool/idl.gni")
 import("//build/ohos.gni")
 import("../../../dlp_permission_service.gni")
+
+idl_gen_interface("dlp_permission_interface") {
+  src_idl = rebase_path("IDlpPermissionService.idl")
+  log_domainid = "0xD005A04"
+  log_tag = "DlpPermissionService"
+}
 
 config("dlp_permission_config") {
   visibility = [ ":*" ]
   include_dirs = [
     "include",
     "${dlp_root_dir}/frameworks/common/include",
+  ]
+}
+
+config("dlp_permission_sdk_config") {
+  include_dirs = [
+    "${dlp_root_dir}/frameworks/dlp_permission/include",
+    "${target_gen_dir}",
   ]
 }
 
@@ -51,7 +65,10 @@ ohos_shared_library("libdlp_permission_common_interface") {
 
   sources = [ "src/dlp_permission_public_interface.cpp" ]
 
-  configs = [ "${dlp_root_dir}/config:coverage_flags" ]
+  configs = [
+    ":dlp_permission_sdk_config",
+    "${dlp_root_dir}/config:coverage_flags",
+  ]
 
   external_deps = [ "json:nlohmann_json_static" ]
 }
@@ -69,7 +86,10 @@ ohos_shared_library("libdlp_permission_sdk") {
   part_name = "dlp_permission_service"
   output_name = "libdlp_permission_sdk"
 
-  public_configs = [ ":dlp_permission_config" ]
+  public_configs = [
+    ":dlp_permission_config",
+    ":dlp_permission_sdk_config",
+  ]
 
   include_dirs = [
     "include",
@@ -93,7 +113,6 @@ ohos_shared_library("libdlp_permission_sdk") {
     "src/dlp_permission_death_recipient.cpp",
     "src/dlp_permission_kit.cpp",
     "src/dlp_permission_load_callback.cpp",
-    "src/dlp_permission_proxy.cpp",
     "src/dlp_sandbox_change_callback.cpp",
     "src/dlp_sandbox_change_callback_customize.cpp",
     "src/dlp_sandbox_change_callback_stub.cpp",
@@ -103,6 +122,11 @@ ohos_shared_library("libdlp_permission_sdk") {
   ]
 
   configs = [ "${dlp_root_dir}/config:coverage_flags" ]
+
+  deps = [
+    ":dlp_permission_interface",
+    "${dlp_permission_public_config_path}/:dlp_permission_stub",
+  ]
 
   external_deps = [
     "ability_base:want",
@@ -117,4 +141,31 @@ ohos_shared_library("libdlp_permission_sdk") {
   ]
 
   cflags_cc = [ "-DHILOG_ENABLE" ]
+}
+
+ohos_source_set("dlp_permission_stub") {
+  branch_protector_ret = "pac_ret"
+
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
+  public_configs = [
+    ":dlp_permission_config",
+    ":dlp_permission_sdk_config",
+  ]
+  output_values = get_target_outputs(":dlp_permission_interface")
+  sources = filter_include(output_values, [ "*_stub.cpp" ])
+  sources += filter_include(output_values, [ "*_proxy.cpp" ])
+  deps = [ ":dlp_permission_interface" ]
+  external_deps = [
+    "ability_base:want",
+    "c_utils:utils",
+    "hilog:libhilog",
+    "ipc:ipc_single",
+    "samgr:samgr_proxy",
+  ]
+  subsystem_name = "security"
+  part_name = "dlp_permission_service"
 }

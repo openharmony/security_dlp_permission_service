@@ -23,7 +23,7 @@
 #include "dlp_sandbox_change_callback_manager.h"
 #include "open_dlp_file_callback_manager.h"
 #include "iservice_registry.h"
-#include "i_dlp_permission_service.h"
+#include "idlp_permission_service.h"
 
 namespace OHOS {
 namespace Security {
@@ -33,6 +33,7 @@ namespace {
 constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "AppStateObserver"};
 const std::string PERMISSION_ACCESS_DLP_FILE = "ohos.permission.ACCESS_DLP_FILE";
 const std::string DLP_MANAGER_BUNDLE_NAME = "com.ohos.dlpmanager";
+constexpr int32_t SA_ID_DLP_PERMISSION_SERVICE = 3521;
 }
 AppStateObserver::AppStateObserver()
 {}
@@ -392,11 +393,11 @@ void AppStateObserver::AddCallbackListener(int32_t pid)
 static bool IsCopyable(DLPFileAccess dlpFileAccess)
 {
     switch (dlpFileAccess) {
-        case READ_ONLY:
+        case DLPFileAccess::READ_ONLY:
             return false;
-        case CONTENT_EDIT:
+        case DLPFileAccess::CONTENT_EDIT:
             return true;
-        case FULL_CONTROL:
+        case DLPFileAccess::FULL_CONTROL:
             return true;
         default:
             return false;
@@ -412,7 +413,7 @@ int32_t AppStateObserver::QueryDlpFileCopyableByTokenId(bool& copyable, uint32_t
         copyable = false;
         return DLP_SERVICE_ERROR_APPOBSERVER_ERROR;
     }
-    DLPFileAccess dlpFileAccess = NO_PERMISSION;
+    DLPFileAccess dlpFileAccess = DLPFileAccess::NO_PERMISSION;
     int32_t res = QueryDlpFileAccessByUid(dlpFileAccess, uid);
     if (res != DLP_OK) {
         copyable = false;
@@ -425,9 +426,9 @@ int32_t AppStateObserver::QueryDlpFileCopyableByTokenId(bool& copyable, uint32_t
 int32_t AppStateObserver::QueryDlpFileAccessByUid(DLPFileAccess& dlpFileAccess, int32_t uid)
 {
     DlpSandboxInfo appInfo;
-    if (!GetSandboxInfo(uid, appInfo) || appInfo.dlpFileAccess == NO_PERMISSION) {
+    if (!GetSandboxInfo(uid, appInfo) || appInfo.dlpFileAccess == DLPFileAccess::NO_PERMISSION) {
         DLP_LOG_ERROR(LABEL, "current uid %{public}d is not a sandbox app", uid);
-        dlpFileAccess = NO_PERMISSION;
+        dlpFileAccess = DLPFileAccess::NO_PERMISSION;
         return DLP_SERVICE_ERROR_APPOBSERVER_ERROR;
     }
     dlpFileAccess = appInfo.dlpFileAccess;
@@ -455,7 +456,7 @@ void AppStateObserver::DumpSandbox(int fd)
         DlpSandboxInfo& appInfo = iter->second;
         dprintf(fd, "    userId:%d;bundleName:%s;sandboxIndex:%d;dlpFileAccess:%s\n",
             appInfo.userId, appInfo.bundleName.c_str(), appInfo.appIndex,
-            appInfo.dlpFileAccess == READ_ONLY ? "ReadOnly" : "FullControl");
+            appInfo.dlpFileAccess == DLPFileAccess::READ_ONLY ? "ReadOnly" : "FullControl");
     }
 }
 }  // namespace DlpPermission

@@ -51,12 +51,12 @@ bool DlpPolicyParcel::Marshalling(Parcel& out) const
     if (!(out.WriteBool(this->policyParams_.supportEveryone_))) {
         DLP_LOG_ERROR(LABEL, "Write supportEveryone_ fail");
     }
-    if (!(out.WriteUint8(this->policyParams_.everyonePerm_))) {
+    if (!(out.WriteUint32(static_cast<uint32_t>(this->policyParams_.everyonePerm_)))) {
         DLP_LOG_ERROR(LABEL, "Write everyonePerm_ fail");
     }
 
     MarshallingAccountInfo(out);
-    if (!(out.WriteUint8(this->policyParams_.perm_))) {
+    if (!(out.WriteUint32(static_cast<uint32_t>(this->policyParams_.perm_)))) {
         DLP_LOG_ERROR(LABEL, "Write perm fail");
     }
 

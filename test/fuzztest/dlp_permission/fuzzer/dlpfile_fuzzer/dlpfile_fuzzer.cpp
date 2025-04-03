@@ -95,7 +95,7 @@ static DlpAccountType GenerateDlpAccountType(const uint8_t* data)
 
 static DLPFileAccess GenerateDLPFileAccess(const uint8_t* data)
 {
-    int8_t fileAccess = (data[0]/TWO + data[1]/TWO) % (sizeof(DLPFileAccess) / sizeof(NO_PERMISSION));
+    int8_t fileAccess = (data[0]/TWO + data[1]/TWO) % (sizeof(DLPFileAccess) / sizeof(DLPFileAccess::NO_PERMISSION));
     if (fileAccess == 0) {
         return DLPFileAccess::NO_PERMISSION;
     } else if (fileAccess == 1) {
@@ -130,7 +130,7 @@ static void GenerateRandProperty(struct DlpProperty& encProp, const uint8_t* dat
     encProp.ownerAccountType = DlpAccountType::CLOUD_ACCOUNT;
     if (size % FIVE == 0) {
         encProp.supportEveryone = true;
-        encProp.everyonePerm = CONTENT_EDIT;
+        encProp.everyonePerm = DLPFileAccess::CONTENT_EDIT;
     }
     for (uint32_t user = 0; user < TEST_USER_COUNT; ++user) {
         std::string accountName = account + std::to_string(user);
@@ -165,7 +165,7 @@ static void GenerateRandPropertyRand(struct DlpProperty& encProp, const uint8_t*
     encProp.ownerAccountType = GenerateDlpAccountType(data);
     if (size % FIVE == 0) {
         encProp.supportEveryone = true;
-        encProp.everyonePerm = CONTENT_EDIT;
+        encProp.everyonePerm = DLPFileAccess::CONTENT_EDIT;
     }
     for (uint32_t user = 0; user < TEST_USER_COUNT; ++user) {
         std::string accountName = account + std::to_string(user);

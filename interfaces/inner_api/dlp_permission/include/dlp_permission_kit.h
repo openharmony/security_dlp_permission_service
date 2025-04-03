@@ -67,7 +67,7 @@ class DlpPermissionKit {
 public:
     static int32_t GenerateDlpCertificate(const PermissionPolicy& policy, std::vector<uint8_t>& cert);
     static int32_t ParseDlpCertificate(sptr<CertParcel>& certParcel, PermissionPolicy& policy,
-        const std::string& appId, const bool& offlineAccess);
+        const std::string& appId, bool offlineAccess);
     static int32_t InstallDlpSandbox(const std::string& bundleName, DLPFileAccess access, int32_t userId,
         SandboxInfo& sandboxInfo, const std::string& uri);
     static int32_t UninstallDlpSandbox(const std::string& bundleName, int32_t appIndex, int32_t userId);

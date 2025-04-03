@@ -18,7 +18,7 @@
 
 #include <iremote_stub.h>
 #include <nocopyable.h>
-#include "i_dlp_permission_callback.h"
+#include "idlp_permission_callback.h"
 #include "dlp_permission_callback.h"
 
 namespace OHOS {

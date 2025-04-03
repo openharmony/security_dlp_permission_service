@@ -1,0 +1,70 @@
+/*
+ * Copyright (c) 2025 Huawei Device Co., Ltd.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import DlpPermissionTypes;
+
+sequenceable OHOS.IRemoteObject;
+sequenceable OHOS.AAFwk.Want;
+sequenceable dlp_policy_parcel..OHOS.Security.DlpPermission.DlpPolicyParcel;
+sequenceable cert_parcel..OHOS.Security.DlpPermission.CertParcel;
+sequenceable dlp_permission_info_parcel..OHOS.Security.DlpPermission.DLPPermissionInfoParcel;
+sequenceable retention_sandbox_info..OHOS.Security.DlpPermission.RetentionSandBoxInfo;
+sequenceable visited_dlp_file_info..OHOS.Security.DlpPermission.VisitedDLPFileInfo;
+sequenceable permission_policy..OHOS.Security.DlpPermission.SandboxInfo;
+interface OHOS.Security.DlpPermission.IDlpPermissionCallback;
+
+interface OHOS.Security.DlpPermission.IDlpPermissionService {
+    void GenerateDlpCertificate(
+        [in] sptr<DlpPolicyParcel> policyParcel,
+        [in] IDlpPermissionCallback dlpPermissionCallback);
+    void ParseDlpCertificate(
+        [in] sptr<CertParcel> certParcel,
+        [in] IDlpPermissionCallback dlpPermissionCallback,
+        [in] String appId,
+        [in] boolean offlineAccess);
+    void InstallDlpSandbox(
+        [in] String bundleName,
+        [in] DLPFileAccess dlpFileAccess,
+        [in] int userId,
+        [out] SandboxInfo sandboxInfo,
+        [in] String uri);
+    void UninstallDlpSandbox([in] String bundleName, [in] int appIndex, [in] int userId);
+    void GetSandboxExternalAuthorization(
+        [in] int sandboxUid,
+        [in] Want want,
+        [out] enum SandBoxExternalAuthorType authType);
+    void QueryDlpFileCopyableByTokenId([out] boolean copyable, [in] unsigned int tokenId);
+    void QueryDlpFileAccess([out] DLPPermissionInfoParcel permInfoParcel);
+    void IsInDlpSandbox([out] boolean inSandbox);
+    void GetDlpSupportFileType([out] String[] supportFileType);
+    void RegisterDlpSandboxChangeCallback([in] IRemoteObject cb);
+    void UnRegisterDlpSandboxChangeCallback([out] boolean res);
+    void RegisterOpenDlpFileCallback([in] IRemoteObject cb);
+    void UnRegisterOpenDlpFileCallback([in] IRemoteObject cb);
+    void GetDlpGatheringPolicy([out] boolean isGathering);
+    void SetRetentionState([in] String[] docUriVec);
+    void CancelRetentionState([in] String[] docUriVec);
+    void GetRetentionSandboxList([in] String bundleName, [out] RetentionSandBoxInfo[] retentionSandBoxInfoVec);
+    void ClearUnreservedSandbox();
+    void GetDLPFileVisitRecord([out] VisitedDLPFileInfo[] infoVec);
+    void SetSandboxAppConfig([in] String configInfo);
+    void CleanSandboxAppConfig();
+    void GetSandboxAppConfig([out] String configInfo);
+    void IsDLPFeatureProvided([out] boolean isProvideDLPFeature);
+    void SetReadFlag([in] unsigned int uid);
+    void SetMDMPolicy([in] String[] appIdList);
+    void GetMDMPolicy([out] String[] appIdList);
+    void RemoveMDMPolicy();
+}

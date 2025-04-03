@@ -14,11 +14,14 @@
  */
 
 #include "isdlpfeatureprovidedstub_fuzzer.h"
+#include "dlp_permission_service_ipc_interface_code.h"
 
 constexpr uint8_t STATUS_NUM = 2;
 
 using namespace OHOS::Security::DlpPermission;
 namespace OHOS {
+static constexpr int32_t SA_ID_DLP_PERMISSION_SERVICE = 3521;
+
 bool IsDlpFeatureProvidedStubFuzzTest(const uint8_t* data, size_t size)
 {
     MessageParcel datas;

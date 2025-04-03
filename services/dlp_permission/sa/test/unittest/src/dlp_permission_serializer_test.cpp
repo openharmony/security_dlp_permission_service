@@ -53,13 +53,13 @@ HWTEST_F(DlpPermissionSerializerTest, SerializeDlpPermission001, TestSize.Level1
 
     std::vector<AuthUserInfo> authUsers;
     AuthUserInfo info;
-    info.authPerm = CONTENT_EDIT;
+    info.authPerm = DLPFileAccess::CONTENT_EDIT;
     authUsers.push_back(info);
     AuthUserInfo info1;
-    info1.authPerm = FULL_CONTROL;
+    info1.authPerm = DLPFileAccess::FULL_CONTROL;
     authUsers.push_back(info1);
     AuthUserInfo info2;
-    info2.authPerm = NO_PERMISSION;
+    info2.authPerm = DLPFileAccess::NO_PERMISSION;
     authUsers.push_back(info2);
 
     PermissionPolicy policy;
@@ -106,21 +106,21 @@ HWTEST_F(DlpPermissionSerializerTest, SerializeDlpPermission003, TestSize.Level1
 
     PermissionPolicy policy1;
     policy1.supportEveryone_ = true;
-    policy1.everyonePerm_ = CONTENT_EDIT;
+    policy1.everyonePerm_ = DLPFileAccess::CONTENT_EDIT;
     policy1.SetAeskey(reinterpret_cast<uint8_t*>(aesKey), AESKEY_LEN);
     policy1.SetIv(reinterpret_cast<uint8_t*>(ivKey), IVKEY_LEN);
     policy1.SetHmacKey(reinterpret_cast<uint8_t*>(hmacKey), HMACKEY_LEN);
 
     PermissionPolicy policy2;
     policy2.supportEveryone_ = true;
-    policy2.everyonePerm_ = FULL_CONTROL;
+    policy2.everyonePerm_ = DLPFileAccess::FULL_CONTROL;
     policy2.SetAeskey(reinterpret_cast<uint8_t*>(aesKey), AESKEY_LEN);
     policy2.SetIv(reinterpret_cast<uint8_t*>(ivKey), IVKEY_LEN);
     policy2.SetHmacKey(reinterpret_cast<uint8_t*>(hmacKey), HMACKEY_LEN);
 
     PermissionPolicy policy3;
     policy3.supportEveryone_ = true;
-    policy3.everyonePerm_ = NO_PERMISSION;
+    policy3.everyonePerm_ = DLPFileAccess::NO_PERMISSION;
     policy3.SetAeskey(reinterpret_cast<uint8_t*>(aesKey), AESKEY_LEN);
     policy3.SetIv(reinterpret_cast<uint8_t*>(ivKey), IVKEY_LEN);
     policy3.SetHmacKey(reinterpret_cast<uint8_t*>(hmacKey), HMACKEY_LEN);

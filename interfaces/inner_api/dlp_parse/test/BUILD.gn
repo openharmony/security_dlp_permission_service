@@ -42,6 +42,9 @@ ohos_unittest("dlp_parse_test") {
   sources = [
     "${dlp_root_dir}/frameworks/common/src/cert_parcel.cpp",
     "${dlp_root_dir}/frameworks/common/src/permission_policy.cpp",
+    "${dlp_root_dir}/frameworks/common/src/retention_sandbox_info.cpp",
+    "${dlp_root_dir}/frameworks/common/src/visited_dlp_file_info.cpp",
+    "${dlp_root_dir}/frameworks/dlp_permission/src/dlp_permission_info_parcel.cpp",
     "${dlp_root_dir}/frameworks/test/mock/c_mock_common.cpp",
     "${dlp_root_dir}/frameworks/test/mock/dlp_permission_kit.cpp",
     "${dlp_root_dir}/frameworks/test/mock/dlp_utils_mock.cpp",
@@ -94,7 +97,10 @@ ohos_unittest("dlp_parse_test") {
     "zlib:shared_libz",
   ]
 
-  configs = [ "${dlp_root_dir}/config:coverage_flags" ]
+  configs = [
+    "${dlp_permission_public_config_path}/:dlp_permission_sdk_config",
+    "${dlp_root_dir}/config:coverage_flags",
+  ]
 
   cflags_cc = [ "-DHILOG_ENABLE" ]
 

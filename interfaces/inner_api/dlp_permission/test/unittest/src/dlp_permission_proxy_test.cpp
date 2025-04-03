@@ -19,6 +19,7 @@
 #include <securec.h>
 #include "dlp_permission.h"
 #include "dlp_permission_log.h"
+#include "dlp_permission_service_proxy.h"
 #include "iremote_stub.h"
 
 using namespace testing::ext;
@@ -60,7 +61,7 @@ HWTEST_F(DlpPermissionProxyTest, SetReadFlag001, TestSize.Level0)
     sptr<DlpTestRemoteObj> callback = new (std::nothrow)IRemoteStub<DlpTestRemoteObj>();
     EXPECT_TRUE(callback != nullptr);
 
-    auto proxy = std::make_shared<DlpPermissionProxy>(callback->AsObject());
+    auto proxy = std::make_shared<DlpPermissionServiceProxy>(callback->AsObject());
     uint32_t uid = 0;
     int32_t ret = proxy->SetReadFlag(uid);
     ASSERT_NE(DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL, ret);
