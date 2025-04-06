@@ -23,6 +23,7 @@
 #include "system_ability_definition.h"
 #include "iservice_registry.h"
 #include "ipc_skeleton.h"
+#include "dlp_permission_service_test.h"
 
 namespace OHOS {
 namespace Security {
