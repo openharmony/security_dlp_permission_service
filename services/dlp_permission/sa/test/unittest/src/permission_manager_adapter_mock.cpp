@@ -20,7 +20,6 @@
 #include "dlp_permission_log.h"
 #include "bundle_manager_adapter.h"
 #include "bundle_mgr_client.h"
-#include "os_account_manager.h"
 #include "system_ability_definition.h"
 #include "iservice_registry.h"
 #include "ipc_skeleton.h"
@@ -31,6 +30,8 @@ namespace DlpPermission {
 using namespace Security::AccessToken;
 using namespace OHOS::AppExecFwk;
 
+bool DlpPermissionServiceTest::isSandbox = true;
+
 bool PermissionManagerAdapter::CheckPermission(const std::string& permission)
 {
     return true;
@@ -38,7 +39,7 @@ bool PermissionManagerAdapter::CheckPermission(const std::string& permission)
 
 int32_t PermissionManagerAdapter::CheckSandboxFlagWithService(AccessToken::AccessTokenID tokenId, bool& sandboxFlag)
 {
-    sandboxFlag = true;
+    sandboxFlag = DlpPermissionServiceTest::isSandbox;
     return DLP_OK;
 }
 }  // namespace DlpPermission

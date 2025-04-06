@@ -42,6 +42,8 @@ public:
     void TearDown();
 
     std::shared_ptr<DlpPermissionService> dlpPermissionService_ = nullptr;
+
+    static bool isSandbox;
 };
 }  // namespace DlpPermission
 }  // namespace Security

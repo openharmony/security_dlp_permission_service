@@ -349,7 +349,9 @@ HWTEST_F(DlpPermissionServiceTest, OpenDlpFileCallbackDeathRecipient001, TestSiz
     EXPECT_EQ(static_cast<uint32_t>(1), OpenDlpFileCallbackManager::GetInstance().openDlpFileCallbackMap_.size());
     recipient->OnRemoteDied(remote); // remote is not nullptr
     EXPECT_EQ(static_cast<uint32_t>(0), OpenDlpFileCallbackManager::GetInstance().openDlpFileCallbackMap_.size());
+    DlpPermissionServiceTest::isSandbox = false;
     res = dlpPermissionService_->UnRegisterOpenDlpFileCallback(callback);
+    DlpPermissionServiceTest::isSandbox = true;
     EXPECT_EQ(DLP_CALLBACK_PARAM_INVALID, res);
     recipient->OnRemoteDied(remote);
 }

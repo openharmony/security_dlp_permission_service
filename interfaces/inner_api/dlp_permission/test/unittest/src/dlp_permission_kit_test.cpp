@@ -1322,16 +1322,27 @@ HWTEST_F(DlpPermissionKitTest, SetSandboxAppConfig001, TestSize.Level0)
  */
 HWTEST_F(DlpPermissionKitTest, SetMDMPolicy001, TestSize.Level0)
 {
-    ASSERT_EQ(IsFeatureProvidedWithDlp(), true);
     seteuid(1000);
     std::vector<std::string> appIdList;
-    ASSERT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, DlpPermissionKit::SetMDMPolicy(appIdList));
+    if (IsFeatureProvidedWithDlp()) {
+        ASSERT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, DlpPermissionKit::SetMDMPolicy(appIdList));
+    } else {
+        ASSERT_EQ(DLP_OK, DlpPermissionKit::SetMDMPolicy(appIdList));
+    }
     appIdList.push_back("@ohos.test.bundleName1_QG9ob3MudGVzdC5idW5kbGVOYW1lMQ==");
-    ASSERT_EQ(DLP_SERVICE_ERROR_PERMISSION_DENY, DlpPermissionKit::SetMDMPolicy(appIdList));
+    if (IsFeatureProvidedWithDlp()) {
+        ASSERT_EQ(DLP_SERVICE_ERROR_PERMISSION_DENY, DlpPermissionKit::SetMDMPolicy(appIdList));
+    } else {
+        ASSERT_EQ(DLP_OK, DlpPermissionKit::SetMDMPolicy(appIdList));
+    }
     seteuid(3057);
     ASSERT_EQ(DLP_OK, DlpPermissionKit::SetMDMPolicy(appIdList));
     appIdList.push_back("");
-    ASSERT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, DlpPermissionKit::SetMDMPolicy(appIdList));
+    if (IsFeatureProvidedWithDlp()) {
+        ASSERT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, DlpPermissionKit::SetMDMPolicy(appIdList));
+    } else {
+        ASSERT_EQ(DLP_OK, DlpPermissionKit::SetMDMPolicy(appIdList));
+    }
     appIdList.pop_back();
     appIdList.push_back("@ohos.test.bundleName2_QG9ob3MudGVzdC5idW5kbGVOYW1lMg==");
     appIdList.push_back("@ohos.test.bundleName3_QG9ob3MudGVzdC5idW5kbGVOYW1lMw==");
@@ -1339,12 +1350,20 @@ HWTEST_F(DlpPermissionKitTest, SetMDMPolicy001, TestSize.Level0)
         "@ohos.test.bundleNameWhichIsLongerThanThe200digitsLengthLimit\
         123456789123456789123456789_QG9ob3MudGVzdC5idW5kbGVOYW1lV2hpY2hJc0xvbmdlclRoYW5UaGUyMDBkaWdpdHNMZW5nd\
         GhMaW1pdDEyMzQ1Njc4OTEyMzQ1Njc4OTEyMzQ1Njc4OQ==");
-    ASSERT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, DlpPermissionKit::SetMDMPolicy(appIdList));
+    if (IsFeatureProvidedWithDlp()) {
+        ASSERT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, DlpPermissionKit::SetMDMPolicy(appIdList));
+    } else {
+        ASSERT_EQ(DLP_OK, DlpPermissionKit::SetMDMPolicy(appIdList));
+    }
     appIdList.pop_back();
     for (int i = 0; i < 250; i++) {
         appIdList.push_back("@ohos.test.bundleName1_QG9ob3MudGVzdC5idW5kbGVOYW1lMQ==");
     }
-    ASSERT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, DlpPermissionKit::SetMDMPolicy(appIdList));
+    if (IsFeatureProvidedWithDlp()) {
+        ASSERT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, DlpPermissionKit::SetMDMPolicy(appIdList));
+    } else {
+        ASSERT_EQ(DLP_OK, DlpPermissionKit::SetMDMPolicy(appIdList));
+    }
     appIdList.clear();
 }
 
@@ -1361,7 +1380,11 @@ HWTEST_F(DlpPermissionKitTest, GetMDMPolicy001, TestSize.Level0)
     }
     seteuid(1000);
     std::vector<std::string> appIdList;
-    ASSERT_EQ(DLP_SERVICE_ERROR_PERMISSION_DENY, DlpPermissionKit::GetMDMPolicy(appIdList));
+    if (IsFeatureProvidedWithDlp()) {
+        ASSERT_EQ(DLP_SERVICE_ERROR_PERMISSION_DENY, DlpPermissionKit::GetMDMPolicy(appIdList));
+    } else {
+        ASSERT_EQ(DLP_OK, DlpPermissionKit::GetMDMPolicy(appIdList));
+    }
     seteuid(3057);
     ASSERT_EQ(DLP_OK, DlpPermissionKit::GetMDMPolicy(appIdList));
     appIdList.clear();
@@ -1379,7 +1402,11 @@ HWTEST_F(DlpPermissionKitTest, RemoveMDMPolicy001, TestSize.Level0)
         return;
     }
     seteuid(1000);
-    ASSERT_EQ(DLP_SERVICE_ERROR_PERMISSION_DENY, DlpPermissionKit::RemoveMDMPolicy());
+    if (IsFeatureProvidedWithDlp()) {
+        ASSERT_EQ(DLP_SERVICE_ERROR_PERMISSION_DENY, DlpPermissionKit::RemoveMDMPolicy());
+    } else {
+        ASSERT_EQ(DLP_OK, DlpPermissionKit::RemoveMDMPolicy());
+    }
     seteuid(3057);
     ASSERT_EQ(DLP_OK, DlpPermissionKit::RemoveMDMPolicy());
 }
