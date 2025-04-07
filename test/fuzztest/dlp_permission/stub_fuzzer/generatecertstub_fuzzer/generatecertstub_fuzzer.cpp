@@ -24,7 +24,7 @@
 #include "dlp_permission_async_stub.h"
 #include "dlp_permission_kit.h"
 #include "dlp_permission_log.h"
-#include "dlp_permission_service_ipc_interface_code.h"
+#include "idlp_permission_service.h"
 #include "securec.h"
 #include "token_setproc.h"
 
@@ -105,7 +105,7 @@ static void FuzzTest(const uint8_t* data, size_t size)
     if (!datas.WriteRemoteObject(asyncStub->AsObject())) {
         return;
     }
-    uint32_t code = static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::GENERATE_DLP_CERTIFICATE);
+    uint32_t code = static_cast<uint32_t>(IDlpPermissionServiceIpcCode::COMMAND_GENERATE_DLP_CERTIFICATE);
     MessageParcel reply;
     MessageOption option;
     auto service = std::make_shared<DlpPermissionService>(SA_ID_DLP_PERMISSION_SERVICE, true);
