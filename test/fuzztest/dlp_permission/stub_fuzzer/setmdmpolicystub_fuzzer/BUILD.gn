@@ -28,6 +28,7 @@ ohos_fuzztest("SetMDMPolicyStubFuzzTest") {
   ]
 
   deps = [
+    "${dlp_permission_public_config_path}/:dlp_permission_stub",
     "${dlp_root_dir}/interfaces/inner_api/dlp_permission:libdlp_permission_sdk",
     "${dlp_root_dir}/services/dlp_permission/sa:dlp_permission_service",
   ]

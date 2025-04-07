@@ -21,7 +21,7 @@
 #include "accesstoken_kit.h"
 #include "dlp_permission.h"
 #include "dlp_permission_log.h"
-#include "dlp_permission_service_ipc_interface_code.h"
+#include "idlp_permission_service.h"
 #include "securec.h"
 #include "token_setproc.h"
 
@@ -41,7 +41,7 @@ static void FuzzTest(const uint8_t* data, size_t size)
     if (!datas.WriteStringVector(docUriVec)) {
         return;
     }
-    uint32_t code = static_cast<uint32_t>(DlpPermissionServiceInterfaceCode::SET_NOT_RETENTION_STATE);
+    uint32_t code = static_cast<uint32_t>(IDlpPermissionServiceIpcCode::COMMAND_CANCEL_RETENTION_STATE);
     MessageParcel reply;
     MessageOption option;
     auto service = std::make_shared<DlpPermissionService>(SA_ID_DLP_PERMISSION_SERVICE, true);
