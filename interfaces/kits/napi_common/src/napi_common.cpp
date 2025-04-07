@@ -991,8 +991,8 @@ bool GetRetentionSandboxListParams(const napi_env env, const napi_callback_info 
         }
     }
     if (argc == PARAM_SIZE_ONE) {
-        if (!GetStringValue(env, argv[PARAM0], asyncContext.bundleName) ||
-            !IsStringLengthValid(asyncContext.bundleName, MAX_BUNDLENAME_LEN, MIN_BUNDLENAME_LEN) ||
+        if (!(GetStringValue(env, argv[PARAM0], asyncContext.bundleName) &&
+            IsStringLengthValid(asyncContext.bundleName, MAX_BUNDLENAME_LEN, MIN_BUNDLENAME_LEN)) &&
             !ParseCallback(env, argv[PARAM0], asyncContext.callbackRef)) {
             DLP_LOG_ERROR(LABEL, "js get bundle name or callback fail");
             ThrowParamError(env, "bundleName or callback", "string or function");
