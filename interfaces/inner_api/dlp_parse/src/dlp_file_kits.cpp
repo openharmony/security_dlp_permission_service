@@ -152,7 +152,7 @@ bool DlpFileKits::IsDlpFile(int32_t dlpFd)
 bool DlpFileKits::GetSandboxFlag(Want& want)
 {
     std::string action = want.GetAction();
-    if (action != TAG_ACTION_VIEW && action != TAG_ACTION_EDIT) {
+    if (!action.empty() && action != TAG_ACTION_VIEW && action != TAG_ACTION_EDIT) {
         DLP_LOG_DEBUG(LABEL, "Action %{public}s is not dlp scene", action.c_str());
         return false;
     }
