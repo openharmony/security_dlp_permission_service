@@ -34,6 +34,7 @@ namespace Security {
 namespace DlpPermission {
 namespace {
     static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "DlpFileKits"};
+    static const std::string FILE_SCHEME_PREFIX = "file://";
 } // namespace
 using Want = OHOS::AAFwk::Want;
 using WantParams = OHOS::AAFwk::WantParams;
@@ -158,6 +159,10 @@ bool DlpFileKits::GetSandboxFlag(Want& want)
     }
 
     std::string uri = want.GetUriString();
+    if (uri.find(FILE_SCHEME_PREFIX) != 0) {
+        DLP_LOG_DEBUG(LABEL, "uri is missing file://");
+        return false;
+    }
     AppFileService::ModuleFileUri::FileUri fileUri(uri);
     std::string fileName = fileUri.GetName();
     if (fileName.empty() || !IsDlpFileName(fileName)) {
