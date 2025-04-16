@@ -144,11 +144,6 @@ struct OpenDlpFileSubscriberContext {
     void DeleteNapiRef();
 };
 
-struct OpenDlpFileUnSubscriberContext : public CommonAsyncContext {
-    explicit OpenDlpFileUnSubscriberContext(napi_env env) : CommonAsyncContext(env) {};
-    bool result = false;
-};
-
 struct GenerateDlpFileAsyncContext : public CommonAsyncContext {
     explicit GenerateDlpFileAsyncContext(napi_env env) : CommonAsyncContext(env) {};
     int64_t plaintextFd = -1;
