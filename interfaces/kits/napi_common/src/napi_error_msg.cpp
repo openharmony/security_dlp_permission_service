@@ -29,7 +29,7 @@ static const std::unordered_map<int32_t, std::string> JS_ERROR_MSG_MAP = {
     { ERR_JS_CAPABILITY_NOT_SUPPORTED, "Capability is not supported" },
     { ERR_JS_INVALID_PARAMETER, "Parameter invalid, please check parameter range" },
     { ERR_JS_BEGIN_CREDENTIAL_FAIL,
-      "Credential encryption or decryption busy, please wait for a moment and try again" },
+      "Credential service busy due to too many tasks or duplicate tasks, please wait for a moment and try again" },
     { ERR_JS_CREDENTIAL_TIMEOUT,
       "Credential encryption or decryption timeout, please wait for a moment and try again" },
     { ERR_JS_CREDENTIAL_SERVICE_ERROR, "Credential service error, please check the service and try again" },
@@ -44,11 +44,11 @@ static const std::unordered_map<int32_t, std::string> JS_ERROR_MSG_MAP = {
     { ERR_JS_SYSTEM_SERVICE_EXCEPTION, "The system ability works abnormally." },
     { ERR_JS_OUT_OF_MEMORY, "System out of memory, please try again or reboot your device" },
     { ERR_JS_SYSTEM_NEED_TO_BE_UPGRADED, "Upgrade required." },
-    { ERR_JS_APPLICATION_NOT_AUTHORIZED, "Not authorized application" },
+    { ERR_JS_APPLICATION_NOT_AUTHORIZED, "The application is not authorized" },
     { ERR_JS_DLP_FILE_EXPIRE_TIME, "DLP file is expiry, please contact the owner" },
     { ERR_JS_DLP_CREDENTIAL_NO_INTERNET_ERROR, "DLP credential need internet, please check your connection" },
-    { ERR_JS_URI_NOT_EXIST, "uri missing in want." },
-    { ERR_JS_PARAM_DISPLAY_NAME_NOT_EXIST, "displayName missing in want." },
+    { ERR_JS_URI_NOT_EXIST, "The uri field is missing in the want parameter." },
+    { ERR_JS_PARAM_DISPLAY_NAME_NOT_EXIST, "The displayName field is missing in the want parameter." },
 };
 
 static const std::unordered_map<int32_t, int32_t> NATIVE_CODE_TO_JS_CODE_MAP = {
