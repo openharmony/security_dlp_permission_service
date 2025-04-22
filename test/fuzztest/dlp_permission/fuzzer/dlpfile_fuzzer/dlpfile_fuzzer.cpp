@@ -195,7 +195,7 @@ static void GDlpFileFuzzTest()
 
 static void UnzipSpecificFileFUZZ(const uint8_t* data, size_t size)
 {
-    if(data == nullptr) {
+    if (data == nullptr) {
         return;
     }
     FuzzedDataProvider fdp(data, size);
