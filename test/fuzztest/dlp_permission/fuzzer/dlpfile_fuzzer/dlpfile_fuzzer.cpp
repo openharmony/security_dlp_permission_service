@@ -14,6 +14,7 @@
  */
 
 #include "dlpfile_fuzzer.h"
+#include <fuzzer/FuzzedDataProvider.h>
 #include <iostream>
 #include <fcntl.h>
 #include <string>
@@ -192,6 +193,16 @@ static void GDlpFileFuzzTest()
     g_Dlpfile->HmacCheck();
 }
 
+static void UnzipSpecificFileFUZZ(const uint8_t* data, size_t size)
+{
+    if(data == nullptr) {
+        return;
+    }
+    FuzzedDataProvider fdp(data, size);
+    UnzipSpecificFile(fdp.ConsumeIntegral<int32_t>(), fdp.ConsumeBytesAsString(size).c_str(),
+        fdp.ConsumeBytesAsString(size).c_str());
+}
+
 static void FuzzTest(const uint8_t* data, size_t size, bool flag)
 {
     if ((data == nullptr) || (size <= sizeof(uint8_t) * MIN_LENGTH)) {
@@ -244,6 +255,7 @@ bool DlpFileFuzzTest(const uint8_t* data, size_t size)
 {
     FuzzTest(data, size, true);
     FuzzTest(data, size, false);
+    UnzipSpecificFileFUZZ(data, size);
     return true;
 }
 } // namespace OHOS
