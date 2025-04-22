@@ -44,12 +44,13 @@ const std::string ENC_DATA_LEN = "encDataLen";
 const std::string ENC_DATA = "encData";
 const std::string ENC_ACCOUNT_TYPE = "accountType";
 const uint32_t BUFFER_LENGTH = 30;
+const uint32_t HEX_BUFFER_LENGTH = 64;
 
 static void InitCertJson(const uint8_t* data, size_t size, Json &certJson)
 {
     certJson[ENC_DATA_LEN] = size;
-    char hexStrBuffer[64] = {0};
-    uint8_t byteBuffer[30] = {0};
+    char hexStrBuffer[HEX_BUFFER_LENGTH] = {0};
+    uint8_t byteBuffer[BUFFER_LENGTH] = {0};
     for (uint32_t i = 0; i < BUFFER_LENGTH; i++) {
         byteBuffer[i] = *(reinterpret_cast<const uint8_t*>(data + i));
     }
