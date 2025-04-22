@@ -50,7 +50,7 @@ namespace OHOS {
     const std::string ENC_DATA_LEN = "encDataLen";
     const std::string ENC_DATA = "encData";
     const std::string ENC_ACCOUNT_TYPE = "accountType";
-    static const uint8_t CONST_SIZE = 100; 
+    static const uint8_t CONST_SIZE = 100;
     static const std::string POLICY_PLAINTTEXT =
     "7b22706f6c696379223a7b224b4941223a22222c226f776e65724163636f756e744e616d65223a226f686f73416e6f6e796d6f75734e616d6"
     "5222c226f776e65724163636f756e744964223a226f686f73416e6f6e796d6f75734e616d65222c2276657273696f6e223a312c2265787069"
