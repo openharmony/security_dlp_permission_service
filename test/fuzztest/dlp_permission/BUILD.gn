@@ -48,6 +48,7 @@ group("fuzztest") {
     "fuzzer/uninstalldlpsandbox_fuzzer:UninstallDlpSandboxFuzzTest",
     "fuzzer/unregisterdlpsandboxchangecallback_fuzzer:UnRegisterDlpSandboxChangeCallbackFuzzTest",
     "fuzzer/unregisteropendlpfilecallback_fuzzer:UnRegisterOpenDlpFileCallbackFuzzTest",
+    "stub_fuzzer/bundlemanageradapter_fuzzer:BundleManagerAdapterFuzzTest",
     "stub_fuzzer/cancelretentionstatestub_fuzzer:CancelRetentionStateStubFuzzTest",
     "stub_fuzzer/cleansandboxconfigstub_fuzzer:CleanSandboxConfigStubFuzzTest",
     "stub_fuzzer/clearunreservedsandboxstub_fuzzer:ClearUnreservedSandboxStubFuzzTest",
