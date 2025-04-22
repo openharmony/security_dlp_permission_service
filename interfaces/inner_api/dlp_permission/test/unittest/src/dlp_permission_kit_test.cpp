@@ -1375,9 +1375,6 @@ HWTEST_F(DlpPermissionKitTest, SetMDMPolicy001, TestSize.Level0)
  */
 HWTEST_F(DlpPermissionKitTest, GetMDMPolicy001, TestSize.Level0)
 {
-    if (!IsFeatureProvidedWithDlp()) {
-        return;
-    }
     seteuid(1000);
     std::vector<std::string> appIdList;
     if (IsFeatureProvidedWithDlp()) {
@@ -1398,9 +1395,6 @@ HWTEST_F(DlpPermissionKitTest, GetMDMPolicy001, TestSize.Level0)
  */
 HWTEST_F(DlpPermissionKitTest, RemoveMDMPolicy001, TestSize.Level0)
 {
-    if (!IsFeatureProvidedWithDlp()) {
-        return;
-    }
     seteuid(1000);
     if (IsFeatureProvidedWithDlp()) {
         ASSERT_EQ(DLP_SERVICE_ERROR_PERMISSION_DENY, DlpPermissionKit::RemoveMDMPolicy());
