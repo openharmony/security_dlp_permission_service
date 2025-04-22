@@ -21,6 +21,7 @@ group("fuzztest") {
     "fuzzer/cancelretentionstate_fuzzer:CancelRetentionStateFuzzTest",
     "fuzzer/cleansandboxconfig_fuzzer:CleanSandboxConfigFuzzTest",
     "fuzzer/clearunreservedsandbox_fuzzer:ClearUnreservedSandboxFuzzTest",
+    "fuzzer/dlpcredential_fuzzer:DlpCredentialFuzzTest",
     "fuzzer/dlpfile_fuzzer:DlpFileFuzzTest",
     "fuzzer/generatecert_fuzzer:GenerateCertFuzzTest",
     "fuzzer/getdlpfilevisitrecord_fuzzer:GetDlpFileVisitRecordFuzzTest",

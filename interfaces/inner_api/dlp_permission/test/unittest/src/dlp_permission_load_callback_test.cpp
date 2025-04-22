@@ -53,8 +53,6 @@ HWTEST_F(DlpPermissionLoadCallbackTest, OnLoadSystemAbilityFail001, TestSize.Lev
     int32_t systemAbilityId = 0;
 
     callback_.OnLoadSystemAbilityFail(systemAbilityId);
-    ASSERT_EQ(systemAbilityId, systemAbilityId);
-
     systemAbilityId = SA_ID_DLP_PERMISSION_SERVICE;
     callback_.OnLoadSystemAbilityFail(systemAbilityId);
     ASSERT_EQ(SA_ID_DLP_PERMISSION_SERVICE, systemAbilityId);

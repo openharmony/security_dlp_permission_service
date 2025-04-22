@@ -189,13 +189,13 @@ static void SetKey(const uint8_t* originalKey, uint32_t originalKeyLen, uint8_t*
         return;
     }
     if (!CheckAesParamLen(originalKeyLen)) {
-        DLP_LOG_ERROR(LABEL, "Key len invalid, len=%{public}u", keyLen);
+        DLP_LOG_ERROR(LABEL, "Key len invalid, len=%{public}u", originalKeyLen);
         return;
     }
     FreeUint8Buffer(key, keyLen);
     *key = new (std::nothrow) uint8_t[originalKeyLen];
     if (*key == nullptr) {
-        DLP_LOG_ERROR(LABEL, "Alloc %{public}u buff for key fail", keyLen);
+        DLP_LOG_ERROR(LABEL, "Alloc %{public}u buff for key fail", originalKeyLen);
         return;
     }
     keyLen = originalKeyLen;

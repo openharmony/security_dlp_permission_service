@@ -254,12 +254,12 @@ static bool ReadParcel(Parcel& in, DlpPolicyParcel* policyParcel)
         policyParcel->policyParams_.authUsers_.emplace_back(authUserInfoParcel->authUserInfo_);
     }
     if (!(in.ReadBool(policyParcel->policyParams_.supportEveryone_))) {
-        DLP_LOG_ERROR(LABEL, "Write supportEveryone_ fail");
+        DLP_LOG_ERROR(LABEL, "Read supportEveryone_ fail");
         return false;
     }
     uint8_t everyonePerm;
     if (!(in.ReadUint8(everyonePerm))) {
-        DLP_LOG_ERROR(LABEL, "Write everyonePerm_ fail");
+        DLP_LOG_ERROR(LABEL, "Read everyonePerm_ fail");
         return false;
     }
     policyParcel->policyParams_.everyonePerm_ = static_cast<DLPFileAccess>(everyonePerm);
