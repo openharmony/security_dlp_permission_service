@@ -70,6 +70,20 @@ static const std::unordered_map<std::string, std::string> SUFFIX_MIMETYPE_MAP = 
     {"docm", "application/vnd.ms-word.document.macroEnabled.12"},
     {"dotm", "application/vnd.ms-word.template.macroEnabled.12"},
     {"odp", "application/vnd.oasis.opendocument.presentation"},
+    {"bmp", "image/bmp"},
+    {"bm", "image/bmp"},
+    {"dng", "image/x-adobe-dng"},
+    {"gif", "image/gif"},
+    {"heic", "image/heic"},
+    {"heics", "image/heic"},
+    {"heif", "image/heif"},
+    {"heifs", "image/heif"},
+    {"hif", "image/heif"},
+    {"jpg", "image/jpeg"},
+    {"jpeg", "image/jpeg"},
+    {"jpe", "image/jpeg"},
+    {"png", "image/png"},
+    {"webp", "image/webp"},
 };
 
 static bool IsDlpFileName(const std::string& dlpFileName)

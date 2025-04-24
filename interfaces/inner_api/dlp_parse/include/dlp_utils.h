@@ -39,6 +39,20 @@ static const std::unordered_map<std::string, std::string> FILE_TYPE_MAP = {
     {"pptx", "support_office_dlp"},
     {"xls", "support_office_dlp"},
     {"xlsx", "support_office_dlp"},
+    {"bmp", "support_photo_dlp"},
+    {"bm", "support_photo_dlp"},
+    {"dng", "support_photo_dlp"},
+    {"gif", "support_photo_dlp"},
+    {"heic", "support_photo_dlp"},
+    {"heics", "support_photo_dlp"},
+    {"heif", "support_photo_dlp"},
+    {"heifs", "support_photo_dlp"},
+    {"hif", "support_photo_dlp"},
+    {"jpg", "support_photo_dlp"},
+    {"jpeg", "support_photo_dlp"},
+    {"jpe", "support_photo_dlp"},
+    {"png", "support_photo_dlp"},
+    {"webp", "support_photo_dlp"},
 };
 
 class DlpUtils {
