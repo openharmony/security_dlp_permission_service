@@ -21,9 +21,7 @@
 #include <openssl/rand.h>
 #include "c_mock_common.h"
 #include "nlohmann/json.hpp"
-#define private public
 #include "dlp_file_operator.h"
-#undef private
 #include "dlp_file_manager.h"
 #include "dlp_permission.h"
 #include "dlp_permission_log.h"
@@ -272,7 +270,6 @@ HWTEST_F(DlpFileOperatorTest, EnterpriseSpaceDecryptDlpFile001, TestSize.Level0)
     EXPECT_EQ(DLP_PARSE_ERROR_FD_ERROR, result);
     result = EnterpriseSpaceDlpPermissionKit::GetInstance()->DecryptDlpFile(g_plainFileFd, g_dlpFileFd);
     EXPECT_EQ(DLP_PARSE_ERROR_FILE_READ_ONLY, result);
-
 }
 
 /**

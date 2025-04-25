@@ -70,7 +70,7 @@ std::mutex g_dirCleanLock;
 std::mutex g_missionMutex;
 std::mutex instanceMutex;
 std::shared_ptr<std::thread> g_missionThread = nullptr;
-const std::string appId = "com.ohos.dlpmanager_BAurHtxID8irkrB1VYVHLCWnMGKeOwaGNcJymGCMdhIpP+"
+const std::string g_appId = "com.ohos.dlpmanager_BAurHtxID8irkrB1VYVHLCWnMGKeOwaGNcJymGCMdhIpP+"
     "PyVFlFnmikA0NIVqmvB+TnZpjup0qT4D0nEdTM/soy4Ab/wzCdSyoJYPNjl6IR/lW/IktytZ7Mn6auB9dJ4g==";
 }
 
@@ -207,7 +207,7 @@ int32_t EnterpriseSpaceDlpPermissionKit::EnterpriseSpaceParseDlpFileProperty(std
     filePtr->GetContactAccount(certParcel->contactAccount);
     certParcel->isNeedAdapter = filePtr->NeedAdapter();
     certParcel->needCheckCustomProperty = needCheckCustomProperty;
-    result = DlpPermissionKit::ParseDlpCertificate(certParcel, policy, appId, filePtr->GetOfflineAccess());
+    result = DlpPermissionKit::ParseDlpCertificate(certParcel, policy, g_appId, filePtr->GetOfflineAccess());
     if (result != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "Parse cert fail, errno=%{public}d", result);
         return result;
