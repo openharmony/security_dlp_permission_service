@@ -275,7 +275,7 @@ HWTEST_F(DlpFileOperatorTest, EnterpriseSpaceDecryptDlpFile001, TestSize.Level0)
         ->EnterpriseSpacePrepareWorkDir(g_dlpFileFd, filePtr, workDir);
     EXPECT_EQ(DLP_OK, result);
 
-    result = EnterpriseSpaceDlpPermissionKit::GetInstance()->EnterpriseSpaceParseDlpFileFormat(filePtr);
+    result = EnterpriseSpaceDlpPermissionKit::GetInstance()->EnterpriseSpaceParseDlpFileFormat(filePtr, true);
     EXPECT_EQ(DLP_OK, result);
     filePtr->authPerm_ = DLPFileAccess::FULL_CONTROL;
     result = DlpFileManager::GetInstance().RecoverDlpFile(filePtr, g_plainFileFd);
