@@ -24,7 +24,51 @@ namespace {
 const uint32_t MAX_ACCOUNT_NUM = 100;
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "DlpPermissionParcel"};
 }
+
 bool DlpPolicyParcel::Marshalling(Parcel& out) const
+{
+    if (!MarshallingUserList(out)) {
+        DLP_LOG_ERROR(LABEL, "Marshalling user list fail");
+        return false;
+    }
+    if (!(out.WriteBool(this->policyParams_.supportEveryone_))) {
+        DLP_LOG_ERROR(LABEL, "Write supportEveryone_ fail");
+        return false;
+    }
+    if (!(out.WriteUint8(static_cast<uint8_t>(this->policyParams_.everyonePerm_)))) {
+        DLP_LOG_ERROR(LABEL, "Write everyonePerm_ fail");
+        return false;
+    }
+
+    if (!MarshallingAccountInfo(out)) {
+        DLP_LOG_ERROR(LABEL, "Marshalling accountInfo fail");
+        return false;
+    }
+    if (!(out.WriteUint8(static_cast<uint8_t>(this->policyParams_.perm_)))) {
+        DLP_LOG_ERROR(LABEL, "Write perm fail");
+        return false;
+    }
+
+    if (!MarshallingKey(out)) {
+        DLP_LOG_ERROR(LABEL, "Marshalling key fail");
+        return false;
+    }
+    if (!MarshallingExpireTime(out)) {
+        DLP_LOG_ERROR(LABEL, "Marshalling expire time fail");
+        return false;
+    }
+    if (!(out.WriteUint32(this->policyParams_.dlpVersion_))) {
+        DLP_LOG_ERROR(LABEL, "Write dlpVersion_ fail");
+        return false;
+    }
+    if (!(out.WriteBool(this->policyParams_.debug_))) {
+        DLP_LOG_ERROR(LABEL, "Write debug_ fail");
+        return false;
+    }
+    return true;
+}
+
+bool DlpPolicyParcel::MarshallingUserList(Parcel& out) const
 {
     const std::vector<AuthUserInfo>& userList = this->policyParams_.authUsers_;
     uint32_t listSize = userList.size();
@@ -48,83 +92,88 @@ bool DlpPolicyParcel::Marshalling(Parcel& out) const
             return false;
         }
     }
-    if (!(out.WriteBool(this->policyParams_.supportEveryone_))) {
-        DLP_LOG_ERROR(LABEL, "Write supportEveryone_ fail");
-    }
-    if (!(out.WriteUint8(this->policyParams_.everyonePerm_))) {
-        DLP_LOG_ERROR(LABEL, "Write everyonePerm_ fail");
-    }
+    return true;
+}
 
-    MarshallingAccountInfo(out);
-    if (!(out.WriteUint8(this->policyParams_.perm_))) {
-        DLP_LOG_ERROR(LABEL, "Write perm fail");
+bool DlpPolicyParcel::MarshallingAccountInfo(Parcel& out) const
+{
+    if (!(out.WriteString(this->policyParams_.ownerAccount_))) {
+        DLP_LOG_ERROR(LABEL, "Write owner account fail");
+        return false;
     }
-
-    MarshallingKey(out);
-    MarshallingExpireTime(out);
-    if (!(out.WriteUint32(this->policyParams_.dlpVersion_))) {
-        DLP_LOG_ERROR(LABEL, "Write dlpVersion_ fail");
+    if (!(out.WriteString(this->policyParams_.ownerAccountId_))) {
+        DLP_LOG_ERROR(LABEL, "Write owner accountId fail");
+        return false;
     }
-    if (!(out.WriteBool(this->policyParams_.debug_))) {
-        DLP_LOG_ERROR(LABEL, "Write debug_ fail");
+    if (!(out.WriteUint8(this->policyParams_.ownerAccountType_))) {
+        DLP_LOG_ERROR(LABEL, "Write owner account type fail");
+        return false;
+    }
+    if (!(out.WriteString(this->policyParams_.accountName_))) {
+        DLP_LOG_ERROR(LABEL, "Write accountName fail");
+        return false;
+    }
+    if (!(out.WriteString(this->policyParams_.acountId_))) {
+        DLP_LOG_ERROR(LABEL, "Write accountId fail");
+        return false;
+    }
+    if (!(out.WriteUint8(this->policyParams_.acountType_))) {
+        DLP_LOG_ERROR(LABEL, "Write accountType fail");
+        return false;
+    }
+    if (!(out.WriteString(this->policyParams_.customProperty_))) {
+        DLP_LOG_ERROR(LABEL, "Write customProperty fail");
+        return false;
     }
     return true;
 }
 
-void DlpPolicyParcel::MarshallingAccountInfo(Parcel& out) const
-{
-    if (!(out.WriteString(this->policyParams_.ownerAccount_))) {
-        DLP_LOG_ERROR(LABEL, "Write owner account fail");
-    }
-    if (!(out.WriteString(this->policyParams_.ownerAccountId_))) {
-        DLP_LOG_ERROR(LABEL, "Write owner accountId fail");
-    }
-    if (!(out.WriteUint8(this->policyParams_.ownerAccountType_))) {
-        DLP_LOG_ERROR(LABEL, "Write owner account type fail");
-    }
-    if (!(out.WriteString(this->policyParams_.accountName_))) {
-        DLP_LOG_ERROR(LABEL, "Write accountName fail");
-    }
-    if (!(out.WriteString(this->policyParams_.acountId_))) {
-        DLP_LOG_ERROR(LABEL, "Write accountId fail");
-    }
-    if (!(out.WriteUint8(this->policyParams_.acountType_))) {
-        DLP_LOG_ERROR(LABEL, "Write accountType fail");
-    }
-}
-
-void DlpPolicyParcel::MarshallingKey(Parcel& out) const
+bool DlpPolicyParcel::MarshallingKey(Parcel& out) const
 {
     if (!(out.WriteUint32(this->policyParams_.GetAeskeyLen()))) {
         DLP_LOG_ERROR(LABEL, "Write aes key len fail");
+        return false;
     }
     if (!(out.WriteBuffer(this->policyParams_.GetAeskey(), this->policyParams_.GetAeskeyLen()))) {
         DLP_LOG_ERROR(LABEL, "Write aes key fail");
+        return false;
     }
     if (!(out.WriteUint32(this->policyParams_.GetIvLen()))) {
         DLP_LOG_ERROR(LABEL, "Write iv len fail");
+        return false;
     }
     if (!(out.WriteBuffer(this->policyParams_.GetIv(), this->policyParams_.GetIvLen()))) {
         DLP_LOG_ERROR(LABEL, "Write iv fail");
+        return false;
     }
     if (!(out.WriteUint32(this->policyParams_.GetHmacKeyLen()))) {
         DLP_LOG_ERROR(LABEL, "Write Hmac len fail");
+        return false;
     }
     if (this->policyParams_.GetHmacKeyLen() > 0) {
         if (!(out.WriteBuffer(this->policyParams_.GetHmacKey(), this->policyParams_.GetHmacKeyLen()))) {
             DLP_LOG_ERROR(LABEL, "Write Hmac fail");
+            return false;
         }
     }
+    return true;
 }
 
-void DlpPolicyParcel::MarshallingExpireTime(Parcel& out) const
+bool DlpPolicyParcel::MarshallingExpireTime(Parcel& out) const
 {
     if (!(out.WriteUint64(this->policyParams_.expireTime_))) {
-        DLP_LOG_ERROR(LABEL, "Write expiryTime_ fail");
+        DLP_LOG_ERROR(LABEL, "Write expireTime_ fail");
+        return false;
+    }
+    if (!(out.WriteUint32(this->policyParams_.actionUponExpiry_))) {
+        DLP_LOG_ERROR(LABEL, "Write actionUponExpiry_ fail");
+        return false;
     }
     if (!(out.WriteUint32(this->policyParams_.needOnline_))) {
         DLP_LOG_ERROR(LABEL, "Write needOnline_ fail");
+        return false;
     }
+    return true;
 }
 
 static bool ReadKey(PermissionPolicy& policy, Parcel& in)
@@ -186,6 +235,10 @@ static bool ReadAesParam(PermissionPolicy& policy, Parcel& in)
         DLP_LOG_ERROR(LABEL, "Read expiryTime_ fail");
         return false;
     }
+    if (!(in.ReadUint32(policy.actionUponExpiry_))) {
+        DLP_LOG_ERROR(LABEL, "Read actionUponExpiry_ fail");
+        return false;
+    }
     if (!(in.ReadUint32(policy.needOnline_))) {
         DLP_LOG_ERROR(LABEL, "Read needOnline_ fail");
         return false;
@@ -230,6 +283,10 @@ static bool ReadAccountInfo(PermissionPolicy& policy, Parcel& in)
         DLP_LOG_ERROR(LABEL, "Read account type fail");
         return false;
     }
+    if (!(in.ReadString(policy.customProperty_))) {
+        DLP_LOG_ERROR(LABEL, "Read customProperty fail");
+        return false;
+    }
     policy.acountType_ = static_cast<DlpAccountType>(type);
     return true;
 }
@@ -254,12 +311,12 @@ static bool ReadParcel(Parcel& in, DlpPolicyParcel* policyParcel)
         policyParcel->policyParams_.authUsers_.emplace_back(authUserInfoParcel->authUserInfo_);
     }
     if (!(in.ReadBool(policyParcel->policyParams_.supportEveryone_))) {
-        DLP_LOG_ERROR(LABEL, "Write supportEveryone_ fail");
+        DLP_LOG_ERROR(LABEL, "Read supportEveryone_ fail");
         return false;
     }
     uint8_t everyonePerm;
     if (!(in.ReadUint8(everyonePerm))) {
-        DLP_LOG_ERROR(LABEL, "Write everyonePerm_ fail");
+        DLP_LOG_ERROR(LABEL, "Read everyonePerm_ fail");
         return false;
     }
     policyParcel->policyParams_.everyonePerm_ = static_cast<DLPFileAccess>(everyonePerm);

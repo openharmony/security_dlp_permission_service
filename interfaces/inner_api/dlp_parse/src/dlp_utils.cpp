@@ -18,6 +18,7 @@
 #include <unistd.h>
 #include "dlp_permission.h"
 #include "dlp_permission_log.h"
+#include "securec.h"
 
 namespace OHOS {
 namespace Security {
@@ -28,6 +29,8 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_
 static constexpr uint32_t MAX_DLP_FILE_SIZE = 1000;
 static const std::string DLP_FILE_SUFFIXS = ".dlp";
 static const std::string DEFAULT_STRINGS = "";
+static const std::string PATH_SEPARATOR = "/";
+static const std::string DESCRIPTOR_MAP_PATH = "/proc/self/fd/";
 }
 
 sptr<AppExecFwk::IBundleMgr> DlpUtils::GetBundleMgrProxy(void)
@@ -114,8 +117,9 @@ int32_t DlpUtils::GetFileNameWithFd(const int32_t &fd, std::string &srcFileName)
     if (fileName == nullptr) {
         return DLP_PARSE_ERROR_MEMORY_OPERATE_FAIL;
     }
+    (void)memset_s(fileName, MAX_DLP_FILE_SIZE + 1, 0, MAX_DLP_FILE_SIZE + 1);
 
-    std::string path = "/proc/self/fd/" + std::to_string(fd);
+    std::string path = DESCRIPTOR_MAP_PATH + std::to_string(fd);
 
     int readLinkRes = readlink(path.c_str(), fileName, MAX_DLP_FILE_SIZE);
     if (readLinkRes < 0) {
@@ -126,6 +130,29 @@ int32_t DlpUtils::GetFileNameWithFd(const int32_t &fd, std::string &srcFileName)
     fileName[readLinkRes] = '\0';
 
     srcFileName = std::string(fileName);
+    delete[] fileName;
+    return DLP_OK;
+}
+
+int32_t DlpUtils::GetFilePathWithFd(const int32_t &fd, std::string &srcFilePath)
+{
+    char *fileName = new (std::nothrow) char[MAX_DLP_FILE_SIZE + 1];
+    if (fileName == nullptr) {
+        return DLP_PARSE_ERROR_MEMORY_OPERATE_FAIL;
+    }
+    (void)memset_s(fileName, MAX_DLP_FILE_SIZE + 1, 0, MAX_DLP_FILE_SIZE + 1);
+
+    std::string path = DESCRIPTOR_MAP_PATH + std::to_string(fd);
+
+    int readLinkRes = readlink(path.c_str(), fileName, MAX_DLP_FILE_SIZE);
+    if (readLinkRes < 0) {
+        DLP_LOG_ERROR(LABEL, "fail to readlink uri, errno = %{public}d", errno);
+        delete[] fileName;
+        return DLP_PARSE_ERROR_FD_ERROR;
+    }
+    std::string tmp(fileName);
+    std::size_t pos = tmp.find_last_of(PATH_SEPARATOR);
+    srcFilePath = tmp.substr(0, pos + 1);
     delete[] fileName;
     return DLP_OK;
 }

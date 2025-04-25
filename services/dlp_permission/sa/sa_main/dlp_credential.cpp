@@ -615,6 +615,7 @@ int32_t DlpCredential::ParseDlpCertificate(sptr<CertParcel>& certParcel, const s
     if (certParcel->isNeedAdapter) {
         AdapterData(certParcel->offlineCert, isOwner, jsonObj, encPolicy);
     }
+    encPolicy.reserved[0] = static_cast<uint8_t>(certParcel->needCheckCustomProperty);
     int32_t res = 0;
     {
         std::lock_guard<std::mutex> lock(g_lockRequest);

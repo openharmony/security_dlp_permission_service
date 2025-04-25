@@ -115,6 +115,7 @@ void PermissionPolicy::FreePermissionPolicyMem()
     ownerAccount_ = "";
     ownerAccountId_ = "";
     ownerAccountType_ = INVALID_ACCOUNT;
+    customProperty_ = "";
     authUsers_.clear();
 }
 
@@ -125,6 +126,7 @@ PermissionPolicy::PermissionPolicy()
     ownerAccountType_ = INVALID_ACCOUNT;
     authUsers_ = {};
     expireTime_ = 0;
+    actionUponExpiry_ = 0;
     needOnline_ = 0;
     aeskey_ = nullptr;
     aeskeyLen_ = 0;
@@ -134,6 +136,7 @@ PermissionPolicy::PermissionPolicy()
     hmacKeyLen_ = 0;
     dlpVersion_ = CURRENT_VERSION;
     debug_ = false;
+    customProperty_ = "";
 }
 
 PermissionPolicy::PermissionPolicy(const DlpProperty& property)
@@ -146,6 +149,7 @@ PermissionPolicy::PermissionPolicy(const DlpProperty& property)
     everyonePerm_ = property.everyonePerm;
     expireTime_ = property.expireTime;
     needOnline_ = !property.offlineAccess;
+    actionUponExpiry_ = static_cast<uint32_t>(property.actionUponExpiry);
     aeskey_ = nullptr;
     aeskeyLen_ = 0;
     iv_ = nullptr;
@@ -154,6 +158,7 @@ PermissionPolicy::PermissionPolicy(const DlpProperty& property)
     hmacKeyLen_ = 0;
     dlpVersion_ = CURRENT_VERSION;
     debug_ = false;
+    customProperty_ = property.customProperty.enterprise;
 }
 
 PermissionPolicy::~PermissionPolicy()
@@ -273,11 +278,26 @@ void PermissionPolicy::CopyPermissionPolicy(const PermissionPolicy& srcPolicy)
     supportEveryone_ = srcPolicy.supportEveryone_;
     everyonePerm_ = srcPolicy.everyonePerm_;
     expireTime_ = srcPolicy.expireTime_;
+    actionUponExpiry_ = srcPolicy.actionUponExpiry_;
     needOnline_ = srcPolicy.needOnline_;
+    customProperty_ = srcPolicy.customProperty_;
     SetAeskey(srcPolicy.aeskey_, srcPolicy.aeskeyLen_);
     SetIv(srcPolicy.iv_, srcPolicy.ivLen_);
     CopyPolicyHmac(srcPolicy);
     dlpVersion_ = srcPolicy.dlpVersion_;
+}
+
+int32_t PermissionPolicy::CheckActionUponExpiry()
+{
+    if (expireTime_ != 0) {
+        if (actionUponExpiry_ > static_cast<uint32_t>(ActionType::OPEN) ||
+           actionUponExpiry_ < static_cast<uint32_t>(ActionType::NOTOPEN)) {
+            return DLP_PARSE_ERROR_VALUE_INVALID;
+        }
+    } else {
+        actionUponExpiry_ = 0;
+    }
+    return DLP_OK;
 }
 
 bool CheckAccountType(DlpAccountType accountType)

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,31 +13,25 @@
  * limitations under the License.
  */
 
-#ifndef DLP_CERT_PARCEL_H
-#define DLP_CERT_PARCEL_H
+#ifndef DLP_FILE_OPERATOR_TEST_H
+#define DLP_FILE_OPERATOR_TEST_H
 
-#include <string>
-#include <vector>
-#include "parcel.h"
+#include <gtest/gtest.h>
 
 namespace OHOS {
 namespace Security {
 namespace DlpPermission {
-class CertParcel : public Parcelable {
+class DlpFileOperatorTest : public testing::Test {
 public:
-    CertParcel();
-    ~CertParcel() override = default;
+    static void SetUpTestCase();
 
-    virtual bool Marshalling(Parcel& data) const override;
-    static CertParcel* Unmarshalling(Parcel& data);
+    static void TearDownTestCase();
 
-    std::vector<uint8_t> cert;
-    std::vector<uint8_t> offlineCert;
-    bool isNeedAdapter;
-    std::string contactAccount;
-    bool needCheckCustomProperty;
+    void SetUp();
+
+    void TearDown();
 };
 } // namespace DlpPermission
 } // namespace Security
 } // namespace OHOS
-#endif // DLP_CERT_PARCEL_H
+#endif // DLP_FILE_OPERATOR_TEST_H
