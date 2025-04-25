@@ -321,6 +321,9 @@ static void SerializeEveryoneInfo(const PermissionPolicy& policy, unordered_json
 static void SerializeCustomProperty(const PermissionPolicy& policy, unordered_json& policyJson)
 {
     unordered_json customProperty;
+    if (policy.customProperty_.empty()) {
+        return;
+    }
     customProperty[ENTERPRISE] = policy.customProperty_;
     policyJson[CUSTOM_PROPERTY] = customProperty.dump();
 }

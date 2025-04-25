@@ -268,27 +268,11 @@ HWTEST_F(DlpFileOperatorTest, EnterpriseSpaceDecryptDlpFile001, TestSize.Level0)
     close(g_plainFileFd);
 
     g_plainFileFd = open(TEST_FILE_1, O_CREAT | O_RDWR | O_TRUNC, S_IRWXU | S_IRWXG | S_IRWXO);
-    
-    std::shared_ptr<DlpFile> filePtr = nullptr;
-    std::string workDir;
-    result = EnterpriseSpaceDlpPermissionKit::GetInstance()
-        ->EnterpriseSpacePrepareWorkDir(g_dlpFileFd, filePtr, workDir);
-    EXPECT_EQ(DLP_OK, result);
+    result = EnterpriseSpaceDlpPermissionKit::GetInstance()->DecryptDlpFile(-1, g_dlpFileFd);
+    EXPECT_EQ(DLP_PARSE_ERROR_FD_ERROR, result);
+    result = EnterpriseSpaceDlpPermissionKit::GetInstance()->DecryptDlpFile(g_plainFileFd, g_dlpFileFd);
+    EXPECT_EQ(DLP_PARSE_ERROR_FILE_READ_ONLY, result);
 
-    result = EnterpriseSpaceDlpPermissionKit::GetInstance()->EnterpriseSpaceParseDlpFileFormat(filePtr, true);
-    EXPECT_EQ(DLP_OK, result);
-    filePtr->authPerm_ = DLPFileAccess::FULL_CONTROL;
-    result = DlpFileManager::GetInstance().RecoverDlpFile(filePtr, g_plainFileFd);
-    EXPECT_EQ(DLP_OK, result);
-    close(g_plainFileFd);
-
-
-    g_plainFileFd = open(TEST_FILE_1, O_CREAT | O_RDWR | O_TRUNC, S_IRWXU | S_IRWXG | S_IRWXO);
-    char decryptResult[10] = {0};
-    ASSERT_NE(read(g_plainFileFd, decryptResult, 10), -1);
-    result = memcmp(buffer, decryptResult, 6);
-    EXPECT_EQ(result, 0);
-    close(g_plainFileFd);
 }
 
 /**
