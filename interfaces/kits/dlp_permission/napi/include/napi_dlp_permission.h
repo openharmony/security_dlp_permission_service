@@ -146,6 +146,18 @@ private:
     static napi_value IsDLPFeatureProvided(napi_env env, napi_callback_info cbInfo);
     static void IsDLPFeatureProvidedExcute(napi_env env, void* data);
     static void IsDLPFeatureProvidedComplete(napi_env env, napi_status status, void* data);
+
+    static napi_value GenerateDlpFileForEnterprise(napi_env env, napi_callback_info cbInfo);
+    static void GenerateDlpFileForEnterpriseExcute(napi_env env, void* data);
+    static void GenerateDlpFileForEnterpriseComplete(napi_env env, napi_status status, void* data);
+
+    static napi_value DecryptDlpFile(napi_env env, napi_callback_info cbInfo);
+    static void DecryptDlpFileExcute(napi_env env, void* data);
+    static void DecryptDlpFileComplete(napi_env env, napi_status status, void* data);
+
+    static napi_value QueryDlpPolicy(napi_env env, napi_callback_info cbInfo);
+    static void QueryDlpPolicyExcute(napi_env env, void* data);
+    static void QueryDlpPolicyComplete(napi_env env, napi_status status, void* data);
 };
 }  // namespace DlpPermission
 }  // namespace Security

@@ -271,6 +271,7 @@ int32_t DlpFileManager::ParseDlpFileFormat(std::shared_ptr<DlpFile>& filePtr, co
     PermissionPolicy policy;
     filePtr->GetContactAccount(certParcel->contactAccount);
     certParcel->isNeedAdapter = filePtr->NeedAdapter();
+    certParcel->needCheckCustomProperty = true;
     StartTrace(HITRACE_TAG_ACCESS_CONTROL, "DlpParseCertificate");
     result = DlpPermissionKit::ParseDlpCertificate(certParcel, policy, appId, filePtr->GetOfflineAccess());
     FinishTrace(HITRACE_TAG_ACCESS_CONTROL);
@@ -328,7 +329,13 @@ int32_t DlpFileManager::SetDlpFileParams(std::shared_ptr<DlpFile>& filePtr, cons
     struct DlpUsageSpec usage;
     struct DlpBlob hmacKey;
 
-    int32_t result = PrepareDlpEncryptParms(policy, key, usage, certData, hmacKey);
+    int result = policy.CheckActionUponExpiry();
+    if (result != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "Check action upon expiry fail, errno=%{public}d", result);
+        return result;
+    }
+
+    result = PrepareDlpEncryptParms(policy, key, usage, certData, hmacKey);
     if (result != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "Set dlp obj params fail, prepare encrypt params error, errno=%{public}d", result);
         return result;

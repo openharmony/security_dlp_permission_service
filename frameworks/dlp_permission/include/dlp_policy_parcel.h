@@ -31,9 +31,10 @@ struct DlpPolicyParcel final : public Parcelable {
     PermissionPolicy policyParams_;
 
 private:
-    void MarshallingAccountInfo(Parcel& out) const;
-    void MarshallingExpireTime(Parcel& out) const;
-    void MarshallingKey(Parcel& out) const;
+    bool MarshallingAccountInfo(Parcel& out) const;
+    bool MarshallingExpireTime(Parcel& out) const;
+    bool MarshallingKey(Parcel& out) const;
+    bool MarshallingUserList(Parcel& out) const;
 };
 }  // namespace DlpPermission
 }  // namespace Security

@@ -77,6 +77,12 @@ int32_t DlpUtils::GetFileNameWithFd(const int32_t &fd, std::string &srcFileName)
     srcFileName = "test.txt.dlp";
     return DLP_OK;
 }
+
+int32_t DlpUtils::GetFilePathWithFd(const int32_t &fd, std::string &srcFilePath)
+{
+    srcFilePath = "/data/local/tmp";
+    return DLP_OK;
+}
 }  // namespace DlpPermission
 }  // namespace Security
 }  // namespace OHOS
