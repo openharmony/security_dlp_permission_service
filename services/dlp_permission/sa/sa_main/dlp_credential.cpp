@@ -464,7 +464,7 @@ int32_t DlpCredential::GenerateDlpCertificate(const std::string& policy, const s
         .extraInfo = nullptr,
         .extraInfoLen = 0
     };
-    
+
     char *dupStr = strdup(accountInfo.c_str());
     AccountInfo accountCfg = {
         .accountId = reinterpret_cast<uint8_t*>(dupStr),
