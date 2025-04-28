@@ -92,7 +92,7 @@ static void UvQueueWorkDlpSandboxChanged(RegisterDlpSandboxChangeWorker *worker)
             GET_AND_THROW_LAST_ERROR(worker->env);
             break;
         }
-    } while(0) ;
+    } while (0);
     napi_close_handle_scope(worker->env, scope);
     delete worker;
     DLP_LOG_DEBUG(LABEL, "UvQueueWorkDlpSandboxChanged end");
@@ -145,7 +145,7 @@ static void UvQueueWorkOpenDlpFile(OpenDlpFileSubscriberWorker *worker)
             GET_AND_THROW_LAST_ERROR(worker->env);
             break;
         }
-    } while(0) ;
+    } while (0);
     napi_close_handle_scope(worker->env, scope);
     delete worker;
     DLP_LOG_INFO(LABEL, "UvQueueWorkOpenDlpFile end");
