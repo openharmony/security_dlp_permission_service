@@ -210,13 +210,12 @@ static int32_t GetNewCert(const unordered_json& plainPolicyJson, std::vector<uin
     plainPolicyJson.at(POLICY_CERT).get_to(json);
     std::string encData = json.dump();
     DLP_EncPolicyData params;
-    char *dupStr = strdup(encData.c_str());
-    params.data = reinterpret_cast<uint8_t*>(dupStr);
+    params.data = reinterpret_cast<uint8_t*>(strdup(encData.c_str()));
     if (params.data == nullptr) {
         DLP_LOG_ERROR(LABEL, "Strdup failed.");
         return DLP_CREDENTIAL_ERROR_VALUE_INVALID;
     }
-    params.dataLen = strlen(dupStr);
+    params.dataLen = strlen(encData.c_str());
     params.accountType = static_cast<AccountType>(ownerAccountType);
     unordered_json encDataJson;
     int32_t res = DlpPermissionSerializer::GetInstance().SerializeEncPolicyData(params, encDataJson);
@@ -465,21 +464,19 @@ int32_t DlpCredential::GenerateDlpCertificate(const std::string& policy, const s
         .extraInfoLen = 0
     };
 
-    char *dupStr = strdup(accountInfo.c_str());
     AccountInfo accountCfg = {
-        .accountId = reinterpret_cast<uint8_t*>(dupStr),
-        .accountIdLen = strlen(dupStr),
+        .accountId = reinterpret_cast<uint8_t*>(strdup(accountInfo.c_str())),
+        .accountIdLen = strlen(accountInfo.c_str()),
     };
     if (accountCfg.accountId == nullptr) {
         DLP_LOG_ERROR(LABEL, "Strdup failed.");
         return DLP_PARSE_ERROR_ACCOUNT_INVALID;
     }
 
-    char *dupStr1 = strdup(policy.c_str());
     DLP_PackPolicyParams packPolicy = {
         .featureName = strdup("dlp_permission_service"),
-        .data = reinterpret_cast<uint8_t*>(dupStr1),
-        .dataLen = strlen(dupStr1),
+        .data = reinterpret_cast<uint8_t*>(strdup(policy.c_str())),
+        .dataLen = strlen(policy.c_str()),
         .options = encAndDecOptions,
         .accountType = static_cast<AccountType>(accountType),
         .senderAccountInfo = accountCfg,
@@ -586,10 +583,9 @@ static int32_t GetAccoutInfo(DlpAccountType accountType, AccountInfo& accountCfg
         }
     }
 
-    char *dupStr = strdup(account.c_str());
     accountCfg = {
-        .accountId = reinterpret_cast<uint8_t*>(dupStr),
-        .accountIdLen = strlen(dupStr),
+        .accountId = reinterpret_cast<uint8_t*>(strdup(account.c_str())),
+        .accountIdLen = strlen(account.c_str()),
     };
     if (accountCfg.accountId == nullptr) {
         DLP_LOG_ERROR(LABEL, "Strdup failed.");
