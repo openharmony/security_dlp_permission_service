@@ -190,7 +190,7 @@ static int32_t DeserializeAuthUserInfo(const json& accountInfoJson, AuthUserInfo
     return DLP_OK;
 }
 
-static int32_t DeserializeAuthUserList( const json& authUsersJson, std::vector<AuthUserInfo>& userList)
+static int32_t DeserializeAuthUserList(const json& authUsersJson, std::vector<AuthUserInfo>& userList)
 {
     for (auto iter = authUsersJson.begin(); iter != authUsersJson.end(); ++iter) {
         AuthUserInfo authInfo;
@@ -378,7 +378,8 @@ HWTEST_F(DlpFileOperatorTest, EnterpriseSpaceDecryptDlpFile001, TestSize.Level0)
 
     std::shared_ptr<DlpFile> filePtr = nullptr;
     std::string workDir;
-    result = EnterpriseSpaceDlpPermissionKit::GetInstance()->EnterpriseSpacePrepareWorkDir(g_dlpFileFd, filePtr, workDir);
+    result = EnterpriseSpaceDlpPermissionKit::GetInstance()
+        ->EnterpriseSpacePrepareWorkDir(g_dlpFileFd, filePtr, workDir);
     EXPECT_EQ(DLP_OK, result);
 
     result = EnterpriseSpaceDlpPermissionKit::GetInstance()->EnterpriseSpaceParseDlpFileFormat(filePtr, false);
