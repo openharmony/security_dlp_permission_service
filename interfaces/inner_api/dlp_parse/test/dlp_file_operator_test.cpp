@@ -21,7 +21,9 @@
 #include <openssl/rand.h>
 #include "c_mock_common.h"
 #include "nlohmann/json.hpp"
+#define private public
 #include "dlp_file_operator.h"
+#undef private
 #include "dlp_file_manager.h"
 #include "dlp_permission.h"
 #include "dlp_permission_log.h"
@@ -66,6 +68,8 @@ static const int32_t RAND_STR_SIZE = 16;
 static int g_plainFileFd = -1;
 static int g_dlpFileFd = -1;
 static int g_recoverFileFd = -1;
+static const int INVALID_FD = -1;
+constexpr uint64_t  VALID_TIME_STAMP = 2147483647;
 
 static const char TEST_FILE[] = "/data/dlpOperatorTest/file_test.txt";
 static const char TEST_FILE_1[] = "/data/dlpOperatorTest/file_test_1.txt";
@@ -116,70 +120,161 @@ static void GenerateRandStr(uint32_t len, std::string& res)
     DLP_LOG_INFO(LABEL, "%{public}s", res.c_str());
 }
 
-static void SerializePermInfo(DLPFileAccess perm, json& rightInfoJson)
+static bool DeserializeEveryoneInfo(const json& policyJson, PermissionPolicy& policy)
 {
-    bool read = false;
+    if (policyJson.find(EVERYONE_INDEX) == policyJson.end() || !policyJson.at(EVERYONE_INDEX).is_object()) {
+        return false;
+    }
+
+    policy.supportEveryone_ = true;
+    json everyoneInfoJson;
+    policyJson.at(EVERYONE_INDEX).get_to(everyoneInfoJson);
+
+    json rightInfoJson;
+    if (everyoneInfoJson.find(RIGHT_INDEX) == everyoneInfoJson.end() ||
+        !everyoneInfoJson.at(RIGHT_INDEX).is_object()) {
+        return false;
+    }
+    everyoneInfoJson.at(RIGHT_INDEX).get_to(rightInfoJson);
+
     bool edit = false;
     bool fullCtrl = false;
 
-    switch (perm) {
-        case DLPFileAccess::READ_ONLY: {
-            read = true;
-            break;
-        }
-        case DLPFileAccess::CONTENT_EDIT: {
-            edit = true;
-            break;
-        }
-        case DLPFileAccess::FULL_CONTROL: {
-            read = true;
-            edit = true;
-            fullCtrl = true;
-            break;
-        }
-        default:
-            break;
+    if (rightInfoJson.find(EDIT_INDEX) != rightInfoJson.end() && rightInfoJson.at(EDIT_INDEX).is_boolean()) {
+        rightInfoJson.at(EDIT_INDEX).get_to(edit);
     }
-    rightInfoJson[READ_INDEX] = read;
-    rightInfoJson[EDIT_INDEX] = edit;
-    rightInfoJson[FC_INDEX] = fullCtrl;
+
+    if (rightInfoJson.find(FC_INDEX) != rightInfoJson.end() && rightInfoJson.at(FC_INDEX).is_boolean()) {
+        rightInfoJson.at(FC_INDEX).get_to(fullCtrl);
+    }
+
+    if (fullCtrl) {
+        policy.everyonePerm_ = FULL_CONTROL;
+    } else if (edit) {
+        policy.everyonePerm_ = CONTENT_EDIT;
+    } else {
+        policy.everyonePerm_ = READ_ONLY;
+    }
+    return true;
 }
 
-static void SerializeAuthUserList(const std::vector<AuthUserInfo>& authUsers, json& authUsersJson)
+static int32_t DeserializeAuthUserInfo(const json& accountInfoJson, AuthUserInfo& userInfo)
 {
-    for (const AuthUserInfo& info : authUsers) {
-        json rightInfoJson;
-        SerializePermInfo(info.authPerm, rightInfoJson);
-        authUsersJson[info.authAccount.c_str()][RIGHT_INDEX] = rightInfoJson;
+    json rightInfoJson;
+    if (accountInfoJson.find(RIGHT_INDEX) != accountInfoJson.end() && accountInfoJson.at(RIGHT_INDEX).is_object()) {
+        accountInfoJson.at(RIGHT_INDEX).get_to(rightInfoJson);
     }
-}
 
-static void SerializeEveryoneInfo(const PermissionPolicy& policy, json& permInfoJson)
-{
-    if (policy.supportEveryone_) {
-        json rightInfoJson;
-        SerializePermInfo(policy.everyonePerm_, rightInfoJson);
-        permInfoJson[EVERYONE_INDEX][RIGHT_INDEX] = rightInfoJson;
-        return;
+    bool edit = false;
+    bool fullCtrl = false;
+
+    if (rightInfoJson.find(EDIT_INDEX) != rightInfoJson.end() && rightInfoJson.at(EDIT_INDEX).is_boolean()) {
+        rightInfoJson.at(EDIT_INDEX).get_to(edit);
     }
-}
 
-static int32_t SerializePermissionPolicy(const PermissionPolicy& policy, std::string& policyString)
-{
-    json policyJson;
-    json authUsersJson;
-    SerializeAuthUserList(policy.authUsers_, authUsersJson);
-    policyJson[OWNER_ACCOUNT_NAME] = policy.ownerAccount_;
-    policyJson[OWNER_ACCOUNT_ID] = policy.ownerAccountId_;
-    policyJson[ACCOUNT_INDEX] = authUsersJson;
-    policyJson[ACCOUNT_TYPE] = policy.acountType_;
-    policyJson[PERM_EXPIRY_TIME] = policy.expireTime_;
-    policyJson[NEED_ONLINE] = policy.needOnline_;
-    policyJson[CUSTOM_PROPERTY] = policy.customProperty_;
-    SerializeEveryoneInfo(policy, policyJson);
-    policyString = policyJson.dump();
+    if (rightInfoJson.find(FC_INDEX) != rightInfoJson.end() && rightInfoJson.at(FC_INDEX).is_boolean()) {
+        rightInfoJson.at(FC_INDEX).get_to(fullCtrl);
+    }
+
+    if (fullCtrl) {
+        userInfo.authPerm = FULL_CONTROL;
+    } else if (edit) {
+        userInfo.authPerm = CONTENT_EDIT;
+    } else {
+        userInfo.authPerm = READ_ONLY;
+    }
+
+    userInfo.permExpiryTime = VALID_TIME_STAMP;
+    userInfo.authAccountType = CLOUD_ACCOUNT;
+
     return DLP_OK;
 }
+
+static int32_t DeserializeAuthUserList( const json& authUsersJson, std::vector<AuthUserInfo>& userList)
+{
+    for (auto iter = authUsersJson.begin(); iter != authUsersJson.end(); ++iter) {
+        AuthUserInfo authInfo;
+        std::string name = iter.key();
+        authInfo.authAccount = name;
+        json accountInfo = iter.value();
+        int32_t res = DeserializeAuthUserInfo(accountInfo, authInfo);
+        if (res == DLP_OK) {
+            userList.emplace_back(authInfo);
+        } else {
+            userList.clear();
+            return res;
+        }
+    }
+    return DLP_OK;
+}
+
+static uint32_t DeserializeDlpPermission(const std::string& queryResult, PermissionPolicy& policy)
+{
+    if (!json::accept(queryResult)) {
+        return DLP_SERVICE_ERROR_JSON_OPERATE_FAIL;
+    }
+    json policyJson = json::parse(queryResult);
+    if (policyJson.find(OWNER_ACCOUNT_NAME) != policyJson.end() && policyJson.at(OWNER_ACCOUNT_NAME).is_string()) {
+        policyJson.at(OWNER_ACCOUNT_NAME).get_to(policy.ownerAccount_);
+    }
+    if (policyJson.find(OWNER_ACCOUNT_ID) != policyJson.end() && policyJson.at(OWNER_ACCOUNT_ID).is_string()) {
+        policyJson.at(OWNER_ACCOUNT_ID).get_to(policy.ownerAccountId_);
+    }
+    if (policyJson.find(PERM_EXPIRY_TIME) != policyJson.end() && policyJson.at(PERM_EXPIRY_TIME).is_number()) {
+        policyJson.at(PERM_EXPIRY_TIME).get_to(policy.expireTime_);
+    }
+    if (policyJson.find(ACTION_UPON_EXPIRY) != policyJson.end() && policyJson.at(ACTION_UPON_EXPIRY).is_number()) {
+        policyJson.at(ACTION_UPON_EXPIRY).get_to(policy.actionUponExpiry_);
+    }
+    if (policyJson.find(NEED_ONLINE) != policyJson.end() && policyJson.at(NEED_ONLINE).is_number()) {
+        policyJson.at(NEED_ONLINE).get_to(policy.needOnline_);
+    }
+    if (policyJson.find(CUSTOM_PROPERTY) != policyJson.end() && policyJson.at(CUSTOM_PROPERTY).is_string()) {
+        policyJson.at(CUSTOM_PROPERTY).get_to(policy.customProperty_);
+    }
+    json accountListJson;
+    if (policyJson.find(ACCOUNT_INDEX) != policyJson.end() && policyJson.at(ACCOUNT_INDEX).is_object()) {
+        policyJson.at(ACCOUNT_INDEX).get_to(accountListJson);
+    }
+    DeserializeEveryoneInfo(policyJson, policy);
+
+    std::vector<AuthUserInfo> userList;
+    if (DeserializeAuthUserList(accountListJson, userList) != DLP_OK) {
+        return DLP_SERVICE_ERROR_JSON_OPERATE_FAIL;
+    }
+    policy.authUsers_ = userList;
+    return DLP_OK;
+}
+
+static bool IsSameAuthInfo(const std::vector<AuthUserInfo>& info1, const std::vector<AuthUserInfo>& info2)
+{
+    if (info1.size() != info2.size()) {
+        return false;
+    }
+    for (auto auth1 : info1) {
+        for (auto auth2 : info2) {
+            if (auth1.authAccount != auth2.authAccount) {
+                continue;
+            }
+            if (auth1.authPerm != auth2.authPerm) {
+                return false;
+            }
+            break;
+        }
+    }
+    return true;
+}
+
+static bool IsSameProperty(const PermissionPolicy& property, const PermissionPolicy& queryProperty)
+{
+    return property.ownerAccount_ == queryProperty.ownerAccount_ &&
+        property.ownerAccountId_ == queryProperty.ownerAccountId_ &&
+        property.expireTime_ == queryProperty.expireTime_ &&
+        property.needOnline_ == queryProperty.needOnline_ &&
+        property.actionUponExpiry_ == queryProperty.actionUponExpiry_ &&
+        IsSameAuthInfo(property.authUsers_, queryProperty.authUsers_);
+}
+
 }
 
 
@@ -219,6 +314,16 @@ HWTEST_F(DlpFileOperatorTest, EnterpriseSpaceEncryptDlpFile001, TestSize.Level0)
     };
 
     int32_t result = EnterpriseSpaceDlpPermissionKit::GetInstance()->EncryptDlpFile(property,
+        customProperty, INVALID_FD, g_dlpFileFd);
+    EXPECT_EQ(DLP_PARSE_ERROR_FD_ERROR, result);
+    result = EnterpriseSpaceDlpPermissionKit::GetInstance()->EncryptDlpFile(property,
+        customProperty, g_plainFileFd, INVALID_FD);
+    EXPECT_EQ(DLP_PARSE_ERROR_FD_ERROR, result);
+    result = EnterpriseSpaceDlpPermissionKit::GetInstance()->EncryptDlpFile(property,
+        customProperty, g_plainFileFd, g_dlpFileFd);
+    EXPECT_EQ(DLP_OK, result);
+    customProperty.enterprise = "";
+    result = EnterpriseSpaceDlpPermissionKit::GetInstance()->EncryptDlpFile(property,
         customProperty, g_plainFileFd, g_dlpFileFd);
     EXPECT_EQ(DLP_OK, result);
     close(g_plainFileFd);
@@ -266,10 +371,24 @@ HWTEST_F(DlpFileOperatorTest, EnterpriseSpaceDecryptDlpFile001, TestSize.Level0)
     close(g_plainFileFd);
 
     g_plainFileFd = open(TEST_FILE_1, O_CREAT | O_RDWR | O_TRUNC, S_IRWXU | S_IRWXG | S_IRWXO);
-    result = EnterpriseSpaceDlpPermissionKit::GetInstance()->DecryptDlpFile(-1, g_dlpFileFd);
+    result = EnterpriseSpaceDlpPermissionKit::GetInstance()->DecryptDlpFile(INVALID_FD, g_dlpFileFd);
     EXPECT_EQ(DLP_PARSE_ERROR_FD_ERROR, result);
-    result = EnterpriseSpaceDlpPermissionKit::GetInstance()->DecryptDlpFile(g_plainFileFd, g_dlpFileFd);
-    EXPECT_EQ(DLP_PARSE_ERROR_FILE_READ_ONLY, result);
+    result = EnterpriseSpaceDlpPermissionKit::GetInstance()->DecryptDlpFile(g_plainFileFd, INVALID_FD);
+    EXPECT_EQ(DLP_PARSE_ERROR_FD_ERROR, result);
+
+    std::shared_ptr<DlpFile> filePtr = nullptr;
+    std::string workDir;
+    result = EnterpriseSpaceDlpPermissionKit::GetInstance()->EnterpriseSpacePrepareWorkDir(g_dlpFileFd, filePtr, workDir);
+    EXPECT_EQ(DLP_OK, result);
+
+    result = EnterpriseSpaceDlpPermissionKit::GetInstance()->EnterpriseSpaceParseDlpFileFormat(filePtr, false);
+    EXPECT_EQ(DLP_OK, result);
+
+    filePtr->authPerm_ = DLPFileAccess::FULL_CONTROL;
+    result = DlpFileManager::GetInstance().RecoverDlpFile(filePtr, g_plainFileFd);
+    EXPECT_EQ(DLP_OK, result);
+    close(g_dlpFileFd);
+    close(g_plainFileFd);
 }
 
 /**
@@ -316,8 +435,8 @@ HWTEST_F(DlpFileOperatorTest, EnterpriseSpaceQueryDlpProperty001, TestSize.Level
     ASSERT_GE(g_dlpFileFd, 0);
 
     std::string queryResult;
-    result = EnterpriseSpaceDlpPermissionKit::GetInstance()->QueryDlpFileProperty(g_dlpFileFd, queryResult);
-    EXPECT_EQ(DLP_OK, result);
+    result = EnterpriseSpaceDlpPermissionKit::GetInstance()->QueryDlpFileProperty(INVALID_FD, queryResult);
+    EXPECT_EQ(DLP_PARSE_ERROR_FD_ERROR, result);
     close(g_dlpFileFd);
 }
 
@@ -364,11 +483,15 @@ HWTEST_F(DlpFileOperatorTest, EnterpriseSpaceQueryDlpProperty002, TestSize.Level
     g_dlpFileFd = open(DLP_FILE, O_RDONLY, S_IRWXU | S_IRWXG | S_IRWXO);
     ASSERT_GE(g_dlpFileFd, 0);
 
-    std::string queryResult;
-    result = EnterpriseSpaceDlpPermissionKit::GetInstance()->QueryDlpFileProperty(-1, queryResult);
-    EXPECT_EQ(DLP_PARSE_ERROR_FD_ERROR, result);
-    result = EnterpriseSpaceDlpPermissionKit::GetInstance()->QueryDlpFileProperty(g_dlpFileFd, queryResult);
+    std::string resultStr;
+    result = EnterpriseSpaceDlpPermissionKit::GetInstance()->QueryDlpFileProperty(g_dlpFileFd, resultStr);
     EXPECT_EQ(DLP_OK, result);
+    PermissionPolicy resultPolicy;
+    result = DeserializeDlpPermission(resultStr, resultPolicy);
+    EXPECT_EQ(DLP_OK, result);
+    PermissionPolicy inputPolicy(property);
+    bool res = IsSameProperty(inputPolicy, resultPolicy);
+    EXPECT_EQ(res, true);
     close(g_dlpFileFd);
 }
 
