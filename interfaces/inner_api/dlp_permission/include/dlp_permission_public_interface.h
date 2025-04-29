@@ -31,6 +31,7 @@ struct GenerateInfoParams {
     std::string contactAccount;
     std::vector<std::string> extraInfo;
     std::string hmacVal;
+    std::string realType;
 };
 
 int32_t GenerateDlpGeneralInfo(const GenerateInfoParams& params, std::string& generalInfo);

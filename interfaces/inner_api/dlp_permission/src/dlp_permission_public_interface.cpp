@@ -29,6 +29,9 @@ const std::string DLP_OFFLINE_FLAG = "offlineAccess";
 const std::string DLP_EXTRA_INFO = "extra_info";
 const std::string DLP_EXTRA_INFO_LOW_CAMEL_CASE = "extraInfo";
 const std::string DLP_HMAC_VALUE = "hmacValue";
+static const std::string DLP_REAL_TYPE = "realFileType";
+static const uint32_t MIN_REALY_TYPE_LENGTH = 2;
+static const uint32_t MAX_REALY_TYPE_LENGTH = 5;
 static bool checkParams(GenerateInfoParams& params, const nlohmann::json& jsonObj,
                         const std::string& versionKey, const std::string& infoKey)
 {
@@ -66,6 +69,9 @@ int32_t GenerateDlpGeneralInfo(const GenerateInfoParams& params, std::string& ge
     }
     if (version >= HMAC_VERSION) {
         dlp_general_info[DLP_HMAC_VALUE] = params.hmacVal;
+    }
+    if (params.realType.size() >= MIN_REALY_TYPE_LENGTH && params.realType.size() <= MAX_REALY_TYPE_LENGTH) {
+        dlp_general_info[DLP_REAL_TYPE] = params.realType;
     }
     generalInfo = dlp_general_info.dump();
     return DLP_OK;
@@ -107,6 +113,10 @@ int32_t ParseDlpGeneralInfo(const std::string& generalInfo, GenerateInfoParams& 
         params.hmacVal = iter->get<std::string>();
     } else if (params.version >= HMAC_VERSION) {
         return DLP_PARSE_ERROR_VALUE_INVALID;
+    }
+    iter = jsonObj.find(DLP_REAL_TYPE);
+    if (iter != jsonObj.end() && iter->is_string()) {
+        params.realType = iter->get<std::string>();
     }
     return DLP_OK;
 }

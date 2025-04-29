@@ -16,19 +16,30 @@
 #include "dlp_utils.h"
 #include <cctype>
 #include <unistd.h>
+#include <sys/stat.h>
+#include <fstream>
+#include <sstream>
+#include <filesystem>
 #include "dlp_permission.h"
 #include "dlp_permission_log.h"
+#include "dlp_permission_public_interface.h"
+#include "dlp_zip.h"
 
 namespace OHOS {
 namespace Security {
 namespace DlpPermission {
-
+using Defer = std::shared_ptr<void>;
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "DlpUtils"};
 static constexpr uint32_t MAX_DLP_FILE_SIZE = 1000;
 static const std::string DLP_FILE_SUFFIXS = ".dlp";
 static const std::string DEFAULT_STRINGS = "";
+const std::string DLP_GENERAL_INFO = "dlp_general_info";
+const std::string CACHE_PATH = "/data/storage/el2/base/files/cache/";
+const uint32_t DLP_CWD_MAX = 256;
 }
+
+std::mutex g_fileOpLock;
 
 sptr<AppExecFwk::IBundleMgr> DlpUtils::GetBundleMgrProxy(void)
 {
@@ -83,9 +94,15 @@ std::string DlpUtils::ToLowerString(const std::string& str)
 std::string DlpUtils::GetFileTypeBySuffix(const std::string& suffix)
 {
     std::string lower = DlpUtils::ToLowerString(suffix);
-    auto iter = FILE_TYPE_MAP.find(lower);
-    if (iter != FILE_TYPE_MAP.end()) {
-        return iter->second;
+    for (size_t len = MAX_REALY_TYPE_LENGTH; len >= MIN_REALY_TYPE_LENGTH; len--) {
+        if (len > lower.size()) {
+            continue;
+        }
+        std::string newStr = lower.substr(0, len);
+        auto iter = FILE_TYPE_MAP.find(newStr);
+        if (iter != FILE_TYPE_MAP.end()) {
+            return iter->second;
+        }
     }
     return DEFAULT_STRINGS;
 }
@@ -128,6 +145,124 @@ int32_t DlpUtils::GetFileNameWithFd(const int32_t &fd, std::string &srcFileName)
     srcFileName = std::string(fileName);
     delete[] fileName;
     return DLP_OK;
+}
+
+static bool IsExistFile(const std::string& path)
+{
+    if (path.empty()) {
+        return false;
+    }
+
+    struct stat buf = {};
+    if (stat(path.c_str(), &buf) != 0) {
+        return false;
+    }
+
+    return S_ISREG(buf.st_mode);
+}
+
+static std::string GetFileContent(const std::string& path)
+{
+    if (!IsExistFile(path)) {
+        DLP_LOG_DEBUG(LABEL, "cannot find file, path = %{public}s", path.c_str());
+        return DEFAULT_STRINGS;
+    }
+    std::stringstream buffer;
+    std::ifstream i(path);
+    if (!i.is_open()) {
+        DLP_LOG_DEBUG(LABEL, "cannot open file %{public}s, errno %{public}d.", path.c_str(), errno);
+        return DEFAULT_STRINGS;
+    }
+    buffer << i.rdbuf();
+    std::string content = buffer.str();
+    i.close();
+    return content;
+}
+
+static void RemoveCachePath(const std::string& path)
+{
+    if (remove(DLP_GENERAL_INFO.c_str()) != 0) {
+        DLP_LOG_ERROR(LABEL, "remove dlp_general_info file fail, error %{public}s", strerror(errno));
+        return;
+    }
+    if (rmdir(path.c_str()) != 0) {
+        DLP_LOG_ERROR(LABEL, "remove cache path fail, error %{public}s", strerror(errno));
+    }
+}
+
+static std::string GetGenerateInfoStr(const int32_t& fd)
+{
+    std::lock_guard<std::mutex> lock(g_fileOpLock);
+    char cwd[DLP_CWD_MAX] = {0};
+    if (getcwd(cwd, DLP_CWD_MAX) == nullptr) {
+        DLP_LOG_ERROR(LABEL, "getcwd fail error %{public}s", strerror(errno));
+        return DEFAULT_STRINGS;
+    }
+    Defer p(nullptr, [&](...) {
+        if (chdir(cwd) != 0) {
+            DLP_LOG_ERROR(LABEL, "chdir failed, %{public}s", strerror(errno));
+        }
+    });
+
+    std::filesystem::path cachePath = CACHE_PATH;
+    if (!std::filesystem::exists(cachePath) || !std::filesystem::is_directory(cachePath)) {
+        if (mkdir(cachePath.c_str(), S_IRWXU) != 0) {
+            DLP_LOG_ERROR(LABEL, "mkdir cache path failed, errorno is %{public}s", strerror(errno));
+            return DEFAULT_STRINGS;
+        }
+    }
+
+    int64_t timeStamp =
+        std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch())
+            .count();
+    std::string path = CACHE_PATH + std::to_string(timeStamp);
+    if (mkdir(path.c_str(), S_IRWXU) != 0) {
+        DLP_LOG_ERROR(LABEL, "mkdir timeStamp path failed, errorno is %{public}s", strerror(errno));
+        return DEFAULT_STRINGS;
+    }
+
+    if (chdir(path.c_str()) != 0) {
+        DLP_LOG_ERROR(LABEL, "chdir cache err, errno is %{public}d", errno);
+        RemoveCachePath(path);
+        return DEFAULT_STRINGS;
+    }
+    if (!CheckUnzipFileInfo(fd) ||
+        UnzipSpecificFile(fd, DLP_GENERAL_INFO.c_str(), DLP_GENERAL_INFO.c_str()) != ZIP_OK) {
+        RemoveCachePath(path);
+        return DEFAULT_STRINGS;
+    }
+
+    std::string generateInfoStr = GetFileContent(DLP_GENERAL_INFO);
+    RemoveCachePath(path);
+    return generateInfoStr;
+}
+
+std::string DlpUtils::GetRealTypeWithFd(const int32_t& fd)
+{
+    std::string realType = DEFAULT_STRINGS;
+    do {
+        std::string generateInfoStr = GetGenerateInfoStr(fd);
+        if (generateInfoStr == DEFAULT_STRINGS) {
+            break;
+        }
+        GenerateInfoParams params;
+        if (ParseDlpGeneralInfo(generateInfoStr, params) != DLP_OK) {
+            DLP_LOG_ERROR(LABEL, "ParseDlpGeneralInfo error: %{public}s", generateInfoStr.c_str());
+            break;
+        }
+        realType = params.realType;
+        if (realType.size() >= MIN_REALY_TYPE_LENGTH && realType.size() <= MAX_REALY_TYPE_LENGTH) {
+            return realType;
+        }
+    } while (0);
+    DLP_LOG_DEBUG(LABEL, "not get real file type in dlp_general_info, will get to file name.");
+
+    std::string fileName;
+    if (DlpUtils::GetFileNameWithFd(fd, fileName) != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "Get file name with fd error");
+        return DEFAULT_STRINGS;
+    }
+    return DlpUtils::GetDlpFileRealSuffix(fileName);
 }
 }  // namespace DlpPermission
 }  // namespace Security

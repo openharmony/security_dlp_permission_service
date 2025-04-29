@@ -29,6 +29,8 @@ namespace DlpPermission {
 
 static const std::string DLP_AUTH_POLICY = "/system/etc/dlp_auth_policy.json";
 static const std::string DLP_DEFAULT_AUTH_POLICY = "default";
+static const uint32_t MIN_REALY_TYPE_LENGTH = 2;
+static const uint32_t MAX_REALY_TYPE_LENGTH = 5;
 
 static const std::unordered_map<std::string, std::string> FILE_TYPE_MAP = {
     {"txt", "support_txt_dlp"},
@@ -62,8 +64,9 @@ public:
         std::vector<std::string> &authPolicy);
     static std::string GetFileTypeBySuffix(const std::string& suffix);
     static std::string GetDlpFileRealSuffix(const std::string& dlpFileName);
-    static int32_t GetFileNameWithFd(const int32_t &fd, std::string &srcFileName);
+    static int32_t GetFileNameWithFd(const int32_t& fd, std::string& srcFileName);
     static std::string ToLowerString(const std::string& str);
+    static std::string GetRealTypeWithFd(const int32_t& fd);
 };
 }  // namespace DlpPermission
 }  // namespace Security

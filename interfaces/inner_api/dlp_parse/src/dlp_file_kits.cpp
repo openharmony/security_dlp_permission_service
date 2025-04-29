@@ -35,6 +35,7 @@ namespace DlpPermission {
 namespace {
     static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "DlpFileKits"};
     static const std::string FILE_SCHEME_PREFIX = "file://";
+    static const std::string DEFAULT_STRINGS = "";
 } // namespace
 using Want = OHOS::AAFwk::Want;
 using WantParams = OHOS::AAFwk::WantParams;
@@ -90,7 +91,7 @@ static bool IsDlpFileName(const std::string& dlpFileName)
 {
     uint32_t dlpSuffixLen = DLP_FILE_SUFFIX.size();
     uint32_t fileNameLen = dlpFileName.size();
-    if (fileNameLen <= dlpSuffixLen) {
+    if (fileNameLen < dlpSuffixLen) {
         return false;
     }
 
@@ -104,9 +105,15 @@ static bool IsDlpFileName(const std::string& dlpFileName)
 static std::string GetMimeTypeBySuffix(const std::string& suffix)
 {
     std::string lower = DlpUtils::ToLowerString(suffix);
-    auto iter = SUFFIX_MIMETYPE_MAP.find(lower);
-    if (iter != SUFFIX_MIMETYPE_MAP.end()) {
-        return iter->second;
+    for (size_t len = MAX_REALY_TYPE_LENGTH; len >= MIN_REALY_TYPE_LENGTH; len--) {
+        if (len > lower.size()) {
+            continue;
+        }
+        std::string newStr = lower.substr(0, len);
+        auto iter = SUFFIX_MIMETYPE_MAP.find(newStr);
+        if (iter != SUFFIX_MIMETYPE_MAP.end()) {
+            return iter->second;
+        }
     }
     return DEFAULT_STRING;
 }
@@ -195,9 +202,7 @@ bool DlpFileKits::GetSandboxFlag(Want& want)
         close(fd);
         return false;
     }
-    close(fd);
-    fd = -1;
-    std::string realSuffix = DlpUtils::GetDlpFileRealSuffix(fileName);
+    std::string realSuffix = DlpUtils::GetRealTypeWithFd(fd);
     if (realSuffix != DEFAULT_STRING) {
         DLP_LOG_DEBUG(LABEL, "Real suffix is %{public}s", realSuffix.c_str());
         std::string realType = GetMimeTypeBySuffix(realSuffix);
@@ -208,6 +213,8 @@ bool DlpFileKits::GetSandboxFlag(Want& want)
                 realSuffix.c_str(), want.GetType().c_str());
         }
     }
+    close(fd);
+    fd = -1;
     DLP_LOG_INFO(LABEL, "Sanbox flag is true");
     return true;
 }
@@ -241,14 +248,47 @@ static int32_t ConvertAbilityInfoWithBundleName(const std::string &abilityName, 
     return DLP_OK;
 }
 
-static bool IsSupportDlp(const std::vector<std::string> &authPolicy,
-    const std::string &bundleName, const std::string &fileType)
+static bool IsSupportDlp(const std::vector<std::string> &authPolicy, const std::string &bundleName)
 {
     auto it = std::find(authPolicy.begin(), authPolicy.end(), bundleName);
     if (it != authPolicy.end()) {
         return true;
     }
     return false;
+}
+
+static std::string GetRealFileType(const AAFwk::Want &want)
+{
+    std::string uri = want.GetUriString();
+    if (uri.find(FILE_SCHEME_PREFIX) != 0) {
+        DLP_LOG_DEBUG(LABEL, "uri is missing file://");
+        return DEFAULT_STRINGS;
+    }
+    AppFileService::ModuleFileUri::FileUri fileUri(uri);
+    std::string fileName = fileUri.GetName();
+    if (fileName.empty() || !IsDlpFileName(fileName)) {
+        DLP_LOG_ERROR(LABEL, "File name is not exist or not dlp, name=%{private}s", fileName.c_str());
+        return DEFAULT_STRINGS;
+    }
+
+    std::string realMimeType = want.GetType();
+    if (realMimeType == DEFAULT_STRING) {
+        DLP_LOG_ERROR(LABEL, "get real mime mype error.");
+        return DEFAULT_STRINGS;
+    }
+
+    std::string realSuffix = DEFAULT_STRING;
+    for (const auto& p : SUFFIX_MIMETYPE_MAP) {
+        if (p.second == realMimeType) {
+            realSuffix = p.first;
+            break;
+        }
+    }
+    std::string fileType = DlpUtils::GetFileTypeBySuffix(realSuffix);
+    if (fileType == DEFAULT_STRING) {
+        DLP_LOG_ERROR(LABEL, "%{public}s is not support dlp.", realSuffix.c_str());
+    }
+    return fileType;
 }
 
 void DlpFileKits::ConvertAbilityInfoWithSupportDlp(const AAFwk::Want &want,
@@ -259,30 +299,18 @@ void DlpFileKits::ConvertAbilityInfoWithSupportDlp(const AAFwk::Want &want,
         return;
     }
 
-    std::string uri = want.GetUriString();
-    AppFileService::ModuleFileUri::FileUri fileUri(uri);
-    std::string fileName = fileUri.GetName();
-    if (fileName.empty() || !IsDlpFileName(fileName)) {
-        DLP_LOG_ERROR(LABEL, "File name is not exist or not dlp, name=%{private}s", fileName.c_str());
+    std::string fileType = GetRealFileType(want);
+    if (fileType == DEFAULT_STRING) {
         return;
     }
 
-    std::string realSuffix = DlpUtils::GetDlpFileRealSuffix(fileName);
-    if (realSuffix == DEFAULT_STRING) {
-        return;
-    }
-    std::string fileType = DlpUtils::GetFileTypeBySuffix(realSuffix);
-    if (fileType == DEFAULT_STRING) {
-        DLP_LOG_ERROR(LABEL, "%{public}s is not support dlp.", realSuffix.c_str());
-        return;
-    }
     std::vector<std::string> authPolicy;
     if (!DlpUtils::GetAuthPolicyWithType(DLP_AUTH_POLICY, fileType, authPolicy)) {
         return;
     }
 
     for (auto it = abilityInfos.begin(); it != abilityInfos.end();) {
-        if (!IsSupportDlp(authPolicy, it->bundleName, fileType)) {
+        if (!IsSupportDlp(authPolicy, it->bundleName)) {
             abilityInfos.erase(it);
         } else {
             ++it;

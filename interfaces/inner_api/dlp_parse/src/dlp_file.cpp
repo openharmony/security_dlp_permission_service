@@ -28,6 +28,7 @@
 #include "dlp_permission_public_interface.h"
 #include "dlp_permission_log.h"
 #include "dlp_zip.h"
+#include "dlp_utils.h"
 #include "hex_string.h"
 #include "ohos_account_kits.h"
 #ifdef DLP_PARSE_INNER
@@ -50,6 +51,7 @@ const std::string DLP_CERT = "dlp_cert";
 const std::string DLP_ENC_DATA = "encrypted_data";
 const std::string DLP_OPENING_ENC_DATA = "opened_encrypted_data";
 const std::string DLP_GEN_FILE = "gen_dlp_file";
+const std::string DEFAULT_STRINGS = "";
 } // namespace
 std::mutex g_fileOpLock_;
 
@@ -87,6 +89,20 @@ DlpFile::DlpFile(int32_t dlpFd, const std::string &workDir, int64_t index, bool 
     hmac_.size = 0;
 
     encDataFd_ = -1;
+
+    std::string suffix = DlpUtils::GetRealTypeWithFd(dlpFd_);
+    std::string lower = DlpUtils::ToLowerString(suffix);
+    for (size_t len = MAX_REALY_TYPE_LENGTH; len >= MIN_REALY_TYPE_LENGTH; len--) {
+        if (len > lower.size()) {
+            continue;
+        }
+        std::string newStr = lower.substr(0, len);
+        auto iter = FILE_TYPE_MAP.find(newStr);
+        if (iter != FILE_TYPE_MAP.end()) {
+            head_.realType = newStr;
+            break;
+        }
+    }
 }
 
 DlpFile::~DlpFile()
@@ -1002,8 +1018,8 @@ static int32_t GetFileSize(int32_t fd, uint32_t& fileLen)
     return ret;
 }
 
-static void SetDlpGeneralInfo(bool accessFlag, std::string& contactAccount, const std::string& hmacStr,
-    const uint32_t& version, std::string& out)
+static std::string SetDlpGeneralInfo(bool accessFlag, std::string& contactAccount, const std::string& hmacStr,
+    const uint32_t& version, const std::string& realType)
 {
     GenerateInfoParams params = {
         .version = version,
@@ -1011,8 +1027,11 @@ static void SetDlpGeneralInfo(bool accessFlag, std::string& contactAccount, cons
         .contactAccount = contactAccount,
         .extraInfo = {"kia_info", "cert_info", "enc_data"},
         .hmacVal = hmacStr,
+        .realType = realType,
     };
+    std::string out;
     GenerateDlpGeneralInfo(params, out);
+    return out;
 }
 
 int32_t DlpFile::GenEncData(int32_t inPlainFileFd)
@@ -1109,8 +1128,7 @@ int32_t DlpFile::AddGeneralInfoToBuff(int32_t encFile)
         DLP_LOG_ERROR(LABEL, "GetHmacVal fail");
         return ret;
     }
-    std::string ja;
-    SetDlpGeneralInfo(head_.offlineAccess, contactAccount_, hmacStr, head_.version, ja);
+    std::string ja = SetDlpGeneralInfo(head_.offlineAccess, contactAccount_, hmacStr, head_.version, head_.realType);
     ret = AddBuffToZip(reinterpret_cast<const void *>(ja.c_str()), ja.size(),
         DLP_GENERAL_INFO.c_str(), DLP_GEN_FILE.c_str());
     CHECK_RET(ret, 0, DLP_PARSE_ERROR_FILE_OPERATE_FAIL, LABEL);
@@ -1215,6 +1233,18 @@ int32_t DlpFile::GenFileInRaw(int32_t inPlainFileFd)
     return DoDlpContentCryptyOperation(inPlainFileFd, dlpFd_, 0, fileLen, true);
 }
 
+static std::string GetFileSuffix(const std::string& fileName)
+{
+    char escape = '.';
+    std::size_t escapeLocate = fileName.find_last_of(escape);
+    if (escapeLocate >= fileName.size()) {
+        DLP_LOG_ERROR(LABEL, "Get file suffix fail, no '.' in file name");
+        return DEFAULT_STRINGS;
+    }
+
+    return fileName.substr(escapeLocate + 1);
+}
+
 int32_t DlpFile::GenFile(int32_t inPlainFileFd)
 {
     if (inPlainFileFd < 0 || dlpFd_ < 0 || !IsValidCipher(cipher_.encKey, cipher_.usageSpec, cipher_.hmacKey)) {
@@ -1236,6 +1266,10 @@ int32_t DlpFile::GenFile(int32_t inPlainFileFd)
         head_.txtOffset = 0;
         if (hmac_.size != 0) {
             CleanBlobParam(hmac_);
+        }
+        std::string fileName;
+        if (DlpUtils::GetFileNameWithFd(inPlainFileFd, fileName) == DLP_OK) {
+            head_.realType = GetFileSuffix(fileName);
         }
         return GenFileInZip(inPlainFileFd);
     } else {
