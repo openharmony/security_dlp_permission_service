@@ -59,6 +59,7 @@ struct DlpHeader {
     uint32_t contactAccountSize;
     uint32_t offlineCertOffset;
     uint32_t offlineCertSize;
+    std::string realType;
 };
 
 enum VALID_KEY_SIZE {

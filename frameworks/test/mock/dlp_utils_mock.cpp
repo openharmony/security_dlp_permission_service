@@ -77,6 +77,11 @@ int32_t DlpUtils::GetFileNameWithFd(const int32_t &fd, std::string &srcFileName)
     srcFileName = "test.txt.dlp";
     return DLP_OK;
 }
+
+std::string DlpUtils::GetRealTypeWithFd(const int32_t& fd)
+{
+    return "txt";
+}
 }  // namespace DlpPermission
 }  // namespace Security
 }  // namespace OHOS

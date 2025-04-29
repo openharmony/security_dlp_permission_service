@@ -500,9 +500,9 @@ static std::string GetAppIdWithBundleName(const std::string &bundleName, const i
     return bundleInfo.appId;
 }
 
-static int32_t SupportDlpWithAppId(const std::string &appId, const std::string &fileName)
+static int32_t SupportDlpWithAppId(const std::string &appId, const int32_t &dlpFileFd)
 {
-    std::string realSuffix = DlpUtils::GetDlpFileRealSuffix(fileName);
+    std::string realSuffix = DlpUtils::GetRealTypeWithFd(dlpFileFd);
     if (realSuffix == DEFAULT_STRING) {
         DLP_LOG_ERROR(LABEL, "get realSuffix error.");
         return DLP_PARSE_ERROR_VALUE_INVALID;
@@ -542,13 +542,7 @@ int32_t DlpFileManager::OpenDlpFile(int32_t dlpFileFd, std::shared_ptr<DlpFile>&
         return DLP_PARSE_ERROR_FD_ERROR;
     }
 
-    std::string fileName;
-    int32_t ret = DlpUtils::GetFileNameWithFd(dlpFileFd, fileName);
-    if (ret != DLP_OK) {
-        return ret;
-    }
-
-    ret = SupportDlpWithAppId(appId, fileName);
+    int32_t ret = SupportDlpWithAppId(appId, dlpFileFd);
     if (ret != DLP_OK) {
         return ret;
     }
