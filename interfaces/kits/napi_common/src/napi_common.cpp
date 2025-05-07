@@ -29,6 +29,7 @@ namespace Security {
 namespace DlpPermission {
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "DlpPermissionCommon"};
+static const int MAX_FILE_NAME_LEN = 256;
 const std::string PARAM_UI_EXTENSION_TYPE = "ability.want.params.uiExtensionType";
 const std::string SYS_COMMON_UI = "sys/commonUI";
 const std::string DLP_MANAGER_BUNDLENAME = "com.ohos.dlpmanager";
