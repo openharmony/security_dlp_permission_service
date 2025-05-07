@@ -48,19 +48,6 @@ constexpr int32_t PARAM_SIZE_THREE = 3;
 constexpr int32_t PARAM_SIZE_FOUR = 4;
 constexpr int32_t PARAM_SIZE_FIVE = 5;
 
-
-#define NAPI_CALL_BASE_WITH_SCOPE(env, theCall, retVal, scope) \
-    do {                                                       \
-        if ((theCall) != napi_ok) {                            \
-            GET_AND_THROW_LAST_ERROR((env));                   \
-            napi_close_handle_scope(env, scope);               \
-            return retVal;                                     \
-        }                                                      \
-    } while (0)
-
-#define NAPI_CALL_RETURN_VOID_WITH_SCOPE(env, theCall, scope) \
-    NAPI_CALL_BASE_WITH_SCOPE(env, theCall, NAPI_RETVAL_NOTHING, scope)
-
 class RegisterDlpSandboxChangeScopePtr : public DlpSandboxChangeCallbackCustomize {
 public:
     RegisterDlpSandboxChangeScopePtr();
