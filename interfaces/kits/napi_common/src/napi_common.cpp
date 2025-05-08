@@ -45,7 +45,7 @@ static bool ConvertDlpSandboxChangeInfo(napi_env env, napi_value value, const Dl
     NAPI_CALL_BASE(env, napi_create_string_utf8(env, result.bundleName.c_str(), NAPI_AUTO_LENGTH, &element), false);
     NAPI_CALL_BASE(env, napi_set_named_property(env, value, "bundleName", element), false);
     return true;
-};
+}
 
 static void UvQueueWorkDlpSandboxChanged(RegisterDlpSandboxChangeWorker *worker)
 {
@@ -57,29 +57,36 @@ static void UvQueueWorkDlpSandboxChanged(RegisterDlpSandboxChangeWorker *worker)
         delete worker;
         return;
     }
-    napi_value result = { nullptr };
-    NAPI_CALL_RETURN_VOID_WITH_SCOPE(worker->env, napi_create_array(worker->env, &result), scope);
-    if (!ConvertDlpSandboxChangeInfo(worker->env, result, worker->result)) {
-        DLP_LOG_ERROR(LABEL, "ConvertDlpSandboxChangeInfo failed");
-        napi_close_handle_scope(worker->env, scope);
-        delete worker;
-        return;
-    }
-
-    napi_value undefined = nullptr;
-    napi_value callback = nullptr;
-    napi_value resultout = nullptr;
-    NAPI_CALL_RETURN_VOID_WITH_SCOPE(worker->env,
-        napi_get_undefined(worker->env, &undefined), scope);
-    NAPI_CALL_RETURN_VOID_WITH_SCOPE(worker->env,
-        napi_get_reference_value(worker->env, worker->ref, &callback), scope);
-    NAPI_CALL_RETURN_VOID_WITH_SCOPE(worker->env,
-        napi_call_function(worker->env, undefined, callback, 1, &result, &resultout), scope);
-
+    do {
+        napi_value result = { nullptr };
+        if (napi_create_array(worker->env, &result) != napi_ok) {
+            GET_AND_THROW_LAST_ERROR(worker->env);
+            break;
+        }
+        if (!ConvertDlpSandboxChangeInfo(worker->env, result, worker->result)) {
+            DLP_LOG_ERROR(LABEL, "ConvertDlpSandboxChangeInfo failed");
+            break;
+        }
+        napi_value undefined = nullptr;
+        napi_value callback = nullptr;
+        napi_value resultout = nullptr;
+        if (napi_get_undefined(worker->env, &undefined) != napi_ok) {
+            GET_AND_THROW_LAST_ERROR(worker->env);
+            break;
+        }
+        if (napi_get_reference_value(worker->env, worker->ref, &callback) != napi_ok) {
+            GET_AND_THROW_LAST_ERROR(worker->env);
+            break;
+        }
+        if (napi_call_function(worker->env, undefined, callback, 1, &result, &resultout) != napi_ok) {
+            GET_AND_THROW_LAST_ERROR(worker->env);
+            break;
+        }
+    } while (0);
     napi_close_handle_scope(worker->env, scope);
     delete worker;
     DLP_LOG_DEBUG(LABEL, "UvQueueWorkDlpSandboxChanged end");
-};
+}
 
 static bool ConvertOpenDlpFileCallbackInfo(napi_env env, napi_value value, const OpenDlpFileCallbackInfo &result)
 {
@@ -90,7 +97,7 @@ static bool ConvertOpenDlpFileCallbackInfo(napi_env env, napi_value value, const
     NAPI_CALL_BASE(env, napi_create_bigint_uint64(env, result.timeStamp, &element), false);
     NAPI_CALL_BASE(env, napi_set_named_property(env, value, "lastOpenTime", element), false);
     return true;
-};
+}
 
 static void UvQueueWorkOpenDlpFile(OpenDlpFileSubscriberWorker *worker)
 {
@@ -103,30 +110,36 @@ static void UvQueueWorkOpenDlpFile(OpenDlpFileSubscriberWorker *worker)
         delete worker;
         return;
     }
-
-    napi_value result = { nullptr };
-    NAPI_CALL_RETURN_VOID_WITH_SCOPE(worker->env, napi_create_array(worker->env, &result), scope);
-    if (!ConvertOpenDlpFileCallbackInfo(worker->env, result, worker->result)) {
-        DLP_LOG_ERROR(LABEL, "ConvertOpenDlpFileCallbackInfo failed");
-        napi_close_handle_scope(worker->env, scope);
-        delete worker;
-        return;
-    }
-
-    napi_value undefined = nullptr;
-    napi_value callback = nullptr;
-    napi_value resultout = nullptr;
-    NAPI_CALL_RETURN_VOID_WITH_SCOPE(worker->env,
-        napi_get_undefined(worker->env, &undefined), scope);
-    NAPI_CALL_RETURN_VOID_WITH_SCOPE(worker->env,
-        napi_get_reference_value(worker->env, worker->ref, &callback), scope);
-    NAPI_CALL_RETURN_VOID_WITH_SCOPE(worker->env,
-        napi_call_function(worker->env, undefined, callback, 1, &result, &resultout), scope);
-
+    do {
+        napi_value result = { nullptr };
+        if (napi_create_array(worker->env, &result) != napi_ok) {
+            GET_AND_THROW_LAST_ERROR(worker->env);
+            break;
+        }
+        if (!ConvertOpenDlpFileCallbackInfo(worker->env, result, worker->result)) {
+            DLP_LOG_ERROR(LABEL, "ConvertOpenDlpFileCallbackInfo failed");
+            break;
+        }
+        napi_value undefined = nullptr;
+        napi_value callback = nullptr;
+        napi_value resultout = nullptr;
+        if (napi_get_undefined(worker->env, &undefined) != napi_ok) {
+            GET_AND_THROW_LAST_ERROR(worker->env);
+            break;
+        }
+        if (napi_get_reference_value(worker->env, worker->ref, &callback) != napi_ok) {
+            GET_AND_THROW_LAST_ERROR(worker->env);
+            break;
+        }
+        if (napi_call_function(worker->env, undefined, callback, 1, &result, &resultout) != napi_ok) {
+            GET_AND_THROW_LAST_ERROR(worker->env);
+            break;
+        }
+    } while (0);
     napi_close_handle_scope(worker->env, scope);
     delete worker;
     DLP_LOG_INFO(LABEL, "UvQueueWorkOpenDlpFile end");
-};
+}
 } // namespace
 
 RegisterDlpSandboxChangeScopePtr::RegisterDlpSandboxChangeScopePtr() {}
