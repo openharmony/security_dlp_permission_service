@@ -64,7 +64,7 @@ static void InitCertJson(const uint8_t* data, size_t size, Json &certJson)
 
 static void FuzzTest(const uint8_t* data, size_t size)
 {
-    if ((data == nullptr) || (size == 0)) {
+    if ((data == nullptr) || (size < BUFFER_LENGTH)) {
         return;
     }
 
