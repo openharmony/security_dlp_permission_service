@@ -24,7 +24,7 @@ namespace OHOS {
 namespace Security {
 namespace DlpPermission {
 static constexpr uint32_t INVALID_FILE_SIZE = 0xffffffff;
-static constexpr uint32_t DLP_BUFF_LEN = 4096;
+static constexpr uint32_t DLP_BUFF_LEN = 1024 * 1024; // 1M
 static constexpr uint32_t IV_SIZE = 16;
 static constexpr uint32_t DLP_FILE_MAGIC = 0x87f4922;
 static constexpr uint32_t DLP_FUSE_MAX_BUFFLEN = (10 * 1024 * 1024); // 10M
