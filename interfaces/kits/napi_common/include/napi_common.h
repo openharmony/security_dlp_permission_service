@@ -189,6 +189,26 @@ struct IsDLPFeatureProvidedAsyncContext : public CommonAsyncContext {
     bool isProvideDLPFeature = false;
 };
 
+struct GenerateDlpFileForEnterpriseAsyncContext : public CommonAsyncContext {
+    explicit GenerateDlpFileForEnterpriseAsyncContext(napi_env env) : CommonAsyncContext(env) {};
+    DlpProperty property;
+    CustomProperty customProperty;
+    int64_t plaintextFd = -1;
+    int64_t dlpFd = -1;
+};
+
+struct DecryptDlpFileAsyncContext : public CommonAsyncContext {
+    explicit DecryptDlpFileAsyncContext(napi_env env) : CommonAsyncContext(env) {};
+    int64_t dlpFd = -1;
+    int64_t plainFileFd = -1;
+};
+
+struct QueryDlpPolicyAsyncContext : public CommonAsyncContext {
+    explicit QueryDlpPolicyAsyncContext(napi_env env) : CommonAsyncContext(env) {};
+    int64_t dlpFd = -1;
+    std::string policyJsonString = "";
+};
+
 struct GetOriginalFileAsyncContext : public CommonAsyncContext {
     explicit GetOriginalFileAsyncContext(napi_env env) : CommonAsyncContext(env) {};
     std::string dlpFilename = "";
@@ -288,6 +308,13 @@ bool GetUninstallDlpSandboxParams(
 bool GetThirdInterfaceParams(
     const napi_env env, const napi_callback_info info, CommonAsyncContext& asyncContext);
 
+bool GetGenerateDlpFileForEnterpriseParam(
+    const napi_env env, const napi_callback_info info, GenerateDlpFileForEnterpriseAsyncContext& asyncContext);
+bool GetDecryptDlpFileParam(
+    const napi_env env, const napi_callback_info info, DecryptDlpFileAsyncContext& asyncContext);
+bool GetQueryDlpPolicyParam(
+    const napi_env env, const napi_callback_info info, QueryDlpPolicyAsyncContext& asyncContext);
+
 bool FillDlpSandboxChangeInfo(const napi_env env, const napi_value* argv, const std::string& type,
     const napi_value thisVar, RegisterDlpSandboxChangeInfo& registerSandboxChangeInfo);
 bool ParseInputToRegister(const napi_env env, const napi_callback_info cbInfo,
@@ -304,6 +331,7 @@ bool GetSandboxAppConfigParams(const napi_env env, const napi_callback_info info
     SandboxAppConfigAsyncContext* asyncContext);
 void GetDlpPropertyExpireTime(napi_env env, napi_value jsObject, DlpProperty& property);
 bool GetDlpProperty(napi_env env, napi_value object, DlpProperty& property);
+bool GetCustomProperty(napi_env env, napi_value object, CustomProperty& customProperty);
 bool ParseCallback(const napi_env& env, const napi_value& value, napi_ref& callbackRef);
 
 napi_value GetNapiValue(napi_env env, napi_value jsObject, const std::string& key);

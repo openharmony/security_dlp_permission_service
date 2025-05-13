@@ -40,6 +40,7 @@ public:
         const std::string& appId);
     int32_t CloseDlpFile(const std::shared_ptr<DlpFile>& dlpFile);
     int32_t RecoverDlpFile(std::shared_ptr<DlpFile>& file, int32_t plainFd) const;
+    int32_t SetDlpFileParams(std::shared_ptr<DlpFile>& filePtr, const DlpProperty& property) const;
 
 private:
     DlpFileManager() {};
@@ -58,7 +59,6 @@ private:
     void FreeChiperBlob(struct DlpBlob& key, struct DlpBlob& certData,
         struct DlpUsageSpec& usage, struct DlpBlob& hmacKey) const;
     void CleanTempBlob(struct DlpBlob& key, struct DlpCipherParam** tagIv, struct DlpBlob& hmacKey) const;
-    int32_t SetDlpFileParams(std::shared_ptr<DlpFile>& filePtr, const DlpProperty& property) const;
     std::mutex g_offlineLock_;
     OHOS::Utils::RWLock g_DlpMapLock_;
     std::unordered_map<int32_t, std::shared_ptr<DlpFile>> g_DlpFileMap_;

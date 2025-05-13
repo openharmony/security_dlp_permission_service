@@ -81,6 +81,15 @@ typedef struct SandboxInfo : public Parcelable {
     static SandboxInfo* Unmarshalling(Parcel &data);
 } SandboxInfo;
 
+enum class ActionType : uint32_t {
+    NOTOPEN = 0,
+    OPEN = 1
+};
+
+struct CustomProperty {
+    std::string enterprise = "";
+};
+
 struct DlpProperty {
     std::string ownerAccount;
     std::string ownerAccountId;
@@ -91,6 +100,8 @@ struct DlpProperty {
     bool supportEveryone = false;
     DLPFileAccess everyonePerm = DLPFileAccess::NO_PERMISSION;
     uint64_t expireTime = 0;
+    ActionType actionUponExpiry = ActionType::NOTOPEN;
+    CustomProperty customProperty;
 };
 
 class PermissionPolicy final {
@@ -113,6 +124,7 @@ public:
     void SetHmacKey(const uint8_t* key, uint32_t keyLen);
     uint8_t* GetHmacKey() const;
     uint32_t GetHmacKeyLen() const;
+    int32_t CheckActionUponExpiry();
 
     std::string ownerAccount_;
     std::string ownerAccountId_;
@@ -128,6 +140,8 @@ public:
     uint32_t needOnline_ = 0;
     uint32_t dlpVersion_ = 0;
     bool debug_ = false;
+    uint32_t actionUponExpiry_ = 0;
+    std::string customProperty_ = "";
 
 private:
     uint8_t* aeskey_;

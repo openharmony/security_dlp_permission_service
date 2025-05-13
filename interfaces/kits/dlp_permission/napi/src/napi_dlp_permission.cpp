@@ -24,6 +24,7 @@
 #include "dlp_permission_log.h"
 #include "dlp_permission_kit.h"
 #include "dlp_file_manager.h"
+#include "dlp_file_operator.h"
 #include "ipc_skeleton.h"
 #include "js_native_api_types.h"
 #include "napi_error_msg.h"
@@ -44,6 +45,7 @@ std::mutex g_lockForOpenDlpFileSubscriber;
 std::set<OpenDlpFileSubscriberContext*> g_openDlpFileSubscribers;
 RegisterDlpSandboxChangeInfo *g_dlpSandboxChangeInfoRegister = nullptr;
 const std::string PERMISSION_ACCESS_DLP_FILE = "ohos.permission.ACCESS_DLP_FILE";
+const std::string PERMISSION_ENTERPRISE_ACCESS_DLP_FILE = "ohos.permission.ENTERPRISE_ACCESS_DLP_FILE";
 static thread_local napi_ref dlpFileRef_;
 const std::string DLP_FILE_CLASS_NAME = "dlpFile";
 static constexpr size_t MAX_TYPE_LEN = 64;
@@ -1882,6 +1884,178 @@ napi_value NapiDlpPermission::StartDLPManagerForResult(napi_env env, napi_callba
     return result;
 }
 
+napi_value NapiDlpPermission::GenerateDlpFileForEnterprise(napi_env env, napi_callback_info cbInfo)
+{
+    if (!CheckPermission(env, PERMISSION_ENTERPRISE_ACCESS_DLP_FILE)) {
+        return nullptr;
+    }
+    auto asyncContextPtr = std::make_unique<GenerateDlpFileForEnterpriseAsyncContext>(env);
+
+    if (!GetGenerateDlpFileForEnterpriseParam(env, cbInfo, *asyncContextPtr)) {
+        return nullptr;
+    }
+    napi_value result = nullptr;
+    if (asyncContextPtr->callbackRef == nullptr) {
+        DLP_LOG_DEBUG(LABEL, "Create promise");
+        NAPI_CALL(env, napi_create_promise(env, &asyncContextPtr->deferred, &result));
+    } else {
+        DLP_LOG_DEBUG(LABEL, "Undefined the result parameter");
+        NAPI_CALL(env, napi_get_undefined(env, &result));
+    }
+    napi_value resource = nullptr;
+    NAPI_CALL(env, napi_create_string_utf8(env, "GenerateDlpFileForEnterprise", NAPI_AUTO_LENGTH, &resource));
+    NAPI_CALL(env, napi_create_async_work(env, nullptr, resource, GenerateDlpFileForEnterpriseExcute,
+        GenerateDlpFileForEnterpriseComplete, static_cast<void*>(asyncContextPtr.get()), &(asyncContextPtr->work)));
+    NAPI_CALL(env, napi_queue_async_work_with_qos(env, asyncContextPtr->work, napi_qos_user_initiated));
+    asyncContextPtr.release();
+    return result;
+}
+
+void NapiDlpPermission::GenerateDlpFileForEnterpriseExcute(napi_env env, void* data)
+{
+    DLP_LOG_DEBUG(LABEL, "GenerateDlpFileForEnterprise start run.");
+    auto asyncContext = reinterpret_cast<GenerateDlpFileForEnterpriseAsyncContext*>(data);
+    if (asyncContext == nullptr) {
+        DLP_LOG_ERROR(LABEL, "AsyncContext is nullptr.");
+        return;
+    }
+
+    asyncContext->errCode = EnterpriseSpaceDlpPermissionKit::GetInstance()->EncryptDlpFile(
+        asyncContext->property, asyncContext->customProperty, asyncContext->plaintextFd, asyncContext->dlpFd);
+}
+
+void NapiDlpPermission::GenerateDlpFileForEnterpriseComplete(napi_env env, napi_status status, void* data)
+{
+    DLP_LOG_DEBUG(LABEL, "GenerateDlpFileForEnterprise start run.");
+    auto asyncContext = reinterpret_cast<GenerateDlpFileForEnterpriseAsyncContext*>(data);
+    if (asyncContext == nullptr) {
+        DLP_LOG_ERROR(LABEL, "AsyncContext is nullptr.");
+        return;
+    }
+    std::unique_ptr<GenerateDlpFileForEnterpriseAsyncContext> asyncContextPtr { asyncContext };
+    napi_value resJs = nullptr;
+    if (asyncContext->errCode == DLP_OK) {
+        NAPI_CALL_RETURN_VOID(env, napi_get_undefined(env, &resJs));
+    }
+
+    ProcessCallbackOrPromise(env, asyncContext, resJs);
+}
+
+napi_value NapiDlpPermission::DecryptDlpFile(napi_env env, napi_callback_info cbInfo)
+{
+    if (!CheckPermission(env, PERMISSION_ENTERPRISE_ACCESS_DLP_FILE)) {
+        return nullptr;
+    }
+    auto asyncContextPtr = std::make_unique<DecryptDlpFileAsyncContext>(env);
+
+    if (!GetDecryptDlpFileParam(env, cbInfo, *asyncContextPtr)) {
+        return nullptr;
+    }
+    napi_value result = nullptr;
+    if (asyncContextPtr->callbackRef == nullptr) {
+        DLP_LOG_DEBUG(LABEL, "Create promise");
+        NAPI_CALL(env, napi_create_promise(env, &asyncContextPtr->deferred, &result));
+    } else {
+        DLP_LOG_DEBUG(LABEL, "Undefined the result parameter");
+        NAPI_CALL(env, napi_get_undefined(env, &result));
+    }
+    napi_value resource = nullptr;
+    NAPI_CALL(env, napi_create_string_utf8(env, "QueryDlpPolicy", NAPI_AUTO_LENGTH, &resource));
+    NAPI_CALL(env, napi_create_async_work(env, nullptr, resource, DecryptDlpFileExcute,
+        DecryptDlpFileComplete, static_cast<void*>(asyncContextPtr.get()), &(asyncContextPtr->work)));
+    NAPI_CALL(env, napi_queue_async_work_with_qos(env, asyncContextPtr->work, napi_qos_user_initiated));
+    asyncContextPtr.release();
+    return result;
+}
+
+void NapiDlpPermission::DecryptDlpFileExcute(napi_env env, void* data)
+{
+    DLP_LOG_DEBUG(LABEL, "QueryDlpPolicy start run.");
+    auto asyncContext = reinterpret_cast<DecryptDlpFileAsyncContext*>(data);
+    if (asyncContext == nullptr) {
+        DLP_LOG_ERROR(LABEL, "AsyncContext is nullptr.");
+        return;
+    }
+
+    asyncContext->errCode = EnterpriseSpaceDlpPermissionKit::GetInstance()->DecryptDlpFile(
+        asyncContext->plainFileFd, asyncContext->dlpFd);
+}
+
+void NapiDlpPermission::DecryptDlpFileComplete(napi_env env, napi_status status, void* data)
+{
+    DLP_LOG_DEBUG(LABEL, "DecryptDlpFile start run.");
+    auto asyncContext = reinterpret_cast<DecryptDlpFileAsyncContext*>(data);
+    if (asyncContext == nullptr) {
+        DLP_LOG_ERROR(LABEL, "AsyncContext is nullptr.");
+        return;
+    }
+    std::unique_ptr<DecryptDlpFileAsyncContext> asyncContextPtr { asyncContext };
+    napi_value resJs = nullptr;
+    if (asyncContext->errCode == DLP_OK) {
+        NAPI_CALL_RETURN_VOID(env, napi_get_undefined(env, &resJs));
+    }
+
+    ProcessCallbackOrPromise(env, asyncContext, resJs);
+}
+
+napi_value NapiDlpPermission::QueryDlpPolicy(napi_env env, napi_callback_info cbInfo)
+{
+    if (!CheckPermission(env, PERMISSION_ENTERPRISE_ACCESS_DLP_FILE)) {
+        return nullptr;
+    }
+    auto asyncContextPtr = std::make_unique<QueryDlpPolicyAsyncContext>(env);
+
+    if (!GetQueryDlpPolicyParam(env, cbInfo, *asyncContextPtr)) {
+        return nullptr;
+    }
+    napi_value result = nullptr;
+    if (asyncContextPtr->callbackRef == nullptr) {
+        DLP_LOG_DEBUG(LABEL, "Create promise");
+        NAPI_CALL(env, napi_create_promise(env, &asyncContextPtr->deferred, &result));
+    } else {
+        DLP_LOG_DEBUG(LABEL, "Undefined the result parameter");
+        NAPI_CALL(env, napi_get_undefined(env, &result));
+    }
+    napi_value resource = nullptr;
+    NAPI_CALL(env, napi_create_string_utf8(env, "QueryDlpPolicy", NAPI_AUTO_LENGTH, &resource));
+    NAPI_CALL(env, napi_create_async_work(env, nullptr, resource, QueryDlpPolicyExcute,
+        QueryDlpPolicyComplete, static_cast<void*>(asyncContextPtr.get()), &(asyncContextPtr->work)));
+    NAPI_CALL(env, napi_queue_async_work_with_qos(env, asyncContextPtr->work, napi_qos_user_initiated));
+    asyncContextPtr.release();
+    return result;
+}
+
+void NapiDlpPermission::QueryDlpPolicyExcute(napi_env env, void* data)
+{
+    DLP_LOG_DEBUG(LABEL, "QueryDlpPolicy start run.");
+    auto asyncContext = reinterpret_cast<QueryDlpPolicyAsyncContext*>(data);
+    if (asyncContext == nullptr) {
+        DLP_LOG_ERROR(LABEL, "AsyncContext is nullptr.");
+        return;
+    }
+
+    asyncContext->errCode = EnterpriseSpaceDlpPermissionKit::GetInstance()->QueryDlpFileProperty(
+        asyncContext->dlpFd, asyncContext->policyJsonString);
+}
+
+void NapiDlpPermission::QueryDlpPolicyComplete(napi_env env, napi_status status, void* data)
+{
+    DLP_LOG_DEBUG(LABEL, "QueryDlpPolicy start run.");
+    auto asyncContext = reinterpret_cast<QueryDlpPolicyAsyncContext*>(data);
+    if (asyncContext == nullptr) {
+        DLP_LOG_ERROR(LABEL, "AsyncContext is nullptr.");
+        return;
+    }
+    std::unique_ptr<QueryDlpPolicyAsyncContext> asyncContextPtr { asyncContext };
+    napi_value resJs = nullptr;
+    if (asyncContext->errCode == DLP_OK) {
+        NAPI_CALL_RETURN_VOID(
+            env, napi_create_string_utf8(env, asyncContextPtr->policyJsonString.c_str(), NAPI_AUTO_LENGTH, &resJs));
+    }
+
+    ProcessCallbackOrPromise(env, asyncContext, resJs);
+}
+
 void NapiDlpPermission::InitFunction(napi_env env, napi_value exports)
 {
     napi_property_descriptor desc[] = {
@@ -1909,6 +2083,10 @@ void NapiDlpPermission::InitFunction(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("cleanSandboxAppConfig", CleanSandboxAppConfig),
         DECLARE_NAPI_FUNCTION("getSandboxAppConfig", GetSandboxAppConfig),
         DECLARE_NAPI_FUNCTION("isDLPFeatureProvided", IsDLPFeatureProvided),
+
+        DECLARE_NAPI_FUNCTION("generateDlpFileForEnterprise", GenerateDlpFileForEnterprise),
+        DECLARE_NAPI_FUNCTION("decryptDlpFile", DecryptDlpFile),
+        DECLARE_NAPI_FUNCTION("queryDlpPolicy", QueryDlpPolicy),
     };
     NAPI_CALL_RETURN_VOID(env, napi_define_properties(env, exports, sizeof(desc) / sizeof(desc[PARAM0]), desc));
 }

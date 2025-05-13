@@ -566,7 +566,6 @@ bool DlpFile::CleanTmpFile()
 
     if (chdir(dirIndex_.c_str()) != 0) {
         DLP_LOG_ERROR(LABEL, "chdir failed, %{public}s", strerror(errno));
-        return false;
     }
 
     if (unlink(DLP_GENERAL_INFO.c_str()) != 0) {
@@ -588,7 +587,6 @@ bool DlpFile::CleanTmpFile()
 
     if (rmdir(dirIndex_.c_str()) != 0) {
         DLP_LOG_ERROR(LABEL, "rmdir failed, %{public}s errno %{public}s", dirIndex_.c_str(), strerror(errno));
-        return false;
     }
 
     if (rmdir(workDir_.c_str()) != 0) {

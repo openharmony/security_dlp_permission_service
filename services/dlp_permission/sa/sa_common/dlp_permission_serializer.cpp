@@ -66,6 +66,9 @@ const std::string RECEIVER_ACCOUNT_INFO = "receiverAccountInfo";
 const std::string OPEN_MODE = "openMode";
 const std::string ACCOUNT_NAME = "accountName";
 const std::string ACCOUNT_ID = "accountId";
+const std::string ACTION_UPON_EXPIRY = "actionUponExpiry";
+const std::string CUSTOM_PROPERTY = "customProperty";
+const std::string ENTERPRISE = "enterprise";
 constexpr uint64_t  VALID_TIME_STAMP = 2147483647;
 static const uint32_t DOMAIN_VERSION = 2;
 static const uint32_t CLOUD_VERSION = 1;
@@ -315,7 +318,17 @@ static void SerializeEveryoneInfo(const PermissionPolicy& policy, unordered_json
     }
 }
 
-int32_t DlpPermissionSerializer::SerializeDlpPermission(const PermissionPolicy& policy, unordered_json& permInfoJson)
+static void SerializeCustomProperty(const PermissionPolicy& policy, unordered_json& policyJson)
+{
+    unordered_json customProperty;
+    if (policy.customProperty_.empty()) {
+        return;
+    }
+    customProperty[ENTERPRISE] = policy.customProperty_;
+    policyJson[CUSTOM_PROPERTY] = customProperty.dump();
+}
+
+static int32_t SerializeFileEncInfo(const PermissionPolicy& policy, unordered_json& fileEnc)
 {
     uint32_t keyHexLen = policy.GetAeskeyLen() * BYTE_TO_HEX_OPER_LENGTH + 1;
     auto keyHex = std::make_unique<char[]>(keyHexLen);
@@ -340,25 +353,6 @@ int32_t DlpPermissionSerializer::SerializeDlpPermission(const PermissionPolicy& 
         DLP_LOG_ERROR(LABEL, "Byte to hexstring fail");
         return res;
     }
-
-    unordered_json authUsersJson = SerializeAuthUserList(policy.authUsers_);
-    unordered_json policyJson;
-    policyJson[KIA_INDEX] = "";
-    policyJson[OWNER_ACCOUNT_NAME] = policy.ownerAccount_;
-    policyJson[OWNER_ACCOUNT_ID] = policy.ownerAccountId_;
-    res = SerializeDomainInfo(policy, policyJson);
-    if (res != DLP_OK) {
-        DLP_LOG_ERROR(LABEL, "Serialize domain info failed, res = %{public}d", res);
-        return res;
-    }
-    policyJson[PERM_EXPIRY_TIME] = policy.expireTime_;
-    policyJson[NEED_ONLINE] = policy.needOnline_;
-    policyJson[DLP_FILE_DEBUG_FLAG] = policy.debug_;
-    policyJson[ACCOUNT_INDEX] = authUsersJson;
-    SerializeEveryoneInfo(policy, policyJson);
-    permInfoJson[POLICY_INDEX] = policyJson;
-
-    unordered_json fileEnc;
     fileEnc[AESKEY] = keyHex.get();
     fileEnc[AESKEY_LEN] = policy.GetAeskeyLen();
     fileEnc[IV] = ivHex.get();
@@ -366,6 +360,36 @@ int32_t DlpPermissionSerializer::SerializeDlpPermission(const PermissionPolicy& 
     fileEnc[HMACKEY] = hmacKeyHex.get();
     fileEnc[HMACKEY_LEN] = policy.GetHmacKeyLen();
     fileEnc[DLP_VERSION_LOW_CAMEL_CASE] = policy.dlpVersion_;
+    return DLP_OK;
+}
+
+int32_t DlpPermissionSerializer::SerializeDlpPermission(const PermissionPolicy& policy, unordered_json& permInfoJson)
+{
+    unordered_json authUsersJson = SerializeAuthUserList(policy.authUsers_);
+    unordered_json policyJson;
+    policyJson[KIA_INDEX] = "";
+    policyJson[OWNER_ACCOUNT_NAME] = policy.ownerAccount_;
+    policyJson[OWNER_ACCOUNT_ID] = policy.ownerAccountId_;
+    int32_t res = SerializeDomainInfo(policy, policyJson);
+    if (res != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "Serialize domain info failed, res = %{public}d", res);
+        return res;
+    }
+    policyJson[PERM_EXPIRY_TIME] = policy.expireTime_;
+    policyJson[ACTION_UPON_EXPIRY] = policy.actionUponExpiry_;
+    policyJson[NEED_ONLINE] = policy.needOnline_;
+    policyJson[DLP_FILE_DEBUG_FLAG] = policy.debug_;
+    policyJson[ACCOUNT_INDEX] = authUsersJson;
+    SerializeCustomProperty(policy, policyJson);
+    SerializeEveryoneInfo(policy, policyJson);
+    permInfoJson[POLICY_INDEX] = policyJson;
+
+    unordered_json fileEnc;
+    res = SerializeFileEncInfo(policy, fileEnc);
+    if (res != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "Serialize file enc info failed, res = %{public}d", res);
+        return res;
+    }
     permInfoJson[FILE_INDEX] = fileEnc;
 
     DLP_LOG_INFO(LABEL, "Serialize successfully!");
@@ -431,18 +455,35 @@ bool DlpPermissionSerializer::DeserializeEveryoneInfo(const unordered_json& poli
     return true;
 }
 
-static void InitPermissionPolicy(PermissionPolicy& policy, const std::vector<AuthUserInfo>& userList,
-    unordered_json policyJson)
+static void InitPermissionAccountInfo(PermissionPolicy& policy, unordered_json policyJson)
 {
-    policy.authUsers_ = userList;
     if (policyJson.find(OWNER_ACCOUNT_NAME) != policyJson.end() && policyJson.at(OWNER_ACCOUNT_NAME).is_string()) {
         policyJson.at(OWNER_ACCOUNT_NAME).get_to(policy.ownerAccount_);
     }
     if (policyJson.find(OWNER_ACCOUNT_ID) != policyJson.end() && policyJson.at(OWNER_ACCOUNT_ID).is_string()) {
         policyJson.at(OWNER_ACCOUNT_ID).get_to(policy.ownerAccountId_);
     }
+    if (policyJson.find(ACCOUNT_TYPE) != policyJson.end() && policyJson.at(ACCOUNT_TYPE).is_number()) {
+        policyJson.at(ACCOUNT_TYPE).get_to(policy.acountType_);
+    }
+    if (policyJson.find(ACCOUNT_NAME) != policyJson.end() && policyJson.at(ACCOUNT_NAME).is_string()) {
+        policyJson.at(ACCOUNT_NAME).get_to(policy.accountName_);
+    }
+    if (policyJson.find(ACCOUNT_ID) != policyJson.end() && policyJson.at(ACCOUNT_ID).is_string()) {
+        policyJson.at(ACCOUNT_ID).get_to(policy.acountId_);
+    }
+}
+
+static void InitPermissionPolicy(PermissionPolicy& policy, const std::vector<AuthUserInfo>& userList,
+    unordered_json policyJson)
+{
+    policy.authUsers_ = userList;
+    InitPermissionAccountInfo(policy, policyJson);
     if (policyJson.find(PERM_EXPIRY_TIME) != policyJson.end() && policyJson.at(PERM_EXPIRY_TIME).is_number()) {
         policyJson.at(PERM_EXPIRY_TIME).get_to(policy.expireTime_);
+    }
+    if (policyJson.find(ACTION_UPON_EXPIRY) != policyJson.end() && policyJson.at(ACTION_UPON_EXPIRY).is_number()) {
+        policyJson.at(ACTION_UPON_EXPIRY).get_to(policy.actionUponExpiry_);
     }
     if (policyJson.find(NEED_ONLINE) != policyJson.end() && policyJson.at(NEED_ONLINE).is_number()) {
         policyJson.at(NEED_ONLINE).get_to(policy.needOnline_);
@@ -453,14 +494,8 @@ static void InitPermissionPolicy(PermissionPolicy& policy, const std::vector<Aut
     if (policyJson.find(OPEN_MODE) != policyJson.end() && policyJson.at(OPEN_MODE).is_number()) {
         policy.perm_ = DLPFileAccess::READ_ONLY;
     }
-    if (policyJson.find(ACCOUNT_TYPE) != policyJson.end() && policyJson.at(ACCOUNT_TYPE).is_number()) {
-        policyJson.at(ACCOUNT_TYPE).get_to(policy.acountType_);
-    }
-    if (policyJson.find(ACCOUNT_NAME) != policyJson.end() && policyJson.at(ACCOUNT_NAME).is_string()) {
-        policyJson.at(ACCOUNT_NAME).get_to(policy.accountName_);
-    }
-    if (policyJson.find(ACCOUNT_ID) != policyJson.end() && policyJson.at(ACCOUNT_ID).is_string()) {
-        policyJson.at(ACCOUNT_ID).get_to(policy.acountId_);
+    if (policyJson.find(CUSTOM_PROPERTY) != policyJson.end() && policyJson.at(CUSTOM_PROPERTY).is_string()) {
+        policyJson.at(CUSTOM_PROPERTY).get_to(policy.customProperty_);
     }
     policy.ownerAccountType_ = CLOUD_ACCOUNT;
 }
