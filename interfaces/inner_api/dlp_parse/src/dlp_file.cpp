@@ -99,7 +99,7 @@ DlpFile::DlpFile(int32_t dlpFd, const std::string &workDir, int64_t index, bool 
         std::string newStr = lower.substr(0, len);
         auto iter = FILE_TYPE_MAP.find(newStr);
         if (iter != FILE_TYPE_MAP.end()) {
-            head_.realType = newStr;
+            realType_ = newStr;
             break;
         }
     }
@@ -1128,7 +1128,7 @@ int32_t DlpFile::AddGeneralInfoToBuff(int32_t encFile)
         DLP_LOG_ERROR(LABEL, "GetHmacVal fail");
         return ret;
     }
-    std::string ja = SetDlpGeneralInfo(head_.offlineAccess, contactAccount_, hmacStr, head_.version, head_.realType);
+    std::string ja = SetDlpGeneralInfo(head_.offlineAccess, contactAccount_, hmacStr, head_.version, realType_);
     ret = AddBuffToZip(reinterpret_cast<const void *>(ja.c_str()), ja.size(),
         DLP_GENERAL_INFO.c_str(), DLP_GEN_FILE.c_str());
     CHECK_RET(ret, 0, DLP_PARSE_ERROR_FILE_OPERATE_FAIL, LABEL);
@@ -1269,7 +1269,7 @@ int32_t DlpFile::GenFile(int32_t inPlainFileFd)
         }
         std::string fileName;
         if (DlpUtils::GetFileNameWithFd(inPlainFileFd, fileName) == DLP_OK) {
-            head_.realType = GetFileSuffix(fileName);
+            realType_ = GetFileSuffix(fileName);
         }
         return GenFileInZip(inPlainFileFd);
     } else {

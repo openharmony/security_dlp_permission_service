@@ -59,7 +59,6 @@ struct DlpHeader {
     uint32_t contactAccountSize;
     uint32_t offlineCertOffset;
     uint32_t offlineCertSize;
-    std::string realType;
 };
 
 enum VALID_KEY_SIZE {
@@ -238,6 +237,7 @@ private:
 
     std::string workDir_ = "";
     std::string dirIndex_;
+    std::string realType_;
     bool isZip_ = false;
     bool isFuseLink_;
     DLPFileAccess authPerm_;
