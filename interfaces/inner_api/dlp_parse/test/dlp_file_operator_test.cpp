@@ -149,11 +149,11 @@ static bool DeserializeEveryoneInfo(const json& policyJson, PermissionPolicy& po
     }
 
     if (fullCtrl) {
-        policy.everyonePerm_ = FULL_CONTROL;
+        policy.everyonePerm_ = DLPFileAccess::FULL_CONTROL;
     } else if (edit) {
-        policy.everyonePerm_ = CONTENT_EDIT;
+        policy.everyonePerm_ = DLPFileAccess::CONTENT_EDIT;
     } else {
-        policy.everyonePerm_ = READ_ONLY;
+        policy.everyonePerm_ = DLPFileAccess::READ_ONLY;
     }
     return true;
 }
@@ -177,11 +177,11 @@ static int32_t DeserializeAuthUserInfo(const json& accountInfoJson, AuthUserInfo
     }
 
     if (fullCtrl) {
-        userInfo.authPerm = FULL_CONTROL;
+        userInfo.authPerm = DLPFileAccess::FULL_CONTROL;
     } else if (edit) {
-        userInfo.authPerm = CONTENT_EDIT;
+        userInfo.authPerm = DLPFileAccess::CONTENT_EDIT;
     } else {
-        userInfo.authPerm = READ_ONLY;
+        userInfo.authPerm = DLPFileAccess::READ_ONLY;
     }
 
     userInfo.permExpiryTime = VALID_TIME_STAMP;

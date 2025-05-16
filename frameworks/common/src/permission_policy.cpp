@@ -29,6 +29,7 @@ namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "DlpPolicyCheck"};
 const uint32_t MAX_ACCOUNT_SIZE = 1024;
 const uint32_t MAX_ACCOUNT_NUM = 100;
+const uint32_t NO_EXPIRATION_DATA = 0;
 const std::set<uint32_t> VALID_AESPARAM_LEN = {16, 24, 32};
 }  // namespace
 
@@ -292,13 +293,13 @@ void PermissionPolicy::CopyPermissionPolicy(const PermissionPolicy& srcPolicy)
 
 int32_t PermissionPolicy::CheckActionUponExpiry()
 {
-    if (expireTime_ != 0) {
+    if (expireTime_ != NO_EXPIRATION_DATA) {
         if (actionUponExpiry_ > static_cast<uint32_t>(ActionType::OPEN) ||
            actionUponExpiry_ < static_cast<uint32_t>(ActionType::NOTOPEN)) {
             return DLP_PARSE_ERROR_VALUE_INVALID;
         }
     } else {
-        actionUponExpiry_ = 0;
+        actionUponExpiry_ = static_cast<uint32_t>(ActionType::NOTOPEN);
     }
     return DLP_OK;
 }

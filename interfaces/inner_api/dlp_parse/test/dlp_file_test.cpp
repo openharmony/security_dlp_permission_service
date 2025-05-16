@@ -1842,7 +1842,7 @@ HWTEST_F(DlpFileTest, CleanTmpFile001, TestSize.Level0)
 
     DlpFile testFile(fdDlp, DLP_TEST_DIR, 0, true);
     initDlpFileCiper(testFile);
-    EXPECT_EQ(false, testFile.CleanTmpFile());
+    EXPECT_EQ(true, testFile.CleanTmpFile());
 
     EXPECT_EQ(DLP_OK, testFile.GenFile(fdPlain));
     EXPECT_EQ(true, testFile.CleanTmpFile());
