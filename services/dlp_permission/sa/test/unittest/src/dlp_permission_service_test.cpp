@@ -708,7 +708,7 @@ HWTEST_F(DlpPermissionServiceTest, DlpPermissionStub001, TestSize.Level1)
     EXPECT_EQ(false, !res);
 
     res = data.WriteParcelable(policyParcel);
-    EXPECT_EQ(false, !res);
+    EXPECT_EQ(false, res);
 
     res = data.WriteRemoteObject(callback->AsObject());
     EXPECT_EQ(false, !res);

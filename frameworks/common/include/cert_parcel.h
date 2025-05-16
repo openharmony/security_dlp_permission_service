@@ -35,6 +35,7 @@ public:
     std::vector<uint8_t> offlineCert;
     bool isNeedAdapter;
     std::string contactAccount;
+    bool needCheckCustomProperty;
 };
 } // namespace DlpPermission
 } // namespace Security

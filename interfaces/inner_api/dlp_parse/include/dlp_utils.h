@@ -65,6 +65,7 @@ public:
     static std::string GetFileTypeBySuffix(const std::string& suffix);
     static std::string GetDlpFileRealSuffix(const std::string& dlpFileName);
     static int32_t GetFileNameWithFd(const int32_t& fd, std::string& srcFileName);
+    static int32_t GetFilePathWithFd(const int32_t& fd, std::string& srcFilePath);
     static std::string ToLowerString(const std::string& str);
     static std::string GetRealTypeWithFd(const int32_t& fd);
 };

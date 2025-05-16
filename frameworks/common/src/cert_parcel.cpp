@@ -27,6 +27,7 @@ CertParcel::CertParcel()
 {
     isNeedAdapter = false;
     contactAccount = "";
+    needCheckCustomProperty = false;
 }
 
 bool CertParcel::Marshalling(Parcel& data) const
@@ -45,6 +46,10 @@ bool CertParcel::Marshalling(Parcel& data) const
     }
     if (!data.WriteUInt8Vector(this->offlineCert)) {
         DLP_LOG_ERROR(LABEL, "Write uint8 offlineCert vector fail");
+        return false;
+    }
+    if (!data.WriteBool(this->needCheckCustomProperty)) {
+        DLP_LOG_ERROR(LABEL, "Write bool needCheckCustomProperty fail");
         return false;
     }
     return true;
@@ -77,6 +82,10 @@ CertParcel* CertParcel::Unmarshalling(Parcel& data)
     }
     if (!data.ReadUInt8Vector(&parcel->offlineCert)) {
         DLP_LOG_ERROR(LABEL, "Read offlineCert fail");
+        return FreeCertParcel(parcel);
+    }
+    if (!data.ReadBool(parcel->needCheckCustomProperty)) {
+        DLP_LOG_ERROR(LABEL, "Read needCheckCustomProperty fail");
         return FreeCertParcel(parcel);
     }
     return parcel;

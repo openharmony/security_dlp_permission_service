@@ -29,6 +29,7 @@ namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "DlpPolicyCheck"};
 const uint32_t MAX_ACCOUNT_SIZE = 1024;
 const uint32_t MAX_ACCOUNT_NUM = 100;
+const uint32_t NO_EXPIRATION_DATA = 0;
 const std::set<uint32_t> VALID_AESPARAM_LEN = {16, 24, 32};
 }  // namespace
 
@@ -118,6 +119,7 @@ void PermissionPolicy::FreePermissionPolicyMem()
     ownerAccount_ = "";
     ownerAccountId_ = "";
     ownerAccountType_ = INVALID_ACCOUNT;
+    customProperty_ = "";
     authUsers_.clear();
 }
 
@@ -128,6 +130,7 @@ PermissionPolicy::PermissionPolicy()
     ownerAccountType_ = INVALID_ACCOUNT;
     authUsers_ = {};
     expireTime_ = 0;
+    actionUponExpiry_ = 0;
     needOnline_ = 0;
     aeskey_ = nullptr;
     aeskeyLen_ = 0;
@@ -137,6 +140,7 @@ PermissionPolicy::PermissionPolicy()
     hmacKeyLen_ = 0;
     dlpVersion_ = CURRENT_VERSION;
     debug_ = false;
+    customProperty_ = "";
 }
 
 PermissionPolicy::PermissionPolicy(const DlpProperty& property)
@@ -149,6 +153,7 @@ PermissionPolicy::PermissionPolicy(const DlpProperty& property)
     everyonePerm_ = property.everyonePerm;
     expireTime_ = property.expireTime;
     needOnline_ = !property.offlineAccess;
+    actionUponExpiry_ = static_cast<uint32_t>(property.actionUponExpiry);
     aeskey_ = nullptr;
     aeskeyLen_ = 0;
     iv_ = nullptr;
@@ -157,6 +162,7 @@ PermissionPolicy::PermissionPolicy(const DlpProperty& property)
     hmacKeyLen_ = 0;
     dlpVersion_ = CURRENT_VERSION;
     debug_ = false;
+    customProperty_ = property.customProperty.enterprise;
 }
 
 PermissionPolicy::~PermissionPolicy()
@@ -276,11 +282,26 @@ void PermissionPolicy::CopyPermissionPolicy(const PermissionPolicy& srcPolicy)
     supportEveryone_ = srcPolicy.supportEveryone_;
     everyonePerm_ = srcPolicy.everyonePerm_;
     expireTime_ = srcPolicy.expireTime_;
+    actionUponExpiry_ = srcPolicy.actionUponExpiry_;
     needOnline_ = srcPolicy.needOnline_;
+    customProperty_ = srcPolicy.customProperty_;
     SetAeskey(srcPolicy.aeskey_, srcPolicy.aeskeyLen_);
     SetIv(srcPolicy.iv_, srcPolicy.ivLen_);
     CopyPolicyHmac(srcPolicy);
     dlpVersion_ = srcPolicy.dlpVersion_;
+}
+
+int32_t PermissionPolicy::CheckActionUponExpiry()
+{
+    if (expireTime_ != NO_EXPIRATION_DATA) {
+        if (actionUponExpiry_ > static_cast<uint32_t>(ActionType::OPEN) ||
+           actionUponExpiry_ < static_cast<uint32_t>(ActionType::NOTOPEN)) {
+            return DLP_PARSE_ERROR_VALUE_INVALID;
+        }
+    } else {
+        actionUponExpiry_ = static_cast<uint32_t>(ActionType::NOTOPEN);
+    }
+    return DLP_OK;
 }
 
 bool CheckAccountType(DlpAccountType accountType)

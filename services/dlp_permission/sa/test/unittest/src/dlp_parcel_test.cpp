@@ -70,7 +70,7 @@ HWTEST_F(DlpParcelTest, DlpParcelTest002, TestSize.Level1)
     info.policyParams_.ownerAccountId_ = "abc";
     Parcel out;
 
-    EXPECT_EQ(true, info.Marshalling(out));
+    EXPECT_EQ(false, info.Marshalling(out));
     auto result = DlpPolicyParcel::Unmarshalling(out);
     EXPECT_EQ(result, nullptr);
 }

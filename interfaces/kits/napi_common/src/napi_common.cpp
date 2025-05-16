@@ -1082,6 +1082,90 @@ bool GetThirdInterfaceParams(
     return true;
 }
 
+bool GetGenerateDlpFileForEnterpriseParam(
+    const napi_env env, const napi_callback_info info, GenerateDlpFileForEnterpriseAsyncContext& asyncContext)
+{
+    size_t argc = PARAM_SIZE_FOUR;
+    napi_value argv[PARAM_SIZE_FOUR] = {nullptr};
+    NAPI_CALL_BASE(env, napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr), false);
+
+    if (!NapiCheckArgc(env, argc, PARAM_SIZE_FOUR)) {
+        return false;
+    }
+
+    if (!GetInt64Value(env, argv[PARAM0], asyncContext.plaintextFd)) {
+        DLP_LOG_ERROR(LABEL, "js get plaintext fd fail");
+        ThrowParamError(env, "plaintextFd", "number");
+        return false;
+    }
+
+    if (!GetInt64Value(env, argv[PARAM1], asyncContext.dlpFd)) {
+        DLP_LOG_ERROR(LABEL, "js get dlp file fd fail");
+        ThrowParamError(env, "dlpFd", "number");
+        return false;
+    }
+
+    if (!GetDlpProperty(env, argv[PARAM2], asyncContext.property)) {
+        DLP_LOG_ERROR(LABEL, "js get property fail");
+        ThrowParamError(env, "property", "DlpProperty");
+        return false;
+    }
+
+    if (!GetCustomProperty(env, argv[PARAM3], asyncContext.customProperty)) {
+        DLP_LOG_ERROR(LABEL, "js get customProperty fail");
+        ThrowParamError(env, "customProperty", "CustomProperty");
+        return false;
+    }
+
+    return true;
+}
+
+bool GetDecryptDlpFileParam(
+    const napi_env env, const napi_callback_info info, DecryptDlpFileAsyncContext& asyncContext)
+{
+    size_t argc = PARAM_SIZE_TWO;
+    napi_value argv[PARAM_SIZE_TWO] = {nullptr};
+    NAPI_CALL_BASE(env, napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr), false);
+
+    if (!NapiCheckArgc(env, argc, PARAM_SIZE_TWO)) {
+        return false;
+    }
+
+    if (!GetInt64Value(env, argv[PARAM0], asyncContext.dlpFd)) {
+        DLP_LOG_ERROR(LABEL, "js get dlp fd fail");
+        ThrowParamError(env, "dlpFd", "number");
+        return false;
+    }
+
+    if (!GetInt64Value(env, argv[PARAM1], asyncContext.plainFileFd)) {
+        DLP_LOG_ERROR(LABEL, "js get plain text fd fail");
+        ThrowParamError(env, "plainFileFd", "number");
+        return false;
+    }
+
+    return true;
+}
+
+bool GetQueryDlpPolicyParam(
+    const napi_env env, const napi_callback_info info, QueryDlpPolicyAsyncContext& asyncContext)
+{
+    size_t argc = PARAM_SIZE_ONE;
+    napi_value argv[PARAM_SIZE_ONE] = {nullptr};
+    NAPI_CALL_BASE(env, napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr), false);
+
+    if (!NapiCheckArgc(env, argc, PARAM_SIZE_ONE)) {
+        return false;
+    }
+
+    if (!GetInt64Value(env, argv[PARAM0], asyncContext.dlpFd)) {
+        DLP_LOG_ERROR(LABEL, "js get dlp fd fail");
+        ThrowParamError(env, "dlpFd", "number");
+        return false;
+    }
+
+    return true;
+}
+
 void GetDlpPropertyExpireTime(napi_env env, napi_value jsObject, DlpProperty& property)
 {
     int64_t jsExpireTime = 0;
@@ -1089,6 +1173,11 @@ void GetDlpPropertyExpireTime(napi_env env, napi_value jsObject, DlpProperty& pr
         DLP_LOG_INFO(LABEL, "js get expity time fail, set zero");
     }
     property.expireTime = static_cast<uint64_t>(jsExpireTime);
+    int64_t jsActionUponExpiry = 0;
+    if (!GetInt64ValueByKey(env, jsObject, "actionUponExpiry", jsActionUponExpiry)) {
+        DLP_LOG_ERROR(LABEL, "js get action upon expiry fail");
+    }
+    property.actionUponExpiry = static_cast<ActionType>(jsActionUponExpiry);
 }
 
 bool GetDlpProperty(napi_env env, napi_value jsObject, DlpProperty& property)
@@ -1139,6 +1228,15 @@ bool GetDlpProperty(napi_env env, napi_value jsObject, DlpProperty& property)
             property.everyonePerm = static_cast<DLPFileAccess>(perm);
             property.supportEveryone = true;
         }
+    }
+    return true;
+}
+
+bool GetCustomProperty(napi_env env, napi_value jsObject, CustomProperty& customProperty)
+{
+    if (!GetStringValueByKey(env, jsObject, "enterprise", customProperty.enterprise)) {
+        DLP_LOG_ERROR(LABEL, "js get enterprise fail");
+        return false;
     }
     return true;
 }
