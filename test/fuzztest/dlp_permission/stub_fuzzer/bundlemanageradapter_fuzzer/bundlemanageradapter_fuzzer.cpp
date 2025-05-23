@@ -177,10 +177,11 @@ static void ParseFUZZ(const uint8_t* data, size_t size)
     std::vector<std::string> appList;
     appList.push_back(fdp.ConsumeBytesAsString(size));
 
-    uint8_t policy  = fdp.ConsumeIntegral<uint8_t>();
+    uint32_t policy  = 0;
     uint32_t policyLen = 1;
 
-    OHOS::Security::DlpPermission::ParseUint8TypedArrayToStringVector((&policy), (&policyLen), appList);
+    OHOS::Security::DlpPermission::ParseUint8TypedArrayToStringVector(reinterpret_cast<uint8_t *>(&policy),
+        (&policyLen), appList);
 
     uint8_t *policy1 = new (std::nothrow) uint8_t[CONST_SIZE];
     OHOS::Security::DlpPermission::ParseStringVectorToUint8TypedArray(appList, policy1, CONST_SIZE);
