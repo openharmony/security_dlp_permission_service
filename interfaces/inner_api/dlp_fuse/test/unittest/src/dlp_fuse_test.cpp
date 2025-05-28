@@ -503,6 +503,7 @@ HWTEST_F(DlpFuseTest, AddDlpLinkFile003, TestSize.Level0)
 
     CheckLinkFd(linkfd);
     close(linkfd);
+    g_linkFdArry[0] = 0;
     ASSERT_EQ(dlpLinkManager->DeleteDlpLinkFile(g_Dlpfile), 0);
     ASSERT_EQ(DlpFileManager::GetInstance().CloseDlpFile(g_Dlpfile), 0);
     g_Dlpfile = nullptr;
