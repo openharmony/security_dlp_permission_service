@@ -18,6 +18,7 @@ ohos_shared_library("libdlppermission_napi") {
   branch_protector_ret = "pac_ret"
 
   sanitize = {
+    integer_overflow = true
     cfi = true
     cfi_cross_dso = true
     debug = false

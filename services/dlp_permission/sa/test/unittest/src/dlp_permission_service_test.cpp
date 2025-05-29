@@ -665,7 +665,8 @@ HWTEST_F(DlpPermissionServiceTest, AppUninstallObserver001, TestSize.Level1)
         .dlpFileAccess = DLPFileAccess::CONTENT_EDIT,
         .userId = 100
     };
-    sandboxJsonManager_->AddSandboxInfo(retentionInfo);
+    int32_t ret = sandboxJsonManager_->AddSandboxInfo(retentionInfo);
+    ASSERT_EQ(DLP_OK, ret);
     want.SetAction(EventFwk::CommonEventSupport::COMMON_EVENT_PACKAGE_FULLY_REMOVED);
     want.SetBundle("testbundle");
     data.SetWant(want);
