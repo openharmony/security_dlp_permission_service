@@ -40,6 +40,7 @@ ohos_shared_library("libdlp_permission_common_interface") {
   branch_protector_ret = "pac_ret"
 
   sanitize = {
+    integer_overflow = true
     cfi = true
     cfi_cross_dso = true
     debug = false
@@ -77,6 +78,7 @@ ohos_shared_library("libdlp_permission_sdk") {
   branch_protector_ret = "pac_ret"
 
   sanitize = {
+    integer_overflow = true
     cfi = true
     cfi_cross_dso = true
     debug = false
