@@ -33,9 +33,14 @@ public:
     static DlpFileManager& GetInstance();
     ~DlpFileManager() {};
 
+    int32_t GenDlpFile(std::shared_ptr<DlpFile>& filePtr, const DlpProperty& property, int32_t plainFileFd);
+
     int32_t GenerateDlpFile(
         int32_t plainFileFd, int32_t dlpFileFd, const DlpProperty& property, std::shared_ptr<DlpFile>& filePtr,
         const std::string& workDir);
+    int32_t ParseAndAddNode(std::shared_ptr<DlpFile>& filePtr, const std::string& workDir,
+        const std::string& appId);
+
     int32_t OpenDlpFile(int32_t dlpFileFd, std::shared_ptr<DlpFile>& filePtr, const std::string& workDir,
         const std::string& appId);
     int32_t CloseDlpFile(const std::shared_ptr<DlpFile>& dlpFile);

@@ -88,14 +88,14 @@ struct stat DlpLinkFile::GetLinkStat()
         return fileStat_;
     }
 
-    uint32_t res = dlpFile_->GetFsContentSize();
+    uint64_t res = dlpFile_->GetFsContentSize();
     if (res != INVALID_FILE_SIZE) {
         fileStat_.st_size = res;
     }
     return fileStat_;
 }
 
-int32_t DlpLinkFile::Truncate(uint32_t modifySize)
+int32_t DlpLinkFile::Truncate(uint64_t modifySize)
 {
     if (stopLinkFlag_) {
         DLP_LOG_INFO(LABEL, "linkFile is stopping link");
@@ -103,7 +103,7 @@ int32_t DlpLinkFile::Truncate(uint32_t modifySize)
     }
 
     if (modifySize >= DLP_MAX_CONTENT_SIZE) {
-        DLP_LOG_ERROR(LABEL, "Truncate link file fail, modify size %{public}u is invalid", modifySize);
+        DLP_LOG_ERROR(LABEL, "Truncate fail, modify size %{public}s is invalid", std::to_string(modifySize).c_str());
         return DLP_FUSE_ERROR_VALUE_INVALID;
     }
 
@@ -113,9 +113,9 @@ int32_t DlpLinkFile::Truncate(uint32_t modifySize)
     }
     int32_t res = dlpFile_->Truncate(modifySize);
     if (res < 0) {
-        DLP_LOG_ERROR(LABEL, "Truncate %{public}u in link file fail, res=%{public}d", modifySize, res);
+        DLP_LOG_ERROR(LABEL, "Truncate %{public}s file fail, res=%{public}d", std::to_string(modifySize).c_str(), res);
     } else {
-        DLP_LOG_INFO(LABEL, "Truncate %{public}u in link file succ", modifySize);
+        DLP_LOG_INFO(LABEL, "Truncate %{public}s in link file succ", std::to_string(modifySize).c_str());
     }
     UpdateMtimeStat();
     return res;
@@ -131,7 +131,7 @@ void DlpLinkFile::UpdateMtimeStat()
     DlpFuseUtils::UpdateCurrTimeStat(&fileStat_.st_mtim);
 }
 
-int32_t DlpLinkFile::Write(uint32_t offset, void* buf, uint32_t size)
+int32_t DlpLinkFile::Write(uint64_t offset, void* buf, uint32_t size)
 {
     if (stopLinkFlag_) {
         DLP_LOG_INFO(LABEL, "linkFile is stopping link");
@@ -150,7 +150,7 @@ int32_t DlpLinkFile::Write(uint32_t offset, void* buf, uint32_t size)
     return res;
 }
 
-int32_t DlpLinkFile::Read(uint32_t offset, void* buf, uint32_t size, uint32_t uid)
+int32_t DlpLinkFile::Read(uint64_t offset, void* buf, uint32_t size, uint32_t uid)
 {
     if (stopLinkFlag_) {
         DLP_LOG_INFO(LABEL, "linkFile is stopping link");

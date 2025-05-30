@@ -64,7 +64,7 @@ static void FuzzTest(const uint8_t* data, size_t size)
     FuzzedDataProvider fdp(data, size);
     uint32_t txtSize = fdp.ConsumeIntegral<uint32_t>();
     std::string workDir = fdp.ConsumeBytesAsString(size - sizeof(int32_t));
-    DlpFile testFile(fd, workDir, 0, false);
+    DlpFile testFile(fd, workDir, 0, false, "txt");
     uint32_t certSize = txtSize;
     uint32_t contactAccountSize = txtSize;
     if (size > ONE) {

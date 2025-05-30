@@ -248,7 +248,25 @@ int32_t EnterpriseSpaceDlpPermissionKit::EnterpriseSpacePrepareWorkDir(int32_t d
     int64_t timeStamp =
         std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch())
             .count();
-    filePtr = std::make_shared<DlpFile>(dlpFileFd, realWorkDir, timeStamp, true);
+    std::string realSuffix = DlpUtils::GetRealTypeWithFd(dlpFileFd);
+    if (realSuffix == "") {
+        DLP_LOG_ERROR(LABEL, "Get real suffix error.");
+        return DLP_PARSE_ERROR_VALUE_INVALID;
+    }
+    std::string lower = DlpUtils::ToLowerString(realSuffix);
+    std::string realType = "";
+    for (size_t len = MAX_REALY_TYPE_LENGTH; len >= MIN_REALY_TYPE_LENGTH; len--) {
+        if (len > lower.size()) {
+            continue;
+        }
+        std::string newStr = lower.substr(0, len);
+        auto iter = FILE_TYPE_MAP.find(newStr);
+        if (iter != FILE_TYPE_MAP.end()) {
+            realType = newStr;
+            break;
+        }
+    }
+    filePtr = std::make_shared<DlpFile>(dlpFileFd, realWorkDir, timeStamp, true, realType);
     return DLP_OK;
 }
 
@@ -364,4 +382,4 @@ int32_t EnterpriseSpaceDlpPermissionKit::QueryDlpFileProperty(int32_t dlpFileFd,
 
 }
 }
-}
+}

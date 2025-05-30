@@ -134,6 +134,8 @@ int32_t DlpOpensslHashFreeCtx(void** cryptoCtx);
 
 int32_t DlpCtrModeIncreaeIvCounter(struct DlpBlob& iv, uint32_t count);
 
+int32_t DlpHmacEncodeForRaw(const DlpBlob& key, int32_t fd, uint64_t fileSize, DlpBlob& out);
+
 int32_t DlpHmacEncode(const DlpBlob& key, int32_t fd, DlpBlob& out);
 #ifdef __cplusplus
 }
