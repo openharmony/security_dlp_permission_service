@@ -242,7 +242,6 @@ static void FuzzTest(const uint8_t* data, size_t size, bool flag)
     GDlpFileFuzzTest();
     g_Dlpfile->GetEncryptCert(cert);
     g_Dlpfile->GetOfflineCert(offlineCert);
-    g_Dlpfile->UpdateCert(cert);
     g_Dlpfile->DlpFileRead(0, writeBuffer, ARRRY_SIZE, hasRead, 0);
     g_Dlpfile->Truncate(ARRRY_SIZE);
     UpdateCertAndTextFuzzTest(offlineCert);

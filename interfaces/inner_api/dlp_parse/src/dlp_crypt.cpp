@@ -952,6 +952,58 @@ int32_t DlpCtrModeIncreaeIvCounter(struct DlpBlob& iv, uint32_t count)
     return DLP_OK;
 }
 
+int32_t DlpHmacEncodeForRaw(const DlpBlob& key, int32_t fd, uint64_t fileSize, DlpBlob& out)
+{
+    if ((key.data == nullptr) || (key.size != SHA256_KEY_LEN)) {
+        DLP_LOG_ERROR(LABEL, "Key blob invalid, size %{public}u", key.size);
+        return DLP_PARSE_ERROR_DIGEST_INVALID;
+    }
+    if ((out.data == nullptr) || (out.size < HMAC_SIZE)) {
+        DLP_LOG_ERROR(LABEL, "Output blob invalid, size %{public}u", out.size);
+        return DLP_PARSE_ERROR_DIGEST_INVALID;
+    }
+
+    HMAC_CTX* ctx = HMAC_CTX_new();
+    if (ctx == nullptr) {
+        DLP_LOG_ERROR(LABEL, "HMAC_CTX is null");
+        return DLP_PARSE_ERROR_CRYPTO_ENGINE_ERROR;
+    }
+    if (HMAC_Init_ex(ctx, key.data, key.size, EVP_sha256(), nullptr) != 1) {
+        DLP_LOG_ERROR(LABEL, "HMAC_Init failed");
+        HMAC_CTX_free(ctx);
+        return DLP_PARSE_ERROR_CRYPTO_ENGINE_ERROR;
+    }
+
+    auto buf = std::make_unique<unsigned char[]>(BUFFER_SIZE);
+    uint64_t inOffset = 0;
+    while (inOffset < fileSize) {
+        uint32_t readLen = ((fileSize - inOffset) < BUFFER_SIZE) ? (fileSize - inOffset) : BUFFER_SIZE;
+        ssize_t readSize = read(fd, buf.get(), readLen);
+        if (readSize != readLen) {
+            DLP_LOG_ERROR(LABEL, "HMAC_Init readLen err: %{public}d", readLen);
+            HMAC_CTX_free(ctx);
+            return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
+        }
+
+        if (HMAC_Update(ctx, buf.get(), readLen) != 1) {
+            DLP_LOG_ERROR(LABEL, "HMAC_Update failed");
+            HMAC_CTX_free(ctx);
+            return DLP_PARSE_ERROR_CRYPTO_ENGINE_ERROR;
+        }
+
+        inOffset += readLen;
+    }
+
+    if (HMAC_Final(ctx, out.data, &out.size) != 1) {
+        DLP_LOG_ERROR(LABEL, "HMAC_Final failed");
+        HMAC_CTX_free(ctx);
+        return DLP_PARSE_ERROR_CRYPTO_ENGINE_ERROR;
+    }
+
+    HMAC_CTX_free(ctx);
+    return DLP_OK;
+}
+
 int32_t DlpHmacEncode(const DlpBlob& key, int32_t fd, DlpBlob& out)
 {
     if ((key.data == nullptr) || (key.size != SHA256_KEY_LEN)) {

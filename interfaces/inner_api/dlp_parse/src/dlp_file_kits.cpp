@@ -85,6 +85,46 @@ static const std::unordered_map<std::string, std::string> SUFFIX_MIMETYPE_MAP = 
     {"jpe", "image/jpeg"},
     {"png", "image/png"},
     {"webp", "image/webp"},
+    {"cur", "image/ico"},
+    {"raf", "image/x-fuji-raf"},
+    {"ico", "image/x-icon"},
+    {"nrw", "image/x-nikon-nrw"},
+    {"rw2", "image/x-panasonic-rw2"},
+    {"pef", "image/x-pentax-pef"},
+    {"srw", "image/x-samsung-srw"},
+    {"svg", "image/svg+xml"},
+    {"arw", "image/x-sony-arw"},
+    {"3gpp2", "video/3gpp2"},
+    {"3gp2", "video/3gpp2"},
+    {"3g2", "video/3gpp2"},
+    {"3gpp", "video/3gpp"},
+    {"3gp", "video/3gpp"},
+    {"avi", "video/avi"},
+    {"m4v", "video/mp4"},
+    {"f4v", "video/mp4"},
+    {"mp4v", "video/mp4"},
+    {"mpeg4", "video/mp4"},
+    {"mp4", "video/mp4"},
+    {"m2ts", "video/mp2t"},
+    {"mts", "video/mp2t"},
+    {"ts", "video/mp2ts"},
+    {"vt", "video/vnd.youtube.yt"},
+    {"wrf", "video/x-webex"},
+    {"mpeg", "video/mpeg"},
+    {"mpeg2", "video/mpeg"},
+    {"mpv2", "video/mpeg"},
+    {"mp2v", "video/mpeg"},
+    {"m2v", "video/mpeg"},
+    {"m2t", "video/mpeg"},
+    {"mpeg1", "video/mpeg"},
+    {"mpv1", "video/mpeg"},
+    {"mp1v", "video/mpeg"},
+    {"m1v", "video/mpeg"},
+    {"mpg", "video/mpeg"},
+    {"mov", "video/quicktime"},
+    {"mkv", "video/x-matroska"},
+    {"webm", "video/webm"},
+    {"h264", "video/H264"},
 };
 
 static bool IsDlpFileName(const std::string& dlpFileName)
@@ -122,13 +162,13 @@ static bool IsValidDlpHeader(const struct DlpHeader& head)
 {
     if (head.magic != DLP_FILE_MAGIC || head.certSize == 0 || head.certSize > DLP_MAX_CERT_SIZE ||
         head.contactAccountSize == 0 || head.contactAccountSize > DLP_MAX_CERT_SIZE ||
-        head.certOffset != sizeof(struct DlpHeader)) {
+        head.certOffset < head.txtOffset) {
         DLP_LOG_ERROR(LABEL, "Parse dlp file header error. certSize=%{public}u, contactAccountSize=%{public}u",
             head.certSize, head.contactAccountSize);
         return false;
     }
-    if (head.contactAccountOffset != (sizeof(struct DlpHeader) + head.certSize) ||
-        head.txtOffset != (sizeof(struct DlpHeader) + head.certSize + head.contactAccountSize + head.offlineCertSize) ||
+    if (head.contactAccountOffset != sizeof(struct DlpHeader) ||
+        head.txtOffset != (sizeof(struct DlpHeader) + head.contactAccountSize) ||
         head.txtSize > DLP_MAX_CONTENT_SIZE || head.offlineCertSize > DLP_MAX_CERT_SIZE) {
         DLP_LOG_ERROR(LABEL, "Parse dlp file header error.");
         return false;
@@ -294,11 +334,6 @@ static std::string GetRealFileType(const AAFwk::Want &want)
 void DlpFileKits::ConvertAbilityInfoWithSupportDlp(const AAFwk::Want &want,
     std::vector<AppExecFwk::AbilityInfo> &abilityInfos)
 {
-    if (abilityInfos.size() == 0) {
-        DLP_LOG_INFO(LABEL, "ability size is zero.");
-        return;
-    }
-
     std::string fileType = GetRealFileType(want);
     if (fileType == DEFAULT_STRING) {
         return;

@@ -37,6 +37,9 @@ namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "DlpFileManager"};
 static constexpr uint32_t MAX_DLP_FILE_SIZE = 1000; // max open dlp file
 const std::string PATH_CACHE = "/cache";
+const std::string SUPPORT_PHOTO_DLP = "support_photo_dlp";
+const std::string SUPPORT_VIDEO_DLP = "support_video_dlp";
+
 std::mutex g_instanceMutex;
 static const std::string DEFAULT_STRING = "";
 }
@@ -235,12 +238,7 @@ int32_t DlpFileManager::UpdateDlpFile(bool isNeedAdapter, uint32_t oldCertSize, 
 #else
     return DLP_OK;
 #endif
-    int32_t res = DLP_OK;
-    if (isNeedAdapter || oldCertSize != certBlob.size) {
-        res = filePtr->UpdateCertAndText(cert, workDir, certBlob);
-    } else {
-        res = filePtr->UpdateCert(certBlob);
-    }
+    int32_t res = filePtr->UpdateCertAndText(cert, workDir, certBlob);
     (void)memset_s(certBlob.data, certBlob.size, 0, certBlob.size);
     delete[] certBlob.data;
     return res;
@@ -263,10 +261,9 @@ int32_t DlpFileManager::ParseDlpFileFormat(std::shared_ptr<DlpFile>& filePtr, co
     certParcel->cert = std::vector<uint8_t>(cert.data, cert.data + cert.size);
     uint32_t oldCertSize = cert.size;
     struct DlpBlob offlineCert = { 0 };
-    uint32_t flag =  filePtr->GetOfflineAccess();
-    if (flag != 0) {
+    if (filePtr->GetOfflineCertSize() != 0) {
         filePtr->GetOfflineCert(offlineCert);
-        certParcel->offlineCert = std::vector<uint8_t>(offlineCert.data, offlineCert.data + offlineCert.size);
+        certParcel->cert = std::vector<uint8_t>(offlineCert.data, offlineCert.data + offlineCert.size);
     }
     PermissionPolicy policy;
     filePtr->GetContactAccount(certParcel->contactAccount);
@@ -438,12 +435,40 @@ static void PrepareWorkDir(const std::string& path)
     mkdir(path.c_str(), S_IRWXU);
 }
 
+static std::string GetFileSuffix(const std::string& fileName)
+{
+    char escape = '.';
+    std::size_t escapeLocate = fileName.find_last_of(escape);
+    if (escapeLocate >= fileName.size()) {
+        DLP_LOG_ERROR(LABEL, "Get file suffix fail, no '.' in file name");
+        return DEFAULT_STRING;
+    }
+
+    return fileName.substr(escapeLocate + 1);
+}
+
+int32_t DlpFileManager::GenDlpFile(std::shared_ptr<DlpFile>& filePtr, const DlpProperty& property, int32_t plainFileFd)
+{
+    int32_t result = SetDlpFileParams(filePtr, property);
+    if (result != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "Generate dlp file fail, set dlp obj params error, errno=%{public}d", result);
+        return result;
+    }
+    
+    result = filePtr->GenFile(plainFileFd);
+    if (result != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "Generate dlp file fail, errno=%{public}d", result);
+        return result;
+    }
+    return AddDlpFileNode(filePtr);
+}
+
 int32_t DlpFileManager::GenerateDlpFile(
     int32_t plainFileFd, int32_t dlpFileFd, const DlpProperty& property, std::shared_ptr<DlpFile>& filePtr,
     const std::string& workDir)
 {
     if (plainFileFd < 0 || dlpFileFd < 0) {
-        DLP_LOG_ERROR(LABEL, "Generate dlp file fail, plain file fd or dlp file fd invalid");
+        DLP_LOG_ERROR(LABEL, "fd invalid, plainFileFd: %{public}d, dlpFileFd: %{public}d", plainFileFd, dlpFileFd);
         return DLP_PARSE_ERROR_FD_ERROR;
     }
 
@@ -465,24 +490,31 @@ int32_t DlpFileManager::GenerateDlpFile(
     std::string realWorkDir = cache + '/' + randomWorkDir;
     PrepareWorkDir(realWorkDir);
 
-    int64_t timeStamp =
-        std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch())
-            .count();
-    filePtr = std::make_shared<DlpFile>(dlpFileFd, realWorkDir, timeStamp, true);
-
-    result = SetDlpFileParams(filePtr, property);
+    int64_t timeStamp = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now()
+        .time_since_epoch()).count();
+    std::string fileName;
+    result = DlpUtils::GetFileNameWithFd(plainFileFd, fileName);
     if (result != DLP_OK) {
-        DLP_LOG_ERROR(LABEL, "Generate dlp file fail, set dlp obj params error, errno=%{public}d", result);
+        DLP_LOG_ERROR(LABEL, "GetFileNameWithFd fail, errno=%{public}d", result);
         return result;
     }
-
-    result = filePtr->GenFile(plainFileFd);
-    if (result != DLP_OK) {
-        DLP_LOG_ERROR(LABEL, "Generate dlp file fail, errno=%{public}d", result);
-        return result;
+    std::string realFileType = GetFileSuffix(fileName);
+    if (realFileType == DEFAULT_STRING) {
+        DLP_LOG_ERROR(LABEL, "GetFileSuffix fail");
+        return DLP_PARSE_ERROR_VALUE_INVALID;
     }
-
-    return AddDlpFileNode(filePtr);
+    std::string fileType = DlpUtils::GetFileTypeBySuffix(realFileType);
+    if (fileType == DEFAULT_STRING) {
+        DLP_LOG_ERROR(LABEL, "GetFileTypeBySuffix fail");
+        return DLP_PARSE_ERROR_VALUE_INVALID;
+    }
+    bool isZip = true;
+    if ((fileType == SUPPORT_PHOTO_DLP || fileType == SUPPORT_VIDEO_DLP) &&
+        property.ownerAccountType == CLOUD_ACCOUNT) {
+        isZip = false;
+    }
+    filePtr = std::make_shared<DlpFile>(dlpFileFd, realWorkDir, timeStamp, isZip, realFileType);
+    return GenDlpFile(filePtr, property, plainFileFd);
 }
 
 static bool GetBundleInfoWithBundleName(const std::string &bundleName, int32_t flag,
@@ -507,13 +539,8 @@ static std::string GetAppIdWithBundleName(const std::string &bundleName, const i
     return bundleInfo.appId;
 }
 
-static int32_t SupportDlpWithAppId(const std::string &appId, const int32_t &dlpFileFd)
+static int32_t SupportDlpWithAppId(const std::string &appId, const int32_t &dlpFileFd, const std::string &realSuffix)
 {
-    std::string realSuffix = DlpUtils::GetRealTypeWithFd(dlpFileFd);
-    if (realSuffix == DEFAULT_STRING) {
-        DLP_LOG_ERROR(LABEL, "get realSuffix error.");
-        return DLP_PARSE_ERROR_VALUE_INVALID;
-    }
     std::string fileType = DlpUtils::GetFileTypeBySuffix(realSuffix);
     if (fileType == DEFAULT_STRING) {
         DLP_LOG_ERROR(LABEL, "get fileType error.");
@@ -541,50 +568,67 @@ static int32_t SupportDlpWithAppId(const std::string &appId, const int32_t &dlpF
     return DLP_CREDENTIAL_ERROR_APPID_NOT_AUTHORIZED;
 }
 
-int32_t DlpFileManager::OpenDlpFile(int32_t dlpFileFd, std::shared_ptr<DlpFile>& filePtr, const std::string& workDir,
-    const std::string& appId)
+int32_t DlpFileManager::ParseAndAddNode(std::shared_ptr<DlpFile>& filePtr, const std::string& workDir,
+                                        const std::string& appId)
 {
-    if (dlpFileFd < 0) {
-        DLP_LOG_ERROR(LABEL, "Open dlp file fail, fd %{public}d is invalid", dlpFileFd);
-        return DLP_PARSE_ERROR_FD_ERROR;
-    }
-
-    int32_t ret = SupportDlpWithAppId(appId, dlpFileFd);
-    if (ret != DLP_OK) {
-        return ret;
-    }
-
-    filePtr = GetDlpFile(dlpFileFd);
-    if (filePtr != nullptr) {
-        DLP_LOG_INFO(LABEL, "Open dlp file fail, fd %{public}d has opened", dlpFileFd);
-        return DLP_OK;
-    }
-
-    std::string cache = workDir + PATH_CACHE;
-    PrepareDirs(cache);
-
-    std::string randomWorkDir;
-    int32_t result = GenerateRandomWorkDir(randomWorkDir);
-    if (result != DLP_OK) {
-        DLP_LOG_ERROR(LABEL, "Generate dir fail, errno=%{public}d", result);
-        return result;
-    }
-
-    std::string realWorkDir = cache + '/' + randomWorkDir;
-    PrepareWorkDir(realWorkDir);
-
-    int64_t timeStamp =
-        std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch())
-            .count();
-    filePtr = std::make_shared<DlpFile>(dlpFileFd, realWorkDir, timeStamp, false);
-
-    result = ParseDlpFileFormat(filePtr, workDir, appId);
+    int32_t result = ParseDlpFileFormat(filePtr, workDir, appId);
     if (result != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "Open dlp file fail, parse dlp file error, errno=%{public}d", result);
         return result;
     }
 
     return AddDlpFileNode(filePtr);
+}
+
+int32_t DlpFileManager::OpenDlpFile(int32_t dlpFileFd, std::shared_ptr<DlpFile>& filePtr, const std::string& workDir,
+                                    const std::string& appId)
+{
+    if (dlpFileFd < 0) {
+        DLP_LOG_ERROR(LABEL, "Open dlp file fail, fd %{public}d is invalid", dlpFileFd);
+        return DLP_PARSE_ERROR_FD_ERROR;
+    }
+    std::string realSuffix = DlpUtils::GetRealTypeWithFd(dlpFileFd);
+    if (realSuffix == DEFAULT_STRING) {
+        DLP_LOG_ERROR(LABEL, "GetRealTypeWithFd fail");
+        return DLP_PARSE_ERROR_VALUE_INVALID;
+    }
+    DLP_LOG_ERROR(LABEL, "realSuffix is %{public}s", realSuffix.c_str());
+    std::string lower = DlpUtils::ToLowerString(realSuffix);
+    std::string realType = "";
+    for (size_t len = MAX_REALY_TYPE_LENGTH; len >= MIN_REALY_TYPE_LENGTH; len--) {
+        if (len > lower.size()) {
+            continue;
+        }
+        std::string newStr = lower.substr(0, len);
+        auto iter = FILE_TYPE_MAP.find(newStr);
+        if (iter != FILE_TYPE_MAP.end()) {
+            realType = newStr;
+            break;
+        }
+    }
+    int32_t ret = SupportDlpWithAppId(appId, dlpFileFd, realSuffix);
+    if (ret != DLP_OK) {
+        return ret;
+    }
+    filePtr = GetDlpFile(dlpFileFd);
+    if (filePtr != nullptr) {
+        DLP_LOG_INFO(LABEL, "Open dlp file fail, fd %{public}d has opened", dlpFileFd);
+        return DLP_OK;
+    }
+    std::string cache = workDir + PATH_CACHE;
+    PrepareDirs(cache);
+    std::string randomWorkDir;
+    ret = GenerateRandomWorkDir(randomWorkDir);
+    if (ret != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "Generate dir fail, errno=%{public}d", ret);
+        return ret;
+    }
+    std::string realWorkDir = cache + '/' + randomWorkDir;
+    PrepareWorkDir(realWorkDir);
+    int64_t timeStamp = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now()
+        .time_since_epoch()).count();
+    filePtr = std::make_shared<DlpFile>(dlpFileFd, realWorkDir, timeStamp, false, realType);
+    return ParseAndAddNode(filePtr, workDir, appId);
 }
 
 int32_t DlpFileManager::CloseDlpFile(const std::shared_ptr<DlpFile>& dlpFile)

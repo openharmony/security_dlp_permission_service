@@ -23,14 +23,15 @@
 namespace OHOS {
 namespace Security {
 namespace DlpPermission {
-static constexpr uint32_t INVALID_FILE_SIZE = 0xffffffff;
+static constexpr uint64_t INVALID_FILE_SIZE = 0x0fffffffffffffff;
 static constexpr uint32_t DLP_BUFF_LEN = 1024 * 1024; // 1M
 static constexpr uint32_t IV_SIZE = 16;
 static constexpr uint32_t DLP_FILE_MAGIC = 0x87f4922;
 static constexpr uint32_t DLP_FUSE_MAX_BUFFLEN = (10 * 1024 * 1024); // 10M
 static constexpr uint32_t DLP_BLOCK_SIZE = 16;
 // dlp file only support 32bits size, apart from 10M max head size
-static constexpr uint32_t DLP_MAX_CONTENT_SIZE = 0xffffffff - 0xA00000;
+static constexpr uint64_t DLP_MAX_CONTENT_SIZE = 0xffffffff - 0xA00000;
+static constexpr uint64_t DLP_MAX_RAW_CONTENT_SIZE = 0xffffffff;
 static constexpr uint32_t HOLE_BUFF_SIZE = 16 * 1024;
 static constexpr uint32_t HOLE_BUFF_SMALL_SIZE = 1 * 1024;
 static constexpr uint32_t MAX_HOLE_SIZE = 50 * 1024 * 1024; // 50M
@@ -51,13 +52,13 @@ struct DlpHeader {
     uint32_t magic;
     uint32_t version;
     uint32_t offlineAccess;
-    uint32_t txtOffset;
-    uint32_t txtSize;
-    uint32_t certOffset;
+    uint64_t txtOffset;
+    uint64_t txtSize;
+    uint64_t certOffset;
     uint32_t certSize;
     uint32_t contactAccountOffset;
     uint32_t contactAccountSize;
-    uint32_t offlineCertOffset;
+    uint64_t offlineCertOffset;
     uint32_t offlineCertSize;
 };
 
@@ -143,7 +144,7 @@ enum VALID_KEY_SIZE {
 
 class DlpFile {
 public:
-    DlpFile(int32_t dlpFd, const std::string &workDir, int64_t index, bool isZip);
+    DlpFile(int32_t dlpFd, const std::string &workDir, int64_t index, bool isZip, const std::string &realType);
     ~DlpFile();
 
     int32_t SetCipher(const struct DlpBlob& key, const struct DlpUsageSpec& spec, const struct DlpBlob& hmacKey);
@@ -151,20 +152,20 @@ public:
     void GetEncryptCert(struct DlpBlob& cert) const;
     void GetOfflineCert(struct DlpBlob& cert) const;
     int32_t UpdateCertAndText(const std::vector<uint8_t>& cert, const std::string& workDir, struct DlpBlob certBlob);
-    int32_t UpdateCert(struct DlpBlob certBlob);
     int32_t SetEncryptCert(const struct DlpBlob& cert);
     void SetOfflineAccess(bool flag);
     bool GetOfflineAccess();
     int32_t GenFile(int32_t inPlainFileFd);
     int32_t RemoveDlpPermission(int outPlainFileFd);
     int32_t DlpFileRead(uint32_t offset, void* buf, uint32_t size, bool& hasRead, int32_t uid);
-    int32_t DlpFileWrite(uint32_t offset, void* buf, uint32_t size);
-    uint32_t GetFsContentSize() const;
+    int32_t DlpFileWrite(uint64_t offset, void* buf, uint32_t size);
+    uint64_t GetFsContentSize() const;
     bool UpdateDlpFilePermission();
     int32_t CheckDlpFile();
     bool NeedAdapter();
     bool CleanTmpFile();
     int32_t HmacCheck();
+    uint32_t GetOfflineCertSize(void);
 
     int32_t SetPolicy(const PermissionPolicy& policy);
     void GetPolicy(PermissionPolicy& policy) const
@@ -193,7 +194,7 @@ public:
         return authPerm_;
     };
 
-    int32_t Truncate(uint32_t size);
+    int32_t Truncate(uint64_t size);
     int32_t dlpFd_;
 
 private:
@@ -207,27 +208,27 @@ private:
     int32_t PrepareBuff(struct DlpBlob& message1, struct DlpBlob& message2) const;
     int32_t GetLocalAccountName(std::string& account) const;
     int32_t GetDomainAccountName(std::string& account) const;
-    int32_t DoDlpContentCryptyOperation(int32_t inFd, int32_t outFd, uint32_t inOffset,
-        uint32_t inFileLen, bool isEncrypt);
-    int32_t DoDlpContentCopyOperation(int32_t inFd, int32_t outFd, uint32_t inOffset, uint32_t inFileLen);
-    int32_t WriteHeadAndCert(int tmpFile, const std::vector<uint8_t>& offlineCert);
+    int32_t DoDlpContentCryptyOperation(int32_t inFd, int32_t outFd, uint64_t inOffset,
+        uint64_t inFileLen, bool isEncrypt);
+    int32_t DoDlpContentCopyOperation(int32_t inFd, int32_t outFd, uint64_t inOffset, uint64_t inFileLen);
     int32_t DupUsageSpec(struct DlpUsageSpec& spec);
     int32_t DoDlpBlockCryptOperation(struct DlpBlob& message1,
-        struct DlpBlob& message2, uint32_t offset, bool isEncrypt);
-    int32_t WriteFirstBlockData(uint32_t offset, void* buf, uint32_t size);
-    int32_t FillHoleData(uint32_t holeStart, uint32_t holeSize);
-    int32_t DoDlpFileWrite(uint32_t offset, void* buf, uint32_t size);
+        struct DlpBlob& message2, uint64_t offset, bool isEncrypt);
+    int32_t WriteFirstBlockData(uint64_t offset, void* buf, uint32_t size);
+    int32_t FillHoleData(uint64_t holeStart, uint64_t holeSize);
+    int32_t DoDlpFileWrite(uint64_t offset, void* buf, uint32_t size);
     int32_t UpdateDlpFileContentSize();
-    int32_t UpdateFile(int tmpFile, const std::vector<uint8_t>& cert, uint32_t oldTxtOffset);
-    int32_t GetTempFile(const std::string& workDir, int& tempFile, std::string& path);
     bool ParseDlpInfo();
     bool ParseCert();
     bool ParseEncData();
 
     int32_t UnzipDlpFile();
+    int32_t GetDlpHmacAndGenFile(void);
     int32_t ParseDlpHeaderInRaw();
     int32_t GenEncData(int32_t inPlainFileFd);
     int32_t GenFileInZip(int32_t inPlainFileFd);
+    int32_t DoWriteHmacAndCert(uint32_t hmacStrLen, std::string& hmacStr);
+    int32_t DoHmacAndCrypty(int32_t inPlainFileFd, off_t fileLen);
     int32_t GenFileInRaw(int32_t inPlainFileFd);
     int32_t RemoveDlpPermissionInZip(int32_t outPlainFileFd);
     int32_t RemoveDlpPermissionInRaw(int32_t outPlainFileFd);
