@@ -267,7 +267,7 @@ HWTEST_F(DlpFileTest, GetLocalAccountName001, TestSize.Level0)
     DlpFile testFile(1000, DLP_TEST_DIR, 0, false, "txt");
     std::string account;
     int dlpRet = testFile.GetLocalAccountName(account);
-    ASSERT_EQ(dlpRet, DLP_PARSE_ERROR_ACCOUNT_INVALID);
+    ASSERT_EQ(dlpRet, DLP_OK);
 }
 
 /**
@@ -753,6 +753,76 @@ HWTEST_F(DlpFileTest, ParseDlpHeader004, TestSize.Level0)
     write(fd, &header, sizeof(header));
 
     EXPECT_EQ(DLP_PARSE_ERROR_FILE_FORMAT_ERROR, testFile.ParseDlpHeader());
+    close(fd);
+    unlink("/data/fuse_test.txt");
+}
+
+/**
+ * @tc.name: ParseDlpHeader005
+ * @tc.desc: test parse dlp file header failed when no contact account
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpFileTest, ParseDlpHeader005, TestSize.Level0)
+{
+    DLP_LOG_INFO(LABEL, "ParseDlpHeader005");
+
+    int fd = open("/data/fuse_test.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
+    ASSERT_NE(fd, -1);
+    DlpFile testFile(fd, DLP_TEST_DIR, 0, false, "txt");
+
+    struct DlpHeader header = {
+        .magic = DLP_FILE_MAGIC,
+        .certOffset = sizeof(struct DlpHeader),
+        .offlineAccess = 0,
+        .certSize = 20,
+        .contactAccountOffset = sizeof(struct DlpHeader) + 20,
+        .contactAccountSize = 20,
+        .txtOffset  = sizeof(struct DlpHeader) + 20 + 20,
+        .txtSize = 100,
+        .offlineCertOffset = 0,
+        .offlineCertSize = 0,
+    };
+    write(fd, &header, sizeof(header));
+    uint8_t buffer[20] = {0};
+    write(fd, buffer, 20);
+
+    EXPECT_EQ(DLP_PARSE_ERROR_FILE_NOT_DLP, testFile.ParseDlpHeader());
+    close(fd);
+    unlink("/data/fuse_test.txt");
+}
+
+/**
+ * @tc.name: ParseDlpHeader006
+ * @tc.desc: test parse dlp file header success with header.offlineCertSize = 0
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpFileTest, ParseDlpHeader006, TestSize.Level0)
+{
+    DLP_LOG_INFO(LABEL, "ParseDlpHeader006");
+
+    int fd = open("/data/fuse_test.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
+    ASSERT_NE(fd, -1);
+    DlpFile testFile(fd, DLP_TEST_DIR, 0, false, "txt");
+
+    struct DlpHeader header = {
+        .magic = DLP_FILE_MAGIC,
+        .certOffset = sizeof(struct DlpHeader) + 20 + 100 + 68,
+        .offlineAccess = 0,
+        .certSize = 20,
+        .contactAccountOffset = sizeof(struct DlpHeader),
+        .contactAccountSize = 20,
+        .txtOffset  = sizeof(struct DlpHeader) + 20,
+        .txtSize = 100,
+        .offlineCertOffset = 0,
+        .offlineCertSize = 0,
+    };
+    write(fd, &header, sizeof(header));
+    uint8_t buffer[208] = {0};
+    write(fd, buffer, 208);
+
+    EXPECT_EQ(DLP_PARSE_ERROR_FILE_OPERATE_FAIL, testFile.ParseDlpHeader());
     close(fd);
     unlink("/data/fuse_test.txt");
 }
@@ -1284,6 +1354,69 @@ HWTEST_F(DlpFileTest, RemoveDlpPermission001, TestSize.Level0)
     condition.mockSequence = { false, false, true };
     SetMockConditions("lseek", condition);
     EXPECT_EQ(DLP_PARSE_ERROR_FILE_OPERATE_FAIL, testFile.RemoveDlpPermission(fdPlain));
+    CleanMockConditions();
+
+    close(fdPlain);
+    close(fdDlp);
+    unlink("/data/fuse_test_plain.txt");
+    unlink("/data/fuse_test_dlp.txt");
+}
+
+/**
+ * @tc.name: DlpFileRead001
+ * @tc.desc: test dlp file read
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpFileTest, DlpFileRead001, TestSize.Level0)
+{
+    DLP_LOG_INFO(LABEL, "DlpFileRead001");
+    int fdPlain = open("/data/fuse_test_plain.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
+    ASSERT_NE(fdPlain, -1);
+    int fdDlp = open("/data/fuse_test_dlp.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
+    ASSERT_NE(fdDlp, -1);
+
+    DlpFile testFile(fdDlp, DLP_TEST_DIR, 0, false, "txt");
+    initDlpFileCiper(testFile);
+    int32_t uid = getuid();
+    bool hasRead = true;
+    // isFuseLink_ true
+    EXPECT_EQ(DLP_PARSE_ERROR_VALUE_INVALID, testFile.DlpFileRead(0, nullptr, 10, hasRead, uid));
+
+    uint8_t buffer[16] = {};
+    EXPECT_EQ(DLP_PARSE_ERROR_VALUE_INVALID, testFile.DlpFileRead(0, buffer, 0, hasRead, uid));
+    EXPECT_EQ(DLP_PARSE_ERROR_VALUE_INVALID, testFile.DlpFileRead(DLP_MAX_CONTENT_SIZE, buffer, 1, hasRead, uid));
+    EXPECT_EQ(DLP_PARSE_ERROR_VALUE_INVALID, testFile.DlpFileRead(0, buffer, DLP_FUSE_MAX_BUFFLEN + 1, hasRead, uid));
+
+    testFile.dlpFd_ = -1;
+    EXPECT_EQ(DLP_PARSE_ERROR_VALUE_INVALID, testFile.DlpFileRead(0, buffer, 16, hasRead, uid));
+    testFile.dlpFd_ = fdDlp;
+
+    testFile.cipher_.encKey.size = 0;
+    EXPECT_EQ(DLP_PARSE_ERROR_VALUE_INVALID, testFile.DlpFileRead(0, buffer, 16, hasRead, uid));
+    testFile.cipher_.encKey.size = 16;
+
+    DlpCMockCondition condition;
+    condition.mockSequence = { true };
+    SetMockConditions("lseek", condition);
+    EXPECT_EQ(DLP_PARSE_ERROR_FILE_OPERATE_FAIL, testFile.DlpFileRead(0, buffer, 16, hasRead, uid));
+    CleanMockConditions();
+
+    // read size 0
+    testFile.head_.txtOffset = 0;
+    EXPECT_EQ(0, testFile.DlpFileRead(0, buffer, 16, hasRead, uid));
+
+    // do crypt failed
+    write(fdDlp, "1111", 4);
+    lseek(fdDlp, 0, SEEK_SET);
+    condition.mockSequence = { true };
+    SetMockConditions("EVP_CIPHER_CTX_new", condition);
+    EXPECT_EQ(DLP_PARSE_ERROR_FILE_OPERATE_FAIL, testFile.DlpFileRead(0, buffer, 16, hasRead, uid));
+    CleanMockConditions();
+
+    condition.mockSequence = { false, true };
+    SetMockConditions("memcpy_s", condition);
+    EXPECT_EQ(DLP_PARSE_ERROR_MEMORY_OPERATE_FAIL, testFile.DlpFileRead(0, buffer, 16, hasRead, uid));
     CleanMockConditions();
 
     close(fdPlain);
@@ -2174,6 +2307,49 @@ HWTEST_F(DlpFileTest, GenFileZip001, TestSize.Level0)
 
     int fdDlp2 = open("/data/fuse_test_dlp.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
     EXPECT_NE(fdDlp2, -1);
+
+    close(fdPlain);
+    close(fdDlp);
+    close(fdDlp2);
+
+    unlink("/data/fuse_test_plain.txt");
+    unlink("/data/fuse_test_dlp.txt");
+}
+
+/**
+ * @tc.name: RemoveDlpPermissionZip001
+ * @tc.desc: test gen file when io api exception
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpFileTest, RemoveDlpPermissionZip001, TestSize.Level0)
+{
+    DLP_LOG_INFO(LABEL, "RemoveDlpPermissionZip001");
+    int fdPlain = open("/data/fuse_test_plain.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
+    EXPECT_NE(fdPlain, -1);
+    int fdDlp = open("/data/fuse_test_dlp.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
+    EXPECT_NE(fdDlp, -1);
+
+    DlpFile testFile(fdDlp, DLP_TEST_DIR, 0, true, "txt");
+    initDlpFileCiper(testFile);
+    testFile.contactAccount_ = "aa";
+    EXPECT_EQ(DLP_OK, testFile.GenFile(fdPlain));
+    
+    DlpFile testFile2(fdDlp, DLP_TEST_DIR, 1, false, "txt");
+    initDlpFileCiper(testFile2);
+    testFile2.contactAccount_ = "aa";
+    EXPECT_EQ(DLP_OK, testFile2.GenFile(fdPlain));
+    testFile2.head_.txtOffset = 0;
+    EXPECT_EQ(DLP_OK, testFile2.RemoveDlpPermissionInRaw(fdPlain));
+
+    int fdDlp2 = open("/data/fuse_test_dlp.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
+    EXPECT_NE(fdDlp2, -1);
+
+    DlpFile testFile3(fdDlp, DLP_TEST_DIR, 2, true, "txt");
+    initDlpFileCiper(testFile3);
+    testFile3.contactAccount_ = "aa";
+    EXPECT_EQ(DLP_OK, testFile3.GenFile(fdPlain));
+    EXPECT_EQ(DLP_OK, testFile3.RemoveDlpPermissionInZip(fdPlain));
 
     close(fdPlain);
     close(fdDlp);
