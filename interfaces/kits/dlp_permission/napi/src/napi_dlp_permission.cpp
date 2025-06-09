@@ -1886,6 +1886,9 @@ napi_value NapiDlpPermission::StartDLPManagerForResult(napi_env env, napi_callba
 
 napi_value NapiDlpPermission::GenerateDlpFileForEnterprise(napi_env env, napi_callback_info cbInfo)
 {
+    if (!IsSystemApp(env)) {
+        return nullptr;
+    }
     if (!CheckPermission(env, PERMISSION_ENTERPRISE_ACCESS_DLP_FILE)) {
         return nullptr;
     }
@@ -1943,6 +1946,9 @@ void NapiDlpPermission::GenerateDlpFileForEnterpriseComplete(napi_env env, napi_
 
 napi_value NapiDlpPermission::DecryptDlpFile(napi_env env, napi_callback_info cbInfo)
 {
+    if (!IsSystemApp(env)) {
+        return nullptr;
+    }
     if (!CheckPermission(env, PERMISSION_ENTERPRISE_ACCESS_DLP_FILE)) {
         return nullptr;
     }
@@ -2000,6 +2006,9 @@ void NapiDlpPermission::DecryptDlpFileComplete(napi_env env, napi_status status,
 
 napi_value NapiDlpPermission::QueryDlpPolicy(napi_env env, napi_callback_info cbInfo)
 {
+    if (!IsSystemApp(env)) {
+        return nullptr;
+    }
     if (!CheckPermission(env, PERMISSION_ENTERPRISE_ACCESS_DLP_FILE)) {
         return nullptr;
     }
