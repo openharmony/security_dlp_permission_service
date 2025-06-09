@@ -893,7 +893,8 @@ int32_t DlpFile::DoDlpBlockCryptOperation(struct DlpBlob& message1, struct DlpBl
 int32_t DlpFile::DoDlpContentCryptyOperation(int32_t inFd, int32_t outFd, uint64_t inOffset,
     uint64_t inFileLen, bool isEncrypt)
 {
-    struct DlpBlob message, outMessage;
+    struct DlpBlob message;
+    struct DlpBlob outMessage;
     if (PrepareBuff(message, outMessage) != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "prepare buff failed");
         return DLP_PARSE_ERROR_MEMORY_OPERATE_FAIL;
