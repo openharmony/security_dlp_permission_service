@@ -58,6 +58,7 @@ constexpr OHOS::HiviewDFX::HiLogLabel LABEL = { LOG_CORE, SECURITY_DOMAIN_DLP_PE
 constexpr const int32_t EDM_UID = 3057;
 constexpr const int32_t SA_ID_DLP_PERMISSION_SERVICE = 3521;
 const std::string PERMISSION_ACCESS_DLP_FILE = "ohos.permission.ACCESS_DLP_FILE";
+const std::string PERMISSION_ENTERPRISE_ACCESS_DLP_FILE = "ohos.permission.ENTERPRISE_ACCESS_DLP_FILE";
 static const std::string ALLOW_ACTION[] = {"ohos.want.action.CREATE_FILE"};
 static const std::string DLP_MANAGER = "com.ohos.dlpmanager";
 static const std::chrono::seconds SLEEP_TIME(120);
@@ -177,7 +178,8 @@ void DlpPermissionService::UnregisterAppStateObserver()
 int32_t DlpPermissionService::GenerateDlpCertificate(
     const sptr<DlpPolicyParcel>& policyParcel, const sptr<IDlpPermissionCallback>& callback)
 {
-    if (!PermissionManagerAdapter::CheckPermission(PERMISSION_ACCESS_DLP_FILE)) {
+    if (!PermissionManagerAdapter::CheckPermission(PERMISSION_ACCESS_DLP_FILE) &&
+        !PermissionManagerAdapter::CheckPermission(PERMISSION_ENTERPRISE_ACCESS_DLP_FILE)) {
         return DLP_SERVICE_ERROR_PERMISSION_DENY;
     }
 
@@ -226,7 +228,8 @@ static bool GetApplicationInfo(std::string appId, AppExecFwk::ApplicationInfo& a
 int32_t DlpPermissionService::ParseDlpCertificate(const sptr<CertParcel>& certParcel,
     const sptr<IDlpPermissionCallback>& callback, const std::string& appId, bool offlineAccess)
 {
-    if (!PermissionManagerAdapter::CheckPermission(PERMISSION_ACCESS_DLP_FILE)) {
+    if (!PermissionManagerAdapter::CheckPermission(PERMISSION_ACCESS_DLP_FILE) &&
+        !PermissionManagerAdapter::CheckPermission(PERMISSION_ENTERPRISE_ACCESS_DLP_FILE)) {
         return DLP_SERVICE_ERROR_PERMISSION_DENY;
     }
     if (callback == nullptr) {
