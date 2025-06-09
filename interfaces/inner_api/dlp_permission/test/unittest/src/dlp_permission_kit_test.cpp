@@ -1417,6 +1417,80 @@ HWTEST_F(DlpPermissionKitTest, IsDLPFeatureProvided001, TestSize.Level0)
     bool isProvided;
     ASSERT_EQ(DLP_OK, DlpPermissionKit::IsDLPFeatureProvided(isProvided));
 }
+
+/* *
+ * @tc.name: SandboxInfo004
+ * @tc.desc: SandboxInfo.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionKitTest, SandboxInfo004, TestSize.Level0)
+{
+    DLP_LOG_DEBUG(LABEL, "Start SandboxInfo004.");
+    Parcel parcel;
+    SandboxInfo info;
+    bool ret = info.Marshalling(parcel);
+    ASSERT_EQ(true, ret);
+    auto out = info.Unmarshalling(parcel);
+    ASSERT_NE(nullptr, out);
+}
+
+/* *
+ * @tc.name: SetRetentionState004
+ * @tc.desc: SetRetentionState.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionKitTest, SetRetentionState004, TestSize.Level0)
+{
+    DLP_LOG_DEBUG(LABEL, "Start SetRetentionState004.");
+    std::vector<std::string> vec;
+    (void)DlpPermissionKit::SetRetentionState(vec);
+    ASSERT_TRUE(TestSetSelfTokenId(g_dlpManagerTokenId));
+}
+
+/* *
+ * @tc.name: CancelRetentionState004
+ * @tc.desc: CancelRetentionState.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionKitTest, CancelRetentionState004, TestSize.Level0)
+{
+    DLP_LOG_DEBUG(LABEL, "Start CancelRetentionState004.");
+    std::vector<std::string> vec;
+    (void)DlpPermissionKit::CancelRetentionState(vec);
+    ASSERT_TRUE(TestSetSelfTokenId(g_dlpManagerTokenId));
+}
+
+/* *
+ * @tc.name: GetRetentionSandboxList004
+ * @tc.desc: GetRetentionSandboxList.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionKitTest, GetRetentionSandboxList004, TestSize.Level0)
+{
+    DLP_LOG_DEBUG(LABEL, "Start GetRetentionSandboxList004.");
+    std::vector<RetentionSandBoxInfo> vec;
+    (void)DlpPermissionKit::GetRetentionSandboxList(DLP_MANAGER_APP, vec);
+    ASSERT_TRUE(TestSetSelfTokenId(g_dlpManagerTokenId));
+}
+
+/* *
+ * @tc.name: GetDLPFileVisitRecord004
+ * @tc.desc: GetDLPFileVisitRecord.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionKitTest, GetDLPFileVisitRecord004, TestSize.Level0)
+{
+    DLP_LOG_DEBUG(LABEL, "Start GetDLPFileVisitRecord004.");
+    std::vector<VisitedDLPFileInfo> vec;
+    (void)DlpPermissionKit::GetDLPFileVisitRecord(vec);
+    ASSERT_TRUE(TestSetSelfTokenId(g_dlpManagerTokenId));
+}
+
 }  // namespace DlpPermission
 }  // namespace Security
 }  // namespace OHOS
