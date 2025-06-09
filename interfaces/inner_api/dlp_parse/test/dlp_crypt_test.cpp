@@ -15,6 +15,7 @@
 
 #include "dlp_crypt_test.h"
 #include <cstring>
+#include <fcntl.h>
 #include <fstream>
 #include <iostream>
 #include <thread>
@@ -46,6 +47,7 @@ constexpr int THOUSAND = 1000;
 constexpr int SIXTEEN = 16;
 constexpr int TWENTYFOUR = 24;
 constexpr int TWENTYFIVE = 25;
+constexpr int HMAC_SIZE = 32;
 uint8_t g_key[32] = { 0xdc, 0x7c, 0x8d, 0xe, 0xeb, 0x41, 0x4b, 0xb0, 0x8e, 0x24, 0x8, 0x32, 0xc7, 0x88, 0x96, 0xb6,
     0x2, 0x69, 0x65, 0x49, 0xaf, 0x3c, 0xa7, 0x8f, 0x38, 0x3d, 0xe3, 0xf1, 0x23, 0xb6, 0x22, 0xfb };
 uint8_t g_iv[16] = { 0x90, 0xd5, 0xe2, 0x45, 0xaa, 0xeb, 0xa0, 0x9, 0x61, 0x45, 0xd1, 0x48, 0x4a, 0xaf, 0xc9, 0xf9 };
@@ -2103,3 +2105,122 @@ HWTEST_F(DlpCryptTest, DlpCtrModeIncreaeIvCounter001, TestSize.Level0)
     ASSERT_EQ(mIn.data[6], 1);
 }
 
+/**
+ * @tc.name: DlpHmacEncodeForRaw001
+ * @tc.desc: test for DlpHmacEncodeForRaw with DLP_OK
+ * @tc.type: FUNC
+ * @tc.require:SR000GVIG3
+ */
+HWTEST_F(DlpCryptTest, DlpHmacEncodeForRaw001, TestSize.Level0)
+{
+    DLP_LOG_INFO(LABEL, "DlpHmacEncodeForRaw001");
+
+    int fd = open("/data/fuse_test.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
+    ASSERT_NE(fd, -1);
+    uint8_t buffer[SIXTEEN] = {0};
+    write(fd, buffer, SIXTEEN);
+    lseek(fd, 0, SEEK_SET);
+
+    uint8_t* hmacKeyData = new (std::nothrow) uint8_t[HMAC_SIZE];
+    ASSERT_NE(hmacKeyData, nullptr);
+    struct DlpBlob key = {
+        .size = HMAC_SIZE,
+        .data = hmacKeyData,
+    };
+
+    uint8_t* outBuf = new (std::nothrow) uint8_t[HMAC_SIZE];
+    ASSERT_NE(outBuf, nullptr);
+    struct DlpBlob out = {
+        .size = HMAC_SIZE,
+        .data = outBuf,
+    };
+
+    ASSERT_EQ(DLP_OK, DlpHmacEncodeForRaw(key, fd, SIXTEEN, out));
+    delete[] key.data;
+    key.data = nullptr;
+    delete[] out.data;
+    out.data = nullptr;
+
+    close(fd);
+    unlink("/data/fuse_test.txt");
+}
+
+/**
+ * @tc.name: DlpHmacEncodeForRaw002
+ * @tc.desc: test for DlpHmacEncodeForRaw with DLP_OK
+ * @tc.type: FUNC
+ * @tc.require:SR000GVIG3
+ */
+HWTEST_F(DlpCryptTest, DlpHmacEncodeForRaw002, TestSize.Level0)
+{
+    DLP_LOG_INFO(LABEL, "DlpHmacEncodeForRaw002");
+
+    int fd = open("/data/fuse_test.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
+    ASSERT_NE(fd, -1);
+    uint8_t buffer[SIXTEEN] = {0};
+    write(fd, buffer, SIXTEEN);
+    lseek(fd, 0, SEEK_SET);
+
+    uint8_t* hmacKeyData = new (std::nothrow) uint8_t[HMAC_SIZE];
+    ASSERT_NE(hmacKeyData, nullptr);
+    struct DlpBlob key = {
+        .size = HMAC_SIZE,
+        .data = hmacKeyData,
+    };
+
+    uint8_t* outBuf = new (std::nothrow) uint8_t[HMAC_SIZE];
+    ASSERT_NE(outBuf, nullptr);
+    struct DlpBlob out = {
+        .size = HMAC_SIZE,
+        .data = outBuf,
+    };
+
+    ASSERT_EQ(DLP_OK, DlpHmacEncodeForRaw(key, fd, 0, out));
+    delete[] key.data;
+    key.data = nullptr;
+    delete[] out.data;
+    out.data = nullptr;
+
+    close(fd);
+    unlink("/data/fuse_test.txt");
+}
+
+/**
+ * @tc.name: DlpHmacEncodeForRaw003
+ * @tc.desc: test for DlpHmacEncodeForRaw with DLP_OK
+ * @tc.type: FUNC
+ * @tc.require:SR000GVIG3
+ */
+HWTEST_F(DlpCryptTest, DlpHmacEncodeForRaw003, TestSize.Level0)
+{
+    DLP_LOG_INFO(LABEL, "DlpHmacEncodeForRaw003");
+
+    int fd = open("/data/fuse_test.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
+    ASSERT_NE(fd, -1);
+    uint8_t buffer[SIXTEEN] = {0};
+    write(fd, buffer, SIXTEEN);
+    lseek(fd, 0, SEEK_SET);
+
+    uint8_t* hmacKeyData = new (std::nothrow) uint8_t[HMAC_SIZE];
+    ASSERT_NE(hmacKeyData, nullptr);
+    struct DlpBlob key = {
+        .size = HMAC_SIZE,
+        .data = hmacKeyData,
+    };
+
+    uint8_t* outBuf = new (std::nothrow) uint8_t[HMAC_SIZE];
+    ASSERT_NE(outBuf, nullptr);
+    struct DlpBlob out = {
+        .size = HMAC_SIZE,
+        .data = outBuf,
+    };
+
+    ASSERT_EQ(DLP_OK, DlpHmacEncodeForRaw(key, fd, SIXTEEN - 1, out));
+    delete[] key.data;
+    key.data = nullptr;
+    delete[] out.data;
+    out.data = nullptr;
+
+    close(fd);
+    unlink("/data/fuse_test.txt");
+}
