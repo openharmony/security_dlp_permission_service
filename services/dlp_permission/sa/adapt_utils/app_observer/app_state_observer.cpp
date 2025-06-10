@@ -287,7 +287,7 @@ uint32_t AppStateObserver::EraseDlpSandboxInfo(int uid)
 
 void AppStateObserver::OnProcessDied(const AppExecFwk::ProcessData& processData)
 {
-    DLP_LOG_INFO(LABEL, "%{public}s is died, uid: %{public}d", processData.bundleName.c_str(), processData.uid);
+    DLP_LOG_DEBUG(LABEL, "%{public}s is died, uid: %{public}d", processData.bundleName.c_str(), processData.uid);
 
     // current died process is dlpmanager
     if (processData.bundleName == DLP_MANAGER_BUNDLE_NAME &&
