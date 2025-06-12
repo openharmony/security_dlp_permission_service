@@ -43,7 +43,7 @@ int32_t FileOperator::InputFileByPathAndContent(const std::string& path, const s
     std::string str = path;
     str.erase(str.rfind('/'));
     if (!IsExistDir(str)) {
-        DLP_LOG_INFO(LABEL, "dir not exist, str = %{public}s errCode %{public}d.", str.c_str(), errno);
+        DLP_LOG_INFO(LABEL, "dir not exist, errCode %{public}d.", errno);
         return DLP_RETENTION_COMMON_FILE_OPEN_FAILED;
     }
 
@@ -51,28 +51,28 @@ int32_t FileOperator::InputFileByPathAndContent(const std::string& path, const s
     (void)realpath(str.c_str(), realPath);
 
     if (str.compare(realPath) != 0) {
-        DLP_LOG_INFO(LABEL, "path need to be canonical, str %{public}s realPath %{public}s.", str.c_str(), realPath);
+        DLP_LOG_INFO(LABEL, "path need to be canonical.");
         return DLP_RETENTION_COMMON_FILE_OPEN_FAILED;
     }
 
-    FILE* fp = fopen(path.c_str(), "wb");
+    FILE* fp = fopen(realPath, "wb");
     if (fp == nullptr) {
-        DLP_LOG_INFO(LABEL, "failed to open %{public}s, errno %{public}d.", path.c_str(), errno);
+        DLP_LOG_INFO(LABEL, "failed to open, errno %{public}d.", errno);
         return DLP_RETENTION_COMMON_FILE_OPEN_FAILED;
     }
     size_t num = fwrite(content.c_str(), sizeof(char), content.length(), fp);
     if (num != content.length()) {
-        DLP_LOG_INFO(LABEL, "failed to fwrite %{public}s, errno %{public}d.", path.c_str(), errno);
+        DLP_LOG_INFO(LABEL, "failed to fwrite, errno %{public}d.", errno);
         fclose(fp);
         return DLP_RETENTION_COMMON_FILE_OPEN_FAILED;
     }
     if (fflush(fp) != 0) {
-        DLP_LOG_INFO(LABEL, "failed to fflush %{public}s, errno %{public}d.", path.c_str(), errno);
+        DLP_LOG_INFO(LABEL, "failed to fflush, errno %{public}d.", errno);
         fclose(fp);
         return DLP_RETENTION_COMMON_FILE_OPEN_FAILED;
     }
     if (fsync(fileno(fp)) != 0) {
-        DLP_LOG_INFO(LABEL, "failed to fsync %{public}s, errno %{public}d.", path.c_str(), errno);
+        DLP_LOG_INFO(LABEL, "failed to fsync, errno %{public}d.", errno);
         fclose(fp);
         return DLP_RETENTION_COMMON_FILE_OPEN_FAILED;
     }
@@ -80,7 +80,7 @@ int32_t FileOperator::InputFileByPathAndContent(const std::string& path, const s
     fp = nullptr;
     // change mode
     if (!ChangeModeFile(path, S_IRUSR | S_IWUSR)) {
-        DLP_LOG_INFO(LABEL, "failed to change mode for file %{public}s, errno %{public}d.", path.c_str(), errno);
+        DLP_LOG_INFO(LABEL, "failed to change mode for file, errno %{public}d.", errno);
     }
 
     return DLP_OK;
