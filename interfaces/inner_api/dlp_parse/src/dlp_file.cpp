@@ -1346,7 +1346,7 @@ int32_t DlpFile::RemoveDlpPermissionInRaw(int32_t outPlainFileFd)
         return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
     }
 
-    if (fileLen == head_.txtOffset) {
+    if (fileLen == static_cast<off_t>(head_.txtOffset)) {
         DLP_LOG_INFO(LABEL, "Dlp file have no content");
         return DLP_OK;
     }

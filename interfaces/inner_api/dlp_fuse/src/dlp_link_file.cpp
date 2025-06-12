@@ -90,7 +90,7 @@ struct stat DlpLinkFile::GetLinkStat()
 
     uint64_t res = dlpFile_->GetFsContentSize();
     if (res != INVALID_FILE_SIZE) {
-        fileStat_.st_size = res;
+        fileStat_.st_size = static_cast<off_t>(res);
     }
     return fileStat_;
 }
