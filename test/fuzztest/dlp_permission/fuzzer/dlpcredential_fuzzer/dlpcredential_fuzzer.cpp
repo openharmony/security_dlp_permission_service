@@ -30,6 +30,7 @@
 #include "dlp_permission.h"
 #include "dlp_permission_async_stub.h"
 #include "dlp_permission_kit.h"
+#include "nlohmann/json.hpp"
 #include "securec.h"
 #include "token_setproc.h"
 #include "hex_string.h"
