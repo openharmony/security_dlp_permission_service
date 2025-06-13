@@ -81,7 +81,7 @@ typedef struct SandboxInfo : public Parcelable {
     static SandboxInfo* Unmarshalling(Parcel &data);
 } SandboxInfo;
 
-enum class ActionType : uint32_t {
+enum ActionType : uint32_t {
     NOTOPEN = 0,
     OPEN = 1
 };
