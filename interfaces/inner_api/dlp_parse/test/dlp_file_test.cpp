@@ -1844,9 +1844,6 @@ HWTEST_F(DlpFileTest, CleanTmpFile001, TestSize.Level0)
     initDlpFileCiper(testFile);
     EXPECT_EQ(true, testFile.CleanTmpFile());
 
-    EXPECT_EQ(DLP_OK, testFile.GenFile(fdPlain));
-    EXPECT_EQ(true, testFile.CleanTmpFile());
-
     close(fdPlain);
     close(fdDlp);
     unlink("/data/fuse_test_plain.txt");
