@@ -288,6 +288,7 @@ napi_value CreateEnumDLPFileAccess(napi_env env);
 napi_value CreateEnumAccountType(napi_env env);
 napi_value CreateEnumActionFlags(napi_env env);
 napi_value CreateEnumGatheringPolicy(napi_env env);
+napi_value CreateEnumActionType(napi_env env);
 
 void ProcessCallbackOrPromise(napi_env env, const CommonAsyncContext* asyncContext, napi_value data);
 

@@ -458,6 +458,22 @@ napi_value CreateEnumGatheringPolicy(napi_env env)
     return gatheringPolicy;
 }
 
+napi_value CreateEnumActionType(napi_env env)
+{
+    napi_value actionType = nullptr;
+    NAPI_CALL(env, napi_create_object(env, &actionType));
+
+    napi_value prop = nullptr;
+    NAPI_CALL(env, napi_create_int32(env, static_cast<int32_t>(NOTOPEN), &prop));
+    NAPI_CALL(env, napi_set_named_property(env, actionType, "NOT_OPEN", prop));
+
+    prop = nullptr;
+    NAPI_CALL(env, napi_create_int32(env, static_cast<int32_t>(OPEN), &prop));
+    NAPI_CALL(env, napi_set_named_property(env, actionType, "OPEN", prop));
+
+    return actionType;
+}
+
 void ProcessCallbackOrPromise(napi_env env, const CommonAsyncContext* asyncContext, napi_value data)
 {
     size_t argc = PARAM_SIZE_TWO;
