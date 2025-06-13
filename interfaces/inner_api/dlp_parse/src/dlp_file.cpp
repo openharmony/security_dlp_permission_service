@@ -89,7 +89,6 @@ DlpFile::DlpFile(int32_t dlpFd, const std::string &workDir, int64_t index, bool 
     hmac_.size = 0;
 
     encDataFd_ = -1;
-
     std::string suffix = DlpUtils::GetRealTypeWithFd(dlpFd_);
     std::string lower = DlpUtils::ToLowerString(suffix);
     for (size_t len = MAX_REALY_TYPE_LENGTH; len >= MIN_REALY_TYPE_LENGTH; len--) {
@@ -156,6 +155,7 @@ bool DlpFile::IsValidCipher(const struct DlpBlob& key, const struct DlpUsageSpec
 {
     if (key.data == nullptr) {
         DLP_LOG_ERROR(LABEL, "key data null");
+        DLP_LOG_ERROR(LABEL, "key data is");
         return false;
     }
 
