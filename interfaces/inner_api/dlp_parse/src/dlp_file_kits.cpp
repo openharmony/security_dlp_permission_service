@@ -89,7 +89,7 @@ static const std::unordered_map<std::string, std::string> SUFFIX_MIMETYPE_MAP = 
     {"raf", "image/x-fuji-raf"},
     {"ico", "image/x-icon"},
     {"nrw", "image/x-nikon-nrw"},
-    {"rw2", "image/x-panasonic-rw2"},
+    {"rw2", "image/x-panasonic-raw"},
     {"pef", "image/x-pentax-pef"},
     {"srw", "image/x-samsung-srw"},
     {"svg", "image/svg+xml"},

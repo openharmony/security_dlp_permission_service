@@ -1559,7 +1559,7 @@ uint64_t DlpFile::GetFsContentSize() const
             std::to_string(static_cast<uint64_t>(fileStat.st_size)).c_str(),
             std::to_string(head_.txtOffset).c_str());
     }
-    return static_cast<uint64_t>(fileStat.st_size) - head_.txtOffset;
+    return isZip_ ? static_cast<uint64_t>(fileStat.st_size) : head_.txtSize;
 }
 
 int32_t DlpFile::UpdateDlpFileContentSize()
