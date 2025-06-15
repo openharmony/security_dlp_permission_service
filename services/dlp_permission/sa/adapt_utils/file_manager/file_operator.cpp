@@ -55,7 +55,7 @@ int32_t FileOperator::InputFileByPathAndContent(const std::string& path, const s
         return DLP_RETENTION_COMMON_FILE_OPEN_FAILED;
     }
 
-    FILE* fp = fopen(realPath, "wb");
+    FILE* fp = fopen(path.c_str(), "wb");
     if (fp == nullptr) {
         DLP_LOG_INFO(LABEL, "failed to open, errno %{public}d.", errno);
         return DLP_RETENTION_COMMON_FILE_OPEN_FAILED;
