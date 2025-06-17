@@ -611,7 +611,12 @@ int32_t DlpPermissionClient::GetSandboxAppConfig(std::string& configInfo)
         DLP_LOG_ERROR(LABEL, "Proxy is null");
         return DLP_CALLBACK_SA_WORK_ABNORMAL;
     }
-    return proxy->GetSandboxAppConfig(configInfo);
+    int32_t ret = proxy->GetSandboxAppConfig(configInfo);
+    // if GetSandboxAppConfig not found, will return ok and configInfo is empty.
+    if (ret == DLP_KV_GET_DATA_NOT_FOUND) {
+        ret = DLP_OK;
+    }
+    return ret;
 }
 
 int32_t DlpPermissionClient::IsDLPFeatureProvided(bool& isProvideDLPFeature)
