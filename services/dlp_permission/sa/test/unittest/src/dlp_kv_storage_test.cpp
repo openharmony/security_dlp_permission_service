@@ -61,7 +61,7 @@ HWTEST_F(DlpKvStorageTest, DlpKvStorageTest001, TestSize.Level1)
     ASSERT_EQ(res, DLP_OK);
     res = SandboxConfigKvDataStorage::GetInstance().GetSandboxConfigFromDataStorage(1000,
         BUNDLE_NAME, configInfo, TOKENID);
-    ASSERT_EQ(res, DLP_KV_GET_DATA_NOT_FOUND);
+    ASSERT_EQ(res, DLP_OK);
     std::map<std::string, std::string> keyMap;
     res = SandboxConfigKvDataStorage::GetInstance().GetKeyMapByUserId(100, keyMap);
     ASSERT_EQ(res, DLP_OK);

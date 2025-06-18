@@ -58,9 +58,10 @@ int32_t SandboxConfigKvDataStorage::GetSandboxConfigFromDataStorage(int32_t user
         return DLP_SERVICE_ERROR_VALUE_INVALID;
     }
     res = IsKeyExists(key);
+    // if GetSandboxAppConfig not found, will return ok and configInfo is empty.
     if (!res) {
         DLP_LOG_ERROR(LABEL, "the key not exists.");
-        return DLP_KV_GET_DATA_NOT_FOUND;
+        return DLP_OK;
     }
     int32_t result = GetValueFromKvStore(key, configInfo);
     if (result != DLP_OK) {
