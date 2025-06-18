@@ -53,7 +53,6 @@ static const std::unordered_map<int32_t, std::string> JS_ERROR_MSG_MAP = {
 
 static const std::unordered_map<int32_t, int32_t> NATIVE_CODE_TO_JS_CODE_MAP = {
     { DLP_OK, ERR_JS_SUCCESS },
-    { DLP_KV_GET_DATA_NOT_FOUND, ERR_JS_SUCCESS },
 
     // ERR_JS_PERMISSION_DENIED
     { DLP_SERVICE_ERROR_PERMISSION_DENY, ERR_JS_PERMISSION_DENIED },

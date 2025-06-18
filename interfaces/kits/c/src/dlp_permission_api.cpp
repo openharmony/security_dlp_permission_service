@@ -29,7 +29,6 @@ static const uint32_t MAX_FILE_NAME_LEN = 256;
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "DlpPermissionCapi"};
 static const std::unordered_map<int32_t, DLP_ErrCode> NATIVE_CODE_TO_C_CODE_MAP = {
     { DLP_OK, ERR_OH_SUCCESS },
-    { DLP_KV_GET_DATA_NOT_FOUND, ERR_OH_SUCCESS },
 
     // ERR_OH_INVALID_PARAMETER
     { DLP_SERVICE_ERROR_VALUE_INVALID, ERR_OH_INVALID_PARAMETER },
