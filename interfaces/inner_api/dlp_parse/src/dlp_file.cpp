@@ -971,7 +971,7 @@ static int32_t GetFileSize(int32_t fd, uint64_t& fileLen)
 {
     int32_t ret = DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
     off_t readLen = lseek(fd, 0, SEEK_END);
-    if (readLen == static_cast<off_t>(-1) || static_cast<uint64_t>(readLen) > DLP_MAX_CONTENT_SIZE) {
+    if (readLen == static_cast<off_t>(-1) || static_cast<uint64_t>(readLen) > UINT32_MAX) {
         DLP_LOG_ERROR(LABEL, "get file size failed, %{public}s", strerror(errno));
     } else {
         fileLen = static_cast<uint64_t>(readLen);

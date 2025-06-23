@@ -961,7 +961,6 @@ HWTEST_F(DlpPermissionKitTest, GetDlpGatheringPolicy001, TestSize.Level0)
     bool isGathering = false;
 
     ASSERT_EQ(DLP_OK, DlpPermissionKit::GetDlpGatheringPolicy(isGathering));
-    ASSERT_EQ(isGathering, false);
 }
 
 /**

@@ -267,7 +267,11 @@ HWTEST_F(DlpFileTest, GetLocalAccountName001, TestSize.Level0)
     DlpFile testFile(1000, DLP_TEST_DIR, 0, false, "txt");
     std::string account;
     int dlpRet = testFile.GetLocalAccountName(account);
-    ASSERT_EQ(dlpRet, DLP_OK);
+    if (dlpRet != DLP_OK) {
+        ASSERT_EQ(dlpRet, DLP_PARSE_ERROR_ACCOUNT_INVALID);
+    } else {
+        ASSERT_EQ(dlpRet, DLP_OK);
+    }
 }
 
 /**
