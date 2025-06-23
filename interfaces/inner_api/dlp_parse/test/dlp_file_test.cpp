@@ -1582,9 +1582,9 @@ HWTEST_F(DlpFileTest, UpdateDlpFileContentSize001, TestSize.Level0)
     initDlpFileCiper(testFile);
 
     testFile.head_.txtOffset = 16;
+    testFile.head_.txtSize = 0;
     EXPECT_EQ(DLP_PARSE_ERROR_FILE_FORMAT_ERROR, testFile.UpdateDlpFileContentSize());
     testFile.head_.txtOffset = 0;
-
     DlpCMockCondition condition;
     condition.mockSequence = { true };
     SetMockConditions("lseek", condition);
@@ -1681,7 +1681,7 @@ HWTEST_F(DlpFileTest, Truncate001, TestSize.Level0)
     initDlpFileCiper(testFile);
 
     testFile.head_.txtOffset = 0;
-
+    testFile.head_.txtSize = 0;
     testFile.authPerm_ = DLPFileAccess::READ_ONLY;
     EXPECT_EQ(DLP_PARSE_ERROR_FILE_READ_ONLY, testFile.Truncate(16));
     testFile.authPerm_ = DLPFileAccess::FULL_CONTROL;
