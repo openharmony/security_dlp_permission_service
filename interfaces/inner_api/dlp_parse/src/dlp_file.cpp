@@ -1549,7 +1549,8 @@ uint64_t DlpFile::GetFsContentSize() const
         DLP_LOG_ERROR(LABEL, "fstat error %{public}d , errno %{public}d dlpfd: %{public}d ", ret, errno, opFd);
         return INVALID_FILE_SIZE;
     }
-    if (head_.txtOffset > fileStat.st_size || fileStat.st_size >= static_cast<off_t>(INVALID_FILE_SIZE)) {
+    if (static_cast<off_t>(head_.txtOffset) > fileStat.st_size ||
+        fileStat.st_size >= static_cast<off_t>(INVALID_FILE_SIZE)) {
         DLP_LOG_ERROR(LABEL, "size error %{public}s %{public}s", std::to_string(head_.txtOffset).c_str(),
             std::to_string(static_cast<uint64_t>(fileStat.st_size)).c_str());
         return INVALID_FILE_SIZE;

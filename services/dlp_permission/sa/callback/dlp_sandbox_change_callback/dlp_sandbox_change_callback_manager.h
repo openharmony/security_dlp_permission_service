@@ -36,7 +36,7 @@ struct DlpSandboxChangeCallbackRecord {
 class DlpSandboxChangeCallbackManager {
 public:
     virtual ~DlpSandboxChangeCallbackManager();
-    DlpSandboxChangeCallbackManager();
+    
     static DlpSandboxChangeCallbackManager &GetInstance();
 
     int32_t AddCallback(int32_t pid, const sptr<IRemoteObject> &callback);
@@ -45,6 +45,8 @@ public:
     void ExecuteCallbackAsync(const DlpSandboxInfo &dlpSandboxInfo);
 
 private:
+    DlpSandboxChangeCallbackManager();
+    DISALLOW_COPY_AND_MOVE(DlpSandboxChangeCallbackManager);
     std::mutex mutex_;
     std::map<int32_t, DlpSandboxChangeCallbackRecord> callbackInfoMap_;
     sptr<IRemoteObject::DeathRecipient> callbackDeathRecipient_;

@@ -31,7 +31,7 @@ using Json = nlohmann::json;
 
 class VisitRecordFileManager {
 public:
-    VisitRecordFileManager();
+
     virtual ~VisitRecordFileManager();
     static VisitRecordFileManager& GetInstance();
 
@@ -40,6 +40,8 @@ public:
         std::vector<VisitedDLPFileInfo>& infoVec);
 
 private:
+    VisitRecordFileManager();
+    DISALLOW_COPY_AND_MOVE(VisitRecordFileManager);
     bool Init();
     int32_t UpdateFile(const int32_t& jsonRes);
     bool hasInit_ = false;

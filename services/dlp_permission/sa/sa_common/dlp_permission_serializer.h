@@ -29,7 +29,6 @@ using unordered_json = nlohmann::ordered_json;
 class DlpPermissionSerializer {
 public:
     static DlpPermissionSerializer& GetInstance();
-    DlpPermissionSerializer() = default;
     virtual ~DlpPermissionSerializer() = default;
 
     int32_t SerializeDlpPermission(const PermissionPolicy& policy, unordered_json& permInfoJson);
@@ -41,6 +40,8 @@ public:
     int32_t DeserializeEncPolicyDataByFirstVersion(const unordered_json& encDataJson,
         const unordered_json& offlineEncDataJson, DLP_EncPolicyData& encData, std::string ownerAccountId);
 private:
+    DlpPermissionSerializer() = default;
+    DISALLOW_COPY_AND_MOVE(DlpPermissionSerializer);
     bool DeserializeEveryoneInfo(const unordered_json& policyJson, PermissionPolicy& policy);
     int32_t DeserializeAuthUserInfo(const unordered_json& accountInfoJson, AuthUserInfo& userInfo);
     int32_t DeserializeAuthUserList(const unordered_json& authUsersJson, std::vector<AuthUserInfo>& userList);

@@ -39,7 +39,7 @@ struct OpenDlpFileCallbackRecord {
 class OpenDlpFileCallbackManager {
 public:
     virtual ~OpenDlpFileCallbackManager();
-    OpenDlpFileCallbackManager();
+
     static OpenDlpFileCallbackManager &GetInstance();
 
     int32_t AddCallback(
@@ -50,6 +50,8 @@ public:
     bool IsCallbackEmpty();
 
 private:
+    OpenDlpFileCallbackManager();
+    DISALLOW_COPY_AND_MOVE(OpenDlpFileCallbackManager);
     bool OnOpenDlpFile(const sptr<IRemoteObject> &subscribeRecordPtr, const DlpSandboxInfo &dlpSandboxInfo);
     std::mutex mutex_;
     std::map<int32_t, std::vector<OpenDlpFileCallbackRecord>> openDlpFileCallbackMap_;

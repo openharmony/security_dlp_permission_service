@@ -29,6 +29,8 @@ typedef enum SandboxConfigOperationEnum : uint8_t {
 
 class SandboxConfigKvDataStorage  : public DlpKvDataStorage {
 public:
+    SandboxConfigKvDataStorage(const SandboxConfigKvDataStorage&) = delete;
+    SandboxConfigKvDataStorage& operator=(const SandboxConfigKvDataStorage&) = delete;
     static SandboxConfigKvDataStorage& GetInstance();
     int32_t GetSandboxConfigFromDataStorage(int32_t userId, const std::string& bundleName,
         std::string& configInfo, const std::string tokenId);

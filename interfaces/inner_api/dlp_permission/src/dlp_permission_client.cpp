@@ -39,7 +39,6 @@ static const uint32_t MAX_CALLBACK_MAP_SIZE = 100;
 static const std::string GRANT_SENSITIVE_PERMISSIONS = "ohos.permission.GRANT_SENSITIVE_PERMISSIONS";
 static const std::string DLP_ENABLE = "const.dlp.dlp_enable";
 static const std::string TRUE_VALUE = "true";
-std::mutex g_instanceMutex;
 static constexpr int32_t DLP_PERMISSION_SERVICE_SA_ID = 3521;
 
 static int32_t CheckSandboxFlag(AccessToken::AccessTokenID tokenId, bool& sandboxFlag)
@@ -56,14 +55,8 @@ static int32_t CheckSandboxFlag(AccessToken::AccessTokenID tokenId, bool& sandbo
 
 DlpPermissionClient& DlpPermissionClient::GetInstance()
 {
-    static DlpPermissionClient* instance = nullptr;
-    if (instance == nullptr) {
-        std::lock_guard<std::mutex> lock(g_instanceMutex);
-        if (instance == nullptr) {
-            instance = new DlpPermissionClient();
-        }
-    }
-    return *instance;
+    static DlpPermissionClient instance;
+    return instance;
 }
 
 DlpPermissionClient::DlpPermissionClient()

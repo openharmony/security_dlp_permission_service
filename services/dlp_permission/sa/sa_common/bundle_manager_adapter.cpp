@@ -28,18 +28,11 @@ using namespace Security::AccessToken;
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = { LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION,
     "BundleManagerAdapter" };
-std::mutex g_instanceMutex;
 }
 BundleManagerAdapter& BundleManagerAdapter::GetInstance()
 {
-    static BundleManagerAdapter* instance = nullptr;
-    if (instance == nullptr) {
-        std::lock_guard<std::mutex> lock(g_instanceMutex);
-        if (instance == nullptr) {
-            instance = new BundleManagerAdapter();
-        }
-    }
-    return *instance;
+    static BundleManagerAdapter instance;
+    return instance;
 }
 
 BundleManagerAdapter::BundleManagerAdapter() :proxy_(nullptr)
@@ -100,7 +93,7 @@ int32_t BundleManagerAdapter::GetBundleInfoV9(const std::string &bundleName, App
     int32_t result = Connect();
     if (result != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "failed to connect bundle manager service.");
-        return false;
+        return DLP_SERVICE_ERROR_IPC_REQUEST_FAIL;
     }
     return proxy_->GetBundleInfoV9(bundleName, flag, bundleInfo, userId);
 }

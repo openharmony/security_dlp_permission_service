@@ -40,7 +40,6 @@ const std::string PATH_CACHE = "/cache";
 const std::string SUPPORT_PHOTO_DLP = "support_photo_dlp";
 const std::string SUPPORT_VIDEO_DLP = "support_video_dlp";
 
-std::mutex g_instanceMutex;
 static const std::string DEFAULT_STRING = "";
 }
 
@@ -657,14 +656,8 @@ int32_t DlpFileManager::RecoverDlpFile(std::shared_ptr<DlpFile>& filePtr, int32_
 
 DlpFileManager& DlpFileManager::GetInstance()
 {
-    static DlpFileManager* instance = nullptr;
-    if (instance == nullptr) {
-        std::lock_guard<std::mutex> lock(g_instanceMutex);
-        if (instance == nullptr) {
-            instance = new DlpFileManager();
-        }
-    }
-    return *instance;
+    static DlpFileManager instance;
+    return instance;
 }
 }  // namespace DlpPermission
 }  // namespace Security
