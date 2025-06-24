@@ -291,6 +291,16 @@ std::string DlpUtils::GetRealTypeWithFd(const int32_t& fd)
     }
     return DlpUtils::GetDlpFileRealSuffix(fileName);
 }
+
+bool DlpUtils::GetBundleInfoWithBundleName(const std::string &bundleName, int32_t flag,
+    AppExecFwk::BundleInfo &bundleInfo, int32_t userId)
+{
+    auto bundleMgrProxy = DlpUtils::GetBundleMgrProxy();
+    if (bundleMgrProxy == nullptr) {
+        return false;
+    }
+    return bundleMgrProxy->GetBundleInfo(bundleName, flag, bundleInfo, userId);
+}
 }  // namespace DlpPermission
 }  // namespace Security
 }  // namespace OHOS
