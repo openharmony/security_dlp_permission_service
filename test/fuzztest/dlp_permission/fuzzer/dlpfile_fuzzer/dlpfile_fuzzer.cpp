@@ -28,6 +28,7 @@
 #include "dlp_permission_kit.h"
 #include "ohos_account_kits.h"
 #include "securec.h"
+#include "system_ability_definition.h"
 #include "token_setproc.h"
 #include "dlp_zip.h"
 
@@ -38,6 +39,7 @@ static const int ACCOUNT_NAME_SIZE = 20;
 static const uint8_t ARRAY_CHAR_SIZE = 62;
 static const char CHAR_ARRAY[] = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 static std::string g_accountName = "ohosAnonymousName";
+static const std::string DLP_SUFFIX = ".dlp";
 }
 
 static void GenerateRandStr(uint32_t len, const uint8_t *data, std::string& res)
@@ -105,6 +107,16 @@ static DLPFileAccess GenerateDLPFileAccess(const uint8_t* data)
         return DLPFileAccess::CONTENT_EDIT;
     } else {
         return DLPFileAccess::FULL_CONTROL;
+    }
+}
+
+static void GenerateDlpFileType(std::string& filePath, const uint8_t* data)
+{
+    int8_t realType = (data[0] / TWO + data[1] / TWO) % TWO;
+    if (realType == 0) {
+        filePath = "/data/file_test.txt";
+    } else {
+        filePath = "/data/file_test.jpg";
     }
 }
 
@@ -178,10 +190,14 @@ static void GenerateRandPropertyRand(struct DlpProperty& encProp, const uint8_t*
     }
 }
 
-static void UpdateCertAndTextFuzzTest(DlpBlob offlineCert)
+static void UpdateCertAndTextFuzzTest(DlpBlob offlineCert, const uint8_t* data, size_t size)
 {
+    FuzzedDataProvider fdp(data, size);
+    std::string certStr = fdp.ConsumeBytesAsString(size);
     std::vector<uint8_t> cert;
     std::string workDir;
+    offlineCert.size = certStr.length();
+    offlineCert.data = reinterpret_cast<uint8_t*>(strdup(certStr.c_str()));
     g_Dlpfile->UpdateCertAndText(cert, workDir, offlineCert);
 }
 
@@ -208,17 +224,18 @@ static void FuzzTest(const uint8_t* data, size_t size, bool flag)
     if ((data == nullptr) || (size <= sizeof(uint8_t) * MIN_LENGTH)) {
         return;
     }
-    int plainFileFd = open("/data/file_test.txt", O_CREAT | O_RDWR | O_TRUNC, S_IRWXU | S_IRWXG | S_IRWXO);
-    int dlpFileFd = open("/data/file_test.txt.dlp", O_CREAT | O_RDWR | O_TRUNC, S_IRWXU | S_IRWXG | S_IRWXO);
+    std::string filePath;
+    GenerateDlpFileType(filePath, data);
+    std::string dlpFilePath = filePath + DLP_SUFFIX;
+    int plainFileFd = open(filePath.c_str(), O_CREAT | O_RDWR | O_TRUNC, S_IRWXU | S_IRWXG | S_IRWXO);
+    int dlpFileFd = open(dlpFilePath.c_str(), O_CREAT | O_RDWR | O_TRUNC, S_IRWXU | S_IRWXG | S_IRWXO);
     std::string text;
     std::string account;
     DlpBlob cert;
     DlpBlob offlineCert;
     GenerateRandStr(TEXT_LENGTH, data, text);
     uint32_t offset = TEXT_LENGTH;
-    std::string appId;
-    GenerateRandStr(APPID_LENGTH, data + offset, appId);
-    offset += APPID_LENGTH;
+    std::string appId = "test_appId_passed";
     write(plainFileFd, text.c_str(), text.length());
     struct DlpProperty prop;
     if (flag) {
@@ -231,10 +248,11 @@ static void FuzzTest(const uint8_t* data, size_t size, bool flag)
     DLP_LOG_INFO(LABEL, "GenerateDlpFile res=%{public}d", res);
     int recoveryFileFd = open("/data/fuse_test.txt.recovery",
         O_CREAT | O_RDWR | O_TRUNC, S_IRWXU | S_IRWXG | S_IRWXO);
-    DlpFileManager::GetInstance().RecoverDlpFile(g_Dlpfile, recoveryFileFd);
     DlpFileManager::GetInstance().CloseDlpFile(g_Dlpfile);
     res = DlpFileManager::GetInstance().OpenDlpFile(dlpFileFd, g_Dlpfile, DLP_TEST_DIR, appId);
     DLP_LOG_INFO(LABEL, "OpenDlpFile res=%{public}d", res);
+    g_Dlpfile->UpdateDlpFilePermission();
+    DlpFileManager::GetInstance().RecoverDlpFile(g_Dlpfile, recoveryFileFd);
     g_Dlpfile->DlpFileWrite(0, const_cast<char *>(text.c_str()), text.length());
     uint8_t writeBuffer[ARRRY_SIZE] = {0x1};
     bool hasRead = true;
@@ -242,9 +260,10 @@ static void FuzzTest(const uint8_t* data, size_t size, bool flag)
     GDlpFileFuzzTest();
     g_Dlpfile->GetEncryptCert(cert);
     g_Dlpfile->GetOfflineCert(offlineCert);
+    g_Dlpfile->GetOfflineCertSize();
     g_Dlpfile->DlpFileRead(0, writeBuffer, ARRRY_SIZE, hasRead, 0);
     g_Dlpfile->Truncate(ARRRY_SIZE);
-    UpdateCertAndTextFuzzTest(offlineCert);
+    UpdateCertAndTextFuzzTest(offlineCert, data, size);
     close(plainFileFd);
     close(dlpFileFd);
     close(recoveryFileFd);

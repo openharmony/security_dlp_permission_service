@@ -40,9 +40,9 @@ static const std::string DESCRIPTOR_MAP_PATH = "/proc/self/fd/";
 const std::string DLP_GENERAL_INFO = "dlp_general_info";
 const std::string CACHE_PATH = "/data/storage/el2/base/files/cache/";
 const uint32_t DLP_CWD_MAX = 256;
+std::mutex g_fileOpLock;
 }
 
-std::mutex g_fileOpLock;
 
 sptr<AppExecFwk::IBundleMgr> DlpUtils::GetBundleMgrProxy(void)
 {
@@ -290,6 +290,16 @@ std::string DlpUtils::GetRealTypeWithFd(const int32_t& fd)
         return DEFAULT_STRINGS;
     }
     return DlpUtils::GetDlpFileRealSuffix(fileName);
+}
+
+bool DlpUtils::GetBundleInfoWithBundleName(const std::string &bundleName, int32_t flag,
+    AppExecFwk::BundleInfo &bundleInfo, int32_t userId)
+{
+    auto bundleMgrProxy = DlpUtils::GetBundleMgrProxy();
+    if (bundleMgrProxy == nullptr) {
+        return false;
+    }
+    return bundleMgrProxy->GetBundleInfo(bundleName, flag, bundleInfo, userId);
 }
 }  // namespace DlpPermission
 }  // namespace Security

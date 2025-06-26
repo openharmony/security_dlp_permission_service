@@ -108,6 +108,8 @@ public:
     static int32_t GetFilePathWithFd(const int32_t& fd, std::string& srcFilePath);
     static std::string ToLowerString(const std::string& str);
     static std::string GetRealTypeWithFd(const int32_t& fd);
+    static bool GetBundleInfoWithBundleName(const std::string &bundleName, int32_t flag,
+        AppExecFwk::BundleInfo &bundleInfo, int32_t userId);
 };
 }  // namespace DlpPermission
 }  // namespace Security
