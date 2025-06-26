@@ -51,10 +51,7 @@ bool DlpUtils::GetAuthPolicyWithType(const std::string &cfgFile, const std::stri
 
 std::string DlpUtils::GetFileTypeBySuffix(const std::string& suffix)
 {
-    if (suffix == "jpg") {
-        return "support_photo_dlp";
-    }
-    return "support_office_dlp";
+    return "test.txt.dlp";
 }
 
 std::string DlpUtils::GetDlpFileRealSuffix(const std::string& dlpFileName)
@@ -90,13 +87,6 @@ int32_t DlpUtils::GetFilePathWithFd(const int32_t &fd, std::string &srcFilePath)
 std::string DlpUtils::GetRealTypeWithFd(const int32_t& fd)
 {
     return "txt";
-}
-
-bool DlpUtils::GetBundleInfoWithBundleName(const std::string &bundleName, int32_t flag,
-    AppExecFwk::BundleInfo &bundleInfo, int32_t userId)
-{
-    bundleInfo.appId = "test_appId_passed";
-    return true;
 }
 }  // namespace DlpPermission
 }  // namespace Security
