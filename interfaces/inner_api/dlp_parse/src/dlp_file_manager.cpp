@@ -517,20 +517,10 @@ int32_t DlpFileManager::GenerateDlpFile(
     return GenDlpFile(filePtr, property, plainFileFd);
 }
 
-static bool GetBundleInfoWithBundleName(const std::string &bundleName, int32_t flag,
-    AppExecFwk::BundleInfo &bundleInfo, int32_t userId)
-{
-    auto bundleMgrProxy = DlpUtils::GetBundleMgrProxy();
-    if (bundleMgrProxy == nullptr) {
-        return false;
-    }
-    return bundleMgrProxy->GetBundleInfo(bundleName, flag, bundleInfo, userId);
-}
-
 static std::string GetAppIdWithBundleName(const std::string &bundleName, const int32_t &userId)
 {
     AppExecFwk::BundleInfo bundleInfo;
-    bool result = GetBundleInfoWithBundleName(bundleName,
+    bool result = DlpUtils::GetBundleInfoWithBundleName(bundleName,
         static_cast<int32_t>(AppExecFwk::GetBundleInfoFlag::GET_BUNDLE_INFO_WITH_SIGNATURE_INFO), bundleInfo, userId);
     if (!result) {
         DLP_LOG_ERROR(LABEL, "get appId error");
