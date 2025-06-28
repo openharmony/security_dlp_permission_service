@@ -210,7 +210,6 @@ static void RemoveCachePath(const std::string& path)
 {
     if (remove(DLP_GENERAL_INFO.c_str()) != 0) {
         DLP_LOG_ERROR(LABEL, "remove dlp_general_info file fail, error %{public}s", strerror(errno));
-        return;
     }
     if (rmdir(path.c_str()) != 0) {
         DLP_LOG_ERROR(LABEL, "remove cache path fail, error %{public}s", strerror(errno));
