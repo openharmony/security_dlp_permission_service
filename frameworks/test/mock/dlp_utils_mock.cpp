@@ -25,6 +25,7 @@
 #include "dlp_permission_public_interface.h"
 #include "dlp_zip.h"
 #include "securec.h"
+#include "system_ability_definition.h"
 
 namespace OHOS {
 namespace Security {

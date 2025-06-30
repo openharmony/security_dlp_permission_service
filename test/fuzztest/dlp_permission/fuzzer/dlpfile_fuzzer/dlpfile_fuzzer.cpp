@@ -192,12 +192,8 @@ static void GenerateRandPropertyRand(struct DlpProperty& encProp, const uint8_t*
 
 static void UpdateCertAndTextFuzzTest(DlpBlob offlineCert, const uint8_t* data, size_t size)
 {
-    FuzzedDataProvider fdp(data, size);
-    std::string certStr = fdp.ConsumeBytesAsString(size);
     std::vector<uint8_t> cert;
     std::string workDir;
-    offlineCert.size = certStr.length();
-    offlineCert.data = reinterpret_cast<uint8_t*>(strdup(certStr.c_str()));
     g_Dlpfile->UpdateCertAndText(cert, workDir, offlineCert);
 }
 

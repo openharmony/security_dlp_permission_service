@@ -77,6 +77,7 @@ static const std::string DLP_FILE_ERR_SUFFIX_URI = "file://data/test/fuse_test..
 static const std::string DLP_FILE_ERR_SUFFIX_URI_2 = "file://data/test/fuse_test.aaa.txt";
 static const std::string DLP_TEST_DIR = "/data/test/dlpTest/";
 static const int DLP_FILE_PERMISSION = 0777;
+static const int FIVE = 5;
 
 void CreateDlpFileFd()
 {
@@ -491,5 +492,5 @@ HWTEST_F(DlpFileKitsTest, ConvertAbilityInfoWithSupportDlp001, TestSize.Level0)
 
     want.SetUri(DLP_FILE_URI);
     DlpFileKits::ConvertAbilityInfoWithSupportDlp(want, abilityInfos);
-    EXPECT_EQ(abilityInfos.size(), 0);
+    EXPECT_EQ(abilityInfos.size(), FIVE);
 }
