@@ -591,8 +591,12 @@ HWTEST_F(DlpFileManagerTest, GenerateDlpFile002, TestSize.Level0)
     property.contactAccount = "owner";
     property.ownerAccountType = CLOUD_ACCOUNT;
 
+    int plainFileFd = open("/data/file_test.txt", O_CREAT | O_RDWR | O_TRUNC, S_IRWXU | S_IRWXG | S_IRWXO);
+    char buffer[] = "123456";
+    ASSERT_NE(write(plainFileFd, buffer, sizeof(buffer)), -1);
     EXPECT_EQ(DLP_PARSE_ERROR_VALUE_INVALID,
-        DlpFileManager::GetInstance().GenerateDlpFile(1000, 1000, property, filePtr, DLP_TEST_DIR));
+        DlpFileManager::GetInstance().GenerateDlpFile(plainFileFd, 1000, property, filePtr, DLP_TEST_DIR));
+    close(plainFileFd);
 }
 
 /**
@@ -611,8 +615,12 @@ HWTEST_F(DlpFileManagerTest, GenerateDlpFile003, TestSize.Level0)
     property.contactAccount = "owner";
     property.ownerAccountType = CLOUD_ACCOUNT;
 
+    int plainFileFd = open("/data/file_test.txt", O_CREAT | O_RDWR | O_TRUNC, S_IRWXU | S_IRWXG | S_IRWXO);
+    char buffer[] = "123456";
+    ASSERT_NE(write(plainFileFd, buffer, sizeof(buffer)), -1);
     EXPECT_EQ(DLP_PARSE_ERROR_FILE_OPERATE_FAIL,
-        DlpFileManager::GetInstance().GenerateDlpFile(1000, 1000, property, filePtr, DLP_TEST_DIR));
+        DlpFileManager::GetInstance().GenerateDlpFile(plainFileFd, 1000, property, filePtr, DLP_TEST_DIR));
+    close(plainFileFd);
 }
 
 /**
@@ -629,7 +637,7 @@ HWTEST_F(DlpFileManagerTest, OpenDlpFile001, TestSize.Level0)
     property.ownerAccount = "owner";
     property.ownerAccountId = "owner";
     property.contactAccount = "owner";
-    property.ownerAccountType = DOMAIN_ACCOUNT;
+    property.ownerAccountType = CLOUD_ACCOUNT;
     std::string appId = "test_appId_passed";
     std::string appIdFake = "test_appId_failed";
 
@@ -638,17 +646,26 @@ HWTEST_F(DlpFileManagerTest, OpenDlpFile001, TestSize.Level0)
     EXPECT_EQ(DLP_PARSE_ERROR_FD_ERROR,
         DlpFileManager::GetInstance().OpenDlpFile(-1, filePtr, "", appIdFake));
 
-    std::shared_ptr<DlpFile> filePtr1 = std::make_shared<DlpFile>(1000, DLP_TEST_DIR, 0, false, "txt");
-    ASSERT_NE(filePtr1, nullptr);
-    DlpFileManager::GetInstance().AddDlpFileNode(filePtr1);
-
+    int plainFileFd = open("/data/file_test.txt", O_CREAT | O_RDWR | O_TRUNC, S_IRWXU | S_IRWXG | S_IRWXO);
+    int dlpFileFd = open("/data/file_test.txt.dlp", O_CREAT | O_RDWR | O_TRUNC, S_IRWXU | S_IRWXG | S_IRWXO);
+    char buffer[] = "123456";
+    ASSERT_NE(write(plainFileFd, buffer, sizeof(buffer)), -1);
     EXPECT_EQ(DLP_OK,
-        DlpFileManager::GetInstance().OpenDlpFile(1000, filePtr, "", appId));
+        DlpFileManager::GetInstance().GenerateDlpFile(plainFileFd, dlpFileFd, property, filePtr, DLP_TEST_DIR));
+    close(plainFileFd);
+
+    std::shared_ptr<DlpFile> filePtr1 = std::make_shared<DlpFile>(dlpFileFd, DLP_TEST_DIR, 0, false, "txt");
+    ASSERT_NE(filePtr1, nullptr);
+    DlpFileManager::GetInstance().RemoveDlpFileNode(filePtr1);
+    DlpFileManager::GetInstance().AddDlpFileNode(filePtr1);
+    EXPECT_EQ(DLP_OK,
+        DlpFileManager::GetInstance().OpenDlpFile(dlpFileFd, filePtr, "", appId));
     EXPECT_EQ(filePtr1, filePtr);
     DlpFileManager::GetInstance().RemoveDlpFileNode(filePtr1);
 
     EXPECT_EQ(DLP_PARSE_ERROR_FILE_OPERATE_FAIL,
-        DlpFileManager::GetInstance().OpenDlpFile(1000, filePtr, "", appId));
+        DlpFileManager::GetInstance().OpenDlpFile(dlpFileFd, filePtr, "", appId));
+    close(dlpFileFd);
 }
 
 /**

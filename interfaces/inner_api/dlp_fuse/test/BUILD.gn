@@ -76,6 +76,7 @@ ohos_unittest("dlp_file_test") {
     "json:nlohmann_json_static",
     "openssl:libcrypto_shared",
     "os_account:os_account_innerkits",
+    "samgr:samgr_proxy",
     "zlib:shared_libz",
   ]
 
