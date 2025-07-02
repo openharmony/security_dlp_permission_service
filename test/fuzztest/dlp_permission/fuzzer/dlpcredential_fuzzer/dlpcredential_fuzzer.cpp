@@ -39,6 +39,7 @@
 #include "dlp_permission_client.h"
 #include "dlp_utils.h"
 #include "dlp_policy_mgr_client.h"
+#include "dlp_zip.h"
 
 
 using namespace OHOS::Security::DlpPermission;
@@ -55,6 +56,7 @@ static const uint8_t TWO = 2;
 static const uint8_t ARRAY_CHAR_SIZE = 62;
 static const uint8_t KEY_LEN = 16;
 static const char CHAR_ARRAY[] = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+static const std::string DLP_AUTH_POLICY = "/system/etc/dlp_auth_policy.json";
 
 class UnregisterOpenDlpFileCallbackFuzzer : public OpenDlpFileCallbackCustomize {
 public:
@@ -184,12 +186,19 @@ static void UtilTest(const uint8_t* data, size_t size)
     std::string type = fdp.ConsumeBytesAsString(size);
     std::vector<std::string> authPolicy;
     DlpUtils::GetAuthPolicyWithType(cfgFile, type, authPolicy);
+    DlpUtils::GetAuthPolicyWithType(DLP_AUTH_POLICY, type, authPolicy);
     std::string srcFile;
     std::string filePath;
     GenerateDlpFileType(fdp.ConsumeIntegral<uint32_t>(), filePath);
     int fd = open(filePath.c_str(), O_CREAT | O_RDWR | O_TRUNC, S_IRWXU | S_IRWXG | S_IRWXO);
     DlpUtils::GetFileNameWithFd(fd, srcFile);
     DlpUtils::GetRealTypeWithFd(fd);
+    std::string str = fdp.ConsumeBytesAsString(size);
+    DlpUtils::ToLowerString(str);
+    std::string suffix = fdp.ConsumeBytesAsString(size);
+    DlpUtils::GetFileTypeBySuffix(str);
+    std::string path;
+    DlpUtils::GetFilePathWithFd(fd, path);
     close(fd);
 }
 
