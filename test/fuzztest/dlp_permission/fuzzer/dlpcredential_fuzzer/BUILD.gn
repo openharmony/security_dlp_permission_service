@@ -68,5 +68,6 @@ ohos_fuzztest("DlpCredentialFuzzTest") {
     "os_account:os_account_innerkits",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
+    "zlib:shared_libz",
   ]
 }

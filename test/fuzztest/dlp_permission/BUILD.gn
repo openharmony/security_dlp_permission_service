@@ -36,6 +36,7 @@ group("fuzztest") {
     "fuzzer/isindlpsandbox_fuzzer:IsInDlpSandboxFuzzTest",
     "fuzzer/parsecert_fuzzer:ParseCertFuzzTest",
     "fuzzer/parsedlpheader_fuzzer:ParseDlpHeaderFuzzTest",
+    "fuzzer/permissionproxy_fuzzer:PermissionProxyFuzzTest",
     "fuzzer/querydlpfileaccess_fuzzer:QueryDlpFileAccessFuzzTest",
     "fuzzer/querydlpfilecopyablebytokenid_fuzzer:QueryDlpFileCopyableByTokenIdFuzzTest",
     "fuzzer/registerdlpsandboxchangecallback_fuzzer:RegisterDlpSandboxChangeCallbackFuzzTest",
