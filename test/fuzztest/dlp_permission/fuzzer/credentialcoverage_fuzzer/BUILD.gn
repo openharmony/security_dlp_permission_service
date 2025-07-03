@@ -1,0 +1,108 @@
+# Copyright (c) 2023 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/config/features.gni")
+import("//build/test.gni")
+import("../../../../../dlp_permission_service.gni")
+
+module_output_path = "dlp_permission_service/dlp_permission_service"
+
+ohos_fuzztest("CredentialCoverageFuzzTest") {
+  module_out_path = module_output_path
+  fuzz_config_file = "${dlp_root_dir}/test/fuzztest/dlp_permission/fuzzer/credentialcoverage_fuzzer"
+
+  configs = [ "${dlp_root_dir}/test/fuzztest/dlp_permission:napi_fuzz_config" ]
+
+  include_dirs = [
+    "${dlp_root_dir}/services/dlp_permission/sa/adapt_utils/account_adapt",
+    "${dlp_root_dir}/services/dlp_permission/sa/adapt_utils/app_observer",
+    "${dlp_root_dir}/services/dlp_permission/sa/adapt_utils/file_manager",
+    "${dlp_root_dir}/services/dlp_permission/sa/callback/dlp_sandbox_change_callback",
+    "${dlp_root_dir}/services/dlp_permission/sa/callback/open_dlp_file_callback",
+    "${dlp_root_dir}/services/dlp_permission/sa/mock",
+    "${dlp_root_dir}/services/dlp_permission/sa/sa_main",
+    "${dlp_root_dir}/services/dlp_permission/sa/sa_common",
+    "${dlp_root_dir}/services/dlp_permission/sa/storage/include",
+    "${dlp_root_dir}/frameworks/common/include",
+    "${dlp_root_dir}/frameworks/dlp_permission/include",
+    "${dlp_root_dir}/interfaces/inner_api/dlp_parse/include",
+    "${dlp_root_dir}/interfaces/inner_api/dlp_permission/include",
+  ]
+
+  sources = [
+    "${dlp_root_dir}/frameworks/common/src/cert_parcel.cpp",
+    "${dlp_root_dir}/frameworks/common/src/permission_policy.cpp",
+    "${dlp_root_dir}/frameworks/common/src/retention_sandbox_info.cpp",
+    "${dlp_root_dir}/frameworks/common/src/visited_dlp_file_info.cpp",
+    "${dlp_root_dir}/frameworks/dlp_permission/src/auth_user_info_parcel.cpp",
+    "${dlp_root_dir}/frameworks/dlp_permission/src/dlp_permission_info_parcel.cpp",
+    "${dlp_root_dir}/frameworks/dlp_permission/src/dlp_policy_parcel.cpp",
+    "${dlp_root_dir}/frameworks/dlp_permission/src/dlp_sandbox_callback_info_parcel.cpp",
+    "${dlp_root_dir}/frameworks/dlp_permission/src/open_dlp_file_callback_info_parcel.cpp",
+    "${dlp_root_dir}/services/dlp_permission/sa/adapt_utils/account_adapt/account_adapt.cpp",
+    "${dlp_root_dir}/services/dlp_permission/sa/adapt_utils/app_observer/app_state_observer.cpp",
+    "${dlp_root_dir}/services/dlp_permission/sa/adapt_utils/app_observer/app_uninstall_observer.cpp",
+    "${dlp_root_dir}/services/dlp_permission/sa/adapt_utils/file_manager/file_operator.cpp",
+    "${dlp_root_dir}/services/dlp_permission/sa/adapt_utils/file_manager/retention_file_manager.cpp",
+    "${dlp_root_dir}/services/dlp_permission/sa/adapt_utils/file_manager/sandbox_json_manager.cpp",
+    "${dlp_root_dir}/services/dlp_permission/sa/adapt_utils/file_manager/visit_record_file_manager.cpp",
+    "${dlp_root_dir}/services/dlp_permission/sa/adapt_utils/file_manager/visit_record_json_manager.cpp",
+    "${dlp_root_dir}/services/dlp_permission/sa/callback/dlp_sandbox_change_callback/dlp_sandbox_change_callback_death_recipient.cpp",
+    "${dlp_root_dir}/services/dlp_permission/sa/callback/dlp_sandbox_change_callback/dlp_sandbox_change_callback_manager.cpp",
+    "${dlp_root_dir}/services/dlp_permission/sa/callback/dlp_sandbox_change_callback/dlp_sandbox_change_callback_proxy.cpp",
+    "${dlp_root_dir}/services/dlp_permission/sa/callback/open_dlp_file_callback/open_dlp_file_callback_death_recipient.cpp",
+    "${dlp_root_dir}/services/dlp_permission/sa/callback/open_dlp_file_callback/open_dlp_file_callback_manager.cpp",
+    "${dlp_root_dir}/services/dlp_permission/sa/callback/open_dlp_file_callback/open_dlp_file_callback_proxy.cpp",
+    "${dlp_root_dir}/services/dlp_permission/sa/mock/dlp_credential_service.c",
+    "${dlp_root_dir}/services/dlp_permission/sa/mock/mock_utils.cpp",
+    "${dlp_root_dir}/services/dlp_permission/sa/sa_common/bundle_manager_adapter.cpp",
+    "${dlp_root_dir}/services/dlp_permission/sa/sa_common/permission_manager_adapter.cpp",
+    "${dlp_root_dir}/services/dlp_permission/sa/sa_main/dlp_permission_async_proxy.cpp",
+    "${dlp_root_dir}/services/dlp_permission/sa/sa_main/dlp_permission_service.cpp",
+    "${dlp_root_dir}/services/dlp_permission/sa/storage/src/dlp_kv_data_storage.cpp",
+    "${dlp_root_dir}/services/dlp_permission/sa/storage/src/sandbox_config_kv_data_storage.cpp",
+    "credentialcoverage_fuzzer.cpp"
+  ]
+
+  deps = [
+    "${dlp_root_dir}/services/dlp_permission/sa:dlp_permission_serializer_static",
+    "${dlp_root_dir}/interfaces/inner_api/dlp_permission:libdlp_permission_sdk",
+  ]
+
+  external_deps = [
+    "ability_base:want",
+    "ability_runtime:app_manager",
+    "access_token:libaccesstoken_sdk",
+    "access_token:libtokensetproc_shared",
+    "bundle_framework:appexecfwk_base",
+    "bundle_framework:appexecfwk_core",
+    "c_utils:utils",
+    "common_event_service:cesfwk_core",
+    "common_event_service:cesfwk_innerkits",
+    "config_policy:configpolicy_util",
+    "hilog:libhilog",
+    "hisysevent:libhisysevent",
+    "init:libbegetutil",
+    "ipc:ipc_core",
+    "json:nlohmann_json_static",
+    "kv_store:distributeddata_inner",
+    "os_account:domain_account_innerkits",
+    "os_account:libaccountkits",
+    "os_account:os_account_innerkits",
+    "safwk:system_ability_fwk",
+    "samgr:samgr_proxy",
+  ]
+
+  cflags_cc = [ "-DHILOG_ENABLE" ]
+  cflags = [ "-DHILOG_ENABLE" ]
+}
