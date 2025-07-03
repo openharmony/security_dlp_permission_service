@@ -35,5 +35,6 @@ ohos_fuzztest("GetDlpSupportFileTypeFuzzTest") {
     "access_token:libtokensetproc_shared",
     "c_utils:utils",
     "hilog:libhilog",
+    "ipc:ipc_core",
   ]
 }
