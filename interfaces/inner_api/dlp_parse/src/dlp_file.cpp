@@ -138,6 +138,10 @@ DlpFile::~DlpFile()
     }
 
     CleanTmpFile();
+    // clear HIAE
+#ifdef SUPPORT_DLP_CREDENTIAL
+    ClearDlpHIAEMgr();
+#endif
 }
 
 bool DlpFile::IsValidCipher(const struct DlpBlob& key, const struct DlpUsageSpec& spec,
@@ -285,6 +289,30 @@ bool DlpFile::UpdateDlpFilePermission()
         }
     }
     return true;
+}
+
+int32_t DlpFile::setAlgType(int32_t inPlainFileFd, bool isZip, const std::string& realFileType)
+{
+    head_.algType = 0;
+    if (isZip) {
+        return DLP_OK;
+    }
+    off_t fileLen = lseek(inPlainFileFd, 0, SEEK_END);
+    if (fileLen == static_cast<off_t>(-1)) {
+        DLP_LOG_ERROR(LABEL, "inFd len is invalid, %{public}s", strerror(errno));
+        return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
+    }
+
+    if (lseek(inPlainFileFd, 0, SEEK_SET) == static_cast<off_t>(-1)) {
+        DLP_LOG_ERROR(LABEL, "seek inFd start failed, %{public}s", strerror(errno));
+        return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
+    }
+
+    if (fileLen > static_cast<off_t>(DLP_MIN_HIAE_SIZE) && DlpUtils::GetFileType(realFileType)) {
+        head_.algType = 1;
+    }
+
+    return DLP_OK;
 }
 
 int32_t DlpFile::SetCipher(const struct DlpBlob& key, const struct DlpUsageSpec& spec, const struct DlpBlob& hmacKey)
@@ -739,11 +767,21 @@ int32_t DlpFile::ParseDlpHeaderInRaw()
 
 int32_t DlpFile::ParseDlpHeader()
 {
+    int32_t ret = DLP_OK;
     if (IsZipFile(dlpFd_)) {
-        return UnzipDlpFile();
+        ret =  UnzipDlpFile();
     } else {
-        return ParseDlpHeaderInRaw();
+        ret =  ParseDlpHeaderInRaw();
     }
+#ifdef SUPPORT_DLP_CREDENTIAL
+    if (head_.algType == 0) {
+        DLP_LOG_INFO(LABEL, "support openssl");
+    } else {
+        DLP_LOG_INFO(LABEL, "support HIAE");
+        ret = InitDlpHIAEMgr();
+    }
+#endif
+    return ret;
 }
 
 void DlpFile::GetEncryptCert(struct DlpBlob& cert) const
@@ -890,9 +928,66 @@ int32_t DlpFile::DoDlpBlockCryptOperation(struct DlpBlob& message1, struct DlpBl
     return DLP_OK;
 }
 
+int32_t DlpFile::DoDlpHIAECryptOperation(struct DlpBlob& message1, struct DlpBlob& message2,
+    uint64_t offset, bool isEncrypt)
+{
+#ifndef SUPPORT_DLP_CREDENTIAL
+    return DoDlpBlockCryptOperation(message1, message2, offset, isEncrypt);
+#endif
+
+    if (offset % DLP_BLOCK_SIZE != 0 || message1.data == nullptr || message1.size == 0
+        ||  message2.data == nullptr || message2.size == 0) {
+        DLP_LOG_ERROR(LABEL, "params is error");
+        return DLP_PARSE_ERROR_VALUE_INVALID;
+    }
+
+    uint32_t counterIndex = offset / DLP_BLOCK_SIZE;
+    struct DlpUsageSpec spec;
+    if (DupUsageSpec(spec) != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "spec dup failed");
+        return DLP_PARSE_ERROR_MEMORY_OPERATE_FAIL;
+    }
+    DlpCtrModeIncreaeIvCounter(spec.algParam->iv, counterIndex);
+
+    int32_t ret = DLP_OK;
+    uint32_t blockOffset = 0;
+    uint32_t blockNum = (message1.size + HIAE_BLOCK_SIZE - 1) / HIAE_BLOCK_SIZE;
+    for (uint32_t i = 0; i < blockNum; ++i) {
+        uint64_t blockLen =
+            ((message1.size - blockOffset) < HIAE_BLOCK_SIZE) ? (message1.size - blockOffset) : HIAE_BLOCK_SIZE;
+        
+        ret = isEncrypt ? DlpHIAEEncrypt(&cipher_.encKey, &spec, blockLen,
+            message1.data + blockOffset, message2.data + blockOffset)
+            : DlpHIAEDecrypt(&cipher_.encKey, &spec, blockLen,
+            message1.data + blockOffset, message2.data + blockOffset);
+        if (ret != DLP_OK) {
+            DLP_LOG_ERROR(LABEL, "do HIAE crypt operation failed, ret: %{public}d", ret);
+            break;
+        }
+
+        DlpCtrModeIncreaeIvCounter(spec.algParam->iv, HIAE_BLOCK_SIZE / DLP_BLOCK_SIZE);
+        blockOffset += blockLen;
+    }
+    message2.size = message1.size;
+    delete[] spec.algParam->iv.data;
+    delete spec.algParam;
+    return ret;
+}
+
 int32_t DlpFile::DoDlpContentCryptyOperation(int32_t inFd, int32_t outFd, uint64_t inOffset,
     uint64_t inFileLen, bool isEncrypt)
 {
+    int32_t ret = DLP_OK;
+#ifdef SUPPORT_DLP_CREDENTIAL
+    if (head_.algType == 0) {
+        DLP_LOG_INFO(LABEL, "support openssl");
+    } else {
+        ret = InitDlpHIAEMgr();
+        if (ret != DLP_OK) {
+            return ret;
+        }
+    }
+#endif
     struct DlpBlob message;
     struct DlpBlob outMessage;
     if (PrepareBuff(message, outMessage) != DLP_OK) {
@@ -901,7 +996,6 @@ int32_t DlpFile::DoDlpContentCryptyOperation(int32_t inFd, int32_t outFd, uint64
     }
 
     uint64_t dlpContentOffset = inOffset;
-    int32_t ret = DLP_OK;
     while (inOffset < inFileLen) {
         uint32_t readLen = ((inFileLen - inOffset) < DLP_BUFF_LEN) ? (inFileLen - inOffset) : DLP_BUFF_LEN;
         (void)memset_s(message.data, DLP_BUFF_LEN, 0, DLP_BUFF_LEN);
@@ -914,8 +1008,14 @@ int32_t DlpFile::DoDlpContentCryptyOperation(int32_t inFd, int32_t outFd, uint64
 
         message.size = readLen;
         outMessage.size = readLen;
-        // Implicit condition: DLP_BUFF_LEN must be DLP_BLOCK_SIZE aligned
-        ret = DoDlpBlockCryptOperation(message, outMessage, inOffset - dlpContentOffset, isEncrypt);
+
+        if (head_.algType == 0) {
+            // Implicit condition: DLP_BUFF_LEN must be DLP_BLOCK_SIZE aligned
+            ret = DoDlpBlockCryptOperation(message, outMessage, inOffset - dlpContentOffset, isEncrypt);
+        } else {
+            ret = DoDlpHIAECryptOperation(message, outMessage, inOffset - dlpContentOffset, isEncrypt);
+        }
+
         if (ret != DLP_OK) {
             DLP_LOG_ERROR(LABEL, "do crypt operation fail");
             break;
@@ -1386,9 +1486,8 @@ int32_t DlpFile::RemoveDlpPermission(int32_t outPlainFileFd)
 int32_t DlpFile::DlpFileRead(uint32_t offset, void* buf, uint32_t size, bool& hasRead, int32_t uid)
 {
     int32_t opFd = isZip_ ? encDataFd_ : dlpFd_;
-    if (buf == nullptr || size == 0 || size > DLP_FUSE_MAX_BUFFLEN ||
-        (offset >= DLP_MAX_CONTENT_SIZE - size) ||
-        opFd < 0 || !IsValidCipher(cipher_.encKey, cipher_.usageSpec, cipher_.hmacKey)) {
+    if (buf == nullptr || size == 0 || size > DLP_FUSE_MAX_BUFFLEN || (offset >= DLP_MAX_CONTENT_SIZE - size)
+        || opFd < 0 || !IsValidCipher(cipher_.encKey, cipher_.usageSpec, cipher_.hmacKey)) {
         DLP_LOG_ERROR(LABEL, "params is error");
         return DLP_PARSE_ERROR_VALUE_INVALID;
     }
@@ -1416,7 +1515,13 @@ int32_t DlpFile::DlpFileRead(uint32_t offset, void* buf, uint32_t size, bool& ha
 
     struct DlpBlob message1 = {.size = readLen, .data = encBuff.get()};
     struct DlpBlob message2 = {.size = readLen, .data = outBuff.get()};
-    if (DoDlpBlockCryptOperation(message1, message2, alignOffset, false) != DLP_OK) {
+    int32_t ret = DLP_OK;
+    if (head_.algType == 0) {
+        ret = DoDlpBlockCryptOperation(message1, message2, alignOffset, false);
+    } else {
+        ret = DoDlpHIAECryptOperation(message1, message2, alignOffset, false);
+    }
+    if (ret != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "decrypt fail");
         return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
     }

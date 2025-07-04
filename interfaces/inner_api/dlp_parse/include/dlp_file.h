@@ -35,6 +35,8 @@ static constexpr uint64_t DLP_MAX_RAW_CONTENT_SIZE = 0xffffffff;
 static constexpr uint32_t HOLE_BUFF_SIZE = 16 * 1024;
 static constexpr uint32_t HOLE_BUFF_SMALL_SIZE = 1 * 1024;
 static constexpr uint32_t MAX_HOLE_SIZE = 50 * 1024 * 1024; // 50M
+static constexpr uint64_t DLP_MIN_HIAE_SIZE = 0xC0000000 - 0xA00000;
+static constexpr uint32_t HIAE_BLOCK_SIZE = 4 * 1024;  // 4k
 
 enum DlpOperation {
     DLP_ENCRYPTION = 1,
@@ -52,6 +54,7 @@ struct DlpHeader {
     uint32_t magic;
     uint32_t version;
     uint32_t offlineAccess;
+    uint32_t algType;
     uint64_t txtOffset;
     uint64_t txtSize;
     uint64_t certOffset;
@@ -166,6 +169,7 @@ public:
     bool CleanTmpFile();
     int32_t HmacCheck();
     uint32_t GetOfflineCertSize(void);
+    int32_t setAlgType(int32_t inPlainFileFd, bool isZip, const std::string& realFileType);
 
     int32_t SetPolicy(const PermissionPolicy& policy);
     void GetPolicy(PermissionPolicy& policy) const
@@ -214,6 +218,8 @@ private:
     int32_t DupUsageSpec(struct DlpUsageSpec& spec);
     int32_t DoDlpBlockCryptOperation(struct DlpBlob& message1,
         struct DlpBlob& message2, uint64_t offset, bool isEncrypt);
+    int32_t DoDlpHIAECryptOperation(struct DlpBlob& message1, struct DlpBlob& message2,
+        uint64_t offset, bool isEncrypt);
     int32_t WriteFirstBlockData(uint64_t offset, void* buf, uint32_t size);
     int32_t FillHoleData(uint64_t holeStart, uint64_t holeSize);
     int32_t DoDlpFileWrite(uint64_t offset, void* buf, uint32_t size);

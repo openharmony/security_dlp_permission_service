@@ -116,6 +116,9 @@ enum DLPErrCode : int32_t {
     DLP_COMMON_CHECK_KVSTORE_ERROR = -602,
     DLP_COMMON_DELETE_KEY_FROM_KVSTORE_ERROR = -603,
     DLP_HAP_ID_GET_ERROR = -605,
+
+    DLP_ERROR_DLOPEN = -700,
+    DLP_ERROR_DLSYM = -701,
 };
 }  // namespace DlpPermission
 }  // namespace Security

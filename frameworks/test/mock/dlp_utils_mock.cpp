@@ -111,6 +111,22 @@ std::string DlpUtils::GetFileTypeBySuffix(const std::string& suffix)
     return DEFAULT_STRINGS;
 }
 
+bool DlpUtils::GetFileType(const std::string& realFileType)
+{
+    std::string lower = DlpUtils::ToLowerString(realFileType);
+    for (size_t len = MAX_REALY_TYPE_LENGTH; len >= MIN_REALY_TYPE_LENGTH; len--) {
+        if (len > lower.size()) {
+            continue;
+        }
+        std::string newStr = lower.substr(0, len);
+        if (newStr == DLP_HIAE_TYPE) {
+            DLP_LOG_DEBUG(LABEL, "the file supports the HIAE.");
+            return true;
+        }
+    }
+    return false;
+}
+
 std::string DlpUtils::GetDlpFileRealSuffix(const std::string& dlpFileName)
 {
     uint32_t dlpSuffixLen = DLP_FILE_SUFFIXS.size();

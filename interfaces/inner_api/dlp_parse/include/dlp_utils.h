@@ -29,6 +29,7 @@ namespace DlpPermission {
 
 static const std::string DLP_AUTH_POLICY = "/system/etc/dlp_auth_policy.json";
 static const std::string DLP_DEFAULT_AUTH_POLICY = "default";
+static const std::string DLP_HIAE_TYPE = "mkv";
 static const uint32_t MIN_REALY_TYPE_LENGTH = 2;
 static const uint32_t MAX_REALY_TYPE_LENGTH = 5;
 
@@ -110,6 +111,7 @@ public:
     static std::string GetRealTypeWithFd(const int32_t& fd);
     static bool GetBundleInfoWithBundleName(const std::string &bundleName, int32_t flag,
         AppExecFwk::BundleInfo &bundleInfo, int32_t userId);
+    static bool GetFileType(const std::string& realFileType);
 };
 }  // namespace DlpPermission
 }  // namespace Security
