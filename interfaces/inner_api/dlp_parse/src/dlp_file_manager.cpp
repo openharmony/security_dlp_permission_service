@@ -514,6 +514,11 @@ int32_t DlpFileManager::GenerateDlpFile(
         isZip = false;
     }
     filePtr = std::make_shared<DlpFile>(dlpFileFd, realWorkDir, timeStamp, isZip, realFileType);
+    int32_t ret = filePtr->setAlgType(plainFileFd, isZip, realFileType);
+    if (ret != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "set alg type fail");
+        return ret;
+    }
     return GenDlpFile(filePtr, property, plainFileFd);
 }
 

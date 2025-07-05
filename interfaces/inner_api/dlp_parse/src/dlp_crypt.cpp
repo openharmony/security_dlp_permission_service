@@ -16,12 +16,14 @@
 #include "dlp_crypt.h"
 #include <cstdio>
 #include <cstdlib>
+#include <dlfcn.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
 #include <openssl/rand.h>
 #include <securec.h>
 #include <string>
+#include <thread>
 #include <unistd.h>
 #include "dlp_permission.h"
 #include "dlp_permission_log.h"
@@ -32,10 +34,241 @@ static const uint32_t BYTE_LEN = 8;
 const uint32_t HMAC_SIZE = 32;
 const uint32_t SHA256_KEY_LEN = 32;
 const uint32_t BUFFER_SIZE = 1048576;
+static uint32_t g_hIAECnt = 0;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+static const std::string DLP_HIAE_SDK_PATH_32_BIT = "/system/lib/platformsdk/libdlp_credential_alg_hiae.z.so";
+static const std::string DLP_HIAE_SDK_PATH_64_BIT = "/system/lib64/platformsdk/libdlp_credential_alg_hiae.z.so";
+static const size_t LENGTH_FOR_64_BIT = 8;
+
+typedef int32_t (*HIAEInitFunc)(HIAE_CipherCtx *ctx, const uint8_t *key, const uint32_t keyLen,
+    const uint8_t *iv, const uint32_t ivLen);
+typedef int32_t (*HIAEClearFunc)(HIAE_CipherCtx *ctx);
+typedef int32_t (*HIAEEncryptUpdateFunc)(HIAE_CipherCtx *ctx, const uint8_t *in, const uint32_t inLen,
+    uint8_t *out, uint32_t *outLen);
+typedef int32_t (*HIAEDecryptUpdateFunc)(HIAE_CipherCtx *ctx, const uint8_t *in, const uint32_t inLen,
+    uint8_t *out, uint32_t *outLen);
+
+typedef struct DlpHIAEMgrHandleT {
+    HIAEInitFunc hIAEInit;
+    HIAEClearFunc hIAEClear;
+    HIAEEncryptUpdateFunc hIAEEncryptUpdate;
+    HIAEDecryptUpdateFunc hIAEDecryptUpdate;
+}DlpHIAEMgrHandle;
+
+static DlpHIAEMgrHandle *g_dlpHIAEMgrHandle = nullptr;
+static void *g_dlpModuleHandle = nullptr;
+std::mutex g_lockDlpHIAESdk;
+
+static int32_t FillHIAEFuncHandle(void)
+{
+    g_dlpHIAEMgrHandle->hIAEInit = reinterpret_cast<HIAEInitFunc>(dlsym(g_dlpModuleHandle, "HIAE_Init"));
+    if (g_dlpHIAEMgrHandle->hIAEInit == nullptr) {
+        DLP_LOG_ERROR(LABEL, "dlsym hIAEInit failed, %{public}s: ", dlerror());
+        return DLP_ERROR_DLSYM;
+    }
+    g_dlpHIAEMgrHandle->hIAEClear = reinterpret_cast<HIAEClearFunc>(dlsym(g_dlpModuleHandle, "HIAE_Clear"));
+    if (g_dlpHIAEMgrHandle->hIAEClear == nullptr) {
+        DLP_LOG_ERROR(LABEL, "dlsym hIAEClear failed, %{public}s: ", dlerror());
+        return DLP_ERROR_DLSYM;
+    }
+    g_dlpHIAEMgrHandle->hIAEEncryptUpdate =
+        reinterpret_cast<HIAEEncryptUpdateFunc>(dlsym(g_dlpModuleHandle, "HIAE_EncryptUpdate"));
+    if (g_dlpHIAEMgrHandle->hIAEEncryptUpdate == nullptr) {
+        DLP_LOG_ERROR(LABEL, "dlsym hIAEEncryptUpdate failed, %{public}s: ", dlerror());
+        return DLP_ERROR_DLSYM;
+    }
+    g_dlpHIAEMgrHandle->hIAEDecryptUpdate =
+        reinterpret_cast<HIAEDecryptUpdateFunc>(dlsym(g_dlpModuleHandle, "HIAE_DecryptUpdate"));
+    if (g_dlpHIAEMgrHandle->hIAEDecryptUpdate == nullptr) {
+        DLP_LOG_ERROR(LABEL, "dlsym hIAEDecryptUpdate failed, %{public}s: ", dlerror());
+        return DLP_ERROR_DLSYM;
+    }
+    return DLP_OK;
+}
+
+void ClearDlpHIAEMgr(void)
+{
+    std::lock_guard<std::mutex> lock(g_lockDlpHIAESdk);
+    g_hIAECnt--;
+    if (g_dlpHIAEMgrHandle == nullptr || g_hIAECnt > 0) {
+        return;
+    }
+    delete g_dlpHIAEMgrHandle;
+    g_dlpHIAEMgrHandle = nullptr;
+    dlclose(g_dlpModuleHandle);
+    g_dlpModuleHandle = nullptr;
+}
+
+int32_t InitDlpHIAEMgr(void)
+{
+    std::lock_guard<std::mutex> lock(g_lockDlpHIAESdk);
+    DLP_LOG_INFO(LABEL, "support HIAE");
+    if (g_dlpModuleHandle != nullptr) {
+        g_hIAECnt++;
+        return DLP_OK;
+    }
+
+    if (sizeof(void *) == LENGTH_FOR_64_BIT) {
+        g_dlpModuleHandle = dlopen(DLP_HIAE_SDK_PATH_64_BIT.c_str(), RTLD_LAZY);
+    } else {
+        g_dlpModuleHandle = dlopen(DLP_HIAE_SDK_PATH_32_BIT.c_str(), RTLD_LAZY);
+    }
+    if (g_dlpModuleHandle == nullptr) {
+        DLP_LOG_ERROR(LABEL, "dlopen failed, %{public}s: ", dlerror());
+        return DLP_ERROR_DLOPEN;
+    }
+
+    g_dlpHIAEMgrHandle = new (std::nothrow) DlpHIAEMgrHandle;
+    if (g_dlpHIAEMgrHandle == nullptr) {
+        DLP_LOG_ERROR(LABEL, "new HIAE Handle failed");
+        dlclose(g_dlpModuleHandle);
+        g_dlpModuleHandle = nullptr;
+        return DLP_PARSE_ERROR_MEMORY_OPERATE_FAIL;
+    }
+
+    if (FillHIAEFuncHandle() != DLP_OK) {
+        delete g_dlpHIAEMgrHandle;
+        g_dlpHIAEMgrHandle = nullptr;
+        dlclose(g_dlpModuleHandle);
+        g_dlpModuleHandle = nullptr;
+        return DLP_ERROR_DLSYM;
+    }
+    g_hIAECnt++;
+    return DLP_OK;
+}
+
+static int32_t AlgHIAEInit(HIAE_CipherCtx *ctx, const uint8_t *key, const uint32_t keyLen,
+    const uint8_t *iv, const uint32_t ivLen)
+{
+    std::lock_guard<std::mutex> lock(g_lockDlpHIAESdk);
+    if (g_dlpHIAEMgrHandle == nullptr) {
+        DLP_LOG_ERROR(LABEL, "HIAE init Handle is null");
+        return DLP_PARSE_ERROR_VALUE_INVALID;
+    }
+    return g_dlpHIAEMgrHandle->hIAEInit(ctx, key, keyLen, iv, ivLen);
+}
+
+static int32_t AlgHIAEClear(HIAE_CipherCtx *ctx)
+{
+    std::lock_guard<std::mutex> lock(g_lockDlpHIAESdk);
+    if (g_dlpHIAEMgrHandle == nullptr) {
+        DLP_LOG_ERROR(LABEL, "HIAE clear Handle is null");
+        return DLP_PARSE_ERROR_VALUE_INVALID;
+    }
+    return g_dlpHIAEMgrHandle->hIAEClear(ctx);
+}
+
+static int32_t AlgHIAEEncryptUpdate(HIAE_CipherCtx *ctx, const uint8_t *in, const uint32_t inLen,
+    uint8_t *out, uint32_t *outLen)
+{
+    std::lock_guard<std::mutex> lock(g_lockDlpHIAESdk);
+    if (g_dlpHIAEMgrHandle == nullptr) {
+        DLP_LOG_ERROR(LABEL, "HIAE encrypt Handle is null");
+        return DLP_PARSE_ERROR_VALUE_INVALID;
+    }
+    return g_dlpHIAEMgrHandle->hIAEEncryptUpdate(ctx, in, inLen, out, outLen);
+}
+
+static int32_t AlgHIAEDecryptUpdate(HIAE_CipherCtx *ctx, const uint8_t *in, const uint32_t inLen,
+    uint8_t *out, uint32_t *outLen)
+{
+    std::lock_guard<std::mutex> lock(g_lockDlpHIAESdk);
+    if (g_dlpHIAEMgrHandle == nullptr) {
+        DLP_LOG_ERROR(LABEL, "HIAE decrypt Handle is null");
+        return DLP_PARSE_ERROR_VALUE_INVALID;
+    }
+    return g_dlpHIAEMgrHandle->hIAEDecryptUpdate(ctx, in, inLen, out, outLen);
+}
+
+inline bool DlpHIAECheckBlob(const struct DlpBlob *blob)
+{
+    return (blob != nullptr) && (blob->data != nullptr);
+}
+
+static bool HIAEParamCheck(const struct DlpBlob *key, const struct DlpUsageSpec *usageSpec,
+    const uint8_t *message, const uint8_t *cipherText)
+{
+    if (!DlpHIAECheckBlob(key)) {
+        DLP_LOG_ERROR(LABEL, "check HIAE param fail, key is null");
+        return false;
+    }
+
+    if (usageSpec == nullptr || usageSpec->algParam == nullptr) {
+        DLP_LOG_ERROR(LABEL, "check HIAE param fail, usageSpec is null");
+        return false;
+    }
+
+    if (message == nullptr) {
+        DLP_LOG_ERROR(LABEL, "check HIAE param fail, message is null");
+        return false;
+    }
+
+    if (cipherText == nullptr) {
+        DLP_LOG_ERROR(LABEL, "check HIAE param fail, cipherText is null");
+        return false;
+    }
+    return true;
+}
+
+int32_t DlpHIAEEncrypt(const struct DlpBlob *key, const struct DlpUsageSpec *usageSpec, const uint32_t inLen,
+    const uint8_t *message, uint8_t *cipherText)
+{
+    if (!HIAEParamCheck(key, usageSpec, message, cipherText)) {
+        return DLP_PARSE_ERROR_VALUE_INVALID;
+    }
+    HIAE_CipherCtx ctx = { { 0 }, 0, 0 };
+    int32_t ret = DLP_OK;
+    do {
+        ret = AlgHIAEInit(&ctx, key->data, key->size,
+        usageSpec->algParam->iv.data, usageSpec->algParam->iv.size);
+        if (ret != DLP_OK) {
+            DLP_LOG_ERROR(LABEL, "Alg HIAE init failed, ret = %{public}d", ret);
+            break;
+        }
+
+        uint32_t outLen = inLen;
+        ret = AlgHIAEEncryptUpdate(&ctx, message, inLen, cipherText, &outLen);
+        if (ret != DLP_OK) {
+            DLP_LOG_ERROR(LABEL, "Alg HIAE encrypt update failed, ret = %{public}d", ret);
+            break;
+        }
+    } while (0);
+
+    (void)AlgHIAEClear(&ctx);
+    return ret;
+}
+
+int32_t DlpHIAEDecrypt(const struct DlpBlob *key, const struct DlpUsageSpec *usageSpec, const uint32_t inLen,
+    const uint8_t *message, uint8_t *plainText)
+{
+    if (!HIAEParamCheck(key, usageSpec, message, plainText)) {
+        return DLP_PARSE_ERROR_VALUE_INVALID;
+    }
+    HIAE_CipherCtx ctx = { { 0 }, 0, 0 };
+    int32_t ret = DLP_OK;
+    do {
+        ret = AlgHIAEInit(&ctx, key->data, key->size,
+        usageSpec->algParam->iv.data, usageSpec->algParam->iv.size);
+        if (ret != DLP_OK) {
+            DLP_LOG_ERROR(LABEL, "Alg HIAE init failed, ret = %{public}d", ret);
+            break;
+        }
+
+        uint32_t outLen = inLen;
+        ret = AlgHIAEDecryptUpdate(&ctx, message, inLen, plainText, &outLen);
+        if (ret != DLP_OK) {
+            DLP_LOG_ERROR(LABEL, "Alg HIAE decrypt update failed, ret = %{public}d", ret);
+            break;
+        }
+    } while (0);
+
+    (void)AlgHIAEClear(&ctx);
+    return ret;
+}
 
 inline bool DlpOpensslCheckBlob(const struct DlpBlob* blob)
 {
