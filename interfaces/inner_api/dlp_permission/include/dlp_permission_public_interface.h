@@ -32,6 +32,7 @@ struct GenerateInfoParams {
     std::vector<std::string> extraInfo;
     std::string hmacVal;
     std::string realType;
+    uint32_t certSize;
 };
 
 int32_t GenerateDlpGeneralInfo(const GenerateInfoParams& params, std::string& generalInfo);

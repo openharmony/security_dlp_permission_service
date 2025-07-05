@@ -105,6 +105,8 @@ ohos_shared_library("libdlpparse_inner") {
     "$ROOT_DIR/src/dlp_file_manager.cpp",
     "$ROOT_DIR/src/dlp_file_operator.cpp",
     "$ROOT_DIR/src/dlp_utils.cpp",
+    "$ROOT_DIR/src/dlp_raw_file.cpp",
+    "$ROOT_DIR/src/dlp_zip_file.cpp",
     "$ROOT_DIR/src/dlp_zip.cpp",
     "${dlp_root_dir}/services/dlp_permission/sa/adapt_utils/file_manager/file_operator.cpp",
   ]

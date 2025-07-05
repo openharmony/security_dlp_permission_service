@@ -26,6 +26,8 @@
 #include <unistd.h>
 #include "accesstoken_kit.h"
 #include "dlp_file.h"
+#include "dlp_raw_file.h"
+#include "dlp_zip_file.h"
 #include "dlp_permission_log.h"
 #include "dlp_permission.h"
 #include "securec.h"
@@ -64,7 +66,7 @@ static void FuzzTest(const uint8_t* data, size_t size)
     FuzzedDataProvider fdp(data, size);
     uint32_t txtSize = fdp.ConsumeIntegral<uint32_t>();
     std::string workDir = fdp.ConsumeBytesAsString(size - sizeof(int32_t));
-    DlpFile testFile(fd, workDir, 0, false, "txt");
+    DlpRawFile testFile(fd, "txt");
     uint32_t certSize = txtSize;
     uint32_t contactAccountSize = txtSize;
     if (size > ONE) {
@@ -88,7 +90,7 @@ static void FuzzTest(const uint8_t* data, size_t size)
     write(fd, &header, sizeof(header));
     uint8_t buffer[BUFFERSIZE] = {0};
     write(fd, buffer, BUFFERSIZE);
-    testFile.ParseDlpHeader();
+    testFile.ProcessDlpFile();
     close(fd);
 }
 

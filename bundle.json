@@ -89,6 +89,8 @@
               "interfaces/inner_api/dlp_parse/include/dlp_file_kits.h",
               "interfaces/inner_api/dlp_parse/include/dlp_file_manager.h",
               "interfaces/inner_api/dlp_parse/include/dlp_file.h",
+              "interfaces/inner_api/dlp_parse/include/dlp_raw_file.h",
+              "interfaces/inner_api/dlp_parse/include/dlp_zip_file.h",
               "frameworks/common/include/permission_policy.h"
             ],
             "header_base": "//base/security/dlp_permission_service"
@@ -111,6 +113,8 @@
               "interfaces/inner_api/dlp_parse/include/dlp_file_kits.h",
               "interfaces/inner_api/dlp_parse/include/dlp_file_manager.h",
               "interfaces/inner_api/dlp_parse/include/dlp_file.h",
+              "interfaces/inner_api/dlp_parse/include/dlp_raw_file.h",
+              "interfaces/inner_api/dlp_parse/include/dlp_zip_file.h",
               "frameworks/common/include/permission_policy.h"
             ],
             "header_base": "//base/security/dlp_permission_service"

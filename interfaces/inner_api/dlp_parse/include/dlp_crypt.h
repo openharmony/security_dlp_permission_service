@@ -85,6 +85,7 @@ struct DlpUsageSpec {
 
 enum DlpCipherMode {
     DLP_MODE_CTR = 1,
+    DLP_MODE_HIAE = 2,
 };
 
 enum DlpKeyPadding {
