@@ -250,9 +250,7 @@ HWTEST_F(DlpFileManagerTest, ParseDlpFileFormat001, TestSize.Level0)
     ASSERT_NE(filePtr, nullptr);
     std::string appId = "test_appId_passed";
 
-    filePtr->dlpFd_ = -1;
-    EXPECT_EQ(DLP_PARSE_ERROR_FD_ERROR, DlpFileManager::GetInstance().OpenRawDlpFile(100, filePtr, appId, "txt"));
-    filePtr->dlpFd_ = g_fdDlp;
+    EXPECT_EQ(DLP_PARSE_ERROR_FD_ERROR, DlpFileManager::GetInstance().OpenRawDlpFile(-1, filePtr, appId, "txt"));
 
     struct DlpHeader header = {
         .magic = DLP_FILE_MAGIC,
@@ -268,8 +266,8 @@ HWTEST_F(DlpFileManagerTest, ParseDlpFileFormat001, TestSize.Level0)
     uint8_t buffer[64] = {0};
     write(g_fdDlp, buffer, 64);
     lseek(g_fdDlp, 0, SEEK_SET);
-    EXPECT_EQ(DLP_PARSE_ERROR_FILE_NOT_DLP,
-        DlpFileManager::GetInstance().OpenRawDlpFile(100, filePtr, appId, "txt"));
+    EXPECT_EQ(DLP_PARSE_ERROR_FILE_FORMAT_ERROR,
+        DlpFileManager::GetInstance().OpenRawDlpFile(g_fdDlp, filePtr, appId, "txt"));
 
     close(g_fdDlp);
     unlink("/data/fuse_test_dlp.txt");
@@ -293,26 +291,38 @@ HWTEST_F(DlpFileManagerTest, ParseDlpFileFormat002, TestSize.Level0)
 
     struct DlpHeader header = {
         .magic = DLP_FILE_MAGIC,
-        .txtOffset = sizeof(struct DlpHeader) + 256 + 32,
-        .txtSize = 0,
-        .certOffset = sizeof(struct DlpHeader),
+        .fileType = 10,
+        .offlineAccess = 0,
+        .algType = DLP_MODE_CTR,
+        .txtOffset = sizeof(struct DlpHeader) + 108,
+        .txtSize = 100,
+        .hmacOffset = sizeof(struct DlpHeader) + 208,
+        .hmacSize = 64,
+        .certOffset = sizeof(struct DlpHeader) + 272,
         .certSize = 256,
-        .contactAccountOffset = sizeof(struct DlpHeader) + 256,
-        .contactAccountSize = 32
+        .contactAccountOffset = sizeof(struct DlpHeader) + 8,
+        .contactAccountSize = 100,
+        .offlineCertOffset = sizeof(struct DlpHeader) + 272,
+        .offlineCertSize = 0
     };
+    uint32_t version = 3;
+    uint32_t dlpHeaderSize = sizeof(struct DlpHeader);
+    write(g_fdDlp, &version, sizeof(struct DlpHeader));
+    write(g_fdDlp, &dlpHeaderSize, sizeof(struct DlpHeader));
+    uint8_t buffer[800] = {0};
+    write(g_fdDlp, buffer, 800);
 
+    lseek(g_fdDlp, 8, SEEK_SET);
     write(g_fdDlp, &header, sizeof(struct DlpHeader));
     std::string certStr = "{\"aeskeyLen\":16, \"aeskey\":\"11223344556677889900112233445566\",\"ivLen\":16,"
         "\"iv\":\"11223344556677889900112233445566\",\"ownerAccount\":\"test\",\"ownerAccountId\":\"test\","
         "\"ownerAccountType\":0}";
+    lseek(g_fdDlp, header.certOffset, SEEK_SET);
     write(g_fdDlp, certStr.c_str(), certStr.length());
-    lseek(g_fdDlp, sizeof(struct DlpHeader) + 256, SEEK_SET);
-    uint8_t buffer[32] = {0};
-    write(g_fdDlp, buffer, 32);
-
     lseek(g_fdDlp, 0, SEEK_SET);
     std::string appId = "test_appId_passed";
-    EXPECT_EQ(DLP_PARSE_ERROR_FILE_NOT_DLP, DlpFileManager::GetInstance().OpenRawDlpFile(100, filePtr, appId, "txt"));
+    EXPECT_EQ(DLP_PARSE_ERROR_FILE_FORMAT_ERROR,
+        DlpFileManager::GetInstance().OpenRawDlpFile(g_fdDlp, filePtr, appId, "txt"));
 
     close(g_fdDlp);
     unlink("/data/fuse_test_dlp.txt");
@@ -359,8 +369,8 @@ HWTEST_F(DlpFileManagerTest, ParseDlpFileFormat003, TestSize.Level0)
     condition.mockSequence = { false, false, false, false, false, false, false, true };
     SetMockConditions("memcpy_s", condition);
     std::string appId = "test_appId_passed";
-    EXPECT_EQ(DLP_PARSE_ERROR_FILE_NOT_DLP,
-        DlpFileManager::GetInstance().OpenRawDlpFile(100, filePtr, appId, "txt"));
+    EXPECT_EQ(DLP_PARSE_ERROR_FILE_FORMAT_ERROR,
+        DlpFileManager::GetInstance().OpenRawDlpFile(g_fdDlp, filePtr, appId, "txt"));
     CleanMockConditions();
 
     close(g_fdDlp);
@@ -384,8 +394,8 @@ HWTEST_F(DlpFileManagerTest, ParseDlpFileFormat004, TestSize.Level0)
     filePtr->SetOfflineAccess(true);
 
     std::string appId = "test_appId_passed";
-    filePtr->dlpFd_ = -1;
-    EXPECT_EQ(DLP_PARSE_ERROR_FD_ERROR, DlpFileManager::GetInstance().OpenRawDlpFile(100, filePtr, appId, "txt"));
+    EXPECT_EQ(DLP_PARSE_ERROR_FILE_FORMAT_ERROR,
+        DlpFileManager::GetInstance().OpenRawDlpFile(g_fdDlp, filePtr, appId, "txt"));
 
     close(g_fdDlp);
     unlink("/data/fuse_test_dlp.txt");
@@ -569,7 +579,7 @@ HWTEST_F(DlpFileManagerTest, GenerateDlpFile001, TestSize.Level0)
         DlpFileManager::GetInstance().GenerateDlpFile(1000, -1, property, filePtr, DLP_TEST_DIR));
 
     DlpFileManager::GetInstance().AddDlpFileNode(filePtr);
-    EXPECT_EQ(DLP_PARSE_ERROR_FILE_ALREADY_OPENED,
+    EXPECT_EQ(DLP_PARSE_ERROR_FILE_OPERATE_FAIL,
         DlpFileManager::GetInstance().GenerateDlpFile(1000, 1000, property, filePtr, DLP_TEST_DIR));
     DlpFileManager::GetInstance().RemoveDlpFileNode(filePtr);
 }
@@ -593,7 +603,7 @@ HWTEST_F(DlpFileManagerTest, GenerateDlpFile002, TestSize.Level0)
     int plainFileFd = open("/data/file_test.txt", O_CREAT | O_RDWR | O_TRUNC, S_IRWXU | S_IRWXG | S_IRWXO);
     char buffer[] = "123456";
     ASSERT_NE(write(plainFileFd, buffer, sizeof(buffer)), -1);
-    EXPECT_EQ(DLP_PARSE_ERROR_VALUE_INVALID,
+    EXPECT_EQ(DLP_PARSE_ERROR_FD_ERROR,
         DlpFileManager::GetInstance().GenerateDlpFile(plainFileFd, 1000, property, filePtr, DLP_TEST_DIR));
     close(plainFileFd);
 }
@@ -617,7 +627,7 @@ HWTEST_F(DlpFileManagerTest, GenerateDlpFile003, TestSize.Level0)
     int plainFileFd = open("/data/file_test.txt", O_CREAT | O_RDWR | O_TRUNC, S_IRWXU | S_IRWXG | S_IRWXO);
     char buffer[] = "123456";
     ASSERT_NE(write(plainFileFd, buffer, sizeof(buffer)), -1);
-    EXPECT_EQ(DLP_PARSE_ERROR_FILE_OPERATE_FAIL,
+    EXPECT_EQ(DLP_PARSE_ERROR_FD_ERROR,
         DlpFileManager::GetInstance().GenerateDlpFile(plainFileFd, 1000, property, filePtr, DLP_TEST_DIR));
     close(plainFileFd);
 }

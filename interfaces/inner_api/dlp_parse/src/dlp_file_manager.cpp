@@ -472,7 +472,7 @@ int32_t DlpFileManager::GenerateDlpFile(
     }
 
     std::string fileName;
-    int32_t result = DlpUtils::GetFileNameWithFd(plainFileFd, fileName);
+    int32_t result = DlpUtils::GetFileNameWithDlpFd(dlpFileFd, fileName);
     if (result != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "GetFileNameWithFd fail, errno=%{public}d", result);
         return result;

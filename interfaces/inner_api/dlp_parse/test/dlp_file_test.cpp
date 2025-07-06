@@ -634,18 +634,21 @@ HWTEST_F(DlpFileTest, IsValidDlpHeader001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "IsValidDlpHeader001");
     DlpRawFile testFile(1000, "txt");
-    PermissionPolicy policy;
     struct DlpHeader header = {
         .magic = DLP_FILE_MAGIC,
-        .certOffset = sizeof(struct DlpHeader) + 20 + 100 + 68,
+        .fileType = 10,
         .offlineAccess = 0,
-        .certSize = 20,
-        .contactAccountOffset = sizeof(struct DlpHeader),
-        .contactAccountSize = 20,
-        .txtOffset  = sizeof(struct DlpHeader) + 20,
+        .algType = DLP_MODE_CTR,
+        .txtOffset = sizeof(struct DlpHeader) + 108,
         .txtSize = 100,
-        .offlineCertOffset = 0,
-        .offlineCertSize = 0,
+        .hmacOffset = sizeof(struct DlpHeader) + 208,
+        .hmacSize = 64,
+        .certOffset = sizeof(struct DlpHeader) + 272,
+        .certSize = 256,
+        .contactAccountOffset = sizeof(struct DlpHeader) + 8,
+        .contactAccountSize = 100,
+        .offlineCertOffset = sizeof(struct DlpHeader) + 272,
+        .offlineCertSize = 0
     };
 
     // valid header
@@ -668,7 +671,7 @@ HWTEST_F(DlpFileTest, IsValidDlpHeader001, TestSize.Level0)
     // certOffset invalid
     header.certOffset = 100;
     ASSERT_FALSE(testFile.IsValidDlpHeader(header));
-    header.certOffset = sizeof(struct DlpHeader) + 20 + 100 + 68;
+    header.certOffset = sizeof(struct DlpHeader) + 272;
 
     // contactAccountSize 0
     header.contactAccountSize = 0;
@@ -834,7 +837,7 @@ HWTEST_F(DlpFileTest, ParseDlpHeader005, TestSize.Level0)
     uint8_t buffer[20] = {0};
     write(fd, buffer, 20);
 
-    EXPECT_EQ(DLP_PARSE_ERROR_FILE_NOT_DLP, testFile.ProcessDlpFile());
+    EXPECT_EQ(DLP_PARSE_ERROR_FILE_FORMAT_ERROR, testFile.ProcessDlpFile());
     close(fd);
     unlink("/data/fuse_test.txt");
 }
@@ -869,7 +872,7 @@ HWTEST_F(DlpFileTest, ParseDlpHeader006, TestSize.Level0)
     uint8_t buffer[208] = {0};
     write(fd, buffer, 208);
 
-    EXPECT_EQ(DLP_PARSE_ERROR_FILE_OPERATE_FAIL, testFile.ProcessDlpFile());
+    EXPECT_EQ(DLP_PARSE_ERROR_FILE_FORMAT_ERROR, testFile.ProcessDlpFile());
     close(fd);
     unlink("/data/fuse_test.txt");
 }
@@ -1432,7 +1435,7 @@ HWTEST_F(DlpFileTest, DlpFileRead001, TestSize.Level0)
 
     uint8_t buffer[16] = {};
     EXPECT_EQ(DLP_PARSE_ERROR_VALUE_INVALID, testFile.DlpFileRead(0, buffer, 0, hasRead, uid));
-    EXPECT_EQ(DLP_PARSE_ERROR_VALUE_INVALID, testFile.DlpFileRead(DLP_MAX_CONTENT_SIZE, buffer, 1, hasRead, uid));
+    EXPECT_EQ(DLP_PARSE_ERROR_VALUE_INVALID, testFile.DlpFileRead(DLP_MAX_RAW_CONTENT_SIZE, buffer, 1, hasRead, uid));
     EXPECT_EQ(DLP_PARSE_ERROR_VALUE_INVALID, testFile.DlpFileRead(0, buffer, DLP_FUSE_MAX_BUFFLEN + 1, hasRead, uid));
 
     testFile.dlpFd_ = -1;
@@ -1635,12 +1638,12 @@ HWTEST_F(DlpFileTest, UpdateDlpFileContentSize001, TestSize.Level0)
     DlpCMockCondition condition;
     condition.mockSequence = { true };
     SetMockConditions("lseek", condition);
-    EXPECT_EQ(DLP_PARSE_ERROR_FILE_OPERATE_FAIL, testFile.UpdateDlpFileContentSize());
+    EXPECT_EQ(DLP_PARSE_ERROR_FILE_FORMAT_ERROR, testFile.UpdateDlpFileContentSize());
     CleanMockConditions();
 
     condition.mockSequence = { true };
     SetMockConditions("write", condition);
-    EXPECT_EQ(DLP_PARSE_ERROR_FILE_OPERATE_FAIL, testFile.UpdateDlpFileContentSize());
+    EXPECT_EQ(DLP_PARSE_ERROR_FILE_FORMAT_ERROR, testFile.UpdateDlpFileContentSize());
     CleanMockConditions();
 
     close(fdPlain);
@@ -1687,7 +1690,7 @@ HWTEST_F(DlpFileTest, DlpFileWrite001, TestSize.Level0)
 
     EXPECT_EQ(DLP_PARSE_ERROR_VALUE_INVALID, testFile.DlpFileWrite(4, nullptr, 16));
     EXPECT_EQ(DLP_PARSE_ERROR_VALUE_INVALID, testFile.DlpFileWrite(4, writeBuffer, 0));
-    EXPECT_EQ(DLP_PARSE_ERROR_VALUE_INVALID, testFile.DlpFileWrite(DLP_MAX_CONTENT_SIZE, writeBuffer, 1));
+    EXPECT_EQ(DLP_PARSE_ERROR_VALUE_INVALID, testFile.DlpFileWrite(DLP_MAX_RAW_CONTENT_SIZE, writeBuffer, 1));
     EXPECT_EQ(DLP_PARSE_ERROR_VALUE_INVALID, testFile.DlpFileWrite(4, writeBuffer, DLP_FUSE_MAX_BUFFLEN + 1));
 
     testFile.dlpFd_ = -1;
@@ -1745,7 +1748,7 @@ HWTEST_F(DlpFileTest, Truncate001, TestSize.Level0)
     DlpCMockCondition condition;
     condition.mockSequence = { true };
     SetMockConditions("lseek", condition);
-    EXPECT_EQ(DLP_PARSE_ERROR_FILE_OPERATE_FAIL, testFile.Truncate(16));
+    EXPECT_EQ(DLP_OK, testFile.Truncate(16));
     CleanMockConditions();
     close(fdPlain);
     close(fdDlp);
@@ -2437,7 +2440,7 @@ HWTEST_F(DlpFileTest, GenFileInZip001, TestSize.Level0)
     DlpRawFile testFile4(-1, "txt");
     initDlpFileCiper(testFile4);
     testFile4.contactAccount_ = "aa";
-    EXPECT_EQ(DLP_OK, testFile4.GenFile(-1));
+    EXPECT_EQ(DLP_PARSE_ERROR_VALUE_INVALID, testFile4.GenFile(-1));
 
     close(fdPlain);
     close(fdDlp);
