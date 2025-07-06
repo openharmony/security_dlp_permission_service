@@ -19,6 +19,7 @@
 #include <mutex>
 #include <string>
 #include "dlp_file.h"
+#include "dlp_zip_file.h"
 #include "permission_policy.h"
 namespace OHOS {
 namespace Security {

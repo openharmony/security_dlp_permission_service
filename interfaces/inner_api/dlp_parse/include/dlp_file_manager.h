@@ -30,22 +30,35 @@ namespace Security {
 namespace DlpPermission {
 class DlpFileManager final {
 public:
+    struct DlpFileMes {
+        int32_t plainFileFd;
+        int32_t dlpFileFd;
+        std::string realFileType;
+    };
+
     static DlpFileManager& GetInstance();
     ~DlpFileManager() {};
 
-    int32_t GenDlpFile(std::shared_ptr<DlpFile>& filePtr, const DlpProperty& property, int32_t plainFileFd);
+    int32_t GenZipDlpFile(DlpFileMes& dlpFileMes, const DlpProperty& property,
+                          std::shared_ptr<DlpFile>& filePtr, const std::string& workDir);
+    int32_t GenRawDlpFile(DlpFileMes& dlpFileMes, const DlpProperty& property,
+                          std::shared_ptr<DlpFile>& filePtr);
 
     int32_t GenerateDlpFile(
         int32_t plainFileFd, int32_t dlpFileFd, const DlpProperty& property, std::shared_ptr<DlpFile>& filePtr,
         const std::string& workDir);
-    int32_t ParseAndAddNode(std::shared_ptr<DlpFile>& filePtr, const std::string& workDir,
-        const std::string& appId);
 
     int32_t OpenDlpFile(int32_t dlpFileFd, std::shared_ptr<DlpFile>& filePtr, const std::string& workDir,
         const std::string& appId);
     int32_t CloseDlpFile(const std::shared_ptr<DlpFile>& dlpFile);
     int32_t RecoverDlpFile(std::shared_ptr<DlpFile>& file, int32_t plainFd) const;
     int32_t SetDlpFileParams(std::shared_ptr<DlpFile>& filePtr, const DlpProperty& property) const;
+    int32_t DlpRawHmacCheckAndUpdata(std::shared_ptr<DlpFile>& filePtr, const std::vector<uint8_t>& offlineCert);
+    int32_t OpenRawDlpFile(int32_t dlpFileFd, std::shared_ptr<DlpFile>& filePtr, const std::string& appId,
+                           const std::string& realType);
+    int32_t ParseZipDlpFileAndAddNode(std::shared_ptr<DlpFile>& filePtr, const std::string& appId);
+    int32_t OpenZipDlpFile(int32_t dlpFileFd, std::shared_ptr<DlpFile>& filePtr, const std::string& workDir,
+                           const std::string& appId, const std::string& realType);
 
 private:
     DlpFileManager() {};
@@ -56,11 +69,9 @@ private:
     std::shared_ptr<DlpFile> GetDlpFile(int32_t dlpFd);
     int32_t GenerateCertData(const PermissionPolicy& policy, struct DlpBlob& certData) const;
     int32_t GenerateCertBlob(const std::vector<uint8_t>& cert, struct DlpBlob& certData) const;
-    int32_t UpdateDlpFile(bool isNeedAdapter, uint32_t oldCertSize, const std::string& workDir,
-        const std::vector<uint8_t>& cert, std::shared_ptr<DlpFile>& filePtr);
+    int32_t UpdateDlpFile(const std::vector<uint8_t>& cert, std::shared_ptr<DlpFile>& filePtr);
     int32_t PrepareDlpEncryptParms(PermissionPolicy& policy, struct DlpBlob& key,
         struct DlpUsageSpec& usage, struct DlpBlob& certData, struct DlpBlob& hmacKey) const;
-    int32_t ParseDlpFileFormat(std::shared_ptr<DlpFile>& filePtr, const std::string& workDir, const std::string& appId);
     void FreeChiperBlob(struct DlpBlob& key, struct DlpBlob& certData,
         struct DlpUsageSpec& usage, struct DlpBlob& hmacKey) const;
     void CleanTempBlob(struct DlpBlob& key, struct DlpCipherParam** tagIv, struct DlpBlob& hmacKey) const;

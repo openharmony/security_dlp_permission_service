@@ -23,6 +23,8 @@
 #include <unistd.h>
 
 #include "dlp_file.h"
+#include "dlp_raw_file.h"
+#include "dlp_zip_file.h"
 #include "rwlock.h"
 
 namespace OHOS {

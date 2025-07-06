@@ -186,7 +186,7 @@ static void SetCustomProperty(DlpProperty& property, const CustomProperty& custo
 int32_t EnterpriseSpaceDlpPermissionKit::EnterpriseSpaceParseDlpFileProperty(std::shared_ptr<DlpFile>& filePtr,
     PermissionPolicy& policy, bool needCheckCustomProperty)
 {
-    int32_t result = filePtr->ParseDlpHeader();
+    int32_t result = filePtr->ProcessDlpFile();
     if (result != DLP_OK) {
         return result;
     }
@@ -266,7 +266,7 @@ int32_t EnterpriseSpaceDlpPermissionKit::EnterpriseSpacePrepareWorkDir(int32_t d
             break;
         }
     }
-    filePtr = std::make_shared<DlpFile>(dlpFileFd, realWorkDir, timeStamp, true, realType);
+    filePtr = std::make_shared<DlpZipFile>(dlpFileFd, realWorkDir, timeStamp, realType);
     return DLP_OK;
 }
 

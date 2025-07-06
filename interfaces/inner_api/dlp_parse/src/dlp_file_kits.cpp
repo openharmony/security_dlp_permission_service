@@ -36,6 +36,10 @@ namespace {
     static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "DlpFileKits"};
     static const std::string FILE_SCHEME_PREFIX = "file://";
     static const std::string DEFAULT_STRINGS = "";
+    static const uint32_t BYTE_TO_HEX_OPER_LENGTH = 2;
+    static const uint32_t CURRENT_VERSION = 3;
+    static const uint32_t FILE_HEAD = 8;
+    static const uint32_t HMAC_SIZE = 32;
 } // namespace
 using Want = OHOS::AAFwk::Want;
 using WantParams = OHOS::AAFwk::WantParams;
@@ -162,14 +166,11 @@ static bool IsValidDlpHeader(const struct DlpHeader& head)
 {
     if (head.magic != DLP_FILE_MAGIC || head.certSize == 0 || head.certSize > DLP_MAX_CERT_SIZE ||
         head.contactAccountSize == 0 || head.contactAccountSize > DLP_MAX_CERT_SIZE ||
-        head.certOffset < head.txtOffset) {
-        DLP_LOG_ERROR(LABEL, "Parse dlp file header error. certSize=%{public}u, contactAccountSize=%{public}u",
-            head.certSize, head.contactAccountSize);
-        return false;
-    }
-    if (head.contactAccountOffset != sizeof(struct DlpHeader) ||
-        head.txtOffset != (sizeof(struct DlpHeader) + head.contactAccountSize) ||
-        head.txtSize > DLP_MAX_CONTENT_SIZE || head.offlineCertSize > DLP_MAX_CERT_SIZE) {
+        head.contactAccountOffset != sizeof(struct DlpHeader) + FILE_HEAD ||
+        head.txtOffset != head.contactAccountOffset + head.contactAccountSize ||
+        head.txtSize > DLP_MAX_CONTENT_SIZE || head.hmacOffset != head.txtOffset + head.txtSize ||
+        head.hmacSize != HMAC_SIZE * BYTE_TO_HEX_OPER_LENGTH || head.offlineCertSize > DLP_MAX_CERT_SIZE ||
+        !(head.certOffset == head.txtOffset || head.certOffset == head.hmacOffset + head.hmacSize)) {
         DLP_LOG_ERROR(LABEL, "Parse dlp file header error.");
         return false;
     }
@@ -197,6 +198,22 @@ bool DlpFileKits::IsDlpFile(int32_t dlpFd)
         DLP_LOG_ERROR(LABEL, "seek dlp file start failed, %{public}s", strerror(errno));
         return false;
     }
+
+    uint32_t version = 0;
+    if (read(dlpFd, &version, sizeof(uint32_t)) != sizeof(uint32_t)) {
+        DLP_LOG_ERROR(LABEL, "can not read version, %{public}s", strerror(errno));
+        return false;
+    }
+    uint32_t dlpHeaderSize = 0;
+    if (read(dlpFd, &dlpHeaderSize, sizeof(uint32_t)) != sizeof(uint32_t)) {
+        DLP_LOG_ERROR(LABEL, "can not read dlpHeaderSize, %{public}s", strerror(errno));
+        return false;
+    }
+    if (version != CURRENT_VERSION || dlpHeaderSize != sizeof(struct DlpHeader)) {
+        DLP_LOG_ERROR(LABEL, "version or dlpHeaderSize is error");
+        return false;
+    }
+
     struct DlpHeader head;
     if (read(dlpFd, &head, sizeof(struct DlpHeader)) != sizeof(struct DlpHeader)) {
         DLP_LOG_ERROR(LABEL, "can not read dlp file head, %{public}s", strerror(errno));
