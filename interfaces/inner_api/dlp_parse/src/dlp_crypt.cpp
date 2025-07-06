@@ -34,7 +34,7 @@ static const uint32_t BYTE_LEN = 8;
 const uint32_t HMAC_SIZE = 32;
 const uint32_t SHA256_KEY_LEN = 32;
 const uint32_t BUFFER_SIZE = 1048576;
-static uint32_t g_hIAECnt = 0;
+static int32_t g_hIAECnt = 0;
 
 #ifdef __cplusplus
 extern "C" {
