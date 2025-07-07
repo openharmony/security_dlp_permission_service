@@ -610,8 +610,7 @@ int32_t DlpRawFile::RemoveDlpPermission(int32_t outPlainFileFd)
 int32_t DlpRawFile::DlpFileRead(uint64_t offset, void* buf, uint32_t size, bool& hasRead, int32_t uid)
 {
     int32_t opFd = dlpFd_;
-    if (buf == nullptr || size == 0 || size > DLP_FUSE_MAX_BUFFLEN ||
-        (offset >= DLP_MAX_RAW_CONTENT_SIZE - size) ||
+    if (buf == nullptr || size == 0 || size > DLP_FUSE_MAX_BUFFLEN || (offset >= DLP_MAX_RAW_CONTENT_SIZE - size) ||
         opFd < 0 || !IsValidCipher(cipher_.encKey, cipher_.usageSpec, cipher_.hmacKey)) {
         DLP_LOG_ERROR(LABEL, "params is error");
         return DLP_PARSE_ERROR_VALUE_INVALID;
@@ -640,7 +639,13 @@ int32_t DlpRawFile::DlpFileRead(uint64_t offset, void* buf, uint32_t size, bool&
 
     struct DlpBlob message1 = {.size = readLen, .data = encBuff.get()};
     struct DlpBlob message2 = {.size = readLen, .data = outBuff.get()};
-    if (DoDlpBlockCryptOperation(message1, message2, alignOffset, false) != DLP_OK) {
+    int32_t res = DLP_OK;
+    if (head_.algType == DLP_MODE_CTR) {
+        res = DoDlpBlockCryptOperation(message1, message2, alignOffset, false);
+    } else {
+        res = DoDlpHIAECryptOperation(message1, message2, alignOffset, false);
+    }
+    if (res != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "decrypt fail");
         return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
     }
@@ -652,7 +657,7 @@ int32_t DlpRawFile::DlpFileRead(uint64_t offset, void* buf, uint32_t size, bool&
     if (hasRead) {
         return message2.size - prefixingSize;
     }
-    int32_t res = DlpPermissionKit::SetReadFlag(uid);
+    res = DlpPermissionKit::SetReadFlag(uid);
     if (res != DLP_OK) {
         return res;
     }
