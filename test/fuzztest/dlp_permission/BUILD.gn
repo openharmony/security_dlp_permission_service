@@ -24,6 +24,7 @@ group("fuzztest") {
     "fuzzer/credentialcoverage_fuzzer:CredentialCoverageFuzzTest",
     "fuzzer/dlpcredential_fuzzer:DlpCredentialFuzzTest",
     "fuzzer/dlpfile_fuzzer:DlpFileFuzzTest",
+    "fuzzer/dlpfilenew_fuzzer:DlpFileNewFuzzTest",
     "fuzzer/generatecert_fuzzer:GenerateCertFuzzTest",
     "fuzzer/getdlpfilevisitrecord_fuzzer:GetDlpFileVisitRecordFuzzTest",
     "fuzzer/getdlpgatheringpolicy_fuzzer:GetDlpGatheringPolicyFuzzTest",
