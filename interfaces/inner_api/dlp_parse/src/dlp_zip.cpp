@@ -55,7 +55,7 @@ int32_t AddZeroBuffToZip(zipFile& zf, const char *nameInZip, uint32_t size)
             return DLP_ZIP_FAIL;
         } else {
             int32_t err = zipWriteInFileInZip(zf, buffer, (unsigned)(MAX_CERT_SIZE - size));
-            delete []buffer;
+            delete[] buffer;
             if (err != ZIP_OK) {
                 DLP_LOG_ERROR(LABEL, "zipWriteInFileInZip fail err %{public}d, %{public}s", err, nameInZip);
                 return DLP_ZIP_FAIL;
