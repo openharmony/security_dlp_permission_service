@@ -110,7 +110,9 @@ DlpRawFile::~DlpRawFile()
     }
 
 #ifdef SUPPORT_DLP_CREDENTIAL
-    ClearDlpHIAEMgr();
+    if (head_.algType == DLP_MODE_HIAE) {
+        ClearDlpHIAEMgr();
+    }
 #endif
 }
 
@@ -399,18 +401,22 @@ int32_t DlpRawFile::DoWriteHmacAndCert(uint32_t hmacStrLen, std::string& hmacStr
         DLP_LOG_ERROR(LABEL, "write dlp cert data failed, %{public}s", strerror(errno));
         return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
     }
-
+    if (MAX_CERT_SIZE < head_.certSize) {
+        DLP_LOG_ERROR(LABEL, "the cert size is error");
+        return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
+    }
     uint8_t* buffer = new (std::nothrow) uint8_t[MAX_CERT_SIZE - head_.certSize];
-    (void)memset_s(buffer, MAX_CERT_SIZE - head_.certSize, 0, MAX_CERT_SIZE - head_.certSize);
     if (buffer == nullptr) {
         DLP_LOG_ERROR(LABEL, "buffer is nullptr");
         return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
     }
+    (void)memset_s(buffer, MAX_CERT_SIZE - head_.certSize, 0, MAX_CERT_SIZE - head_.certSize);
     if (write(dlpFd_, buffer, MAX_CERT_SIZE - head_.certSize) != (ssize_t)(MAX_CERT_SIZE - head_.certSize)) {
         DLP_LOG_ERROR(LABEL, "write buffer is error");
+        delete[] buffer;
         return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
     }
-    delete []buffer;
+    delete[] buffer;
     return DLP_OK;
 }
 

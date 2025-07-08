@@ -67,6 +67,7 @@ static int32_t GetFileSize(int32_t fd, uint64_t& fileLen);
 DlpZipFile::DlpZipFile(int32_t dlpFd, const std::string &workDir, int64_t index, const std::string &realType)
     : DlpFile(dlpFd, realType), workDir_(workDir), dirIndex_(std::to_string(index))
 {
+    certSize_ = 0;
 }
 
 DlpZipFile::~DlpZipFile()
