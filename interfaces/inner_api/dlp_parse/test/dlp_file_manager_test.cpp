@@ -582,6 +582,14 @@ HWTEST_F(DlpFileManagerTest, GenerateDlpFile001, TestSize.Level0)
     EXPECT_EQ(DLP_PARSE_ERROR_FILE_OPERATE_FAIL,
         DlpFileManager::GetInstance().GenerateDlpFile(1000, 1000, property, filePtr, DLP_TEST_DIR));
     DlpFileManager::GetInstance().RemoveDlpFileNode(filePtr);
+
+    DlpFileManager::DlpFileMes dlpFileMes;
+    DlpProperty rawProperty;
+    std::shared_ptr<DlpFile> rawFilePtr = std::make_shared<DlpRawFile>(1000, "mp4");
+    DlpFileManager::GetInstance().GenRawDlpFile(dlpFileMes, rawProperty, rawFilePtr);
+
+    std::vector<uint8_t> offlineCert;
+    DlpFileManager::GetInstance().DlpRawHmacCheckAndUpdata(rawFilePtr, offlineCert);
 }
 
 /**
