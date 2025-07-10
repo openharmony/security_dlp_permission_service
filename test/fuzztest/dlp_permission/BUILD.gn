@@ -56,6 +56,7 @@ group("fuzztest") {
     "stub_fuzzer/cancelretentionstatestub_fuzzer:CancelRetentionStateStubFuzzTest",
     "stub_fuzzer/cleansandboxconfigstub_fuzzer:CleanSandboxConfigStubFuzzTest",
     "stub_fuzzer/clearunreservedsandboxstub_fuzzer:ClearUnreservedSandboxStubFuzzTest",
+    "stub_fuzzer/dlppermissionservicesnormal_fuzzer:DlpPermissionServicesNormalFuzzTest",
     "stub_fuzzer/generatecertstub_fuzzer:GenerateCertStubFuzzTest",
     "stub_fuzzer/getdlpfilevisitrecordstub_fuzzer:GetDlpFileVisitRecordStubFuzzTest",
     "stub_fuzzer/getdlpgatheringpolicystub_fuzzer:GetDlpGatheringPolicyStubFuzzTest",
