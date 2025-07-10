@@ -368,6 +368,16 @@ bool DlpUtils::GetBundleInfoWithBundleName(const std::string &bundleName, int32_
     }
     return bundleMgrProxy->GetBundleInfo(bundleName, flag, bundleInfo, userId);
 }
+
+bool DlpUtils::GetUserIdByForegroundAccount(int32_t &userId)
+{
+    int32_t ret = AccountSA::OsAccountManager::GetForegroundOsAccountLocalId(userId);
+    if (ret != ERR_OK) {
+        DLP_LOG_ERROR(LABEL, "GetForegroundOsAccountLocalId failed %{public}d", ret);
+        return false;
+    }
+    return true;
+}
 }  // namespace DlpPermission
 }  // namespace Security
 }  // namespace OHOS
