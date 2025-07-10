@@ -41,6 +41,7 @@ static const std::string DESCRIPTOR_MAP_PATH = "/proc/self/fd/";
 const std::string DLP_GENERAL_INFO = "dlp_general_info";
 const std::string CACHE_PATH = "/data/storage/el2/base/files/cache/";
 const uint32_t DLP_CWD_MAX = 256;
+const uint32_t OS_ACCOUNT = 100;
 std::mutex g_fileOpLock;
 }
 
@@ -339,6 +340,12 @@ bool DlpUtils::GetBundleInfoWithBundleName(const std::string &bundleName, int32_
     AppExecFwk::BundleInfo &bundleInfo, int32_t userId)
 {
     bundleInfo.appId = "test_appId_passed";
+    return true;
+}
+
+bool DlpUtils::GetUserIdByForegroundAccount(int32_t &userId)
+{
+    userId = OS_ACCOUNT;
     return true;
 }
 }  // namespace DlpPermission

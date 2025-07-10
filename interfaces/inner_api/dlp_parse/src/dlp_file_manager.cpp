@@ -518,9 +518,8 @@ static int32_t SupportDlpWithAppId(const std::string &appId, const int32_t &dlpF
     }
 
     int32_t userId = 0;
-    int32_t ret = AccountSA::OsAccountManager::GetForegroundOsAccountLocalId(userId);
-    if (ret != ERR_OK) {
-        DLP_LOG_ERROR(LABEL, "Get os account localId error, %{public}d", ret);
+    if (!DlpUtils::GetUserIdByForegroundAccount(userId)) {
+        DLP_LOG_ERROR(LABEL, "Get os account localId error");
         return DLP_PARSE_ERROR_GET_ACCOUNT_FAIL;
     }
 

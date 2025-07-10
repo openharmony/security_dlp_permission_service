@@ -57,6 +57,7 @@ static const uint8_t ARRAY_CHAR_SIZE = 62;
 static const uint8_t KEY_LEN = 16;
 static const char CHAR_ARRAY[] = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 static const std::string DLP_AUTH_POLICY = "/system/etc/dlp_auth_policy.json";
+static const std::string DLP_HIAE_TYPE = "mkv";
 
 class UnregisterOpenDlpFileCallbackFuzzer : public OpenDlpFileCallbackCustomize {
 public:
@@ -193,6 +194,9 @@ static void UtilTest(const uint8_t* data, size_t size)
     int fd = open(filePath.c_str(), O_CREAT | O_RDWR | O_TRUNC, S_IRWXU | S_IRWXG | S_IRWXO);
     DlpUtils::GetFileNameWithFd(fd, srcFile);
     DlpUtils::GetRealTypeWithFd(fd);
+    std::string dlpFile;
+    DlpUtils::GetFileNameWithDlpFd(fd, dlpFile);
+    DlpUtils::GetFileType(DLP_HIAE_TYPE);
     std::string str = fdp.ConsumeBytesAsString(size);
     DlpUtils::ToLowerString(str);
     std::string suffix = fdp.ConsumeBytesAsString(size);
