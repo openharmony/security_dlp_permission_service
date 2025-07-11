@@ -933,7 +933,7 @@ bool FillDlpSandboxChangeInfo(const napi_env env, const napi_value *argv, const 
     registerSandboxChangeInfo.subscriber = std::make_shared<RegisterDlpSandboxChangeScopePtr>();
     registerSandboxChangeInfo.subscriber->SetEnv(env);
     registerSandboxChangeInfo.subscriber->SetCallbackRef(callback);
-    napi_wrap(
+    napi_status wrapStatus = napi_wrap(
         env, thisVar, reinterpret_cast<void *>(registerSandboxChangeInfo.subscriber.get()),
         [](napi_env nev, void *data, void *hint) {
             DLP_LOG_DEBUG(LABEL, "RegisterDlpSandboxChangeScopePtr delete");
@@ -943,6 +943,11 @@ bool FillDlpSandboxChangeInfo(const napi_env env, const napi_value *argv, const 
             }
         },
         nullptr, nullptr);
+    if (wrapStatus != napi_ok) {
+        DLP_LOG_ERROR(LABEL, "Wrap js and native option failed");
+        napi_throw(env, GenerateBusinessError(env, ERR_JS_PARAMETER_ERROR, "Wrap js and native option failed"));
+        return false;
+    }
     return true;
 }
 
