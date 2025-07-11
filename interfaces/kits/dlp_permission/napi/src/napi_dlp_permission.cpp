@@ -1221,7 +1221,7 @@ napi_value NapiDlpPermission::SubscribeOpenDlpFile(const napi_env env, const nap
         DlpNapiThrow(env, result);
         return nullptr;
     }
-    napi_wrap(
+    napi_status wrapStatus = napi_wrap(
         env, thisVar, reinterpret_cast<void*>(syncContextPtr->subscriber.get()),
         [](napi_env nev, void* data, void* hint) {
             DLP_LOG_INFO(LABEL, "OpenDlpFileSubscriberPtr delete");
@@ -1231,6 +1231,11 @@ napi_value NapiDlpPermission::SubscribeOpenDlpFile(const napi_env env, const nap
             }
         },
         nullptr, nullptr);
+    if (wrapStatus != napi_ok) {
+        DLP_LOG_ERROR(LABEL, "Wrap js and native option failed");
+        DlpNapiThrow(env, ERR_JS_INVALID_PARAMETER, "Wrap js and native option failed");
+        return nullptr;
+    }
     g_openDlpFileSubscribers.emplace(syncContext);
     DLP_LOG_INFO(LABEL, "Subscribe open dlp file success");
     syncContextPtr.release();
