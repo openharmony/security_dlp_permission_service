@@ -37,20 +37,28 @@
 
 using namespace OHOS::Security::DlpPermission;
 using namespace OHOS::Security::AccessToken;
+
+namespace {
+static const char CHAR_ARRAY[] = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+static const std::string DLP_TEST_DIR = "/data";
+static const std::string LOGIN_EVENT = "Ohos.account.event.LOGIN";
+static const std::string LOGOUT_EVENT = "Ohos.account.event.LOGOUT";
+static constexpr int32_t MIN_LENGTH = 100;
+static constexpr uint64_t MAX_CONTENT_SIZE = 0xffffffff;
+static constexpr uint64_t TRUNC_SHORT = 10;
+static constexpr uint64_t TRUNC_LONG = 100000;
+static constexpr uint64_t OFFSET_SHORT = 20;
+static constexpr uint64_t OFFSET_LONG = 111111;
+static constexpr uint8_t ARRAY_CHAR_SIZE = 62;
+static constexpr uint8_t TWO = 2;
+static constexpr uint8_t ACCOUNT_LEN = 10;
+static constexpr uint8_t BUFF_LEN = 10;
+}
+
 namespace OHOS {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = { LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION,
                                                        "DlpFileFuzzTest" };
 static std::shared_ptr<DlpFile> g_Dlpfile = nullptr;
-static const std::string DLP_TEST_DIR = "/data";
-static const std::string LOGIN_EVENT = "Ohos.account.event.LOGIN";
-static const std::string LOGOUT_EVENT = "Ohos.account.event.LOGOUT";
-constexpr int32_t MIN_LENGTH = 100;
-static const uint64_t TRUNC_LEN = 10000;
-static const uint64_t OFFSET_LEN = 11111;
-static const uint8_t ARRAY_CHAR_SIZE = 62;
-static const uint8_t TWO = 2;
-static const uint8_t ACCOUNT_LEN = 10;
-static const char CHAR_ARRAY[] = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
 static void GenerateRandStr(uint32_t len, const uint8_t *data, std::string& res)
 {
@@ -60,18 +68,17 @@ static void GenerateRandStr(uint32_t len, const uint8_t *data, std::string& res)
     }
 }
 
-static DlpAccountType GenerateDlpAccountType(const uint8_t* data)
+static void GenerateProp(DlpProperty& prop, const std::string& account)
 {
-    int8_t typeNum = (data[0] / TWO + data[1] / TWO) % (sizeof(DlpAccountType) / sizeof(INVALID_ACCOUNT));
-    if (typeNum == 0) {
-        return DlpAccountType::INVALID_ACCOUNT;
-    } else if (typeNum == 1) {
-        return DlpAccountType::CLOUD_ACCOUNT;
-    } else if (typeNum == TWO) {
-        return DlpAccountType::DOMAIN_ACCOUNT;
-    } else {
-        return DlpAccountType::APPLICATION_ACCOUNT;
-    }
+    prop.ownerAccount = account;
+    prop.ownerAccountId = account;
+    prop.contactAccount = account;
+    prop.ownerAccountType = DlpAccountType::CLOUD_ACCOUNT;
+    prop.offlineAccess = false;
+    prop.supportEveryone = true;
+    prop.everyonePerm = DLPFileAccess::FULL_CONTROL;
+    prop.expireTime = 0;
+    prop.actionUponExpiry = ActionType::OPEN;
 }
 
 static void RawFileFuzzTest(const uint8_t* data, size_t size)
@@ -84,20 +91,14 @@ static void RawFileFuzzTest(const uint8_t* data, size_t size)
     std::string text = "text";
     write(plainFileFd, text.c_str(), text.length());
     std::string appId = "test_appId_passed";
-    struct DlpProperty prop;
     FuzzedDataProvider fdp(data, size);
     std::string account;
-    GenerateRandStr(ACCOUNT_LEN, data, account);
+    size_t offset = 0;
+    GenerateRandStr(ACCOUNT_LEN, data + offset, account);
+    offset += ACCOUNT_LEN;
+    DlpProperty prop;
+    GenerateProp(prop, account);
     AccountSA::OhosAccountKits::GetInstance().UpdateOhosAccountInfo(account, account, LOGIN_EVENT);
-    prop.ownerAccount = account;
-    prop.ownerAccountId = account;
-    prop.contactAccount = account;
-    prop.ownerAccountType = GenerateDlpAccountType(data);
-    prop.offlineAccess = false;
-    prop.supportEveryone = true;
-    prop.everyonePerm = DLPFileAccess::FULL_CONTROL;
-    prop.expireTime = 0;
-    prop.actionUponExpiry = ActionType::OPEN;
     DlpFileManager::DlpFileMes dlpFileMes = {
         .plainFileFd = plainFileFd,
         .dlpFileFd = dlpFileFd,
@@ -111,16 +112,20 @@ static void RawFileFuzzTest(const uint8_t* data, size_t size)
     DLP_LOG_INFO(LABEL, "OpenRawDlpFile res=%{public}d", res);
     AccountSA::OhosAccountKits::GetInstance().UpdateOhosAccountInfo(account, account, LOGOUT_EVENT);
     g_Dlpfile->authPerm_ = DLPFileAccess::FULL_CONTROL;
-    uint64_t arraySize = TRUNC_LEN;
-    g_Dlpfile->Truncate(arraySize);
-    uint64_t offset = OFFSET_LEN;
-    std::string bufdata = "bufdata";
-    void* buf = reinterpret_cast<void*>(strdup(bufdata.c_str()));
+    res = g_Dlpfile->RemoveDlpPermission(recoveryFileFd);
+    DLP_LOG_INFO(LABEL, "RemoveDlpPermission res=%{public}d", res);
+    g_Dlpfile->Truncate(MAX_CONTENT_SIZE);
+    g_Dlpfile->Truncate(TRUNC_SHORT);
+    g_Dlpfile->Truncate(TRUNC_LONG);
+    std::string bufdata;
+    GenerateRandStr(BUFF_LEN, data + offset, bufdata);
+    void* bufData = reinterpret_cast<void*>(strdup(bufdata.c_str()));
     uint32_t bufLen = bufdata.length();
-    g_Dlpfile->DlpFileWrite(offset, buf, bufLen);
-    g_Dlpfile->RemoveDlpPermission(recoveryFileFd);
+    g_Dlpfile->DlpFileWrite(MAX_CONTENT_SIZE, bufData, bufLen);
+    g_Dlpfile->DlpFileWrite(OFFSET_SHORT, bufData, bufLen);
+    g_Dlpfile->DlpFileWrite(OFFSET_LONG, bufData, bufLen);
     DlpFileManager::GetInstance().CloseDlpFile(g_Dlpfile);
-    free(buf);
+    free(bufData);
     close(plainFileFd);
     close(dlpFileFd);
     close(recoveryFileFd);
@@ -136,20 +141,14 @@ static void ZipFileFuzzTest(const uint8_t* data, size_t size)
     std::string text = "text";
     write(plainFileFd, text.c_str(), text.length());
     std::string appId = "test_appId_passed";
-    struct DlpProperty prop;
     FuzzedDataProvider fdp(data, size);
     std::string account;
-    GenerateRandStr(ACCOUNT_LEN, data, account);
+    size_t offset = 0;
+    GenerateRandStr(ACCOUNT_LEN, data + offset, account);
+    offset += ACCOUNT_LEN;
+    DlpProperty prop;
+    GenerateProp(prop, account);
     AccountSA::OhosAccountKits::GetInstance().UpdateOhosAccountInfo(account, account, LOGIN_EVENT);
-    prop.ownerAccount = account;
-    prop.ownerAccountId = account;
-    prop.contactAccount = account;
-    prop.ownerAccountType = GenerateDlpAccountType(data);
-    prop.offlineAccess = false;
-    prop.supportEveryone = true;
-    prop.everyonePerm = DLPFileAccess::FULL_CONTROL;
-    prop.expireTime = 0;
-    prop.actionUponExpiry = ActionType::OPEN;
     DlpFileManager::DlpFileMes dlpFileMes = {
         .plainFileFd = plainFileFd,
         .dlpFileFd = dlpFileFd,
@@ -163,16 +162,20 @@ static void ZipFileFuzzTest(const uint8_t* data, size_t size)
     DLP_LOG_INFO(LABEL, "OpenZipDlpFile res=%{public}d", res);
     AccountSA::OhosAccountKits::GetInstance().UpdateOhosAccountInfo(account, account, LOGOUT_EVENT);
     g_Dlpfile->authPerm_ = DLPFileAccess::FULL_CONTROL;
-    uint64_t arraySize = TRUNC_LEN;
-    g_Dlpfile->Truncate(arraySize);
-    uint64_t offset = OFFSET_LEN;
-    std::string bufdata = "bufdata";
-    void* buf = reinterpret_cast<void*>(strdup(bufdata.c_str()));
+    res = g_Dlpfile->RemoveDlpPermission(recoveryFileFd);
+    DLP_LOG_INFO(LABEL, "RemoveDlpPermission res=%{public}d", res);
+    g_Dlpfile->Truncate(MAX_CONTENT_SIZE);
+    g_Dlpfile->Truncate(TRUNC_SHORT);
+    g_Dlpfile->Truncate(TRUNC_LONG);
+    std::string bufdata;
+    GenerateRandStr(BUFF_LEN, data + offset, bufdata);
+    void* bufData = reinterpret_cast<void*>(strdup(bufdata.c_str()));
     uint32_t bufLen = bufdata.length();
-    g_Dlpfile->DlpFileWrite(offset, buf, bufLen);
-    g_Dlpfile->RemoveDlpPermission(recoveryFileFd);
+    g_Dlpfile->DlpFileWrite(MAX_CONTENT_SIZE, bufData, bufLen);
+    g_Dlpfile->DlpFileWrite(OFFSET_SHORT, bufData, bufLen);
+    g_Dlpfile->DlpFileWrite(OFFSET_LONG, bufData, bufLen);
     DlpFileManager::GetInstance().CloseDlpFile(g_Dlpfile);
-    free(buf);
+    free(bufData);
     close(plainFileFd);
     close(dlpFileFd);
     close(recoveryFileFd);
