@@ -29,13 +29,15 @@
 #include "dlp_file_manager.h"
 #undef private
 #include "dlp_crypt.h"
+#include "dlp_permission.h"
 
 using namespace testing::ext;
 using namespace OHOS::Security::DlpPermission;
 using namespace std;
 
 namespace {
-static const uint32_t DLP_MAX_CERT_SIZE = 1024 * 1024;
+static const uint64_t DLP_CERT_SIZE = 1024 * 1024;
+static const uint32_t DLP_HEAD_SIZE = 10 * 1024 * 1024;
 static const std::string DLP_TEST_DIR = "/data/dlpTest/";
 static constexpr int32_t SECOND = 2;
 }
@@ -56,9 +58,9 @@ void DlpRawFileTest::TearDown() {}
  */
 HWTEST_F(DlpRawFileTest, ParseRawDlpHeaderTest, TestSize.Level0)
 {
-    uint64_t fileLen = DLP_MAX_CERT_SIZE;
-    uint32_t dlpHeaderSize = DLP_MAX_CERT_SIZE;
-    std::shared_ptr<DlpFile> filePtr = std::make_shared<DlpRawFile>(-1, "mp4");
+    uint64_t fileLen = DLP_CERT_SIZE;
+    uint32_t dlpHeaderSize = DLP_HEAD_SIZE;
+    std::shared_ptr<DlpRawFile> filePtr = std::make_shared<DlpRawFile>(-1, "mp4");
     ASSERT_EQ(filePtr->ParseRawDlpHeader(fileLen, dlpHeaderSize), DLP_PARSE_ERROR_FD_ERROR);
 }
 
@@ -70,9 +72,9 @@ HWTEST_F(DlpRawFileTest, ParseRawDlpHeaderTest, TestSize.Level0)
  */
 HWTEST_F(DlpRawFileTest, HmacCheckTest, TestSize.Level0)
 {
-    std::shared_ptr<DlpFile> filePtr = std::make_shared<DlpRawFile>(-1, "mp4");
+    std::shared_ptr<DlpRawFile> filePtr = std::make_shared<DlpRawFile>(-1, "mp4");
     filePtr->version_ = SECOND;
-    ASSERT_EQ(filePtr->HmacCheck(fileLen, dlpHeaderSize), DLP_OK);
+    ASSERT_EQ(filePtr->HmacCheck(), DLP_OK);
 }
 
 /**
@@ -83,7 +85,7 @@ HWTEST_F(DlpRawFileTest, HmacCheckTest, TestSize.Level0)
  */
 HWTEST_F(DlpRawFileTest, GetOfflineCertSizeTest, TestSize.Level0)
 {
-    std::shared_ptr<DlpFile> filePtr = std::make_shared<DlpRawFile>(-1, "mp4");
+    std::shared_ptr<DlpRawFile> filePtr = std::make_shared<DlpRawFile>(-1, "mp4");
     ASSERT_EQ(filePtr->GetOfflineCertSize(), 0);
 }
 
@@ -97,6 +99,6 @@ HWTEST_F(DlpRawFileTest, DoDlpHIAECryptOperationTest, TestSize.Level0)
 {
     DlpBlob message1 = { 0, nullptr };
     DlpBlob message2 = { 0, nullptr };
-    std::shared_ptr<DlpFile> filePtr = std::make_shared<DlpRawFile>(-1, "mp4");
-    ASSERT_EQ(filePtr->DoDlpHIAECryptOperation(message1, message2, offset, true), DLP_PARSE_ERROR_VALUE_INVALID);
+    std::shared_ptr<DlpRawFile> filePtr = std::make_shared<DlpRawFile>(-1, "mp4");
+    ASSERT_EQ(filePtr->DoDlpHIAECryptOperation(message1, message2, 0, true), DLP_PARSE_ERROR_VALUE_INVALID);
 }

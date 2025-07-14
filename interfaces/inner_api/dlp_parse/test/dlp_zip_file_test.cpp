@@ -60,7 +60,7 @@ HWTEST_F(DlpZipFileTest, IsZipFile, TestSize.Level0)
 {
     std::vector<uint8_t> cert;
     DlpBlob certBlob = { 0, nullptr };
-    std::shared_ptr<DlpFile> filePtr = std::make_shared<DlpZipFile>(-1, DLP_TEST_DIR, 0, "txt");
+    std::shared_ptr<DlpZipFile> filePtr = std::make_shared<DlpZipFile>(-1, DLP_TEST_DIR, 0, "txt");
     ASSERT_EQ(filePtr->UpdateCertAndText(cert, certBlob), DLP_PARSE_ERROR_MEMORY_OPERATE_FAIL);
 }
 
@@ -73,6 +73,6 @@ HWTEST_F(DlpZipFileTest, IsZipFile, TestSize.Level0)
 HWTEST_F(DlpZipFileTest, GetOfflineCertSizeTest, TestSize.Level0)
 {
     std::vector<uint8_t> cert;
-    std::shared_ptr<DlpFile> filePtr = std::make_shared<DlpZipFile>(-1, DLP_TEST_DIR, 0, "txt");
+    std::shared_ptr<DlpZipFile> filePtr = std::make_shared<DlpZipFile>(-1, DLP_TEST_DIR, 0, "txt");
     ASSERT_EQ(filePtr->GetOfflineCertSize(), 0);
 }

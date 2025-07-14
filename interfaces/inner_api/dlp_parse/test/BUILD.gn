@@ -65,6 +65,8 @@ ohos_unittest("dlp_parse_test") {
     "dlp_file_test.cpp",
     "dlp_zip_test.cpp",
     "dlp_file_operator_test.cpp",
+    "dlp_zip_file_test.cpp",
+    "dlp_raw_file_test.cpp",
   ]
 
   include_dirs = [
