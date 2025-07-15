@@ -473,7 +473,8 @@ HWTEST_F(DlpFileKitsTest, ConvertAbilityInfoWithSupportDlp001, TestSize.Level0)
     DlpFileKits::ConvertAbilityInfoWithSupportDlp(want, abilityInfos);
 
     std::vector<std::string> authPolicy;
-    std::string fileType = DlpUtils::GetFileTypeBySuffix("txt");
+    std::string fileType = DlpUtils::GetFileTypeBySuffix("txt", true);
+    fileType = DlpUtils::GetFileTypeBySuffix("txt", false);
     DlpUtils::GetAuthPolicyWithType(DLP_AUTH_POLICY, fileType, authPolicy);
     OHOS::AppExecFwk::AbilityInfo abilityInfo;
     for (const string& bundleName : authPolicy) {
