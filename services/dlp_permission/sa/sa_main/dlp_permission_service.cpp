@@ -275,8 +275,8 @@ static int32_t GetAppIndexFromRetentionInfo(const std::string& bundleName, bool 
     std::vector<RetentionSandBoxInfo> infoVec;
     auto res = RetentionFileManager::GetInstance().GetRetentionSandboxList(bundleName, infoVec, true);
     if (res != DLP_OK) {
-        DLP_LOG_ERROR(LABEL, "GetRetentionSandboxList fail bundleName:%{public}s,uri:%{public}s, error=%{public}d",
-            bundleName.c_str(), uri.c_str(), res);
+        DLP_LOG_ERROR(LABEL, "GetRetentionSandboxList fail bundleName:%{public}s, error=%{public}d",
+            bundleName.c_str(), res);
         return res;
     }
     for (auto iter = infoVec.begin(); iter != infoVec.end(); ++iter) {

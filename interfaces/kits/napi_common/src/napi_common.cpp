@@ -244,8 +244,7 @@ void OpenDlpFileSubscriberPtr::OnOpenDlpFile(OpenDlpFileCallbackInfo &result)
     openDlpFileWorker->env = env_;
     openDlpFileWorker->ref = ref_;
     openDlpFileWorker->result = result;
-    DLP_LOG_DEBUG(LABEL, "result uri = %{public}s, openTime = %{public}" PRIu64, result.uri.c_str(),
-        result.timeStamp);
+    DLP_LOG_DEBUG(LABEL, "result openTime = %{public}" PRIu64, result.timeStamp);
     openDlpFileWorker->subscriber = this;
     auto task = [openDlpFileWorker]() {
         UvQueueWorkOpenDlpFile(openDlpFileWorker);
@@ -825,8 +824,8 @@ bool GetInstallDlpSandboxParams(const napi_env env, const napi_callback_info inf
         }
     }
 
-    DLP_LOG_DEBUG(LABEL, "bundleName: %{private}s, dlpFileAccess: %{private}d, userId: %{private}d,uri: %{private}s",
-        asyncContext.bundleName.c_str(), asyncContext.dlpFileAccess, asyncContext.userId, asyncContext.uri.c_str());
+    DLP_LOG_DEBUG(LABEL, "bundleName: %{private}s, dlpFileAccess: %{private}d, userId: %{private}d",
+        asyncContext.bundleName.c_str(), asyncContext.dlpFileAccess, asyncContext.userId);
     return true;
 }
 

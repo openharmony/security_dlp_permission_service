@@ -177,7 +177,7 @@ static void FuseDaemonRead(fuse_req_t req, fuse_ino_t ino, size_t size, off_t of
         fuse_reply_err(req, EINVAL);
         return;
     }
-    if (offset < 0 || offset > DLP_MAX_CONTENT_SIZE) {
+    if (offset < 0 || offset > static_cast<off_t>(DLP_MAX_CONTENT_SIZE)) {
         fuse_reply_err(req, EINVAL);
         return;
     }
@@ -214,7 +214,7 @@ static void FuseDaemonWrite(
     fuse_req_t req, fuse_ino_t ino, const char* buf, size_t size, off_t off, struct fuse_file_info* fi)
 {
     (void)fi;
-    if (off < 0 || off > DLP_MAX_CONTENT_SIZE) {
+    if (off < 0 || off > static_cast<off_t>(DLP_MAX_CONTENT_SIZE)) {
         fuse_reply_err(req, EINVAL);
         return;
     }
@@ -319,7 +319,7 @@ static int AddLinkFilesDirentry(DirAddParams& params)
 static void FuseDaemonReadDir(fuse_req_t req, fuse_ino_t ino, size_t size, off_t off, struct fuse_file_info *fi)
 {
     (void)fi;
-    if (off < 0 || off > DLP_MAX_CONTENT_SIZE) {
+    if (off < 0 || off > static_cast<off_t>(DLP_MAX_CONTENT_SIZE)) {
         fuse_reply_err(req, ENOTDIR);
         return;
     }
@@ -420,7 +420,7 @@ void FuseDaemonSetAttr(fuse_req_t req, fuse_ino_t ino, struct stat *attr, int to
         return;
     }
 
-    if (attr->st_size < 0 || attr->st_size > DLP_MAX_CONTENT_SIZE) {
+    if (attr->st_size < 0 || attr->st_size > static_cast<off_t>(DLP_MAX_CONTENT_SIZE)) {
         DLP_LOG_ERROR(LABEL, "Set link file attr fail, file size too large");
         fuse_reply_err(req, EINVAL);
         return;

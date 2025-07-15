@@ -203,7 +203,7 @@ bool DlpZipFile::ParseCert()
         return false;
     }
     CleanBlobParam(cert_);
-    if (fz.st_size == 0 || fz.st_size > DLP_MAX_CERT_SIZE) {
+    if (fz.st_size == 0 || fz.st_size > DLP_MAX_CERT_SIZE || certSize_ > DLP_MAX_CERT_SIZE) {
         DLP_LOG_ERROR(LABEL, "Cert size is too large or equit to 0.");
         return false;
     }
@@ -671,7 +671,7 @@ uint64_t DlpZipFile::GetFsContentSize() const
         DLP_LOG_ERROR(LABEL, "fstat error %{public}d , errno %{public}d dlpfd: %{public}d ", ret, errno, opFd);
         return INVALID_FILE_SIZE;
     }
-    if (0 > fileStat.st_size || fileStat.st_size >= static_cast<off_t>(INVALID_FILE_SIZE)) {
+    if (0 > fileStat.st_size || fileStat.st_size >= static_cast<off_t>(DLP_MAX_RAW_CONTENT_SIZE)) {
         DLP_LOG_ERROR(LABEL, "size error %{public}s",
             std::to_string(static_cast<uint64_t>(fileStat.st_size)).c_str());
         return INVALID_FILE_SIZE;
