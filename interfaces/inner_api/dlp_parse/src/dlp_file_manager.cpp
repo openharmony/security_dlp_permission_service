@@ -484,7 +484,7 @@ int32_t DlpFileManager::GenerateDlpFile(
         DLP_LOG_ERROR(LABEL, "GetFileSuffix fail");
         return DLP_PARSE_ERROR_VALUE_INVALID;
     }
-    std::string fileType = DlpUtils::GetFileTypeBySuffix(realFileType);
+    std::string fileType = DlpUtils::GetFileTypeBySuffix(realFileType, true);
     if (fileType == DEFAULT_STRING) {
         DLP_LOG_ERROR(LABEL, "GetFileTypeBySuffix fail");
         return DLP_PARSE_ERROR_VALUE_INVALID;
@@ -509,12 +509,13 @@ static std::string GetAppIdWithBundleName(const std::string &bundleName, const i
     return bundleInfo.appId;
 }
 
-static int32_t SupportDlpWithAppId(const std::string &appId, const int32_t &dlpFileFd, const std::string &realSuffix)
+static int32_t SupportDlpWithAppId(const std::string &appId, const int32_t &dlpFileFd, const std::string &realSuffix,
+    const bool isFromUriName)
 {
-    std::string fileType = DlpUtils::GetFileTypeBySuffix(realSuffix);
+    std::string fileType = DlpUtils::GetFileTypeBySuffix(realSuffix, isFromUriName);
     if (fileType == DEFAULT_STRING) {
         DLP_LOG_ERROR(LABEL, "get fileType error.");
-        return DLP_PARSE_ERROR_VALUE_INVALID;
+        return DLP_PARSE_ERROR_NOT_SUPPORT_FILE_TYPE;
     }
 
     int32_t userId = 0;
@@ -675,13 +676,14 @@ int32_t DlpFileManager::OpenDlpFile(int32_t dlpFileFd, std::shared_ptr<DlpFile>&
         DLP_LOG_ERROR(LABEL, "Open dlp file fail, fd %{public}d is invalid", dlpFileFd);
         return DLP_PARSE_ERROR_FD_ERROR;
     }
-    std::string realSuffix = DlpUtils::GetRealTypeWithFd(dlpFileFd);
+    bool isFromUriName = false;
+    std::string realSuffix = DlpUtils::GetRealTypeWithFd(dlpFileFd, isFromUriName);
     if (realSuffix == DEFAULT_STRING) {
         DLP_LOG_ERROR(LABEL, "GetRealTypeWithFd fail");
-        return DLP_PARSE_ERROR_VALUE_INVALID;
+        return DLP_PARSE_ERROR_NOT_SUPPORT_FILE_TYPE;
     }
     DLP_LOG_DEBUG(LABEL, "realSuffix is %{public}s", realSuffix.c_str());
-    int32_t ret = SupportDlpWithAppId(appId, dlpFileFd, realSuffix);
+    int32_t ret = SupportDlpWithAppId(appId, dlpFileFd, realSuffix, isFromUriName);
     if (ret != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "SupportDlpWithAppId fail");
         return ret;
@@ -693,15 +695,18 @@ int32_t DlpFileManager::OpenDlpFile(int32_t dlpFileFd, std::shared_ptr<DlpFile>&
     }
     std::string lower = DlpUtils::ToLowerString(realSuffix);
     std::string realType = "";
-    for (size_t len = MAX_REALY_TYPE_LENGTH; len >= MIN_REALY_TYPE_LENGTH; len--) {
-        if (len > lower.size()) {
-            continue;
-        }
-        std::string newStr = lower.substr(0, len);
-        auto iter = FILE_TYPE_MAP.find(newStr);
-        if (iter != FILE_TYPE_MAP.end()) {
-            realType = newStr;
-            break;
+    if (isFromUriName) {
+        for (size_t len = MAX_REALY_TYPE_LENGTH; len >= MIN_REALY_TYPE_LENGTH; len--) {
+            if (len > lower.size()) {
+                continue;
+            }
+            std::string newStr = lower.substr(0, len);
+            auto iter = FILE_TYPE_MAP.find(newStr);
+            if (iter != FILE_TYPE_MAP.end()) {
+                realType = newStr;
+                DLP_LOG_INFO(LABEL, "Assign realType newStr %{public}s", newStr.c_str());
+                break;
+            }
         }
     }
     if (IsZipFile(dlpFileFd)) {

@@ -233,14 +233,14 @@ public:
     static sptr<AppExecFwk::IBundleMgr> GetBundleMgrProxy(void);
     static bool GetAuthPolicyWithType(const std::string &cfgFile, const std::string &type,
         std::vector<std::string> &authPolicy);
-    static std::string GetFileTypeBySuffix(const std::string& suffix);
-    static std::string GetDlpFileRealSuffix(const std::string& dlpFileName);
+    static std::string GetFileTypeBySuffix(const std::string& suffix, const bool isFromUriName);
+    static std::string GetDlpFileRealSuffix(const std::string& dlpFileName, bool& isFromUriName);
     static int32_t GetFileNameWithFd(const int32_t& fd, std::string& srcFileName);
     static int32_t GetFileNameWithDlpFd(const int32_t &fd, std::string &srcFileName);
     static std::string GetRealTypeWithRawFile(const int32_t& fd);
     static int32_t GetFilePathWithFd(const int32_t& fd, std::string& srcFilePath);
     static std::string ToLowerString(const std::string& str);
-    static std::string GetRealTypeWithFd(const int32_t& fd);
+    static std::string GetRealTypeWithFd(const int32_t& fd, bool& isFromUriName);
     static bool GetBundleInfoWithBundleName(const std::string &bundleName, int32_t flag,
         AppExecFwk::BundleInfo &bundleInfo, int32_t userId);
     static bool GetFileType(const std::string& realFileType);

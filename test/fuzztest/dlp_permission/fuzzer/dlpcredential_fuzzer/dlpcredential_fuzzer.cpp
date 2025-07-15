@@ -193,14 +193,16 @@ static void UtilTest(const uint8_t* data, size_t size)
     GenerateDlpFileType(fdp.ConsumeIntegral<uint32_t>(), filePath);
     int fd = open(filePath.c_str(), O_CREAT | O_RDWR | O_TRUNC, S_IRWXU | S_IRWXG | S_IRWXO);
     DlpUtils::GetFileNameWithFd(fd, srcFile);
-    DlpUtils::GetRealTypeWithFd(fd);
+    bool isFromUriName = false;
+    DlpUtils::GetRealTypeWithFd(fd, isFromUriName);
     std::string dlpFile;
     DlpUtils::GetFileNameWithDlpFd(fd, dlpFile);
     DlpUtils::GetFileType(DLP_HIAE_TYPE);
     std::string str = fdp.ConsumeBytesAsString(size);
     DlpUtils::ToLowerString(str);
     std::string suffix = fdp.ConsumeBytesAsString(size);
-    DlpUtils::GetFileTypeBySuffix(str);
+    DlpUtils::GetFileTypeBySuffix(str, true);
+    DlpUtils::GetFileTypeBySuffix(str, false);
     std::string path;
     DlpUtils::GetFilePathWithFd(fd, path);
     close(fd);

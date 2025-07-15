@@ -248,7 +248,8 @@ int32_t EnterpriseSpaceDlpPermissionKit::EnterpriseSpacePrepareWorkDir(int32_t d
     int64_t timeStamp =
         std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch())
             .count();
-    std::string realSuffix = DlpUtils::GetRealTypeWithFd(dlpFileFd);
+    bool isFromUriName = false;
+    std::string realSuffix = DlpUtils::GetRealTypeWithFd(dlpFileFd, isFromUriName);
     if (realSuffix == "") {
         DLP_LOG_ERROR(LABEL, "Get real suffix error.");
         return DLP_PARSE_ERROR_VALUE_INVALID;

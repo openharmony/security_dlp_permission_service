@@ -96,15 +96,22 @@ std::string DlpUtils::ToLowerString(const std::string& str)
     return lower;
 }
 
-std::string DlpUtils::GetFileTypeBySuffix(const std::string& suffix)
+std::string DlpUtils::GetFileTypeBySuffix(const std::string& suffix, const bool isFromUriName)
 {
     std::string lower = DlpUtils::ToLowerString(suffix);
-    for (size_t len = MAX_REALY_TYPE_LENGTH; len >= MIN_REALY_TYPE_LENGTH; len--) {
-        if (len > lower.size()) {
-            continue;
+    if (isFromUriName) {
+        for (size_t len = MAX_REALY_TYPE_LENGTH; len >= MIN_REALY_TYPE_LENGTH; len--) {
+            if (len > lower.size()) {
+                continue;
+            }
+            std::string newStr = lower.substr(0, len);
+            auto iter = FILE_TYPE_MAP.find(newStr);
+            if (iter != FILE_TYPE_MAP.end()) {
+                return iter->second;
+            }
         }
-        std::string newStr = lower.substr(0, len);
-        auto iter = FILE_TYPE_MAP.find(newStr);
+    } else {
+        auto iter = FILE_TYPE_MAP.find(lower);
         if (iter != FILE_TYPE_MAP.end()) {
             return iter->second;
         }
@@ -128,7 +135,7 @@ bool DlpUtils::GetFileType(const std::string& realFileType)
     return false;
 }
 
-std::string DlpUtils::GetDlpFileRealSuffix(const std::string& dlpFileName)
+std::string DlpUtils::GetDlpFileRealSuffix(const std::string& dlpFileName, bool& isFromUriName)
 {
     uint32_t dlpSuffixLen = DLP_FILE_SUFFIXS.size();
     if (dlpFileName.size() <= dlpSuffixLen) {
@@ -143,6 +150,7 @@ std::string DlpUtils::GetDlpFileRealSuffix(const std::string& dlpFileName)
         return DEFAULT_STRINGS;
     }
 
+    isFromUriName = true;
     return realFileName.substr(escapeLocate + 1);
 }
 
@@ -326,7 +334,7 @@ std::string DlpUtils::GetRealTypeWithRawFile(const int32_t& fd)
     return DEFAULT_STRINGS;
 }
 
-std::string DlpUtils::GetRealTypeWithFd(const int32_t& fd)
+std::string DlpUtils::GetRealTypeWithFd(const int32_t& fd, bool& isFromUriName)
 {
     std::string realType = DEFAULT_STRINGS;
     do {
@@ -342,7 +350,7 @@ std::string DlpUtils::GetRealTypeWithFd(const int32_t& fd)
             }
             realType = params.realType;
         } else {
-            realType = GetRealTypeWithRawFile(fd);
+            return GetRealTypeWithRawFile(fd);
         }
     } while (0);
 
@@ -356,7 +364,7 @@ std::string DlpUtils::GetRealTypeWithFd(const int32_t& fd)
         DLP_LOG_ERROR(LABEL, "Get file name with fd error");
         return DEFAULT_STRINGS;
     }
-    return DlpUtils::GetDlpFileRealSuffix(fileName);
+    return DlpUtils::GetDlpFileRealSuffix(fileName, isFromUriName);
 }
 
 bool DlpUtils::GetBundleInfoWithBundleName(const std::string &bundleName, int32_t flag,
