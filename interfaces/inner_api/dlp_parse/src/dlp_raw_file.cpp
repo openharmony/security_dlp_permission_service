@@ -992,18 +992,26 @@ int32_t DlpRawFile::DoDlpHIAECryptOperation(struct DlpBlob& message1, struct Dlp
     return ret;
 }
 
-int32_t DlpRawFile::DoDlpContentCryptyOperation(int32_t inFd, int32_t outFd, uint64_t inOffset,
-    uint64_t inFileLen, bool isEncrypt)
+static bool IsInitDlpContentCryptyOperation(uint32_t algType)
 {
 #ifdef SUPPORT_DLP_CREDENTIAL
-    if (head_.algType == DLP_MODE_CTR) {
+    if (algType == DLP_MODE_CTR) {
         DLP_LOG_INFO(LABEL, "support openssl");
     } else {
         if (InitDlpHIAEMgr() != DLP_OK) {
-            return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
+            return false;
         }
     }
 #endif
+    return true;
+}
+
+int32_t DlpRawFile::DoDlpContentCryptyOperation(int32_t inFd, int32_t outFd, uint64_t inOffset,
+    uint64_t inFileLen, bool isEncrypt)
+{
+    if (!IsInitDlpContentCryptyOperation(head_.algType)) {
+        return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
+    }
     struct DlpBlob message;
     struct DlpBlob outMessage;
     if (PrepareBuff(message, outMessage) != DLP_OK) {
