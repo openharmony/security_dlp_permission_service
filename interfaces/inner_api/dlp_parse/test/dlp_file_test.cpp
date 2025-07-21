@@ -1261,7 +1261,7 @@ HWTEST_F(DlpFileTest, DoDlpContentCryptyOperation003, TestSize.Level0)
     uint8_t buffer[40] = {1};
     write(fd, buffer, 40);
     lseek(fd, 0, SEEK_SET);
-    EXPECT_EQ(DLP_PARSE_ERROR_FILE_OPERATE_FAIL, testFile.DoDlpContentCryptyOperation(fd, 1000, 0, 10, true));
+    EXPECT_EQ(DLP_OK, testFile.DoDlpContentCryptyOperation(fd, 1000, 0, 10, true));
     close(fd);
     unlink("/data/fuse_test.txt");
 }

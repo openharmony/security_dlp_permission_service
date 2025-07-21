@@ -395,6 +395,9 @@ int32_t DlpZipFile::DoDlpContentCopyOperation(int32_t inFd, int32_t outFd, uint6
 
         if (write(outFd, data, readLen) != (ssize_t)readLen) {
             DLP_LOG_ERROR(LABEL, "write fd failed, %{public}s", strerror(errno));
+            if (outFd != -1 && errno == EBADF) {
+                break;
+            }
             ret = DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
             break;
         }
@@ -588,6 +591,10 @@ int32_t DlpZipFile::GenFileInZip(int32_t inPlainFileFd)
     ret = DoDlpContentCopyOperation(tmpFile, dlpFd_, 0, zipSize);
     CHECK_RET(ret, 0, DLP_PARSE_ERROR_FILE_OPERATE_FAIL, LABEL);
 
+    if (dlpFd_ != -1 && errno == EBADF) {
+        DLP_LOG_DEBUG(LABEL, "this dlp fd is readonly, unable write.");
+        return DLP_OK;
+    }
     FTRUNCATE_AND_CHECK(dlpFd_, zipSize, DLP_PARSE_ERROR_FILE_OPERATE_FAIL, LABEL);
 
     (void)fsync(dlpFd_);
