@@ -34,6 +34,10 @@ using namespace OHOS::Security::AccessToken;
 
 static const int32_t DEFAULT_USER_ID = 100;
 
+namespace {
+static const uint64_t SYSTEM_APP_MASK = 0x100000000;
+} // namespace
+
 namespace OHOS {
 static constexpr int32_t SA_ID_DLP_PERMISSION_SERVICE = 3521;
 static constexpr uint8_t STATUS_NUM = 2;
@@ -214,8 +218,9 @@ bool DlpPermissionServicesNormalFuzzTest(const uint8_t* data, size_t size)
 /* Fuzzer entry point */
 extern "C" int LLVMFuzzerInitialize(int *argc, char ***argv)
 {
-    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(DEFAULT_USER_ID, "com.ohos.dlpmanager", 0); // user_id = 100
-    SetSelfTokenID(tokenId);
+    AccessTokenIDEx tokenIdEx = AccessTokenKit::GetHapTokenIDEx(100, "com.ohos.dlpmanager", 0); // user_id = 100
+    tokenIdEx.tokenIDEx |= SYSTEM_APP_MASK;
+    SetSelfTokenID(tokenIdEx.tokenIDEx);
     return 0;
 }
 

@@ -63,6 +63,7 @@ ohos_fuzztest("CredentialCoverageFuzzTest") {
     "${dlp_root_dir}/services/dlp_permission/sa/callback/open_dlp_file_callback/open_dlp_file_callback_death_recipient.cpp",
     "${dlp_root_dir}/services/dlp_permission/sa/callback/open_dlp_file_callback/open_dlp_file_callback_manager.cpp",
     "${dlp_root_dir}/services/dlp_permission/sa/callback/open_dlp_file_callback/open_dlp_file_callback_proxy.cpp",
+    "${dlp_root_dir}/services/dlp_permission/sa/mock/access_token_adapter_mock.cpp",
     "${dlp_root_dir}/services/dlp_permission/sa/mock/dlp_credential_service.c",
     "${dlp_root_dir}/services/dlp_permission/sa/mock/mock_utils.cpp",
     "${dlp_root_dir}/services/dlp_permission/sa/sa_common/bundle_manager_adapter.cpp",
@@ -105,4 +106,4 @@ ohos_fuzztest("CredentialCoverageFuzzTest") {
 
   cflags_cc = [ "-DHILOG_ENABLE" ]
   cflags = [ "-DHILOG_ENABLE" ]
-}
+}
