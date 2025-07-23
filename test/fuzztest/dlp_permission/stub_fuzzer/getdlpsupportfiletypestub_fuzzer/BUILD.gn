@@ -24,7 +24,6 @@ ohos_fuzztest("GetDlpSupportFileTypeStubFuzzTest") {
   configs = [ "${dlp_root_dir}/test/fuzztest/dlp_permission:stub_fuzz_need_skip_timer_config" ]
   sources = [
     "${dlp_root_dir}/services/dlp_permission/sa/sa_main/dlp_permission_service.cpp",
-    "${dlp_root_dir}/services/dlp_permission/sa/mock/access_token_adapter_mock.cpp",
     "getdlpsupportfiletypestub_fuzzer.cpp",
   ]
 

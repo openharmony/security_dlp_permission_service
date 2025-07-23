@@ -80,7 +80,6 @@ static const std::string DLP_ENABEL = "const.dlp.dlp_enable";
 static const std::string TRUE_VALUE = "true";
 static const uint8_t ARRAY_CHAR_SIZE = 62;
 static const char CHAR_ARRAY[] = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-static const uint64_t SYSTEM_APP_MASK = 0x100000000;
 }  // namespace
 
 static uint8_t GetRandNum()
@@ -100,7 +99,7 @@ static void TestRecordProcessInfo()
     DLP_LOG_INFO(LABEL, "get self uid is %{public}d", g_selfUid);
 }
 
-static bool TestSetSelfTokenId(FullTokenID tokenId)
+static bool TestSetSelfTokenId(AccessTokenID tokenId)
 {
     // set tokenId can only be called by native process
     int32_t uid = getuid();
@@ -109,9 +108,8 @@ static bool TestSetSelfTokenId(FullTokenID tokenId)
         return false;
     }
 
-    tokenId |= SYSTEM_APP_MASK;
-    DLP_LOG_INFO(LABEL, "set self tokenId from %{public}s to %{public}s",
-        std::to_string(GetSelfTokenID()).c_str(), std::to_string(tokenId).c_str());
+    DLP_LOG_INFO(LABEL, "set self tokenId from %{public}u to %{public}d",
+        static_cast<unsigned int>(GetSelfTokenID()), tokenId);
     if (SetSelfTokenID(tokenId) != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "set self tokenId fail");
         if (setuid(uid) != 0) {

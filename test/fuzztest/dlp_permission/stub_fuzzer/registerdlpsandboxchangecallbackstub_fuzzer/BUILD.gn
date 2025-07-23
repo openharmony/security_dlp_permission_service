@@ -27,7 +27,6 @@ ohos_fuzztest("RegisterDlpSandboxChangeCallbackStubFuzzTest") {
   ]
   sources = [
     "${dlp_root_dir}/services/dlp_permission/sa/sa_main/dlp_permission_service.cpp",
-    "${dlp_root_dir}/services/dlp_permission/sa/mock/access_token_adapter_mock.cpp",
     "registerdlpsandboxchangecallbackstub_fuzzer.cpp",
   ]
 
