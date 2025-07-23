@@ -31,11 +31,6 @@
 using namespace OHOS::Security::DlpPermission;
 using namespace OHOS::Security::AccessToken;
 using Json = nlohmann::json;
-
-namespace {
-static const uint64_t SYSTEM_APP_MASK = 0x100000000;
-} // namespace
-
 namespace OHOS {
 const std::string ENC_DATA_LEN = "encDataLen";
 const std::string ENC_DATA = "encData";
@@ -111,9 +106,8 @@ bool ParseCertFuzzTest(const uint8_t* data, size_t size)
 /* Fuzzer entry point */
 extern "C" int LLVMFuzzerInitialize(int *argc, char ***argv)
 {
-    AccessTokenIDEx tokenIdEx = AccessTokenKit::GetHapTokenIDEx(100, "com.ohos.dlpmanager", 0); // user_id = 100
-    tokenIdEx.tokenIDEx |= SYSTEM_APP_MASK;
-    SetSelfTokenID(tokenIdEx.tokenIDEx);
+    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(100, "com.ohos.dlpmanager", 0); // user_id = 100
+    SetSelfTokenID(tokenId);
     return 0;
 }
 
