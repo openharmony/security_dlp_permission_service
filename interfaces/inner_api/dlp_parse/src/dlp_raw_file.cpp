@@ -366,6 +366,10 @@ int32_t DlpRawFile::UpdateCertAndText(const std::vector<uint8_t>& cert, struct D
     (void)lseek(dlpFd_, FILE_HEAD, SEEK_SET);
     if (write(dlpFd_, &head_, sizeof(struct DlpHeader)) != sizeof(struct DlpHeader)) {
         DLP_LOG_ERROR(LABEL, "write dlp head_ data failed, %{public}s", strerror(errno));
+        if (dlpFd_ != -1 && errno == EBADF) {
+            DLP_LOG_DEBUG(LABEL, "this dlp fd is readonly, unable write.");
+            return DLP_OK;
+        }
         return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
     }
 
@@ -988,18 +992,26 @@ int32_t DlpRawFile::DoDlpHIAECryptOperation(struct DlpBlob& message1, struct Dlp
     return ret;
 }
 
-int32_t DlpRawFile::DoDlpContentCryptyOperation(int32_t inFd, int32_t outFd, uint64_t inOffset,
-    uint64_t inFileLen, bool isEncrypt)
+static bool IsInitDlpContentCryptyOperation(uint32_t algType)
 {
 #ifdef SUPPORT_DLP_CREDENTIAL
-    if (head_.algType == DLP_MODE_CTR) {
+    if (algType == DLP_MODE_CTR) {
         DLP_LOG_INFO(LABEL, "support openssl");
     } else {
         if (InitDlpHIAEMgr() != DLP_OK) {
-            return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
+            return false;
         }
     }
 #endif
+    return true;
+}
+
+int32_t DlpRawFile::DoDlpContentCryptyOperation(int32_t inFd, int32_t outFd, uint64_t inOffset,
+    uint64_t inFileLen, bool isEncrypt)
+{
+    if (!IsInitDlpContentCryptyOperation(head_.algType)) {
+        return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
+    }
     struct DlpBlob message;
     struct DlpBlob outMessage;
     if (PrepareBuff(message, outMessage) != DLP_OK) {
@@ -1033,6 +1045,10 @@ int32_t DlpRawFile::DoDlpContentCryptyOperation(int32_t inFd, int32_t outFd, uin
 
         if (write(outFd, outMessage.data, readLen) != (ssize_t)readLen) {
             DLP_LOG_ERROR(LABEL, "write fd failed, %{public}s", strerror(errno));
+            if (dlpFd_ != -1 && errno == EBADF) {
+                DLP_LOG_DEBUG(LABEL, "this dlp fd is readonly, unable write.");
+                break;
+            }
             ret = DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
             break;
         }
