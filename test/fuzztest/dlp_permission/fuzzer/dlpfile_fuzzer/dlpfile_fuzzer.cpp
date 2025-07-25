@@ -190,7 +190,7 @@ static void GenerateRandPropertyRand(struct DlpProperty& encProp, const uint8_t*
     }
 }
 
-static void UpdateCertAndTextFuzzTest(DlpBlob offlineCert, const uint8_t* data, size_t size)
+static void UpdateCertAndText(DlpBlob offlineCert)
 {
     std::vector<uint8_t> cert;
     g_Dlpfile->UpdateCertAndText(cert, offlineCert);
@@ -258,7 +258,7 @@ static void FuzzTest(const uint8_t* data, size_t size, bool flag)
     g_Dlpfile->GetOfflineCertSize();
     g_Dlpfile->DlpFileRead(0, writeBuffer, ARRRY_SIZE, hasRead, 0);
     g_Dlpfile->Truncate(ARRRY_SIZE);
-    UpdateCertAndTextFuzzTest(offlineCert, data, size);
+    UpdateCertAndText(offlineCert);
     close(plainFileFd);
     close(dlpFileFd);
     close(recoveryFileFd);
