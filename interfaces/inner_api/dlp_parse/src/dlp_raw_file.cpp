@@ -687,7 +687,7 @@ uint64_t DlpRawFile::GetFsContentSize() const
     if (fileStat.st_size < static_cast<off_t>(head_.txtOffset) ||
         fileStat.st_size - static_cast<off_t>(head_.txtOffset) <= head_.hmacSize ||
         fileStat.st_size - static_cast<off_t>(head_.txtOffset) - head_.hmacSize < head_.certSize ||
-        fileStat.st_size >= static_cast<off_t>(INVALID_FILE_SIZE)) {
+        fileStat.st_size > static_cast<off_t>(DLP_MAX_RAW_CONTENT_SIZE)) {
         DLP_LOG_ERROR(LABEL, "size error %{public}s %{public}s", std::to_string(head_.txtOffset).c_str(),
             std::to_string(static_cast<uint64_t>(fileStat.st_size)).c_str());
         return INVALID_FILE_SIZE;

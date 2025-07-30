@@ -49,17 +49,16 @@ int32_t AddZeroBuffToZip(zipFile& zf, const char *nameInZip, uint32_t size)
 {
     if (!memcmp(DLP_CERT.c_str(), nameInZip, DLP_CERT.size()) && size < MAX_CERT_SIZE) {
         uint8_t* buffer = new (std::nothrow) uint8_t[MAX_CERT_SIZE - size];
-        (void)memset_s(buffer, MAX_CERT_SIZE - size, 0, MAX_CERT_SIZE - size);
         if (buffer == nullptr) {
             DLP_LOG_ERROR(LABEL, "buffer is nullptr");
             return DLP_ZIP_FAIL;
-        } else {
-            int32_t err = zipWriteInFileInZip(zf, buffer, (unsigned)(MAX_CERT_SIZE - size));
-            delete[] buffer;
-            if (err != ZIP_OK) {
-                DLP_LOG_ERROR(LABEL, "zipWriteInFileInZip fail err %{public}d, %{public}s", err, nameInZip);
-                return DLP_ZIP_FAIL;
-            }
+        }
+        (void)memset_s(buffer, MAX_CERT_SIZE - size, 0, MAX_CERT_SIZE - size);
+        int32_t err = zipWriteInFileInZip(zf, buffer, (unsigned)(MAX_CERT_SIZE - size));
+        delete[] buffer;
+        if (err != ZIP_OK) {
+            DLP_LOG_ERROR(LABEL, "zipWriteInFileInZip fail err %{public}d, %{public}s", err, nameInZip);
+            return DLP_ZIP_FAIL;
         }
     }
     return ZIP_OK;
