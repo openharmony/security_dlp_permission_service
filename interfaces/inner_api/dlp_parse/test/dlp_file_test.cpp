@@ -40,7 +40,6 @@ using namespace std;
 
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "DlpFileTest"};
-static constexpr int32_t READ_SIZE = 100;
 static constexpr int32_t SECOND = 2;
 static const std::string DLP_TEST_DIR = "/data/dlpTest/";
 const std::string DLP_GENERAL_INFO = "dlp_general_info";
@@ -2217,7 +2216,6 @@ HWTEST_F(DlpFileTest, ParseCert001, TestSize.Level0)
     EXPECT_NE(rmdir(dst.c_str()), -1);
 
     int fInfo = open(dst.c_str(), O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
-    testFile2.cert_.size = READ_SIZE;
     EXPECT_EQ(false, testFile2.ParseCert());
 
     (void)chdir(cwd);

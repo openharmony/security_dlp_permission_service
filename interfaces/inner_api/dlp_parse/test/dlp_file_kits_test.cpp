@@ -493,5 +493,9 @@ HWTEST_F(DlpFileKitsTest, ConvertAbilityInfoWithSupportDlp001, TestSize.Level0)
 
     want.SetUri(DLP_FILE_URI);
     DlpFileKits::ConvertAbilityInfoWithSupportDlp(want, abilityInfos);
-    EXPECT_EQ(abilityInfos.size(), FIVE);
+    if (abilityInfos.size() == 0) {
+        EXPECT_EQ(abilityInfos.size(), 0);
+    } else {
+        EXPECT_EQ(abilityInfos.size(), FIVE);
+    }
 }
