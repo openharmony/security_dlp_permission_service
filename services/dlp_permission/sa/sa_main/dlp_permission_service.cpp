@@ -16,6 +16,7 @@
 #include "dlp_permission_service.h"
 #include <chrono>
 #include "accesstoken_kit.h"
+#include "access_token_adapter.h"
 #include "account_adapt.h"
 #include "app_mgr_client.h"
 #include "bundle_manager_adapter.h"
@@ -178,6 +179,9 @@ void DlpPermissionService::UnregisterAppStateObserver()
 int32_t DlpPermissionService::GenerateDlpCertificate(
     const sptr<DlpPolicyParcel>& policyParcel, const sptr<IDlpPermissionCallback>& callback)
 {
+    if (!AccessTokenAdapter::IsSystemApp()) {
+        return DLP_SERVICE_ERROR_NOT_SYSTEM_APP;
+    }
     if (!PermissionManagerAdapter::CheckPermission(PERMISSION_ACCESS_DLP_FILE) &&
         !PermissionManagerAdapter::CheckPermission(PERMISSION_ENTERPRISE_ACCESS_DLP_FILE)) {
         return DLP_SERVICE_ERROR_PERMISSION_DENY;
@@ -228,6 +232,9 @@ static bool GetApplicationInfo(std::string appId, AppExecFwk::ApplicationInfo& a
 int32_t DlpPermissionService::ParseDlpCertificate(const sptr<CertParcel>& certParcel,
     const sptr<IDlpPermissionCallback>& callback, const std::string& appId, bool offlineAccess)
 {
+    if (!AccessTokenAdapter::IsSystemApp()) {
+        return DLP_SERVICE_ERROR_NOT_SYSTEM_APP;
+    }
     if (!PermissionManagerAdapter::CheckPermission(PERMISSION_ACCESS_DLP_FILE) &&
         !PermissionManagerAdapter::CheckPermission(PERMISSION_ENTERPRISE_ACCESS_DLP_FILE)) {
         return DLP_SERVICE_ERROR_PERMISSION_DENY;
@@ -313,9 +320,24 @@ static int32_t CheckWithInstallDlpSandbox(const std::string& bundleName, DLPFile
     return DLP_OK;
 }
 
+static void FillDlpSandboxInfo(DlpSandboxInfo& dlpSandboxInfo, const std::string& bundleName,
+    DLPFileAccess dlpFileAccess, int32_t userId, const std::string& uri)
+{
+    dlpSandboxInfo.bundleName = bundleName;
+    dlpSandboxInfo.dlpFileAccess = dlpFileAccess;
+    dlpSandboxInfo.userId = userId;
+    dlpSandboxInfo.pid = IPCSkeleton::GetCallingRealPid();
+    dlpSandboxInfo.uri = uri;
+    dlpSandboxInfo.timeStamp = static_cast<uint64_t>(
+        std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count());
+}
+
 int32_t DlpPermissionService::InstallDlpSandbox(const std::string& bundleName, DLPFileAccess dlpFileAccess,
     int32_t userId, SandboxInfo& sandboxInfo, const std::string& uri)
 {
+    if (!AccessTokenAdapter::IsSystemApp()) {
+        return DLP_SERVICE_ERROR_NOT_SYSTEM_APP;
+    }
     int32_t res = CheckWithInstallDlpSandbox(bundleName, dlpFileAccess);
     if (res != DLP_OK) {
         return res;
@@ -326,7 +348,6 @@ int32_t DlpPermissionService::InstallDlpSandbox(const std::string& bundleName, D
     bool isReadOnly = dlpFileAccess == DLPFileAccess::READ_ONLY;
     bool isNeedInstall = true;
     DlpSandboxInfo dlpSandboxInfo;
-    dlpSandboxInfo.bundleName = bundleName;
     res = GetAppIndexFromRetentionInfo(bundleName, isReadOnly, uri, dlpSandboxInfo, isNeedInstall);
     if (res != DLP_OK) {
         return res;
@@ -347,19 +368,12 @@ int32_t DlpPermissionService::InstallDlpSandbox(const std::string& bundleName, D
             return DLP_SERVICE_ERROR_INSTALL_SANDBOX_FAIL;
         }
     }
-
-    dlpSandboxInfo.dlpFileAccess = dlpFileAccess;
-    dlpSandboxInfo.userId = userId;
-    dlpSandboxInfo.pid = IPCSkeleton::GetCallingRealPid();
-    dlpSandboxInfo.uri = uri;
-    dlpSandboxInfo.timeStamp = static_cast<uint64_t>(
-        std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count());
+    FillDlpSandboxInfo(dlpSandboxInfo, bundleName, dlpFileAccess, userId, uri);
     if (!InsertDlpSandboxInfo(dlpSandboxInfo, !isNeedInstall)) {
         return DLP_SERVICE_ERROR_INSTALL_SANDBOX_FAIL;
     }
     sandboxInfo.appIndex = dlpSandboxInfo.appIndex;
     sandboxInfo.tokenId = dlpSandboxInfo.tokenId;
-
     std::unique_lock<std::shared_mutex> lock(dlpSandboxDataMutex_);
     auto it = dlpSandboxData_.find(dlpSandboxInfo.uid);
     if (it == dlpSandboxData_.end()) {
@@ -401,6 +415,9 @@ int32_t DlpPermissionService::UninstallDlpSandboxApp(const std::string& bundleNa
 
 int32_t DlpPermissionService::UninstallDlpSandbox(const std::string& bundleName, int32_t appIndex, int32_t userId)
 {
+    if (!AccessTokenAdapter::IsSystemApp()) {
+        return DLP_SERVICE_ERROR_NOT_SYSTEM_APP;
+    }
     if (!PermissionManagerAdapter::CheckPermission(PERMISSION_ACCESS_DLP_FILE)) {
         return DLP_SERVICE_ERROR_PERMISSION_DENY;
     }
