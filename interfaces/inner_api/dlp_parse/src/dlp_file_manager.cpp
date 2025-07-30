@@ -23,6 +23,9 @@
 
 #include "dlp_crypt.h"
 #include "dlp_file.h"
+#include "dlp_raw_file.h"
+#include "dlp_zip_file.h"
+#include "dlp_zip.h"
 #include "dlp_permission.h"
 #include "dlp_permission_kit.h"
 #include "dlp_permission_log.h"
@@ -220,8 +223,7 @@ int32_t DlpFileManager::PrepareDlpEncryptParms(PermissionPolicy& policy, struct 
     return DLP_OK;
 }
 
-int32_t DlpFileManager::UpdateDlpFile(bool isNeedAdapter, uint32_t oldCertSize, const std::string& workDir,
-    const std::vector<uint8_t>& cert, std::shared_ptr<DlpFile>& filePtr)
+int32_t DlpFileManager::UpdateDlpFile(const std::vector<uint8_t>& cert, std::shared_ptr<DlpFile>& filePtr)
 {
     std::lock_guard<std::mutex> lock(g_offlineLock_);
     int32_t result = filePtr->CheckDlpFile();
@@ -237,61 +239,10 @@ int32_t DlpFileManager::UpdateDlpFile(bool isNeedAdapter, uint32_t oldCertSize, 
 #else
     return DLP_OK;
 #endif
-    int32_t res = filePtr->UpdateCertAndText(cert, workDir, certBlob);
+    int32_t res = filePtr->UpdateCertAndText(cert, certBlob);
     (void)memset_s(certBlob.data, certBlob.size, 0, certBlob.size);
     delete[] certBlob.data;
     return res;
-}
-
-int32_t DlpFileManager::ParseDlpFileFormat(std::shared_ptr<DlpFile>& filePtr, const std::string& workDir,
-    const std::string& appId)
-{
-    int32_t result = filePtr->ParseDlpHeader();
-    if (result != DLP_OK) {
-        return result;
-    }
-    struct DlpBlob cert;
-    filePtr->GetEncryptCert(cert);
-    sptr<CertParcel> certParcel = new (std::nothrow) CertParcel();
-    if (certParcel == nullptr) {
-        DLP_LOG_ERROR(LABEL, "Alloc certParcel parcel fail");
-        return DLP_PARSE_ERROR_MEMORY_OPERATE_FAIL;
-    }
-    certParcel->cert = std::vector<uint8_t>(cert.data, cert.data + cert.size);
-    uint32_t oldCertSize = cert.size;
-    struct DlpBlob offlineCert = { 0 };
-    if (filePtr->GetOfflineCertSize() != 0) {
-        filePtr->GetOfflineCert(offlineCert);
-        certParcel->cert = std::vector<uint8_t>(offlineCert.data, offlineCert.data + offlineCert.size);
-    }
-    PermissionPolicy policy;
-    filePtr->GetContactAccount(certParcel->contactAccount);
-    certParcel->isNeedAdapter = filePtr->NeedAdapter();
-    certParcel->needCheckCustomProperty = true;
-    StartTrace(HITRACE_TAG_ACCESS_CONTROL, "DlpParseCertificate");
-    result = DlpPermissionKit::ParseDlpCertificate(certParcel, policy, appId, filePtr->GetOfflineAccess());
-    FinishTrace(HITRACE_TAG_ACCESS_CONTROL);
-    if (result != DLP_OK) {
-        DLP_LOG_ERROR(LABEL, "Parse cert fail, errno=%{public}d", result);
-        return result;
-    }
-    result = filePtr->SetPolicy(policy);
-    if (result != DLP_OK) {
-        return result;
-    }
-    struct DlpBlob key = {.size = policy.GetAeskeyLen(), .data = policy.GetAeskey()};
-    struct DlpCipherParam param = {.iv = {.size = policy.GetIvLen(), .data = policy.GetIv()}};
-    struct DlpUsageSpec usage = {.mode = DLP_MODE_CTR, .algParam = &param};
-    struct DlpBlob hmacKey = {.size = policy.GetHmacKeyLen(), .data = policy.GetHmacKey()};
-    result = filePtr->SetCipher(key, usage, hmacKey);
-    if (result != DLP_OK) {
-        return result;
-    }
-    result = filePtr->HmacCheck();
-    if (result != DLP_OK) {
-        return result;
-    }
-    return UpdateDlpFile(filePtr->NeedAdapter(), oldCertSize, workDir, certParcel->offlineCert, filePtr);
 }
 
 void DlpFileManager::FreeChiperBlob(struct DlpBlob& key, struct DlpBlob& certData,
@@ -443,20 +394,53 @@ static std::string GetFileSuffix(const std::string& fileName)
         return DEFAULT_STRING;
     }
 
-    return fileName.substr(escapeLocate + 1);
+    return DlpUtils::ToLowerString(fileName.substr(escapeLocate + 1));
 }
 
-int32_t DlpFileManager::GenDlpFile(std::shared_ptr<DlpFile>& filePtr, const DlpProperty& property, int32_t plainFileFd)
+int32_t DlpFileManager::GenRawDlpFile(DlpFileMes& dlpFileMes, const DlpProperty& property,
+                                      std::shared_ptr<DlpFile>& filePtr)
 {
+    filePtr = std::make_shared<DlpRawFile>(dlpFileMes.dlpFileFd, dlpFileMes.realFileType);
     int32_t result = SetDlpFileParams(filePtr, property);
     if (result != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "Generate dlp file fail, set dlp obj params error, errno=%{public}d", result);
         return result;
     }
-    
-    result = filePtr->GenFile(plainFileFd);
+
+    result = filePtr->GenFile(dlpFileMes.plainFileFd);
     if (result != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "Generate dlp file fail, errno=%{public}d", result);
+        return result;
+    }
+    return AddDlpFileNode(filePtr);
+}
+
+int32_t DlpFileManager::GenZipDlpFile(DlpFileMes& dlpFileMes, const DlpProperty& property,
+                                      std::shared_ptr<DlpFile>& filePtr, const std::string& workDir)
+{
+    std::string cache = workDir + PATH_CACHE;
+    PrepareDirs(cache);
+
+    std::string randomWorkDir;
+    int32_t result = GenerateRandomWorkDir(randomWorkDir);
+    if (result != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "GenerateRandomWorkDir fail, errno=%{public}d", result);
+        return result;
+    }
+    std::string realWorkDir = cache + '/' + randomWorkDir;
+    PrepareWorkDir(realWorkDir);
+    int64_t timeStamp = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now()
+        .time_since_epoch()).count();
+    
+    filePtr = std::make_shared<DlpZipFile>(dlpFileMes.dlpFileFd, realWorkDir, timeStamp, dlpFileMes.realFileType);
+    result = SetDlpFileParams(filePtr, property);
+    if (result != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "SetDlpFileParams fail, errno=%{public}d", result);
+        return result;
+    }
+    result = filePtr->GenFile(dlpFileMes.plainFileFd);
+    if (result != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "GenFile fail, errno=%{public}d", result);
         return result;
     }
     return AddDlpFileNode(filePtr);
@@ -471,65 +455,51 @@ int32_t DlpFileManager::GenerateDlpFile(
         return DLP_PARSE_ERROR_FD_ERROR;
     }
 
+    off_t fileLen = lseek(plainFileFd, 0, SEEK_END);
+    if (fileLen == static_cast<off_t>(-1) || fileLen > static_cast<off_t>(DLP_MAX_CONTENT_SIZE)) {
+        DLP_LOG_ERROR(LABEL, "fileLen invalid");
+        return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
+    }
+    if (lseek(plainFileFd, 0, SEEK_SET) == static_cast<off_t>(-1)) {
+        DLP_LOG_ERROR(LABEL, "lseek invalid, %{public}s", strerror(errno));
+        return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
+    }
+
     if (GetDlpFile(dlpFileFd) != nullptr) {
         DLP_LOG_ERROR(LABEL, "Generate dlp file fail, dlp file has generated, if you want to rebuild, close it first");
         return DLP_PARSE_ERROR_FILE_ALREADY_OPENED;
     }
 
-    std::string cache = workDir + PATH_CACHE;
-    PrepareDirs(cache);
-
-    std::string randomWorkDir;
-    int32_t result = GenerateRandomWorkDir(randomWorkDir);
-    if (result != DLP_OK) {
-        DLP_LOG_ERROR(LABEL, "Generate dir fail, errno=%{public}d", result);
-        return result;
-    }
-
-    std::string realWorkDir = cache + '/' + randomWorkDir;
-    PrepareWorkDir(realWorkDir);
-
-    int64_t timeStamp = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now()
-        .time_since_epoch()).count();
     std::string fileName;
-    result = DlpUtils::GetFileNameWithFd(plainFileFd, fileName);
+    int32_t result = DlpUtils::GetFileNameWithDlpFd(dlpFileFd, fileName);
     if (result != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "GetFileNameWithFd fail, errno=%{public}d", result);
         return result;
     }
+    DLP_LOG_DEBUG(LABEL, "the filename is %{public}s", fileName.c_str());
+
     std::string realFileType = GetFileSuffix(fileName);
     if (realFileType == DEFAULT_STRING) {
         DLP_LOG_ERROR(LABEL, "GetFileSuffix fail");
         return DLP_PARSE_ERROR_VALUE_INVALID;
     }
-    std::string fileType = DlpUtils::GetFileTypeBySuffix(realFileType);
+    std::string fileType = DlpUtils::GetFileTypeBySuffix(realFileType, true);
     if (fileType == DEFAULT_STRING) {
         DLP_LOG_ERROR(LABEL, "GetFileTypeBySuffix fail");
         return DLP_PARSE_ERROR_VALUE_INVALID;
     }
-    bool isZip = true;
+    DlpFileMes dlpFileMes = {plainFileFd, dlpFileFd, realFileType};
     if ((fileType == SUPPORT_PHOTO_DLP || fileType == SUPPORT_VIDEO_DLP) &&
         property.ownerAccountType == CLOUD_ACCOUNT) {
-        isZip = false;
+        return GenRawDlpFile(dlpFileMes, property, filePtr);
     }
-    filePtr = std::make_shared<DlpFile>(dlpFileFd, realWorkDir, timeStamp, isZip, realFileType);
-    return GenDlpFile(filePtr, property, plainFileFd);
-}
-
-static bool GetBundleInfoWithBundleName(const std::string &bundleName, int32_t flag,
-    AppExecFwk::BundleInfo &bundleInfo, int32_t userId)
-{
-    auto bundleMgrProxy = DlpUtils::GetBundleMgrProxy();
-    if (bundleMgrProxy == nullptr) {
-        return false;
-    }
-    return bundleMgrProxy->GetBundleInfo(bundleName, flag, bundleInfo, userId);
+    return GenZipDlpFile(dlpFileMes, property, filePtr, workDir);
 }
 
 static std::string GetAppIdWithBundleName(const std::string &bundleName, const int32_t &userId)
 {
     AppExecFwk::BundleInfo bundleInfo;
-    bool result = GetBundleInfoWithBundleName(bundleName,
+    bool result = DlpUtils::GetBundleInfoWithBundleName(bundleName,
         static_cast<int32_t>(AppExecFwk::GetBundleInfoFlag::GET_BUNDLE_INFO_WITH_SIGNATURE_INFO), bundleInfo, userId);
     if (!result) {
         DLP_LOG_ERROR(LABEL, "get appId error");
@@ -538,18 +508,18 @@ static std::string GetAppIdWithBundleName(const std::string &bundleName, const i
     return bundleInfo.appId;
 }
 
-static int32_t SupportDlpWithAppId(const std::string &appId, const int32_t &dlpFileFd, const std::string &realSuffix)
+static int32_t SupportDlpWithAppId(const std::string &appId, const int32_t &dlpFileFd, const std::string &realSuffix,
+    const bool isFromUriName)
 {
-    std::string fileType = DlpUtils::GetFileTypeBySuffix(realSuffix);
+    std::string fileType = DlpUtils::GetFileTypeBySuffix(realSuffix, isFromUriName);
     if (fileType == DEFAULT_STRING) {
         DLP_LOG_ERROR(LABEL, "get fileType error.");
-        return DLP_PARSE_ERROR_VALUE_INVALID;
+        return DLP_PARSE_ERROR_NOT_SUPPORT_FILE_TYPE;
     }
 
     int32_t userId = 0;
-    int32_t ret = AccountSA::OsAccountManager::GetForegroundOsAccountLocalId(userId);
-    if (ret != ERR_OK) {
-        DLP_LOG_ERROR(LABEL, "Get os account localId error, %{public}d", ret);
+    if (!DlpUtils::GetUserIdByForegroundAccount(userId)) {
+        DLP_LOG_ERROR(LABEL, "Get os account localId error");
         return DLP_PARSE_ERROR_GET_ACCOUNT_FAIL;
     }
 
@@ -567,16 +537,135 @@ static int32_t SupportDlpWithAppId(const std::string &appId, const int32_t &dlpF
     return DLP_CREDENTIAL_ERROR_APPID_NOT_AUTHORIZED;
 }
 
-int32_t DlpFileManager::ParseAndAddNode(std::shared_ptr<DlpFile>& filePtr, const std::string& workDir,
-                                        const std::string& appId)
+int32_t DlpFileManager::DlpRawHmacCheckAndUpdata(std::shared_ptr<DlpFile>& filePtr,
+                                                 const std::vector<uint8_t>& offlineCert)
 {
-    int32_t result = ParseDlpFileFormat(filePtr, workDir, appId);
+    int32_t result = filePtr->HmacCheck();
     if (result != DLP_OK) {
-        DLP_LOG_ERROR(LABEL, "Open dlp file fail, parse dlp file error, errno=%{public}d", result);
         return result;
     }
-
+    result = UpdateDlpFile(offlineCert, filePtr);
+    if (result != DLP_OK) {
+        return result;
+    }
     return AddDlpFileNode(filePtr);
+}
+
+int32_t DlpFileManager::OpenRawDlpFile(int32_t dlpFileFd, std::shared_ptr<DlpFile>& filePtr, const std::string& appId,
+                                       const std::string& realType)
+{
+    filePtr = std::make_shared<DlpRawFile>(dlpFileFd, realType);
+    int32_t result = filePtr->ProcessDlpFile();
+    if (result != DLP_OK) {
+        return result;
+    }
+    struct DlpBlob cert;
+    filePtr->GetEncryptCert(cert);
+    sptr<CertParcel> certParcel = new (std::nothrow) CertParcel();
+    if (certParcel == nullptr) {
+        DLP_LOG_ERROR(LABEL, "Alloc certParcel parcel fail");
+        return DLP_PARSE_ERROR_MEMORY_OPERATE_FAIL;
+    }
+    certParcel->cert = std::vector<uint8_t>(cert.data, cert.data + cert.size);
+    struct DlpBlob offlineCert = { 0 };
+    if (filePtr->GetOfflineCertSize() != 0) {
+        filePtr->GetOfflineCert(offlineCert);
+        certParcel->cert = std::vector<uint8_t>(offlineCert.data, offlineCert.data + offlineCert.size);
+    }
+    PermissionPolicy policy;
+    filePtr->GetContactAccount(certParcel->contactAccount);
+    certParcel->isNeedAdapter = filePtr->NeedAdapter();
+    certParcel->needCheckCustomProperty = true;
+    StartTrace(HITRACE_TAG_ACCESS_CONTROL, "DlpParseCertificate");
+    result = DlpPermissionKit::ParseDlpCertificate(certParcel, policy, appId, filePtr->GetOfflineAccess());
+    FinishTrace(HITRACE_TAG_ACCESS_CONTROL);
+    if (result != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "Parse cert fail, errno=%{public}d", result);
+        return result;
+    }
+    result = filePtr->SetPolicy(policy);
+    if (result != DLP_OK) {
+        return result;
+    }
+    struct DlpBlob key = {.size = policy.GetAeskeyLen(), .data = policy.GetAeskey()};
+    struct DlpCipherParam param = {.iv = {.size = policy.GetIvLen(), .data = policy.GetIv()}};
+    struct DlpUsageSpec usage = {.mode = DLP_MODE_CTR, .algParam = &param};
+    struct DlpBlob hmacKey = {.size = policy.GetHmacKeyLen(), .data = policy.GetHmacKey()};
+    result = filePtr->SetCipher(key, usage, hmacKey);
+    if (result != DLP_OK) {
+        return result;
+    }
+    return DlpRawHmacCheckAndUpdata(filePtr, certParcel->offlineCert);
+}
+
+int32_t DlpFileManager::ParseZipDlpFileAndAddNode(std::shared_ptr<DlpFile>& filePtr, const std::string& appId)
+{
+    int32_t result = filePtr->ProcessDlpFile();
+    if (result != DLP_OK) {
+        return result;
+    }
+    struct DlpBlob cert;
+    filePtr->GetEncryptCert(cert);
+    sptr<CertParcel> certParcel = new (std::nothrow) CertParcel();
+    if (certParcel == nullptr) {
+        DLP_LOG_ERROR(LABEL, "Alloc certParcel parcel fail");
+        return DLP_PARSE_ERROR_MEMORY_OPERATE_FAIL;
+    }
+    certParcel->cert = std::vector<uint8_t>(cert.data, cert.data + cert.size);
+    PermissionPolicy policy;
+    filePtr->GetContactAccount(certParcel->contactAccount);
+    certParcel->isNeedAdapter = filePtr->NeedAdapter();
+    certParcel->needCheckCustomProperty = true;
+    StartTrace(HITRACE_TAG_ACCESS_CONTROL, "DlpParseCertificate");
+    result = DlpPermissionKit::ParseDlpCertificate(certParcel, policy, appId, filePtr->GetOfflineAccess());
+    FinishTrace(HITRACE_TAG_ACCESS_CONTROL);
+    if (result != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "Parse cert fail, errno=%{public}d", result);
+        return result;
+    }
+    result = filePtr->SetPolicy(policy);
+    if (result != DLP_OK) {
+        return result;
+    }
+    struct DlpBlob key = {.size = policy.GetAeskeyLen(), .data = policy.GetAeskey()};
+    struct DlpCipherParam param = {.iv = {.size = policy.GetIvLen(), .data = policy.GetIv()}};
+    struct DlpUsageSpec usage = {.mode = DLP_MODE_CTR, .algParam = &param};
+    struct DlpBlob hmacKey = {.size = policy.GetHmacKeyLen(), .data = policy.GetHmacKey()};
+    result = filePtr->SetCipher(key, usage, hmacKey);
+    if (result != DLP_OK) {
+        return result;
+    }
+    result = filePtr->HmacCheck();
+    if (result != DLP_OK) {
+        return result;
+    }
+    result = UpdateDlpFile(certParcel->offlineCert, filePtr);
+    if (result != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "UpdateDlpFile fail");
+        return result;
+    }
+    return AddDlpFileNode(filePtr);
+}
+
+int32_t DlpFileManager::OpenZipDlpFile(int32_t dlpFileFd, std::shared_ptr<DlpFile>& filePtr,
+                                       const std::string& workDir, const std::string& appId,
+                                       const std::string& realType)
+{
+    std::string cache = workDir + PATH_CACHE;
+    PrepareDirs(cache);
+    std::string randomWorkDir;
+    int32_t result = GenerateRandomWorkDir(randomWorkDir);
+    if (result != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "Generate dir fail, errno=%{public}d", result);
+        return result;
+    }
+    std::string realWorkDir = cache + '/' + randomWorkDir;
+    PrepareWorkDir(realWorkDir);
+    int64_t timeStamp = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now()
+        .time_since_epoch()).count();
+
+    filePtr = std::make_shared<DlpZipFile>(dlpFileFd, realWorkDir, timeStamp, realType);
+    return ParseZipDlpFileAndAddNode(filePtr, appId);
 }
 
 int32_t DlpFileManager::OpenDlpFile(int32_t dlpFileFd, std::shared_ptr<DlpFile>& filePtr, const std::string& workDir,
@@ -586,48 +675,44 @@ int32_t DlpFileManager::OpenDlpFile(int32_t dlpFileFd, std::shared_ptr<DlpFile>&
         DLP_LOG_ERROR(LABEL, "Open dlp file fail, fd %{public}d is invalid", dlpFileFd);
         return DLP_PARSE_ERROR_FD_ERROR;
     }
-    std::string realSuffix = DlpUtils::GetRealTypeWithFd(dlpFileFd);
+    bool isFromUriName = false;
+    std::string realSuffix = DlpUtils::GetRealTypeWithFd(dlpFileFd, isFromUriName);
     if (realSuffix == DEFAULT_STRING) {
         DLP_LOG_ERROR(LABEL, "GetRealTypeWithFd fail");
-        return DLP_PARSE_ERROR_VALUE_INVALID;
+        return DLP_PARSE_ERROR_NOT_SUPPORT_FILE_TYPE;
     }
-    DLP_LOG_ERROR(LABEL, "realSuffix is %{public}s", realSuffix.c_str());
-    std::string lower = DlpUtils::ToLowerString(realSuffix);
-    std::string realType = "";
-    for (size_t len = MAX_REALY_TYPE_LENGTH; len >= MIN_REALY_TYPE_LENGTH; len--) {
-        if (len > lower.size()) {
-            continue;
-        }
-        std::string newStr = lower.substr(0, len);
-        auto iter = FILE_TYPE_MAP.find(newStr);
-        if (iter != FILE_TYPE_MAP.end()) {
-            realType = newStr;
-            break;
-        }
-    }
-    int32_t ret = SupportDlpWithAppId(appId, dlpFileFd, realSuffix);
+    DLP_LOG_DEBUG(LABEL, "realSuffix is %{public}s", realSuffix.c_str());
+    int32_t ret = SupportDlpWithAppId(appId, dlpFileFd, realSuffix, isFromUriName);
     if (ret != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "SupportDlpWithAppId fail");
         return ret;
     }
     filePtr = GetDlpFile(dlpFileFd);
     if (filePtr != nullptr) {
-        DLP_LOG_INFO(LABEL, "Open dlp file fail, fd %{public}d has opened", dlpFileFd);
+        DLP_LOG_ERROR(LABEL, "Open dlp file fail, fd %{public}d has opened", dlpFileFd);
         return DLP_OK;
     }
-    std::string cache = workDir + PATH_CACHE;
-    PrepareDirs(cache);
-    std::string randomWorkDir;
-    ret = GenerateRandomWorkDir(randomWorkDir);
-    if (ret != DLP_OK) {
-        DLP_LOG_ERROR(LABEL, "Generate dir fail, errno=%{public}d", ret);
-        return ret;
+    std::string lower = DlpUtils::ToLowerString(realSuffix);
+    std::string realType = "";
+    if (isFromUriName) {
+        for (size_t len = MAX_REALY_TYPE_LENGTH; len >= MIN_REALY_TYPE_LENGTH; len--) {
+            if (len > lower.size()) {
+                continue;
+            }
+            std::string newStr = lower.substr(0, len);
+            auto iter = FILE_TYPE_MAP.find(newStr);
+            if (iter != FILE_TYPE_MAP.end()) {
+                realType = newStr;
+                DLP_LOG_INFO(LABEL, "Assign realType newStr %{public}s", newStr.c_str());
+                break;
+            }
+        }
     }
-    std::string realWorkDir = cache + '/' + randomWorkDir;
-    PrepareWorkDir(realWorkDir);
-    int64_t timeStamp = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now()
-        .time_since_epoch()).count();
-    filePtr = std::make_shared<DlpFile>(dlpFileFd, realWorkDir, timeStamp, false, realType);
-    return ParseAndAddNode(filePtr, workDir, appId);
+    if (IsZipFile(dlpFileFd)) {
+        return OpenZipDlpFile(dlpFileFd, filePtr, workDir, appId, realType);
+    } else {
+        return OpenRawDlpFile(dlpFileFd, filePtr, appId, realType);
+    }
 }
 
 int32_t DlpFileManager::CloseDlpFile(const std::shared_ptr<DlpFile>& dlpFile)

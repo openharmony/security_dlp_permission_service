@@ -39,8 +39,30 @@ const int32_t DLP_ZIP_FAIL = -1;
 const int32_t DLP_ZIP_OK = 0;
 const int32_t FILE_COUNT = 3;
 const int32_t MAX_PATH = 30;
+const int32_t MAX_CERT_SIZE = 30 * 1024;
+const std::string DLP_CERT = "dlp_cert";
 const std::string DLP_GENERAL_INFO = "dlp_general_info";
 const std::set<std::string> FILE_NAME_SET = {"dlp_cert", "dlp_general_info", "encrypted_data"};
+}
+
+int32_t AddZeroBuffToZip(zipFile& zf, const char *nameInZip, uint32_t size)
+{
+    if (!memcmp(DLP_CERT.c_str(), nameInZip, DLP_CERT.size()) && size < MAX_CERT_SIZE) {
+        uint8_t* buffer = new (std::nothrow) uint8_t[MAX_CERT_SIZE - size];
+        (void)memset_s(buffer, MAX_CERT_SIZE - size, 0, MAX_CERT_SIZE - size);
+        if (buffer == nullptr) {
+            DLP_LOG_ERROR(LABEL, "buffer is nullptr");
+            return DLP_ZIP_FAIL;
+        } else {
+            int32_t err = zipWriteInFileInZip(zf, buffer, (unsigned)(MAX_CERT_SIZE - size));
+            delete[] buffer;
+            if (err != ZIP_OK) {
+                DLP_LOG_ERROR(LABEL, "zipWriteInFileInZip fail err %{public}d, %{public}s", err, nameInZip);
+                return DLP_ZIP_FAIL;
+            }
+        }
+    }
+    return ZIP_OK;
 }
 
 int32_t AddBuffToZip(const void *buf, uint32_t size, const char *nameInZip, const char *zipName)
@@ -73,6 +95,11 @@ int32_t AddBuffToZip(const void *buf, uint32_t size, const char *nameInZip, cons
     int32_t res = DLP_ZIP_OK;
     err = zipWriteInFileInZip (zf, buf, (unsigned)size);
     if (err != ZIP_OK) {
+        DLP_LOG_ERROR(LABEL, "zipWriteInFileInZip fail err %{public}d, %{public}s", err, nameInZip);
+        res = DLP_ZIP_FAIL;
+    }
+
+    if (AddZeroBuffToZip(zf, nameInZip, size) != ZIP_OK) {
         DLP_LOG_ERROR(LABEL, "zipWriteInFileInZip fail err %{public}d, %{public}s", err, nameInZip);
         res = DLP_ZIP_FAIL;
     }

@@ -18,6 +18,7 @@
 #include <iostream>
 #include <fcntl.h>
 #include <fstream>
+#include <memory>
 #include <fuzzer/FuzzedDataProvider.h>
 #include <thread>
 #include <sys/types.h>
@@ -35,6 +36,11 @@
 #include "token_setproc.h"
 #include "hex_string.h"
 #include "dlp_credential.h"
+#include "dlp_permission_client.h"
+#include "dlp_utils.h"
+#include "dlp_policy_mgr_client.h"
+#include "dlp_zip.h"
+
 
 using namespace OHOS::Security::DlpPermission;
 using namespace OHOS::Security::AccessToken;
@@ -44,8 +50,22 @@ namespace OHOS {
 const std::string ENC_DATA_LEN = "encDataLen";
 const std::string ENC_DATA = "encData";
 const std::string ENC_ACCOUNT_TYPE = "accountType";
-const uint32_t BUFFER_LENGTH = 30;
+const uint32_t BUFFER_LENGTH = 64;
 const uint32_t HEX_BUFFER_LENGTH = 64;
+static const uint8_t TWO = 2;
+static const uint8_t ARRAY_CHAR_SIZE = 62;
+static const uint8_t KEY_LEN = 16;
+static const char CHAR_ARRAY[] = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+static const std::string DLP_AUTH_POLICY = "/system/etc/dlp_auth_policy.json";
+static const std::string DLP_HIAE_TYPE = "mkv";
+
+class UnregisterOpenDlpFileCallbackFuzzer : public OpenDlpFileCallbackCustomize {
+public:
+    UnregisterOpenDlpFileCallbackFuzzer() {}
+    ~UnregisterOpenDlpFileCallbackFuzzer() override {}
+
+    void OnOpenDlpFile(OpenDlpFileCallbackInfo& result) override {}
+};
 
 static void InitCertJson(const uint8_t* data, size_t size, Json &certJson)
 {
@@ -89,11 +109,135 @@ static void FuzzTest(const uint8_t* data, size_t size)
     std::string appId = fdp.ConsumeBytesAsString(size);
     AppExecFwk::ApplicationInfo applicationInfo;
     DlpCredential::GetInstance().ParseDlpCertificate(certParcel, callback2, appId, true, applicationInfo);
+    std::vector<std::string> appIdList;
+    DlpCredential::GetInstance().SetMDMPolicy(appIdList);
+    DlpCredential::GetInstance().GetMDMPolicy(appIdList);
+    DlpCredential::GetInstance().RemoveMDMPolicy();
+    std::string bundleName = fdp.ConsumeBytesAsString(size);
+    DlpCredential::GetInstance().CheckMdmPermission(bundleName, fdp.ConsumeIntegral<int32_t>());
+}
+
+static DlpAccountType GenerateDlpAccountType(const uint8_t* data)
+{
+    int8_t typeNum = (data[0]/TWO + data[1]/TWO) % (sizeof(DlpAccountType) / sizeof(INVALID_ACCOUNT));
+    if (typeNum == 0) {
+        return DlpAccountType::DOMAIN_ACCOUNT;
+    } else if (typeNum == 1) {
+        return DlpAccountType::CLOUD_ACCOUNT;
+    } else {
+        return DlpAccountType::APPLICATION_ACCOUNT;
+    }
+}
+
+static void GenerateRandStr(uint32_t len, const uint8_t *data, std::string& res)
+{
+    for (uint32_t i = 0; i < len; i++) {
+        uint32_t index = data[i] % ARRAY_CHAR_SIZE;
+        res.push_back(CHAR_ARRAY[index]);
+    }
+}
+
+static void ClientFuzzTest(const uint8_t* data, size_t size)
+{
+    if ((data == nullptr) || (size < BUFFER_LENGTH)) {
+        return;
+    }
+    FuzzedDataProvider fdp(data, size);
+    DlpPermissionClient::GetInstance().OnRemoteDiedHandle();
+    DlpPermissionClient::GetInstance().FinishStartSAFail();
+    std::shared_ptr<UnregisterOpenDlpFileCallbackFuzzer> callback =
+        std::make_shared<UnregisterOpenDlpFileCallbackFuzzer>();
+    DlpPermissionClient::GetInstance().UnRegisterOpenDlpFileCallback(callback);
+    PermissionPolicy policy;
+    policy.ownerAccount_ = fdp.ConsumeBytesAsString(size);
+    policy.ownerAccountId_ = fdp.ConsumeBytesAsString(size);
+    policy.ownerAccountType_ = GenerateDlpAccountType(data);
+    uint32_t offset = 0;
+    std::string iv;
+    GenerateRandStr(KEY_LEN, data + offset, iv);
+    policy.SetIv(reinterpret_cast<uint8_t*>(strdup(iv.c_str())), iv.length());
+    std::string aes;
+    GenerateRandStr(KEY_LEN, data + offset, aes);
+    policy.SetIv(reinterpret_cast<uint8_t*>(strdup(aes.c_str())), aes.length());
+    std::string hmac;
+    GenerateRandStr(KEY_LEN, data + offset, hmac);
+    policy.SetIv(reinterpret_cast<uint8_t*>(strdup(hmac.c_str())), hmac.length());
+    std::shared_ptr<ClientGenerateDlpCertificateCallback> callback1 =
+        std::make_shared<ClientGenerateDlpCertificateCallback>();
+    DlpPermissionClient::GetInstance().GenerateDlpCertificate(policy, callback1);
+}
+
+static void GenerateDlpFileType(uint32_t data, std::string& filePath)
+{
+    if (data % TWO == 0) {
+        filePath = "/data/file_test.txt";
+    } else {
+        filePath = "/data/file_test.jpg";
+    }
+}
+
+static void UtilTest(const uint8_t* data, size_t size)
+{
+    if ((data == nullptr) || (size < BUFFER_LENGTH)) {
+        return;
+    }
+    FuzzedDataProvider fdp(data, size);
+    DlpUtils::GetBundleMgrProxy();
+    std::string cfgFile = fdp.ConsumeBytesAsString(size);
+    std::string type = fdp.ConsumeBytesAsString(size);
+    std::vector<std::string> authPolicy;
+    DlpUtils::GetAuthPolicyWithType(cfgFile, type, authPolicy);
+    DlpUtils::GetAuthPolicyWithType(DLP_AUTH_POLICY, type, authPolicy);
+    std::string srcFile;
+    std::string filePath;
+    GenerateDlpFileType(fdp.ConsumeIntegral<uint32_t>(), filePath);
+    int fd = open(filePath.c_str(), O_CREAT | O_RDWR | O_TRUNC, S_IRWXU | S_IRWXG | S_IRWXO);
+    DlpUtils::GetFileNameWithFd(fd, srcFile);
+    bool isFromUriName = false;
+    DlpUtils::GetRealTypeWithFd(fd, isFromUriName);
+    std::string dlpFile;
+    DlpUtils::GetFileNameWithDlpFd(fd, dlpFile);
+    DlpUtils::GetFileType(DLP_HIAE_TYPE);
+    std::string str = fdp.ConsumeBytesAsString(size);
+    DlpUtils::ToLowerString(str);
+    std::string suffix = fdp.ConsumeBytesAsString(size);
+    DlpUtils::GetFileTypeBySuffix(str, true);
+    DlpUtils::GetFileTypeBySuffix(str, false);
+    std::string path;
+    DlpUtils::GetFilePathWithFd(fd, path);
+    close(fd);
+}
+
+static PolicyType GenerateRandPolicyType(uint32_t data)
+{
+    if (data % TWO == 0) {
+        return AUTHORIZED_APPLICATION_LIST;
+    } else {
+        return FILE_CLASSIFICATION_POLICY;
+    }
+}
+
+static void CredentialClientFuzzTest(const uint8_t* data, size_t size)
+{
+    if ((data == nullptr) || (size < BUFFER_LENGTH)) {
+        return;
+    }
+    FuzzedDataProvider fdp(data, size);
+    uint32_t policyLen = fdp.ConsumeIntegral<uint32_t>();
+    PolicyType randType = GenerateRandPolicyType(policyLen);
+    DLP_AddPolicy(randType, nullptr, policyLen);
+    DLP_RemovePolicy(randType);
+    DLP_GetPolicy(randType, nullptr, &policyLen);
+    PolicyHandle handle;
+    DLP_CheckPermission(randType, handle);
 }
 
 bool DlpCredentialFuzzTest(const uint8_t* data, size_t size)
 {
     FuzzTest(data, size);
+    ClientFuzzTest(data, size);
+    UtilTest(data, size);
+    CredentialClientFuzzTest(data, size);
     return true;
 }
 } // namespace OHOS

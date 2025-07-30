@@ -23,6 +23,7 @@
 #include "dlp_permission.h"
 #include "dlp_permission_log.h"
 #include "dlp_permission_public_interface.h"
+#include "dlp_file.h"
 #include "dlp_zip.h"
 #include "securec.h"
 
@@ -40,9 +41,10 @@ static const std::string DESCRIPTOR_MAP_PATH = "/proc/self/fd/";
 const std::string DLP_GENERAL_INFO = "dlp_general_info";
 const std::string CACHE_PATH = "/data/storage/el2/base/files/cache/";
 const uint32_t DLP_CWD_MAX = 256;
+const uint32_t DLP_RAW_HEAD_OFFSET = 8;
+std::mutex g_fileOpLock;
 }
 
-std::mutex g_fileOpLock;
 
 sptr<AppExecFwk::IBundleMgr> DlpUtils::GetBundleMgrProxy(void)
 {
@@ -94,15 +96,22 @@ std::string DlpUtils::ToLowerString(const std::string& str)
     return lower;
 }
 
-std::string DlpUtils::GetFileTypeBySuffix(const std::string& suffix)
+std::string DlpUtils::GetFileTypeBySuffix(const std::string& suffix, const bool isFromUriName)
 {
     std::string lower = DlpUtils::ToLowerString(suffix);
-    for (size_t len = MAX_REALY_TYPE_LENGTH; len >= MIN_REALY_TYPE_LENGTH; len--) {
-        if (len > lower.size()) {
-            continue;
+    if (isFromUriName) {
+        for (size_t len = MAX_REALY_TYPE_LENGTH; len >= MIN_REALY_TYPE_LENGTH; len--) {
+            if (len > lower.size()) {
+                continue;
+            }
+            std::string newStr = lower.substr(0, len);
+            auto iter = FILE_TYPE_MAP.find(newStr);
+            if (iter != FILE_TYPE_MAP.end()) {
+                return iter->second;
+            }
         }
-        std::string newStr = lower.substr(0, len);
-        auto iter = FILE_TYPE_MAP.find(newStr);
+    } else {
+        auto iter = FILE_TYPE_MAP.find(lower);
         if (iter != FILE_TYPE_MAP.end()) {
             return iter->second;
         }
@@ -110,7 +119,23 @@ std::string DlpUtils::GetFileTypeBySuffix(const std::string& suffix)
     return DEFAULT_STRINGS;
 }
 
-std::string DlpUtils::GetDlpFileRealSuffix(const std::string& dlpFileName)
+bool DlpUtils::GetFileType(const std::string& realFileType)
+{
+    std::string lower = DlpUtils::ToLowerString(realFileType);
+    for (size_t len = MAX_REALY_TYPE_LENGTH; len >= MIN_REALY_TYPE_LENGTH; len--) {
+        if (len > lower.size()) {
+            continue;
+        }
+        std::string newStr = lower.substr(0, len);
+        if (newStr == DLP_HIAE_TYPE) {
+            DLP_LOG_DEBUG(LABEL, "the file supports the HIAE.");
+            return true;
+        }
+    }
+    return false;
+}
+
+std::string DlpUtils::GetDlpFileRealSuffix(const std::string& dlpFileName, bool& isFromUriName)
 {
     uint32_t dlpSuffixLen = DLP_FILE_SUFFIXS.size();
     if (dlpFileName.size() <= dlpSuffixLen) {
@@ -125,7 +150,34 @@ std::string DlpUtils::GetDlpFileRealSuffix(const std::string& dlpFileName)
         return DEFAULT_STRINGS;
     }
 
+    isFromUriName = true;
     return realFileName.substr(escapeLocate + 1);
+}
+
+int32_t DlpUtils::GetFileNameWithDlpFd(const int32_t &fd, std::string &srcFileName)
+{
+    char *fileName = new (std::nothrow) char[MAX_DLP_FILE_SIZE + 1];
+    if (fileName == nullptr) {
+        return DLP_PARSE_ERROR_MEMORY_OPERATE_FAIL;
+    }
+    (void)memset_s(fileName, MAX_DLP_FILE_SIZE + 1, 0, MAX_DLP_FILE_SIZE + 1);
+
+    std::string path = DESCRIPTOR_MAP_PATH + std::to_string(fd);
+
+    int readLinkRes = readlink(path.c_str(), fileName, MAX_DLP_FILE_SIZE);
+    if (readLinkRes < 0) {
+        DLP_LOG_ERROR(LABEL, "fail to readlink uri, errno = %{public}d", errno);
+        delete[] fileName;
+        return DLP_PARSE_ERROR_FD_ERROR;
+    }
+    std::string tmp(fileName);
+    delete[] fileName;
+    std::size_t pos = tmp.find_last_of(".");
+    if (std::string::npos == pos) {
+        return DLP_PARSE_ERROR_FD_ERROR;
+    }
+    srcFileName = tmp.substr(0, pos);
+    return DLP_OK;
 }
 
 int32_t DlpUtils::GetFileNameWithFd(const int32_t &fd, std::string &srcFileName)
@@ -210,7 +262,6 @@ static void RemoveCachePath(const std::string& path)
 {
     if (remove(DLP_GENERAL_INFO.c_str()) != 0) {
         DLP_LOG_ERROR(LABEL, "remove dlp_general_info file fail, error %{public}s", strerror(errno));
-        return;
     }
     if (rmdir(path.c_str()) != 0) {
         DLP_LOG_ERROR(LABEL, "remove cache path fail, error %{public}s", strerror(errno));
@@ -264,24 +315,48 @@ static std::string GetGenerateInfoStr(const int32_t& fd)
     return generateInfoStr;
 }
 
-std::string DlpUtils::GetRealTypeWithFd(const int32_t& fd)
+std::string DlpUtils::GetRealTypeWithRawFile(const int32_t& fd)
+{
+    if (lseek(fd, DLP_RAW_HEAD_OFFSET, SEEK_SET) == static_cast<off_t>(-1)) {
+        DLP_LOG_ERROR(LABEL, "file head is error: %{public}s", strerror(errno));
+        return DEFAULT_STRINGS;
+    }
+    struct DlpHeader head;
+    if (read(fd, &head, sizeof(head)) != sizeof(head)) {
+        DLP_LOG_ERROR(LABEL, "can not read file head : %{public}s", strerror(errno));
+        return DEFAULT_STRINGS;
+    }
+    auto iter = NUM_TO_TYPE_MAP.find(head.fileType);
+    if (iter != NUM_TO_TYPE_MAP.end()) {
+        return iter->second;
+    }
+    DLP_LOG_DEBUG(LABEL, "find file type of raw is error");
+    return DEFAULT_STRINGS;
+}
+
+std::string DlpUtils::GetRealTypeWithFd(const int32_t& fd, bool& isFromUriName)
 {
     std::string realType = DEFAULT_STRINGS;
     do {
-        std::string generateInfoStr = GetGenerateInfoStr(fd);
-        if (generateInfoStr == DEFAULT_STRINGS) {
-            break;
-        }
-        GenerateInfoParams params;
-        if (ParseDlpGeneralInfo(generateInfoStr, params) != DLP_OK) {
-            DLP_LOG_ERROR(LABEL, "ParseDlpGeneralInfo error: %{public}s", generateInfoStr.c_str());
-            break;
-        }
-        realType = params.realType;
-        if (realType.size() >= MIN_REALY_TYPE_LENGTH && realType.size() <= MAX_REALY_TYPE_LENGTH) {
-            return realType;
+        if (IsZipFile(fd)) {
+            std::string generateInfoStr = GetGenerateInfoStr(fd);
+            if (generateInfoStr == DEFAULT_STRINGS) {
+                break;
+            }
+            GenerateInfoParams params;
+            if (ParseDlpGeneralInfo(generateInfoStr, params) != DLP_OK) {
+                DLP_LOG_ERROR(LABEL, "ParseDlpGeneralInfo error: %{public}s", generateInfoStr.c_str());
+                break;
+            }
+            realType = params.realType;
+        } else {
+            return GetRealTypeWithRawFile(fd);
         }
     } while (0);
+
+    if (realType.size() >= MIN_REALY_TYPE_LENGTH && realType.size() <= MAX_REALY_TYPE_LENGTH) {
+        return realType;
+    }
     DLP_LOG_DEBUG(LABEL, "not get real file type in dlp_general_info, will get to file name.");
 
     std::string fileName;
@@ -289,7 +364,27 @@ std::string DlpUtils::GetRealTypeWithFd(const int32_t& fd)
         DLP_LOG_ERROR(LABEL, "Get file name with fd error");
         return DEFAULT_STRINGS;
     }
-    return DlpUtils::GetDlpFileRealSuffix(fileName);
+    return DlpUtils::GetDlpFileRealSuffix(fileName, isFromUriName);
+}
+
+bool DlpUtils::GetBundleInfoWithBundleName(const std::string &bundleName, int32_t flag,
+    AppExecFwk::BundleInfo &bundleInfo, int32_t userId)
+{
+    auto bundleMgrProxy = DlpUtils::GetBundleMgrProxy();
+    if (bundleMgrProxy == nullptr) {
+        return false;
+    }
+    return bundleMgrProxy->GetBundleInfo(bundleName, flag, bundleInfo, userId);
+}
+
+bool DlpUtils::GetUserIdByForegroundAccount(int32_t &userId)
+{
+    int32_t ret = AccountSA::OsAccountManager::GetForegroundOsAccountLocalId(userId);
+    if (ret != ERR_OK) {
+        DLP_LOG_ERROR(LABEL, "GetForegroundOsAccountLocalId failed %{public}d", ret);
+        return false;
+    }
+    return true;
 }
 }  // namespace DlpPermission
 }  // namespace Security

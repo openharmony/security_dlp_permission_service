@@ -2224,3 +2224,17 @@ HWTEST_F(DlpCryptTest, DlpHmacEncodeForRaw003, TestSize.Level0)
     close(fd);
     unlink("/data/fuse_test.txt");
 }
+
+/**
+ * @tc.name: DlpHIAECryptTest
+ * @tc.desc: test DlpHIAECrypt
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpCryptTest, DlpHIAECryptTest, TestSize.Level0)
+{
+    (void)InitDlpHIAEMgr();
+    ASSERT_EQ(DlpHIAEEncrypt(nullptr, nullptr, 0, nullptr, nullptr), DLP_PARSE_ERROR_VALUE_INVALID);
+    ASSERT_EQ(DlpHIAEDecrypt(nullptr, nullptr, 0, nullptr, nullptr), DLP_PARSE_ERROR_VALUE_INVALID);
+    ClearDlpHIAEMgr();
+}

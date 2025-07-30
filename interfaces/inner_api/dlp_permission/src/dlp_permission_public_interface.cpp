@@ -30,6 +30,7 @@ const std::string DLP_EXTRA_INFO = "extra_info";
 const std::string DLP_EXTRA_INFO_LOW_CAMEL_CASE = "extraInfo";
 const std::string DLP_HMAC_VALUE = "hmacValue";
 static const std::string DLP_REAL_TYPE = "realFileType";
+static const std::string CERT_SIZE = "certSize";
 static const uint32_t MIN_REALY_TYPE_LENGTH = 2;
 static const uint32_t MAX_REALY_TYPE_LENGTH = 5;
 static bool checkParams(GenerateInfoParams& params, const nlohmann::json& jsonObj,
@@ -73,6 +74,7 @@ int32_t GenerateDlpGeneralInfo(const GenerateInfoParams& params, std::string& ge
     if (params.realType.size() >= MIN_REALY_TYPE_LENGTH && params.realType.size() <= MAX_REALY_TYPE_LENGTH) {
         dlp_general_info[DLP_REAL_TYPE] = params.realType;
     }
+    dlp_general_info[CERT_SIZE] = params.certSize;
     generalInfo = dlp_general_info.dump();
     return DLP_OK;
 }
@@ -117,6 +119,11 @@ int32_t ParseDlpGeneralInfo(const std::string& generalInfo, GenerateInfoParams& 
     iter = jsonObj.find(DLP_REAL_TYPE);
     if (iter != jsonObj.end() && iter->is_string()) {
         params.realType = iter->get<std::string>();
+    }
+    iter = jsonObj.find(CERT_SIZE);
+    params.certSize = 0;
+    if (iter != jsonObj.end() && iter->is_number_integer()) {
+        params.certSize = iter->get<uint32_t>();
     }
     return DLP_OK;
 }

@@ -28,6 +28,8 @@
 #include "accesstoken_kit.h"
 #define private public
 #include "dlp_file.h"
+#include "dlp_raw_file.h"
+#include "dlp_zip_file.h"
 #undef private
 #include "dlp_file_manager.h"
 #define private public
@@ -761,7 +763,7 @@ HWTEST_F(DlpFuseTest, AddDlpLinkFile009, TestSize.Level0)
     std::shared_ptr<DlpFile> filePtr = nullptr;
     EXPECT_EQ(dlpLinkManager->AddDlpLinkFile(filePtr, ""), DLP_FUSE_ERROR_DLP_FILE_NULL);
 
-    filePtr = std::make_shared<DlpFile>(1000, DLP_TEST_DIR, 0, false, "txt");
+    filePtr = std::make_shared<DlpZipFile>(1000, DLP_TEST_DIR, 0, "txt");
     EXPECT_EQ(dlpLinkManager->AddDlpLinkFile(filePtr, ""), DLP_FUSE_ERROR_VALUE_INVALID);
 
     EXPECT_EQ(dlpLinkManager->AddDlpLinkFile(filePtr, "linkfile"), DLP_OK);
@@ -780,11 +782,11 @@ HWTEST_F(DlpFuseTest, AddDlpLinkFile009, TestSize.Level0)
 HWTEST_F(DlpFuseTest, AddDlpLinkFile010, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "AddDlpLinkFile010");
-    std::shared_ptr<DlpFile> filePtr = std::make_shared<DlpFile>(-1, DLP_TEST_DIR, 0, false, "txt");
+    std::shared_ptr<DlpFile> filePtr = std::make_shared<DlpZipFile>(-1, DLP_TEST_DIR, 0, "txt");
     ASSERT_NE(filePtr, nullptr);
     for (int i = 0; i < 1000; i++) {
         std::string linkName = "AddDlpLinkFile010-" + std::to_string(i);
-        std::shared_ptr<DlpFile> filePtr2 = std::make_shared<DlpFile>(-i, DLP_TEST_DIR, 0, false, "txt");
+        std::shared_ptr<DlpFile> filePtr2 = std::make_shared<DlpZipFile>(-i, DLP_TEST_DIR, 0, "txt");
         dlpLinkManager->AddDlpLinkFile(filePtr2, linkName);
     }
     EXPECT_EQ(dlpLinkManager->AddDlpLinkFile(filePtr, "linkfile"),
@@ -807,7 +809,7 @@ HWTEST_F(DlpFuseTest, DeleteDlpLinkFile001, TestSize.Level0)
     std::shared_ptr<DlpFile> filePtr = nullptr;
     EXPECT_EQ(dlpLinkManager->DeleteDlpLinkFile(filePtr), DLP_FUSE_ERROR_DLP_FILE_NULL);
 
-    filePtr = std::make_shared<DlpFile>(1000, DLP_TEST_DIR, 0, false, "txt");
+    filePtr = std::make_shared<DlpZipFile>(1000, DLP_TEST_DIR, 0, "txt");
     ASSERT_NE(filePtr, nullptr);
     EXPECT_EQ(dlpLinkManager->DeleteDlpLinkFile(filePtr),
         DLP_FUSE_ERROR_LINKFILE_NOT_EXIST);
@@ -849,7 +851,7 @@ HWTEST_F(DlpFuseTest, LookUpDlpLinkFile001, TestSize.Level0)
 HWTEST_F(DlpFuseTest, DumpDlpLinkFile001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DumpDlpLinkFile001");
-    std::shared_ptr<DlpFile> filePtr = std::make_shared<DlpFile>(1000, DLP_TEST_DIR, 0, false, "txt");
+    std::shared_ptr<DlpFile> filePtr = std::make_shared<DlpZipFile>(1000, DLP_TEST_DIR, 0, "txt");
     ASSERT_NE(filePtr, nullptr);
     DlpLinkFile *node = new (std::nothrow) DlpLinkFile("linkfile1", filePtr);
     ASSERT_NE(node, nullptr);
@@ -983,7 +985,7 @@ HWTEST_F(DlpFuseTest, LinkFileTruncate001, TestSize.Level0)
     EXPECT_EQ(linkFile.Truncate(-1), DLP_FUSE_ERROR_VALUE_INVALID);
     EXPECT_EQ(linkFile.Truncate(0xffffffff), DLP_FUSE_ERROR_VALUE_INVALID);
     EXPECT_EQ(linkFile.Truncate(0), DLP_FUSE_ERROR_DLP_FILE_NULL);
-    filePtr = std::make_shared<DlpFile>(-1, DLP_TEST_DIR, 0, false, "txt");
+    filePtr = std::make_shared<DlpZipFile>(-1, DLP_TEST_DIR, 0, "txt");
     ASSERT_NE(filePtr, nullptr);
 
     DlpLinkFile linkFile1("linkfile1", filePtr);
@@ -1005,7 +1007,7 @@ HWTEST_F(DlpFuseTest, LinkFileWrite001, TestSize.Level0)
     uint8_t buffer[16] = {0};
     EXPECT_EQ(linkFile.Write(0, buffer, 15), DLP_FUSE_ERROR_DLP_FILE_NULL);
 
-    filePtr = std::make_shared<DlpFile>(-1, DLP_TEST_DIR, 0, false, "txt");
+    filePtr = std::make_shared<DlpZipFile>(-1, DLP_TEST_DIR, 0, "txt");
     ASSERT_NE(filePtr, nullptr);
 
     DlpLinkFile linkFile1("linkfile1", filePtr);
@@ -1027,7 +1029,7 @@ HWTEST_F(DlpFuseTest, LinkFileRead001, TestSize.Level0)
     uint8_t buffer[16] = {0};
     EXPECT_EQ(linkFile.Read(0, buffer, 15, 0), DLP_FUSE_ERROR_DLP_FILE_NULL);
 
-    filePtr = std::make_shared<DlpFile>(-1, DLP_TEST_DIR, 0, false, "txt");
+    filePtr = std::make_shared<DlpZipFile>(-1, DLP_TEST_DIR, 0, "txt");
     ASSERT_NE(filePtr, nullptr);
 
     DlpLinkFile linkFile1("linkfile1", filePtr);
@@ -1063,8 +1065,8 @@ HWTEST_F(DlpFuseTest, StopDlpLinkFile001, TestSize.Level0)
     std::shared_ptr<DlpFile> filePtr = nullptr;
     std::shared_ptr<DlpFile> filePtr2 = nullptr;
     EXPECT_EQ(dlpLinkManager->StopDlpLinkFile(filePtr), DLP_FUSE_ERROR_DLP_FILE_NULL);
-    filePtr = std::make_shared<DlpFile>(1000, DLP_TEST_DIR, 0, false, "txt");
-    filePtr2 = std::make_shared<DlpFile>(1001, DLP_TEST_DIR, 0, false, "txt");
+    filePtr = std::make_shared<DlpZipFile>(1000, DLP_TEST_DIR, 0, "txt");
+    filePtr2 = std::make_shared<DlpZipFile>(1001, DLP_TEST_DIR, 0, "txt");
 
     dlpLinkManager->AddDlpLinkFile(filePtr, "linkfile");
     EXPECT_EQ(dlpLinkManager->StopDlpLinkFile(filePtr2),
@@ -1089,9 +1091,9 @@ HWTEST_F(DlpFuseTest, RestartDlpLinkFile001, TestSize.Level0)
     dlpLinkManager->dlpLinkFileNameMap_.clear();
     std::shared_ptr<DlpFile> filePtr = nullptr;
     EXPECT_EQ(dlpLinkManager->RestartDlpLinkFile(filePtr), DLP_FUSE_ERROR_DLP_FILE_NULL);
-    filePtr = std::make_shared<DlpFile>(1000, DLP_TEST_DIR, 0, false, "txt");
+    filePtr = std::make_shared<DlpZipFile>(1000, DLP_TEST_DIR, 0, "txt");
     std::shared_ptr<DlpFile> filePtr2 = nullptr;
-    filePtr2 = std::make_shared<DlpFile>(1001, DLP_TEST_DIR, 0, false, "txt");
+    filePtr2 = std::make_shared<DlpZipFile>(1001, DLP_TEST_DIR, 0, "txt");
 
     dlpLinkManager->AddDlpLinkFile(filePtr, "linkfile");
     EXPECT_EQ(dlpLinkManager->RestartDlpLinkFile(filePtr2),
@@ -1116,7 +1118,7 @@ HWTEST_F(DlpFuseTest, ReplaceDlpLinkFile001, TestSize.Level0)
     std::shared_ptr<DlpFile> filePtr = nullptr;
     EXPECT_EQ(dlpLinkManager->ReplaceDlpLinkFile(filePtr, "test"),
         DLP_FUSE_ERROR_DLP_FILE_NULL);
-    filePtr = std::make_shared<DlpFile>(1000, DLP_TEST_DIR, 0, false, "txt");
+    filePtr = std::make_shared<DlpZipFile>(1000, DLP_TEST_DIR, 0, "txt");
 
     dlpLinkManager->AddDlpLinkFile(filePtr, "linkfile");
     EXPECT_EQ(dlpLinkManager->ReplaceDlpLinkFile(filePtr, ""),

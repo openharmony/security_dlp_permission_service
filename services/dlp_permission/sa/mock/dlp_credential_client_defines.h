@@ -32,6 +32,11 @@ typedef enum {
 } OpenMode;
 
 typedef enum {
+    IS_INNER_HAP_RESTORE_INDEX = 0, // 1 byte
+    IS_NEED_CHECK_CUSTOM_PROPERTY = 1, // 1 byte
+} ReservedValue;
+
+typedef enum {
     RECEIVER_DECRYPT_MUST_USE_CLOUD_AND_RETURN_ENCRYPTION_VALUE = 0,
     RECEIVER_DECRYPT_MUST_USE_CLOUD = 1,
     ALLOW_RECEIVER_DECRYPT_WITHOUT_USE_CLOUD = 2,

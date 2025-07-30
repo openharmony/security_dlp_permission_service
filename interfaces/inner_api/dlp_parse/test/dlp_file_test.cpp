@@ -24,6 +24,8 @@
 #include <sys/stat.h>
 #define private public
 #include "dlp_file.h"
+#include "dlp_raw_file.h"
+#include "dlp_zip_file.h"
 #include "dlp_file_manager.h"
 #undef private
 #include "dlp_permission.h"
@@ -53,7 +55,7 @@ const std::string DLP_VERSION = "dlpVersion";
 const std::string DLP_OFFLINE_FLAG = "offlineAccess";
 const std::string DLP_EXTRA_INFO = "extraInfo";
 
-void initDlpFileCiper(DlpFile &testFile)
+void initDlpFileCiper(DlpRawFile &testFile)
 {
     uint8_t keyData[16] = {};
     struct DlpBlob key = {
@@ -77,7 +79,48 @@ void initDlpFileCiper(DlpFile &testFile)
     };
 
     testFile.policy_.dlpVersion_ = SECOND;
-    testFile.head_.version = SECOND;
+    testFile.version_ = SECOND;
+
+    testFile.SetCipher(key, spec, hmacKey);
+    uint8_t* cert = new (std::nothrow) uint8_t[16];
+    if (cert == nullptr) {
+        return;
+    }
+    struct DlpBlob certKey = {
+        .data = cert,
+        .size = 16
+    };
+    testFile.SetEncryptCert(certKey);
+    delete[] certKey.data;
+    certKey.data = nullptr;
+    certKey.size = 0;
+}
+
+void initDlpFileCiper(DlpZipFile &testFile)
+{
+    uint8_t keyData[16] = {};
+    struct DlpBlob key = {
+        .data = keyData,
+        .size = 16
+    };
+
+    uint8_t ivData[16] = {};
+    struct DlpCipherParam param;
+    param.iv.data = ivData;
+    param.iv.size = IV_SIZE;
+    struct DlpUsageSpec spec = {
+        .mode = DLP_MODE_CTR,
+        .algParam = &param
+    };
+
+    uint8_t hmacKeyData[32] = {};
+    struct DlpBlob hmacKey = {
+        .data = hmacKeyData,
+        .size = 32
+    };
+
+    testFile.policy_.dlpVersion_ = SECOND;
+    testFile.version_ = SECOND;
 
     testFile.SetCipher(key, spec, hmacKey);
     uint8_t* cert = new (std::nothrow) uint8_t[16];
@@ -145,7 +188,7 @@ HWTEST_F(DlpFileTest, IsValidCipher001, TestSize.Level0)
     };
 
     // key.data nullptr
-    DlpFile testFile(1000, DLP_TEST_DIR, 0, false, "txt");
+    DlpRawFile testFile(1000, "txt");
     ASSERT_FALSE(testFile.IsValidCipher(key, spec, hmacKey));
 
     // key size is invalid
@@ -198,7 +241,7 @@ HWTEST_F(DlpFileTest, CopyBlobParam001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "CopyBlobParam001");
 
-    DlpFile testFile(1000, DLP_TEST_DIR, 0, false, "txt");
+    DlpRawFile testFile(1000, "txt");
     struct DlpBlob src = {
         .data = nullptr,
     };
@@ -235,7 +278,7 @@ HWTEST_F(DlpFileTest, CleanBlobParam001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "CleanBlobParam001");
 
-    DlpFile testFile(1000, DLP_TEST_DIR, 0, false, "txt");
+    DlpRawFile testFile(1000, "txt");
     struct DlpBlob blob = {
         .data = nullptr,
     };
@@ -264,7 +307,7 @@ HWTEST_F(DlpFileTest, GetLocalAccountName001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "GetLocalAccountName001");
 
-    DlpFile testFile(1000, DLP_TEST_DIR, 0, false, "txt");
+    DlpRawFile testFile(1000, "txt");
     std::string account;
     int dlpRet = testFile.GetLocalAccountName(account);
     if (dlpRet != DLP_OK) {
@@ -284,7 +327,7 @@ HWTEST_F(DlpFileTest, GetDomainAccountName001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "GetLocalAccountName001");
 
-    DlpFile testFile(1000, DLP_TEST_DIR, 0, false, "txt");
+    DlpRawFile testFile(1000, "txt");
     std::string account;
     int dlpRet = testFile.GetDomainAccountName(account);
     ASSERT_EQ(dlpRet, DLP_OK);
@@ -300,7 +343,7 @@ HWTEST_F(DlpFileTest, UpdateDlpFilePermission001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "UpdateDlpFilePermission001");
 
-    DlpFile testFile(1000, DLP_TEST_DIR, 0, false, "txt");
+    DlpRawFile testFile(1000, "txt");
     testFile.policy_.ownerAccount_ = "ohosAnonymousName";
     testFile.policy_.ownerAccountId_ = "ohosAnonymousName";
     testFile.policy_.ownerAccountType_ = DOMAIN_ACCOUNT;
@@ -320,7 +363,7 @@ HWTEST_F(DlpFileTest, UpdateDlpFilePermission002, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "UpdateDlpFilePermission002");
 
-    DlpFile testFile(1000, DLP_TEST_DIR, 0, false, "txt");
+    DlpRawFile testFile(1000, "txt");
     AuthUserInfo user = {
         .authAccount = "ohosAnonymousName",
         .authPerm = DLPFileAccess::READ_ONLY
@@ -343,7 +386,7 @@ HWTEST_F(DlpFileTest, UpdateDlpFilePermission003, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "UpdateDlpFilePermission003");
 
-    DlpFile testFile(1000, DLP_TEST_DIR, 0, false, "txt");
+    DlpRawFile testFile(1000, "txt");
     testFile.policy_.ownerAccount_ = "ohosAnonymousName";
     testFile.policy_.ownerAccountId_ = "ohosAnonymousName";
     testFile.policy_.ownerAccountType_ = DOMAIN_ACCOUNT;
@@ -365,7 +408,7 @@ HWTEST_F(DlpFileTest, UpdateDlpFilePermission004, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "UpdateDlpFilePermission004");
 
-    DlpFile testFile(1000, DLP_TEST_DIR, 0, false, "txt");
+    DlpRawFile testFile(1000, "txt");
     AuthUserInfo user = {
         .authAccount = "noExistUser",
         .authPerm = DLPFileAccess::FULL_CONTROL
@@ -387,7 +430,7 @@ HWTEST_F(DlpFileTest, UpdateDlpFilePermission005, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "UpdateDlpFilePermission005");
 
-    DlpFile testFile(1000, DLP_TEST_DIR, 0, false, "txt");
+    DlpRawFile testFile(1000, "txt");
     testFile.policy_.ownerAccount_ = "ohosAnonymousName";
     testFile.policy_.ownerAccountId_ = "ohosAnonymousName";
     testFile.policy_.ownerAccountType_ = DOMAIN_ACCOUNT;
@@ -407,7 +450,7 @@ HWTEST_F(DlpFileTest, UpdateDlpFilePermission006, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "UpdateDlpFilePermission006");
 
-    DlpFile testFile(1000, DLP_TEST_DIR, 0, false, "txt");
+    DlpRawFile testFile(1000, "txt");
     testFile.policy_.ownerAccount_ = "ohosAnonymousName";
     testFile.policy_.ownerAccountId_ = "ohosAnonymousName";
     testFile.policy_.ownerAccountType_ = DOMAIN_ACCOUNT;
@@ -428,7 +471,7 @@ HWTEST_F(DlpFileTest, SetCipher001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "SetCipher001");
 
-    DlpFile testFile(1000, DLP_TEST_DIR, 0, false, "txt");
+    DlpRawFile testFile(1000, "txt");
     struct DlpBlob key = {
         .data = nullptr,
     };
@@ -453,7 +496,7 @@ HWTEST_F(DlpFileTest, SetCipher002, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "SetCipher001");
 
-    DlpFile testFile(1000, DLP_TEST_DIR, 0, false, "txt");
+    DlpRawFile testFile(1000, "txt");
     uint8_t keyData[DLP_KEY_LEN_256] = { 0 };
     struct DlpBlob key;
     key.data = keyData;
@@ -489,7 +532,7 @@ HWTEST_F(DlpFileTest, SetCipher003, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "SetCipher003");
 
-    DlpFile testFile(1000, DLP_TEST_DIR, 0, false, "txt");
+    DlpRawFile testFile(1000, "txt");
     uint8_t keyData[DLP_KEY_LEN_256] = { 0 };
     struct DlpBlob key;
     key.data = keyData;
@@ -525,7 +568,7 @@ HWTEST_F(DlpFileTest, SetCipher004, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "SetCipher004");
 
-    DlpFile testFile(1000, DLP_TEST_DIR, 0, false, "txt");
+    DlpRawFile testFile(1000, "txt");
     uint8_t keyData[DLP_KEY_LEN_256] = { 0 };
     struct DlpBlob key;
     key.data = keyData;
@@ -556,7 +599,7 @@ HWTEST_F(DlpFileTest, SetCipher004, TestSize.Level0)
 HWTEST_F(DlpFileTest, SetContactAccount001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "SetContactAccount001");
-    DlpFile testFile(1000, DLP_TEST_DIR, 0, false, "txt");
+    DlpRawFile testFile(1000, "txt");
     ASSERT_EQ(DLP_PARSE_ERROR_VALUE_INVALID, testFile.SetContactAccount(""));
 
     std::string invalidAccount(DLP_MAX_CERT_SIZE + 1, 'a');
@@ -576,7 +619,7 @@ HWTEST_F(DlpFileTest, SetContactAccount001, TestSize.Level0)
 HWTEST_F(DlpFileTest, SetPolicy001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "SetPolicy001");
-    DlpFile testFile(1000, DLP_TEST_DIR, 0, false, "txt");
+    DlpRawFile testFile(1000, "txt");
     PermissionPolicy policy;
     ASSERT_EQ(DLP_PARSE_ERROR_VALUE_INVALID, testFile.SetPolicy(policy));
 }
@@ -590,19 +633,22 @@ HWTEST_F(DlpFileTest, SetPolicy001, TestSize.Level0)
 HWTEST_F(DlpFileTest, IsValidDlpHeader001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "IsValidDlpHeader001");
-    DlpFile testFile(1000, DLP_TEST_DIR, 0, false, "txt");
-    PermissionPolicy policy;
+    DlpRawFile testFile(1000, "txt");
     struct DlpHeader header = {
         .magic = DLP_FILE_MAGIC,
-        .certOffset = sizeof(struct DlpHeader) + 20 + 100 + 68,
+        .fileType = 10,
         .offlineAccess = 0,
-        .certSize = 20,
-        .contactAccountOffset = sizeof(struct DlpHeader),
-        .contactAccountSize = 20,
-        .txtOffset  = sizeof(struct DlpHeader) + 20,
+        .algType = DLP_MODE_CTR,
+        .txtOffset = sizeof(struct DlpHeader) + 108,
         .txtSize = 100,
-        .offlineCertOffset = 0,
-        .offlineCertSize = 0,
+        .hmacOffset = sizeof(struct DlpHeader) + 208,
+        .hmacSize = 64,
+        .certOffset = sizeof(struct DlpHeader) + 272,
+        .certSize = 256,
+        .contactAccountOffset = sizeof(struct DlpHeader) + 8,
+        .contactAccountSize = 100,
+        .offlineCertOffset = sizeof(struct DlpHeader) + 272,
+        .offlineCertSize = 0
     };
 
     // valid header
@@ -625,7 +671,7 @@ HWTEST_F(DlpFileTest, IsValidDlpHeader001, TestSize.Level0)
     // certOffset invalid
     header.certOffset = 100;
     ASSERT_FALSE(testFile.IsValidDlpHeader(header));
-    header.certOffset = sizeof(struct DlpHeader) + 20 + 100 + 68;
+    header.certOffset = sizeof(struct DlpHeader) + 272;
 
     // contactAccountSize 0
     header.contactAccountSize = 0;
@@ -659,19 +705,19 @@ HWTEST_F(DlpFileTest, IsValidDlpHeader001, TestSize.Level0)
 HWTEST_F(DlpFileTest, ParseDlpHeader001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "ParseDlpHeader001");
-    DlpFile testFile(1000, DLP_TEST_DIR, 0, false, "txt");
+    DlpRawFile testFile(1000, "txt");
 
     testFile.dlpFd_ = -1;
-    ASSERT_EQ(DLP_PARSE_ERROR_FD_ERROR, testFile.ParseDlpHeader());
+    ASSERT_EQ(DLP_PARSE_ERROR_FD_ERROR, testFile.ProcessDlpFile());
 
     testFile.dlpFd_ = 1000;
     testFile.isFuseLink_ = true;
-    ASSERT_EQ(DLP_PARSE_ERROR_FILE_LINKING, testFile.ParseDlpHeader());
+    ASSERT_EQ(DLP_PARSE_ERROR_FILE_LINKING, testFile.ProcessDlpFile());
 
     // fd > 0 but invalid
     testFile.dlpFd_ = 1000;
     testFile.isFuseLink_ = false;
-    ASSERT_EQ(DLP_PARSE_ERROR_FILE_OPERATE_FAIL, testFile.ParseDlpHeader());
+    ASSERT_EQ(DLP_PARSE_ERROR_FILE_OPERATE_FAIL, testFile.ProcessDlpFile());
 }
 
 /**
@@ -686,7 +732,7 @@ HWTEST_F(DlpFileTest, ParseDlpHeader002, TestSize.Level0)
 
     int fd = open("/data/fuse_test.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
     ASSERT_NE(fd, -1);
-    DlpFile testFile(fd, DLP_TEST_DIR, 0, false, "txt");
+    DlpRawFile testFile(fd, "txt");
 
     struct DlpHeader header = {
         .magic = DLP_FILE_MAGIC,
@@ -696,7 +742,7 @@ HWTEST_F(DlpFileTest, ParseDlpHeader002, TestSize.Level0)
 
     // write less than header size
     write(fd, &header, sizeof(header) - 1);
-    EXPECT_EQ(DLP_PARSE_ERROR_FILE_FORMAT_ERROR, testFile.ParseDlpHeader());
+    EXPECT_EQ(DLP_PARSE_ERROR_FILE_FORMAT_ERROR, testFile.ProcessDlpFile());
     close(fd);
     unlink("/data/fuse_test.txt");
 }
@@ -713,7 +759,7 @@ HWTEST_F(DlpFileTest, ParseDlpHeader003, TestSize.Level0)
 
     int fd = open("/data/fuse_test.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
     ASSERT_NE(fd, -1);
-    DlpFile testFile(fd, DLP_TEST_DIR, 0, false, "txt");
+    DlpRawFile testFile(fd, "txt");
 
     struct DlpHeader header = {
         .magic = DLP_FILE_MAGIC,
@@ -723,7 +769,7 @@ HWTEST_F(DlpFileTest, ParseDlpHeader003, TestSize.Level0)
 
     // write less than header size
     write(fd, &header, sizeof(header));
-    EXPECT_EQ(DLP_PARSE_ERROR_FILE_FORMAT_ERROR, testFile.ParseDlpHeader());
+    EXPECT_EQ(DLP_PARSE_ERROR_FILE_FORMAT_ERROR, testFile.ProcessDlpFile());
     close(fd);
     unlink("/data/fuse_test.txt");
 }
@@ -740,7 +786,7 @@ HWTEST_F(DlpFileTest, ParseDlpHeader004, TestSize.Level0)
 
     int fd = open("/data/fuse_test.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
     ASSERT_NE(fd, -1);
-    DlpFile testFile(fd, DLP_TEST_DIR, 0, false, "txt");
+    DlpRawFile testFile(fd, "txt");
 
     struct DlpHeader header = {
         .magic = DLP_FILE_MAGIC,
@@ -756,7 +802,7 @@ HWTEST_F(DlpFileTest, ParseDlpHeader004, TestSize.Level0)
     };
     write(fd, &header, sizeof(header));
 
-    EXPECT_EQ(DLP_PARSE_ERROR_FILE_FORMAT_ERROR, testFile.ParseDlpHeader());
+    EXPECT_EQ(DLP_PARSE_ERROR_FILE_FORMAT_ERROR, testFile.ProcessDlpFile());
     close(fd);
     unlink("/data/fuse_test.txt");
 }
@@ -773,7 +819,7 @@ HWTEST_F(DlpFileTest, ParseDlpHeader005, TestSize.Level0)
 
     int fd = open("/data/fuse_test.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
     ASSERT_NE(fd, -1);
-    DlpFile testFile(fd, DLP_TEST_DIR, 0, false, "txt");
+    DlpRawFile testFile(fd, "txt");
 
     struct DlpHeader header = {
         .magic = DLP_FILE_MAGIC,
@@ -791,7 +837,7 @@ HWTEST_F(DlpFileTest, ParseDlpHeader005, TestSize.Level0)
     uint8_t buffer[20] = {0};
     write(fd, buffer, 20);
 
-    EXPECT_EQ(DLP_PARSE_ERROR_FILE_NOT_DLP, testFile.ParseDlpHeader());
+    EXPECT_EQ(DLP_PARSE_ERROR_FILE_FORMAT_ERROR, testFile.ProcessDlpFile());
     close(fd);
     unlink("/data/fuse_test.txt");
 }
@@ -808,7 +854,7 @@ HWTEST_F(DlpFileTest, ParseDlpHeader006, TestSize.Level0)
 
     int fd = open("/data/fuse_test.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
     ASSERT_NE(fd, -1);
-    DlpFile testFile(fd, DLP_TEST_DIR, 0, false, "txt");
+    DlpRawFile testFile(fd, "txt");
 
     struct DlpHeader header = {
         .magic = DLP_FILE_MAGIC,
@@ -826,7 +872,7 @@ HWTEST_F(DlpFileTest, ParseDlpHeader006, TestSize.Level0)
     uint8_t buffer[208] = {0};
     write(fd, buffer, 208);
 
-    EXPECT_EQ(DLP_PARSE_ERROR_FILE_OPERATE_FAIL, testFile.ParseDlpHeader());
+    EXPECT_EQ(DLP_PARSE_ERROR_FILE_FORMAT_ERROR, testFile.ProcessDlpFile());
     close(fd);
     unlink("/data/fuse_test.txt");
 }
@@ -843,7 +889,7 @@ HWTEST_F(DlpFileTest, ParseDlpHeader007, TestSize.Level0)
 
     int fd = open("/data/fuse_test.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
     ASSERT_NE(fd, -1);
-    DlpFile testFile(fd, DLP_TEST_DIR, 0, false, "txt");
+    DlpRawFile testFile(fd, "txt");
 
     struct DlpHeader header = {
         .magic = DLP_FILE_MAGIC,
@@ -861,7 +907,7 @@ HWTEST_F(DlpFileTest, ParseDlpHeader007, TestSize.Level0)
     uint8_t buffer[40] = {0};
     write(fd, buffer, 40);
 
-    EXPECT_EQ(DLP_PARSE_ERROR_FILE_FORMAT_ERROR, testFile.ParseDlpHeader());
+    EXPECT_EQ(DLP_PARSE_ERROR_FILE_FORMAT_ERROR, testFile.ProcessDlpFile());
     close(fd);
     unlink("/data/fuse_test.txt");
 }
@@ -876,7 +922,7 @@ HWTEST_F(DlpFileTest, SetEncryptCert001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "SetEncryptCert001");
 
-    DlpFile testFile(1000, DLP_TEST_DIR, 0, false, "txt");
+    DlpRawFile testFile(1000, "txt");
     struct DlpBlob cert = {
         .data = nullptr,
         .size = 0
@@ -901,7 +947,7 @@ HWTEST_F(DlpFileTest, SetEncryptCert002, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "SetEncryptCert002");
 
-    DlpFile testFile(1000, DLP_TEST_DIR, 0, false, "txt");
+    DlpRawFile testFile(1000, "txt");
     uint8_t data[32] = {};
     struct DlpBlob cert = {
         .data = data,
@@ -926,7 +972,7 @@ HWTEST_F(DlpFileTest, SetEncryptCert003, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "SetEncryptCert003");
 
-    DlpFile testFile(1000, DLP_TEST_DIR, 0, false, "txt");
+    DlpRawFile testFile(1000, "txt");
     uint8_t data[32] = {};
     struct DlpBlob cert = {
         .data = data,
@@ -946,7 +992,7 @@ HWTEST_F(DlpFileTest, DupUsageSpec001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DupUsageSpec001");
 
-    DlpFile testFile(1000, DLP_TEST_DIR, 0, false, "txt");
+    DlpRawFile testFile(1000, "txt");
     struct DlpUsageSpec spec;
 
     EXPECT_EQ(DLP_PARSE_ERROR_VALUE_INVALID, testFile.DupUsageSpec(spec));
@@ -962,7 +1008,7 @@ HWTEST_F(DlpFileTest, DupUsageSpec002, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DupUsageSpec002");
 
-    DlpFile testFile(1000, DLP_TEST_DIR, 0, false, "txt");
+    DlpRawFile testFile(1000, "txt");
     uint8_t data[16] = {};
 
     struct DlpCipherParam param = {
@@ -995,7 +1041,7 @@ HWTEST_F(DlpFileTest, DupUsageSpec003, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DupUsageSpec003");
 
-    DlpFile testFile(1000, DLP_TEST_DIR, 0, false, "txt");
+    DlpRawFile testFile(1000, "txt");
     uint8_t data[16] = {};
 
     struct DlpCipherParam param = {
@@ -1028,7 +1074,7 @@ HWTEST_F(DlpFileTest, DoDlpBlockCryptOperation001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DoDlpBlockCryptOperation001");
 
-    DlpFile testFile(1000, DLP_TEST_DIR, 0, false, "txt");
+    DlpRawFile testFile(1000, "txt");
 
     uint8_t data1[16] = {};
     uint8_t data2[16] = {};
@@ -1076,7 +1122,7 @@ HWTEST_F(DlpFileTest, DoDlpBlockCryptOperation002, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DoDlpBlockCryptOperation002");
 
-    DlpFile testFile(1000, DLP_TEST_DIR, 0, false, "txt");
+    DlpRawFile testFile(1000, "txt");
 
     uint8_t data1[16] = {};
     uint8_t data2[16] = {};
@@ -1104,7 +1150,7 @@ HWTEST_F(DlpFileTest, DoDlpBlockCryptOperation003, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DoDlpBlockCryptOperation003");
 
-    DlpFile testFile(1000, DLP_TEST_DIR, 0, false, "txt");
+    DlpRawFile testFile(1000, "txt");
 
     uint8_t data1[16] = {};
     uint8_t data2[16] = {};
@@ -1145,7 +1191,7 @@ HWTEST_F(DlpFileTest, DoDlpContentCryptyOperation001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DoDlpContentCryptyOperation001");
 
-    DlpFile testFile(1000, DLP_TEST_DIR, 0, false, "txt");
+    DlpRawFile testFile(1000, "txt");
     uint8_t ivData[16] = {};
 
     struct DlpCipherParam param = {
@@ -1172,7 +1218,7 @@ HWTEST_F(DlpFileTest, DoDlpContentCryptyOperation001, TestSize.Level0)
 HWTEST_F(DlpFileTest, DoDlpContentCryptyOperation002, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DoDlpContentCryptyOperation002");
-    DlpFile testFile(1000, DLP_TEST_DIR, 0, false, "txt");
+    DlpRawFile testFile(1000, "txt");
     uint8_t ivData[16] = {};
 
     struct DlpCipherParam param = {
@@ -1206,7 +1252,7 @@ HWTEST_F(DlpFileTest, DoDlpContentCryptyOperation002, TestSize.Level0)
 HWTEST_F(DlpFileTest, DoDlpContentCryptyOperation003, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DoDlpContentCryptyOperation003");
-    DlpFile testFile(1000, DLP_TEST_DIR, 0, false, "txt");
+    DlpRawFile testFile(1000, "txt");
 
     initDlpFileCiper(testFile);
 
@@ -1215,7 +1261,7 @@ HWTEST_F(DlpFileTest, DoDlpContentCryptyOperation003, TestSize.Level0)
     uint8_t buffer[40] = {1};
     write(fd, buffer, 40);
     lseek(fd, 0, SEEK_SET);
-    EXPECT_EQ(DLP_PARSE_ERROR_FILE_OPERATE_FAIL, testFile.DoDlpContentCryptyOperation(fd, 1000, 0, 10, true));
+    EXPECT_EQ(DLP_OK, testFile.DoDlpContentCryptyOperation(fd, 1000, 0, 10, true));
     close(fd);
     unlink("/data/fuse_test.txt");
 }
@@ -1229,7 +1275,7 @@ HWTEST_F(DlpFileTest, DoDlpContentCryptyOperation003, TestSize.Level0)
 HWTEST_F(DlpFileTest, GenFile001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "GenFile001");
-    DlpFile testFile(1000, DLP_TEST_DIR, 0, false, "txt");
+    DlpRawFile testFile(1000, "txt");
 
     EXPECT_EQ(DLP_PARSE_ERROR_VALUE_INVALID, testFile.GenFile(-1));
 
@@ -1254,7 +1300,7 @@ HWTEST_F(DlpFileTest, GenFile002, TestSize.Level0)
     int fdDlp = open("/data/fuse_test_dlp.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
     ASSERT_NE(fdDlp, -1);
 
-    DlpFile testFile(fdDlp, DLP_TEST_DIR, 0, false, "txt");
+    DlpRawFile testFile(fdDlp, "txt");
     initDlpFileCiper(testFile);
 
     DlpCMockCondition condition;
@@ -1313,7 +1359,7 @@ HWTEST_F(DlpFileTest, RemoveDlpPermission001, TestSize.Level0)
     int fdDlp = open("/data/fuse_test_dlp.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
     ASSERT_NE(fdDlp, -1);
 
-    DlpFile testFile(fdDlp, DLP_TEST_DIR, 0, false, "txt");
+    DlpRawFile testFile(fdDlp, "txt");
     initDlpFileCiper(testFile);
 
     // isFuseLink_ true
@@ -1380,7 +1426,7 @@ HWTEST_F(DlpFileTest, DlpFileRead001, TestSize.Level0)
     int fdDlp = open("/data/fuse_test_dlp.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
     ASSERT_NE(fdDlp, -1);
 
-    DlpFile testFile(fdDlp, DLP_TEST_DIR, 0, false, "txt");
+    DlpRawFile testFile(fdDlp, "txt");
     initDlpFileCiper(testFile);
     int32_t uid = getuid();
     bool hasRead = true;
@@ -1389,7 +1435,7 @@ HWTEST_F(DlpFileTest, DlpFileRead001, TestSize.Level0)
 
     uint8_t buffer[16] = {};
     EXPECT_EQ(DLP_PARSE_ERROR_VALUE_INVALID, testFile.DlpFileRead(0, buffer, 0, hasRead, uid));
-    EXPECT_EQ(DLP_PARSE_ERROR_VALUE_INVALID, testFile.DlpFileRead(DLP_MAX_CONTENT_SIZE, buffer, 1, hasRead, uid));
+    EXPECT_EQ(DLP_PARSE_ERROR_VALUE_INVALID, testFile.DlpFileRead(DLP_MAX_RAW_CONTENT_SIZE, buffer, 1, hasRead, uid));
     EXPECT_EQ(DLP_PARSE_ERROR_VALUE_INVALID, testFile.DlpFileRead(0, buffer, DLP_FUSE_MAX_BUFFLEN + 1, hasRead, uid));
 
     testFile.dlpFd_ = -1;
@@ -1442,7 +1488,7 @@ HWTEST_F(DlpFileTest, WriteFirstBlockData001, TestSize.Level0)
     ASSERT_NE(fdPlain, -1);
     int fdDlp = open("/data/fuse_test_dlp.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
     ASSERT_NE(fdDlp, -1);
-    DlpFile testFile(fdDlp, DLP_TEST_DIR, 0, false, "txt");
+    DlpRawFile testFile(fdDlp, "txt");
     initDlpFileCiper(testFile);
     uint8_t writeBuffer[16] = {0x1};
 
@@ -1504,7 +1550,7 @@ HWTEST_F(DlpFileTest, DoDlpFileWrite001, TestSize.Level0)
     ASSERT_NE(fdPlain, -1);
     int fdDlp = open("/data/fuse_test_dlp.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
     ASSERT_NE(fdDlp, -1);
-    DlpFile testFile(fdDlp, DLP_TEST_DIR, 0, false, "txt");
+    DlpRawFile testFile(fdDlp, "txt");
     initDlpFileCiper(testFile);
     uint8_t writeBuffer[18] = {0x1};
 
@@ -1557,7 +1603,7 @@ HWTEST_F(DlpFileTest, GetFsContentSize001, TestSize.Level0)
     ASSERT_NE(fdPlain, -1);
     int fdDlp = open("/data/fuse_test_dlp.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
     ASSERT_NE(fdDlp, -1);
-    DlpFile testFile(fdDlp, DLP_TEST_DIR, 0, false, "txt");
+    DlpRawFile testFile(fdDlp, "txt");
     initDlpFileCiper(testFile);
 
     testFile.head_.txtOffset = 16;
@@ -1582,7 +1628,7 @@ HWTEST_F(DlpFileTest, UpdateDlpFileContentSize001, TestSize.Level0)
     ASSERT_NE(fdPlain, -1);
     int fdDlp = open("/data/fuse_test_dlp.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
     ASSERT_NE(fdDlp, -1);
-    DlpFile testFile(fdDlp, DLP_TEST_DIR, 0, false, "txt");
+    DlpRawFile testFile(fdDlp, "txt");
     initDlpFileCiper(testFile);
 
     testFile.head_.txtOffset = 16;
@@ -1592,12 +1638,12 @@ HWTEST_F(DlpFileTest, UpdateDlpFileContentSize001, TestSize.Level0)
     DlpCMockCondition condition;
     condition.mockSequence = { true };
     SetMockConditions("lseek", condition);
-    EXPECT_EQ(DLP_PARSE_ERROR_FILE_OPERATE_FAIL, testFile.UpdateDlpFileContentSize());
+    EXPECT_EQ(DLP_PARSE_ERROR_FILE_FORMAT_ERROR, testFile.UpdateDlpFileContentSize());
     CleanMockConditions();
 
     condition.mockSequence = { true };
     SetMockConditions("write", condition);
-    EXPECT_EQ(DLP_PARSE_ERROR_FILE_OPERATE_FAIL, testFile.UpdateDlpFileContentSize());
+    EXPECT_EQ(DLP_PARSE_ERROR_FILE_FORMAT_ERROR, testFile.UpdateDlpFileContentSize());
     CleanMockConditions();
 
     close(fdPlain);
@@ -1615,7 +1661,7 @@ HWTEST_F(DlpFileTest, UpdateDlpFileContentSize001, TestSize.Level0)
 HWTEST_F(DlpFileTest, FillHoleData001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "FillHoleData001");
-    DlpFile testFile(-1, DLP_TEST_DIR, 0, false, "txt");
+    DlpRawFile testFile(-1, "txt");
     ASSERT_EQ(DLP_PARSE_ERROR_FILE_OPERATE_FAIL, testFile.FillHoleData(0, 16));
 }
 
@@ -1632,7 +1678,7 @@ HWTEST_F(DlpFileTest, DlpFileWrite001, TestSize.Level0)
     ASSERT_NE(fdPlain, -1);
     int fdDlp = open("/data/fuse_test_dlp.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
     ASSERT_NE(fdDlp, -1);
-    DlpFile testFile(fdDlp, DLP_TEST_DIR, 0, false, "txt");
+    DlpRawFile testFile(fdDlp, "txt");
     initDlpFileCiper(testFile);
     uint8_t writeBuffer[16] = {0x1};
 
@@ -1644,7 +1690,7 @@ HWTEST_F(DlpFileTest, DlpFileWrite001, TestSize.Level0)
 
     EXPECT_EQ(DLP_PARSE_ERROR_VALUE_INVALID, testFile.DlpFileWrite(4, nullptr, 16));
     EXPECT_EQ(DLP_PARSE_ERROR_VALUE_INVALID, testFile.DlpFileWrite(4, writeBuffer, 0));
-    EXPECT_EQ(DLP_PARSE_ERROR_VALUE_INVALID, testFile.DlpFileWrite(DLP_MAX_CONTENT_SIZE, writeBuffer, 1));
+    EXPECT_EQ(DLP_PARSE_ERROR_VALUE_INVALID, testFile.DlpFileWrite(DLP_MAX_RAW_CONTENT_SIZE, writeBuffer, 1));
     EXPECT_EQ(DLP_PARSE_ERROR_VALUE_INVALID, testFile.DlpFileWrite(4, writeBuffer, DLP_FUSE_MAX_BUFFLEN + 1));
 
     testFile.dlpFd_ = -1;
@@ -1681,7 +1727,7 @@ HWTEST_F(DlpFileTest, Truncate001, TestSize.Level0)
     ASSERT_NE(fdPlain, -1);
     int fdDlp = open("/data/fuse_test_dlp.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
     ASSERT_NE(fdDlp, -1);
-    DlpFile testFile(fdDlp, DLP_TEST_DIR, 0, false, "txt");
+    DlpRawFile testFile(fdDlp, "txt");
     initDlpFileCiper(testFile);
 
     testFile.head_.txtOffset = 0;
@@ -1702,7 +1748,7 @@ HWTEST_F(DlpFileTest, Truncate001, TestSize.Level0)
     DlpCMockCondition condition;
     condition.mockSequence = { true };
     SetMockConditions("lseek", condition);
-    EXPECT_EQ(DLP_PARSE_ERROR_FILE_OPERATE_FAIL, testFile.Truncate(16));
+    EXPECT_EQ(DLP_OK, testFile.Truncate(16));
     CleanMockConditions();
     close(fdPlain);
     close(fdDlp);
@@ -1719,7 +1765,7 @@ HWTEST_F(DlpFileTest, Truncate001, TestSize.Level0)
 HWTEST_F(DlpFileTest, DoDlpContentCopyOperation001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "DoDlpContentCopyOperation001");
-    DlpFile testFile(1000, DLP_TEST_DIR, 0, false, "txt");
+    DlpZipFile testFile(1000, DLP_TEST_DIR, 0, "txt");
     uint8_t ivData[16] = {};
 
     struct DlpCipherParam param = {
@@ -1757,14 +1803,14 @@ HWTEST_F(DlpFileTest, CheckDlpFile001, TestSize.Level0)
     DLP_LOG_INFO(LABEL, "CheckDlpFile001");
     int fdDlp = open("/data/fuse_test_dlp.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
     ASSERT_NE(fdDlp, -1);
-    DlpFile testFile(fdDlp, DLP_TEST_DIR, 0, false, "txt");
+    DlpRawFile testFile(fdDlp, "txt");
     testFile.head_.certSize = 10;
     testFile.head_.contactAccountSize = 10;
     testFile.head_.contactAccountOffset = sizeof(struct DlpHeader) + 10;
     testFile.head_.txtOffset = sizeof(struct DlpHeader) + 10 + 10;
     testFile.head_.txtSize = 0;
     // dlp file version not exist
-    testFile.head_.version = 99;
+    testFile.version_ = 99;
     write(fdDlp, &testFile.head_, sizeof(struct DlpHeader));
     lseek(fdDlp, 0, SEEK_SET);
     int res = testFile.CheckDlpFile();
@@ -1781,11 +1827,11 @@ HWTEST_F(DlpFileTest, CheckDlpFile001, TestSize.Level0)
 HWTEST_F(DlpFileTest, NeedAdapter001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "NeedAdapter001");
-    DlpFile testFile(1000, DLP_TEST_DIR, 0, false, "txt");
+    DlpRawFile testFile(1000, "txt");
     ASSERT_FALSE(testFile.NeedAdapter());
-    testFile.head_.version = 1;
+    testFile.version_ = 1;
     ASSERT_TRUE(testFile.NeedAdapter());
-    testFile.head_.version = 2;
+    testFile.version_ = 2;
     ASSERT_FALSE(testFile.NeedAdapter());
 }
 
@@ -1803,7 +1849,7 @@ HWTEST_F(DlpFileTest, GenZipFile001, TestSize.Level0)
     int fdDlp = open("/data/fuse_test_dlp.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
     ASSERT_NE(fdDlp, -1);
 
-    DlpFile testFile(fdDlp, DLP_TEST_DIR, 0, true, "txt");
+    DlpZipFile testFile(fdDlp, DLP_TEST_DIR, 0, "txt");
     initDlpFileCiper(testFile);
 
     EXPECT_EQ(DLP_OK, testFile.GenFile(fdPlain));
@@ -1828,7 +1874,7 @@ HWTEST_F(DlpFileTest, CleanTmpFile001, TestSize.Level0)
     int fdDlp = open("/data/fuse_test_dlp.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
     ASSERT_NE(fdDlp, -1);
 
-    DlpFile testFile(fdDlp, DLP_TEST_DIR, 0, true, "txt");
+    DlpZipFile testFile(fdDlp, DLP_TEST_DIR, 0, "txt");
     initDlpFileCiper(testFile);
     EXPECT_EQ(true, testFile.CleanTmpFile());
     close(fdPlain);
@@ -1851,7 +1897,7 @@ HWTEST_F(DlpFileTest, ParseDlpInfo001, TestSize.Level0)
     int fdDlp = open("/data/fuse_test_dlp.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
     ASSERT_NE(fdDlp, -1);
 
-    DlpFile testFile(fdDlp, DLP_TEST_DIR, 0, true, "txt");
+    DlpZipFile testFile(fdDlp, DLP_TEST_DIR, 0, "txt");
     initDlpFileCiper(testFile);
 
     testFile.contactAccount_ = "aa";
@@ -1860,8 +1906,8 @@ HWTEST_F(DlpFileTest, ParseDlpInfo001, TestSize.Level0)
     int fdDlp2 = open("/data/fuse_test_dlp.txt", O_RDWR);
     ASSERT_NE(fdDlp2, -1);
 
-    DlpFile testFile2(fdDlp2, DLP_TEST_DIR, 1, true, "txt");
-    EXPECT_EQ(DLP_OK, testFile2.UnzipDlpFile());
+    DlpZipFile testFile2(fdDlp2, DLP_TEST_DIR, 1, "txt");
+    EXPECT_EQ(DLP_OK, testFile2.ProcessDlpFile());
     char cwd[PATH_MAX] = {0};
     (void)getcwd(cwd, PATH_MAX);
     std::string path = DLP_TEST_DIR + "/1";
@@ -1908,7 +1954,7 @@ HWTEST_F(DlpFileTest, ParseDlpInfo002, TestSize.Level0)
     int fdDlp = open("/data/fuse_test_dlp.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
     ASSERT_NE(fdDlp, -1);
 
-    DlpFile testFile(fdDlp, DLP_TEST_DIR, 0, true, "txt");
+    DlpZipFile testFile(fdDlp, DLP_TEST_DIR, 0, "txt");
     initDlpFileCiper(testFile);
     testFile.contactAccount_ = "aa";
     EXPECT_EQ(DLP_OK, testFile.GenFile(fdPlain));
@@ -1916,8 +1962,8 @@ HWTEST_F(DlpFileTest, ParseDlpInfo002, TestSize.Level0)
     int fdDlp2 = open("/data/fuse_test_dlp.txt", O_RDWR);
     ASSERT_NE(fdDlp2, -1);
 
-    DlpFile testFile2(fdDlp2, DLP_TEST_DIR, 1, true, "txt");
-    EXPECT_EQ(DLP_OK, testFile2.UnzipDlpFile());
+    DlpZipFile testFile2(fdDlp2, DLP_TEST_DIR, 1, "txt");
+    EXPECT_EQ(DLP_OK, testFile2.ProcessDlpFile());
     char cwd[PATH_MAX] = {0};
     (void)getcwd(cwd, PATH_MAX);
     std::string path = DLP_TEST_DIR + "/1";
@@ -1967,7 +2013,7 @@ HWTEST_F(DlpFileTest, ParseDlpInfo003, TestSize.Level0)
     int fdDlp = open("/data/fuse_test_dlp.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
     ASSERT_NE(fdDlp, -1);
 
-    DlpFile testFile(fdDlp, DLP_TEST_DIR, 0, true, "txt");
+    DlpZipFile testFile(fdDlp, DLP_TEST_DIR, 0, "txt");
     initDlpFileCiper(testFile);
     testFile.contactAccount_ = "aa";
     EXPECT_EQ(DLP_OK, testFile.GenFile(fdPlain));
@@ -1975,8 +2021,8 @@ HWTEST_F(DlpFileTest, ParseDlpInfo003, TestSize.Level0)
     int fdDlp2 = open("/data/fuse_test_dlp.txt", O_RDWR);
     ASSERT_NE(fdDlp2, -1);
 
-    DlpFile testFile2(fdDlp2, DLP_TEST_DIR, 1, true, "txt");
-    EXPECT_EQ(DLP_OK, testFile2.UnzipDlpFile());
+    DlpZipFile testFile2(fdDlp2, DLP_TEST_DIR, 1, "txt");
+    EXPECT_EQ(DLP_OK, testFile2.ProcessDlpFile());
     char cwd[PATH_MAX] = {0};
     (void)getcwd(cwd, PATH_MAX);
     std::string path = DLP_TEST_DIR + "/1";
@@ -2026,7 +2072,7 @@ HWTEST_F(DlpFileTest, ParseDlpInfo004, TestSize.Level0)
     int fdDlp = open("/data/fuse_test_dlp.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
     ASSERT_NE(fdDlp, -1);
 
-    DlpFile testFile(fdDlp, DLP_TEST_DIR, 0, true, "txt");
+    DlpZipFile testFile(fdDlp, DLP_TEST_DIR, 0, "txt");
     initDlpFileCiper(testFile);
     testFile.contactAccount_ = "aa";
     EXPECT_EQ(DLP_OK, testFile.GenFile(fdPlain));
@@ -2034,8 +2080,8 @@ HWTEST_F(DlpFileTest, ParseDlpInfo004, TestSize.Level0)
     int fdDlp2 = open("/data/fuse_test_dlp.txt", O_RDWR);
     ASSERT_NE(fdDlp2, -1);
 
-    DlpFile testFile2(fdDlp2, DLP_TEST_DIR, 1, true, "txt");
-    EXPECT_EQ(DLP_OK, testFile2.UnzipDlpFile());
+    DlpZipFile testFile2(fdDlp2, DLP_TEST_DIR, 1, "txt");
+    EXPECT_EQ(DLP_OK, testFile2.ProcessDlpFile());
     char cwd[PATH_MAX] = {0};
     (void)getcwd(cwd, PATH_MAX);
     std::string path = DLP_TEST_DIR + "/1";
@@ -2086,7 +2132,7 @@ HWTEST_F(DlpFileTest, ParseDlpInfo005, TestSize.Level0)
     int fdDlp = open("/data/fuse_test_dlp.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
     ASSERT_NE(fdDlp, -1);
 
-    DlpFile testFile(fdDlp, DLP_TEST_DIR, 0, true, "txt");
+    DlpZipFile testFile(fdDlp, DLP_TEST_DIR, 0, "txt");
     initDlpFileCiper(testFile);
     testFile.contactAccount_ = "aa";
     EXPECT_EQ(DLP_OK, testFile.GenFile(fdPlain));
@@ -2094,8 +2140,8 @@ HWTEST_F(DlpFileTest, ParseDlpInfo005, TestSize.Level0)
     int fdDlp2 = open("/data/fuse_test_dlp.txt", O_RDWR);
     ASSERT_NE(fdDlp2, -1);
 
-    DlpFile testFile2(fdDlp2, DLP_TEST_DIR, 1, true, "txt");
-    EXPECT_EQ(DLP_OK, testFile2.UnzipDlpFile());
+    DlpZipFile testFile2(fdDlp2, DLP_TEST_DIR, 1, "txt");
+    EXPECT_EQ(DLP_OK, testFile2.ProcessDlpFile());
     char cwd[PATH_MAX] = {0};
     (void)getcwd(cwd, PATH_MAX);
     std::string path = DLP_TEST_DIR + "/1";
@@ -2146,7 +2192,7 @@ HWTEST_F(DlpFileTest, ParseCert001, TestSize.Level0)
     int fdDlp = open("/data/fuse_test_dlp.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
     EXPECT_NE(fdDlp, -1);
 
-    DlpFile testFile(fdDlp, DLP_TEST_DIR, 0, true, "txt");
+    DlpZipFile testFile(fdDlp, DLP_TEST_DIR, 0, "txt");
     initDlpFileCiper(testFile);
     testFile.contactAccount_ = "aa";
     EXPECT_EQ(DLP_OK, testFile.GenFile(fdPlain));
@@ -2154,8 +2200,8 @@ HWTEST_F(DlpFileTest, ParseCert001, TestSize.Level0)
     int fdDlp2 = open("/data/fuse_test_dlp.txt", O_RDWR);
     EXPECT_NE(fdDlp2, -1);
 
-    DlpFile testFile2(fdDlp2, DLP_TEST_DIR, 1, true, "txt");
-    EXPECT_EQ(DLP_OK, testFile2.UnzipDlpFile());
+    DlpZipFile testFile2(fdDlp2, DLP_TEST_DIR, 1, "txt");
+    EXPECT_EQ(DLP_OK, testFile2.ProcessDlpFile());
     char cwd[PATH_MAX] = {0};
     (void)getcwd(cwd, PATH_MAX);
     std::string path = DLP_TEST_DIR + "/1";
@@ -2197,7 +2243,7 @@ HWTEST_F(DlpFileTest, ParseEncData001, TestSize.Level0)
     int fdDlp = open("/data/fuse_test_dlp.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
     EXPECT_NE(fdDlp, -1);
 
-    DlpFile testFile(fdDlp, DLP_TEST_DIR, 0, true, "txt");
+    DlpZipFile testFile(fdDlp, DLP_TEST_DIR, 0, "txt");
     initDlpFileCiper(testFile);
     testFile.contactAccount_ = "aa";
     EXPECT_EQ(DLP_OK, testFile.GenFile(fdPlain));
@@ -2205,8 +2251,8 @@ HWTEST_F(DlpFileTest, ParseEncData001, TestSize.Level0)
     int fdDlp2 = open("/data/fuse_test_dlp.txt", O_RDWR);
     EXPECT_NE(fdDlp2, -1);
 
-    DlpFile testFile2(fdDlp2, DLP_TEST_DIR, 1, true, "txt");
-    EXPECT_EQ(DLP_OK, testFile2.UnzipDlpFile());
+    DlpZipFile testFile2(fdDlp2, DLP_TEST_DIR, 1, "txt");
+    EXPECT_EQ(DLP_OK, testFile2.ProcessDlpFile());
     char cwd[PATH_MAX] = {0};
     (void)getcwd(cwd, PATH_MAX);
     std::string path = DLP_TEST_DIR + "/1";
@@ -2239,16 +2285,16 @@ HWTEST_F(DlpFileTest, UnzipDlpFile001, TestSize.Level0)
     int fdDlp = open("/data/fuse_test_dlp.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
     EXPECT_NE(fdDlp, -1);
 
-    DlpFile testFile(fdDlp, DLP_TEST_DIR, 0, true, "txt");
+    DlpZipFile testFile(fdDlp, DLP_TEST_DIR, 0, "txt");
     initDlpFileCiper(testFile);
     testFile.contactAccount_ = "aa";
     EXPECT_EQ(DLP_OK, testFile.GenFile(fdPlain));
     int fdDlp2 = open("/data/fuse_test_dlp.txt", O_RDWR, S_IRWXU);
     EXPECT_NE(fdDlp2, -1);
 
-    DlpFile testFile2(fdDlp2, DLP_TEST_DIR, 1, true, "txt");
+    DlpZipFile testFile2(fdDlp2, DLP_TEST_DIR, 1, "txt");
     initDlpFileCiper(testFile2);
-    EXPECT_EQ(DLP_OK, testFile2.UnzipDlpFile());
+    EXPECT_EQ(DLP_OK, testFile2.ProcessDlpFile());
 
     int fdDlp3 = open("/data/fuse_test_dlp.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
     EXPECT_NE(fdDlp3, -1);
@@ -2260,18 +2306,18 @@ HWTEST_F(DlpFileTest, UnzipDlpFile001, TestSize.Level0)
     dlpRet = AddBuffToZip(tmp.c_str(), tmp.size(), "dlp_cert",
         "/data/fuse_test_dlp.txt");
     EXPECT_EQ(dlpRet, 0);
-    EXPECT_EQ(DLP_PARSE_ERROR_FILE_OPERATE_FAIL, testFile2.UnzipDlpFile());
+    EXPECT_EQ(DLP_PARSE_ERROR_FILE_OPERATE_FAIL, testFile2.ProcessDlpFile());
     dlpRet = ftruncate(fdDlp3, 0);
     EXPECT_NE(dlpRet, -1);
 
     dlpRet = AddBuffToZip(tmp.c_str(), tmp.size(), "dlp_general_info",
         "/data/fuse_test_dlp.txt");
     EXPECT_EQ(dlpRet, 0);
-    EXPECT_EQ(DLP_PARSE_ERROR_FILE_OPERATE_FAIL, testFile2.UnzipDlpFile());
+    EXPECT_EQ(DLP_PARSE_ERROR_FILE_OPERATE_FAIL, testFile2.ProcessDlpFile());
 
     dlpRet = ftruncate(fdDlp3, 0);
     EXPECT_NE(dlpRet, -1);
-    EXPECT_EQ(DLP_PARSE_ERROR_FILE_OPERATE_FAIL, testFile2.UnzipDlpFile());
+    EXPECT_EQ(DLP_PARSE_ERROR_FILE_OPERATE_FAIL, testFile2.ProcessDlpFile());
 
     close(fdPlain);
     close(fdDlp);
@@ -2295,12 +2341,12 @@ HWTEST_F(DlpFileTest, GenFileZip001, TestSize.Level0)
     int fdDlp = open("/data/fuse_test_dlp.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
     EXPECT_NE(fdDlp, -1);
 
-    DlpFile testFile(fdDlp, DLP_TEST_DIR, 0, true, "txt");
+    DlpZipFile testFile(fdDlp, DLP_TEST_DIR, 0, "txt");
     initDlpFileCiper(testFile);
     testFile.contactAccount_ = "aa";
     EXPECT_EQ(DLP_OK, testFile.GenFile(fdPlain));
 
-    DlpFile testFile2(fdDlp, DLP_TEST_DIR, 0, false, "txt");
+    DlpRawFile testFile2(fdDlp, "txt");
     initDlpFileCiper(testFile2);
     testFile2.contactAccount_ = "aa";
     EXPECT_EQ(DLP_OK, testFile2.GenFile(fdPlain));
@@ -2330,12 +2376,12 @@ HWTEST_F(DlpFileTest, RemoveDlpPermissionZip001, TestSize.Level0)
     int fdDlp = open("/data/fuse_test_dlp.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
     EXPECT_NE(fdDlp, -1);
 
-    DlpFile testFile(fdDlp, DLP_TEST_DIR, 0, true, "txt");
+    DlpZipFile testFile(fdDlp, DLP_TEST_DIR, 0, "txt");
     initDlpFileCiper(testFile);
     testFile.contactAccount_ = "aa";
     EXPECT_EQ(DLP_OK, testFile.GenFile(fdPlain));
     
-    DlpFile testFile2(fdDlp, DLP_TEST_DIR, 1, false, "txt");
+    DlpRawFile testFile2(fdDlp, "txt");
     initDlpFileCiper(testFile2);
     testFile2.contactAccount_ = "aa";
     EXPECT_EQ(DLP_OK, testFile2.GenFile(fdPlain));
@@ -2345,7 +2391,7 @@ HWTEST_F(DlpFileTest, RemoveDlpPermissionZip001, TestSize.Level0)
     int fdDlp2 = open("/data/fuse_test_dlp.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
     EXPECT_NE(fdDlp2, -1);
 
-    DlpFile testFile3(fdDlp, DLP_TEST_DIR, 2, true, "txt");
+    DlpZipFile testFile3(fdDlp, DLP_TEST_DIR, 2, "txt");
     initDlpFileCiper(testFile3);
     testFile3.contactAccount_ = "aa";
     EXPECT_EQ(DLP_OK, testFile3.GenFile(fdPlain));
@@ -2373,28 +2419,28 @@ HWTEST_F(DlpFileTest, GenFileInZip001, TestSize.Level0)
     int fdDlp = open("/data/fuse_test_dlp.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
     EXPECT_NE(fdDlp, -1);
 
-    DlpFile testFile(fdDlp, DLP_TEST_DIR, 0, true, "txt");
+    DlpZipFile testFile(fdDlp, DLP_TEST_DIR, 0, "txt");
     initDlpFileCiper(testFile);
     testFile.contactAccount_ = "aa";
-    EXPECT_EQ(DLP_OK, testFile.GenFileInZip(fdPlain));
+    EXPECT_EQ(DLP_OK, testFile.GenFile(fdPlain));
 
-    DlpFile testFile2(fdDlp, DLP_TEST_DIR, 1, false, "txt");
+    DlpRawFile testFile2(fdDlp, "txt");
     initDlpFileCiper(testFile2);
     testFile2.contactAccount_ = "aa";
-    EXPECT_EQ(DLP_OK, testFile2.GenFileInZip(fdPlain));
+    EXPECT_EQ(DLP_OK, testFile2.GenFile(fdPlain));
 
     int fdDlp2 = open("/data/fuse_test_dlp.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
     EXPECT_NE(fdDlp2, -1);
 
-    DlpFile testFile3(fdDlp, DLP_TEST_DIR, 2, true, "txt");
+    DlpZipFile testFile3(fdDlp, DLP_TEST_DIR, 2, "txt");
     initDlpFileCiper(testFile3);
     testFile3.contactAccount_ = "aa";
-    EXPECT_EQ(DLP_OK, testFile3.GenFileInZip(fdPlain));
+    EXPECT_EQ(DLP_OK, testFile3.GenFile(fdPlain));
 
-    DlpFile testFile4(-1, DLP_TEST_DIR, 2, false, "txt");
+    DlpRawFile testFile4(-1, "txt");
     initDlpFileCiper(testFile4);
     testFile4.contactAccount_ = "aa";
-    EXPECT_EQ(DLP_OK, testFile4.GenFileInZip(-1));
+    EXPECT_EQ(DLP_PARSE_ERROR_VALUE_INVALID, testFile4.GenFile(-1));
 
     close(fdPlain);
     close(fdDlp);
@@ -2418,12 +2464,12 @@ HWTEST_F(DlpFileTest, GenEncData001, TestSize.Level0)
     int fdDlp = open("/data/fuse_test_dlp.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
     EXPECT_NE(fdDlp, -1);
 
-    DlpFile testFile(fdDlp, DLP_TEST_DIR, 0, true, "txt");
+    DlpZipFile testFile(fdDlp, DLP_TEST_DIR, 0, "txt");
     initDlpFileCiper(testFile);
     testFile.contactAccount_ = "aa";
     EXPECT_EQ(-1, testFile.GenEncData(-1));
 
-    DlpFile testFile2(fdDlp, DLP_TEST_DIR, 1, true, "txt");
+    DlpZipFile testFile2(fdDlp, DLP_TEST_DIR, 1, "txt");
     initDlpFileCiper(testFile2);
     testFile2.contactAccount_ = "aa";
     EXPECT_EQ(true, testFile2.GenEncData(fdPlain) >= 0);
@@ -2448,14 +2494,14 @@ HWTEST_F(DlpFileTest, UpdateCertAndText001, TestSize.Level0)
 
     int fdDlp = open("/data/fuse_test_dlp.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
     EXPECT_NE(fdDlp, -1);
-    DlpFile testFile(fdDlp, DLP_TEST_DIR, 0, false, "txt");
+    DlpRawFile testFile(fdDlp, "txt");
     initDlpFileCiper(testFile);
 
     std::vector<uint8_t> cert;
     std::string workDir = "";
     DlpBlob certBlob;
 
-    EXPECT_EQ(DLP_PARSE_ERROR_MEMORY_OPERATE_FAIL, testFile.UpdateCertAndText(cert, workDir, certBlob));
+    EXPECT_EQ(DLP_PARSE_ERROR_MEMORY_OPERATE_FAIL, testFile.UpdateCertAndText(cert, certBlob));
 
     close(fdDlp);
 }
@@ -2472,7 +2518,7 @@ HWTEST_F(DlpFileTest, GetOfflineAccess001, TestSize.Level0)
 
     int fdDlp = open("/data/fuse_test_dlp.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
     EXPECT_NE(fdDlp, -1);
-    DlpFile testFile(fdDlp, DLP_TEST_DIR, 0, false, "txt");
+    DlpRawFile testFile(fdDlp, "txt");
     initDlpFileCiper(testFile);
 
     EXPECT_EQ(false, testFile.GetOfflineAccess());
@@ -2492,7 +2538,7 @@ HWTEST_F(DlpFileTest, GetOfflineCert001, TestSize.Level0)
 
     int fdDlp = open("/data/fuse_test_dlp.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
     EXPECT_NE(fdDlp, -1);
-    DlpFile testFile(fdDlp, DLP_TEST_DIR, 0, false, "txt");
+    DlpRawFile testFile(fdDlp, "txt");
     initDlpFileCiper(testFile);
 
     testFile.GetOfflineCert(offlineCert);

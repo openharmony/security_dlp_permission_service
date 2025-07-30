@@ -55,6 +55,14 @@ enum DLP_DIGEST_LEN {
 
 #define DLP_RANDOM_MAX_SIZE 1024
 
+const static uint32_t HIAE_STATE_SIZE = 256;
+
+typedef struct {
+    uint8_t state[HIAE_STATE_SIZE];
+    uint64_t msgLen;
+    uint64_t adLen;
+} HIAE_CipherCtx;
+
 enum DlpKeySize {
     DLP_AES_KEY_SIZE_128 = 128,
     DLP_AES_KEY_SIZE_192 = 192,
@@ -77,6 +85,7 @@ struct DlpUsageSpec {
 
 enum DlpCipherMode {
     DLP_MODE_CTR = 1,
+    DLP_MODE_HIAE = 2,
 };
 
 enum DlpKeyPadding {
@@ -137,6 +146,17 @@ int32_t DlpCtrModeIncreaeIvCounter(struct DlpBlob& iv, uint32_t count);
 int32_t DlpHmacEncodeForRaw(const DlpBlob& key, int32_t fd, uint64_t fileSize, DlpBlob& out);
 
 int32_t DlpHmacEncode(const DlpBlob& key, int32_t fd, DlpBlob& out);
+
+int32_t InitDlpHIAEMgr(void);
+
+void ClearDlpHIAEMgr(void);
+
+int32_t DlpHIAEEncrypt(const struct DlpBlob *key, const struct DlpUsageSpec *usageSpec, const uint32_t inLen,
+    const uint8_t *message, uint8_t *cipherText);
+
+int32_t DlpHIAEDecrypt(const struct DlpBlob *key, const struct DlpUsageSpec *usageSpec, const uint32_t inLen,
+    const uint8_t *message, uint8_t *plainText);
+
 #ifdef __cplusplus
 }
 #endif

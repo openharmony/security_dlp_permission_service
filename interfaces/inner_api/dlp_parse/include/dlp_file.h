@@ -35,11 +35,8 @@ static constexpr uint64_t DLP_MAX_RAW_CONTENT_SIZE = 0xffffffff;
 static constexpr uint32_t HOLE_BUFF_SIZE = 16 * 1024;
 static constexpr uint32_t HOLE_BUFF_SMALL_SIZE = 1 * 1024;
 static constexpr uint32_t MAX_HOLE_SIZE = 50 * 1024 * 1024; // 50M
-
-enum DlpOperation {
-    DLP_ENCRYPTION = 1,
-    DLP_DECRYPTION = 2,
-};
+static constexpr uint64_t DLP_MIN_HIAE_SIZE = 0xC0000000 - 0xA00000;
+static constexpr uint32_t HIAE_BLOCK_SIZE = 4 * 1024;  // 4k
 
 struct DlpCipher {
     struct DlpBlob encKey;
@@ -50,16 +47,19 @@ struct DlpCipher {
 
 struct DlpHeader {
     uint32_t magic;
-    uint32_t version;
+    uint32_t fileType;
     uint32_t offlineAccess;
+    uint32_t algType;
+    uint32_t certSize;
+    uint32_t hmacSize;
+    uint32_t contactAccountOffset;
+    uint32_t contactAccountSize;
+    uint32_t offlineCertSize;
     uint64_t txtOffset;
     uint64_t txtSize;
     uint64_t certOffset;
-    uint32_t certSize;
-    uint32_t contactAccountOffset;
-    uint32_t contactAccountSize;
+    uint64_t hmacOffset;
     uint64_t offlineCertOffset;
-    uint32_t offlineCertSize;
 };
 
 enum VALID_KEY_SIZE {
@@ -144,36 +144,39 @@ enum VALID_KEY_SIZE {
 
 class DlpFile {
 public:
-    DlpFile(int32_t dlpFd, const std::string &workDir, int64_t index, bool isZip, const std::string &realType);
-    ~DlpFile();
+    DlpFile(int32_t dlpFd, const std::string &realType);
+    virtual ~DlpFile();
 
     int32_t SetCipher(const struct DlpBlob& key, const struct DlpUsageSpec& spec, const struct DlpBlob& hmacKey);
-    int32_t ParseDlpHeader();
     void GetEncryptCert(struct DlpBlob& cert) const;
     void GetOfflineCert(struct DlpBlob& cert) const;
-    int32_t UpdateCertAndText(const std::vector<uint8_t>& cert, const std::string& workDir, struct DlpBlob certBlob);
-    int32_t SetEncryptCert(const struct DlpBlob& cert);
-    void SetOfflineAccess(bool flag);
     bool GetOfflineAccess();
-    int32_t GenFile(int32_t inPlainFileFd);
-    int32_t RemoveDlpPermission(int outPlainFileFd);
-    int32_t DlpFileRead(uint32_t offset, void* buf, uint32_t size, bool& hasRead, int32_t uid);
-    int32_t DlpFileWrite(uint64_t offset, void* buf, uint32_t size);
-    uint64_t GetFsContentSize() const;
     bool UpdateDlpFilePermission();
-    int32_t CheckDlpFile();
     bool NeedAdapter();
-    bool CleanTmpFile();
-    int32_t HmacCheck();
-    uint32_t GetOfflineCertSize(void);
-
     int32_t SetPolicy(const PermissionPolicy& policy);
+    virtual int32_t UpdateCertAndText(const std::vector<uint8_t>& cert, struct DlpBlob certBlob) = 0;
+    virtual int32_t SetEncryptCert(const struct DlpBlob& cert) = 0;
+    virtual void SetOfflineAccess(bool flag) = 0;
+    virtual int32_t RemoveDlpPermission(int outPlainFileFd) = 0;
+    virtual int32_t DlpFileRead(uint64_t offset, void* buf, uint32_t size, bool& hasRead, int32_t uid) = 0;
+    virtual int32_t DlpFileWrite(uint64_t offset, void* buf, uint32_t size) = 0;
+    virtual uint64_t GetFsContentSize() const = 0;
+    virtual int32_t CheckDlpFile() = 0;
+    virtual int32_t HmacCheck() = 0;
+    virtual uint32_t GetOfflineCertSize(void) = 0;
+    virtual int32_t SetContactAccount(const std::string& contactAccount) = 0;
+    virtual int32_t Truncate(uint64_t size) = 0;
+    virtual int32_t UpdateDlpFileContentSize() = 0;
+    virtual int32_t GenFile(int32_t inPlainFileFd) = 0;
+    virtual int32_t ProcessDlpFile() = 0;
+    virtual int32_t DoDlpContentCryptyOperation(int32_t inFd, int32_t outFd, uint64_t inOffset,
+                                                uint64_t inFileLen, bool isEncrypt) = 0;
+
     void GetPolicy(PermissionPolicy& policy) const
     {
         policy.CopyPermissionPolicy(policy_);
     };
 
-    int32_t SetContactAccount(const std::string& contactAccount);
     void GetContactAccount(std::string& contactAccount) const
     {
         contactAccount = contactAccount_;
@@ -194,68 +197,38 @@ public:
         return authPerm_;
     };
 
-    int32_t Truncate(uint64_t size);
     int32_t dlpFd_;
-
+    friend class DlpRawFile;
+    friend class DlpZipFile;
 private:
-    bool IsValidDlpHeader(const struct DlpHeader& head) const;
-    bool IsValidPadding(uint32_t padding);
-    bool IsValidCipher(const struct DlpBlob& key, const struct DlpUsageSpec& spec,
+    virtual bool IsValidCipher(const struct DlpBlob& key, const struct DlpUsageSpec& spec,
         const struct DlpBlob& hmacKey) const;
-    int32_t CopyBlobParam(const struct DlpBlob& src, struct DlpBlob& dst) const;
-    int32_t CleanBlobParam(struct DlpBlob& blob) const;
-    int32_t UpdateFileCertData();
-    int32_t PrepareBuff(struct DlpBlob& message1, struct DlpBlob& message2) const;
-    int32_t GetLocalAccountName(std::string& account) const;
-    int32_t GetDomainAccountName(std::string& account) const;
-    int32_t DoDlpContentCryptyOperation(int32_t inFd, int32_t outFd, uint64_t inOffset,
-        uint64_t inFileLen, bool isEncrypt);
-    int32_t DoDlpContentCopyOperation(int32_t inFd, int32_t outFd, uint64_t inOffset, uint64_t inFileLen);
-    int32_t DupUsageSpec(struct DlpUsageSpec& spec);
-    int32_t DoDlpBlockCryptOperation(struct DlpBlob& message1,
+    virtual int32_t CopyBlobParam(const struct DlpBlob& src, struct DlpBlob& dst) const;
+    virtual int32_t CleanBlobParam(struct DlpBlob& blob) const;
+    virtual int32_t PrepareBuff(struct DlpBlob& message1, struct DlpBlob& message2) const;
+    virtual int32_t GetLocalAccountName(std::string& account) const;
+    virtual int32_t GetDomainAccountName(std::string& account) const;
+    virtual int32_t DupUsageSpec(struct DlpUsageSpec& spec);
+    virtual int32_t DoDlpBlockCryptOperation(struct DlpBlob& message1,
         struct DlpBlob& message2, uint64_t offset, bool isEncrypt);
-    int32_t WriteFirstBlockData(uint64_t offset, void* buf, uint32_t size);
-    int32_t FillHoleData(uint64_t holeStart, uint64_t holeSize);
-    int32_t DoDlpFileWrite(uint64_t offset, void* buf, uint32_t size);
-    int32_t UpdateDlpFileContentSize();
-    bool ParseDlpInfo();
-    bool ParseCert();
-    bool ParseEncData();
+    virtual int32_t WriteFirstBlockData(uint64_t offset, void* buf, uint32_t size) = 0;
+    virtual int32_t FillHoleData(uint64_t holeStart, uint64_t holeSize);
+    virtual int32_t DoDlpFileWrite(uint64_t offset, void* buf, uint32_t size) = 0;
 
-    int32_t UnzipDlpFile();
-    int32_t GetDlpHmacAndGenFile(void);
-    int32_t ParseDlpHeaderInRaw();
-    int32_t GenEncData(int32_t inPlainFileFd);
-    int32_t GenFileInZip(int32_t inPlainFileFd);
-    int32_t DoWriteHmacAndCert(uint32_t hmacStrLen, std::string& hmacStr);
-    int32_t DoHmacAndCrypty(int32_t inPlainFileFd, off_t fileLen);
-    int32_t GenFileInRaw(int32_t inPlainFileFd);
-    int32_t RemoveDlpPermissionInZip(int32_t outPlainFileFd);
-    int32_t RemoveDlpPermissionInRaw(int32_t outPlainFileFd);
-    int32_t GetHmacVal(int32_t encFile, std::string& hmacStr);
-    int32_t GenerateHmacVal(int32_t encFile, struct DlpBlob& out);
-    int32_t AddGeneralInfoToBuff(int32_t encFile);
-
-    std::string workDir_ = "";
-    std::string dirIndex_;
     std::string realType_;
-    bool isZip_ = false;
     bool isFuseLink_;
     DLPFileAccess authPerm_;
-
-    std::vector<std::string> extraInfo_;
     int32_t encDataFd_;
 
-    // dlp parse format
-    struct DlpHeader head_;
     struct DlpBlob cert_;
     struct DlpBlob offlineCert_;
     struct DlpBlob hmac_;
-
     struct DlpCipher cipher_;
     // policy in certificate
     PermissionPolicy policy_;
     std::string contactAccount_;
+    uint32_t version_;
+    uint32_t offlineAccess_;
 };
 }  // namespace DlpPermission
 }  // namespace Security

@@ -65,10 +65,6 @@ static void FuzzTest(const uint8_t* data, size_t size)
     if (!datas.WriteInterfaceToken(DlpPermissionServiceStub::GetDescriptor())) {
         return;
     }
-    std::string appId(reinterpret_cast<const char*>(data + BUFFER_LENGTH), size - BUFFER_LENGTH);
-    if (!datas.WriteString(DLP_MANAGER_BUNDLE_NAME + appId)) {
-        return;
-    }
     Json certJson;
     InitCertJson(data, size, certJson);
     std::string certStr = certJson.dump();
@@ -82,6 +78,10 @@ static void FuzzTest(const uint8_t* data, size_t size)
     std::shared_ptr<ParseDlpCertificateCallback> callback = std::make_shared<ClientParseDlpCertificateCallback>();
     sptr<IDlpPermissionCallback> asyncStub = new (std::nothrow) DlpPermissionAsyncStub(callback);
     if (!datas.WriteRemoteObject(asyncStub->AsObject())) {
+        return;
+    }
+    std::string appId(reinterpret_cast<const char*>(data + BUFFER_LENGTH), size - BUFFER_LENGTH);
+    if (!datas.WriteString(DLP_MANAGER_BUNDLE_NAME + appId)) {
         return;
     }
     uint32_t flag = 0;
