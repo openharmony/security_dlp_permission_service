@@ -16,6 +16,7 @@
 #include "dlppermissionservicesnormal_fuzzer.h"
 
 #include <iostream>
+#include <fcntl.h>
 #include <openssl/rand.h>
 #include <string>
 #include <vector>
@@ -37,6 +38,7 @@ static const int32_t DEFAULT_USER_ID = 100;
 namespace OHOS {
 static constexpr int32_t SA_ID_DLP_PERMISSION_SERVICE = 3521;
 static constexpr uint8_t STATUS_NUM = 2;
+static const std::string CONFIGINGO = "configInfo";
 
 static void TestGenerateCert()
 {
@@ -197,6 +199,73 @@ static void TestSetSandboxConfig(const uint8_t* data, size_t size)
     service->OnRemoteRequest(code, datas, reply, option);
 }
 
+static void TestSetSandboxAppConfig(const uint8_t* data, size_t size)
+{
+    if ((data == nullptr) || (size == 0)) {
+        return;
+    }
+    std::string configInfo = CONFIGINGO;
+    auto service = std::make_shared<DlpPermissionService>(SA_ID_DLP_PERMISSION_SERVICE, data[0] % STATUS_NUM);
+    service->appStateObserver_ = new (std::nothrow) AppStateObserver();
+    service->SetSandboxAppConfig(configInfo);
+}
+
+static void TestUnRegisterDlpSandboxChangeCallback(const uint8_t* data, size_t size)
+{
+    if ((data == nullptr) || (size == 0)) {
+        return;
+    }
+    auto service = std::make_shared<DlpPermissionService>(SA_ID_DLP_PERMISSION_SERVICE, data[0] % STATUS_NUM);
+    service->appStateObserver_ = new (std::nothrow) AppStateObserver();
+    bool flag = false;
+    service->UnRegisterDlpSandboxChangeCallback(flag);
+    flag = true;
+    service->UnRegisterDlpSandboxChangeCallback(flag);
+}
+
+static void TestDump(const uint8_t* data, size_t size)
+{
+    if ((data == nullptr) || (size == 0)) {
+        return;
+    }
+    auto service = std::make_shared<DlpPermissionService>(SA_ID_DLP_PERMISSION_SERVICE, data[0] % STATUS_NUM);
+    service->appStateObserver_ = new (std::nothrow) AppStateObserver();
+    std::vector<std::u16string> args;
+    args.emplace_back(Str8ToStr16("-h"));
+    int32_t fd = -1;
+    service->Dump(fd, args);
+    fd = open("/data/fuse_test.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
+    service->Dump(fd, args);
+    args.clear();
+    args.emplace_back(Str8ToStr16("-d"));
+    service->Dump(fd, args);
+    args.clear();
+    args.emplace_back(Str8ToStr16("-n"));
+    service->Dump(fd, args);
+    close(fd);
+    unlink("/data/fuse_test.txt");
+}
+
+static void TestRemoveMDMPolicy(const uint8_t* data, size_t size)
+{
+    if ((data == nullptr) || (size == 0)) {
+        return;
+    }
+    auto service = std::make_shared<DlpPermissionService>(SA_ID_DLP_PERMISSION_SERVICE, data[0] % STATUS_NUM);
+    service->appStateObserver_ = new (std::nothrow) AppStateObserver();
+    service->RemoveMDMPolicy();
+}
+
+static void TestClearUnreservedSandbox(const uint8_t* data, size_t size)
+{
+    if ((data == nullptr) || (size == 0)) {
+        return;
+    }
+    auto service = std::make_shared<DlpPermissionService>(SA_ID_DLP_PERMISSION_SERVICE, data[0] % STATUS_NUM);
+    service->appStateObserver_ = new (std::nothrow) AppStateObserver();
+    service->ClearUnreservedSandbox();
+}
+
 bool DlpPermissionServicesNormalFuzzTest(const uint8_t* data, size_t size)
 {
     TestSetSandboxConfig(data, size);
@@ -207,6 +276,11 @@ bool DlpPermissionServicesNormalFuzzTest(const uint8_t* data, size_t size)
     TestRegisterRegisterDlpSandboxChangeCallback();
     TestRegisterRegisterOpenDlpFileCallback();
     TestUnRegisterUnregisterOpenDlpFileCallback();
+    TestSetSandboxAppConfig(data, size);
+    TestUnRegisterDlpSandboxChangeCallback(data, size);
+    TestDump(data, size);
+    TestRemoveMDMPolicy(data, size);
+    TestClearUnreservedSandbox(data, size);
     return true;
 }
 } // namespace OHOS
