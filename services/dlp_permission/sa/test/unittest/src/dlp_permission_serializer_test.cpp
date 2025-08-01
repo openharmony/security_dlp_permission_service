@@ -17,6 +17,7 @@
 #include <cerrno>
 #include <gtest/gtest.h>
 #include <securec.h>
+#include "dlp_os_account_mock.h"
 #include "dlp_permission.h"
 #include "dlp_permission_log.h"
 #define  private public
@@ -26,6 +27,7 @@
 using namespace testing::ext;
 using namespace OHOS;
 using namespace OHOS::Security::DlpPermission;
+using namespace OHOS::Security::DlpPermissionUnitTest;
 using namespace std;
 
 namespace {
@@ -135,6 +137,53 @@ HWTEST_F(DlpPermissionSerializerTest, SerializeDlpPermission003, TestSize.Level1
 
     ret = serialize.SerializeDlpPermission(policy3, permInfoJson);
     ASSERT_EQ(DLP_OK, ret);
+}
+
+/**
+ * @tc.name: SerializeDlpPermission004
+ * @tc.desc: SerializeDlpPermission test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionSerializerTest, SerializeDlpPermission004, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL, "SerializeDlpPermission004");
+    PermissionPolicy policy;
+    policy.ownerAccountType_ = OHOS::Security::DlpPermission::DOMAIN_ACCOUNT;
+    unordered_json permInfoJson;
+
+    DlpPermissionSerializer serialize;
+    int32_t ret = serialize.SerializeDlpPermission(policy, permInfoJson);
+    ASSERT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, ret);
+}
+
+/**
+ * @tc.name: SerializeDlpPermission005
+ * @tc.desc: SerializeDlpPermission test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionSerializerTest, SerializeDlpPermission005, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL, "SerializeDlpPermission005");
+    PermissionPolicy policy;
+    policy.ownerAccountType_ = OHOS::Security::DlpPermission::DOMAIN_ACCOUNT;
+    unordered_json permInfoJson;
+    std::string paramJson = R"({"parameters":{"adConfig":{"adDomain":"test"}}})";
+    SetAccountServerConfigParameters(paramJson);
+    DlpPermissionSerializer serialize;
+    int32_t ret = serialize.SerializeDlpPermission(policy, permInfoJson);
+    ASSERT_EQ(DLP_SERVICE_ERROR_JSON_OPERATE_FAIL, ret);
+
+    paramJson = R"({"adConfig":{"adDomain":"test"},"type":"AD"})";
+    SetAccountServerConfigParameters(paramJson);
+    ret = serialize.SerializeDlpPermission(policy, permInfoJson);
+    ASSERT_EQ(DLP_SERVICE_ERROR_JSON_OPERATE_FAIL, ret);
+
+    paramJson = R"({[]})";
+    SetAccountServerConfigParameters(paramJson);
+    ret = serialize.SerializeDlpPermission(policy, permInfoJson);
+    ASSERT_EQ(DLP_SERVICE_ERROR_JSON_OPERATE_FAIL, ret);
 }
 
 /**

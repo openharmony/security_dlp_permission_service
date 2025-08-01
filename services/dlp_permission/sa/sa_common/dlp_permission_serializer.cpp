@@ -15,6 +15,7 @@
 
 #include "dlp_permission_serializer.h"
 #include <cinttypes>
+#include "domain_account_client.h"
 #include "dlp_permission.h"
 #include "dlp_permission_log.h"
 #include "hex_string.h"
@@ -33,6 +34,8 @@ const std::string OWNER_ACCOUNT_ID = "ownerAccountId";
 const std::string VERSION_INDEX = "version";
 const std::string PERM_EXPIRY_TIME = "expireTime";
 const std::string PERM_DOMAIN = "domain";
+const std::string PARAMETER_KEY = "parameters";
+const std::string TYPE_KEY = "type";
 const std::string ACCOUNT_INDEX = "account";
 const std::string AESKEY = "filekey";
 const std::string AESKEY_LEN = "filekeyLen";
@@ -268,16 +271,29 @@ static int32_t SerializeDomainInfo(const PermissionPolicy& policy, unordered_jso
 
     AccountSA::DomainAccountInfo domainInfo;
     osAccountInfo.GetDomainInfo(domainInfo);
-
-    size_t pos = domainInfo.serverConfigId_.find(":");
-    if (pos == std::string::npos) {
-        DLP_LOG_ERROR(LABEL, "Get serverConfigId or domain failed");
+    AccountSA::DomainServerConfig config;
+    res = AccountSA::DomainAccountClient::GetInstance().GetAccountServerConfig(domainInfo, config);
+    if (res != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "GetAccountServerConfig failed, res = %{public}d", res);
         return DLP_PARSE_ERROR_ACCOUNT_INVALID;
     }
-    std::string domainStr = domainInfo.serverConfigId_.substr(0, pos);
-    permInfoJson[PERM_DOMAIN] = domainStr;
+    auto serverConfigJsonObj = nlohmann::json::parse(config.parameters_, nullptr, false);
+    if (serverConfigJsonObj.is_discarded() || (!serverConfigJsonObj.is_object())) {
+        DLP_LOG_ERROR(LABEL, "JsonObj is discarded");
+        return DLP_SERVICE_ERROR_JSON_OPERATE_FAIL;
+    }
+    if (!serverConfigJsonObj.contains(PARAMETER_KEY) || !serverConfigJsonObj[PARAMETER_KEY].is_object()) {
+        DLP_LOG_ERROR(LABEL, "PARAMETER_KEY is missing or not an object");
+        return DLP_SERVICE_ERROR_JSON_OPERATE_FAIL;
+    }
+    auto parameterObj = serverConfigJsonObj[PARAMETER_KEY];
+    if (!parameterObj.contains(TYPE_KEY) || !parameterObj[TYPE_KEY].is_string()) {
+        DLP_LOG_ERROR(LABEL, "TYPE_KEY is missing or not a string");
+        return DLP_SERVICE_ERROR_JSON_OPERATE_FAIL;
+    }
+    std::string typeStr = parameterObj[TYPE_KEY];
+    permInfoJson[PERM_DOMAIN] = typeStr;
     permInfoJson[VERSION_INDEX] = DOMAIN_VERSION;
-
     return DLP_OK;
 }
 
