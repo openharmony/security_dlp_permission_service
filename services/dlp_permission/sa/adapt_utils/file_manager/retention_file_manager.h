@@ -30,7 +30,6 @@ using Json = nlohmann::json;
 
 class RetentionFileManager {
 public:
-    explicit RetentionFileManager();
     virtual ~RetentionFileManager();
     static RetentionFileManager& GetInstance();
 
@@ -47,6 +46,8 @@ public:
     int32_t GetBundleNameSetByUserId(const int32_t userId, std::set<std::string>& bundleNameSet);
     int32_t RemoveRetentionInfoByUserId(const int32_t userId, const std::set<std::string>& bundleNameSet);
 private:
+    RetentionFileManager();
+    DISALLOW_COPY_AND_MOVE(RetentionFileManager);
     bool Init();
     int32_t UpdateFile(const int32_t& jsonRes);
     bool hasInit_;

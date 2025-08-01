@@ -35,7 +35,6 @@ typedef struct RequestInfo {
 
 class DlpCredential {
 public:
-    DlpCredential();
     ~DlpCredential();
     static DlpCredential& GetInstance();
     int32_t GenerateDlpCertificate(
@@ -47,6 +46,9 @@ public:
     int32_t GetMDMPolicy(std::vector<std::string>& appIdList);
     int32_t RemoveMDMPolicy();
     int32_t CheckMdmPermission(const std::string& bundleName, int32_t userId);
+private:
+    DlpCredential();
+    DISALLOW_COPY_AND_MOVE(DlpCredential);
 };
 }  // namespace DlpPermission
 }  // namespace Security

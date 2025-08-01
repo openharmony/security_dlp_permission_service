@@ -75,19 +75,12 @@ static const uint32_t CLOUD_VERSION = 1;
 
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
     LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "DlpPermissionSerializer"};
-std::mutex g_instanceMutex;
 }  // namespace
 
 DlpPermissionSerializer& DlpPermissionSerializer::GetInstance()
 {
-    static DlpPermissionSerializer* instance = nullptr;
-    if (instance == nullptr) {
-        std::lock_guard<std::mutex> lock(g_instanceMutex);
-        if (instance == nullptr) {
-            instance = new DlpPermissionSerializer();
-        }
-    }
-    return *instance;
+    static DlpPermissionSerializer instance;
+    return instance;
 }
 
 static int32_t ReadUint8ArrayFromJson(const unordered_json& permJson, uint8_t** buff, uint32_t& buffLen,

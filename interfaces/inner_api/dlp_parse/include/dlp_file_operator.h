@@ -27,6 +27,7 @@ namespace DlpPermission {
 
 class EnterpriseSpaceDlpPermissionKit {
 private:
+    DISALLOW_COPY_AND_MOVE(EnterpriseSpaceDlpPermissionKit);
     EnterpriseSpaceDlpPermissionKit();
     int32_t EnterpriseSpaceParseDlpFileFormat(std::shared_ptr<DlpFile>& filePtr, bool needCheckCustomProperty);
     int32_t EnterpriseSpacePrepareWorkDir(int32_t dlpFileFd, std::shared_ptr<DlpFile>& filePtr, std::string& workDir);

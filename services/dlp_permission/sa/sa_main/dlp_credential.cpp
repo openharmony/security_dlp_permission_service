@@ -50,7 +50,6 @@ static std::unordered_map<uint64_t, RequestInfo> g_requestMap;
 static std::unordered_map<uint64_t, DlpAccountType> g_requestAccountTypeMap;
 static const std::string DEVELOPER_MODE = "const.security.developermode.state";
 std::mutex g_lockRequest;
-std::mutex g_instanceMutex;
 
 #ifdef SUPPORT_DLP_CREDENTIAL
 static const size_t LENGTH_FOR_64_BIT = 8;
@@ -352,14 +351,8 @@ static void DlpRestorePolicyCallback(uint64_t requestId, int errorCode, DLP_Rest
 
 DlpCredential& DlpCredential::GetInstance()
 {
-    static DlpCredential* instance = nullptr;
-    if (instance == nullptr) {
-        std::lock_guard<std::mutex> lock(g_instanceMutex);
-        if (instance == nullptr) {
-            instance = new DlpCredential();
-        }
-    }
-    return *instance;
+    static DlpCredential instance;
+    return instance;
 }
 
 static void FreeDlpPackPolicyParams(DLP_PackPolicyParams& packPolicy)

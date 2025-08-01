@@ -624,7 +624,7 @@ int32_t DlpPermissionService::RegisterOpenDlpFileCallback(const sptr<IRemoteObje
     int32_t userId;
     if (GetUserIdFromUid(uid, &userId) != 0) {
         DLP_LOG_ERROR(LABEL, "GetUserIdFromUid error");
-        return false;
+        return DLP_SERVICE_ERROR_VALUE_INVALID;
     }
     int32_t pid = IPCSkeleton::GetCallingRealPid();
 

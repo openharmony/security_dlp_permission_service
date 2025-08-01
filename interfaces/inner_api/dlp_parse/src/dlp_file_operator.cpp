@@ -68,7 +68,6 @@ using Defer = std::shared_ptr<void>;
 using json = nlohmann::ordered_json;
 std::mutex g_dirCleanLock;
 std::mutex g_missionMutex;
-std::mutex instanceMutex;
 std::shared_ptr<std::thread> g_missionThread = nullptr;
 const std::string APPID = "com.ohos.dlpmanager_BAurHtxID8irkrB1VYVHLCWnMGKeOwaGNcJymGCMdhIpP+"
     "PyVFlFnmikA0NIVqmvB+TnZpjup0qT4D0nEdTM/soy4Ab/wzCdSyoJYPNjl6IR/lW/IktytZ7Mn6auB9dJ4g==";
@@ -78,15 +77,8 @@ EnterpriseSpaceDlpPermissionKit::EnterpriseSpaceDlpPermissionKit() {}
 
 EnterpriseSpaceDlpPermissionKit* EnterpriseSpaceDlpPermissionKit::GetInstance()
 {
-    static EnterpriseSpaceDlpPermissionKit* instance = nullptr;
-    if (instance == nullptr) {
-        std::lock_guard<std::mutex> lock(instanceMutex);
-        if (instance == nullptr) {
-            instance = new EnterpriseSpaceDlpPermissionKit();
-            DLP_LOG_INFO(LABEL, "EnterpriseSpaceDlpPermissionKit init complete");
-        }
-    }
-    return instance;
+    static EnterpriseSpaceDlpPermissionKit instance;
+    return &instance;
 }
 
 EnterpriseSpaceDlpPermissionKit::~EnterpriseSpaceDlpPermissionKit() {}

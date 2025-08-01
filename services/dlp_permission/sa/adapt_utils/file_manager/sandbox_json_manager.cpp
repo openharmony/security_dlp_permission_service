@@ -223,7 +223,7 @@ int32_t SandboxJsonManager::RemoveRetentionState(const std::string& bundleName, 
     {
         int32_t userId;
         if (!GetUserIdByForegroundAccount(&userId)) {
-            return false;
+            return DLP_SERVICE_ERROR_GET_ACCOUNT_FAIL;
         }
         std::lock_guard<std::mutex> lock(mutex_);
         for (auto iter = infoVec_.begin(); iter != infoVec_.end();) {
@@ -285,7 +285,7 @@ int32_t SandboxJsonManager::ClearUnreservedSandbox()
     DLP_LOG_INFO(LABEL, "ClearUnreservedSandbox called");
     int32_t userId;
     if (!GetUserIdByForegroundAccount(&userId)) {
-        return false;
+        return DLP_SERVICE_ERROR_GET_ACCOUNT_FAIL;
     }
     std::lock_guard<std::mutex> lock(mutex_);
     bool isChanged = false;
