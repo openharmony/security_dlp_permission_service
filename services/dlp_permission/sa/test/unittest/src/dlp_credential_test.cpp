@@ -140,6 +140,87 @@ HWTEST_F(DlpCredentialTest, DlpCredentialTest002, TestSize.Level1)
 }
 
 /**
+ * @tc.name: DlpCredentialTest003
+ * @tc.desc: DlpSandboxChangeCallbackProxy test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpCredentialTest, DlpCredentialTest003, TestSize.Level1)
+{
+    sptr<IDlpPermissionCallback> stub = new (std::nothrow) DlpPermissionAsyncStubTest();
+    std::string policy;
+    std::string account;
+    DlpAccountType accountType = OHOS::Security::DlpPermission::DOMAIN_ACCOUNT;
+    AppExecFwk::ApplicationInfo applicationInfo;
+    int res = DlpCredential::GetInstance().GenerateDlpCertificate(policy, account, accountType, stub);
+    EXPECT_EQ(DLP_CREDENTIAL_ERROR_COMMON_ERROR, res);
+    sptr<CertParcel> certParcel = new (std::nothrow) CertParcel();
+    std::string appId = "test_appId_passed";
+    res = DlpCredential::GetInstance().ParseDlpCertificate(certParcel, stub, appId, true, applicationInfo);
+    EXPECT_EQ(DLP_SERVICE_ERROR_JSON_OPERATE_FAIL, res);
+    unordered_json encDataJson = {
+        {ENC_DATA_LEN, POLICY_PLAINTTEXT.length()},
+        {ENC_DATA, POLICY_PLAINTTEXT},
+        {ENC_ACCOUNT_TYPE, accountType},
+    };
+    std::string s2 = encDataJson.dump();
+    std::vector<uint8_t> cert2(s2.begin(), s2.end());
+    certParcel->cert = cert2;
+    res = DlpCredential::GetInstance().ParseDlpCertificate(certParcel, stub, appId, true, applicationInfo);
+}
+
+/**
+ * @tc.name: SetMDMPolicy001
+ * @tc.desc: SetMDMPolicy test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpCredentialTest, SetMDMPolicy001, TestSize.Level1)
+{
+    std::vector<std::string> appIdList1 = {};
+    std::vector<std::string> appIdList2 = {"wechat", "taobao", "dlp_manager"};
+
+    int32_t ret = DlpCredential::GetInstance().SetMDMPolicy(appIdList1);
+    ASSERT_EQ(DLP_OK, ret);
+
+    ret = DlpCredential::GetInstance().SetMDMPolicy(appIdList2);
+    ASSERT_EQ(DLP_OK, ret);
+}
+
+/**
+ * @tc.name: GetMDMPolicy001
+ * @tc.desc: GetMDMPolicy test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpCredentialTest, GetMDMPolicy001, TestSize.Level1)
+{
+    std::vector<std::string> appIdList1 = {};
+    std::vector<std::string> appIdList2 = {"wechat", "taobao", "dlp_manager"};
+
+    int32_t ret = DlpCredential::GetInstance().GetMDMPolicy(appIdList1);
+    ASSERT_EQ(DLP_OK, ret);
+
+    ret = DlpCredential::GetInstance().GetMDMPolicy(appIdList2);
+    ASSERT_EQ(DLP_OK, ret);
+}
+
+/**
+ * @tc.name: RemoveMDMPolicy001
+ * @tc.desc: RemoveMDMPolicy test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpCredentialTest, RemoveMDMPolicy001, TestSize.Level1)
+{
+    std::vector<std::string> appIdList1 = {"wechat", "taobao", "dlp_manager"};
+    int32_t ret = DlpCredential::GetInstance().SetMDMPolicy(appIdList1);
+    ASSERT_EQ(DLP_OK, ret);
+    ret = DlpCredential::GetInstance().RemoveMDMPolicy();
+    ASSERT_EQ(DLP_OK, ret);
+}
+
+/**
  * @tc.name: CheckMdmPermission001
  * @tc.desc: CheckMdmPermission test
  * @tc.type: FUNC
