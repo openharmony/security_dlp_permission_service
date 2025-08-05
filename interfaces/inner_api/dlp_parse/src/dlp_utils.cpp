@@ -386,6 +386,39 @@ bool DlpUtils::GetUserIdByForegroundAccount(int32_t &userId)
     }
     return true;
 }
+
+std::string DlpUtils::GetRealTypeForEnterpriseWithFd(const int32_t& fd, bool& isFromUriName)
+{
+    std::string realType = DEFAULT_STRINGS;
+    do {
+        if (IsZipFile(fd)) {
+            std::string generateInfoStr = GetGenerateInfoStr(fd);
+            if (generateInfoStr == DEFAULT_STRINGS) {
+                break;
+            }
+            GenerateInfoParams params;
+            if (ParseDlpGeneralInfo(generateInfoStr, params) != DLP_OK) {
+                DLP_LOG_ERROR(LABEL, "ParseDlpGeneralInfo error: %{public}s", generateInfoStr.c_str());
+                break;
+            }
+            realType = params.realType;
+        } else {
+            realType = GetRealTypeWithRawFile(fd);
+        }
+    } while (0);
+
+    if (realType.size() >= MIN_REALY_TYPE_LENGTH && realType.size() <= MAX_REALY_TYPE_LENGTH) {
+        return realType;
+    }
+    DLP_LOG_DEBUG(LABEL, "not get real file type in dlp_general_info, will get to file name.");
+
+    std::string fileName;
+    if (DlpUtils::GetFileNameWithFd(fd, fileName) != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "Get file name with fd error");
+        return DEFAULT_STRINGS;
+    }
+    return DlpUtils::GetDlpFileRealSuffix(fileName, isFromUriName);
+}
 }  // namespace DlpPermission
 }  // namespace Security
 }  // namespace OHOS

@@ -355,6 +355,11 @@ bool DlpUtils::GetUserIdByForegroundAccount(int32_t &userId)
     userId = OS_ACCOUNT;
     return true;
 }
+
+std::string DlpUtils::GetRealTypeForEnterpriseWithFd(const int32_t& fd, bool& isFromUriName)
+{
+    return DlpUtils::GetRealTypeWithFd(fd, isFromUriName);
+}
 }  // namespace DlpPermission
 }  // namespace Security
 }  // namespace OHOS

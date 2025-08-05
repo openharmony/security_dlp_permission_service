@@ -245,6 +245,7 @@ public:
         AppExecFwk::BundleInfo &bundleInfo, int32_t userId);
     static bool GetFileType(const std::string& realFileType);
     static bool GetUserIdByForegroundAccount(int32_t &userId);
+    static std::string GetRealTypeForEnterpriseWithFd(const int32_t& fd, bool& isFromUriName);
 };
 }  // namespace DlpPermission
 }  // namespace Security
