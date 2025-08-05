@@ -33,6 +33,7 @@ namespace {
 constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "AppStateObserver"};
 const std::string PERMISSION_ACCESS_DLP_FILE = "ohos.permission.ACCESS_DLP_FILE";
 const std::string DLP_MANAGER_BUNDLE_NAME = "com.ohos.dlpmanager";
+const std::string DLP_CREDMGR_BUNDLE_NAME = "com.huawei.hmos.dlpcredmgr";
 constexpr int32_t SA_ID_DLP_PERMISSION_SERVICE = 3521;
 }
 AppStateObserver::AppStateObserver()
@@ -84,6 +85,18 @@ void AppStateObserver::UninstallAllDlpSandbox()
         UninstallAllDlpSandboxForUser(iter);
     }
     userIdList_.clear();
+}
+
+bool AppStateObserver::HasDlpSandboxForUser(int32_t userId)
+{
+    std::lock_guard<std::mutex> lock(sandboxInfoLock_);
+    for (auto iter = sandboxInfo_.begin(); iter != sandboxInfo_.end();) {
+        auto& appInfo = iter->second;
+        if (appInfo.userId == userId) {
+            return true;
+        }
+    }
+    return false;
 }
 
 void AppStateObserver::ExitSaAfterAllDlpManagerDie()
@@ -302,6 +315,16 @@ void AppStateObserver::OnProcessDied(const AppExecFwk::ProcessData& processData)
         EraseUserId(userId);
         ExitSaAfterAllDlpManagerDie();
         return;
+    }
+    // current died process is dlpcredmgr
+    if (processData.bundleName == DLP_CREDMGR_BUNDLE_NAME) {
+        int32_t userId;
+        if (GetUserIdFromUid(processData.uid, &userId) != 0) {
+            return;
+        }
+        if (!HasDlpSandboxForUser(userId)) {
+            ExitSaAfterAllDlpManagerDie();
+        }
     }
     // if current died process is a listener
     if (RemoveCallbackListener(processData.pid)) {

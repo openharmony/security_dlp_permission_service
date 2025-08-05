@@ -144,7 +144,6 @@ static void ClientFuzzTest(const uint8_t* data, size_t size)
     }
     FuzzedDataProvider fdp(data, size);
     DlpPermissionClient::GetInstance().OnRemoteDiedHandle();
-    DlpPermissionClient::GetInstance().FinishStartSAFail();
     std::shared_ptr<UnregisterOpenDlpFileCallbackFuzzer> callback =
         std::make_shared<UnregisterOpenDlpFileCallbackFuzzer>();
     DlpPermissionClient::GetInstance().UnRegisterOpenDlpFileCallback(callback);

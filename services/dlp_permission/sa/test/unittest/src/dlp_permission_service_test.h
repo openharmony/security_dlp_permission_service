@@ -44,6 +44,8 @@ public:
     std::shared_ptr<DlpPermissionService> dlpPermissionService_ = nullptr;
 
     static bool isSandbox;
+    static bool isCheckSandbox;
+    static int32_t permType;
 };
 }  // namespace DlpPermission
 }  // namespace Security

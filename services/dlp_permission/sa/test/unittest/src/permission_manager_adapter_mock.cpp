@@ -31,15 +31,42 @@ namespace DlpPermission {
 using namespace Security::AccessToken;
 using namespace OHOS::AppExecFwk;
 
+static const std::string PERMISSION_ACCESS_DLP_FILE = "ohos.permission.ACCESS_DLP_FILE";
+static const std::string PERMISSION_ENTERPRISE_ACCESS_DLP_FILE = "ohos.permission.ENTERPRISE_ACCESS_DLP_FILE";
+static const int32_t TWO = 2;
+
 bool DlpPermissionServiceTest::isSandbox = true;
+bool DlpPermissionServiceTest::isCheckSandbox = true;
+int32_t DlpPermissionServiceTest::permType = 0;
 
 bool PermissionManagerAdapter::CheckPermission(const std::string& permission)
 {
+    switch (DlpPermissionServiceTest::permType) {
+        case -1:
+            return false;
+        case 0:
+            return true;
+        case 1:
+            if (permission == PERMISSION_ACCESS_DLP_FILE) {
+                return true;
+            }
+            return false;
+        case TWO:
+            if (permission == PERMISSION_ENTERPRISE_ACCESS_DLP_FILE) {
+                return true;
+            }
+            return false;
+        default:
+            break;
+    }
     return true;
 }
 
 int32_t PermissionManagerAdapter::CheckSandboxFlagWithService(AccessToken::AccessTokenID tokenId, bool& sandboxFlag)
 {
+    if (!DlpPermissionServiceTest::isCheckSandbox) {
+        return DLP_SERVICE_ERROR_VALUE_INVALID;
+    }
     sandboxFlag = DlpPermissionServiceTest::isSandbox;
     return DLP_OK;
 }

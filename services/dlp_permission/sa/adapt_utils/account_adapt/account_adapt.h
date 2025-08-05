@@ -23,8 +23,6 @@
 
 #include <string>
 
-int32_t GetLocalAccountUid(std::string& accountUid);
-
 extern "C" {
 #endif
 typedef struct {

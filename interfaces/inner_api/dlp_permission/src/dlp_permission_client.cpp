@@ -17,7 +17,6 @@
 #include <unistd.h>
 #include "accesstoken_kit.h"
 #include "dlp_permission_async_stub.h"
-#include "dlp_permission_load_callback.h"
 #include "dlp_permission_log.h"
 #include "dlp_permission_service_proxy.h"
 #include "ipc_skeleton.h"
@@ -627,46 +626,6 @@ int32_t DlpPermissionClient::SetReadFlag(uint32_t uid)
     return proxy->SetReadFlag(uid);
 }
 
-bool DlpPermissionClient::StartLoadDlpPermissionSa()
-{
-    {
-        std::unique_lock<std::mutex> lock(cvLock_);
-        readyFlag_ = false;
-    }
-    auto sam = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
-    if (sam == nullptr) {
-        DLP_LOG_ERROR(LABEL, "GetSystemAbilityManager return null");
-        return false;
-    }
-
-    sptr<DlpPermissionLoadCallback> ptrDlpPermissionLoadCallback = new (std::nothrow) DlpPermissionLoadCallback();
-    if (ptrDlpPermissionLoadCallback == nullptr) {
-        DLP_LOG_ERROR(LABEL, "New ptrDlpPermissionLoadCallback fail.");
-        return false;
-    }
-
-    int32_t result = sam->LoadSystemAbility(DLP_PERMISSION_SERVICE_SA_ID, ptrDlpPermissionLoadCallback);
-    if (result != DLP_OK) {
-        DLP_LOG_ERROR(LABEL, "LoadSystemAbility %{public}d failed", DLP_PERMISSION_SERVICE_SA_ID);
-        return false;
-    }
-    DLP_LOG_INFO(LABEL, "Notify samgr load sa %{public}d success", DLP_PERMISSION_SERVICE_SA_ID);
-    return true;
-}
-
-void DlpPermissionClient::WaitForDlpPermissionSa()
-{
-    // wait_for release lock and block until time out(1s) or match the condition with notice
-    std::unique_lock<std::mutex> lock(cvLock_);
-    auto waitStatus = dlpPermissionCon_.wait_for(
-        lock, std::chrono::milliseconds(DLP_PERMISSION_LOAD_SA_TIMEOUT_MS), [this]() { return readyFlag_; });
-    if (!waitStatus) {
-        // time out or loadcallback fail
-        DLP_LOG_ERROR(LABEL, "Dlp Permission load sa timeout");
-        return;
-    }
-}
-
 void DlpPermissionClient::GetDlpPermissionSa()
 {
     auto sam = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
@@ -684,34 +643,23 @@ void DlpPermissionClient::GetDlpPermissionSa()
     GetProxyFromRemoteObject(dlpPermissionSa);
 }
 
-void DlpPermissionClient::FinishStartSASuccess(const sptr<IRemoteObject>& remoteObject)
-{
-    DLP_LOG_INFO(LABEL, "Get dlp_permission sa success.");
-
-    GetProxyFromRemoteObject(remoteObject);
-
-    // get lock which wait_for release and send a notice so that wait_for can out of block
-    std::unique_lock<std::mutex> lock(cvLock_);
-    readyFlag_ = true;
-    dlpPermissionCon_.notify_one();
-}
-
-void DlpPermissionClient::FinishStartSAFail()
-{
-    DLP_LOG_ERROR(LABEL, "get dlp_permission sa failed.");
-
-    // get lock which wait_for release and send a notice
-    std::unique_lock<std::mutex> lock(cvLock_);
-    readyFlag_ = true;
-    dlpPermissionCon_.notify_one();
-}
-
 void DlpPermissionClient::LoadDlpPermissionSa()
 {
-    if (!StartLoadDlpPermissionSa()) {
+    DLP_LOG_INFO(LABEL, "start loadSystemAbility %{public}d.", DLP_PERMISSION_SERVICE_SA_ID);
+    
+    auto sam = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+    if (sam == nullptr) {
+        DLP_LOG_ERROR(LABEL, "GetSystemAbilityManager return null");
         return;
     }
-    WaitForDlpPermissionSa();
+
+    auto dlpPermissionSa = sam->LoadSystemAbility(DLP_PERMISSION_SERVICE_SA_ID, DLP_PERMISSION_LOAD_SA_TIMEOUT_MS);
+    if (dlpPermissionSa == nullptr) {
+        DLP_LOG_ERROR(LABEL, "LoadSystemAbility %{public}d failed", DLP_PERMISSION_SERVICE_SA_ID);
+        return;
+    }
+    GetProxyFromRemoteObject(dlpPermissionSa);
+    DLP_LOG_INFO(LABEL, "LoadSystemAbility %{public}d success.", DLP_PERMISSION_SERVICE_SA_ID);
 }
 
 void DlpPermissionClient::OnRemoteDiedHandle()
@@ -720,10 +668,6 @@ void DlpPermissionClient::OnRemoteDiedHandle()
     std::unique_lock<std::mutex> lock(proxyMutex_);
     proxy_ = nullptr;
     serviceDeathObserver_ = nullptr;
-    {
-        std::unique_lock<std::mutex> lock1(cvLock_);
-        readyFlag_ = false;
-    }
 }
 
 void DlpPermissionClient::GetProxyFromRemoteObject(const sptr<IRemoteObject>& remoteObject)
