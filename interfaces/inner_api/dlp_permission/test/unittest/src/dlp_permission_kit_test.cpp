@@ -316,6 +316,35 @@ static bool IsFeatureProvidedWithDlp()
 }
 
 /**
+ * @tc.name: SetRetentionState005
+ * @tc.desc: SetRetentionState abnormal input test.
+ * @tc.type: FUNC
+ * @tc.require:SR000I38N7
+ */
+HWTEST_F(DlpPermissionKitTest, SetRetentionState005, TestSize.Level1)
+{
+    std::vector<std::string> uriVec;
+    uriVec.clear();
+    std::vector<RetentionSandBoxInfo> sandBoxInfoVec;
+    sandBoxInfoVec.clear();
+    std::vector<VisitedDLPFileInfo> infoVec;
+    infoVec.clear();
+    DlpPermissionKit::SetRetentionState(uriVec);
+    DlpPermissionKit::GetRetentionSandboxList(DLP_MANAGER_APP, sandBoxInfoVec);
+    DlpPermissionKit::GetDLPFileVisitRecord(infoVec);
+    uriVec.clear();
+    DlpPermissionKit::CancelRetentionState(uriVec);
+
+    SandboxInfo testInfo;
+    Parcel parcel;
+    EXPECT_EQ(true, testInfo.Marshalling(parcel));
+    SandboxInfo *ptrParcel = testInfo.Unmarshalling(parcel);
+    if (ptrParcel != nullptr) {
+        delete ptrParcel;
+    }
+}
+
+/**
  * @tc.name: SetRetentionState01
  * @tc.desc: SetRetentionState abnormal input test.
  * @tc.type: FUNC
