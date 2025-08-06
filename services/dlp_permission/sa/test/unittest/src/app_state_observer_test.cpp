@@ -244,3 +244,133 @@ HWTEST_F(AppStateObserverTest, AddSandboxInfo001, TestSize.Level1)
     observer.UpdatReadFlag(uid);
     ASSERT_TRUE(observer.sandboxInfo_[appInfo.uid].hasRead);
 }
+
+/**
+ * @tc.name: ExitSaAfterAllDlpManagerDie001
+ * @tc.desc: AppStateObserver test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AppStateObserverTest, ExitSaAfterAllDlpManagerDie001, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL, "ExitSaAfterAllDlpManagerDie001");
+    AppStateObserver observer;
+    observer.ExitSaAfterAllDlpManagerDie();
+    int32_t uid = 1;
+    DlpSandboxInfo appInfo;
+    observer.AddSandboxInfo(appInfo);
+    observer.UpdatReadFlag(uid);
+    ASSERT_FALSE(observer.sandboxInfo_[appInfo.uid].hasRead);
+    observer.ExitSaAfterAllDlpManagerDie();
+}
+
+/**
+ * @tc.name: ExitSaAfterAllDlpManagerDie002
+ * @tc.desc: AppStateObserver test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AppStateObserverTest, ExitSaAfterAllDlpManagerDie002, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL, "ExitSaAfterAllDlpManagerDie002");
+    AppStateObserver observer;
+    observer.ExitSaAfterAllDlpManagerDie();
+    int32_t uid = 1;
+    DlpSandboxInfo appInfo;
+    observer.AddSandboxInfo(appInfo);
+    observer.UpdatReadFlag(uid);
+    ASSERT_FALSE(observer.sandboxInfo_[appInfo.uid].hasRead);
+    observer.ExitSaAfterAllDlpManagerDie();
+    observer.AddCallbackListener(uid);
+    observer.ExitSaAfterAllDlpManagerDie();
+    observer.UninstallAllDlpSandbox();
+    observer.ExitSaAfterAllDlpManagerDie();
+}
+
+/**
+ * @tc.name: EraseUserId001
+ * @tc.desc: AppStateObserver test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AppStateObserverTest, EraseUserId001, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL, "EraseUserId001");
+    AppStateObserver observer;
+    int32_t uid = 1;
+    observer.EraseUserId(uid);
+    observer.AddUserId(uid);
+    observer.EraseUserId(uid);
+    observer.AddUserId(uid);
+    ASSERT_EQ(1, uid);
+}
+
+/**
+ * @tc.name: AddUidWithTokenId001
+ * @tc.desc: AddUidWithTokenId test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AppStateObserverTest, AddUidWithTokenId001, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL, "AddUidWithTokenId001");
+    AppStateObserver observer;
+    int32_t uid = 1;
+    observer.EraseUidTokenIdMap(100);
+    observer.AddUidWithTokenId(100, uid);
+    observer.EraseUidTokenIdMap(100);
+    ASSERT_EQ(1, uid);
+}
+
+/**
+ * @tc.name: GetOpeningReadOnlySandbox002
+ * @tc.desc: GetOpeningReadOnlySandbox test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AppStateObserverTest, GetOpeningReadOnlySandbox002, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL, "GetOpeningReadOnlySandbox002");
+    AppStateObserver observer;
+    DlpSandboxInfo appInfo;
+    appInfo = {
+        .uid = 1,
+        .userId = 123,
+        .appIndex = 0,
+        .dlpFileAccess = DLPFileAccess::READ_ONLY,
+        .bundleName = "testbundle1",
+        .hasRead = false
+    };
+    observer.AddSandboxInfo(appInfo);
+
+    std::string bundleName = "testbundle1";
+    int32_t userId = 123;
+    int32_t appIndex = 0;
+    observer.GetOpeningReadOnlySandbox(bundleName, userId, appIndex);
+    bundleName = "testbundle2";
+    observer.GetOpeningReadOnlySandbox(bundleName, userId, appIndex);
+    bundleName = "testbundle1";
+    userId = 124;
+    observer.GetOpeningReadOnlySandbox(bundleName, userId, appIndex);
+    userId = 123;
+
+    observer.EraseSandboxInfo(1);
+
+    appInfo = {
+        .uid = 1,
+        .userId = 123,
+        .appIndex = 0,
+        .dlpFileAccess = DLPFileAccess::NO_PERMISSION,
+        .bundleName = "testbundle1",
+        .hasRead = false
+    };
+    observer.AddSandboxInfo(appInfo);
+
+    observer.GetOpeningReadOnlySandbox(bundleName, userId, appIndex);
+    bundleName = "testbundle2";
+    observer.GetOpeningReadOnlySandbox(bundleName, userId, appIndex);
+    bundleName = "testbundle1";
+    userId = 124;
+    observer.GetOpeningReadOnlySandbox(bundleName, userId, appIndex);
+    ASSERT_EQ(124, userId);
+}
