@@ -237,3 +237,56 @@ HWTEST_F(DlpUtilsTest, GetFilePathWithFd, TestSize.Level0)
     fd = -1;
     ASSERT_NE(DlpUtils::GetFilePathWithFd(fd, srcFilePath), DLP_PARSE_ERROR_CIPHER_PARAMS_INVALID);
 }
+
+/**
+ * @tc.name: GetRealTypeForEnterpriseWithFd001
+ * @tc.desc: test GetRealTypeForEnterpriseWithFd
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpUtilsTest, GetRealTypeForEnterpriseWithFd001, TestSize.Level0)
+{
+    DLP_LOG_INFO(LABEL, "GetRealTypeForEnterpriseWithFd001");
+
+    int fd = open("/data/fuse_test.txt.dlp", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
+    ASSERT_NE(fd, -1);
+    struct DlpHeader header = {
+        .magic = DLP_FILE_MAGIC,
+        .certSize = 20,
+        .contactAccountSize = 20,
+        .fileType = 1,
+    };
+    uint8_t buffer[8] = {0};
+    write(fd, buffer, 8);
+    write(fd, &header, sizeof(header));
+    lseek(fd, 0, SEEK_SET);
+    bool isFromUriName = true;
+    DlpUtils::GetRealTypeForEnterpriseWithFd(fd, isFromUriName);
+    unlink("/data/fuse_test.txt.dlp");
+}
+
+/**
+ * @tc.name: GetRealTypeForEnterpriseWithFd002
+ * @tc.desc: test GetRealTypeForEnterpriseWithFd
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpUtilsTest, GetRealTypeForEnterpriseWithFd002, TestSize.Level0)
+{
+    DLP_LOG_INFO(LABEL, "GetRealTypeForEnterpriseWithFd002");
+    int fd = open("/data/fuse_test.txt.dlp", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
+    ASSERT_NE(fd, -1);
+    struct DlpHeader header = {
+        .magic = DLP_FILE_MAGIC,
+        .certSize = 20,
+        .contactAccountSize = 20,
+        .fileType = 5,
+    };
+    uint8_t buffer[8] = {0};
+    write(fd, buffer, 8);
+    write(fd, &header, sizeof(header));
+    lseek(fd, 0, SEEK_SET);
+    bool isFromUriName = true;
+    DlpUtils::GetRealTypeForEnterpriseWithFd(fd, isFromUriName);
+    unlink("/data/fuse_test.txt.dlp");
+}
