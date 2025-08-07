@@ -56,6 +56,8 @@ private:
     void UninstallAllDlpSandboxForUser(int32_t userId);
     void UninstallAllDlpSandbox();
 
+    bool HasDlpSandboxForUser(int32_t userId);
+
     void EraseUserId(int32_t userId);
     void AddUserId(int32_t userId);
 

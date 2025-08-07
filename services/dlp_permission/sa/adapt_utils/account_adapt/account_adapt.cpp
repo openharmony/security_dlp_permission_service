@@ -64,18 +64,6 @@ bool GetUserIdByForegroundAccount(int32_t* userId)
     return true;
 }
 
-int32_t GetLocalAccountUid(std::string& accountUid)
-{
-    OHOS::AccountSA::OhosAccountInfo accountInfo;
-    int32_t ret = OHOS::AccountSA::OhosAccountKits::GetInstance().GetOsAccountDistributedInfo(GetCallingUserId(),
-        accountInfo);
-    if (ret != 0) {
-        return ret;
-    }
-    accountUid = accountInfo.GetRawUid();
-    return 0;
-}
-
 int8_t GetUserIdFromUid(int32_t uid, int32_t* userId)
 {
     if (OHOS::AccountSA::OsAccountManager::GetOsAccountLocalIdFromUid(uid, *userId) != 0) {

@@ -114,7 +114,6 @@ ohos_shared_library("libdlp_permission_sdk") {
     "src/dlp_permission_client.cpp",
     "src/dlp_permission_death_recipient.cpp",
     "src/dlp_permission_kit.cpp",
-    "src/dlp_permission_load_callback.cpp",
     "src/dlp_sandbox_change_callback.cpp",
     "src/dlp_sandbox_change_callback_customize.cpp",
     "src/dlp_sandbox_change_callback_stub.cpp",

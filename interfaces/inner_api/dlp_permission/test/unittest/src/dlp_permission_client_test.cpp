@@ -117,34 +117,7 @@ HWTEST_F(DlpPermissionClientTest, GetProxy001, TestSize.Level0)
 
     sptr<IDlpPermissionService> service_ = DlpPermissionClient::GetInstance().GetProxy(doLoadSa);
     ASSERT_EQ(DlpPermissionClient::GetInstance().proxy_, service_);
-}
-
-/**
- * @tc.name: FinishStartSAFail001
- * @tc.desc: FinishStartSAFail test
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(DlpPermissionClientTest, FinishStartSAFail001, TestSize.Level0)
-{
-    DLP_LOG_INFO(LABEL, "FinishStartSAFail001");
-
-    DlpPermissionClient::GetInstance().FinishStartSAFail();
-    ASSERT_TRUE(DlpPermissionClient::GetInstance().readyFlag_);
-}
-
-/**
- * @tc.name: OnRemoteDiedHandle001
- * @tc.desc: OnRemoteDiedHandle test
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(DlpPermissionClientTest, OnRemoteDiedHandle001, TestSize.Level0)
-{
-    DLP_LOG_INFO(LABEL, "OnRemoteDiedHandle001");
-
     DlpPermissionClient::GetInstance().OnRemoteDiedHandle();
-    ASSERT_FALSE(DlpPermissionClient::GetInstance().readyFlag_);
 }
 
 /**

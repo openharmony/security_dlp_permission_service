@@ -312,6 +312,11 @@ HWTEST_F(DlpPermissionServiceTest, DlpSandboxChangeCallbackDeathRecipient001, Te
     int32_t res = dlpPermissionService_->UnRegisterDlpSandboxChangeCallback(result);
     ASSERT_EQ(DLP_CALLBACK_PARAM_INVALID, res);
     recipient->OnRemoteDied(remote);
+    DlpPermissionServiceTest::permType = -1;
+    dlpPermissionService_->RegisterDlpSandboxChangeCallback(callback);
+    res = dlpPermissionService_->UnRegisterDlpSandboxChangeCallback(result);
+    ASSERT_EQ(DLP_SERVICE_ERROR_PERMISSION_DENY, res);
+    DlpPermissionServiceTest::permType = 0;
 }
 
 class TestOpenDlpFileCallback : public OpenDlpFileCallbackStub {
@@ -354,6 +359,14 @@ HWTEST_F(DlpPermissionServiceTest, OpenDlpFileCallbackDeathRecipient001, TestSiz
     DlpPermissionServiceTest::isSandbox = true;
     EXPECT_EQ(DLP_CALLBACK_PARAM_INVALID, res);
     recipient->OnRemoteDied(remote);
+
+    res = dlpPermissionService_->UnRegisterOpenDlpFileCallback(callback);
+    ASSERT_EQ(DLP_SERVICE_ERROR_API_NOT_FOR_SANDBOX_ERROR, res);
+
+    DlpPermissionServiceTest::isCheckSandbox = false;
+    res = dlpPermissionService_->UnRegisterOpenDlpFileCallback(callback);
+    DlpPermissionServiceTest::isCheckSandbox = true;
+    ASSERT_EQ(res, DLP_SERVICE_ERROR_VALUE_INVALID);
 }
 
 /**
@@ -616,6 +629,23 @@ HWTEST_F(DlpPermissionServiceTest, InstallDlpSandbox001, TestSize.Level1)
 }
 
 /**
+ * @tc.name:InstallDlpSandbox002
+ * @tc.desc:InstallDlpSandbox test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionServiceTest, InstallDlpSandbox002, TestSize.Level1)
+{
+    DLP_LOG_DEBUG(LABEL, "InstallDlpSandbox002");
+    SandboxInfo sandboxInfo;
+    DlpPermissionServiceTest::permType = -1;
+    int32_t ret = dlpPermissionService_->InstallDlpSandbox(
+        DLP_MANAGER_APP, DLPFileAccess::CONTENT_EDIT, DEFAULT_USERID, sandboxInfo, "testUri");
+    DlpPermissionServiceTest::permType = 0;
+    ASSERT_EQ(DLP_SERVICE_ERROR_PERMISSION_DENY, ret);
+}
+
+/**
  * @tc.name:UninstallDlpSandbox001
  * @tc.desc:UninstallDlpSandbox test
  * @tc.type: FUNC
@@ -636,6 +666,20 @@ HWTEST_F(DlpPermissionServiceTest, UninstallDlpSandbox001, TestSize.Level1)
     ASSERT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, dlpPermissionService_->UninstallDlpSandbox("", -1, -1));
     ASSERT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, dlpPermissionService_->UninstallDlpSandbox("testbundle", -1, -1));
     ASSERT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, dlpPermissionService_->UninstallDlpSandbox("testbundle", 1, -1));
+}
+
+/**
+ * @tc.name:UninstallDlpSandbox002
+ * @tc.desc:UninstallDlpSandbox test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionServiceTest, UninstallDlpSandbox002, TestSize.Level1)
+{
+    DlpPermissionServiceTest::permType = -1;
+    int32_t ret = dlpPermissionService_->UninstallDlpSandbox("", -1, -1);
+    DlpPermissionServiceTest::permType = 0;
+    ASSERT_EQ(DLP_SERVICE_ERROR_PERMISSION_DENY, ret);
 }
 
 /**
@@ -947,6 +991,32 @@ HWTEST_F(DlpPermissionServiceTest, ParseDlpCertificate001, TestSize.Level1)
 }
 
 /**
+ * @tc.name: ParseDlpCertificate002
+ * @tc.desc: ParseDlpCertificate test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionServiceTest, ParseDlpCertificate002, TestSize.Level1)
+{
+    sptr<CertParcel> certParcel = new (std::nothrow) CertParcel();
+    sptr<IDlpPermissionCallback> callback = nullptr;
+    DlpPermissionServiceTest::permType = 1;
+    int32_t ret = dlpPermissionService_->ParseDlpCertificate(certParcel, callback, "", true);
+    DlpPermissionServiceTest::permType = 0;
+    ASSERT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, ret);
+
+    DlpPermissionServiceTest::permType = 2;
+    ret = dlpPermissionService_->ParseDlpCertificate(certParcel, callback, "", true);
+    DlpPermissionServiceTest::permType = 0;
+    ASSERT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, ret);
+
+    DlpPermissionServiceTest::permType = -1;
+    ret = dlpPermissionService_->ParseDlpCertificate(certParcel, callback, "", true);
+    DlpPermissionServiceTest::permType = 0;
+    ASSERT_EQ(DLP_SERVICE_ERROR_PERMISSION_DENY, ret);
+}
+
+/**
  * @tc.name: InsertDlpSandboxInfo001
  * @tc.desc: InsertDlpSandboxInfo test
  * @tc.type: FUNC
@@ -1057,6 +1127,41 @@ HWTEST_F(DlpPermissionServiceTest, GenerateDlpCertificate003, TestSize.Level1)
 }
 
 /**
+ * @tc.name: GenerateDlpCertificate004
+ * @tc.desc: GenerateDlpCertificate test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionServiceTest, GenerateDlpCertificate004, TestSize.Level1)
+{
+    DLP_LOG_DEBUG(LABEL, "GenerateDlpCertificate004");
+    sptr<DlpPolicyParcel> policyParcel = new (std::nothrow) DlpPolicyParcel();
+    std::shared_ptr<GenerateDlpCertificateCallback> callback1 =
+        std::make_shared<ClientGenerateDlpCertificateCallback>();
+    sptr<IDlpPermissionCallback> callback = new (std::nothrow) DlpPermissionAsyncStub(callback1);
+
+    PermissionPolicy policy;
+    GeneratePolicyParam param = {ACCOUNT_LENGTH, AESKEY_LEN, AESKEY_LEN, USER_NUM, ACCOUNT_LENGTH, AUTH_PERM,
+        DELTA_EXPIRY_TIME, HMACKEY_LEN};
+    GeneratePolicy(policy, param, OHOS::Security::DlpPermission::DlpAccountType::CLOUD_ACCOUNT);
+    policyParcel->policyParams_.CopyPermissionPolicy(policy);
+    DlpPermissionServiceTest::permType = 1;
+    int32_t res = dlpPermissionService_->GenerateDlpCertificate(policyParcel, callback);
+    DlpPermissionServiceTest::permType = 0;
+    ASSERT_EQ(DLP_OK, res);
+
+    DlpPermissionServiceTest::permType = 2;
+    res = dlpPermissionService_->GenerateDlpCertificate(policyParcel, callback);
+    DlpPermissionServiceTest::permType = 0;
+    ASSERT_EQ(DLP_OK, res);
+
+    DlpPermissionServiceTest::permType = -1;
+    res = dlpPermissionService_->GenerateDlpCertificate(policyParcel, callback);
+    DlpPermissionServiceTest::permType = 0;
+    ASSERT_EQ(DLP_SERVICE_ERROR_PERMISSION_DENY, res);
+}
+
+/**
  * @tc.name: SerializeEncPolicyData001
  * @tc.desc: SerializeEncPolicyData test
  * @tc.type: FUNC
@@ -1146,6 +1251,25 @@ HWTEST_F(DlpPermissionServiceTest, GetSandboxExternalAuthorization001, TestSize.
     sandboxUid = 0;
     ret = dlpPermissionService_->GetSandboxExternalAuthorization(sandboxUid, want, authType);
     ASSERT_EQ(DLP_OK, ret);
+}
+
+/**
+ * @tc.name: GetSandboxExternalAuthorization002
+ * @tc.desc: GetSandboxExternalAuthorization test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionServiceTest, GetSandboxExternalAuthorization002, TestSize.Level1)
+{
+    DLP_LOG_DEBUG(LABEL, "GetSandboxExternalAuthorization002");
+
+    int sandboxUid = -1;
+    AAFwk::Want want;
+    SandBoxExternalAuthorType authType;
+    DlpPermissionServiceTest::permType = -1;
+    int32_t ret = dlpPermissionService_->GetSandboxExternalAuthorization(sandboxUid, want, authType);
+    DlpPermissionServiceTest::permType = 0;
+    ASSERT_EQ(DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL, ret);
 }
 
 /**
@@ -1249,6 +1373,45 @@ HWTEST_F(DlpPermissionServiceTest, SetReadFlag001, TestSize.Level1)
 }
 
 /**
+ * @tc.name: QueryDlpFileAccess001
+ * @tc.desc: QueryDlpFileAccess test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionServiceTest, QueryDlpFileAccess001, TestSize.Level1)
+{
+    DLPPermissionInfoParcel permInfoParcel;
+    DlpPermissionServiceTest::isSandbox = false;
+    int32_t res = dlpPermissionService_->QueryDlpFileAccess(permInfoParcel);
+    DlpPermissionServiceTest::isSandbox = true;
+    ASSERT_EQ(DLP_SERVICE_ERROR_API_ONLY_FOR_SANDBOX_ERROR, res);
+
+    DlpPermissionServiceTest::isCheckSandbox = false;
+    res = dlpPermissionService_->QueryDlpFileAccess(permInfoParcel);
+    DlpPermissionServiceTest::isCheckSandbox = true;
+    ASSERT_EQ(res, DLP_SERVICE_ERROR_VALUE_INVALID);
+}
+
+/**
+ * @tc.name: RegisterOpenDlpFileCallback001
+ * @tc.desc: RegisterOpenDlpFileCallback test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionServiceTest, RegisterOpenDlpFileCallback001, TestSize.Level1)
+{
+    DlpPermissionServiceTest::isSandbox = true;
+    int32_t res = dlpPermissionService_->RegisterOpenDlpFileCallback(nullptr);
+    ASSERT_EQ(DLP_SERVICE_ERROR_API_NOT_FOR_SANDBOX_ERROR, res);
+
+    DlpPermissionServiceTest::isCheckSandbox = false;
+    res = dlpPermissionService_->RegisterOpenDlpFileCallback(nullptr);
+    DlpPermissionServiceTest::isCheckSandbox = true;
+    ASSERT_EQ(res, DLP_SERVICE_ERROR_VALUE_INVALID);
+}
+
+
+/**
  * @tc.name: SetRetentionState001
  * @tc.desc: SetRetentionState test success
  * @tc.type: FUNC
@@ -1287,4 +1450,86 @@ HWTEST_F(DlpPermissionServiceTest, SetRetentionState001, TestSize.Level1)
     info.bundleName = appInfo.bundleName;
     bool res = dlpPermissionService_->RemoveRetentionInfo(retentionSandBoxInfoVec, info);
     ASSERT_TRUE(res);
+}
+
+/**
+ * @tc.name: SetRetentionState002
+ * @tc.desc: SetRetentionState test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionServiceTest, SetRetentionState002, TestSize.Level1)
+{
+    std::vector<std::string> docUriVec;
+    docUriVec.push_back("hh");
+    DlpPermissionServiceTest::isSandbox = false;
+    int32_t ret = dlpPermissionService_->SetRetentionState(docUriVec);
+    DlpPermissionServiceTest::isSandbox = true;
+    ASSERT_EQ(ret, DLP_SERVICE_ERROR_API_ONLY_FOR_SANDBOX_ERROR);
+
+    DlpPermissionServiceTest::isCheckSandbox = false;
+    ret = dlpPermissionService_->SetRetentionState(docUriVec);
+    DlpPermissionServiceTest::isCheckSandbox = true;
+    ASSERT_EQ(ret, DLP_SERVICE_ERROR_VALUE_INVALID);
+
+    docUriVec.clear();
+    ret = dlpPermissionService_->SetRetentionState(docUriVec);
+    ASSERT_EQ(ret, DLP_SERVICE_ERROR_VALUE_INVALID);
+}
+
+/**
+ * @tc.name: GetRetentionSandboxList001
+ * @tc.desc: GetRetentionSandboxList test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionServiceTest, GetRetentionSandboxList001, TestSize.Level1)
+{
+    std::vector<RetentionSandBoxInfo> vec;
+    DlpPermissionServiceTest::isSandbox = true;
+    int32_t ret = dlpPermissionService_->GetRetentionSandboxList("testbundle1", vec);
+    ASSERT_EQ(ret, DLP_SERVICE_ERROR_API_NOT_FOR_SANDBOX_ERROR);
+
+    DlpPermissionServiceTest::isCheckSandbox = false;
+    ret = dlpPermissionService_->GetRetentionSandboxList("testbundle1", vec);
+    DlpPermissionServiceTest::isCheckSandbox = true;
+    ASSERT_EQ(ret, DLP_SERVICE_ERROR_VALUE_INVALID);
+}
+
+/**
+ * @tc.name: GetDLPFileVisitRecord001
+ * @tc.desc: GetDLPFileVisitRecord test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionServiceTest, GetDLPFileVisitRecord001, TestSize.Level1)
+{
+    std::vector<VisitedDLPFileInfo> infoVec;
+
+    DlpPermissionServiceTest::isSandbox = true;
+    int32_t ret = dlpPermissionService_->GetDLPFileVisitRecord(infoVec);
+    ASSERT_EQ(ret, DLP_SERVICE_ERROR_API_NOT_FOR_SANDBOX_ERROR);
+
+    DlpPermissionServiceTest::isCheckSandbox = false;
+    ret = dlpPermissionService_->GetDLPFileVisitRecord(infoVec);
+    DlpPermissionServiceTest::isCheckSandbox = true;
+    ASSERT_EQ(ret, DLP_SERVICE_ERROR_VALUE_INVALID);
+}
+
+/**
+ * @tc.name: CleanSandboxAppConfig001
+ * @tc.desc: CleanSandboxAppConfig test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionServiceTest, CleanSandboxAppConfig001, TestSize.Level1)
+{
+    DlpPermissionServiceTest::isSandbox = true;
+    int32_t ret = dlpPermissionService_->CleanSandboxAppConfig();
+    ASSERT_EQ(ret, DLP_SERVICE_ERROR_API_NOT_FOR_SANDBOX_ERROR);
+
+    DlpPermissionServiceTest::isCheckSandbox = false;
+    ret = dlpPermissionService_->CleanSandboxAppConfig();
+    DlpPermissionServiceTest::isCheckSandbox = true;
+    ASSERT_EQ(ret, DLP_SERVICE_ERROR_VALUE_INVALID);
 }

@@ -70,8 +70,6 @@ public:
     int32_t GetSandboxAppConfig(std::string& configInfo);
     int32_t IsDLPFeatureProvided(bool& isProvideDLPFeature);
     int32_t SetReadFlag(uint32_t uid);
-    void FinishStartSASuccess(const sptr<IRemoteObject>& remoteObject);
-    void FinishStartSAFail();
     void OnRemoteDiedHandle();
     void CleanUpResource();
 
@@ -83,17 +81,12 @@ private:
         sptr<DlpSandboxChangeCallback> &callback);
     int32_t CreateOpenDlpFileCallback(
         const std::shared_ptr<OpenDlpFileCallbackCustomize>& customizedCb, sptr<OpenDlpFileCallback>& callback);
-    bool StartLoadDlpPermissionSa();
-    void WaitForDlpPermissionSa();
     void GetDlpPermissionSa();
     void LoadDlpPermissionSa();
 
     sptr<IDlpPermissionService> GetProxy(bool doLoadSa);
     void GetProxyFromRemoteObject(const sptr<IRemoteObject>& remoteObject);
 
-    std::mutex cvLock_;
-    bool readyFlag_ = false;
-    std::condition_variable dlpPermissionCon_;
     std::mutex proxyMutex_;
     sptr<IDlpPermissionService> proxy_ = nullptr;
     sptr<DlpPermissionDeathRecipient> serviceDeathObserver_ = nullptr;
