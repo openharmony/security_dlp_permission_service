@@ -232,9 +232,9 @@ static const std::unordered_map<std::string, std::string> FILE_TYPE_MAP = {
     {"mkv", "support_video_dlp"},
     {"webm", "support_video_dlp"},
     {"h264", "support_video_dlp"},
-    {"wbmp", "support_video_dlp"},
-    {"nef", "support_video_dlp"},
-    {"cr2", "support_video_dlp"},
+    {"wbmp", "support_photo_dlp"},
+    {"nef", "support_photo_dlp"},
+    {"cr2", "support_photo_dlp"},
 };
 
 class DlpUtils {
