@@ -96,6 +96,10 @@ static const std::unordered_map<std::string, uint32_t> TYPE_TO_NUM_MAP = {
     {"mkv", 60},
     {"webm", 61},
     {"h264", 62},
+    {"wbmp", 63},
+    {"nef", 64},
+    {"cr2", 65},
+    {"orf", 66},
 };
 
 static const std::unordered_map<uint32_t, std::string> NUM_TO_TYPE_MAP = {
@@ -161,6 +165,10 @@ static const std::unordered_map<uint32_t, std::string> NUM_TO_TYPE_MAP = {
     {60, "mkv"},
     {61, "webm"},
     {62, "h264"},
+    {63, "wbmp"},
+    {64, "nef"},
+    {65, "cr2"},
+    {66, "orf"},
 };
 
 static const std::unordered_map<std::string, std::string> FILE_TYPE_MAP = {
@@ -226,6 +234,10 @@ static const std::unordered_map<std::string, std::string> FILE_TYPE_MAP = {
     {"mkv", "support_video_dlp"},
     {"webm", "support_video_dlp"},
     {"h264", "support_video_dlp"},
+    {"wbmp", "support_video_dlp"},
+    {"nef", "support_video_dlp"},
+    {"cr2", "support_video_dlp"},
+    {"orf", "support_video_dlp"},
 };
 
 class DlpUtils {
