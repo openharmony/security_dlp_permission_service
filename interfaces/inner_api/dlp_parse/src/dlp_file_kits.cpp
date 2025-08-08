@@ -129,6 +129,9 @@ static const std::unordered_map<std::string, std::string> SUFFIX_MIMETYPE_MAP = 
     {"mkv", "video/x-matroska"},
     {"webm", "video/webm"},
     {"h264", "video/H264"},
+    {"wbmp", "image/vnd.wap.wbmp"},
+    {"nef", "image/x-nikon-nef"},
+    {"cr2", "image/x-canon-cr2"},
 };
 
 static bool IsDlpFileName(const std::string& dlpFileName)
