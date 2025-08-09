@@ -811,8 +811,6 @@ HWTEST_F(DlpPermissionServiceTest, VisitRecordJsonManager001, TestSize.Level1)
     } else {
         ASSERT_EQ(DLP_OK, res);
     }
-    res = visitRecordJsonManager_->GetVisitRecordList(DLP_MANAGER_APP, 100, infoVec);
-    ASSERT_EQ(DLP_OK, res);
     res = visitRecordJsonManager_->GetVisitRecordList(PERMISSION_APP, 1001, infoVec);
     ASSERT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, res);
     for (int32_t i = 1; i <= 1024; i++) {

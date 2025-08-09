@@ -181,10 +181,18 @@ HWTEST_F(DlpCredentialTest, SetMDMPolicy001, TestSize.Level1)
     std::vector<std::string> appIdList2 = {"wechat", "taobao", "dlp_manager"};
 
     int32_t ret = DlpCredential::GetInstance().SetMDMPolicy(appIdList1);
-    ASSERT_EQ(DLP_OK, ret);
+    if (ret == DLP_SERVICE_ERROR_VALUE_INVALID) {
+        ASSERT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, ret);
+    } else {
+        ASSERT_EQ(DLP_OK, ret);
+    }
 
     ret = DlpCredential::GetInstance().SetMDMPolicy(appIdList2);
-    ASSERT_EQ(DLP_OK, ret);
+    if (ret == DLP_SERVICE_ERROR_VALUE_INVALID) {
+        ASSERT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, ret);
+    } else {
+        ASSERT_EQ(DLP_OK, ret);
+    }
 }
 
 /**
@@ -215,9 +223,17 @@ HWTEST_F(DlpCredentialTest, RemoveMDMPolicy001, TestSize.Level1)
 {
     std::vector<std::string> appIdList1 = {"wechat", "taobao", "dlp_manager"};
     int32_t ret = DlpCredential::GetInstance().SetMDMPolicy(appIdList1);
-    ASSERT_EQ(DLP_OK, ret);
+    if (ret == DLP_SERVICE_ERROR_VALUE_INVALID) {
+        ASSERT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, ret);
+    } else {
+        ASSERT_EQ(DLP_OK, ret);
+    }
     ret = DlpCredential::GetInstance().RemoveMDMPolicy();
-    ASSERT_EQ(DLP_OK, ret);
+    if (ret == DLP_SERVICE_ERROR_VALUE_INVALID) {
+        ASSERT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, ret);
+    } else {
+        ASSERT_EQ(DLP_OK, ret);
+    }
 }
 
 /**

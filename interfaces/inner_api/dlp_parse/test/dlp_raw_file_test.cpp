@@ -65,6 +65,256 @@ HWTEST_F(DlpRawFileTest, ParseRawDlpHeaderTest, TestSize.Level0)
 }
 
 /**
+ * @tc.name: ParseRawDlpHeaderTest002
+ * @tc.desc: test ParseRawDlpHeader
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpRawFileTest, ParseRawDlpHeaderTest002, TestSize.Level0)
+{
+    int32_t fd = open("/data/fuse_test_dlp.txt.dlp", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
+    ASSERT_NE(fd, -1);
+    std::shared_ptr<DlpRawFile> filePtr = std::make_shared<DlpRawFile>(-1, "mp4");
+    ASSERT_NE(filePtr, nullptr);
+
+    struct DlpHeader header = {
+        .magic = DLP_FILE_MAGIC,
+        .fileType = 10,
+        .offlineAccess = 0,
+        .algType = DLP_MODE_CTR,
+        .txtOffset = sizeof(struct DlpHeader) + 108,
+        .txtSize = 100,
+        .hmacOffset = sizeof(struct DlpHeader) + 208,
+        .hmacSize = 64,
+        .certOffset = sizeof(struct DlpHeader) + 272,
+        .certSize = 256,
+        .contactAccountOffset = sizeof(struct DlpHeader) + 8,
+        .contactAccountSize = 100,
+        .offlineCertOffset = sizeof(struct DlpHeader) + 272,
+        .offlineCertSize = 0
+    };
+    uint32_t version = 3;
+    uint32_t dlpHeaderSize = sizeof(struct DlpHeader);
+    write(fd, &version, sizeof(struct DlpHeader));
+    write(fd, &dlpHeaderSize, sizeof(struct DlpHeader));
+    uint8_t buffer[800] = {0};
+    write(fd, buffer, 800);
+
+    lseek(fd, 8, SEEK_SET);
+    write(fd, &header, sizeof(struct DlpHeader));
+    std::string certStr = "{\"aeskeyLen\":16, \"aeskey\":\"11223344556677889900112233445566\",\"ivLen\":16,"
+        "\"iv\":\"11223344556677889900112233445566\",\"ownerAccount\":\"test\",\"ownerAccountId\":\"test\","
+        "\"ownerAccountType\":0}";
+    lseek(fd, header.certOffset, SEEK_SET);
+    write(fd, certStr.c_str(), certStr.length());
+    lseek(fd, 0, SEEK_SET);
+    filePtr->ParseRawDlpHeader(dlpHeaderSize, dlpHeaderSize);
+    close(fd);
+    unlink("/data/fuse_test_dlp.txt");
+    fd = -1;
+}
+
+/**
+ * @tc.name: ParseRawDlpHeaderTest003
+ * @tc.desc: test ParseRawDlpHeader
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpRawFileTest, ParseRawDlpHeaderTest003, TestSize.Level0)
+{
+    int32_t fd = open("/data/fuse_test_dlp.txt.dlp", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
+    ASSERT_NE(fd, -1);
+    std::shared_ptr<DlpRawFile> filePtr = std::make_shared<DlpRawFile>(-1, "mp4");
+    ASSERT_NE(filePtr, nullptr);
+
+    struct DlpHeader header = {
+        .magic = DLP_FILE_MAGIC,
+        .fileType = 10,
+        .offlineAccess = 0,
+        .algType = DLP_MODE_CTR,
+        .txtOffset = sizeof(struct DlpHeader) + 108,
+        .txtSize = 100,
+        .hmacOffset = sizeof(struct DlpHeader) + 208,
+        .hmacSize = 64,
+        .certOffset = sizeof(struct DlpHeader) + 272,
+        .certSize = 256,
+        .contactAccountOffset = sizeof(struct DlpHeader) + 8,
+        .contactAccountSize = 100,
+        .offlineCertOffset = sizeof(struct DlpHeader) + 272,
+        .offlineCertSize = 0
+    };
+    uint32_t version = 3;
+    uint32_t dlpHeaderSize = sizeof(struct DlpHeader);
+    write(fd, &version, sizeof(struct DlpHeader));
+    write(fd, &dlpHeaderSize, sizeof(struct DlpHeader));
+    uint8_t buffer[800] = {0};
+    write(fd, buffer, 800);
+
+    lseek(fd, 8, SEEK_SET);
+    write(fd, &header, sizeof(struct DlpHeader));
+    std::string certStr = "{\"aeskeyLen\":16, \"aeskey\":\"11223344556677889900112233445566\",\"ivLen\":16,"
+        "\"iv\":\"11223344556677889900112233445566\",\"ownerAccount\":\"test\",\"ownerAccountId\":\"test\","
+        "\"ownerAccountType\":0}";
+    lseek(fd, header.certOffset, SEEK_SET);
+    write(fd, certStr.c_str(), certStr.length());
+    lseek(fd, 0, SEEK_SET);
+    filePtr->ParseRawDlpHeader(DLP_HEAD_SIZE + 808, DLP_HEAD_SIZE);
+    close(fd);
+    unlink("/data/fuse_test_dlp.txt");
+    fd = -1;
+}
+
+/**
+ * @tc.name: ParseRawDlpHeaderTest004
+ * @tc.desc: test ParseRawDlpHeader
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpRawFileTest, ParseRawDlpHeaderTest004, TestSize.Level0)
+{
+    int32_t fd = open("/data/fuse_test_dlp.txt.dlp", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
+    ASSERT_NE(fd, -1);
+    std::shared_ptr<DlpRawFile> filePtr = std::make_shared<DlpRawFile>(-1, "mp4");
+    ASSERT_NE(filePtr, nullptr);
+
+    struct DlpHeader header = {
+        .magic = DLP_FILE_MAGIC,
+        .fileType = 10,
+        .offlineAccess = 0,
+        .algType = DLP_MODE_CTR,
+        .txtOffset = sizeof(struct DlpHeader) + 108,
+        .txtSize = 100,
+        .hmacOffset = sizeof(struct DlpHeader) + 208,
+        .hmacSize = 64,
+        .certOffset = sizeof(struct DlpHeader) + 272,
+        .certSize = 256,
+        .contactAccountOffset = sizeof(struct DlpHeader) + 8,
+        .contactAccountSize = 100,
+        .offlineCertOffset = sizeof(struct DlpHeader) + 272,
+        .offlineCertSize = 0
+    };
+    uint32_t version = 3;
+    uint32_t dlpHeaderSize = sizeof(struct DlpHeader);
+    write(fd, &version, sizeof(struct DlpHeader));
+    write(fd, &dlpHeaderSize, sizeof(struct DlpHeader));
+    uint8_t buffer[800] = {0};
+    write(fd, buffer, 800);
+
+    lseek(fd, 8, SEEK_SET);
+    write(fd, &header, sizeof(struct DlpHeader));
+    std::string certStr = "{\"aeskeyLen\":16, \"aeskey\":\"11223344556677889900112233445566\",\"ivLen\":16,"
+        "\"iv\":\"11223344556677889900112233445566\",\"ownerAccount\":\"test\",\"ownerAccountId\":\"test\","
+        "\"ownerAccountType\":0}";
+    lseek(fd, header.certOffset, SEEK_SET);
+    write(fd, certStr.c_str(), certStr.length());
+    lseek(fd, 0, SEEK_SET);
+    filePtr->ParseRawDlpHeader(808, dlpHeaderSize);
+    close(fd);
+    unlink("/data/fuse_test_dlp.txt");
+    fd = -1;
+}
+
+/**
+ * @tc.name: ParseRawDlpHeaderTest005
+ * @tc.desc: test ParseRawDlpHeader
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpRawFileTest, ParseRawDlpHeaderTest005, TestSize.Level0)
+{
+    int32_t fd = open("/data/fuse_test_dlp.txt.dlp", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
+    ASSERT_NE(fd, -1);
+    std::shared_ptr<DlpRawFile> filePtr = std::make_shared<DlpRawFile>(-1, "mp4");
+    ASSERT_NE(filePtr, nullptr);
+
+    struct DlpHeader header = {
+        .magic = DLP_FILE_MAGIC,
+        .fileType = 10,
+        .offlineAccess = 0,
+        .algType = DLP_MODE_CTR,
+        .txtOffset = sizeof(struct DlpHeader) + 108,
+        .txtSize = 0,
+        .hmacOffset = sizeof(struct DlpHeader) + 108,
+        .hmacSize = 64,
+        .certOffset = sizeof(struct DlpHeader) + 172,
+        .certSize = 256,
+        .contactAccountOffset = sizeof(struct DlpHeader) + 8,
+        .contactAccountSize = 100,
+        .offlineCertOffset = sizeof(struct DlpHeader) + 272,
+        .offlineCertSize = 0
+    };
+    uint32_t version = 3;
+    uint32_t dlpHeaderSize = sizeof(struct DlpHeader);
+    write(fd, &version, sizeof(struct DlpHeader));
+    write(fd, &dlpHeaderSize, sizeof(struct DlpHeader));
+    uint8_t buffer[800] = {0};
+    write(fd, buffer, 800);
+
+    lseek(fd, 8, SEEK_SET);
+    write(fd, &header, sizeof(struct DlpHeader));
+    std::string certStr = "{\"aeskeyLen\":16, \"aeskey\":\"11223344556677889900112233445566\",\"ivLen\":16,"
+        "\"iv\":\"11223344556677889900112233445566\",\"ownerAccount\":\"test\",\"ownerAccountId\":\"test\","
+        "\"ownerAccountType\":0}";
+    lseek(fd, header.certOffset, SEEK_SET);
+    write(fd, certStr.c_str(), certStr.length());
+    lseek(fd, 0, SEEK_SET);
+    filePtr->ParseRawDlpHeader(400, dlpHeaderSize);
+    close(fd);
+    unlink("/data/fuse_test_dlp.txt");
+    fd = -1;
+}
+
+/**
+ * @tc.name: ParseRawDlpHeaderTest006
+ * @tc.desc: test ParseRawDlpHeader
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpRawFileTest, ParseRawDlpHeaderTest006, TestSize.Level0)
+{
+    int32_t fd = open("/data/fuse_test_dlp.txt.dlp", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
+    ASSERT_NE(fd, -1);
+    std::shared_ptr<DlpRawFile> filePtr = std::make_shared<DlpRawFile>(-1, "mp4");
+    ASSERT_NE(filePtr, nullptr);
+
+    struct DlpHeader header = {
+        .magic = DLP_FILE_MAGIC,
+        .fileType = 10,
+        .offlineAccess = 0,
+        .algType = DLP_MODE_CTR,
+        .txtOffset = sizeof(struct DlpHeader) + 108,
+        .txtSize = 0,
+        .hmacOffset = sizeof(struct DlpHeader) + 108,
+        .hmacSize = 64,
+        .certOffset = sizeof(struct DlpHeader) + 172,
+        .certSize = 256,
+        .contactAccountOffset = sizeof(struct DlpHeader) + 8,
+        .contactAccountSize = 100,
+        .offlineCertOffset = sizeof(struct DlpHeader) + 272,
+        .offlineCertSize = 0
+    };
+    uint32_t version = 3;
+    uint32_t dlpHeaderSize = sizeof(struct DlpHeader);
+    write(fd, &version, sizeof(struct DlpHeader));
+    write(fd, &dlpHeaderSize, sizeof(struct DlpHeader));
+    uint8_t buffer[800] = {0};
+    write(fd, buffer, 800);
+
+    lseek(fd, 8, SEEK_SET);
+    write(fd, &header, sizeof(struct DlpHeader));
+    std::string certStr = "{\"aeskeyLen\":16, \"aeskey\":\"11223344556677889900112233445566\",\"ivLen\":16,"
+        "\"iv\":\"11223344556677889900112233445566\",\"ownerAccount\":\"test\",\"ownerAccountId\":\"test\","
+        "\"ownerAccountType\":0}";
+    lseek(fd, header.certOffset, SEEK_SET);
+    write(fd, certStr.c_str(), certStr.length());
+    lseek(fd, 0, SEEK_SET);
+    filePtr->ParseRawDlpHeader(808, dlpHeaderSize);
+    close(fd);
+    unlink("/data/fuse_test_dlp.txt");
+    fd = -1;
+}
+
+/**
  * @tc.name: HmacCheckTest
  * @tc.desc: test HmacCheck
  * @tc.type: FUNC

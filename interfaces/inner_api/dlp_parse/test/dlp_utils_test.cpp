@@ -262,6 +262,7 @@ HWTEST_F(DlpUtilsTest, GetRealTypeForEnterpriseWithFd001, TestSize.Level0)
     lseek(fd, 0, SEEK_SET);
     bool isFromUriName = true;
     DlpUtils::GetRealTypeForEnterpriseWithFd(fd, isFromUriName);
+    close(fd);
     unlink("/data/fuse_test.txt.dlp");
 }
 
@@ -288,5 +289,60 @@ HWTEST_F(DlpUtilsTest, GetRealTypeForEnterpriseWithFd002, TestSize.Level0)
     lseek(fd, 0, SEEK_SET);
     bool isFromUriName = true;
     DlpUtils::GetRealTypeForEnterpriseWithFd(fd, isFromUriName);
+    close(fd);
+    unlink("/data/fuse_test.txt.dlp");
+}
+
+/**
+ * @tc.name: GetRealTypeForEnterpriseWithFd003
+ * @tc.desc: test GetRealTypeForEnterpriseWithFd
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpUtilsTest, GetRealTypeForEnterpriseWithFd003, TestSize.Level0)
+{
+    DLP_LOG_INFO(LABEL, "GetRealTypeForEnterpriseWithFd003");
+    int fd = open("/data/fuse_test.txt.dlp", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
+    ASSERT_NE(fd, -1);
+    struct DlpHeader header = {
+        .magic = DLP_FILE_MAGIC,
+        .certSize = 20,
+        .contactAccountSize = 20,
+        .fileType = 1000,
+    };
+    uint8_t buffer[8] = {0};
+    write(fd, buffer, 8);
+    write(fd, &header, sizeof(header));
+    lseek(fd, 0, SEEK_SET);
+    bool isFromUriName = true;
+    DlpUtils::GetRealTypeForEnterpriseWithFd(fd, isFromUriName);
+    close(fd);
+    unlink("/data/fuse_test.txt.dlp");
+}
+
+/**
+ * @tc.name: GetRealTypeForEnterpriseWithFd004
+ * @tc.desc: test GetRealTypeForEnterpriseWithFd
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpUtilsTest, GetRealTypeForEnterpriseWithFd004, TestSize.Level0)
+{
+    DLP_LOG_INFO(LABEL, "GetRealTypeForEnterpriseWithFd004");
+    int fd = open("/data/fuse_test.txt.dlp", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
+    ASSERT_NE(fd, -1);
+    struct DlpHeader header = {
+        .magic = DLP_FILE_MAGIC,
+        .certSize = 20,
+        .contactAccountSize = 20,
+        .fileType = 1000,
+    };
+    uint8_t buffer[8] = {0};
+    write(fd, buffer, 8);
+    write(fd, &header, sizeof(header) - 1);
+    lseek(fd, 0, SEEK_SET);
+    bool isFromUriName = true;
+    DlpUtils::GetRealTypeForEnterpriseWithFd(fd, isFromUriName);
+    close(fd);
     unlink("/data/fuse_test.txt.dlp");
 }
