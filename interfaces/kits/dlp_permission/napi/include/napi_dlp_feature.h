@@ -13,24 +13,33 @@
  * limitations under the License.
  */
 
-#ifndef PERMISSION_MANAGER_ADAPTER_H
-#define PERMISSION_MANAGER_ADAPTER_H
+#ifndef NAPI_DLP_FEATURE_H
+#define NAPI_DLP_FEATURE_H
 
-#include "permission_policy.h"
-#include "access_token.h"
- 
+#include "napi/native_api.h"
+#include "napi/native_node_api.h"
+
 namespace OHOS {
 namespace Security {
 namespace DlpPermission {
 
-class PermissionManagerAdapter {
+class NapiDlpFeature {
 public:
-    static bool CheckPermission(const std::string& permission);
-    static bool CheckPermissionAndGetAppId(std::string& appId);
-    static int32_t CheckSandboxFlagWithService(AccessToken::AccessTokenID tokenId, bool& sandboxFlag);
+    static napi_value Init(napi_env env, napi_value exports);
+
+private:
+    static void InitFunction(napi_env env, napi_value exports);
+
+    static void SetDlpFeatureExecute(napi_env env, void* data);
+    static void SetDlpFeatureComplete(napi_env env, napi_status status, void* data);
+    static napi_value SetDlpFeature(napi_env env, napi_callback_info cbInfo);
 };
 }  // namespace DlpPermission
 }  // namespace Security
 }  // namespace OHOS
-#endif  // PERMISSION_MANAGER_ADAPTER_H
- 
+/*
+ * function for module exports
+ */
+static napi_value Init(napi_env env, napi_value exports);
+
+#endif /*  NAPI_DLP_FEATURE_H */

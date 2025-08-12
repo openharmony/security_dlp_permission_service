@@ -44,6 +44,7 @@
         "ability_runtime",
         "hilog",
         "hisysevent",
+        "huks",
         "napi",
         "safwk",
         "samgr",

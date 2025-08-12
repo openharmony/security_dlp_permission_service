@@ -13,24 +13,25 @@
  * limitations under the License.
  */
 
-#ifndef PERMISSION_MANAGER_ADAPTER_H
-#define PERMISSION_MANAGER_ADAPTER_H
+#ifndef DLP_FEATURE_INFO_H
+#define DLP_FEATURE_INFO_H
 
-#include "permission_policy.h"
-#include "access_token.h"
- 
+#include "nlohmann/json.hpp"
+
 namespace OHOS {
 namespace Security {
 namespace DlpPermission {
+using unordered_json = nlohmann::ordered_json;
 
-class PermissionManagerAdapter {
+class DlpFeatureInfo {
 public:
-    static bool CheckPermission(const std::string& permission);
-    static bool CheckPermissionAndGetAppId(std::string& appId);
-    static int32_t CheckSandboxFlagWithService(AccessToken::AccessTokenID tokenId, bool& sandboxFlag);
+    DlpFeatureInfo();
+    ~DlpFeatureInfo();
+    static int32_t SaveDlpFeatureInfoToFile(const unordered_json& dlpFeatureJson);
+    static int32_t GetDlpFeatureInfoFromFile(const char *filePath, uint32_t& dlpFeature);
 };
+
 }  // namespace DlpPermission
 }  // namespace Security
 }  // namespace OHOS
-#endif  // PERMISSION_MANAGER_ADAPTER_H
- 
+#endif  // DLP_FEATURE_INFO_H

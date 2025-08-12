@@ -76,3 +76,48 @@ ohos_shared_library("libdlppermission_napi") {
   subsystem_name = "security"
   part_name = "dlp_permission_service"
 }
+
+ohos_shared_library("libdlpsetdlpfeature_napi") {
+  branch_protector_ret = "pac_ret"
+
+  sanitize = {
+    integer_overflow = true
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
+
+  include_dirs = [
+    "${dlp_root_dir}/frameworks/common/include",
+    "${dlp_root_dir}/interfaces/inner_api/dlp_permission/include",
+    "${dlp_root_dir}/interfaces/kits/dlp_permission/napi/include",
+    "${dlp_root_dir}/interfaces/kits/napi_common/include",
+    "${dlp_root_dir}/interfaces/inner_api/dlp_parse/include",
+  ]
+
+  sources = [
+    "${dlp_root_dir}/interfaces/kits/dlp_permission/napi/src/napi_dlp_feature.cpp",
+    "${dlp_root_dir}/interfaces/kits/napi_common/src/napi_common.cpp",
+    "${dlp_root_dir}/interfaces/kits/napi_common/src/napi_error_msg.cpp",
+  ]
+
+  deps = [
+    "${dlp_root_dir}/interfaces/inner_api/dlp_permission:libdlp_permission_sdk",
+  ]
+  cflags_cc = [ "-DHILOG_ENABLE" ]
+
+  configs = [ "${dlp_root_dir}/config:coverage_flags" ]
+
+  external_deps = [
+    "ability_runtime:ability_context_native",
+    "ability_runtime:napi_base_context",
+    "ability_runtime:napi_common",
+    "access_token:libaccesstoken_sdk",
+    "ace_engine:ace_uicontent",
+    "napi:ace_napi",
+  ]
+
+  relative_install_dir = "module"
+  subsystem_name = "security"
+  part_name = "dlp_permission_service"
+}

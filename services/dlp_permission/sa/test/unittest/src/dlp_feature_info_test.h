@@ -13,24 +13,26 @@
  * limitations under the License.
  */
 
-#ifndef PERMISSION_MANAGER_ADAPTER_H
-#define PERMISSION_MANAGER_ADAPTER_H
+#ifndef DLP_FEATURE_INFO_TEST_H
+#define DLP_FEATURE_INFO_TEST_H
 
-#include "permission_policy.h"
-#include "access_token.h"
- 
+#include <gtest/gtest.h>
+
 namespace OHOS {
 namespace Security {
 namespace DlpPermission {
 
-class PermissionManagerAdapter {
+class DlpFeatureInfoTest : public testing::Test {
 public:
-    static bool CheckPermission(const std::string& permission);
-    static bool CheckPermissionAndGetAppId(std::string& appId);
-    static int32_t CheckSandboxFlagWithService(AccessToken::AccessTokenID tokenId, bool& sandboxFlag);
+    static void SetUpTestCase();
+
+    static void TearDownTestCase();
+
+    void SetUp();
+
+    void TearDown();
 };
 }  // namespace DlpPermission
 }  // namespace Security
 }  // namespace OHOS
-#endif  // PERMISSION_MANAGER_ADAPTER_H
- 
+#endif  // DLP_FEATURE_INFO_TEST_H

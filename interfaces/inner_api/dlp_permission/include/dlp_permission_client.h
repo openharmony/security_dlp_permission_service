@@ -72,6 +72,7 @@ public:
     int32_t SetReadFlag(uint32_t uid);
     void OnRemoteDiedHandle();
     void CleanUpResource();
+    int32_t SetDlpFeature(uint32_t dlpFeatureInfo, bool& statusSetInfo);
 
 private:
     DlpPermissionClient();
