@@ -693,7 +693,7 @@ int32_t DlpFileManager::OpenDlpFile(int32_t dlpFileFd, std::shared_ptr<DlpFile>&
         return DLP_OK;
     }
     std::string lower = DlpUtils::ToLowerString(realSuffix);
-    std::string realType = "";
+    std::string realType = lower;
     if (isFromUriName) {
         for (size_t len = MAX_REALY_TYPE_LENGTH; len >= MIN_REALY_TYPE_LENGTH; len--) {
             if (len > lower.size()) {

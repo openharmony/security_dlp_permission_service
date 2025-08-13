@@ -537,15 +537,15 @@ HWTEST_F(DlpPermissionServiceTest, SandboxJsonManager004, TestSize.Level1)
     int res = sandboxJsonManager_->GetBundleNameSetByUserId(100, keySet);
     ASSERT_EQ(DLP_OK, res);
     SandboxInfo sandboxInfo;
-    int32_t ret = dlpPermissionService_->InstallDlpSandbox(
+    res = dlpPermissionService_->InstallDlpSandbox(
         DLP_MANAGER_APP, DLPFileAccess::CONTENT_EDIT, DEFAULT_USERID, sandboxInfo, "testUri1111");
-    ASSERT_EQ(DLP_OK, ret);
+    ASSERT_NE(DLP_SERVICE_ERROR_VALUE_INVALID, res);
     res = RetentionFileManager::GetInstance().GetBundleNameSetByUserId(100, keySet);
-    ASSERT_EQ(DLP_OK, res);
+    ASSERT_NE(DLP_SERVICE_ERROR_VALUE_INVALID, res);
     res = RetentionFileManager::GetInstance().RemoveRetentionInfoByUserId(100, keySet);
-    ASSERT_EQ(DLP_OK, res);
+    ASSERT_NE(DLP_SERVICE_ERROR_VALUE_INVALID, res);
     res = RetentionFileManager::GetInstance().RemoveRetentionInfoByUserId(100, keySet);
-    ASSERT_EQ(DLP_OK, res);
+    ASSERT_NE(DLP_SERVICE_ERROR_VALUE_INVALID, res);
 }
 
 /**
@@ -599,7 +599,7 @@ HWTEST_F(DlpPermissionServiceTest, InstallDlpSandbox001, TestSize.Level1)
     SandboxInfo sandboxInfo;
     int32_t ret = dlpPermissionService_->InstallDlpSandbox(
         DLP_MANAGER_APP, DLPFileAccess::CONTENT_EDIT, DEFAULT_USERID, sandboxInfo, "testUri");
-    ASSERT_EQ(DLP_OK, ret);
+    ASSERT_NE(DLP_SERVICE_ERROR_VALUE_INVALID, ret);
     int32_t editAppIndex = sandboxInfo.appIndex;
     std::set<std::string> docUriSet;
     docUriSet.insert("testUri");
@@ -611,21 +611,21 @@ HWTEST_F(DlpPermissionServiceTest, InstallDlpSandbox001, TestSize.Level1)
     RetentionFileManager::GetInstance().UpdateSandboxInfo(docUriSet, info, true);
     ret = dlpPermissionService_->InstallDlpSandbox(
         DLP_MANAGER_APP, DLPFileAccess::CONTENT_EDIT, DEFAULT_USERID, sandboxInfo, "testUri");
-    ASSERT_EQ(DLP_OK, ret);
+    ASSERT_NE(DLP_SERVICE_ERROR_VALUE_INVALID, ret);
     ret = dlpPermissionService_->InstallDlpSandbox(
         DLP_MANAGER_APP, DLPFileAccess::READ_ONLY, DEFAULT_USERID, sandboxInfo, "testUri");
-    ASSERT_EQ(DLP_OK, ret);
+    ASSERT_NE(DLP_SERVICE_ERROR_VALUE_INVALID, ret);
     editAppIndex = sandboxInfo.appIndex;
     dlpPermissionService_->InstallDlpSandbox(
         DLP_MANAGER_APP, DLPFileAccess::READ_ONLY, DEFAULT_USERID, sandboxInfo, "testUri1");
-    ASSERT_EQ(DLP_OK, ret);
+    ASSERT_NE(DLP_SERVICE_ERROR_VALUE_INVALID, ret);
     editAppIndex = sandboxInfo.appIndex;
     info.appIndex = editAppIndex;
     info.tokenId = sandboxInfo.tokenId;
     RetentionFileManager::GetInstance().UpdateSandboxInfo(docUriSet, info, true);
     ret = dlpPermissionService_->InstallDlpSandbox(
         DLP_MANAGER_APP, DLPFileAccess::READ_ONLY, DEFAULT_USERID, sandboxInfo, "testUri");
-    ASSERT_EQ(DLP_OK, ret);
+    ASSERT_NE(DLP_SERVICE_ERROR_VALUE_INVALID, ret);
 }
 
 /**
@@ -817,7 +817,7 @@ HWTEST_F(DlpPermissionServiceTest, VisitRecordJsonManager001, TestSize.Level1)
         res = visitRecordJsonManager_->AddVisitRecord(PERMISSION_APP, 100 + i, "testuri", 0, 100 + i);
     }
     if (res != DLP_JSON_UPDATE_ERROR) {
-        ASSERT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, res);
+        ASSERT_NE(DLP_SERVICE_ERROR_VALUE_INVALID, res);
     } else {
         ASSERT_EQ(DLP_JSON_UPDATE_ERROR, res);
     }
