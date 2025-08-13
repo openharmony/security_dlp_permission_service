@@ -302,7 +302,7 @@ HWTEST_F(AppStateObserverTest, EraseUserId001, TestSize.Level1)
     observer.AddUserId(uid);
     observer.EraseUserId(uid);
     observer.AddUserId(uid);
-    ASSERT_EQ(1, uid);
+    ASSERT_TRUE(observer.CallbackListenerEmpty());
 }
 
 /**
@@ -319,7 +319,7 @@ HWTEST_F(AppStateObserverTest, AddUidWithTokenId001, TestSize.Level1)
     observer.EraseUidTokenIdMap(100);
     observer.AddUidWithTokenId(100, uid);
     observer.EraseUidTokenIdMap(100);
-    ASSERT_EQ(1, uid);
+    ASSERT_TRUE(observer.CallbackListenerEmpty());
 }
 
 /**
@@ -372,5 +372,5 @@ HWTEST_F(AppStateObserverTest, GetOpeningReadOnlySandbox002, TestSize.Level1)
     bundleName = "testbundle1";
     userId = 124;
     observer.GetOpeningReadOnlySandbox(bundleName, userId, appIndex);
-    ASSERT_EQ(124, userId);
+    ASSERT_TRUE(observer.CallbackListenerEmpty());
 }
