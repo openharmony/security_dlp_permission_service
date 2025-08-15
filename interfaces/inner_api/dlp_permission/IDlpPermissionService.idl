@@ -63,6 +63,7 @@ interface OHOS.Security.DlpPermission.IDlpPermissionService {
     void CleanSandboxAppConfig();
     void GetSandboxAppConfig([out] String configInfo);
     void IsDLPFeatureProvided([out] boolean isProvideDLPFeature);
+    void SetDlpFeature([in] unsigned int dlpFeatureInfo, [out] boolean statusSetInfo);
     void SetReadFlag([in] unsigned int uid);
     void SetMDMPolicy([in] String[] appIdList);
     void GetMDMPolicy([out] String[] appIdList);

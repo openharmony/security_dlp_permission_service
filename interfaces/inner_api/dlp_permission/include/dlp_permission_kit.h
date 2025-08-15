@@ -96,6 +96,7 @@ public:
     static int32_t GetSandboxAppConfig(std::string& configInfo);
     static int32_t IsDLPFeatureProvided(bool& isProvideDLPFeature);
     static int32_t SetReadFlag(uint32_t uid);
+    static int32_t SetDlpFeature(uint32_t dlpFeatureInfo, bool& statusSetInfo);
 };
 }  // namespace DlpPermission
 }  // namespace Security

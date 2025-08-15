@@ -150,3 +150,33 @@ HWTEST_F(DlpPermissionClientTest, SetReadFlag001, TestSize.Level0)
     int32_t ret = DlpPermissionClient::GetInstance().SetReadFlag(uid);
     ASSERT_TRUE(ret != DLP_CALLBACK_SA_WORK_ABNORMAL);
 }
+
+/**
+ * @tc.name: SetDlpFeature001
+ * @tc.desc: SetDlpFeature test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionClientTest, SetDlpFeature001, TestSize.Level0)
+{
+    DLP_LOG_INFO(LABEL, "SetDlpFeature001");
+    uint32_t dlpFeatureInfo = 0;
+    bool statusSetInfo;
+    int32_t ret = DlpPermissionClient::GetInstance().SetDlpFeature(dlpFeatureInfo, statusSetInfo);
+    ASSERT_TRUE(ret != DLP_CALLBACK_SA_WORK_ABNORMAL);
+}
+
+/**
+ * @tc.name: SetDlpFeature002
+ * @tc.desc: SetDlpFeature test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionClientTest, SetDlpFeature002, TestSize.Level0)
+{
+    DLP_LOG_INFO(LABEL, "SetDlpFeature002");
+    uint32_t dlpFeatureInfo = 1;
+    bool statusSetInfo;
+    int32_t ret = DlpPermissionClient::GetInstance().SetDlpFeature(dlpFeatureInfo, statusSetInfo);
+    ASSERT_TRUE(ret != DLP_CALLBACK_SA_WORK_ABNORMAL);
+}

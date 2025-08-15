@@ -62,6 +62,12 @@ bool PermissionManagerAdapter::CheckPermission(const std::string& permission)
     return true;
 }
 
+bool PermissionManagerAdapter::CheckPermissionAndGetAppId(std::string& appId)
+{
+    appId = "6917562860841254665";
+    return true;
+}
+
 int32_t PermissionManagerAdapter::CheckSandboxFlagWithService(AccessToken::AccessTokenID tokenId, bool& sandboxFlag)
 {
     if (!DlpPermissionServiceTest::isCheckSandbox) {

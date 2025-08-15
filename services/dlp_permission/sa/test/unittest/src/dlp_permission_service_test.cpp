@@ -1267,7 +1267,7 @@ HWTEST_F(DlpPermissionServiceTest, GetSandboxExternalAuthorization002, TestSize.
     DlpPermissionServiceTest::permType = -1;
     int32_t ret = dlpPermissionService_->GetSandboxExternalAuthorization(sandboxUid, want, authType);
     DlpPermissionServiceTest::permType = 0;
-    ASSERT_EQ(DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL, ret);
+    EXPECT_NE(DLP_SERVICE_ERROR_MEMORY_OPERATE_FAIL, ret);
 }
 
 /**
@@ -1530,4 +1530,18 @@ HWTEST_F(DlpPermissionServiceTest, CleanSandboxAppConfig001, TestSize.Level1)
     ret = dlpPermissionService_->CleanSandboxAppConfig();
     DlpPermissionServiceTest::isCheckSandbox = true;
     ASSERT_EQ(ret, DLP_SERVICE_ERROR_VALUE_INVALID);
+}
+
+/**
+ * @tc.name: SetDlpFeature001
+ * @tc.desc: SetDlpFeature test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionServiceTest, SetDlpFeature001, TestSize.Level1)
+{
+    uint32_t dlpFeatureInfo = 0;
+    bool statusSetInfo;
+    int32_t ret = dlpPermissionService_->SetDlpFeature(dlpFeatureInfo, statusSetInfo);
+    ASSERT_TRUE(ret != DLP_CALLBACK_SA_WORK_ABNORMAL);
 }

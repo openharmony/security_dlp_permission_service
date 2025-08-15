@@ -13,24 +13,20 @@
  * limitations under the License.
  */
 
-#ifndef PERMISSION_MANAGER_ADAPTER_H
-#define PERMISSION_MANAGER_ADAPTER_H
+#ifndef ALG_MANAGER_H
+#define ALG_MANAGER_H
 
-#include "permission_policy.h"
-#include "access_token.h"
- 
+#include "alg_common_type.h"
+
 namespace OHOS {
 namespace Security {
 namespace DlpPermission {
 
-class PermissionManagerAdapter {
-public:
-    static bool CheckPermission(const std::string& permission);
-    static bool CheckPermissionAndGetAppId(std::string& appId);
-    static int32_t CheckSandboxFlagWithService(AccessToken::AccessTokenID tokenId, bool& sandboxFlag);
-};
+bool AlgIsKeyExist(const HuksKeyInfo *keyInfo);
+int32_t AlgGenerateMacKey(const HuksKeyInfo *keyInfo);
+int32_t AlgHmac(const HuksKeyInfo *keyInfo, const BlobData *data, BlobData *outData);
+
 }  // namespace DlpPermission
 }  // namespace Security
 }  // namespace OHOS
-#endif  // PERMISSION_MANAGER_ADAPTER_H
- 
+#endif  // ALG_MANAGER_H

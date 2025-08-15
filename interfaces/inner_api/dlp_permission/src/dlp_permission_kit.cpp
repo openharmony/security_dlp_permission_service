@@ -249,6 +249,13 @@ int32_t DlpPermissionKit::SetReadFlag(uint32_t uid)
 {
     return DlpPermissionClient::GetInstance().SetReadFlag(uid);
 }
+
+int32_t DlpPermissionKit::SetDlpFeature(uint32_t dlpFeatureInfo, bool& statusSetInfo)
+{
+    int32_t res = DlpPermissionClient::GetInstance().SetDlpFeature(dlpFeatureInfo, statusSetInfo);
+    DlpPermissionClient::GetInstance().CleanUpResource();
+    return res;
+}
 }  // namespace DlpPermission
 }  // namespace Security
 }  // namespace OHOS

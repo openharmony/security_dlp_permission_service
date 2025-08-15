@@ -83,6 +83,7 @@ public:
     int32_t RemoveMDMPolicy() override;
     void StartTimer();
     int Dump(int fd, const std::vector<std::u16string>& args) override;
+    int32_t SetDlpFeature(const uint32_t dlpFeatureInfo, bool& statusSetInfo) override;
 
 private:
     bool InsertDlpSandboxInfo(DlpSandboxInfo& sandboxInfo, bool hasRetention);

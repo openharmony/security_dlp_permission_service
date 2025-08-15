@@ -626,6 +626,16 @@ int32_t DlpPermissionClient::SetReadFlag(uint32_t uid)
     return proxy->SetReadFlag(uid);
 }
 
+int32_t DlpPermissionClient::SetDlpFeature(uint32_t dlpFeatureInfo, bool& statusSetInfo)
+{
+    auto proxy = GetProxy(true);
+    if (proxy == nullptr) {
+        DLP_LOG_ERROR(LABEL, "Proxy is null");
+        return DLP_CALLBACK_SA_WORK_ABNORMAL;
+    }
+    return proxy->SetDlpFeature(dlpFeatureInfo, statusSetInfo);
+}
+
 void DlpPermissionClient::GetDlpPermissionSa()
 {
     auto sam = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();

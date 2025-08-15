@@ -48,6 +48,8 @@
 #include "visit_record_file_manager.h"
 #include "os_account_manager.h"
 #include "permission_manager_adapter.h"
+#include "alg_utils.h"
+#include "dlp_feature_info.h"
 
 namespace OHOS {
 namespace Security {
@@ -77,6 +79,10 @@ static const uint32_t MAX_SUPPORT_FILE_TYPE_NUM = 1024;
 static const uint32_t MAX_RETENTION_SIZE = 1024;
 static const uint32_t MAX_FILE_RECORD_SIZE = 1024;
 static const uint32_t MAX_APPID_LIST_SIZE = 250;
+static const std::string MDM_ENABLE_VALUE = "status";
+static const std::string MDM_BUNDLE_NAME = "appId";
+static const uint32_t ENABLE_VALUE_TRUE = 1;
+static const char *FEATURE_INFO_DATA_FILE_PATH = "/data/service/el1/public/dlp_permission_service/dlp_feature_info.txt";
 }
 REGISTER_SYSTEM_ABILITY_BY_ID(DlpPermissionService, SA_ID_DLP_PERMISSION_SERVICE, true);
 
@@ -1012,10 +1018,47 @@ int32_t DlpPermissionService::GetSandboxAppConfig(std::string& configInfo)
     return SandboxConfigOperate(configInfo, SandboxConfigOperationEnum::GET);
 }
 
+int32_t DlpPermissionService::SetDlpFeature(const uint32_t dlpFeatureInfo, bool& statusSetInfo)
+{
+    SetTimer(true);
+    std::string appId;
+    if (!PermissionManagerAdapter::CheckPermissionAndGetAppId(appId)) {
+        return DLP_SERVICE_ERROR_PERMISSION_DENY;
+    }
+
+    unordered_json featureJson;
+    featureJson[MDM_BUNDLE_NAME] = appId;
+    featureJson[MDM_ENABLE_VALUE] = dlpFeatureInfo;
+
+    int32_t res = DlpFeatureInfo::SaveDlpFeatureInfoToFile(featureJson);
+    DLP_LOG_INFO(LABEL, "SaveDlpFeatureInfoToFile res is: %{public}d", res);
+    if (res == DLP_OK) {
+        statusSetInfo = true;
+    }
+    return DLP_OK;
+}
+
 int32_t DlpPermissionService::IsDLPFeatureProvided(bool& isProvideDLPFeature)
 {
     SetTimer(true);
+    uint32_t dlpFeature = 0;
     std::string value = OHOS::system::GetParameter(DLP_ENABLE, "");
+    if (HcIsFileExist(FEATURE_INFO_DATA_FILE_PATH)) {
+        DLP_LOG_INFO(LABEL, "feature info file exist");
+        if (DlpFeatureInfo::GetDlpFeatureInfoFromFile(FEATURE_INFO_DATA_FILE_PATH, dlpFeature) != DLP_OK) {
+            DLP_LOG_ERROR(LABEL, "GetDlpFeatureInfoFromFile failed");
+            isProvideDLPFeature = (value == TRUE_VALUE);
+            return DLP_OK;
+        }
+        if (dlpFeature != ENABLE_VALUE_TRUE) {
+            DLP_LOG_ERROR(LABEL, "DlpFeatureInfo is false");
+            isProvideDLPFeature = false;
+            return DLP_OK;
+        }
+        isProvideDLPFeature = true;
+        return DLP_OK;
+    }
+    DLP_LOG_DEBUG(LABEL, "feature info file not exist!");
     isProvideDLPFeature = (value == TRUE_VALUE);
     return DLP_OK;
 }

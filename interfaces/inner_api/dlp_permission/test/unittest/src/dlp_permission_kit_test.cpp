@@ -1521,6 +1521,35 @@ HWTEST_F(DlpPermissionKitTest, GetDLPFileVisitRecord004, TestSize.Level0)
     ASSERT_TRUE(TestSetSelfTokenId(g_dlpManagerTokenId));
 }
 
+/* *
+ * @tc.name: SetDlpFeature001
+ * @tc.desc: SetDlpFeature test dlpFeatureInfo 0
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionKitTest, SetDlpFeature001, TestSize.Level0)
+{
+    DLP_LOG_DEBUG(LABEL, "SetDlpFeature001");
+    uint32_t dlpFeatureInfo = 0;
+    bool statusSetInfo;
+    int32_t ret = DlpPermissionKit::SetDlpFeature(dlpFeatureInfo, statusSetInfo);
+    ASSERT_TRUE(ret != DLP_CALLBACK_SA_WORK_ABNORMAL);
+}
+
+/* *
+ * @tc.name: SetDlpFeature002
+ * @tc.desc: SetDlpFeature test dlpFeatureInfo 1
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionKitTest, SetDlpFeature002, TestSize.Level0)
+{
+    DLP_LOG_DEBUG(LABEL, "SetDlpFeature002");
+    uint32_t dlpFeatureInfo = 1;
+    bool statusSetInfo;
+    int32_t ret = DlpPermissionKit::SetDlpFeature(dlpFeatureInfo, statusSetInfo);
+    ASSERT_TRUE(ret != DLP_CALLBACK_SA_WORK_ABNORMAL);
+}
 }  // namespace DlpPermission
 }  // namespace Security
 }  // namespace OHOS

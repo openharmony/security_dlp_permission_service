@@ -13,24 +13,26 @@
  * limitations under the License.
  */
 
-#ifndef PERMISSION_MANAGER_ADAPTER_H
-#define PERMISSION_MANAGER_ADAPTER_H
+#ifndef DLP_COMMON_FUNC_H
+#define DLP_COMMON_FUNC_H
 
-#include "permission_policy.h"
-#include "access_token.h"
- 
+#include "alg_common_type.h"
+#include "alg_utils.h"
+
 namespace OHOS {
 namespace Security {
 namespace DlpPermission {
 
-class PermissionManagerAdapter {
-public:
-    static bool CheckPermission(const std::string& permission);
-    static bool CheckPermissionAndGetAppId(std::string& appId);
-    static int32_t CheckSandboxFlagWithService(AccessToken::AccessTokenID tokenId, bool& sandboxFlag);
-};
+int32_t GetHMACValue(const HMACSrcParams *hmacSrcParams,
+    uint8_t **hmacValue, uint32_t *hmacValueSize, const BlobData *aliasBlob);
+
+int32_t WriteHMACAndBufToFile(const HMACSrcParams *hmacSrcParams, const char *keyAlias, const char *filePath);
+
+int32_t ReadBufFromFile(uint8_t **fileBuffer, uint32_t *fileSize, const char *filePath);
+
+int32_t CompareHMACValue(const HMACSrcParams *hmacSrcParams, uint8_t **buffer, uint32_t *bufLen, const char *keyAlias);
+
 }  // namespace DlpPermission
 }  // namespace Security
 }  // namespace OHOS
-#endif  // PERMISSION_MANAGER_ADAPTER_H
- 
+#endif  // DLP_COMMON_FUNC_H

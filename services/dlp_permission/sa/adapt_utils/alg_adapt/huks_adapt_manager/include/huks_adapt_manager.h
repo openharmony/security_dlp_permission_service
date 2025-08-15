@@ -13,24 +13,27 @@
  * limitations under the License.
  */
 
-#ifndef PERMISSION_MANAGER_ADAPTER_H
-#define PERMISSION_MANAGER_ADAPTER_H
+#ifndef HUKS_ADAPT_MANAGER_H
+#define HUKS_ADAPT_MANAGER_H
 
-#include "permission_policy.h"
-#include "access_token.h"
- 
+#include "alg_common_type.h"
+#include "alg_utils.h"
+
+#define HASH_SIZE_SHA_256 32
+#define MAX_DATABASE_FILE_SIZE (40 * 1024)
+#define MAX_UPDATE_SIZE (64 * 1024)
+#define MAX_OUTDATA_SIZE (64 * 1024)
+#define SIZE_OF_UINT64 sizeof(uint64_t)
+
 namespace OHOS {
 namespace Security {
 namespace DlpPermission {
 
-class PermissionManagerAdapter {
-public:
-    static bool CheckPermission(const std::string& permission);
-    static bool CheckPermissionAndGetAppId(std::string& appId);
-    static int32_t CheckSandboxFlagWithService(AccessToken::AccessTokenID tokenId, bool& sandboxFlag);
-};
+bool IsHuksMgrKeyExist(const HuksKeyInfo *keyInfo);
+int32_t HuksGenerateMacKey(const HuksKeyInfo *keyInfo);
+int32_t HuksGenerateHmac(const HuksKeyInfo *keyInfo, const BlobData *data, BlobData *outData);
+
 }  // namespace DlpPermission
 }  // namespace Security
 }  // namespace OHOS
-#endif  // PERMISSION_MANAGER_ADAPTER_H
- 
+#endif  // HUKS_ADAPT_MANAGER_H

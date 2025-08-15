@@ -34,6 +34,7 @@ using namespace OHOS::AppExecFwk;
 namespace {
 constexpr OHOS::HiviewDFX::HiLogLabel LABEL = { LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "PermissionManagerAdapter" };
 static const std::string CRED_HAP_IDENTIFIER = "5765880207854232861";
+static const std::string MDM_HAP_IDENTIFIER = "6917562860841254665";
 }
 static int32_t GetOsAccountId(int32_t &osAccountId)
 {
@@ -118,6 +119,37 @@ static int32_t CheckPermissionForConnect(uint32_t callerTokenId)
         return DLP_HAP_ID_GET_ERROR;
     }
     return DLP_OK;
+}
+
+bool PermissionManagerAdapter::CheckPermissionAndGetAppId(std::string& appId)
+{
+    Security::AccessToken::AccessTokenID callingToken = IPCSkeleton::GetCallingTokenID();
+    int32_t osAccountId = 0;
+    int32_t ret = GetOsAccountId(osAccountId);
+    if (ret != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "Failed to GetOsAccountId.");
+        return false;
+    }
+
+    HapTokenInfo hapTokenInfo;
+    int32_t result = AccessTokenKit::GetHapTokenInfo(callingToken, hapTokenInfo);
+    if (result != 0) {
+        DLP_LOG_ERROR(LABEL, "Failed to GetHapTokenInfo.");
+        return false;
+    }
+
+    std::string appIdentifier;
+    if (GetAppIdentifier(hapTokenInfo.bundleName, appIdentifier, osAccountId) == false) {
+        DLP_LOG_ERROR(LABEL, "Failed to check appIdentifier.");
+        return false;
+    }
+
+    if (appIdentifier != MDM_HAP_IDENTIFIER) {
+        DLP_LOG_ERROR(LABEL, "Failed to match appIdentifier.");
+        return false;
+    }
+    appId = appIdentifier;
+    return true;
 }
 
 bool PermissionManagerAdapter::CheckPermission(const std::string& permission)
