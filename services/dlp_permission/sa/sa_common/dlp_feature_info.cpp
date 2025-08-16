@@ -112,6 +112,11 @@ int32_t DlpFeatureInfo::GetDlpFeatureInfoFromFile(const char *filePath, uint32_t
         DLP_LOG_ERROR(LABEL, "GetDlpFeatureInfoFromFile filePath Invalid input params");
         return DLP_SERVICE_ERROR_VALUE_INVALID;
     }
+    int32_t userId;
+    if (!GetUserIdByForegroundAccount(&userId)) {
+        DLP_LOG_ERROR(LABEL, "get userID failed");
+        return DLP_SERVICE_ERROR_VALUE_INVALID;
+    }
     uint8_t *fileBuffer = nullptr;
     uint32_t fileSize = 0;
     int32_t ret = ReadBufFromFile(&fileBuffer, &fileSize, filePath);
@@ -122,11 +127,6 @@ int32_t DlpFeatureInfo::GetDlpFeatureInfoFromFile(const char *filePath, uint32_t
     uint8_t *featureInfoStrBuf = nullptr;
     uint32_t featureInfoStrBufLen = 0;
 
-    int32_t userId;
-    if (!GetUserIdByForegroundAccount(&userId)) {
-        DLP_LOG_ERROR(LABEL, "get userID failed");
-        return DLP_SERVICE_ERROR_VALUE_INVALID;
-    }
     BlobData fileBlob = { fileSize, (uint8_t *)fileBuffer };
     HMACSrcParams hmacSrcParams = { .osAccountId = userId, .protectionLevel = PROTECT_LEVEL_DE,
         .SrcDataBlob = &fileBlob };
