@@ -37,6 +37,7 @@ public:
 
 namespace {
 static const uint64_t SYSTEM_APP_MASK = 0x100000000;
+static const int32_t DEFAULT_USER_ID = 100;
 } // namespace
 
 namespace OHOS {
@@ -58,7 +59,7 @@ bool UnRegisterUnregisterOpenDlpFileCallbackFuzzer(const uint8_t* data, size_t s
 /* Fuzzer entry point */
 extern "C" int LLVMFuzzerInitialize(int *argc, char ***argv)
 {
-    AccessTokenIDEx tokenIdEx = AccessTokenKit::GetHapTokenIDEx(100, "com.ohos.dlpmanager", 0); // user_id = 100
+    AccessTokenIDEx tokenIdEx = AccessTokenKit::GetHapTokenIDEx(DEFAULT_USER_ID, "com.ohos.dlpmanager", 0);
     tokenIdEx.tokenIDEx |= SYSTEM_APP_MASK;
     SetSelfTokenID(tokenIdEx.tokenIDEx);
     return 0;

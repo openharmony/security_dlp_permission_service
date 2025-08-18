@@ -41,6 +41,7 @@ static const char CHAR_ARRAY[] = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJ
 static std::string g_accountName = "ohosAnonymousName";
 static const std::string DLP_SUFFIX = ".dlp";
 static const uint64_t SYSTEM_APP_MASK = 0x100000000;
+static const int32_t DEFAULT_USER_ID = 100;
 }
 
 static void GenerateRandStr(uint32_t len, const uint8_t *data, std::string& res)
@@ -277,7 +278,7 @@ bool DlpFileFuzzTest(const uint8_t* data, size_t size)
 /* Fuzzer entry point */
 extern "C" int LLVMFuzzerInitialize(int *argc, char ***argv)
 {
-    AccessTokenIDEx tokenIdEx = AccessTokenKit::GetHapTokenIDEx(100, "com.ohos.dlpmanager", 0); // user_id = 100
+    AccessTokenIDEx tokenIdEx = AccessTokenKit::GetHapTokenIDEx(DEFAULT_USER_ID, "com.ohos.dlpmanager", 0);
     tokenIdEx.tokenIDEx |= SYSTEM_APP_MASK;
     SetSelfTokenID(tokenIdEx.tokenIDEx);
     return 0;

@@ -36,6 +36,7 @@ static constexpr int32_t SA_ID_DLP_PERMISSION_SERVICE = 3521;
 const int32_t DEFAULT_USERID = 100;
 constexpr uint8_t STATUS_NUM = 2;
 static const uint64_t SYSTEM_APP_MASK = 0x100000000;
+static const int32_t DEFAULT_USER_ID = 100;
 }
 
 int32_t GetCallingUserId(void)
@@ -87,7 +88,7 @@ bool SetSandboxConfigFuzzTest(const uint8_t* data, size_t size)
 /* Fuzzer entry point */
 extern "C" int LLVMFuzzerInitialize(int *argc, char ***argv)
 {
-    AccessTokenIDEx tokenIdEx = AccessTokenKit::GetHapTokenIDEx(100, "com.ohos.dlpmanager", 0); // user_id = 100
+    AccessTokenIDEx tokenIdEx = AccessTokenKit::GetHapTokenIDEx(DEFAULT_USER_ID, "com.ohos.dlpmanager", 0);
     tokenIdEx.tokenIDEx |= SYSTEM_APP_MASK;
     SetSelfTokenID(tokenIdEx.tokenIDEx);
     return 0;

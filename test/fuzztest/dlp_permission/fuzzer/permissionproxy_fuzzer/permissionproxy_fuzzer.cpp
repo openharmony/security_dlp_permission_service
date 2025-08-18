@@ -39,6 +39,7 @@ static constexpr int32_t DLP_PERMISSION_SERVICE_SA_ID = 3521;
 constexpr int32_t SA_LOAD_TIME = 4 * 1000;
 const uint32_t BUFFER_LENGTH = 64;
 static const uint64_t SYSTEM_APP_MASK = 0x100000000;
+static const int32_t DEFAULT_USER_ID = 100;
 }
 
 namespace OHOS {
@@ -123,7 +124,7 @@ bool PermissionProxyFuzzer(const uint8_t* data, size_t size)
 /* Fuzzer entry point */
 extern "C" int LLVMFuzzerInitialize(int *argc, char ***argv)
 {
-    AccessTokenIDEx tokenIdEx = AccessTokenKit::GetHapTokenIDEx(100, "com.ohos.dlpmanager", 0); // user_id = 100
+    AccessTokenIDEx tokenIdEx = AccessTokenKit::GetHapTokenIDEx(DEFAULT_USER_ID, "com.ohos.dlpmanager", 0);
     tokenIdEx.tokenIDEx |= SYSTEM_APP_MASK;
     SetSelfTokenID(tokenIdEx.tokenIDEx);
     return 0;
