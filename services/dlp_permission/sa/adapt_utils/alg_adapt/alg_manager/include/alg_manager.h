@@ -22,9 +22,9 @@ namespace OHOS {
 namespace Security {
 namespace DlpPermission {
 
-bool AlgIsKeyExist(const HuksKeyInfo *keyInfo);
-int32_t AlgGenerateMacKey(const HuksKeyInfo *keyInfo);
-int32_t AlgHmac(const HuksKeyInfo *keyInfo, const BlobData *data, BlobData *outData);
+bool AlgIsKeyExist(const AlgKeyInfo *keyInfo);
+int32_t AlgGenerateMacKey(const AlgKeyInfo *keyInfo);
+int32_t AlgHmac(const AlgKeyInfo *keyInfo, const BlobData *data, BlobData *outData);
 
 }  // namespace DlpPermission
 }  // namespace Security

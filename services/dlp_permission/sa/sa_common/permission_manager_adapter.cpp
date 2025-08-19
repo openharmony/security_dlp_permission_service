@@ -127,14 +127,14 @@ bool PermissionManagerAdapter::CheckPermissionAndGetAppId(std::string& appId)
     int32_t osAccountId = 0;
     int32_t ret = GetOsAccountId(osAccountId);
     if (ret != DLP_OK) {
-        DLP_LOG_ERROR(LABEL, "Failed to GetOsAccountId.");
+        DLP_LOG_ERROR(LABEL, "Failed to GetOsAccountId, error code: %{public}d.", ret);
         return false;
     }
 
     HapTokenInfo hapTokenInfo;
-    int32_t result = AccessTokenKit::GetHapTokenInfo(callingToken, hapTokenInfo);
-    if (result != 0) {
-        DLP_LOG_ERROR(LABEL, "Failed to GetHapTokenInfo.");
+    ret = AccessTokenKit::GetHapTokenInfo(callingToken, hapTokenInfo);
+    if (ret != RET_SUCCESS) {
+        DLP_LOG_ERROR(LABEL, "Failed to GetHapTokenInfo, error code: %{public}d.", ret);
         return false;
     }
 

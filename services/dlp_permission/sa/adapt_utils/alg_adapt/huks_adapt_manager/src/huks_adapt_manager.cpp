@@ -31,7 +31,7 @@ constexpr OHOS::HiviewDFX::HiLogLabel LABEL = { LOG_CORE, SECURITY_DOMAIN_DLP_PE
 }
 static const uint32_t HMAC_KEY_SIZE_256 = 256;
 
-static bool CheckHMACParams(const HuksKeyInfo *keyInfo, const BlobData *data, const BlobData *outData)
+static bool CheckHMACParams(const AlgKeyInfo *keyInfo, const BlobData *data, const BlobData *outData)
 {
     if (keyInfo == nullptr || !IsBlobDataValid(&(keyInfo->keyAlias))) {
         DLP_LOG_ERROR(LABEL, "Mac keyInfo is invalid!");
@@ -75,7 +75,7 @@ static int32_t ConstructParamSet(struct HksParamSet **outParamSet, struct HksPar
 
 static int32_t MallocAndCheckBlobData(struct HksBlob *blob, uint32_t blobSize)
 {
-    blob->data = (uint8_t *)HcMalloc(blobSize, 0);
+    blob->data = static_cast<uint8_t *>(HcMalloc(blobSize, 0));
     if (blob->data == nullptr) {
         DLP_LOG_ERROR(LABEL, "Allocate blob data memory failed!");
         return HKS_FAILURE;
@@ -93,7 +93,7 @@ static int32_t LessThanMaxSeg(const struct HksBlob *handle, const struct HksPara
     int32_t ret = HksUpdate(handle, paramSet, inData, &tmpOutData);
     HcFree(tmpOutData.data);
     if (ret != HKS_SUCCESS) {
-        DLP_LOG_ERROR(LABEL, "HksUpdate Failed.");
+        DLP_LOG_ERROR(LABEL, "HksUpdate Failed, error code: %{public}d.", ret);
         return HKS_FAILURE;
     }
     struct HksBlob tmpInData = { 0, nullptr };
@@ -104,7 +104,7 @@ static int32_t LessThanMaxSeg(const struct HksBlob *handle, const struct HksPara
     ret = HksFinish(handle, paramSet, &tmpInData, outData);
     HcFree(tmpInData.data);
     if (ret != HKS_SUCCESS) {
-        DLP_LOG_ERROR(LABEL, "HksFinish Failed.");
+        DLP_LOG_ERROR(LABEL, "HksFinish Failed, error code: %{public}d.", ret);
         return HKS_FAILURE;
     }
     return HKS_SUCCESS;
@@ -155,21 +155,23 @@ static int32_t HksHMACThreeStages(const BlobData *keyAlias, struct HksParamSet *
 {
     uint8_t handle[SIZE_OF_UINT64] = { 0 };
     struct HksBlob handleHMAC = { SIZE_OF_UINT64, handle };
-    int32_t ret = HksInit((struct HksBlob *)keyAlias, hmacParamSet, &handleHMAC, nullptr);
+    int32_t ret = HksInit(reinterpret_cast<const struct HksBlob *>(keyAlias), hmacParamSet, &handleHMAC, nullptr);
     if (ret != HKS_SUCCESS) {
+        DLP_LOG_ERROR(LABEL, "HksInit failed, error code: %{public}d.", ret);
         return ret;
     }
 
-    ret = HksShardingUpdateAndFinish(&handleHMAC, hmacParamSet, (struct HksBlob *)data, (struct HksBlob *)outData);
+    ret = HksShardingUpdateAndFinish(&handleHMAC, hmacParamSet,
+        reinterpret_cast<const struct HksBlob *>(data), reinterpret_cast<struct HksBlob *>(outData));
     if (ret != HKS_SUCCESS) {
-        DLP_LOG_ERROR(LABEL, "Update and finish stage failed, error code: %{public}d", ret);
+        DLP_LOG_ERROR(LABEL, "Update and finish stage failed, error code: %{public}d.", ret);
         HksAbort(&handleHMAC, hmacParamSet);
         return DLP_SERVICE_ERROR_VALUE_INVALID;
     }
     return DLP_OK;
 }
 
-bool IsHuksMgrKeyExist(const HuksKeyInfo *keyInfo)
+bool IsHuksMgrKeyExist(const AlgKeyInfo *keyInfo)
 {
     if (keyInfo == nullptr || !IsBlobDataValid(&(keyInfo->keyAlias))) {
         DLP_LOG_ERROR(LABEL, "keyInfo is invalid!");
@@ -185,7 +187,7 @@ bool IsHuksMgrKeyExist(const HuksKeyInfo *keyInfo)
         DLP_LOG_ERROR(LABEL, "construct param set failed!");
         return false;
     }
-    res = HksKeyExist((struct HksBlob *)(&(keyInfo->keyAlias)), paramSet);
+    res = HksKeyExist(reinterpret_cast<const struct HksBlob *>(&(keyInfo->keyAlias)), paramSet);
     HksFreeParamSet(&paramSet);
     if (res != HKS_SUCCESS) {
         DLP_LOG_ERROR(LABEL, "Key is not exist, error code: %{public}d.", res);
@@ -194,7 +196,7 @@ bool IsHuksMgrKeyExist(const HuksKeyInfo *keyInfo)
     return true;
 }
 
-int32_t HuksGenerateMacKey(const HuksKeyInfo *keyInfo)
+int32_t HuksGenerateMacKey(const AlgKeyInfo *keyInfo)
 {
     if (keyInfo == nullptr || !IsBlobDataValid(&(keyInfo->keyAlias))) {
         DLP_LOG_ERROR(LABEL, "keyInfo is invalid!");
@@ -213,23 +215,23 @@ int32_t HuksGenerateMacKey(const HuksKeyInfo *keyInfo)
     int32_t ret = ConstructParamSet(&paramSet, deGenParams, sizeof(deGenParams) / sizeof(deGenParams[0]));
     if (ret != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "Construct MacKey ParamSet failed!");
-        return DLP_SERVICE_ERROR_VALUE_INVALID;
+        return DLP_ERROR_CONSTRUCT_PARAMS_FAILED;
     }
-    ret = HksGenerateKey((struct HksBlob *)(&(keyInfo->keyAlias)), paramSet, nullptr);
+    ret = HksGenerateKey(reinterpret_cast<const struct HksBlob *>(&(keyInfo->keyAlias)), paramSet, nullptr);
     HksFreeParamSet(&paramSet);
     if (ret != HKS_SUCCESS) {
         DLP_LOG_ERROR(LABEL, "HksGenerateKey for mac key failed, error code: %{public}d.", ret);
-        return DLP_SERVICE_ERROR_VALUE_INVALID;
+        return DLP_ERROR_GENERATE_KEY_FAILED;
     }
     return DLP_OK;
 }
 
-int32_t HuksGenerateHmac(const HuksKeyInfo *keyInfo, const BlobData *data, BlobData *outData)
+int32_t HuksGenerateHmac(const AlgKeyInfo *keyInfo, const BlobData *data, BlobData *outData)
 {
     if (!CheckHMACParams(keyInfo, data, outData)) {
         return DLP_SERVICE_ERROR_VALUE_INVALID;
     }
-    outData->value = (uint8_t *)HcMalloc(HASH_SIZE_SHA_256, 0);
+    outData->value = static_cast<uint8_t *>(HcMalloc(HASH_SIZE_SHA_256, 0));
     if (outData->value == nullptr) {
         DLP_LOG_ERROR(LABEL, "Allocate outData memory failed");
         return DLP_SERVICE_ERROR_MEMORY_OPERATE_FAIL;
@@ -248,13 +250,13 @@ int32_t HuksGenerateHmac(const HuksKeyInfo *keyInfo, const BlobData *data, BlobD
     if (res != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "construct hmac param set failed!");
         FreeBlobData(outData);
-        return DLP_SERVICE_ERROR_VALUE_INVALID;
+        return DLP_ERROR_CONSTRUCT_PARAMS_FAILED;
     }
     res = HksHMACThreeStages(&(keyInfo->keyAlias), hmacParamSet, data, outData);
     HksFreeParamSet(&hmacParamSet);
     if (res != DLP_OK) {
         FreeBlobData(outData);
-        res = DLP_SERVICE_ERROR_VALUE_INVALID;
+        res = DLP_ERROR_HMAC_FAILED;
     }
     return res;
 }

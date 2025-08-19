@@ -59,10 +59,10 @@ typedef union {
     (ptr) = NULL; \
 }
 
-void* HcMalloc(uint32_t size, char val);
-void HcFree(void* addr);
+void *HcMalloc(uint32_t size, char val);
+void HcFree(void *addr);
 uint32_t HcStrlen(const char *str);
-void* ClibMalloc(uint32_t size, char val);
+void *ClibMalloc(uint32_t size, char val);
 
 bool IsBlobDataValid(const BlobData *blob);
 void FreeBlobData(BlobData *data);

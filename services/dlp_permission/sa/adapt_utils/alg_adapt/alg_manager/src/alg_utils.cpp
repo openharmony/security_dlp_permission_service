@@ -31,20 +31,20 @@ const int PARCEL_DEFAULT_INCREASE_STEP = 16;
 const uint32_t PARCEL_UINT_MAX = 0xffffffffU;
 }
 
-void* HcMalloc(uint32_t size, char val)
+void *HcMalloc(uint32_t size, char val)
 {
     if (size == 0 || size > MAX_MALLOC_SIZE) {
         DLP_LOG_ERROR(LABEL, "Malloc size is invalid.");
         return nullptr;
     }
-    void* addr = malloc(size);
+    void *addr = malloc(size);
     if (addr != nullptr) {
         (void)memset_s(addr, size, val, size);
     }
     return addr;
 }
 
-void HcFree(void* addr)
+void HcFree(void *addr)
 {
     if (addr != nullptr) {
         free(addr);
@@ -59,12 +59,12 @@ uint32_t HcStrlen(const char *str)
     return strlen(str);
 }
 
-void* ClibMalloc(uint32_t size, char val)
+void *ClibMalloc(uint32_t size, char val)
 {
     if (size == 0 || size > CLIB_MAX_MALLOC_SIZE) {
         return nullptr;
     }
-    void* addr = malloc(size);
+    void *addr = malloc(size);
     if (addr != nullptr) {
         (void)memset_s(addr, size, val, size);
     }
@@ -107,7 +107,7 @@ HcParcel CreateParcel(uint32_t size, uint32_t allocUnit)
         parcel.allocUnit = PARCEL_DEFAULT_INCREASE_STEP;
     }
     if (size > 0) {
-        parcel.data = (char *)ClibMalloc(size, 0);
+        parcel.data = static_cast<char *>(ClibMalloc(size, 0));
         if (parcel.data != nullptr) {
             parcel.length = size;
         }
@@ -174,7 +174,7 @@ static HcBool ParcelRealloc(HcParcel *parcel, uint32_t size)
     if (parcel->length >= size) {
         return HC_FALSE;
     }
-    char *newData = (char *)ClibMalloc(size, 0);
+    char *newData = static_cast<char *>(ClibMalloc(size, 0));
     if (newData == nullptr) {
         return HC_FALSE;
     }
@@ -362,7 +362,7 @@ int HcFileRead(FileHandle file, void *dst, int dstSize)
         return -1;
     }
 
-    char *dstBuffer = (char *)dst;
+    char *dstBuffer = static_cast<char *>(dst);
     int total = 0;
     while (total < dstSize) {
         int readCount = (int)fread(dstBuffer + total, 1, dstSize - total, fp);

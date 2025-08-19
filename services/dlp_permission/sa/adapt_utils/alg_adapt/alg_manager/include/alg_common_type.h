@@ -26,11 +26,11 @@ typedef enum DlpKeyProtectionLevel {
     PROTECT_LEVEL_DE = 1,
 } DlpKeyProtectionLevel;
 
-typedef struct HuksKeyInfo {
+typedef struct AlgKeyInfo {
     DlpKeyProtectionLevel protectionLevel;
     uint32_t osAccountId;
     BlobData keyAlias;
-} HuksKeyInfo;
+} AlgKeyInfo;
 
 typedef struct {
     uint32_t osAccountId;
