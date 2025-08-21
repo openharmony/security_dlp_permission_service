@@ -55,9 +55,9 @@ HWTEST_F(DlpFeatureInfoTest, SaveDlpFeatureInfoToFile001, TestSize.Level0)
     EXPECT_EQ(ret, DLP_OK);
 
     uint32_t dlpFeatureInfo = 1;
-    std::string callerBundleName = "com.dlpFeatureInfo.test";
+    std::string appId = "123456789";
     unordered_json featureJson;
-    featureJson[MDM_BUNDLE_NAME] = callerBundleName;
+    featureJson[MDM_BUNDLE_NAME] = appId;
     featureJson[MDM_ENABLE_VALUE] = dlpFeatureInfo;
 
     ret = DlpFeatureInfo::SaveDlpFeatureInfoToFile(featureJson);
@@ -74,9 +74,9 @@ HWTEST_F(DlpFeatureInfoTest, SaveDlpFeatureInfoToFile002, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "SaveDlpFeatureInfoToFile002");
 
-    std::string callerBundleName = "com.dlpFeatureInfo.test";
+    std::string appId = "123456789";
     unordered_json featureJson;
-    featureJson[MDM_BUNDLE_NAME] = callerBundleName;
+    featureJson[MDM_BUNDLE_NAME] = appId;
 
     int32_t ret = DlpFeatureInfo::SaveDlpFeatureInfoToFile(featureJson);
     EXPECT_EQ(ret, DLP_SERVICE_ERROR_VALUE_INVALID);
@@ -93,9 +93,9 @@ HWTEST_F(DlpFeatureInfoTest, SaveDlpFeatureInfoToFile003, TestSize.Level0)
     DLP_LOG_INFO(LABEL, "SaveDlpFeatureInfoToFile003");
 
     uint32_t dlpFeatureInfo = -1;
-    std::string callerBundleName = "com.dlpFeatureInfo.test";
+    std::string appId = "123456789";
     unordered_json featureJson;
-    featureJson[MDM_BUNDLE_NAME] = callerBundleName;
+    featureJson[MDM_BUNDLE_NAME] = appId;
     featureJson[MDM_ENABLE_VALUE] = dlpFeatureInfo;
 
     int32_t ret = DlpFeatureInfo::SaveDlpFeatureInfoToFile(featureJson);
@@ -113,9 +113,9 @@ HWTEST_F(DlpFeatureInfoTest, SaveDlpFeatureInfoToFile004, TestSize.Level0)
     DLP_LOG_INFO(LABEL, "SaveDlpFeatureInfoToFile004");
 
     uint32_t dlpFeatureInfo = 1;
-    std::string callerBundleName = "com.dlpFeatureInfo.test";
+    std::string appId = "123456789";
     unordered_json featureJson;
-    featureJson[MDM_BUNDLE_NAME] = callerBundleName;
+    featureJson[MDM_BUNDLE_NAME] = appId;
     featureJson[MDM_ENABLE_VALUE] = dlpFeatureInfo;
 
     int32_t ret = DlpFeatureInfo::SaveDlpFeatureInfoToFile(featureJson);

@@ -37,7 +37,7 @@ static constexpr int32_t SA_ID_DLP_PERMISSION_SERVICE = 3521;
 
 static void FuzzTest(const uint8_t* data, size_t size)
 {
-    if ((data == nullptr) || (size == 0)) {
+    if ((data == nullptr) || size < STATUS_NUM) {
         return;
     }
     auto service1 = std::make_shared<DlpPermissionService>(SA_ID_DLP_PERMISSION_SERVICE, data[0] % STATUS_NUM);

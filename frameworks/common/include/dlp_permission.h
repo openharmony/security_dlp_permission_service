@@ -120,6 +120,14 @@ enum DLPErrCode : int32_t {
 
     DLP_ERROR_DLOPEN = -700,
     DLP_ERROR_DLSYM = -701,
+
+    DLP_ERROR_GENERATE_KEY_FAILED = -730,
+    DLP_ERROR_CONSTRUCT_PARAMS_FAILED = -731,
+    DLP_ERROR_HMAC_FAILED = -732,
+
+    DLP_ERROR_FILE_READ = -750,
+    DLP_ERROR_FILE_SIZE = -751,
+    DLP_ERROR_FILE_NOT_EXIST = -752,
 };
 }  // namespace DlpPermission
 }  // namespace Security

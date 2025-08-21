@@ -39,10 +39,10 @@ DlpFeatureInfo::DlpFeatureInfo() {}
 
 DlpFeatureInfo::~DlpFeatureInfo() {}
 
-static int32_t AssembleFeatureInfoPath(char** filePath)
+static int32_t AssembleFeatureInfoPath(char **filePath)
 {
     uint32_t filePathSize = HcStrlen(FEATURE_INFO_DATA_FILE_PATH);
-    *filePath = (char*)HcMalloc(filePathSize + 1, 0);
+    *filePath = static_cast<char *>(HcMalloc(filePathSize + 1, 0));
     if (*filePath == nullptr) {
         DLP_LOG_ERROR(LABEL, "Allocate memory for feature info file path failed");
         return DLP_SERVICE_ERROR_MEMORY_OPERATE_FAIL;
@@ -55,7 +55,7 @@ static int32_t AssembleFeatureInfoPath(char** filePath)
     return DLP_OK;
 }
 
-int32_t DlpFeatureInfo::SaveDlpFeatureInfoToFile(const unordered_json& dlpFeatureJson)
+int32_t DlpFeatureInfo::SaveDlpFeatureInfoToFile(const unordered_json &dlpFeatureJson)
 {
     auto result = dlpFeatureJson.find(MDM_ENABLE_VALUE);
     if (result == dlpFeatureJson.end() || !result->is_number()) {
@@ -72,18 +72,19 @@ int32_t DlpFeatureInfo::SaveDlpFeatureInfoToFile(const unordered_json& dlpFeatur
         DLP_LOG_ERROR(LABEL, "get userID failed");
         return DLP_SERVICE_ERROR_VALUE_INVALID;
     }
-    BlobData keyAliasBlob = { HcStrlen(DLP_FEATURE_INFO_FILE_KEY_ALIAS), (uint8_t *)DLP_FEATURE_INFO_FILE_KEY_ALIAS };
-    HuksKeyInfo keyInfo = { .protectionLevel = PROTECT_LEVEL_DE, .osAccountId = userId, .keyAlias = keyAliasBlob };
+    BlobData keyAliasBlob = { HcStrlen(DLP_FEATURE_INFO_FILE_KEY_ALIAS),
+        const_cast<uint8_t *>(reinterpret_cast<const uint8_t *>(DLP_FEATURE_INFO_FILE_KEY_ALIAS)) };
+    AlgKeyInfo keyInfo = { .protectionLevel = PROTECT_LEVEL_DE, .osAccountId = userId, .keyAlias = keyAliasBlob };
     int32_t res = DLP_SERVICE_ERROR_VALUE_INVALID;
     if (!AlgIsKeyExist(&keyInfo)) {
         res = AlgGenerateMacKey(&keyInfo);
         if (res != DLP_OK) {
             DLP_LOG_ERROR(LABEL, "Generate HMAC key failed!");
-            return DLP_SERVICE_ERROR_VALUE_INVALID;
+            return DLP_ERROR_GENERATE_KEY_FAILED;
         }
     }
 
-    char* filePath = nullptr;
+    char *filePath = nullptr;
     res = AssembleFeatureInfoPath(&filePath);
     if (res != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "Failed to assemble FeatureInfoPath! res is %{public}d", res);
@@ -91,12 +92,13 @@ int32_t DlpFeatureInfo::SaveDlpFeatureInfoToFile(const unordered_json& dlpFeatur
     }
 
     std::string jsonString = dlpFeatureJson.dump();
-    BlobData fileDataBlob = { HcStrlen(jsonString.c_str()), (uint8_t *)jsonString.c_str() };
+    BlobData fileDataBlob = { HcStrlen(jsonString.c_str()),
+        const_cast<uint8_t *>(reinterpret_cast<const uint8_t *>(jsonString.c_str())) };
     HMACSrcParams hmacSrcParams = { .osAccountId = keyInfo.osAccountId, .protectionLevel = PROTECT_LEVEL_DE,
         .SrcDataBlob = &fileDataBlob };
     res = WriteHMACAndBufToFile(&hmacSrcParams, DLP_FEATURE_INFO_FILE_KEY_ALIAS, filePath);
     if (res != DLP_OK) {
-        DLP_LOG_ERROR(LABEL, "WriteHMACAndBufToFile failed");
+        DLP_LOG_ERROR(LABEL, "WriteHMACAndBufToFile failed, error code: %{public}d.", res);
         DLP_FREE_PTR(filePath);
         return res;
     }
@@ -106,7 +108,7 @@ int32_t DlpFeatureInfo::SaveDlpFeatureInfoToFile(const unordered_json& dlpFeatur
     return res;
 }
 
-int32_t DlpFeatureInfo::GetDlpFeatureInfoFromFile(const char *filePath, uint32_t& dlpFeature)
+int32_t DlpFeatureInfo::GetDlpFeatureInfoFromFile(const char *filePath, uint32_t &dlpFeature)
 {
     if (filePath == nullptr) {
         DLP_LOG_ERROR(LABEL, "GetDlpFeatureInfoFromFile filePath Invalid input params");
@@ -127,7 +129,7 @@ int32_t DlpFeatureInfo::GetDlpFeatureInfoFromFile(const char *filePath, uint32_t
     uint8_t *featureInfoStrBuf = nullptr;
     uint32_t featureInfoStrBufLen = 0;
 
-    BlobData fileBlob = { fileSize, (uint8_t *)fileBuffer };
+    BlobData fileBlob = { fileSize, fileBuffer };
     HMACSrcParams hmacSrcParams = { .osAccountId = userId, .protectionLevel = PROTECT_LEVEL_DE,
         .SrcDataBlob = &fileBlob };
     ret = CompareHMACValue(&hmacSrcParams, &featureInfoStrBuf, &featureInfoStrBufLen, DLP_FEATURE_INFO_FILE_KEY_ALIAS);
@@ -150,7 +152,6 @@ int32_t DlpFeatureInfo::GetDlpFeatureInfoFromFile(const char *filePath, uint32_t
     DLP_FREE_PTR(featureInfoStrBuf);
     return DLP_OK;
 }
-
 }  // namespace DlpPermission
 }  // namespace Security
 }  // namespace OHOS
