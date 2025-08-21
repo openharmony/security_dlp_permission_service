@@ -56,12 +56,92 @@ HWTEST_F(AppStateObserverTest, OnProcessDied001, TestSize.Level1)
     AppStateObserver observer;
     OHOS::AppExecFwk::ProcessData processData;
     processData.bundleName = "com.ohos.dlpmanager";
+    processData.processName = "com.ohos.dlpmanager";
     processData.uid = 0;
 
     observer.OnProcessDied(processData);
     ASSERT_EQ(0, processData.uid);
 }
 
+/**
+ * @tc.name: OnProcessDied002
+ * @tc.desc: OnProcessDied test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AppStateObserverTest, OnProcessDied002, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL, "OnProcessDied002");
+
+    AppStateObserver observer;
+    OHOS::AppExecFwk::ProcessData processData;
+    processData.bundleName = "com.huawei.hmos.dlpcredmgr";
+    processData.uid = 0;
+    processData.renderUid = 0;
+
+    observer.OnProcessDied(processData);
+    ASSERT_EQ(0, processData.uid);
+}
+
+/**
+ * @tc.name: OnProcessDied003
+ * @tc.desc: OnProcessDied test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AppStateObserverTest, OnProcessDied003, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL, "OnProcessDied003");
+
+    AppStateObserver observer;
+    OHOS::AppExecFwk::ProcessData processData;
+    processData.bundleName = "com.ohos.dlpmanager";
+    processData.processName = "com.huawei.hmos.dlpcredmgr";
+    processData.uid = 1;
+    observer.AddUidWithTokenId(0, 1);
+
+    DlpSandboxInfo appInfo = {
+        .uid = 1,
+        .userId = 123,
+        .appIndex = 2,
+        .bundleName = "testbundle1",
+        .hasRead = false
+    };
+    observer.AddSandboxInfo(appInfo);
+
+    observer.OnProcessDied(processData);
+    ASSERT_EQ(1, processData.uid);
+}
+
+/**
+ * @tc.name: OnProcessDied004
+ * @tc.desc: OnProcessDied test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AppStateObserverTest, OnProcessDied004, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL, "OnProcessDied004");
+
+    AppStateObserver observer;
+    OHOS::AppExecFwk::ProcessData processData;
+    processData.bundleName = "com.ohos.dlpmanager";
+    processData.processName = "com.huawei.hmos.dlpcredmgr";
+    processData.uid = 1;
+    observer.AddUidWithTokenId(0, 1);
+
+    DlpSandboxInfo appInfo = {
+        .uid = 0,
+        .userId = 123,
+        .appIndex = 0,
+        .bundleName = "testbundle1",
+        .hasRead = false
+    };
+    observer.AddSandboxInfo(appInfo);
+
+    observer.OnProcessDied(processData);
+    ASSERT_EQ(1, processData.uid);
+}
 /**
  * @tc.name: CallbackListenerEmpty001
  * @tc.desc: CallbackListenerEmpty test
