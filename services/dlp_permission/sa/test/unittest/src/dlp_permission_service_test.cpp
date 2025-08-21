@@ -786,7 +786,7 @@ HWTEST_F(DlpPermissionServiceTest, VisitRecordJsonManager001, TestSize.Level1)
     } else {
         ASSERT_EQ(DLP_OK, res);
     }
-    
+
     res = visitRecordJsonManager_->AddVisitRecord(DLP_MANAGER_APP, 100, "testuri");
     if (res != DLP_OK) {
         ASSERT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, res);
@@ -1544,4 +1544,61 @@ HWTEST_F(DlpPermissionServiceTest, SetDlpFeature001, TestSize.Level1)
     bool statusSetInfo;
     int32_t ret = dlpPermissionService_->SetDlpFeature(dlpFeatureInfo, statusSetInfo);
     ASSERT_TRUE(ret != DLP_CALLBACK_SA_WORK_ABNORMAL);
+}
+
+/**
+ * @tc.name: GetDlpSupportFileType
+ * @tc.desc: GetDlpSupportFileType test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionServiceTest, GetDlpSupportFileType, TestSize.Level1)
+{
+    std::vector<std::string> supportFileType(1025, "a");
+    int32_t ret = dlpPermissionService_->GetDlpSupportFileType(supportFileType);
+    ASSERT_TRUE(ret = DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL);
+}
+
+/**
+ * @tc.name: SetMDMPolicy
+ * @tc.desc: SetMDMPolicy test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionServiceTest, SetMDMPolicy, TestSize.Level1)
+{
+    std::vector<std::string> appIdList_1;
+    int32_t ret = dlpPermissionService_->SetMDMPolicy(appIdList_1);
+    ASSERT_TRUE(ret = DLP_SERVICE_ERROR_VALUE_INVALID);
+    appIdList_1.push_back("a");
+    ret = dlpPermissionService_->SetMDMPolicy(appIdList_1);
+    ASSERT_TRUE(ret = DLP_SERVICE_ERROR_PERMISSION_DENY);
+}
+
+/**
+ * @tc.name: GetMDMPolicy
+ * @tc.desc: GetMDMPolicy test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionServiceTest, GetMDMPolicy, TestSize.Level1)
+{
+    std::vector<std::string> appIdList_1(251, "a");
+    int32_t ret = dlpPermissionService_->GetMDMPolicy(appIdList_1);
+    ASSERT_TRUE(ret = DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL);
+    std::vector<std::string> appIdList_2(1, "a");
+    ret = dlpPermissionService_->GetMDMPolicy(appIdList_2);
+    EXPECT_TRUE(ret = DLP_SERVICE_ERROR_PERMISSION_DENY);
+}
+
+/**
+ * @tc.name: RemoveMDMPolicy
+ * @tc.desc: RemoveMDMPolicy test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionServiceTest, RemoveMDMPolicy, TestSize.Level1)
+{
+    int32_t ret = dlpPermissionService_->RemoveMDMPolicy();
+    ASSERT_TRUE(ret = DLP_SERVICE_ERROR_PERMISSION_DENY);
 }
