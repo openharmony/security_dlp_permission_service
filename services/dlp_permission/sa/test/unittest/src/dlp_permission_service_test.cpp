@@ -1583,10 +1583,10 @@ HWTEST_F(DlpPermissionServiceTest, SetMDMPolicy, TestSize.Level1)
  */
 HWTEST_F(DlpPermissionServiceTest, GetMDMPolicy, TestSize.Level1)
 {
-    std::vector<std::string> appIdList_1(251,"a");
+    std::vector<std::string> appIdList_1(251, "a");
     int32_t ret = dlpPermissionService_->GetMDMPolicy(appIdList_1);
     ASSERT_TRUE(ret = DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL);
-    std::vector<std::string> appIdList_2(1,"a");
+    std::vector<std::string> appIdList_2(1, "a");
     ret = dlpPermissionService_->GetMDMPolicy(appIdList_2);
     EXPECT_TRUE(ret = DLP_SERVICE_ERROR_PERMISSION_DENY);
 }
