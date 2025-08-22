@@ -1556,7 +1556,7 @@ HWTEST_F(DlpPermissionServiceTest, GetDlpSupportFileType, TestSize.Level1)
 {
     std::vector<std::string> supportFileType(1025, "a");
     int32_t ret = dlpPermissionService_->GetDlpSupportFileType(supportFileType);
-    ASSERT_TRUE(ret = DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL);
+    ASSERT_EQ(ret, DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL);
 }
 
 /**
@@ -1569,10 +1569,10 @@ HWTEST_F(DlpPermissionServiceTest, SetMDMPolicy, TestSize.Level1)
 {
     std::vector<std::string> appIdList_1;
     int32_t ret = dlpPermissionService_->SetMDMPolicy(appIdList_1);
-    ASSERT_TRUE(ret = DLP_SERVICE_ERROR_VALUE_INVALID);
+    ASSERT_EQ(ret, DLP_SERVICE_ERROR_VALUE_INVALID);
     appIdList_1.push_back("a");
     ret = dlpPermissionService_->SetMDMPolicy(appIdList_1);
-    ASSERT_TRUE(ret = DLP_SERVICE_ERROR_PERMISSION_DENY);
+    ASSERT_EQ(ret, DLP_SERVICE_ERROR_PERMISSION_DENY);
 }
 
 /**
@@ -1585,10 +1585,10 @@ HWTEST_F(DlpPermissionServiceTest, GetMDMPolicy, TestSize.Level1)
 {
     std::vector<std::string> appIdList_1(251, "a");
     int32_t ret = dlpPermissionService_->GetMDMPolicy(appIdList_1);
-    ASSERT_TRUE(ret = DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL);
+    ASSERT_EQ(ret, DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL);
     std::vector<std::string> appIdList_2(1, "a");
     ret = dlpPermissionService_->GetMDMPolicy(appIdList_2);
-    EXPECT_TRUE(ret = DLP_SERVICE_ERROR_PERMISSION_DENY);
+    ASSERT_EQ(ret, DLP_SERVICE_ERROR_PERMISSION_DENY);
 }
 
 /**
@@ -1600,5 +1600,5 @@ HWTEST_F(DlpPermissionServiceTest, GetMDMPolicy, TestSize.Level1)
 HWTEST_F(DlpPermissionServiceTest, RemoveMDMPolicy, TestSize.Level1)
 {
     int32_t ret = dlpPermissionService_->RemoveMDMPolicy();
-    ASSERT_TRUE(ret = DLP_SERVICE_ERROR_PERMISSION_DENY);
+    ASSERT_EQ(ret, DLP_SERVICE_ERROR_PERMISSION_DENY);
 }
