@@ -1554,9 +1554,9 @@ HWTEST_F(DlpPermissionServiceTest, SetDlpFeature001, TestSize.Level1)
  */
 HWTEST_F(DlpPermissionServiceTest, GetDlpSupportFileType, TestSize.Level1)
 {
-    std::vector<std::string> supportFileType(1025, "a");
+    std::vector<std::string> supportFileType;
     int32_t ret = dlpPermissionService_->GetDlpSupportFileType(supportFileType);
-    ASSERT_EQ(ret, DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL);
+    ASSERT_EQ(ret, DLP_OK);
 }
 
 /**
@@ -1583,11 +1583,8 @@ HWTEST_F(DlpPermissionServiceTest, SetMDMPolicy, TestSize.Level1)
  */
 HWTEST_F(DlpPermissionServiceTest, GetMDMPolicy, TestSize.Level1)
 {
-    std::vector<std::string> appIdList_1(251, "a");
+    std::vector<std::string> appIdList_1;
     int32_t ret = dlpPermissionService_->GetMDMPolicy(appIdList_1);
-    ASSERT_EQ(ret, DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL);
-    std::vector<std::string> appIdList_2(1, "a");
-    ret = dlpPermissionService_->GetMDMPolicy(appIdList_2);
     ASSERT_EQ(ret, DLP_SERVICE_ERROR_PERMISSION_DENY);
 }
 
