@@ -13,26 +13,26 @@
  * limitations under the License.
  */
 
-#ifndef DLP_FEATURE_INFO_H
-#define DLP_FEATURE_INFO_H
+#ifndef DLP_COMMON_FUC_TEST_H
+#define DLP_COMMON_FUC_TEST_H
 
-#include "nlohmann/json.hpp"
+#include <gtest/gtest.h>
 
 namespace OHOS {
 namespace Security {
 namespace DlpPermission {
-using unordered_json = nlohmann::ordered_json;
 
-class DlpFeatureInfo {
+class DlpCommonFuncTest : public testing::Test {
 public:
-    DlpFeatureInfo();
-    ~DlpFeatureInfo();
-    static int32_t SaveDlpFeatureInfoToFile(const unordered_json &dlpFeatureJson);
-    static int32_t GetDlpFeatureInfoFromFile(const char *filePath, uint32_t &dlpFeature);
-    static int32_t GetDlpFeatureInfoFromJson(std::string jsonString, uint32_t &dlpFeature);
-};
+    static void SetUpTestCase();
 
+    static void TearDownTestCase();
+
+    void SetUp();
+
+    void TearDown();
+};
 }  // namespace DlpPermission
 }  // namespace Security
 }  // namespace OHOS
-#endif  // DLP_FEATURE_INFO_H
+#endif  // DLP_COMMON_FUC_TEST_H
