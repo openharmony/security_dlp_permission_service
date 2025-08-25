@@ -1584,7 +1584,7 @@ HWTEST_F(DlpPermissionServiceTest, SetMDMPolicy, TestSize.Level1)
 HWTEST_F(DlpPermissionServiceTest, GetMDMPolicy, TestSize.Level1)
 {
     std::vector<std::string> appIdList_1;
-    ret = dlpPermissionService_->GetMDMPolicy(appIdList_1);
+    int32_t ret = dlpPermissionService_->GetMDMPolicy(appIdList_1);
     ASSERT_EQ(ret, DLP_SERVICE_ERROR_PERMISSION_DENY);
 }
 
