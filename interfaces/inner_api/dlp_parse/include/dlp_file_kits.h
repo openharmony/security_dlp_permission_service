@@ -42,7 +42,7 @@ public:
     static bool GetSandboxFlag(AAFwk::Want &want);
     static bool IsDlpFile(int32_t dlpFd);
     static bool IsDlpFileBySuffix(const std::string &fileSuffix);
-    static void ConvertAbilityInfoWithSupportDlp(const AAFwk::Want& want,
+    static void ConvertAbilityInfoWithSupportDlp(AAFwk::Want& want,
         std::vector<AppExecFwk::AbilityInfo> &abilityInfos);
 };
 }  // namespace DlpPermission

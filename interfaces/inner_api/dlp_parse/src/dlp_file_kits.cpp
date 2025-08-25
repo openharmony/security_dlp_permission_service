@@ -36,6 +36,7 @@ namespace {
     static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "DlpFileKits"};
     static const std::string FILE_SCHEME_PREFIX = "file://";
     static const std::string DEFAULT_STRINGS = "";
+    static const std::string DLP_TYPE = "dlp";
     static const uint32_t BYTE_TO_HEX_OPER_LENGTH = 2;
     static const uint32_t CURRENT_VERSION = 3;
     static const uint32_t FILE_HEAD = 8;
@@ -328,7 +329,7 @@ static std::string GetRealFileType(const AAFwk::Want &want)
     return fileType;
 }
 
-void DlpFileKits::ConvertAbilityInfoWithSupportDlp(const AAFwk::Want &want,
+void DlpFileKits::ConvertAbilityInfoWithSupportDlp(AAFwk::Want &want,
     std::vector<AppExecFwk::AbilityInfo> &abilityInfos)
 {
     std::string fileType = GetRealFileType(want);
@@ -348,6 +349,8 @@ void DlpFileKits::ConvertAbilityInfoWithSupportDlp(const AAFwk::Want &want,
             ++it;
         }
     }
+
+    want.SetType(DLP_TYPE);
 
     if (abilityInfos.size() != 0) {
         return;
