@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef DLP_COMMON_FUC_TEST_H
-#define DLP_COMMON_FUC_TEST_H
+#ifndef DLP_COMMON_FUNC_TEST_H
+#define DLP_COMMON_FUNC_TEST_H
 
 #include <gtest/gtest.h>
 
@@ -35,4 +35,4 @@ public:
 }  // namespace DlpPermission
 }  // namespace Security
 }  // namespace OHOS
-#endif  // DLP_COMMON_FUC_TEST_H
+#endif  // DLP_COMMON_FUNC_TEST_H

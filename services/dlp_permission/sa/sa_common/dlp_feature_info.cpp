@@ -108,7 +108,7 @@ int32_t DlpFeatureInfo::SaveDlpFeatureInfoToFile(const unordered_json &dlpFeatur
     return res;
 }
 
-int32_t DlpFeatureInfo::GetDlpFeatureInfoFromJson(std::string jsonString, uint32_t &dlpFeature)
+static int32_t GetDlpFeatureInfoFromJson(const std::string &jsonString, uint32_t &dlpFeature)
 {
     auto jsonObj = nlohmann::json::parse(jsonString, nullptr, false);
     if (jsonObj.is_discarded() || (!jsonObj.is_object())) {
