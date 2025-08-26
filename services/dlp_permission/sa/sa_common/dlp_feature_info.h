@@ -29,7 +29,6 @@ public:
     ~DlpFeatureInfo();
     static int32_t SaveDlpFeatureInfoToFile(const unordered_json &dlpFeatureJson);
     static int32_t GetDlpFeatureInfoFromFile(const char *filePath, uint32_t &dlpFeature);
-    static int32_t GetDlpFeatureInfoFromJson(std::string jsonString, uint32_t &dlpFeature);
 };
 
 }  // namespace DlpPermission
