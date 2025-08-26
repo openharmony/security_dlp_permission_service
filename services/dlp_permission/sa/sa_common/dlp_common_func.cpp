@@ -32,7 +32,8 @@ constexpr OHOS::HiviewDFX::HiLogLabel LABEL = { LOG_CORE, SECURITY_DOMAIN_DLP_PE
 int32_t GetHMACValue(const HMACSrcParams *hmacSrcParams,
     uint8_t **hmacValue, uint32_t *hmacValueSize, const BlobData *aliasBlob)
 {
-    if (hmacValue == nullptr || hmacValueSize == nullptr || aliasBlob == nullptr) {
+    if (hmacSrcParams == nullptr || !IsBlobDataValid(hmacSrcParams->SrcDataBlob) ||
+        hmacValue == nullptr || hmacValueSize == nullptr || aliasBlob == nullptr) {
         DLP_LOG_ERROR(LABEL, "GetHMACValue params error!");
         return DLP_SERVICE_ERROR_VALUE_INVALID;
     }

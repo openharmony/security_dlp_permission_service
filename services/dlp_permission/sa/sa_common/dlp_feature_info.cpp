@@ -108,6 +108,20 @@ int32_t DlpFeatureInfo::SaveDlpFeatureInfoToFile(const unordered_json &dlpFeatur
     return res;
 }
 
+int32_t DlpFeatureInfo::GetDlpFeatureInfoFromJson(std::string jsonString, uint32_t &dlpFeature)
+{
+    auto jsonObj = nlohmann::json::parse(jsonString, nullptr, false);
+    if (jsonObj.is_discarded() || (!jsonObj.is_object())) {
+        DLP_LOG_WARN(LABEL, "JsonObj is discarded");
+        return DLP_SERVICE_ERROR_JSON_OPERATE_FAIL;
+    }
+    auto result = jsonObj.find(MDM_ENABLE_VALUE);
+    if (result != jsonObj.end() && result->is_number()) {
+        dlpFeature = result->get<uint32_t>();
+    }
+    return DLP_OK;
+}
+
 int32_t DlpFeatureInfo::GetDlpFeatureInfoFromFile(const char *filePath, uint32_t &dlpFeature)
 {
     if (filePath == nullptr) {
@@ -138,19 +152,22 @@ int32_t DlpFeatureInfo::GetDlpFeatureInfoFromFile(const char *filePath, uint32_t
         DLP_LOG_ERROR(LABEL, "Compare feature info file HmacValue failed, ret is %{public}d!", ret);
         return ret;
     }
-    std::string jsonString(reinterpret_cast<const char *>(featureInfoStrBuf));
-    auto jsonObj = nlohmann::json::parse(jsonString, nullptr, false);
-    if (jsonObj.is_discarded() || (!jsonObj.is_object())) {
-        DLP_LOG_WARN(LABEL, "JsonObj is discarded");
+    char *featureInfoStr = static_cast<char *>(HcMalloc(featureInfoStrBufLen + 1, 0));
+    if (featureInfoStr == nullptr) {
+        DLP_LOG_ERROR(LABEL, "featureInfoStr is null!");
         DLP_FREE_PTR(featureInfoStrBuf);
-        return DLP_SERVICE_ERROR_JSON_OPERATE_FAIL;
+        return DLP_SERVICE_ERROR_MEMORY_OPERATE_FAIL;
     }
-    auto result = jsonObj.find(MDM_ENABLE_VALUE);
-    if (result != jsonObj.end() && result->is_number()) {
-        dlpFeature = result->get<uint32_t>();
+    if (memcpy_s(featureInfoStr, featureInfoStrBufLen + 1, featureInfoStrBuf, featureInfoStrBufLen) != EOK) {
+        DLP_LOG_ERROR(LABEL, "Copy featureInfoStrBuf fail, memcpy_s fail");
+        DLP_FREE_PTR(featureInfoStrBuf);
+        DLP_FREE_PTR(featureInfoStr);
+        return DLP_SERVICE_ERROR_MEMORY_OPERATE_FAIL;
     }
     DLP_FREE_PTR(featureInfoStrBuf);
-    return DLP_OK;
+    std::string jsonString(featureInfoStr);
+    DLP_FREE_PTR(featureInfoStr);
+    return GetDlpFeatureInfoFromJson(jsonString, dlpFeature);
 }
 }  // namespace DlpPermission
 }  // namespace Security

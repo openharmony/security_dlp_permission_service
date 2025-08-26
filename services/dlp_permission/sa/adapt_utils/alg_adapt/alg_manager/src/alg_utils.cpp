@@ -123,7 +123,7 @@ void DeleteParcel(HcParcel *parcel)
 
     if (parcel->data != nullptr) {
         HcFree(parcel->data);
-        parcel->data = 0;
+        parcel->data = nullptr;
     }
     parcel->length = 0;
     parcel->beginPos = 0;
