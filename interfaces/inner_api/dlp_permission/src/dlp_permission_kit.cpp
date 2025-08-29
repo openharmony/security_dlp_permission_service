@@ -256,6 +256,11 @@ int32_t DlpPermissionKit::SetDlpFeature(uint32_t dlpFeatureInfo, bool& statusSet
     DlpPermissionClient::GetInstance().CleanUpResource();
     return res;
 }
+
+int32_t DlpPermissionKit::SetEnterprisePolicy(const std::string& policy)
+{
+    return DlpPermissionClient::GetInstance().SetEnterprisePolicy(policy);
+}
 }  // namespace DlpPermission
 }  // namespace Security
 }  // namespace OHOS
