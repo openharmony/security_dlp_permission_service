@@ -68,4 +68,5 @@ interface OHOS.Security.DlpPermission.IDlpPermissionService {
     void SetMDMPolicy([in] String[] appIdList);
     void GetMDMPolicy([out] String[] appIdList);
     void RemoveMDMPolicy();
+    void SetEnterprisePolicy([in] String policy);
 }
