@@ -32,6 +32,8 @@ __attribute__ ((visibility("default"))) int32_t DLP_GetPolicy(PolicyType type, u
 
 __attribute__ ((visibility("default"))) int32_t DLP_CheckPermission(PolicyType type, PolicyHandle handle);
 
+__attribute__ ((visibility("default"))) int32_t DLP_SetEnterprisePolicy(uint8_t *policy, uint32_t policyLen);
+
 bool ModifyParseData(uint8_t** data, uint32_t* dataLen);
 #ifdef __cplusplus
 }
