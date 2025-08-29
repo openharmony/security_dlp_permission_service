@@ -199,6 +199,7 @@ int32_t EnterpriseSpaceDlpPermissionKit::EnterpriseSpaceParseDlpFileProperty(std
     filePtr->GetContactAccount(certParcel->contactAccount);
     certParcel->isNeedAdapter = filePtr->NeedAdapter();
     certParcel->needCheckCustomProperty = needCheckCustomProperty;
+    filePtr->GetRealType(certParcel->realFileType);
     result = DlpPermissionKit::ParseDlpCertificate(certParcel, policy, APPID, filePtr->GetOfflineAccess());
     if (result != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "Parse cert fail, errno=%{public}d", result);
