@@ -49,6 +49,7 @@ static const std::unordered_map<int32_t, std::string> JS_ERROR_MSG_MAP = {
     { ERR_JS_DLP_CREDENTIAL_NO_INTERNET_ERROR, "DLP credential need internet, please check your connection" },
     { ERR_JS_URI_NOT_EXIST, "The uri field is missing in the want parameter." },
     { ERR_JS_PARAM_DISPLAY_NAME_NOT_EXIST, "The displayName field is missing in the want parameter." },
+    { ERR_JS_DLP_SET_ENTERPRISE_POLICY_FAIL, "Failed to set the enterprise policy." },
 };
 
 static const std::unordered_map<int32_t, int32_t> NATIVE_CODE_TO_JS_CODE_MAP = {
@@ -139,6 +140,7 @@ static const std::unordered_map<int32_t, int32_t> NATIVE_CODE_TO_JS_CODE_MAP = {
     { DLP_COMMON_CHECK_KVSTORE_ERROR, ERR_JS_SYSTEM_SERVICE_EXCEPTION },
     { DLP_COMMON_DELETE_KEY_FROM_KVSTORE_ERROR, ERR_JS_SYSTEM_SERVICE_EXCEPTION },
     { DLP_CREDENTIAL_ERROR_VALUE_INVALID, ERR_JS_SYSTEM_SERVICE_EXCEPTION },
+    { DLP_CALLBACK_SA_WORK_ABNORMAL, ERR_JS_SYSTEM_SERVICE_EXCEPTION },
 
     // ERR_JS_OUT_OF_MEMORY
     { DLP_SERVICE_ERROR_MEMORY_OPERATE_FAIL, ERR_JS_OUT_OF_MEMORY },
@@ -159,6 +161,9 @@ static const std::unordered_map<int32_t, int32_t> NATIVE_CODE_TO_JS_CODE_MAP = {
 
     // ERR_JS_SYSTEM_NEED_TO_BE_UPGRADED
     { DLP_PARSE_ERROR_NOT_SUPPORT_FILE_TYPE, ERR_JS_SYSTEM_NEED_TO_BE_UPGRADED },
+
+    // ERR_JS_DLP_SET_ENTERPRISE_POLICY_FAIL
+    { DLP_CREDENTIAL_ERROR_SET_ENTERPRISE_POLICY_FAIL, ERR_JS_DLP_SET_ENTERPRISE_POLICY_FAIL },
 };
 
 std::string GetJsErrMsg(int32_t jsErrCode)
