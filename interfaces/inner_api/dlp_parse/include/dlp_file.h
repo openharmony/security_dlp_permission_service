@@ -197,6 +197,11 @@ public:
         return authPerm_;
     };
 
+    void GetRealType(std::string& realType) const
+    {
+        realType = realType_;
+    };
+
     int32_t dlpFd_;
     friend class DlpRawFile;
     friend class DlpZipFile;
