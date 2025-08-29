@@ -257,6 +257,11 @@ struct UIExtensionRequestContext : public CommonAsyncContext {
     OHOS::AAFwk::Want requestWant;
 };
 
+struct SetEnterprisePolicyContext : public CommonAsyncContext {
+    explicit SetEnterprisePolicyContext(napi_env env) : CommonAsyncContext(env) {};
+    EnterprisePolicy policy;
+};
+
 class UIExtensionCallback {
 public:
     explicit UIExtensionCallback(std::shared_ptr<UIExtensionRequestContext>& reqContext);
@@ -315,6 +320,9 @@ bool GetDecryptDlpFileParam(
     const napi_env env, const napi_callback_info info, DecryptDlpFileAsyncContext& asyncContext);
 bool GetQueryDlpPolicyParam(
     const napi_env env, const napi_callback_info info, QueryDlpPolicyAsyncContext& asyncContext);
+
+bool GetSetEnterprisePolicyParams(
+    const napi_env env, const napi_callback_info info, SetEnterprisePolicyContext& asyncContext);
 
 bool FillDlpSandboxChangeInfo(const napi_env env, const napi_value* argv, const std::string& type,
     const napi_value thisVar, RegisterDlpSandboxChangeInfo& registerSandboxChangeInfo);
