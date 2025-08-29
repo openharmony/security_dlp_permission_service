@@ -90,6 +90,10 @@ struct CustomProperty {
     std::string enterprise = "";
 };
 
+struct EnterprisePolicy {
+    std::string policyString = "";
+};
+
 struct DlpProperty {
     std::string ownerAccount;
     std::string ownerAccountId;
