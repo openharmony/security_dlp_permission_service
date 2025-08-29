@@ -1261,6 +1261,25 @@ bool GetCustomProperty(napi_env env, napi_value jsObject, CustomProperty& custom
     return true;
 }
 
+bool bool GetSetEnterprisePolicyParams(
+    const napi_env env, const napi_callback_info info, SetEnterprisePolicyContext& asyncContext)
+{
+    size_t argc = PARAM_SIZE_ONE;
+    napi_value argv[PARAM_SIZE_ONE] = {nullptr};
+    NAPI_CALL_BASE(env, napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr), false);
+
+    if (!NapiCheckArgc(env, argc, PARAM_SIZE_ONE)) {
+        return false;
+    }
+
+    if (!GetStringValue(env, argv[PARAM0], asyncContext.policy.policyString)) {
+        DLP_LOG_ERROR(LABEL, "js get enterprise policy fail");
+        DlpNapiThrow(env, ERR_JS_INVALID_PARAMETER, "Invalid parameter value.");
+        return false;
+    }
+    return true;
+}
+
 napi_value RetentionSandboxInfoToJs(napi_env env, const std::vector<RetentionSandBoxInfo>& infoVec)
 {
     napi_value vectorJs = nullptr;
