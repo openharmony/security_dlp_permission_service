@@ -1261,7 +1261,7 @@ bool GetCustomProperty(napi_env env, napi_value jsObject, CustomProperty& custom
     return true;
 }
 
-bool bool GetSetEnterprisePolicyParams(
+bool GetSetEnterprisePolicyParams(
     const napi_env env, const napi_callback_info info, SetEnterprisePolicyContext& asyncContext)
 {
     size_t argc = PARAM_SIZE_ONE;
