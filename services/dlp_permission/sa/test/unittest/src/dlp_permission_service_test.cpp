@@ -1601,12 +1601,12 @@ HWTEST_F(DlpPermissionServiceTest, RemoveMDMPolicy, TestSize.Level1)
 }
 
 /**
- * @tc.name: SetEnterprisePolicy001
+ * @tc.name: SetEnterprisePolicy
  * @tc.desc: SetEnterprisePolicy test
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpPermissionServiceTest, SetEnterprisePolicy001, TestSize.Level1)
+HWTEST_F(DlpPermissionServiceTest, SetEnterprisePolicy, TestSize.Level1)
 {
     std::string policy = "policy";
     int32_t ret = dlpPermissionService_->SetEnterprisePolicy(policy);
