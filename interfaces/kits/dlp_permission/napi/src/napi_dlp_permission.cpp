@@ -2070,7 +2070,7 @@ void NapiDlpPermission::QueryDlpPolicyComplete(napi_env env, napi_status status,
     ProcessCallbackOrPromise(env, asyncContext, resJs);
 }
 
-napi_value SetEnterprisePolicy(napi_env env, napi_callback_info cbInfo)
+napi_value NapiDlpPermission::SetEnterprisePolicy(napi_env env, napi_callback_info cbInfo)
 {
     DLP_LOG_INFO(LABEL, "Enter SetEnterprisePolicy.");
     if (!CheckPermission(env, PERMISSION_ENTERPRISE_ACCESS_DLP_FILE)) {
