@@ -515,6 +515,10 @@ static void FreeDLPEncPolicyData(DLP_EncPolicyData& encPolicy)
         free(encPolicy.receiverAccountInfo.accountId);
         encPolicy.receiverAccountInfo.accountId = nullptr;
     }
+    if (encPolicy.realType != nullptr) {
+        free(encPolicy.realType);
+        encPolicy.realType = nullptr;
+    }
 }
 
 static int32_t GetLocalAccountName(std::string& account, const std::string& contactAccount, bool* isOwner)
