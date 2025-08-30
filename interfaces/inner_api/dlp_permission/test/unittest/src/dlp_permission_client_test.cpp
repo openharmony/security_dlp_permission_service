@@ -191,6 +191,6 @@ HWTEST_F(DlpPermissionClientTest, SetEnterprisePolicy001, TestSize.Level0)
 {
     DLP_LOG_DEBUG(LABEL, "SetEnterprisePolicy001");
     std::string policy = "policy";
-    int32_t ret = DlpPermissionClient::SetEnterprisePolicy(policy);
+    int32_t ret = DlpPermissionClient::GetInstance().SetEnterprisePolicy(policy);
     ASSERT_TRUE(ret != DLP_CALLBACK_SA_WORK_ABNORMAL);
 }
