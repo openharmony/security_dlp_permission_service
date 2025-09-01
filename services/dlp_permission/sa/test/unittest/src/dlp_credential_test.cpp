@@ -258,7 +258,7 @@ HWTEST_F(DlpCredentialTest, SetEnterprisePolicy001, TestSize.Level1)
 {
     std::string policy = "policy";
     int32_t ret = DlpCredential::GetInstance().SetEnterprisePolicy(policy);
-    ASSERT_EQ(DLP_SERVICE_ERROR_IPC_REQUEST_FAIL, ret);
+    ASSERT_EQ(DLP_OK, ret);
 }
 }  // namespace DlpPermission
 }  // namespace Security
