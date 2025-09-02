@@ -187,7 +187,10 @@ ohos_shared_library("dlp_permission_service") {
 
   deps += [ "etc:param_files" ]
 
-  configs = [ "${dlp_root_dir}/config:coverage_flags" ]
+  configs = [
+    "${dlp_root_dir}/config:coverage_flags",
+    "${dlp_root_dir}/config:common_build_options_flags",
+  ]
 
   external_deps = [
     "ability_base:want",
