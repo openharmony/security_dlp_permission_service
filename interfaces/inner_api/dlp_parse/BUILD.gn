@@ -82,7 +82,10 @@ ohos_shared_library("libdlpparse") {
     ":dlpparse_public_config",
     "${dlp_permission_public_config_path}/:dlp_permission_sdk_config",
   ]
-  configs = [ "${dlp_root_dir}/config:coverage_flags" ]
+  configs = [
+    "${dlp_root_dir}/config:coverage_flags",
+    "${dlp_root_dir}/config:common_build_options_flags",
+  ]
 
   part_name = "dlp_permission_service"
   subsystem_name = "security"
@@ -143,7 +146,10 @@ ohos_shared_library("libdlpparse_inner") {
 
   cflags_cc = [ "-DHILOG_ENABLE" ]
   public_configs = [ ":dlpparse_public_config" ]
-  configs = [ "${dlp_root_dir}/config:coverage_flags" ]
+  configs = [
+    "${dlp_root_dir}/config:coverage_flags",
+    "${dlp_root_dir}/config:common_build_options_flags",
+  ]
 
   innerapi_tags = [ "platformsdk" ]
   part_name = "dlp_permission_service"

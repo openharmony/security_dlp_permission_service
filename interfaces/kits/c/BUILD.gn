@@ -37,6 +37,11 @@ ohos_shared_library("ohdlp_permission") {
     "-Wall",
   ]
 
+  configs = [
+    "${dlp_root_dir}/config:coverage_flags",
+    "${dlp_root_dir}/config:common_build_options_flags",
+  ]
+
   external_deps = [
     "ability_base:want",
     "access_token:libaccesstoken_sdk",

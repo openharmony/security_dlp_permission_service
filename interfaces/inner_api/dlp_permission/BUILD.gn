@@ -69,6 +69,7 @@ ohos_shared_library("libdlp_permission_common_interface") {
   configs = [
     ":dlp_permission_sdk_config",
     "${dlp_root_dir}/config:coverage_flags",
+    "${dlp_root_dir}/config:common_build_options_flags",
   ]
 
   external_deps = [ "json:nlohmann_json_static" ]
@@ -122,7 +123,10 @@ ohos_shared_library("libdlp_permission_sdk") {
     "src/open_dlp_file_callback_stub.cpp",
   ]
 
-  configs = [ "${dlp_root_dir}/config:coverage_flags" ]
+  configs = [
+    "${dlp_root_dir}/config:coverage_flags",
+    "${dlp_root_dir}/config:common_build_options_flags",
+  ]
 
   deps = [
     ":dlp_permission_interface",

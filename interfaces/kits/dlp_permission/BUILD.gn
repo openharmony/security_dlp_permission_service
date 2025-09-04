@@ -46,7 +46,10 @@ ohos_shared_library("libdlppermission_napi") {
   ]
   cflags_cc = [ "-DHILOG_ENABLE" ]
 
-  configs = [ "${dlp_root_dir}/config:coverage_flags" ]
+  configs = [
+    "${dlp_root_dir}/config:coverage_flags",
+    "${dlp_root_dir}/config:common_build_options_flags",
+  ]
 
   external_deps = [
     "ability_base:base",
@@ -106,7 +109,10 @@ ohos_shared_library("libdlpsetdlpfeature_napi") {
   ]
   cflags_cc = [ "-DHILOG_ENABLE" ]
 
-  configs = [ "${dlp_root_dir}/config:coverage_flags" ]
+  configs = [
+    "${dlp_root_dir}/config:coverage_flags",
+    "${dlp_root_dir}/config:common_build_options_flags",
+  ]
 
   external_deps = [
     "ability_runtime:ability_context_native",
