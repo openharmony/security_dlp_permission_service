@@ -64,7 +64,7 @@ typedef int32_t (*DlpPackPolicyFunction)(uint32_t osAccountId, const DLP_PackPol
     DLP_PackPolicyCallback callback, uint64_t *requestId);
 typedef int32_t (*DlpRestorePolicyFunction)(uint32_t osAccountId, const DLP_EncPolicyData *params,
     DLP_RestorePolicyCallback callback, uint64_t *requestId);
-typedef int32_t (*DlpSetEnterprisePolicyFunction)(uint8_t *policy, uint32_t policyLen);
+typedef int32_t (*DlpSetEnterprisePolicyFunction)(const uint8_t *policy, uint32_t policyLen);
 
 static void *g_dlpCredentialSdkHandle = nullptr;
 std::mutex g_lockDlpCredSdk;
