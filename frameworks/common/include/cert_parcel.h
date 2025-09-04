@@ -36,6 +36,7 @@ public:
     bool isNeedAdapter;
     std::string contactAccount;
     bool needCheckCustomProperty;
+    std::string realFileType;
 };
 } // namespace DlpPermission
 } // namespace Security

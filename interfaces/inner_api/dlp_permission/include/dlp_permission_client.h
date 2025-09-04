@@ -73,6 +73,7 @@ public:
     void OnRemoteDiedHandle();
     void CleanUpResource();
     int32_t SetDlpFeature(uint32_t dlpFeatureInfo, bool& statusSetInfo);
+    int32_t SetEnterprisePolicy(const std::string& policy);
 
 private:
     DlpPermissionClient();

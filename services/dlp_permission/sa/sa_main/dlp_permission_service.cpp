@@ -1177,6 +1177,11 @@ int DlpPermissionService::Dump(int fd, const std::vector<std::u16string>& args)
 
     return ERR_OK;
 }
+
+int DlpPermissionService::SetEnterprisePolicy(const std::string& policy)
+{
+    return DlpCredential::GetInstance().SetEnterprisePolicy(policy);
+}
 } // namespace DlpPermission
 } // namespace Security
 } // namespace OHOS

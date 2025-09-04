@@ -2070,6 +2070,30 @@ void NapiDlpPermission::QueryDlpPolicyComplete(napi_env env, napi_status status,
     ProcessCallbackOrPromise(env, asyncContext, resJs);
 }
 
+napi_value NapiDlpPermission::SetEnterprisePolicy(napi_env env, napi_callback_info cbInfo)
+{
+    DLP_LOG_INFO(LABEL, "Enter SetEnterprisePolicy.");
+    if (!CheckPermission(env, PERMISSION_ENTERPRISE_ACCESS_DLP_FILE)) {
+        return nullptr;
+    }
+    auto* asyncContext = new (std::nothrow) SetEnterprisePolicyContext(env);
+    if (asyncContext == nullptr) {
+        DLP_LOG_ERROR(LABEL, "asyncContext is nullptr.");
+        return nullptr;
+    }
+    std::unique_ptr<SetEnterprisePolicyContext> asyncContextPtr { asyncContext };
+
+    if (!GetSetEnterprisePolicyParams(env, cbInfo, *asyncContext)) {
+        return nullptr;
+    }
+    asyncContext->errCode = DlpPermissionKit::SetEnterprisePolicy(asyncContext->policy.policyString);
+    if (asyncContext->errCode != DLP_OK) {
+        DlpNapiThrow(env, asyncContext->errCode, GetJsErrMsg(asyncContext->errCode));
+    }
+    asyncContextPtr.release();
+    return nullptr;
+}
+
 void NapiDlpPermission::InitFunction(napi_env env, napi_value exports)
 {
     napi_property_descriptor desc[] = {
@@ -2101,6 +2125,8 @@ void NapiDlpPermission::InitFunction(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("generateDlpFileForEnterprise", GenerateDlpFileForEnterprise),
         DECLARE_NAPI_FUNCTION("decryptDlpFile", DecryptDlpFile),
         DECLARE_NAPI_FUNCTION("queryDlpPolicy", QueryDlpPolicy),
+
+        DECLARE_NAPI_FUNCTION("setEnterprisePolicy", SetEnterprisePolicy),
     };
     NAPI_CALL_RETURN_VOID(env, napi_define_properties(env, exports, sizeof(desc) / sizeof(desc[PARAM0]), desc));
 }

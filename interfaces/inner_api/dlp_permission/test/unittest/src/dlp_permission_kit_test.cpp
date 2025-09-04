@@ -1550,6 +1550,20 @@ HWTEST_F(DlpPermissionKitTest, SetDlpFeature002, TestSize.Level0)
     int32_t ret = DlpPermissionKit::SetDlpFeature(dlpFeatureInfo, statusSetInfo);
     ASSERT_TRUE(ret != DLP_CALLBACK_SA_WORK_ABNORMAL);
 }
+
+/* *
+ * @tc.name: SetEnterprisePolicy001
+ * @tc.desc: SetEnterprisePolicy.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionKitTest, SetEnterprisePolicy001, TestSize.Level0)
+{
+    DLP_LOG_DEBUG(LABEL, "SetEnterprisePolicy001");
+    std::string policy = "policy";
+    int32_t ret = DlpPermissionKit::SetEnterprisePolicy(policy);
+    ASSERT_TRUE(ret != DLP_CALLBACK_SA_WORK_ABNORMAL);
+}
 }  // namespace DlpPermission
 }  // namespace Security
 }  // namespace OHOS

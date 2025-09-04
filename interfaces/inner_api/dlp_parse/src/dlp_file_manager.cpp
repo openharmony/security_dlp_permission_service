@@ -576,6 +576,7 @@ int32_t DlpFileManager::OpenRawDlpFile(int32_t dlpFileFd, std::shared_ptr<DlpFil
     filePtr->GetContactAccount(certParcel->contactAccount);
     certParcel->isNeedAdapter = filePtr->NeedAdapter();
     certParcel->needCheckCustomProperty = true;
+    filePtr->GetRealType(certParcel->realFileType);
     StartTrace(HITRACE_TAG_ACCESS_CONTROL, "DlpParseCertificate");
     result = DlpPermissionKit::ParseDlpCertificate(certParcel, policy, appId, filePtr->GetOfflineAccess());
     FinishTrace(HITRACE_TAG_ACCESS_CONTROL);
@@ -616,6 +617,7 @@ int32_t DlpFileManager::ParseZipDlpFileAndAddNode(std::shared_ptr<DlpFile>& file
     filePtr->GetContactAccount(certParcel->contactAccount);
     certParcel->isNeedAdapter = filePtr->NeedAdapter();
     certParcel->needCheckCustomProperty = true;
+    filePtr->GetRealType(certParcel->realFileType);
     StartTrace(HITRACE_TAG_ACCESS_CONTROL, "DlpParseCertificate");
     result = DlpPermissionKit::ParseDlpCertificate(certParcel, policy, appId, filePtr->GetOfflineAccess());
     FinishTrace(HITRACE_TAG_ACCESS_CONTROL);

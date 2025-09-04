@@ -64,6 +64,7 @@ typedef int32_t (*DlpPackPolicyFunction)(uint32_t osAccountId, const DLP_PackPol
     DLP_PackPolicyCallback callback, uint64_t *requestId);
 typedef int32_t (*DlpRestorePolicyFunction)(uint32_t osAccountId, const DLP_EncPolicyData *params,
     DLP_RestorePolicyCallback callback, uint64_t *requestId);
+typedef int32_t (*DlpSetEnterprisePolicyFunction)(const uint8_t *policy, uint32_t policyLen);
 
 static void *g_dlpCredentialSdkHandle = nullptr;
 std::mutex g_lockDlpCredSdk;
@@ -514,6 +515,10 @@ static void FreeDLPEncPolicyData(DLP_EncPolicyData& encPolicy)
         free(encPolicy.receiverAccountInfo.accountId);
         encPolicy.receiverAccountInfo.accountId = nullptr;
     }
+    if (encPolicy.realType != nullptr) {
+        free(encPolicy.realType);
+        encPolicy.realType = nullptr;
+    }
 }
 
 static int32_t GetLocalAccountName(std::string& account, const std::string& contactAccount, bool* isOwner)
@@ -696,6 +701,7 @@ int32_t DlpCredential::ParseDlpCertificate(const sptr<CertParcel>& certParcel,
     if (certParcel->isNeedAdapter) {
         AdapterData(certParcel->offlineCert, isOwner, jsonObj, encPolicy);
     }
+    encPolicy.realType = strdup(const_cast<char *>(certParcel->realFileType.c_str()));
     encPolicy.reserved[IS_NEED_CHECK_CUSTOM_PROPERTY] = static_cast<uint8_t>(certParcel->needCheckCustomProperty);
     int32_t res = 0;
     {
@@ -933,6 +939,28 @@ int32_t DlpCredential::CheckMdmPermission(const std::string& bundleName, int32_t
         handle.id = nullptr;
     }
     return res;
+}
+
+int32_t DlpCredential::SetEnterprisePolicy(const std::string& policy)
+{
+    uint32_t policyLen = strlen(policy.c_str());
+#ifdef SUPPORT_DLP_CREDENTIAL
+    DlpSetEnterprisePolicyFunction dlpSetEnterprisePolicyFunc =
+        reinterpret_cast<DlpSetEnterprisePolicyFunction>(GetDlpCredSdkLibFunc("DLP_SetEnterprisePolicy"));
+    if (dlpSetEnterprisePolicyFunc == nullptr) {
+        DLP_LOG_ERROR(LABEL, "dlsym DLP_SetEnterprisePolicy error.");
+        DestroyDlpCredentialSdk();
+        return DLP_SERVICE_ERROR_VALUE_INVALID;
+    }
+    int32_t res = (*dlpSetEnterprisePolicyFunc)(reinterpret_cast<uint8_t *>(strdup(policy.c_str())), policyLen);
+#else
+    int32_t res = DLP_SetEnterprisePolicy(reinterpret_cast<uint8_t *>(strdup(policy.c_str())), policyLen);
+#endif
+    if (res != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "SetEnterprisePolicy request fail, error: %{public}d", res);
+        return DLP_CREDENTIAL_ERROR_SET_ENTERPRISE_POLICY_FAIL;
+    }
+    return DLP_OK;
 }
 }  // namespace DlpPermission
 }  // namespace Security

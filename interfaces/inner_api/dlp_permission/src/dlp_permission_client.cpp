@@ -636,6 +636,16 @@ int32_t DlpPermissionClient::SetDlpFeature(uint32_t dlpFeatureInfo, bool& status
     return proxy->SetDlpFeature(dlpFeatureInfo, statusSetInfo);
 }
 
+int32_t DlpPermissionClient::SetEnterprisePolicy(const std::string& policy)
+{
+    auto proxy = GetProxy(true);
+    if (proxy == nullptr) {
+        DLP_LOG_ERROR(LABEL, "Proxy is null");
+        return DLP_CALLBACK_SA_WORK_ABNORMAL;
+    }
+    return proxy->SetEnterprisePolicy(policy);
+}
+
 void DlpPermissionClient::GetDlpPermissionSa()
 {
     auto sam = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();

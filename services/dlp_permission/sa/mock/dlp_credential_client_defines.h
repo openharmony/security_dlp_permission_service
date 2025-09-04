@@ -65,6 +65,7 @@ typedef struct {
 
 typedef struct {
     char *featureName;
+    char *realType;
     uint8_t *data;
     uint32_t dataLen;
     EncAndDecOptions options;

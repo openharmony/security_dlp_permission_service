@@ -84,6 +84,7 @@ public:
     void StartTimer();
     int Dump(int fd, const std::vector<std::u16string>& args) override;
     int32_t SetDlpFeature(const uint32_t dlpFeatureInfo, bool& statusSetInfo) override;
+    int32_t SetEnterprisePolicy(const std::string& policy) override;
 
 private:
     bool InsertDlpSandboxInfo(DlpSandboxInfo& sandboxInfo, bool hasRetention);

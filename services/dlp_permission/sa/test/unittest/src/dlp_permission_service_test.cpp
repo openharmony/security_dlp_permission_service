@@ -1599,3 +1599,16 @@ HWTEST_F(DlpPermissionServiceTest, RemoveMDMPolicy, TestSize.Level1)
     int32_t ret = dlpPermissionService_->RemoveMDMPolicy();
     ASSERT_EQ(ret, DLP_SERVICE_ERROR_PERMISSION_DENY);
 }
+
+/**
+ * @tc.name: SetEnterprisePolicy
+ * @tc.desc: SetEnterprisePolicy test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionServiceTest, SetEnterprisePolicy, TestSize.Level1)
+{
+    std::string policy = "policy";
+    int32_t ret = dlpPermissionService_->SetEnterprisePolicy(policy);
+    ASSERT_TRUE(ret != DLP_CALLBACK_SA_WORK_ABNORMAL);
+}

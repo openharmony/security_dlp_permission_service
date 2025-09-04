@@ -247,6 +247,19 @@ HWTEST_F(DlpCredentialTest, CheckMdmPermission001, TestSize.Level1)
     int32_t ret = DlpCredential::GetInstance().CheckMdmPermission("testBundle", 101);
     ASSERT_EQ(DLP_SERVICE_ERROR_IPC_REQUEST_FAIL, ret);
 }
+
+/**
+ * @tc.name: SetEnterprisePolicy001
+ * @tc.desc: SetEnterprisePolicy test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpCredentialTest, SetEnterprisePolicy001, TestSize.Level1)
+{
+    std::string policy = "policy";
+    int32_t ret = DlpCredential::GetInstance().SetEnterprisePolicy(policy);
+    ASSERT_EQ(DLP_OK, ret);
+}
 }  // namespace DlpPermission
 }  // namespace Security
 }  // namespace OHOS
