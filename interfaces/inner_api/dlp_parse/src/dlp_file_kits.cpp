@@ -249,7 +249,11 @@ bool DlpFileKits::GetSandboxFlag(Want& want)
         } else {
             DLP_LOG_INFO(LABEL, "Real suffix %{public}s not match known type, using origin type %{public}s",
                 realSuffix.c_str(), want.GetType().c_str());
+            want.SetType("image/jpeg");
         }
+    } else {
+        DLP_LOG_INFO(LABEL, "GetRealTypeWithFd empty");
+        want.SetType("image/jpeg");
     }
     close(fd);
     fd = -1;
