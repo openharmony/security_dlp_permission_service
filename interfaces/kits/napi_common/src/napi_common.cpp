@@ -1272,7 +1272,7 @@ bool GetSetEnterprisePolicyParams(
         return false;
     }
 
-    if (!GetStringValue(env, argv[PARAM0], asyncContext.policy.policyString)) {
+    if (!GetStringValueByKey(env, argv[PARAM0], "policyString", asyncContext.policy.policyString)) {
         DLP_LOG_ERROR(LABEL, "js get enterprise policy fail");
         DlpNapiThrow(env, ERR_JS_INVALID_PARAMETER, "Invalid parameter value.");
         return false;
