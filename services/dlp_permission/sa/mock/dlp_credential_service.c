@@ -423,7 +423,7 @@ int32_t  DLP_CheckPermission(PolicyType type, PolicyHandle handle)
     return DLP_SUCCESS;
 }
 
-int32_t DLP_SetEnterprisePolicy(uint8_t *policy, uint32_t policyLen)
+int32_t DLP_SetEnterprisePolicy(const uint8_t *policy, uint32_t policyLen)
 {
     return DLP_SUCCESS;
 }
