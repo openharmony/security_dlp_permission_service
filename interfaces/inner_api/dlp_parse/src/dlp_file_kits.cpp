@@ -41,6 +41,8 @@ namespace {
     static const uint32_t CURRENT_VERSION = 3;
     static const uint32_t FILE_HEAD = 8;
     static const uint32_t HMAC_SIZE = 32;
+    static const uint32_t ENTERPRISE_HEAD_MAX = 1024;
+
 } // namespace
 using Want = OHOS::AAFwk::Want;
 using WantParams = OHOS::AAFwk::WantParams;
@@ -159,6 +161,21 @@ static bool IsValidDlpHeader(const struct DlpHeader& head)
     return true;
 }
 
+static bool IsValidEnterpriseDlpHeader(const struct DlpHeader& head, uint32_t dlpHeaderSize)
+{
+    if (head.magic != DLP_FILE_MAGIC || head.certSize == 0 || head.certSize > DLP_MAX_CERT_SIZE ||
+        head.contactAccountSize != 0 ||
+        head.contactAccountOffset != dlpHeaderSize + FILE_HEAD ||
+        head.txtOffset != head.contactAccountOffset + head.contactAccountSize ||
+        head.txtSize > DLP_MAX_CONTENT_SIZE || head.hmacOffset != head.txtOffset + head.txtSize ||
+        head.hmacSize != HMAC_SIZE * BYTE_TO_HEX_OPER_LENGTH || head.offlineCertSize > DLP_MAX_CERT_SIZE ||
+        !(head.certOffset == head.txtOffset || head.certOffset == head.hmacOffset + head.hmacSize)) {
+        DLP_LOG_ERROR(LABEL, "IsValidEnterpriseDlpHeader error.");
+        return false;
+    }
+    return true;
+}
+
 bool DlpFileKits::IsDlpFile(int32_t dlpFd)
 {
     if (dlpFd < 0) {
@@ -192,7 +209,8 @@ bool DlpFileKits::IsDlpFile(int32_t dlpFd)
         DLP_LOG_ERROR(LABEL, "can not read dlpHeaderSize, %{public}s", strerror(errno));
         return false;
     }
-    if (version != CURRENT_VERSION || dlpHeaderSize != sizeof(struct DlpHeader)) {
+    if (version != CURRENT_VERSION || dlpHeaderSize < sizeof(struct DlpHeader) ||
+        dlpHeaderSize > ENTERPRISE_HEAD_MAX) {
         DLP_LOG_ERROR(LABEL, "version or dlpHeaderSize is error");
         return false;
     }
@@ -208,7 +226,8 @@ bool DlpFileKits::IsDlpFile(int32_t dlpFd)
         return false;
     }
 
-    return IsValidDlpHeader(head);
+    return dlpHeaderSize == sizeof(struct DlpHeader) ? IsValidDlpHeader(head) :
+        IsValidEnterpriseDlpHeader(head, dlpHeaderSize);
 }
 
 bool DlpFileKits::GetSandboxFlag(Want& want)

@@ -35,6 +35,8 @@ ohos_shared_library("libdlppermission_napi") {
 
   sources = [
     "${dlp_root_dir}/interfaces/kits/dlp_permission/napi/src/napi_dlp_permission.cpp",
+    "${dlp_root_dir}/interfaces/kits/dlp_permission/napi/src/napi_dlp_permission_manager.cpp",
+    "${dlp_root_dir}/interfaces/kits/dlp_permission/napi/src/napi_dlp_connection_plugin.cpp",
     "${dlp_root_dir}/interfaces/kits/napi_common/src/napi_common.cpp",
     "${dlp_root_dir}/interfaces/kits/napi_common/src/napi_error_msg.cpp",
   ]
@@ -72,8 +74,15 @@ ohos_shared_library("libdlppermission_napi") {
     "hilog:libhilog",
     "ipc:ipc_core",
     "napi:ace_napi",
-    "samgr:samgr_proxy",
-  ]
+    "samgr:samgr_proxy"
+  ] 
+
+  if (dlp_credential_enable == true) {
+    external_deps += ["dlp_credential_service:dlp_connection_static"]
+    cflags_cc += [ "-DSUPPORT_DLP_CREDENTIAL" ]
+  } else {
+    sources += [ "${dlp_root_dir}/interfaces/kits/dlp_permission/napi/src/dlp_connection_static_mock.cpp" ]
+  }
 
   relative_install_dir = "module"
   subsystem_name = "security"

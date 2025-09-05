@@ -185,9 +185,6 @@ void DlpPermissionService::UnregisterAppStateObserver()
 int32_t DlpPermissionService::GenerateDlpCertificate(
     const sptr<DlpPolicyParcel>& policyParcel, const sptr<IDlpPermissionCallback>& callback)
 {
-    if (!AccessTokenAdapter::IsSystemApp()) {
-        return DLP_SERVICE_ERROR_NOT_SYSTEM_APP;
-    }
     if (!PermissionManagerAdapter::CheckPermission(PERMISSION_ACCESS_DLP_FILE) &&
         !PermissionManagerAdapter::CheckPermission(PERMISSION_ENTERPRISE_ACCESS_DLP_FILE)) {
         return DLP_SERVICE_ERROR_PERMISSION_DENY;
@@ -238,9 +235,6 @@ static bool GetApplicationInfo(std::string appId, AppExecFwk::ApplicationInfo& a
 int32_t DlpPermissionService::ParseDlpCertificate(const sptr<CertParcel>& certParcel,
     const sptr<IDlpPermissionCallback>& callback, const std::string& appId, bool offlineAccess)
 {
-    if (!AccessTokenAdapter::IsSystemApp()) {
-        return DLP_SERVICE_ERROR_NOT_SYSTEM_APP;
-    }
     if (!PermissionManagerAdapter::CheckPermission(PERMISSION_ACCESS_DLP_FILE) &&
         !PermissionManagerAdapter::CheckPermission(PERMISSION_ENTERPRISE_ACCESS_DLP_FILE)) {
         return DLP_SERVICE_ERROR_PERMISSION_DENY;

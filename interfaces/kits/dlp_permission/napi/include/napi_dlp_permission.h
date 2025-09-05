@@ -21,12 +21,13 @@
 #include "napi/native_node_api.h"
 #include "parcel.h"
 #include "permission_policy.h"
+#include "napi_common.h"
 
 namespace OHOS {
 namespace Security {
 namespace DlpPermission {
-
 class NapiDlpPermission {
+
 public:
     static napi_value Init(napi_env env, napi_value exports);
 
@@ -147,6 +148,8 @@ private:
     static void IsDLPFeatureProvidedExcute(napi_env env, void* data);
     static void IsDLPFeatureProvidedComplete(napi_env env, napi_status status, void* data);
 
+    static napi_value ProcessDomainAccount(napi_env env, napi_callback_info cbInfo);
+
     static napi_value GenerateDlpFileForEnterprise(napi_env env, napi_callback_info cbInfo);
     static void GenerateDlpFileForEnterpriseExcute(napi_env env, void* data);
     static void GenerateDlpFileForEnterpriseComplete(napi_env env, napi_status status, void* data);
@@ -164,9 +167,5 @@ private:
 }  // namespace DlpPermission
 }  // namespace Security
 }  // namespace OHOS
-/*
- * function for module exports
- */
-static napi_value Init(napi_env env, napi_value exports);
 
 #endif /*  INTERFACES_KITS_DLP_PERMISSION_NAPI_INCLUDE_NAPI_H */

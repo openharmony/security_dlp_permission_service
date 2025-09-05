@@ -163,6 +163,7 @@ PermissionPolicy::PermissionPolicy(const DlpProperty& property)
     dlpVersion_ = CURRENT_VERSION;
     debug_ = false;
     customProperty_ = property.customProperty.enterprise;
+    fileId = property.fileId;
 }
 
 PermissionPolicy::~PermissionPolicy()
@@ -172,6 +173,11 @@ PermissionPolicy::~PermissionPolicy()
 
 bool PermissionPolicy::IsValid() const
 {
+    if (this->ownerAccountType_ == ENTERPRISE_ACCOUNT) {
+        return (CheckAesParam(this->aeskey_, this->aeskeyLen_) &&
+            CheckAesParam(this->iv_, this->ivLen_) && CheckAuthUserInfoList(this->authUsers_) &&
+            (this->hmacKeyLen_ == 0 || CheckAesParam(this->hmacKey_, this->hmacKeyLen_)));
+    }
     return (CheckAccount(this->ownerAccount_) && CheckAccount(this->ownerAccountId_) &&
         CheckAccountType(this->ownerAccountType_) && CheckAesParam(this->aeskey_, this->aeskeyLen_) &&
         CheckAesParam(this->iv_, this->ivLen_) && CheckAuthUserInfoList(this->authUsers_) &&
@@ -289,6 +295,10 @@ void PermissionPolicy::CopyPermissionPolicy(const PermissionPolicy& srcPolicy)
     SetIv(srcPolicy.iv_, srcPolicy.ivLen_);
     CopyPolicyHmac(srcPolicy);
     dlpVersion_ = srcPolicy.dlpVersion_;
+    if (srcPolicy.ownerAccountType_ == ENTERPRISE_ACCOUNT) {
+        appId = srcPolicy.appId;
+        fileId = srcPolicy.fileId;
+    }
 }
 
 int32_t PermissionPolicy::CheckActionUponExpiry()
@@ -306,7 +316,8 @@ int32_t PermissionPolicy::CheckActionUponExpiry()
 
 bool CheckAccountType(DlpAccountType accountType)
 {
-    if (accountType != CLOUD_ACCOUNT && accountType != DOMAIN_ACCOUNT && accountType != APPLICATION_ACCOUNT) {
+    if (accountType != CLOUD_ACCOUNT && accountType != DOMAIN_ACCOUNT && accountType != APPLICATION_ACCOUNT
+        && accountType != ENTERPRISE_ACCOUNT) {
         DLP_LOG_ERROR(LABEL, "Account type is invalid, type=%{public}d", accountType);
         return false;
     }

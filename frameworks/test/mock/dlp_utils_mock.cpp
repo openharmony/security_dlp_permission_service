@@ -360,6 +360,23 @@ std::string DlpUtils::GetRealTypeForEnterpriseWithFd(const int32_t& fd, bool& is
 {
     return DlpUtils::GetRealTypeWithFd(fd, isFromUriName);
 }
+
+bool DlpUtils::GetAppIdFromToken(std::string &appId)
+{
+    auto bundleMgrProxy = DlpUtils::GetBundleMgrProxy();
+    if (bundleMgrProxy == nullptr) {
+        return false;
+    }
+    AppExecFwk::BundleInfo bundleInfo;
+    int32_t ret = bundleMgrProxy->GetBundleInfoForSelf(static_cast<int32_t>(
+        AppExecFwk::GetBundleInfoFlag::GET_BUNDLE_INFO_WITH_SIGNATURE_INFO), bundleInfo);
+    if (ret != DLP_OK || bundleInfo.appId.size() == 0) {
+        DLP_LOG_ERROR(LABEL, "GetBundleInfoForSelf failed %{public}d", ret);
+        return false;
+    }
+    appId = bundleInfo.appId;
+    return true;
+}
 }  // namespace DlpPermission
 }  // namespace Security
 }  // namespace OHOS

@@ -197,6 +197,36 @@ public:
         return authPerm_;
     };
 
+    void SetAppId(std::string appId)
+    {
+        appId_ = appId;
+    };
+
+    void SetFileId(std::string fileId)
+    {
+        fileId_ = fileId;
+    };
+
+    void SetAccountType(int32_t accountType)
+    {
+        accountType_ = accountType;
+    };
+
+    int32_t GetAccountType()
+    {
+        return accountType_;
+    };
+
+    std::string GetAppId()
+    {
+        return appId_;
+    };
+
+    std::string GetFileId()
+    {
+        return fileId_;
+    };
+
     void GetRealType(std::string& realType) const
     {
         realType = realType_;
@@ -234,6 +264,9 @@ private:
     std::string contactAccount_;
     uint32_t version_;
     uint32_t offlineAccess_;
+    std::string appId_;
+    std::string fileId_;
+    int32_t accountType_;
 };
 }  // namespace DlpPermission
 }  // namespace Security
