@@ -18,7 +18,7 @@
 
 #include <string>
 
-namespace OHOS::Security::DIA{
+namespace OHOS::Security::DIA {
 enum DIAErrorCode : int32_t {
     ERR_DIA_JS_SUCCESS = 0,
     ERR_DIA_JS_PERMISSION_DENIED = 201,

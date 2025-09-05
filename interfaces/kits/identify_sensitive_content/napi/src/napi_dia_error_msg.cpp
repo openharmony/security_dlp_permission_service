@@ -19,7 +19,7 @@
 #include "dia_error_code.h"
 #endif
 
-namespace OHOS::Security::DIA{
+namespace OHOS::Security::DIA {
 
 static const std::unordered_map<int32_t, std::string> DIA_JS_ERROR_MSG_MAP = {
     //  error + message

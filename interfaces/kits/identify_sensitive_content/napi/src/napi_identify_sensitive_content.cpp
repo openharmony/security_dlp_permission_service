@@ -24,7 +24,7 @@
 #include "dia_fi_interface.h"
 #endif
 
-namespace OHOS::Security::DIA{
+namespace OHOS::Security::DIA {
 const std::string PERMISSION_ENTERPRISE_DATA_IDENTIFY_FILE = "ohos.permission.ENTERPRISE_DATA_IDENTIFY_FILE";
 
 static bool CheckPermission(napi_env env, const std::string &permission)
@@ -41,7 +41,6 @@ static bool CheckPermission(napi_env env, const std::string &permission)
     return false;
 }
 
-#ifdef FILE_IDENTIFY_ENABLE
 static napi_value NapiGetNull(napi_env env)
 {
     napi_value result = nullptr;
@@ -49,6 +48,7 @@ static napi_value NapiGetNull(napi_env env)
     return result;
 }
 
+#ifdef FILE_IDENTIFY_ENABLE
 bool ParseFileOperationContext(napi_env env, napi_callback_info info, ScanFileAsyncContext &asyncContext)
 {
     size_t argc = ARG_SIZE_TWO;

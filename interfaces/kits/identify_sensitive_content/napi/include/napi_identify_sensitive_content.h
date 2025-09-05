@@ -20,7 +20,7 @@
 #include "napi/native_common.h"
 
 
-namespace OHOS::Security::DIA{
+namespace OHOS::Security::DIA {
 
 class NapiIdentifySensitiveContent {
 public:

@@ -18,51 +18,12 @@
 
 #include <string>
 #include "napi/native_api.h"
+#include "napi/native_node_api.h"
 #ifdef FILE_IDENTIFY_ENABLE
 #include "dia_fi_defines.h"
 #endif
 
-namespace OHOS::Security::DIA{
-
-#define NAPI_RETVAL_NOTHING
-
-#define GET_AND_THROW_LAST_ERROR(env)                                                                   \
-    do {                                                                                                \
-        const napi_extended_error_info* errorInfo = nullptr;                                            \
-        napi_get_last_error_info((env), &errorInfo);                                                    \
-        bool isPending = false;                                                                         \
-        napi_is_exception_pending((env), &isPending);                                                   \
-        if (!isPending && errorInfo != nullptr) {                                                       \
-            const char* errorMessage =                                                                  \
-                errorInfo->error_message != nullptr ? errorInfo->error_message : "empty error message"; \
-            napi_throw_error((env), nullptr, errorMessage);                                             \
-        }                                                                                               \
-    } while (0)
-
-#define NAPI_ASSERT_BASE(env, assertion, message, retVal)                                    \
-    do {                                                                                     \
-        if (!(assertion)) {                                                                  \
-            napi_throw_error((env), nullptr, "assertion (" #assertion ") failed: " message); \
-            return retVal;                                                                   \
-        }                                                                                    \
-    } while (0)
-
-#define NAPI_ASSERT(env, assertion, message) NAPI_ASSERT_BASE(env, assertion, message, nullptr)
-
-#define NAPI_ASSERT_RETURN_VOID(env, assertion, message) NAPI_ASSERT_BASE(env, assertion, message, NAPI_RETVAL_NOTHING)
-
-#define NAPI_CALL_BASE(env, theCall, retVal) \
-    do {                                     \
-        if ((theCall) != napi_ok) {          \
-            GET_AND_THROW_LAST_ERROR((env)); \
-            return retVal;                   \
-        }                                    \
-    } while (0)
-
-#define NAPI_CALL(env, theCall) NAPI_CALL_BASE(env, theCall, nullptr)
-
-#define NAPI_CALL_RETURN_VOID(env, theCall) NAPI_CALL_BASE(env, theCall, NAPI_RETVAL_NOTHING)
-
+namespace OHOS::Security::DIA {
 
 constexpr size_t ARG_SIZE_TWO = 2;
 
@@ -85,7 +46,7 @@ bool NapiParseString(napi_env env, std::string &param, napi_value args);
 void DIANapiThrow(napi_env env, int32_t jsErrCode, const std::string &jsErrMsg);
 
 #ifdef FILE_IDENTIFY_ENABLE
-struct ScanFileAsyncContext : CommonAsyncContext{
+struct ScanFileAsyncContext : CommonAsyncContext {
     explicit ScanFileAsyncContext(napi_env env) : CommonAsyncContext(env) {};
     std::string filePath;
     std::vector<Policy> policies;

@@ -17,7 +17,7 @@
 #include "napi_dia_error_msg.h"
 #include "napi_dia_log_adapter.h"
 
-namespace OHOS::Security::DIA{
+namespace OHOS::Security::DIA {
 
 CommonAsyncContext::CommonAsyncContext(napi_env napiEnv)
 {
@@ -182,7 +182,7 @@ napi_value NapiComposeMatchResultArray(napi_env env, const std::vector<MatchResu
 {
     napi_value result;
     NAPI_CALL(env, napi_create_array_with_length(env, matchResultList.size(), &result));
-    for(uint32_t i = 0; i < matchResultList.size(); ++i) {
+    for (uint32_t i = 0; i < matchResultList.size(); ++i) {
         napi_value matchResult;
         NAPI_CALL(env, napi_create_object(env, &matchResult));
 
