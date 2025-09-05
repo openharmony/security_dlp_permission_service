@@ -63,6 +63,7 @@ namespace OHOS::Security::DIA{
 
 #define NAPI_CALL_RETURN_VOID(env, theCall) NAPI_CALL_BASE(env, theCall, NAPI_RETVAL_NOTHING)
 
+
 constexpr size_t ARG_SIZE_TWO = 2;
 
 constexpr size_t PARAM_ZERO = 0;
@@ -92,7 +93,7 @@ struct ScanFileAsyncContext : CommonAsyncContext{
 };
 bool NapiParsePolicyArray(napi_env env, std::vector<Policy> &policies, napi_value args);
 void DIANapiThrow(napi_env env, int32_t nativeErrCode);
-napi_value NapiComposeMarchResultArray(napi_env env, const std::vector<MatchResult> &matchResultList);
+napi_value NapiComposeMatchResultArray(napi_env env, const std::vector<MatchResult> &matchResultList);
 #endif
 }
 #endif

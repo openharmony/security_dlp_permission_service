@@ -20,6 +20,7 @@ group("napi_packages") {
     deps += [
       "${dlp_root_dir}/interfaces/kits/dlp_permission:libdlppermission_napi",
       "${dlp_root_dir}/interfaces/kits/dlp_permission:libdlpsetdlpfeature_napi",
+      "${dlp_root_dir}/interfaces/kits/identify_sensitive_content:identifysensitivecontent_napi",
     ]
   }
 }

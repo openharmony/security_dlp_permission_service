@@ -17,7 +17,8 @@
 #define NAPI_IDENTIFY_SENSITIVE_CONTENT_H
 
 #include "napi/native_api.h"
-#include "napi/native_comm.h"
+#include "napi/native_common.h"
+
 
 namespace OHOS::Security::DIA{
 
@@ -25,6 +26,6 @@ class NapiIdentifySensitiveContent {
 public:
     static napi_value Init(napi_env env, napi_value exports);
     static napi_value ScanFile(napi_env env, napi_callback_info info);
-}
+};
 } // namespace OHOS::Security::DIA
 #endif // NAPI_IDENTIFY_SENSITIVE_CONTENT_H

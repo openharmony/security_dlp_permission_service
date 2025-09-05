@@ -28,9 +28,9 @@ ohos_shared_library("identifysensitivecontent_napi") {
     "${dlp_root_dir}/interfaces/kits/identify_sensitive_content/napi/include",
   ]
   sources = [
-    "${dlp_root_dir}/interfaces/kits/identify_sensitive_content/napi/src/",
-    "${dlp_root_dir}/interfaces/kits/identify_sensitive_content/napi/src/",
-    "${dlp_root_dir}/interfaces/kits/identify_sensitive_content/napi/src/",
+    "${dlp_root_dir}/interfaces/kits/identify_sensitive_content/napi/src/napi_dia_common.cpp",
+    "${dlp_root_dir}/interfaces/kits/identify_sensitive_content/napi/src/napi_dia_error_msg.cpp",
+    "${dlp_root_dir}/interfaces/kits/identify_sensitive_content/napi/src/napi_identify_sensitive_content.cpp",
   ]
 
   defines = []

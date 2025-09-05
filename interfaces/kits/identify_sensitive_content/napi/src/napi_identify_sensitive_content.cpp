@@ -37,7 +37,7 @@ static bool CheckPermission(napi_env env, const std::string &permission)
     }
     LOG_ERROR("check permission %{public}s fail", permission.c_str());
     NAPI_CALL_BASE(env, napi_throw(env,
-        GenerateBusinessError(env, ERR_DIA_JS_PERMISSION_DENIED, GetJsErrMsg(ERR_DIA_JS_PERMISSION_DENIED))), false);
+        GenerateBusinessError(env, ERR_DIA_JS_PERMISSION_DENIED, GetDIAJsErrMsg(ERR_DIA_JS_PERMISSION_DENIED))), false);
     return false;
 }
 
@@ -49,11 +49,11 @@ static napi_value NapiGetNull(napi_env env)
     return result;
 }
 
-bool ParseFileOperationContext(napi_value env, napi_callback_info info, ScanFileAsyncContext &asyncContext)
+bool ParseFileOperationContext(napi_env env, napi_callback_info info, ScanFileAsyncContext &asyncContext)
 {
     size_t argc = ARG_SIZE_TWO;
     napi_value argv[ARG_SIZE_TWO] = {nullptr};
-    napi_get_cb_info(env, info, &argc, &grgv, nullptr, nullptr);
+    napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr);
 
     if (argc == ARG_SIZE_TWO) {
         if (!NapiParseString(env, asyncContext.filePath, argv[PARAM_ZERO])) {
@@ -70,7 +70,7 @@ bool ParseFileOperationContext(napi_value env, napi_callback_info info, ScanFile
     return false;
 }
 
-void NapiIdentifySensitiveFileExcute(napi_value env, void *data)
+void NapiIdentifySensitiveFileExcute(napi_env env, void *data)
 {
     LOG_INFO("NapiIdentifySensitiveFileExcute napi_create_async_work runing");
     auto scanFileAsyncContext = reinterpret_cast<ScanFileAsyncContext *>(data);
@@ -83,7 +83,7 @@ void NapiIdentifySensitiveFileExcute(napi_value env, void *data)
     return;
 }
 
-void NapiIdentifySensitiveFileComplete(napi_value env, napi_status status, void *data)
+void NapiIdentifySensitiveFileComplete(napi_env env, napi_status status, void *data)
 {
     LOG_INFO("NapiIdentifySensitiveFileExcute napi_create_async_work complete");
     auto scanFileAsyncContext = reinterpret_cast<ScanFileAsyncContext *>(data);
@@ -95,7 +95,7 @@ void NapiIdentifySensitiveFileComplete(napi_value env, napi_status status, void 
     int32_t errCode = NativeCodeToDIAJsCode(asyncContextPtr->errCode);
     napi_value result = nullptr;
     if (errCode == ERR_DIA_JS_SUCCESS) {
-        result = NapiComposeMarchResultArray(env, asyncContextPtr->matchResultList);
+        result = NapiComposeMatchResultArray(env, asyncContextPtr->matchResultList);
         NAPI_CALL_RETURN_VOID(env, napi_resolve_deferred(env, asyncContextPtr->deferred, result));
     } else {
         LOG_ERROR("identify sensitive file error");
@@ -116,7 +116,7 @@ napi_value NapiIdentifySensitiveContent::ScanFile(napi_env env, napi_callback_in
     ScanFileAsyncContext *asyncContext = new (std::nothrow) ScanFileAsyncContext(env);
     if (!asyncContext) {
         LOG_ERROR("insufficient memory for asyncContext!");
-        return;
+        return NapiGetNull(env);
     }
     std::unique_ptr<ScanFileAsyncContext> asyncContextPtr {asyncContext};
     if (!ParseFileOperationContext(env, info, *asyncContextPtr)) {
@@ -141,7 +141,7 @@ napi_value NapiIdentifySensitiveContent::ScanFile(napi_env env, napi_callback_in
 napi_value NapiIdentifySensitiveContent::Init(napi_env env, napi_value exports)
 {
     napi_property_descriptor desc[] = {
-        DECLARE_NAPI_FUNCTION("scanFile", NapiIdentifySensitiveContent::ScanFile);
+        DECLARE_NAPI_FUNCTION("scanFile", NapiIdentifySensitiveContent::ScanFile),
     };
     NAPI_CALL(env, napi_define_properties(env, exports, sizeof(desc) / sizeof(desc[0]), desc));
     return exports;
@@ -160,18 +160,20 @@ EXTERN_C_END
 /*
  * Module define
  */
-static napi_module _module = {.nm_version = 1,
+static napi_module _module = {
+    .nm_version = 1,
     .nm_flags = 0,
     .nm_filename = nullptr,
     .nm_register_func = Init,
-    .nm_modname = "identifySensitiveContent",
+    .nm_modname = "security.identifySensitiveContent",
     .nm_priv = ((void*)0),
-    .reserved = {0}};
+    .reserved = {0}
+};
 
 /*
  * Module register function
  */
-extern "C" __attribute__((constructor)) void DlpPermissionModuleRegister(void)
+extern "C" __attribute__((constructor)) void IdentifySensitiveContentModuleRegister(void)
 {
     napi_module_register(&_module);
 }

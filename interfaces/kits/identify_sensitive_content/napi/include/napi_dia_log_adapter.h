@@ -29,23 +29,23 @@ constexpr OHOS::HiviewDFX::HiLogLabel LOG_LABEL = {LOG_CORE, LOG_DOMAINID, "Iden
 
 #define LOG_DEBUG(fmt, ...) \
     ((void)HILOG_IMPL(LOG_LABEL.type, LOG_DEBUG, LOG_LABEL.domain, LOG_LABEL.tag, \
-    "[%{public}s@%{public}s:%{public}d] " fmt, __FUNCTION__, LOG_FILE_NAME, __LINE__, ##__VA_AEGS__))
+    "[%{public}s@%{public}s:%{public}d] " fmt, __FUNCTION__, LOG_FILE_NAME, __LINE__, ##__VA_ARGS__))
 
 #define LOG_INFO(fmt, ...) \
     ((void)HILOG_IMPL(LOG_LABEL.type, LOG_INFO, LOG_LABEL.domain, LOG_LABEL.tag, \
-    "[%{public}s@%{public}s:%{public}d] " fmt, __FUNCTION__, LOG_FILE_NAME, __LINE__, ##__VA_AEGS__))
+    "[%{public}s@%{public}s:%{public}d] " fmt, __FUNCTION__, LOG_FILE_NAME, __LINE__, ##__VA_ARGS__))
 
 #define LOG_WARN(fmt, ...) \
     ((void)HILOG_IMPL(LOG_LABEL.type, LOG_WARN, LOG_LABEL.domain, LOG_LABEL.tag, \
-    "[%{public}s@%{public}s:%{public}d] " fmt, __FUNCTION__, LOG_FILE_NAME, __LINE__, ##__VA_AEGS__))
+    "[%{public}s@%{public}s:%{public}d] " fmt, __FUNCTION__, LOG_FILE_NAME, __LINE__, ##__VA_ARGS__))
 
 #define LOG_ERROR(fmt, ...) \
     ((void)HILOG_IMPL(LOG_LABEL.type, LOG_ERROR, LOG_LABEL.domain, LOG_LABEL.tag, \
-    "[%{public}s@%{public}s:%{public}d] " fmt, __FUNCTION__, LOG_FILE_NAME, __LINE__, ##__VA_AEGS__))
+    "[%{public}s@%{public}s:%{public}d] " fmt, __FUNCTION__, LOG_FILE_NAME, __LINE__, ##__VA_ARGS__))
 
 #define LOG_FATAL(fmt, ...) \
     ((void)HILOG_IMPL(LOG_LABEL.type, LOG_FATAL, LOG_LABEL.domain, LOG_LABEL.tag, \
-    "[%{public}s@%{public}s:%{public}d] " fmt, __FUNCTION__, LOG_FILE_NAME, __LINE__, ##__VA_AEGS__))
+    "[%{public}s@%{public}s:%{public}d] " fmt, __FUNCTION__, LOG_FILE_NAME, __LINE__, ##__VA_ARGS__))
 
 
 #endif  // NAPI_DIA_LOG_ADAPTER_H

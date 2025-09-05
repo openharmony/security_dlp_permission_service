@@ -87,7 +87,7 @@ bool GetStringFromNAPI(napi_env env, napi_value value, std::string &resultStr)
 bool NapiParseString(napi_env env, std::string &param, napi_value args)
 {
     napi_valuetype valuetype;
-    if (napi_typeof(env, args, &valueType) != napi_ok || valueType != napi_string ||
+    if (napi_typeof(env, args, &valuetype) != napi_ok || valuetype != napi_string ||
         !GetStringFromNAPI(env, args, param)) {
         LOG_ERROR("can not get napi type or type is not string");
         return false;
@@ -178,9 +178,9 @@ bool NapiParsePolicyArray(napi_env env, std::vector<Policy> &policies, napi_valu
     return true;
 }
 
-napi_value NapiComposeMarchResultArray(napi_env env, const std::vector<MatchResult> &matchResultList)
+napi_value NapiComposeMatchResultArray(napi_env env, const std::vector<MatchResult> &matchResultList)
 {
-    napi_env result;
+    napi_value result;
     NAPI_CALL(env, napi_create_array_with_length(env, matchResultList.size(), &result));
     for(uint32_t i = 0; i < matchResultList.size(); ++i) {
         napi_value matchResult;
