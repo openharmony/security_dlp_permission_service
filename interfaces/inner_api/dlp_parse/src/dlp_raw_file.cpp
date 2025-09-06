@@ -151,6 +151,21 @@ bool DlpRawFile::IsValidDlpHeader(const struct DlpHeader& head) const
     return true;
 }
 
+bool DlpRawFile::IsValidEnterpriseDlpHeader(const struct DlpHeader& head, uint32_t dlpHeaderSize)
+{
+    if (head.magic != DLP_FILE_MAGIC || head.certSize == 0 || head.certSize > DLP_MAX_CERT_SIZE ||
+        head.contactAccountSize != 0 ||
+        head.contactAccountOffset != dlpHeaderSize + FILE_HEAD ||
+        head.txtOffset != head.contactAccountOffset + head.contactAccountSize ||
+        head.txtSize > DLP_MAX_CONTENT_SIZE || head.hmacOffset != head.txtOffset + head.txtSize ||
+        head.hmacSize != HMAC_SIZE * BYTE_TO_HEX_OPER_LENGTH || head.offlineCertSize > DLP_MAX_CERT_SIZE ||
+        !(head.certOffset == head.txtOffset || head.certOffset == head.hmacOffset + head.hmacSize)) {
+        DLP_LOG_ERROR(LABEL, "IsValidEnterpriseDlpHeader error.");
+        return false;
+    }
+    return true;
+}
+
 int32_t DlpRawFile::ParseRawDlpHeader(uint64_t fileLen, uint32_t dlpHeaderSize)
 {
     if (fileLen - FILE_HEAD <= dlpHeaderSize || dlpHeaderSize >= DLP_MAX_CERT_SIZE) {
@@ -192,6 +207,91 @@ int32_t DlpRawFile::ParseRawDlpHeader(uint64_t fileLen, uint32_t dlpHeaderSize)
     return DLP_OK;
 }
 
+int32_t DlpRawFile::ParseEnterpriseFileId(uint64_t fileLen, uint32_t fileIdSize)
+{
+    uint32_t idSize = 0;
+    if (read(dlpFd_, &idSize, sizeof(uint32_t)) != sizeof(uint32_t) || idSize > fileIdSize) {
+        DLP_LOG_ERROR(LABEL, "can not read fileid size , %{public}s", strerror(errno));
+        return DLP_PARSE_ERROR_FD_ERROR;
+    }
+    uint8_t *buff = new (std::nothrow)uint8_t[idSize + 1];
+    if (buff == nullptr) {
+        DLP_LOG_ERROR(LABEL, "buff is null");
+        return DLP_PARSE_ERROR_FD_ERROR;
+    }
+    (void)memset_s(buff, idSize + 1, 0, idSize + 1);
+    if (read(dlpFd_, buff, idSize) != idSize) {
+        delete []buff;
+        DLP_LOG_ERROR(LABEL, "can not read dlp file cert, %{public}s", strerror(errno));
+        return DLP_PARSE_ERROR_FD_ERROR;
+    }
+    char *char_buffer = reinterpret_cast<char *>(buff);
+    std::string str(char_buffer);
+    delete []buff;
+    buff = nullptr;
+    fileId_ = str;
+    offlineAccess_ = head_.offlineAccess;
+    if (head_.txtSize == 0) {
+        if (fileLen < head_.hmacOffset + head_.certSize) {
+            DLP_LOG_ERROR(LABEL, "file is error");
+            return DLP_PARSE_ERROR_FILE_FORMAT_ERROR;
+        }
+    } else if (fileLen < head_.hmacOffset + head_.hmacSize + head_.certSize) {
+        return DLP_PARSE_ERROR_FILE_FORMAT_ERROR;
+    }
+    if (version_ > CURRENT_VERSION) {
+        DLP_LOG_ERROR(LABEL, "version_ > CURRENT_VERSION");
+        return DLP_PARSE_ERROR_FILE_VERSION_BIGGER_THAN_CURRENT;
+    }
+#ifdef SUPPORT_DLP_CREDENTIAL
+    if (head_.algType == DLP_MODE_CTR) {
+        DLP_LOG_INFO(LABEL, "support openssl");
+        return DLP_OK;
+    }
+    return InitDlpHIAEMgr();
+#endif
+    return DLP_OK;
+}
+
+int32_t DlpRawFile::ParseEnterpriseRawDlpHeader(uint64_t fileLen, uint32_t dlpHeaderSize)
+{
+    accountType_ = ENTERPRISE_ACCOUNT;
+    if (fileLen - FILE_HEAD < dlpHeaderSize || dlpHeaderSize >= MAX_CERT_SIZE) {
+        DLP_LOG_ERROR(LABEL, "file size is error");
+        return DLP_PARSE_ERROR_FD_ERROR;
+    }
+    if (read(dlpFd_, &head_, sizeof(head_)) != sizeof(head_)) {
+        DLP_LOG_ERROR(LABEL, "can not read version_ or dlpHeaderSize, %{public}s", strerror(errno));
+        return DLP_PARSE_ERROR_FD_ERROR;
+    }
+    if (!IsValidEnterpriseDlpHeader(head_, dlpHeaderSize)) {
+        DLP_LOG_ERROR(LABEL, "head_ is error");
+        return DLP_PARSE_ERROR_FD_ERROR;
+    }
+    uint32_t idSize = 0;
+    if (read(dlpFd_, &idSize, sizeof(uint32_t)) != sizeof(uint32_t) || idSize > dlpHeaderSize - FILE_HEAD) {
+        DLP_LOG_ERROR(LABEL, "can not read appid size , %{public}s", strerror(errno));
+        return DLP_PARSE_ERROR_FD_ERROR;
+    }
+    uint8_t *buff = new (std::nothrow)uint8_t[idSize + 1];
+    if (buff == nullptr) {
+        DLP_LOG_ERROR(LABEL, "buff is null");
+        return DLP_PARSE_ERROR_FD_ERROR;
+    }
+    (void)memset_s(buff, idSize + 1, 0, idSize + 1);
+    if (read(dlpFd_, buff, idSize) != idSize) {
+        delete []buff;
+        DLP_LOG_ERROR(LABEL, "can not read dlp file cert, %{public}s", strerror(errno));
+        return DLP_PARSE_ERROR_FD_ERROR;
+    }
+    char *char_buffer = reinterpret_cast<char *>(buff);
+    std::string str(char_buffer);
+    delete []buff;
+    buff = nullptr;
+    appId_ = str;
+    return ParseEnterpriseFileId(fileLen, dlpHeaderSize - idSize - FILE_HEAD);
+}
+
 int32_t DlpRawFile::CheckDlpFile()
 {
     if (dlpFd_ < 0) {
@@ -229,6 +329,8 @@ int32_t DlpRawFile::CheckDlpFile()
 
     if (version_ == CURRENT_VERSION && dlpHeaderSize == sizeof(struct DlpHeader)) {
         return ParseRawDlpHeader(fileLen, dlpHeaderSize);
+    } else {
+        return ParseEnterpriseRawDlpHeader(fileLen, dlpHeaderSize);
     }
 
     DLP_LOG_ERROR(LABEL, "the version or HeaderSize is error");
@@ -286,7 +388,6 @@ int32_t DlpRawFile::ProcessDlpFile()
     }
     uint8_t* buf = new (std::nothrow)uint8_t[head_.certSize];
     if (buf == nullptr) {
-        DLP_LOG_WARN(LABEL, "alloc buffer failed.");
         return DLP_PARSE_ERROR_MEMORY_OPERATE_FAIL;
     }
     (void)lseek(dlpFd_, head_.certOffset, SEEK_SET);
@@ -298,23 +399,24 @@ int32_t DlpRawFile::ProcessDlpFile()
     CleanBlobParam(cert_);
     cert_.data = buf;
     cert_.size = head_.certSize;
-    uint8_t *tmpBuf = new (std::nothrow)uint8_t[head_.contactAccountSize];
-    if (tmpBuf == nullptr) {
-        DLP_LOG_WARN(LABEL, "alloc tmpBuf failed.");
-        return DLP_PARSE_ERROR_MEMORY_OPERATE_FAIL;
-    }
-    (void)lseek(dlpFd_, head_.contactAccountOffset, SEEK_SET);
-    if (read(dlpFd_, tmpBuf, head_.contactAccountSize) != (ssize_t)head_.contactAccountSize) {
+    uint8_t *tmpBuf = nullptr;
+    if (accountType_ != ENTERPRISE_ACCOUNT) {
+        uint8_t *tmpBuf = new (std::nothrow)uint8_t[head_.contactAccountSize];
+        if (tmpBuf == nullptr) {
+            return DLP_PARSE_ERROR_MEMORY_OPERATE_FAIL;
+        }
+        (void)lseek(dlpFd_, head_.contactAccountOffset, SEEK_SET);
+        if (read(dlpFd_, tmpBuf, head_.contactAccountSize) != (ssize_t)head_.contactAccountSize) {
+            delete[] tmpBuf;
+            DLP_LOG_ERROR(LABEL, "can not read dlp contact account, %{public}s", strerror(errno));
+            return DLP_PARSE_ERROR_FILE_FORMAT_ERROR;
+        }
+        contactAccount_ = std::string(tmpBuf, tmpBuf + head_.contactAccountSize);
         delete[] tmpBuf;
-        DLP_LOG_ERROR(LABEL, "can not read dlp contact account, %{public}s", strerror(errno));
-        return DLP_PARSE_ERROR_FILE_FORMAT_ERROR;
     }
-    contactAccount_ = std::string(tmpBuf, tmpBuf + head_.contactAccountSize);
-    delete[] tmpBuf;
     if (head_.offlineCertSize != 0 && head_.offlineCertSize == head_.certSize) {
         tmpBuf = new (std::nothrow)uint8_t[head_.offlineCertSize];
         if (tmpBuf == nullptr) {
-            DLP_LOG_WARN(LABEL, "alloc tmpBuf failed.");
             return DLP_PARSE_ERROR_MEMORY_OPERATE_FAIL;
         }
         (void)lseek(dlpFd_, head_.offlineCertOffset, SEEK_SET);
@@ -474,13 +576,32 @@ int32_t DlpRawFile::DoWriteHeaderAndContactAccount(int32_t inPlainFileFd, uint64
         DLP_LOG_ERROR(LABEL, "write dlp head failed, %{public}s", strerror(errno));
         return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
     }
-
-    if (write(dlpFd_, contactAccount_.c_str(), contactAccount_.size()) !=
-        static_cast<int32_t>(contactAccount_.size())) {
-        DLP_LOG_ERROR(LABEL, "write dlp contact data failed, %{public}s", strerror(errno));
-        return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
+    if (accountType_ == ENTERPRISE_ACCOUNT) {
+        uint32_t idSize = appId_.size();
+        if (write(dlpFd_, &idSize, sizeof(uint32_t)) != sizeof(uint32_t)) {
+            DLP_LOG_ERROR(LABEL, "write appId_ size failed, %{public}s", strerror(errno));
+            return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
+        }
+        if (write(dlpFd_, appId_.c_str(), idSize) != static_cast<int32_t>(idSize)) {
+            DLP_LOG_ERROR(LABEL, "write appId_ failed, %{public}s", strerror(errno));
+            return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
+        }
+        idSize = fileId_.size();
+        if (write(dlpFd_, &idSize, sizeof(uint32_t)) != sizeof(uint32_t)) {
+            DLP_LOG_ERROR(LABEL, "write fileId_ size failed, %{public}s", strerror(errno));
+            return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
+        }
+        if (write(dlpFd_, fileId_.c_str(), idSize) != static_cast<int32_t>(idSize)) {
+            DLP_LOG_ERROR(LABEL, "write fileId_ failed, %{public}s", strerror(errno));
+            return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
+        }
+    } else {
+        if (write(dlpFd_, contactAccount_.c_str(), contactAccount_.size()) !=
+            static_cast<int32_t>(contactAccount_.size())) {
+            DLP_LOG_ERROR(LABEL, "write dlp contact data failed, %{public}s", strerror(errno));
+            return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
+        }
     }
-
     if (head_.txtSize == 0) {
         DLP_LOG_INFO(LABEL, "Plaintext file len is 0, do not need encrypt");
         if (write(dlpFd_, cert_.data, head_.certSize) != (ssize_t)head_.certSize) {
@@ -496,6 +617,11 @@ int32_t DlpRawFile::DoWriteHeaderAndContactAccount(int32_t inPlainFileFd, uint64
 int32_t DlpRawFile::GenFileInRaw(int32_t inPlainFileFd)
 {
     off_t fileLen = lseek(inPlainFileFd, 0, SEEK_END);
+    if (accountType_ == ENTERPRISE_ACCOUNT) {
+        head_.contactAccountSize = 0;
+        head_.contactAccountOffset = FILE_HEAD + sizeof(DlpHeader) + appId_.size() + fileId_.size() + FILE_HEAD;
+        head_.txtOffset = head_.contactAccountOffset + head_.contactAccountSize;
+    }
     head_.txtSize = static_cast<uint64_t>(fileLen);
     if (fileLen == 0) {
         head_.hmacOffset = head_.txtOffset + head_.txtSize;
@@ -510,12 +636,11 @@ int32_t DlpRawFile::GenFileInRaw(int32_t inPlainFileFd)
     }
     DLP_LOG_DEBUG(LABEL, "fileLen %{public}s", std::to_string(head_.txtSize).c_str());
     auto iter = TYPE_TO_NUM_MAP.find(realType_);
-    if (iter != TYPE_TO_NUM_MAP.end()) {
-        head_.fileType = iter->second;
-    } else {
+    if (iter == TYPE_TO_NUM_MAP.end()) {
         DLP_LOG_DEBUG(LABEL, "find %{public}s type fail", realType_.c_str());
         return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
     }
+    head_.fileType = iter->second;
     // clean dlpFile
     if (ftruncate(dlpFd_, 0) == -1) {
         DLP_LOG_ERROR(LABEL, "truncate dlp file to zero failed, %{public}s", strerror(errno));
@@ -536,7 +661,8 @@ int32_t DlpRawFile::GenFileInRaw(int32_t inPlainFileFd)
         DLP_LOG_ERROR(LABEL, "write dlp dlpHeaderSize failed, %{public}s", strerror(errno));
         return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
     }
-    uint32_t dlpHeaderSize = sizeof(struct DlpHeader);
+    uint32_t dlpHeaderSize = accountType_ == ENTERPRISE_ACCOUNT ?
+        (sizeof(DlpHeader) + appId_.size() + fileId_.size() + FILE_HEAD) : sizeof(struct DlpHeader);
     if (write(dlpFd_, &dlpHeaderSize, sizeof(uint32_t)) != sizeof(uint32_t)) {
         DLP_LOG_ERROR(LABEL, "write dlp dlpHeaderSize failed, %{public}s", strerror(errno));
         return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
@@ -568,12 +694,6 @@ int32_t DlpRawFile::RemoveDlpPermissionInRaw(int32_t outPlainFileFd)
         return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
     }
 
-    // clean plainTxtFile
-    if (ftruncate(outPlainFileFd, 0) == -1) {
-        DLP_LOG_ERROR(LABEL, "truncate plain file to zero failed, %{public}s", strerror(errno));
-        return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
-    }
-
     if (lseek(outPlainFileFd, 0, SEEK_SET) == static_cast<off_t>(-1)) {
         DLP_LOG_ERROR(LABEL, "seek plain file start failed, %{public}s", strerror(errno));
         return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
@@ -589,7 +709,7 @@ int32_t DlpRawFile::RemoveDlpPermissionInRaw(int32_t outPlainFileFd)
         return DLP_OK;
     }
 
-    return DoDlpContentCryptyOperation(dlpFd_, outPlainFileFd, head_.txtOffset, head_.txtSize, false);
+    return DoDlpContentCryptyOperation(dlpFd_, outPlainFileFd, 0, head_.txtSize, false);
 }
 
 int32_t DlpRawFile::RemoveDlpPermission(int32_t outPlainFileFd)

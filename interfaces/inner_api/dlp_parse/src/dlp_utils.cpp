@@ -25,6 +25,7 @@
 #include "dlp_permission_public_interface.h"
 #include "dlp_file.h"
 #include "dlp_zip.h"
+#include "ipc_skeleton.h"
 #include "securec.h"
 
 namespace OHOS {
@@ -375,6 +376,23 @@ bool DlpUtils::GetBundleInfoWithBundleName(const std::string &bundleName, int32_
         return false;
     }
     return bundleMgrProxy->GetBundleInfo(bundleName, flag, bundleInfo, userId);
+}
+
+bool DlpUtils::GetAppIdFromToken(std::string &appId)
+{
+    auto bundleMgrProxy = DlpUtils::GetBundleMgrProxy();
+    if (bundleMgrProxy == nullptr) {
+        return false;
+    }
+    AppExecFwk::BundleInfo bundleInfo;
+    int32_t ret = bundleMgrProxy->GetBundleInfoForSelf(static_cast<int32_t>(
+        AppExecFwk::GetBundleInfoFlag::GET_BUNDLE_INFO_WITH_SIGNATURE_INFO), bundleInfo);
+    if (ret != DLP_OK || bundleInfo.appId.size() == 0) {
+        DLP_LOG_ERROR(LABEL, "GetBundleInfoForSelf failed %{public}d", ret);
+        return false;
+    }
+    appId = bundleInfo.appId;
+    return true;
 }
 
 bool DlpUtils::GetUserIdByForegroundAccount(int32_t &userId)

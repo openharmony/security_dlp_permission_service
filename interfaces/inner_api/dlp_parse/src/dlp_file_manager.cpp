@@ -39,6 +39,7 @@ namespace DlpPermission {
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "DlpFileManager"};
 static constexpr uint32_t MAX_DLP_FILE_SIZE = 1000; // max open dlp file
+static constexpr uint32_t DECRYPTTYPEFORUSER = 2;
 const std::string PATH_CACHE = "/cache";
 const std::string SUPPORT_PHOTO_DLP = "support_photo_dlp";
 const std::string SUPPORT_VIDEO_DLP = "support_video_dlp";
@@ -282,6 +283,11 @@ int32_t DlpFileManager::SetDlpFileParams(std::shared_ptr<DlpFile>& filePtr, cons
         return result;
     }
 
+    if (property.ownerAccountType == ENTERPRISE_ACCOUNT) {
+        policy.appId = filePtr->GetAppId();
+        policy.fileId = property.fileId;
+    }
+
     result = PrepareDlpEncryptParms(policy, key, usage, certData, hmacKey);
     if (result != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "Set dlp obj params fail, prepare encrypt params error, errno=%{public}d", result);
@@ -308,7 +314,8 @@ int32_t DlpFileManager::SetDlpFileParams(std::shared_ptr<DlpFile>& filePtr, cons
         return result;
     }
 
-    result = filePtr->SetContactAccount(property.contactAccount);
+    result = (property.ownerAccountType == ENTERPRISE_ACCOUNT) ? DLP_OK :
+        filePtr->SetContactAccount(property.contactAccount);
     if (result != DLP_OK) {
         DLP_LOG_WARN(LABEL, "Set dlp obj params fail, set contact account error, errno=%{public}d", result);
     }
@@ -576,6 +583,10 @@ int32_t DlpFileManager::OpenRawDlpFile(int32_t dlpFileFd, std::shared_ptr<DlpFil
     filePtr->GetContactAccount(certParcel->contactAccount);
     certParcel->isNeedAdapter = filePtr->NeedAdapter();
     certParcel->needCheckCustomProperty = true;
+    if (filePtr->GetAccountType() == ENTERPRISE_ACCOUNT) {
+        certParcel->decryptType = DECRYPTTYPEFORUSER;
+        certParcel->appId = filePtr->GetAppId();
+    }
     filePtr->GetRealType(certParcel->realFileType);
     StartTrace(HITRACE_TAG_ACCESS_CONTROL, "DlpParseCertificate");
     result = DlpPermissionKit::ParseDlpCertificate(certParcel, policy, appId, filePtr->GetOfflineAccess());

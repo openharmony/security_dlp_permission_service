@@ -42,6 +42,7 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_
 const std::string PERMISSION_ACCESS_DLP_FILE = "ohos.permission.ACCESS_DLP_FILE";
 static const size_t MAX_REQUEST_NUM = 100;
 static const uint32_t MAX_APPID_LIST_NUM = 250;
+static const uint32_t DECTYPE_SIZE = 4;
 static const uint32_t MAX_APPID_LENGTH = 200;
 static const uint32_t DLP_RESTORE_POLICY_DATA_LEN = 1024 * 200;
 static const std::string POLICY_CERT = "policyCert";
@@ -76,6 +77,11 @@ static bool IsDlpCredentialHuksError(int errorCode)
     return ((errorCode >= DLP_ERR_GENERATE_KEY_FAILED) && (errorCode < DLP_ERR_IPC_INTERNAL_FAILED));
 }
 
+static bool IsEnterpriseError(int errorCode)
+{
+    return ((errorCode >= DLP_ERR_ENTERPRISE_MIN) && (errorCode < DLP_ERR_ENTERPRISE_MAX));
+}
+
 static bool IsDlpCredentialIpcError(int errorCode)
 {
     return ((errorCode >= DLP_ERR_IPC_INTERNAL_FAILED) && (errorCode < DLP_ERR_CONNECTION_TIME_OUT));
@@ -101,6 +107,9 @@ static int32_t ConvertCredentialError(int errorCode)
 {
     if (errorCode == DLP_SUCCESS) {
         return DLP_OK;
+    }
+    if (IsEnterpriseError(errorCode)) {
+        return errorCode;
     }
     if (errorCode == DLP_ERR_CONNECTION_POLICY_PERMISSION_EXPIRED) {
         return DLP_CREDENTIAL_ERROR_TIME_EXPIRED;
@@ -561,6 +570,18 @@ static int32_t GetDomainAccountName(std::string& account, const std::string& con
     return DLP_OK;
 }
 
+static int32_t GetEnterpriseAccountName(AccountInfo& accountCfg, const std::string& appId, bool* isOwner)
+{
+    std::string account = appId;
+    accountCfg.accountId = reinterpret_cast<uint8_t *>(strdup(account.c_str()));
+    accountCfg.accountIdLen = strlen(account.c_str());
+    if (accountCfg.accountId == nullptr) {
+        DLP_LOG_ERROR(LABEL, "accountCfg error");
+        return DLP_PARSE_ERROR_ACCOUNT_INVALID;
+    }
+    return DLP_OK;
+}
+
 static int32_t GetAccoutInfo(DlpAccountType accountType, AccountInfo& accountCfg,
     const std::string& contactAccount, bool* isOwner)
 {
@@ -693,7 +714,12 @@ int32_t DlpCredential::ParseDlpCertificate(const sptr<CertParcel>& certParcel,
         return DLP_SERVICE_ERROR_JSON_OPERATE_FAIL;
     }
     bool isOwner = false;
-    int32_t infoRet = GetAccoutInfo(accountType, encPolicy.receiverAccountInfo, certParcel->contactAccount, &isOwner);
+    int32_t infoRet = DLP_OK;
+    if (accountType == ENTERPRISE_ACCOUNT) {
+        infoRet = GetEnterpriseAccountName(encPolicy.receiverAccountInfo, certParcel->appId, &isOwner);
+    } else {
+        infoRet = GetAccoutInfo(accountType, encPolicy.receiverAccountInfo, certParcel->contactAccount, &isOwner);
+    }
     if (infoRet != DLP_OK) {
         FreeDLPEncPolicyData(encPolicy);
         return infoRet;
@@ -703,6 +729,7 @@ int32_t DlpCredential::ParseDlpCertificate(const sptr<CertParcel>& certParcel,
     }
     encPolicy.realType = strdup(const_cast<char *>(certParcel->realFileType.c_str()));
     encPolicy.reserved[IS_NEED_CHECK_CUSTOM_PROPERTY] = static_cast<uint8_t>(certParcel->needCheckCustomProperty);
+    (void)memcpy_s(&(encPolicy.reserved[ENTERPRISE_ONE]), DECTYPE_SIZE, &(certParcel->decryptType), DECTYPE_SIZE);
     int32_t res = 0;
     {
         std::lock_guard<std::mutex> lock(g_lockRequest);

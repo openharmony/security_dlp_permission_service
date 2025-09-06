@@ -36,6 +36,8 @@ public:
     uint64_t GetFsContentSize() const;
     void SetOfflineAccess(bool flag);
     int32_t ParseRawDlpHeader(uint64_t fileLen, uint32_t dlpHeaderSize);
+    int32_t ParseEnterpriseFileId(uint64_t fileLen, uint32_t fileIdSize);
+    int32_t ParseEnterpriseRawDlpHeader(uint64_t fileLen, uint32_t dlpHeaderSize);
     int32_t CheckDlpFile();
     int32_t HmacCheck();
     uint32_t GetOfflineCertSize(void);
@@ -50,6 +52,7 @@ public:
                                                 uint64_t inFileLen, bool isEncrypt);
 
 private:
+    bool IsValidEnterpriseDlpHeader(const struct DlpHeader& head, uint32_t dlpHeaderSize);
     bool IsValidDlpHeader(const struct DlpHeader& head) const;
     int32_t UpdateDlpFileContentSize();
     int32_t GetRawDlpHmac(void);

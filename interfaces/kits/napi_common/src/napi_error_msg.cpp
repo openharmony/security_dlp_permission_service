@@ -182,6 +182,9 @@ int32_t NativeCodeToJsCode(int32_t nativeErrCode)
     if (iter != NATIVE_CODE_TO_JS_CODE_MAP.end()) {
         return iter->second;
     }
+    if (nativeErrCode <= 0xCFFFF && nativeErrCode >= 0xC0000) {
+        return nativeErrCode;
+    }
     return ERR_JS_SYSTEM_SERVICE_EXCEPTION;
 }
 }  // namespace DlpPermission

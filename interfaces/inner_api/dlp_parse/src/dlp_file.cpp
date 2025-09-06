@@ -68,6 +68,7 @@ DlpFile::DlpFile(int32_t dlpFd, const std::string &realType)
     encDataFd_ = -1;
     offlineAccess_ = 0;
     version_ = CURRENT_VERSION;
+    accountType_ = 0;
 }
 
 DlpFile::~DlpFile() = default;
@@ -185,7 +186,14 @@ bool DlpFile::UpdateDlpFilePermission()
         return true;
     }
     std::string accountName;
-    if (policy_.ownerAccountType_ == DOMAIN_ACCOUNT) {
+    if (policy_.ownerAccountType_ == ENTERPRISE_ACCOUNT) {
+        if (policy_.authUsers_.size() < 1) {
+            DLP_LOG_ERROR(LABEL, "enterprise account authUsers failed");
+            return false;
+        }
+        authPerm_ = policy_.authUsers_[0].authPerm;
+        return true;
+    } else if (policy_.ownerAccountType_ == DOMAIN_ACCOUNT) {
         if (GetDomainAccountName(accountName) != DLP_OK) {
             DLP_LOG_ERROR(LABEL, "query GetDomainAccountName failed");
             return false;

@@ -34,6 +34,10 @@ typedef enum {
 typedef enum {
     IS_INNER_HAP_RESTORE_INDEX = 0, // 1 byte
     IS_NEED_CHECK_CUSTOM_PROPERTY = 1, // 1 byte
+    ENTERPRISE_ONE = 2,
+    ENTERPRISE_TWO = 3,
+    ENTERPRISE_THREE = 4,
+    ENTERPRISE_FOUR = 5,
 } ReservedValue;
 
 typedef enum {
@@ -97,6 +101,8 @@ typedef enum {
     DLP_ERR_TOKEN_CONNECTION_TIME_OUT = 0x00006007,
     DLP_ERR_APPID_NOT_AUTHORIZED = 0x00007003,
     DLP_ERR_CALLBACK_TIME_OUT = 0x0000200A,
+    DLP_ERR_ENTERPRISE_MIN = 0x0000C0000,
+    DLP_ERR_ENTERPRISE_MAX = 0x0000CFFFF,
 } DLP_ErrorCode;
 
 typedef void (*DLP_PackPolicyCallback)(uint64_t requestId, int errorCode, DLP_EncPolicyData *outParams);

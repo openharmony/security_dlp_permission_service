@@ -209,6 +209,11 @@ struct QueryDlpPolicyAsyncContext : public CommonAsyncContext {
     std::string policyJsonString = "";
 };
 
+struct BusinessError {
+    int32_t code = 0;
+    std::string data;
+};
+
 struct GetOriginalFileAsyncContext : public CommonAsyncContext {
     explicit GetOriginalFileAsyncContext(napi_env env) : CommonAsyncContext(env) {};
     std::string dlpFilename = "";
@@ -314,6 +319,12 @@ bool GetUninstallDlpSandboxParams(
 bool GetThirdInterfaceParams(
     const napi_env env, const napi_callback_info info, CommonAsyncContext& asyncContext);
 
+bool GetEnterpriseDlpProperty(napi_env env, napi_value jsObject, DlpProperty& property);
+bool GetAccountTypeInDlpProperty(napi_env env, napi_value jsObject, DlpProperty& property);
+bool GetAccountTypeInEnterpriseParam(
+    const napi_env env, const napi_callback_info info, GenerateDlpFileForEnterpriseAsyncContext& asyncContext);
+bool GetGenerateDlpFileForDomainParam(
+    const napi_env env, const napi_callback_info info, GenerateDlpFileForEnterpriseAsyncContext& asyncContext);
 bool GetGenerateDlpFileForEnterpriseParam(
     const napi_env env, const napi_callback_info info, GenerateDlpFileForEnterpriseAsyncContext& asyncContext);
 bool GetDecryptDlpFileParam(

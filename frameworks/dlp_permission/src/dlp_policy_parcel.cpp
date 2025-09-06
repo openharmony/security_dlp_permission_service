@@ -65,6 +65,14 @@ bool DlpPolicyParcel::Marshalling(Parcel& out) const
         DLP_LOG_ERROR(LABEL, "Write debug_ fail");
         return false;
     }
+    if (!(out.WriteString(this->policyParams_.appId))) {
+        DLP_LOG_ERROR(LABEL, "Write owner appId fail");
+        return false;
+    }
+    if (!(out.WriteString(this->policyParams_.fileId))) {
+        DLP_LOG_ERROR(LABEL, "Write owner fileId fail");
+        return false;
+    }
     return true;
 }
 
@@ -291,7 +299,7 @@ static bool ReadAccountInfo(PermissionPolicy& policy, Parcel& in)
     return true;
 }
 
-static bool ReadParcel(Parcel& in, DlpPolicyParcel* policyParcel)
+static bool ReadParcelList(Parcel& in, DlpPolicyParcel* policyParcel)
 {
     uint32_t listSize;
     if (!in.ReadUint32(listSize)) {
@@ -309,6 +317,14 @@ static bool ReadParcel(Parcel& in, DlpPolicyParcel* policyParcel)
             return false;
         }
         policyParcel->policyParams_.authUsers_.emplace_back(authUserInfoParcel->authUserInfo_);
+    }
+    return true;
+}
+
+static bool ReadParcel(Parcel& in, DlpPolicyParcel* policyParcel)
+{
+    if (!ReadParcelList(in, policyParcel)) {
+        return false;
     }
     if (!(in.ReadBool(policyParcel->policyParams_.supportEveryone_))) {
         DLP_LOG_ERROR(LABEL, "Read supportEveryone_ fail");
@@ -330,7 +346,19 @@ static bool ReadParcel(Parcel& in, DlpPolicyParcel* policyParcel)
         return false;
     }
     policyParcel->policyParams_.perm_ = static_cast<DLPFileAccess>(perm);
-    return ReadAesParam(policyParcel->policyParams_, in);
+    if (!(ReadAesParam(policyParcel->policyParams_, in))) {
+        DLP_LOG_ERROR(LABEL, "Read aesparam type fail");
+        return false;
+    }
+    if (!(in.ReadString(policyParcel->policyParams_.appId))) {
+        DLP_LOG_ERROR(LABEL, "Read appId fail");
+        return false;
+    }
+    if (!(in.ReadString(policyParcel->policyParams_.fileId))) {
+        DLP_LOG_ERROR(LABEL, "Read fileId fail");
+        return false;
+    }
+    return true;
 }
 
 DlpPolicyParcel* DlpPolicyParcel::Unmarshalling(Parcel& in)

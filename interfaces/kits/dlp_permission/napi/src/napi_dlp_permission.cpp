@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -35,10 +35,13 @@
 #include "securec.h"
 #include "tokenid_kit.h"
 #include "token_setproc.h"
+#include "napi_dlp_connection_plugin.h"
 
 namespace OHOS {
 namespace Security {
 namespace DlpPermission {
+
+using namespace OHOS::Security::DlpConnection;
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "DlpPermissionNapi"};
 std::mutex g_lockForOpenDlpFileSubscriber;
@@ -1889,17 +1892,14 @@ napi_value NapiDlpPermission::StartDLPManagerForResult(napi_env env, napi_callba
     return result;
 }
 
-napi_value NapiDlpPermission::GenerateDlpFileForEnterprise(napi_env env, napi_callback_info cbInfo)
+napi_value NapiDlpPermission::ProcessDomainAccount(napi_env env, napi_callback_info cbInfo)
 {
     if (!IsSystemApp(env)) {
         return nullptr;
     }
-    if (!CheckPermission(env, PERMISSION_ENTERPRISE_ACCESS_DLP_FILE)) {
-        return nullptr;
-    }
-    auto asyncContextPtr = std::make_unique<GenerateDlpFileForEnterpriseAsyncContext>(env);
 
-    if (!GetGenerateDlpFileForEnterpriseParam(env, cbInfo, *asyncContextPtr)) {
+    auto asyncContextPtr = std::make_unique<GenerateDlpFileForEnterpriseAsyncContext>(env);
+    if (!GetGenerateDlpFileForDomainParam(env, cbInfo, *asyncContextPtr)) {
         return nullptr;
     }
     napi_value result = nullptr;
@@ -1911,12 +1911,27 @@ napi_value NapiDlpPermission::GenerateDlpFileForEnterprise(napi_env env, napi_ca
         NAPI_CALL(env, napi_get_undefined(env, &result));
     }
     napi_value resource = nullptr;
-    NAPI_CALL(env, napi_create_string_utf8(env, "GenerateDlpFileForEnterprise", NAPI_AUTO_LENGTH, &resource));
+    NAPI_CALL(env, napi_create_string_utf8(env, "ProcessDomainAccount", NAPI_AUTO_LENGTH, &resource));
     NAPI_CALL(env, napi_create_async_work(env, nullptr, resource, GenerateDlpFileForEnterpriseExcute,
         GenerateDlpFileForEnterpriseComplete, static_cast<void*>(asyncContextPtr.get()), &(asyncContextPtr->work)));
     NAPI_CALL(env, napi_queue_async_work_with_qos(env, asyncContextPtr->work, napi_qos_user_initiated));
     asyncContextPtr.release();
     return result;
+}
+
+napi_value NapiDlpPermission::GenerateDlpFileForEnterprise(napi_env env, napi_callback_info cbInfo)
+{
+    if (!CheckPermission(env, PERMISSION_ENTERPRISE_ACCESS_DLP_FILE)) {
+        return nullptr;
+    }
+    auto asyncContextPtr = std::make_unique<GenerateDlpFileForEnterpriseAsyncContext>(env);
+    if (!GetAccountTypeInEnterpriseParam(env, cbInfo, *asyncContextPtr)) {
+        return nullptr;
+    }
+    if (asyncContextPtr->property.ownerAccountType == ENTERPRISE_ACCOUNT) {
+        return ProcessEnterpriseAccount(env, cbInfo);
+    }
+    return ProcessDomainAccount(env, cbInfo);
 }
 
 void NapiDlpPermission::GenerateDlpFileForEnterpriseExcute(napi_env env, void* data)
@@ -1951,9 +1966,6 @@ void NapiDlpPermission::GenerateDlpFileForEnterpriseComplete(napi_env env, napi_
 
 napi_value NapiDlpPermission::DecryptDlpFile(napi_env env, napi_callback_info cbInfo)
 {
-    if (!IsSystemApp(env)) {
-        return nullptr;
-    }
     if (!CheckPermission(env, PERMISSION_ENTERPRISE_ACCESS_DLP_FILE)) {
         return nullptr;
     }
@@ -2011,9 +2023,6 @@ void NapiDlpPermission::DecryptDlpFileComplete(napi_env env, napi_status status,
 
 napi_value NapiDlpPermission::QueryDlpPolicy(napi_env env, napi_callback_info cbInfo)
 {
-    if (!IsSystemApp(env)) {
-        return nullptr;
-    }
     if (!CheckPermission(env, PERMISSION_ENTERPRISE_ACCESS_DLP_FILE)) {
         return nullptr;
     }
@@ -2134,6 +2143,7 @@ void NapiDlpPermission::InitFunction(napi_env env, napi_value exports)
 napi_value NapiDlpPermission::Init(napi_env env, napi_value exports)
 {
     InitFunction(env, exports);
+    InitDlpConnectFunction(env, exports);
     napi_property_descriptor descriptor[] = {DECLARE_NAPI_FUNCTION("DLPFile", DlpFile)};
     NAPI_CALL(
         env, napi_define_properties(env, exports, sizeof(descriptor) / sizeof(napi_property_descriptor), descriptor));
@@ -2210,34 +2220,3 @@ napi_value NapiDlpPermission::JsConstructor(napi_env env, napi_callback_info cbi
 }  // namespace DlpPermission
 }  // namespace Security
 }  // namespace OHOS
-
-EXTERN_C_START
-/*
- * function for module exports
- */
-static napi_value Init(napi_env env, napi_value exports)
-{
-    DLP_LOG_DEBUG(OHOS::Security::DlpPermission::LABEL, "Register end, start init.");
-
-    return OHOS::Security::DlpPermission::NapiDlpPermission::Init(env, exports);
-}
-EXTERN_C_END
-
-/*
- * Module define
- */
-static napi_module _module = {.nm_version = 1,
-    .nm_flags = 0,
-    .nm_filename = nullptr,
-    .nm_register_func = Init,
-    .nm_modname = "dlpPermission",
-    .nm_priv = ((void*)0),
-    .reserved = {0}};
-
-/*
- * Module register function
- */
-extern "C" __attribute__((constructor)) void DlpPermissionModuleRegister(void)
-{
-    napi_module_register(&_module);
-}

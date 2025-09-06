@@ -72,6 +72,8 @@ const std::string ACCOUNT_ID = "accountId";
 const std::string ACTION_UPON_EXPIRY = "actionUponExpiry";
 const std::string CUSTOM_PROPERTY = "customProperty";
 const std::string ENTERPRISE = "enterprise";
+const std::string APPID = "appId";
+const std::string FILEID = "fileId";
 constexpr uint64_t  VALID_TIME_STAMP = 2147483647;
 static const uint32_t DOMAIN_VERSION = 2;
 static const uint32_t CLOUD_VERSION = 1;
@@ -391,6 +393,10 @@ int32_t DlpPermissionSerializer::SerializeDlpPermission(const PermissionPolicy& 
     policyJson[ACCOUNT_INDEX] = authUsersJson;
     SerializeCustomProperty(policy, policyJson);
     SerializeEveryoneInfo(policy, policyJson);
+    if (policy.ownerAccountType_ == ENTERPRISE_ACCOUNT) {
+        policyJson[APPID] = policy.appId;
+        policyJson[FILEID] = policy.fileId;
+    }
     permInfoJson[POLICY_INDEX] = policyJson;
 
     unordered_json fileEnc;
@@ -488,6 +494,9 @@ static void InitPermissionPolicy(PermissionPolicy& policy, const std::vector<Aut
 {
     policy.authUsers_ = userList;
     InitPermissionAccountInfo(policy, policyJson);
+    if (policyJson.find(FILEID) != policyJson.end() && policyJson.at(FILEID).is_string()) {
+        policyJson.at(FILEID).get_to(policy.fileId);
+    }
     if (policyJson.find(PERM_EXPIRY_TIME) != policyJson.end() && policyJson.at(PERM_EXPIRY_TIME).is_number()) {
         policyJson.at(PERM_EXPIRY_TIME).get_to(policy.expireTime_);
     }

@@ -34,6 +34,7 @@ enum DlpAccountType : uint32_t {
     CLOUD_ACCOUNT = 1,
     DOMAIN_ACCOUNT = 2,
     APPLICATION_ACCOUNT = 3,
+    ENTERPRISE_ACCOUNT = 4,
 };
 
 enum GatheringPolicyType : uint32_t {
@@ -106,6 +107,7 @@ struct DlpProperty {
     uint64_t expireTime = 0;
     ActionType actionUponExpiry = ActionType::NOTOPEN;
     CustomProperty customProperty;
+    std::string fileId;
 };
 
 class PermissionPolicy final {
@@ -146,6 +148,8 @@ public:
     bool debug_ = false;
     uint32_t actionUponExpiry_ = 0;
     std::string customProperty_ = "";
+    std::string fileId = "";
+    std::string appId = "";
 
 private:
     uint8_t* aeskey_;

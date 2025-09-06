@@ -383,6 +383,10 @@ napi_value CreateEnumAccountType(napi_env env)
     NAPI_CALL(env, napi_create_int32(env, static_cast<int32_t>(APPLICATION_ACCOUNT), &prop));
     NAPI_CALL(env, napi_set_named_property(env, accountType, "APPLICATION_ACCOUNT", prop));
 
+    prop = nullptr;
+    NAPI_CALL(env, napi_create_int32(env, static_cast<int32_t>(ENTERPRISE_ACCOUNT), &prop));
+    NAPI_CALL(env, napi_set_named_property(env, accountType, "ENTERPRISE_ACCOUNT", prop));
+
     return accountType;
 }
 
@@ -1102,7 +1106,75 @@ bool GetThirdInterfaceParams(
     return true;
 }
 
+bool GetAccountTypeInDlpProperty(napi_env env, napi_value jsObject, DlpProperty& property)
+{
+    int64_t type;
+    if (!GetInt64ValueByKey(env, jsObject, "ownerAccountType", type)) {
+        DLP_LOG_ERROR(LABEL, "js get owner account type fail.");
+        return false;
+    }
+
+    property.ownerAccountType = static_cast<DlpAccountType>(type);
+    return true;
+}
+
+bool GetAccountTypeInEnterpriseParam(
+    const napi_env env, const napi_callback_info info, GenerateDlpFileForEnterpriseAsyncContext& asyncContext)
+{
+    size_t argc = PARAM_SIZE_FOUR;
+    napi_value argv[PARAM_SIZE_FOUR] = {nullptr};
+    NAPI_CALL_BASE(env, napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr), false);
+
+    if (!NapiCheckArgc(env, argc, PARAM_SIZE_FOUR)) {
+        return false;
+    }
+    if (!GetAccountTypeInDlpProperty(env, argv[PARAM2], asyncContext.property)) {
+        DLP_LOG_ERROR(LABEL, "js get property fail.");
+        ThrowParamError(env, "property", "DlpProperty");
+        return false;
+    }
+    return true;
+}
+
 bool GetGenerateDlpFileForEnterpriseParam(
+    const napi_env env, const napi_callback_info info, GenerateDlpFileForEnterpriseAsyncContext& asyncContext)
+{
+    size_t argc = PARAM_SIZE_FOUR;
+    napi_value argv[PARAM_SIZE_FOUR] = {nullptr};
+    NAPI_CALL_BASE(env, napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr), false);
+
+    if (!NapiCheckArgc(env, argc, PARAM_SIZE_FOUR)) {
+        return false;
+    }
+
+    if (!GetInt64Value(env, argv[PARAM0], asyncContext.plaintextFd)) {
+        DLP_LOG_ERROR(LABEL, "js get plaintext fd fail");
+        ThrowParamError(env, "plaintextFd", "number");
+        return false;
+    }
+
+    if (!GetInt64Value(env, argv[PARAM1], asyncContext.dlpFd)) {
+        DLP_LOG_ERROR(LABEL, "js get dlp file fd fail");
+        ThrowParamError(env, "dlpFd", "number");
+        return false;
+    }
+
+    if (!GetAccountTypeInDlpProperty(env, argv[PARAM2], asyncContext.property)) {
+        DLP_LOG_ERROR(LABEL, "js get property fail");
+        ThrowParamError(env, "property", "DlpProperty");
+        return false;
+    }
+
+    if (!GetCustomProperty(env, argv[PARAM3], asyncContext.customProperty)) {
+        DLP_LOG_ERROR(LABEL, "js get customProperty fail");
+        ThrowParamError(env, "customProperty", "CustomProperty");
+        return false;
+    }
+
+    return true;
+}
+
+bool GetGenerateDlpFileForDomainParam(
     const napi_env env, const napi_callback_info info, GenerateDlpFileForEnterpriseAsyncContext& asyncContext)
 {
     size_t argc = PARAM_SIZE_FOUR;
@@ -1198,6 +1270,72 @@ void GetDlpPropertyExpireTime(napi_env env, napi_value jsObject, DlpProperty& pr
         DLP_LOG_ERROR(LABEL, "js get action upon expiry fail");
     }
     property.actionUponExpiry = static_cast<ActionType>(jsActionUponExpiry);
+}
+
+static bool GetEnterpriseDlpPropertyAccount(napi_env env, napi_value jsObject, DlpProperty& property)
+{
+    if (!GetStringValueByKey(env, jsObject, "ownerAccount", property.ownerAccount) ||
+        !IsStringLengthValid(property.ownerAccount, MAX_ACCOUNT_LEN)) {
+        DLP_LOG_ERROR(LABEL, "js get owner account fail");
+        return false;
+    }
+    if (!GetStringValueByKey(env, jsObject, "ownerAccountID", property.ownerAccountId) ||
+        !IsStringLengthValid(property.ownerAccountId, MAX_ACCOUNT_LEN)) {
+        DLP_LOG_ERROR(LABEL, "js get owner accountId fail");
+        return false;
+    }
+    int64_t type;
+    if (!GetInt64ValueByKey(env, jsObject, "ownerAccountType", type)) {
+        DLP_LOG_ERROR(LABEL, "js get owner account type fail");
+        return false;
+    }
+    property.ownerAccountType = static_cast<DlpAccountType>(type);
+    return true;
+}
+
+bool GetEnterpriseDlpProperty(napi_env env, napi_value jsObject, DlpProperty& property)
+{
+    if (!GetEnterpriseDlpPropertyAccount(env, jsObject, property)) {
+        return false;
+    }
+    napi_value authUserListObj = GetNapiValue(env, jsObject, "authUserList");
+    if (authUserListObj != nullptr) {
+        if (!GetVectorAuthUser(env, authUserListObj, property.authUsers)) {
+            DLP_LOG_ERROR(LABEL, "js get auth users fail");
+            return false;
+        }
+    }
+    if (!GetStringValueByKey(env, jsObject, "contactAccount", property.contactAccount) ||
+        !IsStringLengthValid(property.contactAccount, MAX_ACCOUNT_LEN)) {
+        DLP_LOG_ERROR(LABEL, "js get contact account fail");
+        return false;
+    }
+    if (!GetBoolValueByKey(env, jsObject, "offlineAccess", property.offlineAccess)) {
+        DLP_LOG_ERROR(LABEL, "js get offline access flag fail");
+        return false;
+    }
+    GetDlpPropertyExpireTime(env, jsObject, property);
+
+    napi_value everyoneAccessListObj = GetNapiValue(env, jsObject, "everyoneAccessList");
+    if (everyoneAccessListObj != nullptr) {
+        std::vector<uint32_t> permList = {};
+        if (!GetVectorUint32(env, everyoneAccessListObj, permList)) {
+            DLP_LOG_ERROR(LABEL, "js get everyoneAccessList fail");
+            return false;
+        }
+        if (permList.size() > 0) {
+            uint32_t perm = *(std::max_element(permList.begin(), permList.end()));
+            property.everyonePerm = static_cast<DLPFileAccess>(perm);
+            property.supportEveryone = true;
+        }
+    }
+
+    if (!GetStringValueByKey(env, jsObject, "fileId", property.fileId) ||
+        !IsStringLengthValid(property.fileId, MAX_ACCOUNT_LEN)) {
+        DLP_LOG_ERROR(LABEL, "js get fileId fail");
+        return false;
+    }
+    return true;
 }
 
 bool GetDlpProperty(napi_env env, napi_value jsObject, DlpProperty& property)

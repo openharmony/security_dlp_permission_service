@@ -19,6 +19,7 @@
 #include <mutex>
 #include <string>
 #include "dlp_file.h"
+#include "dlp_raw_file.h"
 #include "dlp_zip_file.h"
 #include "permission_policy.h"
 namespace OHOS {
@@ -29,14 +30,19 @@ class EnterpriseSpaceDlpPermissionKit {
 private:
     DISALLOW_COPY_AND_MOVE(EnterpriseSpaceDlpPermissionKit);
     EnterpriseSpaceDlpPermissionKit();
-    int32_t EnterpriseSpaceParseDlpFileFormat(std::shared_ptr<DlpFile>& filePtr, bool needCheckCustomProperty);
+    int32_t EnterpriseSpaceParseDlpFileFormat(std::shared_ptr<DlpFile>& filePtr,
+        bool needCheckCustomProperty, int32_t decryptType = 0);
     int32_t EnterpriseSpacePrepareWorkDir(int32_t dlpFileFd, std::shared_ptr<DlpFile>& filePtr, std::string& workDir);
     int32_t EnterpriseSpaceParseDlpFileProperty(std::shared_ptr<DlpFile>& filePtr, PermissionPolicy& policy,
-        bool needCheckCustomProperty);
+        bool needCheckCustomProperty, int32_t decryptType = 0);
 public:
     static EnterpriseSpaceDlpPermissionKit* GetInstance();
     ~EnterpriseSpaceDlpPermissionKit();
     int32_t EncryptDlpFile(DlpProperty property, CustomProperty customProperty, int32_t plainFileFd, int32_t dlpFileFd);
+    uint32_t DecryptRawDlpFileAndGetAccountType(int32_t dlpFileFd);
+    int32_t DecryptEnterpriseDlpFile(int32_t plainFileFd, int32_t dlpFileFd, int32_t decryptType);
+    int32_t EncryptEnterpriseDlpFile(DlpProperty property, CustomProperty customProperty,
+        int32_t plainFileFd, int32_t dlpFileFd);
     int32_t DecryptDlpFile(int32_t plainFileFd, int32_t dlpFileFd);
     int32_t QueryDlpFileProperty(int32_t dlpFileFd, std::string &policyJsonString);
 };

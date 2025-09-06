@@ -52,6 +52,14 @@ bool CertParcel::Marshalling(Parcel& data) const
         DLP_LOG_ERROR(LABEL, "Write bool needCheckCustomProperty fail");
         return false;
     }
+    if (!data.WriteInt32(this->decryptType)) {
+        DLP_LOG_ERROR(LABEL, "Write decryptType fail");
+        return false;
+    }
+    if (!data.WriteString(this->appId)) {
+        DLP_LOG_ERROR(LABEL, "Write appId fail");
+        return false;
+    }
     if (!data.WriteString(this->realFileType)) {
         DLP_LOG_ERROR(LABEL, "Write string realFileType fail");
         return false;
@@ -90,6 +98,14 @@ CertParcel* CertParcel::Unmarshalling(Parcel& data)
     }
     if (!data.ReadBool(parcel->needCheckCustomProperty)) {
         DLP_LOG_ERROR(LABEL, "Read needCheckCustomProperty fail");
+        return FreeCertParcel(parcel);
+    }
+    if (!data.ReadInt32(parcel->decryptType)) {
+        DLP_LOG_ERROR(LABEL, "Read decryptType fail");
+        return FreeCertParcel(parcel);
+    }
+    if (!data.ReadString(parcel->appId)) {
+        DLP_LOG_ERROR(LABEL, "Read appId fail");
         return FreeCertParcel(parcel);
     }
     if (!data.ReadString(parcel->realFileType)) {
