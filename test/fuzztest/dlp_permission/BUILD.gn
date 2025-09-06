@@ -83,6 +83,7 @@ group("fuzztest") {
     "stub_fuzzer/uninstalldlpsandboxstub_fuzzer:UninstallDlpSandboxStubFuzzTest",
     "stub_fuzzer/unregisterdlpsandboxchangecallbackstub_fuzzer:UnRegisterDlpSandboxChangeCallbackStubFuzzTest",
     "stub_fuzzer/unregisteropendlpfilecallbackstub_fuzzer:UnRegisterOpenDlpFileCallbackStubFuzzTest",
+    "stub_fuzzer/algmanager_fuzzer:AlgManagerFuzzTest",
   ]
 }
 
