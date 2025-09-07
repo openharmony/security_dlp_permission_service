@@ -127,9 +127,9 @@ int PoliciesToPolicyC(std::vector<PolicyC> &policyCTmp, ScanFileAsyncContext *sc
         size_t keywordsVecSize = scanFileAsyncContext->policies[i].keywords.size();
         policyCTmp[i].keywords = new (std::nothrow) DIA_String[keywordsVecSize];
         if (!policyCTmp[i].keywords) {
-           LOG_ERROR("new keywords error");
-           ret = DIA_ERR_MALLOC;
-           break;
+            LOG_ERROR("new keywords error");
+            ret = DIA_ERR_MALLOC;
+            break;
         }
         policyCTmp[i].keywordsLength = keywordsVecSize;
         for (size_t j = 0; j < keywordsVecSize; j++) {
@@ -186,11 +186,11 @@ void NapiIdentifySensitiveFileExcute(napi_env env, void *data)
         policyTmp.data(), policyTmp.size(), &filePathTmp, &matchResults, &matchResultLength);
     DestroyPolicyC(policyTmp);
     if (matchResults) {
-        for (int i = 0; i < matchResultLength; i++){
+        for (int i = 0; i < matchResultLength; i++) {
             MatchResult matchResult;
-            matchResult.sensitiveLabel = 
+            matchResult.sensitiveLabel =
                 std::string(matchResults[i].sensitiveLabel.data, matchResults[i].sensitiveLabel.dataLength);
-            matchResult.matchContent = 
+            matchResult.matchContent =
                 std::string(matchResults[i].matchContent.data, matchResults[i].matchContent.dataLength);
             matchResult.matchNumber = matchResults[i].matchNumber;
             scanFileAsyncContext->matchResultList.push_back(matchResult);
