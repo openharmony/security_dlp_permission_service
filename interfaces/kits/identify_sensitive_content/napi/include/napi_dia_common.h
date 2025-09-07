@@ -17,11 +17,9 @@
 #define NAPI_DIA_COMMON_H
 
 #include <string>
+#include "dia_fi_defines.h"
 #include "napi/native_api.h"
 #include "napi/native_node_api.h"
-#ifdef FILE_IDENTIFY_ENABLE
-#include "dia_fi_defines.h"
-#endif
 
 namespace OHOS::Security::DIA {
 

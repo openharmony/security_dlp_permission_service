@@ -14,18 +14,25 @@
  */
 
 #include "napi_identify_sensitive_content.h"
+#include <dlfcn,h>
 #include "napi_dia_log_adapter.h"
 #include "napi_dia_error_msg.h"
 #include "napi_dia_common.h"
 #include "accesstoken_kit.h"
 #include "ipc_skeleton.h"
 #include "token_setproc.h"
-#ifdef FILE_IDENTIFY_ENABLE
-#include "dia_fi_interface.h"
-#endif
 
 namespace OHOS::Security::DIA {
 const std::string PERMISSION_ENTERPRISE_DATA_IDENTIFY_FILE = "ohos.permission.ENTERPRISE_DATA_IDENTIFY_FILE";
+#ifdef FILE_IDENTIFY_ENABLE
+typedef int (*IdentifySensitiveFileFunction)(const PolicyC *policies, int policyLength, const DIA_String *filePath,
+    MatchResultC **matchResults, int *matchResultLength);
+typedef void (*ReleaseMatchResultListFunction)(MatchResultC **matchResults, int matchResultLength);
+static void *g_diaCredentialSdkHandle = nullptr;
+stdtic int sdkCount = 0;
+std::mutex g_lockDIACredSdk;
+static const std::string DIA_SDK_PATH_64_BIT = "/system/lib64/platformsdk/libdia_sdk.z.so";
+#endif
 
 static bool CheckPermission(napi_env env, const std::string &permission)
 {
@@ -49,6 +56,44 @@ static napi_value NapiGetNull(napi_env env)
 }
 
 #ifdef FILE_IDENTIFY_ENABLE
+static void *GetDIACredSdkLibFunc(const char *funcName)
+{
+    LOG_INFO("start GetDIACredSdkLibFunc.");
+    std::lock_guard<std::mutex> lock(g_lockDIACredSdk);
+    if (g_diaCredentialSdkHandle == nullptr) {
+        g_diaCredentialSdkHandle = dlopen(DIA_SDK_PATH_64_BIT.c_str(), RTLD_LAZY);
+        if (g_diaCredentialSdkHandle == nullptr) {
+            LOG_ERROR("dlopen file");
+            return nullptr;
+        }
+    }
+    sdkCount++;
+    void *func = dlsym(g_diaCredentialSdkHandle, funcName);
+    return func;
+}
+
+static void *GetDIASdkLibFunc(const char *funcName)
+{
+    LOG_INFO("start GetDIASdkLibFunc.");
+    std::lock_guard<std::mutex> lock(g_lockDIACredSdk);
+    if (g_diaCredentialSdkHandle) {
+        return dlsym(g_diaCredentialSdkHandle, funcName);
+    }
+    return nullptr;
+}
+
+static void DestroyDIACredentialSdk()
+{
+    LOG_INFO("start DestroyDIACredentialSdk.");
+    std::lock_guard<std::mutex> lock(g_lockDIACredSdk);
+    sdkCount--;
+    if (g_diaCredentialSdkHandle != nullptr && !sdkCount) {
+        dlclose(g_diaCredentialSdkHandle);
+        g_diaCredentialSdkHandle = nullptr;
+        LOG_INFO("dlclose diaSdk end.");
+    }
+}
+
 bool ParseFileOperationContext(napi_env env, napi_callback_info info, ScanFileAsyncContext &asyncContext)
 {
     size_t argc = ARG_SIZE_TWO;
@@ -70,6 +115,44 @@ bool ParseFileOperationContext(napi_env env, napi_callback_info info, ScanFileAs
     return false;
 }
 
+int PoliciesToPolicyC(std::vector<PolicyC> &policyTmp, ScanFileAsyncContext *scanFileAsyncContext)
+{
+    int ret = DIA_SUCCESS;
+    for (siez_t i = 0; i < scanFileAsyncContext->policies.size(); i++) {
+        // sensitiveLabel
+        policyCtmp[i].sensitiveLabel.data =
+            const_cast<char *>(scanFileAsyncContext->policies[i].sensitiveLabel.c_str());
+        policyCtmp[i].sensitiveLabel.dataLength = scanFileAsyncContext->policies[i].sensitiveLabel.length();
+        // keyword;
+        size_t keywordsVecSize = scanFileAsyncContext->policies[i].keywords.size();
+        policyCtmp[i].keywords = new (std::nothrow) DIA_String[keywordsVecSize];
+        if (!policyCtmp[i].keywords) {
+           LOG_ERROR("new keywords error");
+           ret = DIA_ERR_MALLOC;
+           break;
+        }
+        policyCtmp[i].keywordsLength = keywordsVecSize;
+        for (size_t j = 0; j < keywordsVecSize; j++) {
+            policyCtmp[i].keywords[j].data = const_cast<char *>(scanFileAsyncContext->policies[i].keywords[j].c_str());
+            policyCtmp[i].keywords[j].dataLength = scanFileAsyncContext->policies[i].keywords[j].length();
+        }
+        // regex
+        policyCtmp[i].regex.data = const_cast<char *>(scanFileAsyncContext->policies[i].regex.c_str());
+        policyCtmp[i].regex.dataLength = scanFileAsyncContext->policies[i].regex.length();
+    }
+    return ret;
+}
+
+void DestroyPolicyC(std::vector<PolicyC> &policyTmp)
+{
+    for (size_t i = 0; i < policyTmp.size(); i++) {
+        if (policyTmp[i].keywords) {
+            delete[] policyTmp[i].keywords;
+            policyTmp[i].keywords = nullptr;
+        }
+    }
+}
+
 void NapiIdentifySensitiveFileExcute(napi_env env, void *data)
 {
     LOG_INFO("NapiIdentifySensitiveFileExcute napi_create_async_work runing");
@@ -78,8 +161,47 @@ void NapiIdentifySensitiveFileExcute(napi_env env, void *data)
         LOG_ERROR("scanFileAsyncContext is nullptr");
         return;
     }
-    scanFileAsyncContext->errCode = IdentifySensitiveFile(
-        scanFileAsyncContext->policies, scanFileAsyncContext->filePath, scanFileAsyncContext->matchResultList);
+    //dlopen
+    IdentifySensitiveFileFunction identifySensitiveFileFunction =
+        reinterpret_cast<IdentifySensitiveFileFunction>(GetDIACredSdkLibFunc("IdentifySensitiveFileC"));
+    if (!identifySensitiveFileFunction) {
+        LOG_ERROR("identifySensitiveFileFunction is nullptr.");
+        DestroyDIACredentialSdk();
+        scanFileAsyncContext->errCode = ERR_DIA_JS_SYSTEM_SERVICE_EXCEPTION;
+        return;
+    }
+    std::vector<PolicyC> policyTmp(scanFileAsyncContext->policies.size());
+    if (PoliciesToPolicyC(policyTmp, scanFileAsyncContext) != DIA_SUCCESS) {
+        LOG_ERROR("PoliciesToPolicyC error.");
+        DestroyDIACredentialSdk();
+        DestroyPolicyC(policyTmp);
+        return;
+    }
+    DIA_String filePathTmp;
+    filePathTmp.data = const_cast<char *>(scanFileAsyncContext->filePath.c_str());
+    filePathTmp.dataLength = scanFileAsyncContext->filePath.length();
+    MatchResultC *matchResults = nullptr;
+    int matchResultLength = 0;
+    scanFileAsyncContext->errCode = (*IdentifySensitiveFileFunction)(
+        policyTmp->data(), policyTmp.size(), &filePathTmp, &matchResults, &matchResultLength);
+    DestroyPolicyC(policyTmp);
+    if (matchResults) {
+        for (int i = 0; i < matchResultLength; i++){
+            MatchResult matchResult;
+            matchResult.sensitiveLabel = 
+                std::string(matchResults[i].sensitiveLabel.data, matchResults[i].sensitiveLabel.dataLength);
+            matchResult.matchContent = 
+                std::string(matchResults[i].matchContent.data, matchResults[i].matchContent.dataLength);
+            matchResult.matchNumber = matchResults[i].matchNumber;
+            scanFileAsyncContext->matchResultList.push_back(matchResult);
+        }
+        ReleaseMatchResultListFunction releaseMatchResultListFunction =
+            reinterpret_cast<ReleaseMatchResultListFunction>(GetDIASdkLibFunc("ReleaseMatchResultList"));
+        if (releaseMatchResultListFunction) {
+            (*releaseMatchResultListFunction)(&matchResults, matchResultLength);
+        }
+    }
+    DestroyDIACredentialSdk()
     return;
 }
 

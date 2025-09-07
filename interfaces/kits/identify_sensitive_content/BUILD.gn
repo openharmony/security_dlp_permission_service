@@ -45,9 +45,6 @@ ohos_shared_library("identifysensitivecontent_napi") {
 
   if(target_platform == "pc" && data_identify_anonymize_service_enable) {
       defines += [ "FILE_IDENTIFY_ENABLE" ]
-      external_deps += [
-          "data_identify_anonymize_service:dia_sdk"
-      ] 
   }
 
   relative_install_dir = "module/security"

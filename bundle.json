@@ -55,8 +55,7 @@
         "json",
         "zlib",
         "openssl",
-        "libfuse",
-        "data_identify_anonymize_service"
+        "libfuse"
       ],
       "third_party": []
     },
