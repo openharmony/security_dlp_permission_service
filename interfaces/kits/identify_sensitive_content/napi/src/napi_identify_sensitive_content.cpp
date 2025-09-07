@@ -14,7 +14,7 @@
  */
 
 #include "napi_identify_sensitive_content.h"
-#include <dlfcn,h>
+#include <dlfcn.h>
 #include "napi_dia_log_adapter.h"
 #include "napi_dia_error_msg.h"
 #include "napi_dia_common.h"
@@ -29,7 +29,7 @@ typedef int (*IdentifySensitiveFileFunction)(const PolicyC *policies, int policy
     MatchResultC **matchResults, int *matchResultLength);
 typedef void (*ReleaseMatchResultListFunction)(MatchResultC **matchResults, int matchResultLength);
 static void *g_diaCredentialSdkHandle = nullptr;
-stdtic int sdkCount = 0;
+static int sdkCount = 0;
 std::mutex g_lockDIACredSdk;
 static const std::string DIA_SDK_PATH_64_BIT = "/system/lib64/platformsdk/libdia_sdk.z.so";
 #endif
@@ -115,40 +115,40 @@ bool ParseFileOperationContext(napi_env env, napi_callback_info info, ScanFileAs
     return false;
 }
 
-int PoliciesToPolicyC(std::vector<PolicyC> &policyTmp, ScanFileAsyncContext *scanFileAsyncContext)
+int PoliciesToPolicyC(std::vector<PolicyC> &policyCTmp, ScanFileAsyncContext *scanFileAsyncContext)
 {
     int ret = DIA_SUCCESS;
-    for (siez_t i = 0; i < scanFileAsyncContext->policies.size(); i++) {
+    for (size_t i = 0; i < scanFileAsyncContext->policies.size(); i++) {
         // sensitiveLabel
-        policyCtmp[i].sensitiveLabel.data =
+        policyCTmp[i].sensitiveLabel.data =
             const_cast<char *>(scanFileAsyncContext->policies[i].sensitiveLabel.c_str());
-        policyCtmp[i].sensitiveLabel.dataLength = scanFileAsyncContext->policies[i].sensitiveLabel.length();
+        policyCTmp[i].sensitiveLabel.dataLength = scanFileAsyncContext->policies[i].sensitiveLabel.length();
         // keyword;
         size_t keywordsVecSize = scanFileAsyncContext->policies[i].keywords.size();
-        policyCtmp[i].keywords = new (std::nothrow) DIA_String[keywordsVecSize];
-        if (!policyCtmp[i].keywords) {
+        policyCTmp[i].keywords = new (std::nothrow) DIA_String[keywordsVecSize];
+        if (!policyCTmp[i].keywords) {
            LOG_ERROR("new keywords error");
            ret = DIA_ERR_MALLOC;
            break;
         }
-        policyCtmp[i].keywordsLength = keywordsVecSize;
+        policyCTmp[i].keywordsLength = keywordsVecSize;
         for (size_t j = 0; j < keywordsVecSize; j++) {
-            policyCtmp[i].keywords[j].data = const_cast<char *>(scanFileAsyncContext->policies[i].keywords[j].c_str());
-            policyCtmp[i].keywords[j].dataLength = scanFileAsyncContext->policies[i].keywords[j].length();
+            policyCTmp[i].keywords[j].data = const_cast<char *>(scanFileAsyncContext->policies[i].keywords[j].c_str());
+            policyCTmp[i].keywords[j].dataLength = scanFileAsyncContext->policies[i].keywords[j].length();
         }
         // regex
-        policyCtmp[i].regex.data = const_cast<char *>(scanFileAsyncContext->policies[i].regex.c_str());
-        policyCtmp[i].regex.dataLength = scanFileAsyncContext->policies[i].regex.length();
+        policyCTmp[i].regex.data = const_cast<char *>(scanFileAsyncContext->policies[i].regex.c_str());
+        policyCTmp[i].regex.dataLength = scanFileAsyncContext->policies[i].regex.length();
     }
     return ret;
 }
 
-void DestroyPolicyC(std::vector<PolicyC> &policyTmp)
+void DestroyPolicyC(std::vector<PolicyC> &policyCTmp)
 {
-    for (size_t i = 0; i < policyTmp.size(); i++) {
-        if (policyTmp[i].keywords) {
-            delete[] policyTmp[i].keywords;
-            policyTmp[i].keywords = nullptr;
+    for (size_t i = 0; i < policyCTmp.size(); i++) {
+        if (policyCTmp[i].keywords) {
+            delete[] policyCTmp[i].keywords;
+            policyCTmp[i].keywords = nullptr;
         }
     }
 }
@@ -170,11 +170,11 @@ void NapiIdentifySensitiveFileExcute(napi_env env, void *data)
         scanFileAsyncContext->errCode = ERR_DIA_JS_SYSTEM_SERVICE_EXCEPTION;
         return;
     }
-    std::vector<PolicyC> policyTmp(scanFileAsyncContext->policies.size());
-    if (PoliciesToPolicyC(policyTmp, scanFileAsyncContext) != DIA_SUCCESS) {
+    std::vector<PolicyC> policyCTmp(scanFileAsyncContext->policies.size());
+    if (PoliciesToPolicyC(policyCTmp, scanFileAsyncContext) != DIA_SUCCESS) {
         LOG_ERROR("PoliciesToPolicyC error.");
         DestroyDIACredentialSdk();
-        DestroyPolicyC(policyTmp);
+        DestroyPolicyC(policyCTmp);
         return;
     }
     DIA_String filePathTmp;
@@ -182,8 +182,8 @@ void NapiIdentifySensitiveFileExcute(napi_env env, void *data)
     filePathTmp.dataLength = scanFileAsyncContext->filePath.length();
     MatchResultC *matchResults = nullptr;
     int matchResultLength = 0;
-    scanFileAsyncContext->errCode = (*IdentifySensitiveFileFunction)(
-        policyTmp->data(), policyTmp.size(), &filePathTmp, &matchResults, &matchResultLength);
+    scanFileAsyncContext->errCode = (*identifySensitiveFileFunction)(
+        policyTmp.data(), policyTmp.size(), &filePathTmp, &matchResults, &matchResultLength);
     DestroyPolicyC(policyTmp);
     if (matchResults) {
         for (int i = 0; i < matchResultLength; i++){
@@ -201,7 +201,7 @@ void NapiIdentifySensitiveFileExcute(napi_env env, void *data)
             (*releaseMatchResultListFunction)(&matchResults, matchResultLength);
         }
     }
-    DestroyDIACredentialSdk()
+    DestroyDIACredentialSdk();
     return;
 }
 

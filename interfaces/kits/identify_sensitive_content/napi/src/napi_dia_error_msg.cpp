@@ -15,9 +15,7 @@
 
 #include <unordered_map>
 #include "napi_dia_error_msg.h"
-#ifdef FILE_IDENTIFY_ENABLE
-#include "dia_error_code.h"
-#endif
+#include "dia_fi_defines.h"
 
 namespace OHOS::Security::DIA {
 
