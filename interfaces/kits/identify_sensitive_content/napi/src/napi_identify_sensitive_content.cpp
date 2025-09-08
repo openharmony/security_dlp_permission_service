@@ -183,8 +183,8 @@ void NapiIdentifySensitiveFileExcute(napi_env env, void *data)
     MatchResultC *matchResults = nullptr;
     unsigned matchResultLength = 0;
     scanFileAsyncContext->errCode = (*identifySensitiveFileFunction)(
-        policyTmp.data(), policyTmp.size(), &filePathTmp, &matchResults, &matchResultLength);
-    DestroyPolicyC(policyTmp);
+        policyCTmp.data(), policyCTmp.size(), &filePathTmp, &matchResults, &matchResultLength);
+    DestroyPolicyC(policyCTmp);
     if (matchResults) {
         for (unsigned i = 0; i < matchResultLength; i++) {
             MatchResult matchResult;
