@@ -25,9 +25,9 @@
 namespace OHOS::Security::DIA {
 const std::string PERMISSION_ENTERPRISE_DATA_IDENTIFY_FILE = "ohos.permission.ENTERPRISE_DATA_IDENTIFY_FILE";
 #ifdef FILE_IDENTIFY_ENABLE
-typedef int (*IdentifySensitiveFileFunction)(const PolicyC *policies, int policyLength, const DIA_String *filePath,
-    MatchResultC **matchResults, int *matchResultLength);
-typedef void (*ReleaseMatchResultListFunction)(MatchResultC **matchResults, int matchResultLength);
+typedef int (*IdentifySensitiveFileFunction)(const PolicyC *policies, unsigned policyLength, const DIA_String *filePath,
+    MatchResultC **matchResults, unsigned *matchResultLength);
+typedef void (*ReleaseMatchResultListFunction)(MatchResultC **matchResults, unsigned matchResultLength);
 static void *g_diaCredentialSdkHandle = nullptr;
 static int sdkCount = 0;
 std::mutex g_lockDIACredSdk;
@@ -181,12 +181,12 @@ void NapiIdentifySensitiveFileExcute(napi_env env, void *data)
     filePathTmp.data = const_cast<char *>(scanFileAsyncContext->filePath.c_str());
     filePathTmp.dataLength = scanFileAsyncContext->filePath.length();
     MatchResultC *matchResults = nullptr;
-    int matchResultLength = 0;
+    unsigned matchResultLength = 0;
     scanFileAsyncContext->errCode = (*identifySensitiveFileFunction)(
         policyTmp.data(), policyTmp.size(), &filePathTmp, &matchResults, &matchResultLength);
     DestroyPolicyC(policyTmp);
     if (matchResults) {
-        for (int i = 0; i < matchResultLength; i++) {
+        for (unsigned i = 0; i < matchResultLength; i++) {
             MatchResult matchResult;
             matchResult.sensitiveLabel =
                 std::string(matchResults[i].sensitiveLabel.data, matchResults[i].sensitiveLabel.dataLength);
@@ -238,6 +238,7 @@ napi_value NapiIdentifySensitiveContent::ScanFile(napi_env env, napi_callback_in
     ScanFileAsyncContext *asyncContext = new (std::nothrow) ScanFileAsyncContext(env);
     if (!asyncContext) {
         LOG_ERROR("insufficient memory for asyncContext!");
+        DIANapiThrow(env, ERR_DIA_JS_SYSTEM_SERVICE_EXCEPTION, GetDIAJsErrMsg(ERR_DIA_JS_SYSTEM_SERVICE_EXCEPTION));
         return NapiGetNull(env);
     }
     std::unique_ptr<ScanFileAsyncContext> asyncContextPtr {asyncContext};

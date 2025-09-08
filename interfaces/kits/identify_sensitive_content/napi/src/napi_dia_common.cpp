@@ -195,7 +195,7 @@ napi_value NapiComposeMatchResultArray(napi_env env, const std::vector<MatchResu
             napi_create_string_utf8(env, matchResultList[i].matchContent.c_str(), NAPI_AUTO_LENGTH, &matchContent));
         NAPI_CALL(env, napi_set_named_property(env, matchResult, "matchContent", matchContent));
         napi_value matchNumber;
-        NAPI_CALL(env, napi_create_int32(env, matchResultList[i].matchNumber, &matchNumber));
+        NAPI_CALL(env, napi_create_uint32(env, matchResultList[i].matchNumber, &matchNumber));
         NAPI_CALL(env, napi_set_named_property(env, matchResult, "matchNumber", matchNumber));
 
         NAPI_CALL(env, napi_set_element(env, result, i, matchResult));

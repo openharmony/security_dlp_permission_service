@@ -24,7 +24,7 @@ namespace OHOS::Security::DIA {
 struct MatchResult {
     std::string sensitiveLabel;
     std::string matchContent;
-    int matchNumber;
+    unsigned matchNumber;
 };
 
 struct Policy {
@@ -40,14 +40,14 @@ struct DIA_String {
 struct MatchResultC {
     DIA_String sensitiveLabel;
     DIA_String matchContent;
-    int matchNumber;
+    unsigned matchNumber;
 };
 
 struct PolicyC {
     DIA_String sensitiveLabel;
     DIA_String *keywords;
     DIA_String regex;
-    int keywordsLength;
+    unsigned keywordsLength;
 };
 
 enum DIAErrCode {
