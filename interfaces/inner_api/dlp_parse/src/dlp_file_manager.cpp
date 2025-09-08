@@ -547,6 +547,10 @@ static int32_t SupportDlpWithAppId(const std::string &appId, const int32_t &dlpF
 int32_t DlpFileManager::DlpRawHmacCheckAndUpdata(std::shared_ptr<DlpFile>& filePtr,
                                                  const std::vector<uint8_t>& offlineCert)
 {
+    if (filePtr == nullptr) {
+        DLP_LOG_ERROR(LABEL, "DlpRawHmacCheckAndUpdata input null filePtr");
+        return DLP_SERVICE_ERROR_VALUE_INVALID;
+    }
     int32_t result = filePtr->HmacCheck();
     if (result != DLP_OK) {
         return result;
