@@ -37,7 +37,7 @@ std::string GetDIAJsErrMsg(int32_t diaErrCode)
     if (iter != DIA_JS_ERROR_MSG_MAP.end()) {
         return iter->second;
     }
-    std::string msg = "unkown error, please reboot your device and try again, error=" + std::to_string(diaErrCode);
+    std::string msg = "unknown error, please reboot your device and try again, error=" + std::to_string(diaErrCode);
     return msg;
 }
 
