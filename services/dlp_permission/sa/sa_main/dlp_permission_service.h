@@ -100,6 +100,7 @@ private:
     void GetConfigFileValue(const std::string& cfgFile, std::vector<std::string>& typeList);
     void InitConfig(std::vector<std::string>& typeList);
     void SetTimer(bool isNeedStartTimer);
+    int32_t CheckIfEnterpriseAccount();
 
     std::atomic<int32_t> repeatTime_;
     std::shared_ptr<std::thread> thread_ = nullptr;

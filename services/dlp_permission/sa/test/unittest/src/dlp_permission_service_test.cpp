@@ -1612,3 +1612,29 @@ HWTEST_F(DlpPermissionServiceTest, SetEnterprisePolicy, TestSize.Level1)
     int32_t ret = dlpPermissionService_->SetEnterprisePolicy(policy);
     ASSERT_TRUE(ret != DLP_CALLBACK_SA_WORK_ABNORMAL);
 }
+
+/**
+ * @tc.name: CheckIfEnterpriseAccount
+ * @tc.desc: CheckIfEnterpriseAccount test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionServiceTest, CheckIfEnterpriseAccount, TestSize.Level1)
+{
+    int32_t ret = dlpPermissionService_->CheckIfEnterpriseAccount();
+    ASSERT_EQ(ret, DLP_PARSE_ERROR_ACCOUNT_INVALID);
+}
+
+/**
+ * @tc.name: IsDLPFeatureProvided
+ * @tc.desc: IsDLPFeatureProvided test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionServiceTest, IsDLPFeatureProvided, TestSize.Level1)
+{
+    bool isDLPFeatureProvided = true;
+    int32_t ret = dlpPermissionService_->IsDLPFeatureProvided(isDLPFeatureProvided);
+    ASSERT_FALSE(isDLPFeatureProvided);
+    ASSERT_EQ(ret, DLP_OK);
+}
