@@ -66,7 +66,7 @@ void MemoryFuzzTest(const uint8_t* data, size_t size)
         return;
     }
     HcFree(data2);
-    char *newdata = static_cast<char *>(HcMalloc(size, 0));
+    char *newdata = static_cast<char *>(HcMalloc(size + 1, 0));
     int ret2 = memcpy_s(newdata, size, data, size);
     if (ret2 == -1) {
         HcFree(newdata);
