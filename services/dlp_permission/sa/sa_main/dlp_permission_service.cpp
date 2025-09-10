@@ -1032,9 +1032,36 @@ int32_t DlpPermissionService::SetDlpFeature(const uint32_t dlpFeatureInfo, bool&
     return DLP_OK;
 }
 
+int32_t DlpPermissionService::CheckIfEnterpriseAccount()
+{
+    int32_t userId;
+    int32_t res = OHOS::AccountSA::OsAccountManager::GetForegroundOsAccountLocalId(userId);
+    if (res != 0) {
+        DLP_LOG_ERROR(LABEL, "GetForegroundOsAccountLocalId failed %{public}d", res);
+        return DLP_PARSE_ERROR_ACCOUNT_INVALID;
+    }
+    AccountSA::OsAccountInfo osAccountInfo;
+    res = OHOS::AccountSA::OsAccountManager::QueryOsAccountById(userId, osAccountInfo);
+    if (res != 0) {
+        DLP_LOG_ERROR(LABEL, "QueryOsAccountById failed %{public}d", res);
+        return DLP_PARSE_ERROR_ACCOUNT_INVALID;
+    }
+    AccountSA::DomainAccountInfo domainInfo;
+    osAccountInfo.GetDomainInfo(domainInfo);
+    if (domainInfo.accountName_.empty()) {
+        DLP_LOG_INFO(LABEL, "AccountName empty, ForegroundOsAccoun is personal account");
+        return DLP_PARSE_ERROR_ACCOUNT_PERSONAL;
+    }
+    return DLP_OK;
+}
+
 int32_t DlpPermissionService::IsDLPFeatureProvided(bool& isProvideDLPFeature)
 {
     SetTimer(true);
+    if (CheckIfEnterpriseAccount() != DLP_OK) {
+        isProvideDLPFeature = false;
+        return DLP_OK;
+    }
     uint32_t dlpFeature = 0;
     std::string value = OHOS::system::GetParameter(DLP_ENABLE, "");
     if (HcIsFileExist(FEATURE_INFO_DATA_FILE_PATH)) {
