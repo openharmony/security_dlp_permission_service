@@ -126,9 +126,7 @@ int32_t ParseDlpGeneralInfo(const std::string& generalInfo, GenerateInfoParams& 
     params.certSize = 0;
     if (iter != jsonObj.end() && iter->is_number_integer()) {
         params.certSize = iter->get<uint32_t>();
-        if (params.certSize > MAX_CERT_SIZE) {
-            params.certSize ^= EXTRA_CERT_SIZE;
-        }
+        params.certSize = (params.certSize > MAX_CERT_SIZE) ? (params.certSize ^ EXTRA_CERT_SIZE) : params.certSize;
     }
     return DLP_OK;
 }
