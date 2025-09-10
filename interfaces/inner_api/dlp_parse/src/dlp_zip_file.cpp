@@ -148,13 +148,13 @@ static bool IsExistFile(const std::string& path)
 static int32_t GetFileContent(const std::string& path, std::string& content)
 {
     if (!IsExistFile(path)) {
-        DLP_LOG_INFO(LABEL, "cannot find file, path = %{public}s", path.c_str());
+        DLP_LOG_INFO(LABEL, "cannot find file");
         return DLP_RETENTION_FILE_FIND_FILE_ERROR;
     }
     std::stringstream buffer;
     std::ifstream i(path);
     if (!i.is_open()) {
-        DLP_LOG_INFO(LABEL, "cannot open file %{public}s, errno %{public}d.", path.c_str(), errno);
+        DLP_LOG_INFO(LABEL, "cannot open file, errno %{public}d.", errno);
         return DLP_RETENTION_COMMON_FILE_OPEN_FAILED;
     }
     buffer << i.rdbuf();

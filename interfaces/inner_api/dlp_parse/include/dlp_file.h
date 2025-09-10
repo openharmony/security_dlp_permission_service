@@ -80,8 +80,8 @@ enum VALID_KEY_SIZE {
 #define CHDIR_AND_CHECK(path, ret, TAG)                                 \
     do {                                                                \
         if (chdir(path) != 0) {                                         \
-            DLP_LOG_ERROR(TAG, "chdir fail path %{public}s, errno %{public}s", \
-                path, strerror(errno));                                 \
+            DLP_LOG_ERROR(TAG, "chdir fail, errno %{public}s", \
+                strerror(errno));                                 \
             return ret;                                                 \
         }                                                               \
     } while (0)                                                         \
@@ -89,8 +89,8 @@ enum VALID_KEY_SIZE {
 #define UNLINK_AND_CHECK(path, ret, TAG)                                \
     do {                                                                \
         if (unlink(path) != 0) {                                        \
-            DLP_LOG_ERROR(TAG, "unlink fail path %{public}s, errno %{public}s", \
-                path, strerror(errno));                                 \
+            DLP_LOG_ERROR(TAG, "unlink fail, errno %{public}s", \
+                strerror(errno));                                 \
             return ret;                                                 \
         }                                                               \
     } while (0)                                                         \
@@ -98,8 +98,8 @@ enum VALID_KEY_SIZE {
 #define MKDIR_AND_CHECK(path, mode, ret, TAG)                           \
     do {                                                                \
         if (mkdir(path, mode) != 0) {                                   \
-            DLP_LOG_ERROR(TAG, "mkdir fail path %{public}s, errno %{public}s", \
-                path, strerror(errno));                                 \
+            DLP_LOG_ERROR(TAG, "mkdir fail, errno %{public}s", \
+                strerror(errno));                                 \
             return ret;                                                 \
         }                                                               \
     } while (0)                                                         \

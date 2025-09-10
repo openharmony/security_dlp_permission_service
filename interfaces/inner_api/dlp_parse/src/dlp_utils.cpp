@@ -244,13 +244,13 @@ static bool IsExistFile(const std::string& path)
 static std::string GetFileContent(const std::string& path)
 {
     if (!IsExistFile(path)) {
-        DLP_LOG_DEBUG(LABEL, "cannot find file, path = %{public}s", path.c_str());
+        DLP_LOG_DEBUG(LABEL, "cannot find file");
         return DEFAULT_STRINGS;
     }
     std::stringstream buffer;
     std::ifstream i(path);
     if (!i.is_open()) {
-        DLP_LOG_DEBUG(LABEL, "cannot open file %{public}s, errno %{public}d.", path.c_str(), errno);
+        DLP_LOG_DEBUG(LABEL, "cannot open file, errno %{public}d.", errno);
         return DEFAULT_STRINGS;
     }
     buffer << i.rdbuf();
