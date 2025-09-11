@@ -1,3 +1,4 @@
+
 /*
  * Copyright (c) 2023-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -100,11 +101,10 @@ int32_t ParseDlpGeneralInfo(const std::string& generalInfo, GenerateInfoParams& 
         return DLP_PARSE_ERROR_VALUE_INVALID;
     }
     auto iter = jsonObj.find(DLP_OFFLINE_FLAG);
-    if (iter != jsonObj.end() && iter->is_boolean()) {
-        params.offlineAccessFlag = iter->get<bool>();
-    } else {
+    if ((iter == jsonObj.end()) || !(iter->is_boolean()) {
         return DLP_PARSE_ERROR_VALUE_INVALID;
     }
+    params.offlineAccessFlag = iter->get<bool>();
     iter = jsonObj.find(DLP_CONTACT_ACCOUNT);
     if (iter != jsonObj.end() && iter->is_string()) {
         params.contactAccount = iter->get<std::string>();
