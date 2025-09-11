@@ -101,7 +101,7 @@ int32_t ParseDlpGeneralInfo(const std::string& generalInfo, GenerateInfoParams& 
         return DLP_PARSE_ERROR_VALUE_INVALID;
     }
     auto iter = jsonObj.find(DLP_OFFLINE_FLAG);
-    if ((iter == jsonObj.end()) || !(iter->is_boolean()) {
+    if ((iter == jsonObj.end()) || !(iter->is_boolean())) {
         return DLP_PARSE_ERROR_VALUE_INVALID;
     }
     params.offlineAccessFlag = iter->get<bool>();
