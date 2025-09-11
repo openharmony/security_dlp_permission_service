@@ -33,7 +33,7 @@ static const std::string DLP_REAL_TYPE = "realFileType";
 static const std::string CERT_SIZE = "certSize";
 static const uint32_t MIN_REALY_TYPE_LENGTH = 2;
 static const uint32_t MAX_REALY_TYPE_LENGTH = 5;
-static const uint32_t EXTRA_CERT_SIZE = (2 << 32) - 1;
+static const uint32_t EXTRA_CERT_SIZE = UINT32_MAX;
 static const uint32_t MAX_CERT_SIZE = 30 * 1024;
 static bool checkParams(GenerateInfoParams& params, const nlohmann::json& jsonObj,
                         const std::string& versionKey, const std::string& infoKey)
