@@ -28,13 +28,6 @@ public:
     virtual void OnResult(const int32_t errCode, std::string &data) = 0;
 };
 
-class IDlpConnectionPlugin : public IRemoteBroker {
-    DECLARE_INTERFACE_DESCRIPTOR(u"ohos.Security.IDlpConnectionPlugin");
-
-    virtual int32_t ConnectServer(const std::string requestId, const std::string requestData,
-        const sptr<IDlpConnectionCallback> &callback) = 0;
-};
-
 class DlpConnectionCallback {
 public:
     virtual void OnResult(const int32_t errCode, std::string &data) = 0;
@@ -45,10 +38,17 @@ class DlpConnectionPlugin {
         const std::shared_ptr<DlpConnectionCallback> &callback);
 };
 
+class IDlpConnectionPlugin : public IRemoteBroker {
+    DECLARE_INTERFACE_DESCRIPTOR(u"ohos.Security.IDlpConnectionPlugin");
+
+    virtual int32_t ConnectServer(const std::string requestId, const std::string requestData,
+        const sptr<IDlpConnectionCallback> &callback) = 0;
+};
+
 class DlpConnectionClient {
 public:
     static DlpConnectionClient &GetInstance();
-    int32_t RegisterPlugin(const std::shared_ptr<DlpConnectionPlugin> &plugin, uint64_t &pluginId);
+    int32_t RegisterPlugin(DlpConnectionPlugin *plugin, uint64_t *pluginId);
 private:
     DlpConnectionClient();
     ~DlpConnectionClient() = default;

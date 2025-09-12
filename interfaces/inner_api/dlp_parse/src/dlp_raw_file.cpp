@@ -226,7 +226,7 @@ int32_t DlpRawFile::ParseEnterpriseFileId(uint64_t fileLen, uint32_t fileIdSize)
         return DLP_PARSE_ERROR_FD_ERROR;
     }
     char *char_buffer = reinterpret_cast<char *>(buff);
-    std::string str(char_buffer);
+    std::string str(char_buffer, idSize);
     delete []buff;
     buff = nullptr;
     fileId_ = str;
@@ -285,7 +285,7 @@ int32_t DlpRawFile::ParseEnterpriseRawDlpHeader(uint64_t fileLen, uint32_t dlpHe
         return DLP_PARSE_ERROR_FD_ERROR;
     }
     char *char_buffer = reinterpret_cast<char *>(buff);
-    std::string str(char_buffer);
+    std::string str(char_buffer, idSize);
     delete []buff;
     buff = nullptr;
     appId_ = str;
@@ -322,7 +322,8 @@ int32_t DlpRawFile::CheckDlpFile()
     }
     uint32_t dlpHeaderSize = 0;
 
-    if (read(dlpFd_, &dlpHeaderSize, sizeof(uint32_t)) != sizeof(uint32_t)) {
+    if (read(dlpFd_, &dlpHeaderSize, sizeof(uint32_t)) != sizeof(uint32_t) ||
+        dlpHeaderSize < sizeof(struct DlpHeader)) {
         DLP_LOG_ERROR(LABEL, "can not read dlp file dlpHeaderSize, %{public}s", strerror(errno));
         return DLP_PARSE_ERROR_FILE_FORMAT_ERROR;
     }

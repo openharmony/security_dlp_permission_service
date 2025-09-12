@@ -1159,7 +1159,7 @@ bool GetGenerateDlpFileForEnterpriseParam(
         return false;
     }
 
-    if (!GetAccountTypeInDlpProperty(env, argv[PARAM2], asyncContext.property)) {
+    if (!GetEnterpriseDlpProperty(env, argv[PARAM2], asyncContext.property)) {
         DLP_LOG_ERROR(LABEL, "js get property fail");
         ThrowParamError(env, "property", "DlpProperty");
         return false;

@@ -29,11 +29,11 @@ DlpConnectionClient::DlpConnectionClient()
 {
 }
 
-int32_t DlpConnectionClient::RegisterPlugin(const std::shared_ptr<DlpConnectionPlugin> &plugin, uint64_t &pluginId)
+int32_t DlpConnectionClient::RegisterPlugin(DlpConnectionPlugin *plugin, uint64_t *pluginId)
 {
     (void)plugin;
-    pluginId = 1;
-    return true;
+    *pluginId = 1;
+    return 0;
 }
 } // DlpConnection
 } // Security

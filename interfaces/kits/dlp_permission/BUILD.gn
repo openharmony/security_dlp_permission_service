@@ -78,7 +78,6 @@ ohos_shared_library("libdlppermission_napi") {
   ] 
 
   if (dlp_credential_enable == true) {
-    external_deps += ["dlp_credential_service:dlp_connection_static"]
     cflags_cc += [ "-DSUPPORT_DLP_CREDENTIAL" ]
   } else {
     sources += [ "${dlp_root_dir}/interfaces/kits/dlp_permission/napi/src/dlp_connection_static_mock.cpp" ]

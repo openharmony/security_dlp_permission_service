@@ -92,6 +92,30 @@ static bool GetAppIdentifier(const std::string &bundleName, std::string &appIden
     return true;
 }
 
+bool PermissionManagerAdapter::GetAppIdentifierForCalling(std::string &appIdentifier)
+{
+    Security::AccessToken::AccessTokenID callingToken = IPCSkeleton::GetCallingTokenID();
+    int32_t osAccountId = 0;
+    int32_t ret = GetOsAccountId(osAccountId);
+    if (ret != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "Failed to GetOsAccountId, error code: %{public}d.", ret);
+        return false;
+    }
+
+    HapTokenInfo hapTokenInfo;
+    ret = AccessTokenKit::GetHapTokenInfo(callingToken, hapTokenInfo);
+    if (ret != RET_SUCCESS) {
+        DLP_LOG_ERROR(LABEL, "Failed to GetHapTokenInfo, error code: %{public}d.", ret);
+        return false;
+    }
+
+    if (GetAppIdentifier(hapTokenInfo.bundleName, appIdentifier, osAccountId) == false) {
+        DLP_LOG_ERROR(LABEL, "Failed to check appIdentifier.");
+        return false;
+    }
+    return true;
+}
+
 static int32_t CheckPermissionForConnect(uint32_t callerTokenId)
 {
     int32_t osAccountId = 0;

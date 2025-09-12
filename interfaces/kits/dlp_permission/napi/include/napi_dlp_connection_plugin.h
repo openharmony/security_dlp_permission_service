@@ -23,17 +23,25 @@
 #include "permission_policy.h"
 #include "napi_common.h"
 
-#ifdef SUPPORT_DLP_CREDENTIAL
-#include "dlp_connection_callback.h"
-#include "dlp_connection_plugin.h"
-#include "dlp_connection_client.h"
-#else
+#ifndef SUPPORT_DLP_CREDENTIAL
 #include "dlp_connection_static_mock.h"
 #endif
 
 namespace OHOS {
 namespace Security {
 namespace DlpConnection {
+
+#ifdef SUPPORT_DLP_CREDENTIAL
+class DlpConnectionCallback {
+public:
+    virtual void OnResult(const int32_t errCode, std::string &data) = 0;
+};
+
+class DlpConnectionPlugin {
+    virtual void ConnectServer(const std::string requestId, const std::string requestData,
+        const std::shared_ptr<DlpConnectionCallback> &callback);
+};
+#endif
 
 struct ThreadLockInfo {
     std::mutex mutex;

@@ -55,8 +55,7 @@
         "json",
         "zlib",
         "openssl",
-        "libfuse",
-        "dlp_credential_service"
+        "libfuse"
       ],
       "third_party": []
     },

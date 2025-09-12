@@ -450,7 +450,7 @@ uint32_t EnterpriseSpaceDlpPermissionKit::DecryptRawDlpFileAndGetAccountType(int
         return INVALID_ACCOUNT;
     }
     char *char_buffer = reinterpret_cast<char *>(buff);
-    std::string str(char_buffer);
+    std::string str(char_buffer, head.certSize);
     delete []buff;
     return GetAccountTypeFromCert(str);
 }
@@ -475,7 +475,7 @@ int32_t EnterpriseSpaceDlpPermissionKit::DecryptEnterpriseDlpFile(int32_t plainF
     }
     result = DlpFileManager::GetInstance().RecoverDlpFile(filePtr, plainFileFd);
     if (result != DLP_OK) {
-        DLP_LOG_ERROR(LABEL, "Enterprise space prepare workDir fail, errno=%{public}d", result);
+        DLP_LOG_ERROR(LABEL, "RecoverDlpFile fail, errno=%{public}d", result);
         return result;
     }
     return DLP_OK;

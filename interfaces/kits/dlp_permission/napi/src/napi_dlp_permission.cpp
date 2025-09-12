@@ -1921,9 +1921,6 @@ napi_value NapiDlpPermission::ProcessDomainAccount(napi_env env, napi_callback_i
 
 napi_value NapiDlpPermission::GenerateDlpFileForEnterprise(napi_env env, napi_callback_info cbInfo)
 {
-    if (!CheckPermission(env, PERMISSION_ENTERPRISE_ACCESS_DLP_FILE)) {
-        return nullptr;
-    }
     auto asyncContextPtr = std::make_unique<GenerateDlpFileForEnterpriseAsyncContext>(env);
     if (!GetAccountTypeInEnterpriseParam(env, cbInfo, *asyncContextPtr)) {
         return nullptr;
@@ -1966,9 +1963,6 @@ void NapiDlpPermission::GenerateDlpFileForEnterpriseComplete(napi_env env, napi_
 
 napi_value NapiDlpPermission::DecryptDlpFile(napi_env env, napi_callback_info cbInfo)
 {
-    if (!CheckPermission(env, PERMISSION_ENTERPRISE_ACCESS_DLP_FILE)) {
-        return nullptr;
-    }
     auto asyncContextPtr = std::make_unique<DecryptDlpFileAsyncContext>(env);
 
     if (!GetDecryptDlpFileParam(env, cbInfo, *asyncContextPtr)) {
@@ -2023,9 +2017,6 @@ void NapiDlpPermission::DecryptDlpFileComplete(napi_env env, napi_status status,
 
 napi_value NapiDlpPermission::QueryDlpPolicy(napi_env env, napi_callback_info cbInfo)
 {
-    if (!CheckPermission(env, PERMISSION_ENTERPRISE_ACCESS_DLP_FILE)) {
-        return nullptr;
-    }
     auto asyncContextPtr = std::make_unique<QueryDlpPolicyAsyncContext>(env);
 
     if (!GetQueryDlpPolicyParam(env, cbInfo, *asyncContextPtr)) {
