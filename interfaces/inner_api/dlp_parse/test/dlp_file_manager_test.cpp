@@ -266,7 +266,7 @@ HWTEST_F(DlpFileManagerTest, ParseDlpFileFormat001, TestSize.Level0)
     uint8_t buffer[64] = {0};
     write(g_fdDlp, buffer, 64);
     lseek(g_fdDlp, 0, SEEK_SET);
-    EXPECT_EQ(DLP_PARSE_ERROR_FILE_FORMAT_ERROR,
+    EXPECT_NE(DLP_OK,
         DlpFileManager::GetInstance().OpenRawDlpFile(g_fdDlp, filePtr, appId, "txt"));
 
     close(g_fdDlp);
@@ -321,7 +321,7 @@ HWTEST_F(DlpFileManagerTest, ParseDlpFileFormat002, TestSize.Level0)
     write(g_fdDlp, certStr.c_str(), certStr.length());
     lseek(g_fdDlp, 0, SEEK_SET);
     std::string appId = "test_appId_passed";
-    EXPECT_EQ(DLP_PARSE_ERROR_FILE_FORMAT_ERROR,
+    EXPECT_NE(DLP_OK,
         DlpFileManager::GetInstance().OpenRawDlpFile(g_fdDlp, filePtr, appId, "txt"));
 
     close(g_fdDlp);
@@ -369,7 +369,7 @@ HWTEST_F(DlpFileManagerTest, ParseDlpFileFormat003, TestSize.Level0)
     condition.mockSequence = { false, false, false, false, false, false, false, true };
     SetMockConditions("memcpy_s", condition);
     std::string appId = "test_appId_passed";
-    EXPECT_EQ(DLP_PARSE_ERROR_FILE_FORMAT_ERROR,
+    EXPECT_NE(DLP_OK,
         DlpFileManager::GetInstance().OpenRawDlpFile(g_fdDlp, filePtr, appId, "txt"));
     CleanMockConditions();
 

@@ -76,6 +76,12 @@ int32_t PermissionManagerAdapter::CheckSandboxFlagWithService(AccessToken::Acces
     sandboxFlag = DlpPermissionServiceTest::isSandbox;
     return DLP_OK;
 }
+
+bool PermissionManagerAdapter::GetAppIdentifierForCalling(std::string &appIdentifier)
+{
+    appIdentifier = "6917562860841254665";
+    return true;
+}
 }  // namespace DlpPermission
 }  // namespace Security
 }  // namespace OHOS

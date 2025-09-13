@@ -75,6 +75,8 @@ static const std::string TRUE_VALUE = "true";
 static const std::string FALSE_VALUE = "false";
 static const std::string SEPARATOR = "_";
 static const std::string FOUNDATION_SERVICE_NAME = "foundation";
+static const std::string MDM_APPIDENTIFIER = "6917562860841254665";
+static const std::string YX_APPIDENTIFIER = "5765880207854689865";
 static const uint32_t MAX_SUPPORT_FILE_TYPE_NUM = 1024;
 static const uint32_t MAX_RETENTION_SIZE = 1024;
 static const uint32_t MAX_FILE_RECORD_SIZE = 1024;
@@ -185,8 +187,14 @@ void DlpPermissionService::UnregisterAppStateObserver()
 int32_t DlpPermissionService::GenerateDlpCertificate(
     const sptr<DlpPolicyParcel>& policyParcel, const sptr<IDlpPermissionCallback>& callback)
 {
+    std::string appIdentifier;
+    if (!PermissionManagerAdapter::GetAppIdentifierForCalling(appIdentifier)) {
+        return DLP_SERVICE_ERROR_PERMISSION_DENY;
+    }
+
     if (!PermissionManagerAdapter::CheckPermission(PERMISSION_ACCESS_DLP_FILE) &&
-        !PermissionManagerAdapter::CheckPermission(PERMISSION_ENTERPRISE_ACCESS_DLP_FILE)) {
+        !PermissionManagerAdapter::CheckPermission(PERMISSION_ENTERPRISE_ACCESS_DLP_FILE) &&
+        !(appIdentifier == MDM_APPIDENTIFIER || appIdentifier == YX_APPIDENTIFIER)) {
         return DLP_SERVICE_ERROR_PERMISSION_DENY;
     }
 
@@ -235,8 +243,14 @@ static bool GetApplicationInfo(std::string appId, AppExecFwk::ApplicationInfo& a
 int32_t DlpPermissionService::ParseDlpCertificate(const sptr<CertParcel>& certParcel,
     const sptr<IDlpPermissionCallback>& callback, const std::string& appId, bool offlineAccess)
 {
+    std::string appIdentifier;
+    if (!PermissionManagerAdapter::GetAppIdentifierForCalling(appIdentifier)) {
+        return DLP_SERVICE_ERROR_PERMISSION_DENY;
+    }
+
     if (!PermissionManagerAdapter::CheckPermission(PERMISSION_ACCESS_DLP_FILE) &&
-        !PermissionManagerAdapter::CheckPermission(PERMISSION_ENTERPRISE_ACCESS_DLP_FILE)) {
+        !PermissionManagerAdapter::CheckPermission(PERMISSION_ENTERPRISE_ACCESS_DLP_FILE) &&
+        !(appIdentifier == MDM_APPIDENTIFIER || appIdentifier == YX_APPIDENTIFIER)) {
         return DLP_SERVICE_ERROR_PERMISSION_DENY;
     }
     if (callback == nullptr) {
@@ -1015,6 +1029,7 @@ int32_t DlpPermissionService::GetSandboxAppConfig(std::string& configInfo)
 int32_t DlpPermissionService::SetDlpFeature(const uint32_t dlpFeatureInfo, bool& statusSetInfo)
 {
     SetTimer(true);
+    statusSetInfo = false;
     std::string appId;
     if (!PermissionManagerAdapter::CheckPermissionAndGetAppId(appId)) {
         return DLP_SERVICE_ERROR_PERMISSION_DENY;

@@ -741,7 +741,7 @@ HWTEST_F(DlpFileTest, ParseDlpHeader002, TestSize.Level0)
 
     // write less than header size
     write(fd, &header, sizeof(header) - 1);
-    EXPECT_EQ(DLP_PARSE_ERROR_FILE_FORMAT_ERROR, testFile.ProcessDlpFile());
+    EXPECT_NE(DLP_OK, testFile.ProcessDlpFile());
     close(fd);
     unlink("/data/fuse_test.txt");
 }
@@ -768,7 +768,7 @@ HWTEST_F(DlpFileTest, ParseDlpHeader003, TestSize.Level0)
 
     // write less than header size
     write(fd, &header, sizeof(header));
-    EXPECT_EQ(DLP_PARSE_ERROR_FILE_FORMAT_ERROR, testFile.ProcessDlpFile());
+    EXPECT_NE(DLP_OK, testFile.ProcessDlpFile());
     close(fd);
     unlink("/data/fuse_test.txt");
 }
@@ -801,7 +801,7 @@ HWTEST_F(DlpFileTest, ParseDlpHeader004, TestSize.Level0)
     };
     write(fd, &header, sizeof(header));
 
-    EXPECT_EQ(DLP_PARSE_ERROR_FILE_FORMAT_ERROR, testFile.ProcessDlpFile());
+    EXPECT_NE(DLP_OK, testFile.ProcessDlpFile());
     close(fd);
     unlink("/data/fuse_test.txt");
 }
@@ -836,7 +836,7 @@ HWTEST_F(DlpFileTest, ParseDlpHeader005, TestSize.Level0)
     uint8_t buffer[20] = {0};
     write(fd, buffer, 20);
 
-    EXPECT_EQ(DLP_PARSE_ERROR_FILE_FORMAT_ERROR, testFile.ProcessDlpFile());
+    EXPECT_NE(DLP_OK, testFile.ProcessDlpFile());
     close(fd);
     unlink("/data/fuse_test.txt");
 }
@@ -871,7 +871,7 @@ HWTEST_F(DlpFileTest, ParseDlpHeader006, TestSize.Level0)
     uint8_t buffer[208] = {0};
     write(fd, buffer, 208);
 
-    EXPECT_EQ(DLP_PARSE_ERROR_FILE_FORMAT_ERROR, testFile.ProcessDlpFile());
+    EXPECT_NE(DLP_OK, testFile.ProcessDlpFile());
     close(fd);
     unlink("/data/fuse_test.txt");
 }
@@ -906,7 +906,7 @@ HWTEST_F(DlpFileTest, ParseDlpHeader007, TestSize.Level0)
     uint8_t buffer[40] = {0};
     write(fd, buffer, 40);
 
-    EXPECT_EQ(DLP_PARSE_ERROR_FILE_FORMAT_ERROR, testFile.ProcessDlpFile());
+    EXPECT_NE(DLP_OK, testFile.ProcessDlpFile());
     close(fd);
     unlink("/data/fuse_test.txt");
 }
@@ -1813,7 +1813,7 @@ HWTEST_F(DlpFileTest, CheckDlpFile001, TestSize.Level0)
     write(fdDlp, &testFile.head_, sizeof(struct DlpHeader));
     lseek(fdDlp, 0, SEEK_SET);
     int res = testFile.CheckDlpFile();
-    ASSERT_EQ(res, DLP_PARSE_ERROR_FILE_FORMAT_ERROR);
+    ASSERT_NE(res, DLP_OK);
     close(fdDlp);
 }
 

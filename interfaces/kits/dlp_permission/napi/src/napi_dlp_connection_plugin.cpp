@@ -31,7 +31,16 @@ namespace DlpConnection {
 using namespace OHOS::Security::DlpPermission;
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "NapiConnectionPlugin"};
+#ifdef SUPPORT_DLP_CREDENTIAL
+static const size_t SIZE_64_BIT = 8;
+static const std::string DLP_CREDENTIAL_STATIC_PLP_32_PATH = "/system/lib/libdlp_connection_static.z.so";
+static const std::string DLP_CREDENTIAL_STATIC_PLP_64_PATH = "/system/lib64/libdlp_connection_static.z.so";
+std::mutex g_lockDlpStatic;
+static void *g_dlpStaticHandle;
+#endif
 }  // namespace
+
+typedef int32_t (*Connection_Set)(void *plugin, uint64_t *pluginId);
 
 NapiDlpConnectionPlugin::NapiDlpConnectionPlugin(napi_env env, const JsDlpConnPlugin &jsPlugin)
     : env_(env), jsPlugin_(jsPlugin)
@@ -308,11 +317,42 @@ static napi_value RegisterPlugin(napi_env env, napi_callback_info cbInfo)
         return nullptr;
     }
     uint64_t pluginId = 0;
-    auto plugin = std::make_shared<NapiDlpConnectionPlugin>(env, jsPlugin);
-    int32_t errCode = DlpConnectionClient::GetInstance().RegisterPlugin(plugin, pluginId);
-    if (errCode != 0) {
-        DLP_LOG_ERROR(LABEL, "RegisterPlugin is error.");
-        DlpNapiThrow(env, errCode);
+    auto plugin = new (std::nothrow) NapiDlpConnectionPlugin(env, jsPlugin);
+    if (plugin == nullptr) {
+        DLP_LOG_ERROR(LABEL, "malloc is error.");
+        return nullptr;
+    }
+    int32_t res = 0;
+#ifdef SUPPORT_DLP_CREDENTIAL
+    std::lock_guard<std::mutex> lock(g_lockDlpStatic);
+    if (g_dlpStaticHandle == nullptr) {
+        if (sizeof(void *) == SIZE_64_BIT) {
+            g_dlpStaticHandle = dlopen(DLP_CREDENTIAL_STATIC_PLP_64_PATH.c_str(), RTLD_LAZY);
+        } else {
+            g_dlpStaticHandle = dlopen(DLP_CREDENTIAL_STATIC_PLP_32_PATH.c_str(), RTLD_LAZY);
+        }
+        if (g_dlpStaticHandle == nullptr) {
+            return nullptr;
+        }
+    }
+    void *func = dlsym(g_dlpStaticHandle, "Connection_Set");
+    if (func == nullptr) {
+        DLP_LOG_ERROR(LABEL, "get func is error.");
+        return nullptr;
+    }
+    Connection_Set dlpFunc = reinterpret_cast<Connection_Set>(func);
+    if (dlpFunc == nullptr) {
+        DLP_LOG_ERROR(LABEL, "get dlpFunc is error.");
+        return nullptr;
+    }
+    res = (*dlpFunc)(reinterpret_cast<void *>(plugin), &pluginId);
+#else
+    res = DlpConnectionClient::GetInstance().RegisterPlugin(plugin, &pluginId);
+#endif
+    if (res != 0) {
+        DLP_LOG_ERROR(LABEL, "res is %{public}d.", res);
+        delete plugin;
+        DlpNapiThrow(env, res);
     }
     napi_value result = CreateUint64(env, pluginId);
     return result;
@@ -322,6 +362,13 @@ static napi_value UnregisterPlugin(napi_env env, napi_callback_info cbInfo)
 {
     DLP_LOG_INFO(LABEL, "Enter UnregisterPlugin.");
     (void)cbInfo;
+#ifdef SUPPORT_DLP_CREDENTIAL
+    std::lock_guard<std::mutex> lock(g_lockDlpStatic);
+    if (g_dlpStaticHandle != nullptr) {
+        dlclose(g_dlpStaticHandle);
+        g_dlpStaticHandle = nullptr;
+    }
+#endif
     return nullptr;
 }
 
