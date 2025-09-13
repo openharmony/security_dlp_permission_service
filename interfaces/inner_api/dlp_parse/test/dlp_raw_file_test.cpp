@@ -352,3 +352,15 @@ HWTEST_F(DlpRawFileTest, DoDlpHIAECryptOperationTest, TestSize.Level0)
     std::shared_ptr<DlpRawFile> filePtr = std::make_shared<DlpRawFile>(-1, "mp4");
     ASSERT_EQ(filePtr->DoDlpHIAECryptOperation(message1, message2, 0, true), DLP_PARSE_ERROR_VALUE_INVALID);
 }
+
+/**
+ * @tc.name: ParseEnterpriseFileId
+ * @tc.desc: test ParseEnterpriseFileId
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpRawFileTest, ParseEnterpriseFileIdTest, TestSize.Level1)
+{
+    std::shared_ptr<DlpRawFile> filePtr = std::make_shared<DlpRawFile>(-1, "mp4");
+    ASSERT_NE(filePtr->ParseEnterpriseFileId(0, 0), DLP_OK);
+}
