@@ -275,6 +275,44 @@ HWTEST_F(DlpFileTest, OpenDlpFile002, TestSize.Level0)
     ASSERT_EQ(DlpFileManager::GetInstance().CloseDlpFile(g_Dlpfile), 0);
     g_Dlpfile = nullptr;
 }
+
+/**
+ * @tc.name: TestDlpFile
+ * @tc.desc: test dlp file function
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpFileTest, TestDlpFile, TestSize.Level1)
+{
+    g_plainFileFd = open("/data/fuse_test.txt", O_CREAT | O_RDWR | O_TRUNC, S_IRWXU | S_IRWXG | S_IRWXO);
+    g_dlpFileFd = open("/data/fuse_test.txt.dlp", O_CREAT | O_RDWR | O_TRUNC, S_IRWXU | S_IRWXG | S_IRWXO);
+    ASSERT_GE(g_plainFileFd, 0);
+    ASSERT_GE(g_dlpFileFd, 0);
+    char buffer[] = "123456";
+    ASSERT_NE(write(g_plainFileFd, buffer, sizeof(buffer)), -1);
+    struct DlpProperty prop;
+    GenerateRandProperty(prop);
+    int32_t result = DlpFileManager::GetInstance().GenerateDlpFile(g_plainFileFd,
+        g_dlpFileFd, prop, g_Dlpfile, DLP_TEST_DIR);
+    ASSERT_EQ(result, 0);
+    ASSERT_NE(g_Dlpfile, nullptr);
+
+    std::string appId = "12345";
+    g_Dlpfile->SetAppId(appId);
+    ASSERT_EQ(g_Dlpfile->GetAppId(), appId);
+
+    std::string fileId = "12345";
+    g_Dlpfile->SetFileId(fileId);
+    ASSERT_EQ(g_Dlpfile->GetFileId(), fileId);
+
+    int32_t accountType = 0;
+    g_Dlpfile->SetAccountType(accountType);
+    ASSERT_EQ(g_Dlpfile->GetAccountType(), accountType);
+
+    result = DlpFileManager::GetInstance().CloseDlpFile(g_Dlpfile);
+    ASSERT_EQ(result, 0);
+    g_Dlpfile = nullptr;
+}
 }  // namespace DlpPermission
 }  // namespace Security
 }  // namespace OHOS
