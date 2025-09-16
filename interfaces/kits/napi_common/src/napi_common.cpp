@@ -1272,6 +1272,15 @@ void GetDlpPropertyExpireTime(napi_env env, napi_value jsObject, DlpProperty& pr
     property.actionUponExpiry = static_cast<ActionType>(jsActionUponExpiry);
 }
 
+void GetAllowedOpenCount(napi_env env, napi_value jsObject, DlpProperty& property)
+{
+    int32_t jsAllowedOpenCount = 0;
+    if (!GetInt32ValueByKey(env, jsObject, "allowedOpenCount", jsAllowedOpenCount)) {
+        DLP_LOG_DEBUG(LABEL, "js get allowed open count fail, will set zero");
+    }
+    property.allowedOpenCount = jsAllowedOpenCount;
+}
+
 static bool GetEnterpriseDlpPropertyAccount(napi_env env, napi_value jsObject, DlpProperty& property)
 {
     if (!GetStringValueByKey(env, jsObject, "ownerAccount", property.ownerAccount) ||
@@ -1315,6 +1324,7 @@ bool GetEnterpriseDlpProperty(napi_env env, napi_value jsObject, DlpProperty& pr
         return false;
     }
     GetDlpPropertyExpireTime(env, jsObject, property);
+    GetAllowedOpenCount(env, jsObject, property);
 
     napi_value everyoneAccessListObj = GetNapiValue(env, jsObject, "everyoneAccessList");
     if (everyoneAccessListObj != nullptr) {
@@ -1373,6 +1383,7 @@ bool GetDlpProperty(napi_env env, napi_value jsObject, DlpProperty& property)
         return false;
     }
     GetDlpPropertyExpireTime(env, jsObject, property);
+    GetAllowedOpenCount(env, jsObject, property);
 
     napi_value everyoneAccessListObj = GetNapiValue(env, jsObject, "everyoneAccessList");
     if (everyoneAccessListObj != nullptr) {
@@ -1728,6 +1739,27 @@ bool GetInt64Value(napi_env env, napi_value jsObject, int64_t& result)
         return false;
     }
     NAPI_CALL_BASE(env, napi_get_value_int64(env, jsObject, &result), false);
+    return true;
+}
+
+bool GetInt32ValueByKey(napi_env env, napi_value jsObject, const std::string& key, int32_t& result)
+{
+    napi_value value = GetNapiValue(env, jsObject, key);
+    return GetInt32Value(env, value, result);
+}
+
+bool GetInt32Value(napi_env env, napi_value jsObject, int32_t& result)
+{
+    napi_valuetype valueType = napi_undefined;
+    if (napi_typeof(env, jsObject, &valueType) != napi_ok) {
+        DLP_LOG_ERROR(LABEL, "Can not get napi type");
+        return false;
+    }
+    if (valueType != napi_number) {
+        DLP_LOG_ERROR(LABEL, "object is no a number");
+        return false;
+    }
+    NAPI_CALL_BASE(env, napi_get_value_int32(env, jsObject, &result), false);
     return true;
 }
 
