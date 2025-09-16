@@ -108,7 +108,7 @@ struct DlpProperty {
     ActionType actionUponExpiry = ActionType::NOTOPEN;
     CustomProperty customProperty;
     std::string fileId;
-    int32_t allowedOpenCount;
+    int32_t allowedOpenCount = 0;
 };
 
 class PermissionPolicy final {
