@@ -717,6 +717,7 @@ HWTEST_F(DlpFileTest, ParseDlpHeader001, TestSize.Level0)
     testFile.dlpFd_ = 1000;
     testFile.isFuseLink_ = false;
     ASSERT_EQ(DLP_PARSE_ERROR_FILE_OPERATE_FAIL, testFile.ProcessDlpFile());
+    ASSERT_NE(DLP_OK, testFile.RemoveDlpPermission(-1));
 }
 
 /**
