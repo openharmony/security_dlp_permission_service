@@ -126,9 +126,15 @@ int32_t DlpZipFile::SetContactAccount(const std::string& contactAccount)
     return DLP_OK;
 };
 
-void DlpZipFile::SetOfflineAccess(bool flag)
+void DlpZipFile::SetOfflineAccess(bool flag, int32_t allowedOpenCount)
 {
-    offlineAccess_ = static_cast<uint32_t>(flag);
+    bool offlineAccess = false;
+    if (allowedOpenCount > 0) {
+        offlineAccess = true;
+    } else {
+        offlineAccess = flag;
+    }
+    offlineAccess_ = static_cast<uint32_t>(offlineAccess);
 }
 
 static bool IsExistFile(const std::string& path)

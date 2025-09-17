@@ -59,6 +59,8 @@ static const std::string POLICY_INDEX = "policy";
 static const std::string READ_INDEX = "read";
 static const std::string RIGHT_INDEX = "right";
 static const std::string CUSTOM_PROPERTY = "customProperty";
+static const std::string ALLOWED_OPEN_COUNT = "allowedOpenCount";
+static const std::string FILEID = "fileId";
 
 static const std::string DEFAULT_CURRENT_ACCOUNT = "ohosAnonymousName";
 static const std::string DEFAULT_CUSTOM_PROPERTY = "customProperty";
@@ -214,23 +216,21 @@ static uint32_t DeserializeDlpPermission(const std::string& queryResult, Permiss
         return DLP_SERVICE_ERROR_JSON_OPERATE_FAIL;
     }
     json policyJson = json::parse(queryResult);
-    if (policyJson.find(OWNER_ACCOUNT_NAME) != policyJson.end() && policyJson.at(OWNER_ACCOUNT_NAME).is_string()) {
-        policyJson.at(OWNER_ACCOUNT_NAME).get_to(policy.ownerAccount_);
-    }
-    if (policyJson.find(OWNER_ACCOUNT_ID) != policyJson.end() && policyJson.at(OWNER_ACCOUNT_ID).is_string()) {
-        policyJson.at(OWNER_ACCOUNT_ID).get_to(policy.ownerAccountId_);
-    }
-    if (policyJson.find(PERM_EXPIRY_TIME) != policyJson.end() && policyJson.at(PERM_EXPIRY_TIME).is_number()) {
-        policyJson.at(PERM_EXPIRY_TIME).get_to(policy.expireTime_);
-    }
-    if (policyJson.find(ACTION_UPON_EXPIRY) != policyJson.end() && policyJson.at(ACTION_UPON_EXPIRY).is_number()) {
-        policyJson.at(ACTION_UPON_EXPIRY).get_to(policy.actionUponExpiry_);
-    }
-    if (policyJson.find(NEED_ONLINE) != policyJson.end() && policyJson.at(NEED_ONLINE).is_number()) {
-        policyJson.at(NEED_ONLINE).get_to(policy.needOnline_);
-    }
-    if (policyJson.find(CUSTOM_PROPERTY) != policyJson.end() && policyJson.at(CUSTOM_PROPERTY).is_string()) {
-        policyJson.at(CUSTOM_PROPERTY).get_to(policy.customProperty_);
+    std::vector<FieldMapping> mappings = {
+        {OWNER_ACCOUNT_NAME, &policy.ownerAccount_, [](const json& j) { return j.is_string(); }},
+        {OWNER_ACCOUNT_ID, &policy.ownerAccountId_, [](const json& j) { return j.is_string(); }},
+        {PERM_EXPIRY_TIME, &policy.expireTime_, [](const json& j) { return j.is_number(); }},
+        {ACTION_UPON_EXPIRY, &policy.actionUponExpiry_, [](const json& j) { return j.is_number(); }},
+        {NEED_ONLINE, &policy.needOnline_, [](const json& j) { return j.is_number(); }},
+        {CUSTOM_PROPERTY, &policy.customProperty_, [](const json& j) { return j.is_string(); }},
+        {FILEID, &policy.fileId, [](const json& j) { return j.is_string(); }},
+        {ALLOWED_OPEN_COUNT, &policy.allowedOpenCount_, [](const json& j) { return j.is_number(); }},
+    };
+    for (const auto& mapping : mappings) {
+        if (policyJson.find(mapping.jsonField) != policyJson.end() &&
+            mapping.validator(policyJson.at(mapping.jsonField))) {
+            policyJson.at(mapping.jsonField).get_to(*static_cast<decltype(mapping.target)>(mapping.target));
+        }
     }
     json accountListJson;
     if (policyJson.find(ACCOUNT_INDEX) != policyJson.end() && policyJson.at(ACCOUNT_INDEX).is_object()) {
@@ -272,6 +272,7 @@ static bool IsSameProperty(const PermissionPolicy& property, const PermissionPol
         property.expireTime_ == queryProperty.expireTime_ &&
         property.needOnline_ == queryProperty.needOnline_ &&
         property.actionUponExpiry_ == queryProperty.actionUponExpiry_ &&
+        property.allowedOpenCount_ == queryProperty.allowedOpenCount_ &&
         IsSameAuthInfo(property.authUsers_, queryProperty.authUsers_);
 }
 
@@ -307,7 +308,9 @@ HWTEST_F(DlpFileOperatorTest, EnterpriseSpaceEncryptDlpFile001, TestSize.Level0)
         .supportEveryone = false,
         .everyonePerm = DLPFileAccess::NO_PERMISSION,
         .expireTime = 0,
-        .actionUponExpiry = ActionType::NOTOPEN
+        .actionUponExpiry = ActionType::NOTOPEN,
+        .fileid = '121212121212',
+        .allowedOpenCount = 1
     };
     CustomProperty customProperty = {
         .enterprise = DEFAULT_CUSTOM_PROPERTY
@@ -359,7 +362,9 @@ HWTEST_F(DlpFileOperatorTest, EnterpriseSpaceDecryptDlpFile001, TestSize.Level0)
         .supportEveryone = false,
         .everyonePerm = DLPFileAccess::NO_PERMISSION,
         .expireTime = 0,
-        .actionUponExpiry = ActionType::NOTOPEN
+        .actionUponExpiry = ActionType::NOTOPEN,
+        .fileid = '121212121212',
+        .allowedOpenCount = 1
     };
     CustomProperty customProperty = {
         .enterprise = DEFAULT_CUSTOM_PROPERTY
@@ -421,7 +426,9 @@ HWTEST_F(DlpFileOperatorTest, EnterpriseSpaceQueryDlpProperty001, TestSize.Level
         .supportEveryone = false,
         .everyonePerm = DLPFileAccess::NO_PERMISSION,
         .expireTime = 0,
-        .actionUponExpiry = ActionType::NOTOPEN
+        .actionUponExpiry = ActionType::NOTOPEN,
+        .fileid = '121212121212',
+        .allowedOpenCount = 1
     };
     CustomProperty customProperty = {
         .enterprise = DEFAULT_CUSTOM_PROPERTY
@@ -470,7 +477,9 @@ HWTEST_F(DlpFileOperatorTest, EnterpriseSpaceQueryDlpProperty002, TestSize.Level
         .supportEveryone = false,
         .everyonePerm = DLPFileAccess::NO_PERMISSION,
         .expireTime = 0,
-        .actionUponExpiry = ActionType::NOTOPEN
+        .actionUponExpiry = ActionType::NOTOPEN,
+        .fileid = '121212121212',
+        .allowedOpenCount = 1
     };
     CustomProperty customProperty = {
         .enterprise = DEFAULT_CUSTOM_PROPERTY

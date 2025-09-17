@@ -141,6 +141,8 @@ PermissionPolicy::PermissionPolicy()
     dlpVersion_ = CURRENT_VERSION;
     debug_ = false;
     customProperty_ = "";
+    fileId = "";
+    allowedOpenCount_ = 0;
 }
 
 PermissionPolicy::PermissionPolicy(const DlpProperty& property)
@@ -164,6 +166,7 @@ PermissionPolicy::PermissionPolicy(const DlpProperty& property)
     debug_ = false;
     customProperty_ = property.customProperty.enterprise;
     fileId = property.fileId;
+    allowedOpenCount_ = property.allowedOpenCount;
 }
 
 PermissionPolicy::~PermissionPolicy()
@@ -297,8 +300,9 @@ void PermissionPolicy::CopyPermissionPolicy(const PermissionPolicy& srcPolicy)
     dlpVersion_ = srcPolicy.dlpVersion_;
     if (srcPolicy.ownerAccountType_ == ENTERPRISE_ACCOUNT) {
         appId = srcPolicy.appId;
-        fileId = srcPolicy.fileId;
     }
+    fileId = srcPolicy.fileId;
+    allowedOpenCount_ = srcPolicy.allowedOpenCount_;
 }
 
 int32_t PermissionPolicy::CheckActionUponExpiry()

@@ -19,6 +19,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <uuid/uuid.h>
 #include <string>
 
 #include "dlp_crypt.h"
@@ -40,6 +41,8 @@ namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "DlpFileManager"};
 static constexpr uint32_t MAX_DLP_FILE_SIZE = 1000; // max open dlp file
 static constexpr uint32_t DECRYPTTYPEFORUSER = 2;
+static const int32_t FILE_UUID_SIZE = 36;
+static const int32_t FILE_UUID_STR_SIZE = 37;
 const std::string PATH_CACHE = "/cache";
 const std::string SUPPORT_PHOTO_DLP = "support_photo_dlp";
 const std::string SUPPORT_VIDEO_DLP = "support_video_dlp";
@@ -269,6 +272,19 @@ void DlpFileManager::FreeChiperBlob(struct DlpBlob& key, struct DlpBlob& certDat
     }
 }
 
+int32_t DlpFileManager::GenerateFileId(std::string& fileId) const
+{
+    uuid_t uuid_bin;
+    char uuid_str[FILE_UUID_STR_SIZE] = {};
+    uuid_generate_random(uuid_bin);
+    uuid_unparse_lower(uuid_bin, uuid_str);
+    fileId = uuid_str;
+    if (fileId.length() != FILE_UUID_SIZE) {
+        return DLP_PARSE_ERROR_GENERATE_FILEID_ERROR;
+    }
+    return DLP_OK;
+}
+
 int32_t DlpFileManager::SetDlpFileParams(std::shared_ptr<DlpFile>& filePtr, const DlpProperty& property) const
 {
     PermissionPolicy policy(property);
@@ -285,7 +301,13 @@ int32_t DlpFileManager::SetDlpFileParams(std::shared_ptr<DlpFile>& filePtr, cons
 
     if (property.ownerAccountType == ENTERPRISE_ACCOUNT) {
         policy.appId = filePtr->GetAppId();
-        policy.fileId = property.fileId;
+    }
+
+    policy.allowedOpenCount_ = property.allowedOpenCount_;
+    result = GenerateFileId(policy.fileId);
+    if (result != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "GenerateFileId error, errno=%{public}d", result);
+        return result;
     }
 
     result = PrepareDlpEncryptParms(policy, key, usage, certData, hmacKey);
@@ -320,7 +342,7 @@ int32_t DlpFileManager::SetDlpFileParams(std::shared_ptr<DlpFile>& filePtr, cons
         DLP_LOG_WARN(LABEL, "Set dlp obj params fail, set contact account error, errno=%{public}d", result);
     }
 
-    filePtr->SetOfflineAccess(property.offlineAccess);
+    filePtr->SetOfflineAccess(property.offlineAccess, property.allowedOpenCount);
 
     FreeChiperBlob(key, certData, usage, hmacKey);
     return result;

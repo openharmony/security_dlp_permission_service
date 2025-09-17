@@ -81,6 +81,8 @@ static void GenerateProp(DlpProperty& prop, const std::string& account)
     prop.everyonePerm = DLPFileAccess::FULL_CONTROL;
     prop.expireTime = 0;
     prop.actionUponExpiry = ActionType::OPEN;
+    prop.fileId = '111';
+    prop.allowedOpenCount = 1;
 }
 
 static void RawFileFuzzTest(const uint8_t* data, size_t size)

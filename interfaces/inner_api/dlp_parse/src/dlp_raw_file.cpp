@@ -130,10 +130,18 @@ int32_t DlpRawFile::SetContactAccount(const std::string& contactAccount)
     return DLP_OK;
 };
 
-void DlpRawFile::SetOfflineAccess(bool flag)
+void DlpRawFile::SetOfflineAccess(bool flag, int32_t allowedOpenCount)
 {
-    offlineAccess_ = static_cast<uint32_t>(flag);
-    head_.offlineAccess = static_cast<uint32_t>(flag);
+    bool offlineAccess = false;
+    if (allowedOpenCount > 0) {
+        offlineAccess = true;
+    } else {
+        offlineAccess = flag;
+    }
+    DLP_LOG_ERROR(LABEL, "bsx SetOfflineAccess offlineAccess %{public}s flag %{public}s allowedOpenCount %{public}d",
+        offlineAccess ? "true" : "false", flag ? "true" : "false", allowedOpenCount);
+    offlineAccess_ = static_cast<uint32_t>(offlineAccess);
+    head_.offlineAccess = static_cast<uint32_t>(offlineAccess);
 }
 
 bool DlpRawFile::IsValidDlpHeader(const struct DlpHeader& head) const

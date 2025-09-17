@@ -181,6 +181,10 @@ bool DlpPolicyParcel::MarshallingExpireTime(Parcel& out) const
         DLP_LOG_ERROR(LABEL, "Write needOnline_ fail");
         return false;
     }
+    if (!(out.WriteInt32(this->policyParams_.allowedOpenCount_))) {
+        DLP_LOG_ERROR(LABEL, "Write allowedOpenCount_ fail");
+        return false;
+    }
     return true;
 }
 
@@ -356,6 +360,10 @@ static bool ReadParcel(Parcel& in, DlpPolicyParcel* policyParcel)
     }
     if (!(in.ReadString(policyParcel->policyParams_.fileId))) {
         DLP_LOG_ERROR(LABEL, "Read fileId fail");
+        return false;
+    }
+    if (!(in.ReadInt32(policyParcel->policyParams_.allowedOpenCount_))) {
+        DLP_LOG_ERROR(LABEL, "Read allowedOpenCount fail");
         return false;
     }
     return true;

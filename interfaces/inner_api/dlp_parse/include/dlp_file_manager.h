@@ -59,6 +59,7 @@ public:
     int32_t ParseZipDlpFileAndAddNode(std::shared_ptr<DlpFile>& filePtr, const std::string& appId);
     int32_t OpenZipDlpFile(int32_t dlpFileFd, std::shared_ptr<DlpFile>& filePtr, const std::string& workDir,
                            const std::string& appId, const std::string& realType);
+    int32_t GenerateFileId(std::string& fileId) const;
 
 private:
     DlpFileManager() {};

@@ -150,6 +150,7 @@ public:
     std::string customProperty_ = "";
     std::string fileId = "";
     std::string appId = "";
+    int32_t allowedOpenCount_ = 0;
 
 private:
     uint8_t* aeskey_;

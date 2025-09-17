@@ -63,6 +63,7 @@ static const std::string RIGHT_INDEX = "right";
 static const std::string CUSTOM_PROPERTY = "customProperty";
 const std::string PATH_CACHE = "cache";
 const std::string FILEID = "fileId";
+const std::string ALLOWED_OPEN_COUNT = "allowedOpenCount";
 
 static const uint32_t FILE_HEAD = 8;
 static const uint32_t MAX_DLP_HEAD_SIZE = 1024;
@@ -175,6 +176,7 @@ static int32_t SerializePermissionPolicy(const PermissionPolicy& policy, std::st
     policyJson[NEED_ONLINE] = policy.needOnline_;
     policyJson[CUSTOM_PROPERTY] = policy.customProperty_;
     policyJson[FILEID] = policy.fileId;
+    policyJson[ALLOWED_OPEN_COUNT] = policy.allowedOpenCount_;
     SerializeEveryoneInfo(policy, policyJson);
     policyString = policyJson.dump();
     return DLP_OK;

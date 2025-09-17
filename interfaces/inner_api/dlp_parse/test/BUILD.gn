@@ -101,6 +101,7 @@ ohos_unittest("dlp_parse_test") {
     "os_account:os_account_innerkits",
     "samgr:samgr_proxy",
     "zlib:shared_libz",
+    "e2fsprogs:libext2_uuid",
   ]
 
   configs = [
@@ -183,6 +184,7 @@ ohos_unittest("dlp_utils_test") {
     "os_account:os_account_innerkits",
     "samgr:samgr_proxy",
     "zlib:shared_libz",
+    "e2fsprogs:libext2_uuid",
   ]
 
   configs = [

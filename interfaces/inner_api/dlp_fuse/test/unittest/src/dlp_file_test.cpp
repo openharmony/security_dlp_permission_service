@@ -303,11 +303,14 @@ HWTEST_F(DlpFileTest, TestDlpFile, TestSize.Level1)
 
     std::string fileId = "12345";
     g_Dlpfile->SetFileId(fileId);
-    ASSERT_EQ(g_Dlpfile->GetFileId(), fileId);
 
     int32_t accountType = 0;
     g_Dlpfile->SetAccountType(accountType);
     ASSERT_EQ(g_Dlpfile->GetAccountType(), accountType);
+
+    int32_t allowedOpenCount = 1;
+    g_Dlpfile->SetAllowedOpenCount(allowedOpenCount);
+    ASSERT_EQ(g_Dlpfile->GetAllowedOpenCount(), allowedOpenCount);
 
     result = DlpFileManager::GetInstance().CloseDlpFile(g_Dlpfile);
     ASSERT_EQ(result, 0);

@@ -1272,6 +1272,19 @@ void GetDlpPropertyExpireTime(napi_env env, napi_value jsObject, DlpProperty& pr
     property.actionUponExpiry = static_cast<ActionType>(jsActionUponExpiry);
 }
 
+void GetAllowedOpenCount(napi_env env, napi_value jsObject, DlpProperty& property)
+{
+    int32_t jsAllowedOpenCount = 0;
+    if (!GetInt32ValueByKey(env, jsObject, "allowedOpenCount", jsAllowedOpenCount)) {
+        DLP_LOG_DEBUG(LABEL, "js get allowed open count fail, will set zero");
+    }
+    property.allowedOpenCount = jsAllowedOpenCount;
+    if (!GetStringValueByKey(env, jsObject, "fileId", property.fileId) ||
+        !IsStringLengthValid(property.fileId, MAX_ACCOUNT_LEN)) {
+        DLP_LOG_ERROR(LABEL, "js get fileId fail");
+    }
+}
+
 static bool GetEnterpriseDlpPropertyAccount(napi_env env, napi_value jsObject, DlpProperty& property)
 {
     if (!GetStringValueByKey(env, jsObject, "ownerAccount", property.ownerAccount) ||
@@ -1315,6 +1328,7 @@ bool GetEnterpriseDlpProperty(napi_env env, napi_value jsObject, DlpProperty& pr
         return false;
     }
     GetDlpPropertyExpireTime(env, jsObject, property);
+    GetAllowedOpenCount(env, jsObject, property);
 
     napi_value everyoneAccessListObj = GetNapiValue(env, jsObject, "everyoneAccessList");
     if (everyoneAccessListObj != nullptr) {
@@ -1330,11 +1344,6 @@ bool GetEnterpriseDlpProperty(napi_env env, napi_value jsObject, DlpProperty& pr
         }
     }
 
-    if (!GetStringValueByKey(env, jsObject, "fileId", property.fileId) ||
-        !IsStringLengthValid(property.fileId, MAX_ACCOUNT_LEN)) {
-        DLP_LOG_ERROR(LABEL, "js get fileId fail");
-        return false;
-    }
     return true;
 }
 
@@ -1373,6 +1382,7 @@ bool GetDlpProperty(napi_env env, napi_value jsObject, DlpProperty& property)
         return false;
     }
     GetDlpPropertyExpireTime(env, jsObject, property);
+    GetAllowedOpenCount(env, jsObject, property);
 
     napi_value everyoneAccessListObj = GetNapiValue(env, jsObject, "everyoneAccessList");
     if (everyoneAccessListObj != nullptr) {
@@ -1507,6 +1517,14 @@ napi_value DlpPropertyToJs(napi_env env, const DlpProperty& property)
     napi_value ownerAccountTypeJs;
     NAPI_CALL(env, napi_create_int64(env, property.ownerAccountType, &ownerAccountTypeJs));
     NAPI_CALL(env, napi_set_named_property(env, dlpPropertyJs, "ownerAccountType", ownerAccountTypeJs));
+
+    napi_value fileIdJs;
+    NAPI_CALL(env, napi_create_string_utf8(env, property.fileId.c_str(), NAPI_AUTO_LENGTH, &fileIdJs));
+    NAPI_CALL(env, napi_set_named_property(env, dlpPropertyJs, "fileId", fileIdJs));
+
+    napi_value allowedOpenCountJs;
+    NAPI_CALL(env, napi_create_int32(env, property.allowedOpenCount, &allowedOpenCountJs));
+    NAPI_CALL(env, napi_set_named_property(env, dlpPropertyJs, "allowedOpenCount", allowedOpenCountJs));
 
     return dlpPropertyJs;
 }

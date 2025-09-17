@@ -74,6 +74,7 @@ const std::string CUSTOM_PROPERTY = "customProperty";
 const std::string ENTERPRISE = "enterprise";
 const std::string APPID = "appId";
 const std::string FILEID = "fileId";
+const std::string ALLOWED_OPEN_COUNT = "allowedOpenCount";
 constexpr uint64_t  VALID_TIME_STAMP = 2147483647;
 static const uint32_t DOMAIN_VERSION = 2;
 static const uint32_t CLOUD_VERSION = 1;
@@ -395,8 +396,9 @@ int32_t DlpPermissionSerializer::SerializeDlpPermission(const PermissionPolicy& 
     SerializeEveryoneInfo(policy, policyJson);
     if (policy.ownerAccountType_ == ENTERPRISE_ACCOUNT) {
         policyJson[APPID] = policy.appId;
-        policyJson[FILEID] = policy.fileId;
     }
+    policyJson[FILEID] = policy.fileId;
+    policyJson[ALLOWED_OPEN_COUNT] = policy.allowedOpenCount_;
     permInfoJson[POLICY_INDEX] = policyJson;
 
     unordered_json fileEnc;
@@ -514,6 +516,9 @@ static void InitPermissionPolicy(PermissionPolicy& policy, const std::vector<Aut
     }
     if (policyJson.find(CUSTOM_PROPERTY) != policyJson.end() && policyJson.at(CUSTOM_PROPERTY).is_string()) {
         policyJson.at(CUSTOM_PROPERTY).get_to(policy.customProperty_);
+    }
+    if (policyJson.find(ALLOWED_OPEN_COUNT) != policyJson.end() && policyJson.at(ALLOWED_OPEN_COUNT).is_number()) {
+        policyJson.at(ALLOWED_OPEN_COUNT).get_to(policy.allowedOpenCount_);
     }
     policy.ownerAccountType_ = CLOUD_ACCOUNT;
 }

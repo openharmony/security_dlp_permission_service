@@ -251,6 +251,8 @@ static void GetDlpProperty(std::shared_ptr<DlpFile>& dlpFileNative, DlpProperty&
     dlpFileNative->GetPolicy(policy);
     std::string contactAccount;
     dlpFileNative->GetContactAccount(contactAccount);
+    std::string fileId;
+    dlpFileNative->GetFileId(fileId);
     property = {
         .ownerAccount = policy.ownerAccount_,
         .ownerAccountId = policy.ownerAccountId_,
@@ -261,6 +263,7 @@ static void GetDlpProperty(std::shared_ptr<DlpFile>& dlpFileNative, DlpProperty&
         .supportEveryone = policy.supportEveryone_,
         .everyonePerm = policy.everyonePerm_,
         .expireTime = policy.expireTime_,
+        .allowedOpenCount = policy.allowedOpenCount_,
     };
 }
 
