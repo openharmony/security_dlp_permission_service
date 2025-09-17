@@ -59,17 +59,11 @@
 
 ## 部件独立编译命令
 
-./build.sh --product-name rk3568 --build-target dlp_permission_build_module --ccache 
-
-## 使用说明
-
-**使用指导**
+./build.sh --product-name rk3568 --build-target dlp_permission_build_module --ccache
 
 ## 相关仓
 
-安全子系统
+[DLP权限管理应用](https://gitcode.com/openharmony/applications_dlp_manager)
 
-DLP权限管理部件
-
-**security\_dlp\_permission\_service**
+[**DLP权限管理服务**](https://gitcode.com/openharmony/security_dlp_permission_service)
 
