@@ -108,6 +108,7 @@ struct DlpProperty {
     ActionType actionUponExpiry = ActionType::NOTOPEN;
     CustomProperty customProperty;
     std::string fileId;
+    int32_t allowedOpenCount = 0;
 };
 
 class PermissionPolicy final {
@@ -131,6 +132,7 @@ public:
     uint8_t* GetHmacKey() const;
     uint32_t GetHmacKeyLen() const;
     int32_t CheckActionUponExpiry();
+    int32_t GetAllowedOpenCount() const;
 
     std::string ownerAccount_;
     std::string ownerAccountId_;

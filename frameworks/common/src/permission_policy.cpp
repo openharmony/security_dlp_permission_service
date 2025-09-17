@@ -269,6 +269,11 @@ uint32_t PermissionPolicy::GetHmacKeyLen() const
     return hmacKeyLen_;
 }
 
+int32_t PermissionPolicy::GetAllowedOpenCount() const
+{
+    return allowedOpenCount_;
+}
+
 void PermissionPolicy::CopyPolicyHmac(const PermissionPolicy& srcPolicy)
 {
     if (srcPolicy.hmacKeyLen_ == 0 || srcPolicy.hmacKey_ == nullptr) {

@@ -391,7 +391,8 @@ HWTEST_F(DlpFileManagerTest, ParseDlpFileFormat004, TestSize.Level0)
     ASSERT_NE(g_fdDlp, -1);
     std::shared_ptr<DlpFile> filePtr = std::make_shared<DlpRawFile>(g_fdDlp, "txt");
     ASSERT_NE(filePtr, nullptr);
-    filePtr->SetOfflineAccess(true);
+    filePtr->SetOfflineAccess(true, 0);
+    filePtr->SetOfflineAccess(true, 1);
 
     std::string appId = "test_appId_passed";
     EXPECT_EQ(DLP_PARSE_ERROR_FILE_FORMAT_ERROR,
@@ -589,7 +590,8 @@ HWTEST_F(DlpFileManagerTest, GenerateDlpFile001, TestSize.Level0)
     DlpFileManager::GetInstance().GenRawDlpFile(dlpFileMes, rawProperty, rawFilePtr);
 
     std::vector<uint8_t> offlineCert;
-    DlpFileManager::GetInstance().DlpRawHmacCheckAndUpdata(rawFilePtr, offlineCert);
+    DlpFileManager::GetInstance().DlpRawHmacCheckAndUpdata(rawFilePtr, offlineCert, 0);
+    DlpFileManager::GetInstance().DlpRawHmacCheckAndUpdata(rawFilePtr, offlineCert, 1);
 }
 
 /**

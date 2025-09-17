@@ -216,21 +216,29 @@ static uint32_t DeserializeDlpPermission(const std::string& queryResult, Permiss
         return DLP_SERVICE_ERROR_JSON_OPERATE_FAIL;
     }
     json policyJson = json::parse(queryResult);
-    std::vector<FieldMapping> mappings = {
-        {OWNER_ACCOUNT_NAME, &policy.ownerAccount_, [](const json& j) { return j.is_string(); }},
-        {OWNER_ACCOUNT_ID, &policy.ownerAccountId_, [](const json& j) { return j.is_string(); }},
-        {PERM_EXPIRY_TIME, &policy.expireTime_, [](const json& j) { return j.is_number(); }},
-        {ACTION_UPON_EXPIRY, &policy.actionUponExpiry_, [](const json& j) { return j.is_number(); }},
-        {NEED_ONLINE, &policy.needOnline_, [](const json& j) { return j.is_number(); }},
-        {CUSTOM_PROPERTY, &policy.customProperty_, [](const json& j) { return j.is_string(); }},
-        {FILEID, &policy.fileId, [](const json& j) { return j.is_string(); }},
-        {ALLOWED_OPEN_COUNT, &policy.allowedOpenCount_, [](const json& j) { return j.is_number(); }},
-    };
-    for (const auto& mapping : mappings) {
-        if (policyJson.find(mapping.jsonField) != policyJson.end() &&
-            mapping.validator(policyJson.at(mapping.jsonField))) {
-            policyJson.at(mapping.jsonField).get_to(*static_cast<decltype(mapping.target)>(mapping.target));
-        }
+    if (policyJson.find(OWNER_ACCOUNT_NAME) != policyJson.end() && policyJson.at(OWNER_ACCOUNT_NAME).is_string()) {	
+        policyJson.at(OWNER_ACCOUNT_NAME).get_to(policy.ownerAccount_);	
+    }
+    if (policyJson.find(OWNER_ACCOUNT_ID) != policyJson.end() && policyJson.at(OWNER_ACCOUNT_ID).is_string()) {	
+        policyJson.at(OWNER_ACCOUNT_ID).get_to(policy.ownerAccountId_);	
+    }
+    if (policyJson.find(PERM_EXPIRY_TIME) != policyJson.end() && policyJson.at(PERM_EXPIRY_TIME).is_number()) {	
+        policyJson.at(PERM_EXPIRY_TIME).get_to(policy.expireTime_);	
+    }
+    if (policyJson.find(ACTION_UPON_EXPIRY) != policyJson.end() && policyJson.at(ACTION_UPON_EXPIRY).is_number()) {	
+        policyJson.at(ACTION_UPON_EXPIRY).get_to(policy.actionUponExpiry_);	
+    }
+    if (policyJson.find(NEED_ONLINE) != policyJson.end() && policyJson.at(NEED_ONLINE).is_number()) {	
+        policyJson.at(NEED_ONLINE).get_to(policy.needOnline_);	
+    }
+    if (policyJson.find(CUSTOM_PROPERTY) != policyJson.end() && policyJson.at(CUSTOM_PROPERTY).is_string()) {
+        policyJson.at(CUSTOM_PROPERTY).get_to(policy.customProperty_);
+    }
+    if (policyJson.find(FILEID) != policyJson.end() && policyJson.at(FILEID).is_string()) {
+        policyJson.at(FILEID).get_to(policy.fileId);
+    }
+    if (policyJson.find(ALLOWED_OPEN_COUNT) != policyJson.end() && policyJson.at(ALLOWED_OPEN_COUNT).is_number()) {	
+        policyJson.at(ALLOWED_OPEN_COUNT).get_to(policy.allowedOpenCount_);	
     }
     json accountListJson;
     if (policyJson.find(ACCOUNT_INDEX) != policyJson.end() && policyJson.at(ACCOUNT_INDEX).is_object()) {

@@ -158,8 +158,8 @@ HWTEST_F(PermissionPolicyTest, IsValid003, TestSize.Level1)
     policy->ownerAccountType_ = INVALID_ACCOUNT;
     ASSERT_FALSE(policy->IsValid());
 
-    // account APPLICATION_ACCOUNT + 1
-    policy->ownerAccountType_ = static_cast<DlpAccountType>(APPLICATION_ACCOUNT + 1);
+    // account APPLICATION_ACCOUNT + APPLICATION_ACCOUNT
+    policy->ownerAccountType_ = static_cast<DlpAccountType>(APPLICATION_ACCOUNT + APPLICATION_ACCOUNT);
     ASSERT_FALSE(policy->IsValid());
     delete[] policy->iv_;
     policy->iv_ = nullptr;

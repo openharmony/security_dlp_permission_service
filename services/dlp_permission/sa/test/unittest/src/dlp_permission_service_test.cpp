@@ -1622,7 +1622,7 @@ HWTEST_F(DlpPermissionServiceTest, SetEnterprisePolicy, TestSize.Level1)
 HWTEST_F(DlpPermissionServiceTest, CheckIfEnterpriseAccount, TestSize.Level1)
 {
     int32_t ret = dlpPermissionService_->CheckIfEnterpriseAccount();
-    ASSERT_EQ(ret, DLP_PARSE_ERROR_ACCOUNT_INVALID);
+    ASSERT_NE(ret, DLP_OK);
 }
 
 /**

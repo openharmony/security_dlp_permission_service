@@ -55,8 +55,7 @@
         "json",
         "zlib",
         "openssl",
-        "libfuse",
-        "e2fsprogs"
+        "libfuse"
       ],
       "third_party": []
     },

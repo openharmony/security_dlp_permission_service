@@ -134,11 +134,11 @@ void DlpRawFile::SetOfflineAccess(bool flag, int32_t allowedOpenCount)
 {
     bool offlineAccess = false;
     if (allowedOpenCount > 0) {
-        offlineAccess = true;
+        offlineAccess = false;
     } else {
         offlineAccess = flag;
     }
-    DLP_LOG_ERROR(LABEL, "bsx SetOfflineAccess offlineAccess %{public}s flag %{public}s allowedOpenCount %{public}d",
+    DLP_LOG_DEBUG(LABEL, "SetOfflineAccess offlineAccess %{public}s flag %{public}s allowedOpenCount %{public}d",
         offlineAccess ? "true" : "false", flag ? "true" : "false", allowedOpenCount);
     offlineAccess_ = static_cast<uint32_t>(offlineAccess);
     head_.offlineAccess = static_cast<uint32_t>(offlineAccess);

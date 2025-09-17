@@ -33,8 +33,7 @@ static const std::string DLP_REAL_TYPE = "realFileType";
 static const std::string CERT_SIZE = "certSize";
 static const uint32_t MIN_REALY_TYPE_LENGTH = 2;
 static const uint32_t MAX_REALY_TYPE_LENGTH = 5;
-static const uint32_t EXTRA_CERT_SIZE = UINT32_MAX;
-static const uint32_t MAX_CERT_SIZE = 30 * 1024;
+static const uint32_t LIMIT_CERT_SIZE = 10000;
 static bool checkParams(GenerateInfoParams& params, const nlohmann::json& jsonObj,
                         const std::string& versionKey, const std::string& infoKey)
 {
@@ -76,8 +75,14 @@ int32_t GenerateDlpGeneralInfo(const GenerateInfoParams& params, std::string& ge
     if (params.realType.size() >= MIN_REALY_TYPE_LENGTH && params.realType.size() <= MAX_REALY_TYPE_LENGTH) {
         dlp_general_info[DLP_REAL_TYPE] = params.realType;
     }
-    dlp_general_info[CERT_SIZE] = params.certSize ^ EXTRA_CERT_SIZE;
+    dlp_general_info[CERT_SIZE] = params.certSize;
     generalInfo = dlp_general_info.dump();
+    size_t pos = generalInfo.find(CERT_SIZE);
+    if (pos != std::string::npos &&
+        params.certSize < LIMIT_CERT_SIZE && pos + CERT_SIZE.size() + 1 < generalInfo.size()) {
+        generalInfo = generalInfo.substr(0, pos + CERT_SIZE.size() + 1) +
+            " " + generalInfo.substr(pos + CERT_SIZE.size() + 1, generalInfo.size());
+    }
     return DLP_OK;
 }
 
@@ -100,10 +105,11 @@ int32_t ParseDlpGeneralInfo(const std::string& generalInfo, GenerateInfoParams& 
         return DLP_PARSE_ERROR_VALUE_INVALID;
     }
     auto iter = jsonObj.find(DLP_OFFLINE_FLAG);
-    if ((iter == jsonObj.end()) || !(iter->is_boolean())) {
+    if (iter != jsonObj.end() && iter->is_boolean()) {
+        params.offlineAccessFlag = iter->get<bool>();
+    } else {
         return DLP_PARSE_ERROR_VALUE_INVALID;
     }
-    params.offlineAccessFlag = iter->get<bool>();
     iter = jsonObj.find(DLP_CONTACT_ACCOUNT);
     if (iter != jsonObj.end() && iter->is_string()) {
         params.contactAccount = iter->get<std::string>();
@@ -125,7 +131,6 @@ int32_t ParseDlpGeneralInfo(const std::string& generalInfo, GenerateInfoParams& 
     params.certSize = 0;
     if (iter != jsonObj.end() && iter->is_number_integer()) {
         params.certSize = iter->get<uint32_t>();
-        params.certSize = (params.certSize > MAX_CERT_SIZE) ? (params.certSize ^ EXTRA_CERT_SIZE) : params.certSize;
     }
     return DLP_OK;
 }

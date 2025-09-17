@@ -35,6 +35,7 @@ private:
     bool MarshallingExpireTime(Parcel& out) const;
     bool MarshallingKey(Parcel& out) const;
     bool MarshallingUserList(Parcel& out) const;
+    bool MarshallingDlpPolicy(Parcel& out) const;
 };
 }  // namespace DlpPermission
 }  // namespace Security

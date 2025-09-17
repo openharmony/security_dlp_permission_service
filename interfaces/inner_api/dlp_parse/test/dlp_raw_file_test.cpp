@@ -40,6 +40,8 @@ static const uint64_t DLP_CERT_SIZE = 1024 * 1024;
 static const uint32_t DLP_HEAD_SIZE = 10 * 1024 * 1024;
 static const std::string DLP_TEST_DIR = "/data/dlpTest/";
 static constexpr int32_t SECOND = 2;
+static const uint32_t FILE_HEAD = 8;
+static const uint32_t MAX_CERT_SIZE = 30 * 1024;
 }
 
 void DlpRawFileTest::SetUpTestCase() {}
@@ -363,4 +365,90 @@ HWTEST_F(DlpRawFileTest, ParseEnterpriseFileIdTest, TestSize.Level1)
 {
     std::shared_ptr<DlpRawFile> filePtr = std::make_shared<DlpRawFile>(-1, "mp4");
     ASSERT_NE(filePtr->ParseEnterpriseFileId(0, 0), DLP_OK);
+}
+
+/**
+ * @tc.name: IsValidEnterpriseDlpHeader
+ * @tc.desc: test IsValidEnterpriseDlpHeader
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpRawFileTest, IsValidEnterpriseDlpHeader, TestSize.Level1)
+{
+    std::shared_ptr<DlpRawFile> testFile = std::make_shared<DlpRawFile>(1000, "txt");
+    struct DlpHeader header = {
+        .magic = DLP_FILE_MAGIC,
+        .fileType = 10,
+        .offlineAccess = 0,
+        .algType = DLP_MODE_CTR,
+        .txtOffset = sizeof(struct DlpHeader) + 8,
+        .txtSize = 100,
+        .hmacOffset = sizeof(struct DlpHeader) + 108,
+        .hmacSize = 64,
+        .certOffset = sizeof(struct DlpHeader) + 172,
+        .certSize = 256,
+        .contactAccountOffset = sizeof(struct DlpHeader) + 8,
+        .contactAccountSize = 0,
+        .offlineCertOffset = sizeof(struct DlpHeader) + 272,
+        .offlineCertSize = 0
+    };
+    uint32_t dlpHeaderSize = sizeof(struct DlpHeader);
+
+    // valid header
+    ASSERT_TRUE(testFile->IsValidEnterpriseDlpHeader(header, dlpHeaderSize));
+
+    // wrong magic
+    header.magic = 0;
+    ASSERT_FALSE(testFile->IsValidEnterpriseDlpHeader(header, dlpHeaderSize));
+    header.magic = DLP_FILE_MAGIC;
+
+    // certSize 0
+    header.certSize = 0;
+    ASSERT_FALSE(testFile->IsValidEnterpriseDlpHeader(header, dlpHeaderSize));
+
+    // certSize too large
+    header.certSize = DLP_MAX_CERT_SIZE + 1;
+    ASSERT_FALSE(testFile->IsValidEnterpriseDlpHeader(header, dlpHeaderSize));
+    header.certSize = 20;
+
+    // certOffset invalid
+    header.certOffset = 100;
+    ASSERT_FALSE(testFile->IsValidEnterpriseDlpHeader(header, dlpHeaderSize));
+    header.certOffset = sizeof(struct DlpHeader) + 272;
+
+    // contactAccountSize 100
+    header.contactAccountSize = 100;
+    ASSERT_FALSE(testFile->IsValidEnterpriseDlpHeader(header, dlpHeaderSize));
+
+    // contactAccountSize too large
+    header.contactAccountSize = DLP_MAX_CERT_SIZE + 1;
+    ASSERT_FALSE(testFile->IsValidEnterpriseDlpHeader(header, dlpHeaderSize));
+
+    // contactAccountOffset invalid
+    header.contactAccountOffset = 100;
+    ASSERT_FALSE(testFile->IsValidEnterpriseDlpHeader(header, dlpHeaderSize));
+    header.contactAccountOffset = sizeof(struct DlpHeader);
+
+    // txtOffset invalid
+    header.txtOffset = 100;
+    ASSERT_FALSE(testFile->IsValidEnterpriseDlpHeader(header, dlpHeaderSize));
+    header.txtOffset = sizeof(struct DlpHeader) + 20;
+
+    // txtOffset invalid
+    header.txtSize = DLP_MAX_CONTENT_SIZE + 1;
+    ASSERT_FALSE(testFile->IsValidEnterpriseDlpHeader(header, dlpHeaderSize));
+}
+
+/**
+ * @tc.name: ParseEnterpriseRawDlpHeader
+ * @tc.desc: test ParseEnterpriseRawDlpHeader
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpRawFileTest, ParseEnterpriseRawDlpHeader, TestSize.Level1)
+{
+    std::shared_ptr<DlpRawFile> testFile = std::make_shared<DlpRawFile>(-1, "txt");
+    ASSERT_NE(testFile->ParseEnterpriseRawDlpHeader(FILE_HEAD, 1), DLP_OK);
+    ASSERT_NE(testFile->ParseEnterpriseRawDlpHeader(FILE_HEAD, MAX_CERT_SIZE), DLP_OK);
+    ASSERT_NE(testFile->ParseEnterpriseRawDlpHeader(FILE_HEAD + FILE_HEAD, 1), DLP_OK);
 }

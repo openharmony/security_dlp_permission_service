@@ -57,6 +57,15 @@ bool DlpPolicyParcel::Marshalling(Parcel& out) const
         DLP_LOG_ERROR(LABEL, "Marshalling expire time fail");
         return false;
     }
+    if (!MarshallingDlpPolicy(out)) {
+        DLP_LOG_ERROR(LABEL, "Marshalling DlpPolicy fail");
+        return false;
+    }
+    return true;
+}
+
+bool DlpPolicyParcel::MarshallingDlpPolicy(Parcel& out) const
+{
     if (!(out.WriteUint32(this->policyParams_.dlpVersion_))) {
         DLP_LOG_ERROR(LABEL, "Write dlpVersion_ fail");
         return false;
@@ -71,6 +80,10 @@ bool DlpPolicyParcel::Marshalling(Parcel& out) const
     }
     if (!(out.WriteString(this->policyParams_.fileId))) {
         DLP_LOG_ERROR(LABEL, "Write owner fileId fail");
+        return false;
+    }
+    if (!(out.WriteInt32(this->policyParams_.allowedOpenCount_))) {
+        DLP_LOG_ERROR(LABEL, "Write allowedOpenCount_ fail");
         return false;
     }
     return true;
@@ -179,10 +192,6 @@ bool DlpPolicyParcel::MarshallingExpireTime(Parcel& out) const
     }
     if (!(out.WriteUint32(this->policyParams_.needOnline_))) {
         DLP_LOG_ERROR(LABEL, "Write needOnline_ fail");
-        return false;
-    }
-    if (!(out.WriteInt32(this->policyParams_.allowedOpenCount_))) {
-        DLP_LOG_ERROR(LABEL, "Write allowedOpenCount_ fail");
         return false;
     }
     return true;

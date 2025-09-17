@@ -62,6 +62,8 @@ HWTEST_F(DlpZipFileTest, IsZipFile, TestSize.Level0)
     DlpBlob certBlob = { 0, nullptr };
     std::shared_ptr<DlpZipFile> filePtr = std::make_shared<DlpZipFile>(-1, DLP_TEST_DIR, 0, "txt");
     ASSERT_EQ(filePtr->UpdateCertAndText(cert, certBlob), DLP_PARSE_ERROR_MEMORY_OPERATE_FAIL);
+    ASSERT_NE(filePtr->GenFile(-1), DLP_OK);
+    ASSERT_NE(filePtr->GenFile(0), DLP_OK);
 }
 
 /**

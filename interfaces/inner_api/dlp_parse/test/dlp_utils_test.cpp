@@ -35,6 +35,7 @@ using namespace std;
 
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "DlpUtilsTest"};
+static const std::string DEFAULT_STRINGS = "";
 }
 
 void DlpUtilsTest::SetUpTestCase() {}
@@ -345,4 +346,65 @@ HWTEST_F(DlpUtilsTest, GetRealTypeForEnterpriseWithFd004, TestSize.Level0)
     DlpUtils::GetRealTypeForEnterpriseWithFd(fd, isFromUriName);
     close(fd);
     unlink("/data/fuse_test.txt.dlp");
+}
+
+/**
+ * @tc.name: GetFileType
+ * @tc.desc: test GetFileType
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpUtilsTest, GetFileType, TestSize.Level1)
+{
+    std::string realFileType = "1234567890";
+    ASSERT_EQ(DlpUtils::GetFileType(realFileType), false);
+    realFileType = "12";
+    ASSERT_EQ(DlpUtils::GetFileType(realFileType), false);
+    realFileType = DLP_HIAE_TYPE;
+    ASSERT_EQ(DlpUtils::GetFileType(realFileType), true);
+}
+
+/**
+ * @tc.name: GetRealTypeWithFd
+ * @tc.desc: test GetRealTypeWithFd
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpUtilsTest, GetRealTypeWithFd, TestSize.Level1)
+{
+    bool isFromUriName = false;
+    ASSERT_EQ(DlpUtils::GetRealTypeWithFd(-1, isFromUriName), DEFAULT_STRINGS);
+    isFromUriName = true;
+    ASSERT_EQ(DlpUtils::GetRealTypeWithFd(-1, isFromUriName), DEFAULT_STRINGS);
+    int fd = open("/data/fuse_test.txt.dlp", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
+    ASSERT_NE(fd, -1);
+    struct DlpHeader header = {
+        .magic = DLP_FILE_MAGIC,
+        .certSize = 20,
+        .contactAccountSize = 20,
+        .fileType = 1000,
+    };
+    uint8_t buffer[8] = {0};
+    write(fd, buffer, 8);
+    write(fd, &header, sizeof(header));
+    lseek(fd, 0, SEEK_SET);
+    ASSERT_EQ(DlpUtils::GetRealTypeWithFd(fd, isFromUriName), DEFAULT_STRINGS);
+    close(fd);
+    unlink("/data/fuse_test.txt.dlp");
+}
+
+/**
+ * @tc.name: GetBundleInfoWithBundleName
+ * @tc.desc: test GetBundleInfoWithBundleName
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpUtilsTest, GetBundleInfoWithBundleName, TestSize.Level1)
+{
+    OHOS::AppExecFwk::BundleInfo bundleInfo;
+    ASSERT_EQ(DlpUtils::GetBundleInfoWithBundleName("", 0, bundleInfo, 0), false);
+    std::string appId;
+    ASSERT_EQ(DlpUtils::GetAppIdFromToken(appId), false);
+    int32_t userId = 0;
+    (void)DlpUtils::GetUserIdByForegroundAccount(userId);
 }
