@@ -79,7 +79,7 @@ int32_t PermissionManagerAdapter::CheckSandboxFlagWithService(AccessToken::Acces
 
 bool PermissionManagerAdapter::GetAppIdentifierForCalling(std::string &appIdentifier)
 {
-    appIdentifier = "6917562860841254665";
+    appIdentifier = "1234567890";
     return true;
 }
 }  // namespace DlpPermission
