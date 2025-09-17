@@ -360,7 +360,9 @@ bool GetStringValueByKey(napi_env env, napi_value jsObject, const std::string& k
 bool GetBoolValueByKey(napi_env env, napi_value jsObject, const std::string& key, bool& result);
 bool GetBoolValue(napi_env env, napi_value jsObject, bool& result);
 bool GetInt64Value(napi_env env, napi_value jsObject, int64_t& result);
+bool GetInt32Value(napi_env env, napi_value jsObject, int32_t& result);
 bool GetInt64ValueByKey(napi_env env, napi_value jsObject, const std::string& key, int64_t& result);
+bool GetInt32ValueByKey(napi_env env, napi_value jsObject, const std::string& key, int32_t& result);
 bool GetUint32Value(napi_env env, napi_value jsObject, uint32_t& result);
 bool GetUint32ValueByKey(napi_env env, napi_value jsObject, const std::string& key, uint32_t& result);
 napi_value GetArrayValueByKey(napi_env env, napi_value jsObject, const std::string& key);
