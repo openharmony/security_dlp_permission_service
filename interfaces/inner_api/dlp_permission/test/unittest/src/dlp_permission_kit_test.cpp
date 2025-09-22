@@ -39,6 +39,7 @@
 #include "visited_dlp_file_info.h"
 #include "want.h"
 #include "bundle_mgr_client.h"
+#include "token_mock_test_common.h"
 
 namespace OHOS {
 namespace Security {
@@ -70,10 +71,10 @@ const int64_t INVALID_DELTA_EXPIRY_TIME = -100;
 const int32_t DEFAULT_USERID = 100;
 const int32_t ACTION_SET_EDIT = 0xff;
 const int32_t ACTION_SET_FC = 0x7ff;
-static AccessTokenID g_selfTokenId = 0;
 static AccessTokenID g_dlpManagerTokenId = 0;
 static int32_t g_selfUid = 0;
 const std::string DLP_MANAGER_APP = "com.ohos.dlpmanager";
+const std::string DLP_PERMISSION_SERVICE = "dlp_permission_service";
 const std::string TEST_URI = "datashare:///media/file/8";
 const std::string TEST_UNEXIST_URI = "datashare:///media/file/1";
 static const std::string DLP_ENABEL = "const.dlp.dlp_enable";
@@ -81,6 +82,11 @@ static const std::string TRUE_VALUE = "true";
 static const uint8_t ARRAY_CHAR_SIZE = 62;
 static const char CHAR_ARRAY[] = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 static const uint64_t SYSTEM_APP_MASK = 0x100000000;
+static MockHapToken* g_mock = nullptr;
+static uint64_t g_selfTokenId = 0;
+const std::string PATH_SEPARATOR = "/";
+const std::string USER_INFO_BASE = "/data/service/el1/public/dlp_permission_service";
+const std::string DLP_VISIT_RECORD_JSON_PATH = USER_INFO_BASE + PATH_SEPARATOR + "dlp_file_visit_record_info.json";
 }  // namespace
 
 static uint8_t GetRandNum()
@@ -88,16 +94,6 @@ static uint8_t GetRandNum()
     uint8_t rand;
     RAND_bytes(reinterpret_cast<unsigned char *>(&rand), sizeof(rand));
     return rand;
-}
-
-static void TestRecordProcessInfo()
-{
-    g_selfTokenId = GetSelfTokenID();
-    DLP_LOG_INFO(LABEL, "get self tokenId is %{public}d", g_selfTokenId);
-    g_dlpManagerTokenId = AccessTokenKit::GetHapTokenID(DEFAULT_USERID, DLP_MANAGER_APP, 0);
-    DLP_LOG_INFO(LABEL, "get dlp manager tokenId is %{public}d", g_dlpManagerTokenId);
-    g_selfUid = getuid();
-    DLP_LOG_INFO(LABEL, "get self uid is %{public}d", g_selfUid);
 }
 
 static bool TestSetSelfTokenId(FullTokenID tokenId)
@@ -135,6 +131,7 @@ static bool TestGetTokenId(int userID, const std::string& bundleName, int instIn
     }
     int32_t uid = getuid();
     setuid(g_selfUid);
+    SetSelfTokenID(DlpPermissionTestCommon::GetNativeTokenIdFromProcess(DLP_PERMISSION_SERVICE));
     tokenId = AccessTokenKit::GetHapTokenID(userID, bundleName, instIndex);
     setuid(uid);
     DLP_LOG_INFO(LABEL, "get app tokenId is %{public}d", tokenId);
@@ -211,18 +208,47 @@ static void TestRecoverProcessInfo(int32_t uid, AccessTokenID tokenId)
     ASSERT_TRUE(TestSetSelfTokenId((tokenId)));
 }
 
+static void GetDlpManagerHapReqPerm(std::vector<std::string> &reqPerm)
+{
+    reqPerm.emplace_back("ohos.permission.ACCESS_DLP_FILE");
+    reqPerm.emplace_back("ohos.permission.GET_LOCAL_ACCOUNTS");
+    reqPerm.emplace_back("ohos.permission.START_ABILITIES_FROM_BACKGROUND");
+    reqPerm.emplace_back("ohos.permission.GET_NETWORK_INFO");
+    reqPerm.emplace_back("ohos.permission.START_DLP_CRED");
+    reqPerm.emplace_back("ohos.permission.START_SYSTEM_DIALOG");
+    reqPerm.emplace_back("ohos.permission.GET_BUNDLE_INFO");
+    reqPerm.emplace_back("ohos.permission.EXEMPT_PRIVACY_SECURITY_CENTER");
+    reqPerm.emplace_back("ohos.permission.REPORT_SECURITY_EVENT");
+}
+
 void DlpPermissionKitTest::SetUpTestCase()
 {
     // make test case clean
     DLP_LOG_INFO(LABEL, "SetUpTestCase.");
-    TestRecordProcessInfo();
-    ASSERT_TRUE(TestSetSelfTokenId(g_dlpManagerTokenId));
+    g_selfTokenId = GetSelfTokenID();
+    DLP_LOG_INFO(LABEL, "get self tokenId is %{public}llu", g_selfTokenId);
+    g_selfUid = getuid();
+    DLP_LOG_INFO(LABEL, "get self uid is %{public}d", g_selfUid);
+    DlpPermissionTestCommon::SetTestEvironment(g_selfTokenId);
+    std::vector<std::string> reqPerm;
+    GetDlpManagerHapReqPerm(reqPerm);
+    g_mock = new (std::nothrow) MockHapToken(DLP_MANAGER_APP, reqPerm);
+    EXPECT_NE(g_mock, nullptr);
+    if (g_mock != nullptr) {
+        g_dlpManagerTokenId = g_mock->GetMockToken();
+        DLP_LOG_INFO(LABEL, "get mock dlp manager tokenId is %{public}d", g_dlpManagerTokenId);
+    }
 }
 
 void DlpPermissionKitTest::TearDownTestCase()
 {
     DLP_LOG_INFO(LABEL, "TearDownTestCase.");
-    ASSERT_TRUE(TestSetSelfTokenId(g_selfTokenId));
+    if (g_mock != nullptr) {
+        delete g_mock;
+        g_mock = nullptr;
+    }
+    SetSelfTokenID(g_selfTokenId);
+    DlpPermissionTestCommon::ResetTestEvironment();
 }
 
 void DlpPermissionKitTest::SetUp()
@@ -364,9 +390,11 @@ HWTEST_F(DlpPermissionKitTest, SetRetentionState01, TestSize.Level1)
     ASSERT_EQ(DLP_OK, DlpPermissionKit::InstallDlpSandbox(DLP_MANAGER_APP,
         DLPFileAccess::FULL_CONTROL, DEFAULT_USERID, sandboxInfo, TEST_URI));
     ASSERT_TRUE(sandboxInfo.appIndex != 0);
+    SetSelfTokenID(DlpPermissionTestCommon::GetNativeTokenIdFromProcess(DLP_PERMISSION_SERVICE));
     AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(100, DLP_MANAGER_APP, sandboxInfo.appIndex);
     AccessTokenID normalTokenId = AccessTokenKit::GetHapTokenID(100, DLP_MANAGER_APP, 0);
     std::vector<RetentionSandBoxInfo> retentionSandBoxInfoVec;
+    ASSERT_TRUE(TestSetSelfTokenId(g_dlpManagerTokenId));
     ASSERT_EQ(DLP_OK, DlpPermissionKit::GetRetentionSandboxList(DLP_MANAGER_APP, retentionSandBoxInfoVec));
     ASSERT_TRUE(0 == retentionSandBoxInfoVec.size());
     ASSERT_TRUE(TestSetSelfTokenId(tokenId));
@@ -440,6 +468,7 @@ HWTEST_F(DlpPermissionKitTest, SetRetentionState03, TestSize.Level1)
     ASSERT_EQ(DLP_OK, DlpPermissionKit::InstallDlpSandbox(DLP_MANAGER_APP,
         DLPFileAccess::FULL_CONTROL, DEFAULT_USERID, sandboxInfo, TEST_URI));
     ASSERT_TRUE(sandboxInfo.appIndex != 0);
+    SetSelfTokenID(DlpPermissionTestCommon::GetNativeTokenIdFromProcess(DLP_PERMISSION_SERVICE));
     AccessTokenID sandboxTokenId = AccessTokenKit::GetHapTokenID(DEFAULT_USERID, DLP_MANAGER_APP, sandboxInfo.appIndex);
     DLP_LOG_INFO(LABEL, "SetRetentionState03 sandboxTokenId  tokenId from %{public}d ", sandboxTokenId);
     ASSERT_TRUE(TestSetSelfTokenId(sandboxTokenId));
@@ -1309,6 +1338,7 @@ HWTEST_F(DlpPermissionKitTest, GetDLPFileVisitRecord001, TestSize.Level1)
     ASSERT_TRUE(sandboxInfo.appIndex != 0);
     TestMockApp(DLP_MANAGER_APP, 0, DEFAULT_USERID);
     ASSERT_TRUE(TestSetSelfTokenId(g_dlpManagerTokenId));
+    chmod(DLP_VISIT_RECORD_JSON_PATH.c_str(), 0666);
     ASSERT_EQ(DLP_OK, DlpPermissionKit::GetDLPFileVisitRecord(infoVec));
     DLP_LOG_INFO(LABEL, "GetDLPFileVisitRecord size:%{public}zu", infoVec.size());
     ASSERT_TRUE(1 == infoVec.size());
@@ -1316,6 +1346,7 @@ HWTEST_F(DlpPermissionKitTest, GetDLPFileVisitRecord001, TestSize.Level1)
     infoVec.clear();
     ASSERT_EQ(DLP_OK, DlpPermissionKit::GetDLPFileVisitRecord(infoVec));
     ASSERT_TRUE(0 == infoVec.size());
+    SetSelfTokenID(DlpPermissionTestCommon::GetNativeTokenIdFromProcess(DLP_PERMISSION_SERVICE));
     AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(100, DLP_MANAGER_APP, sandboxInfo.appIndex);
     ASSERT_TRUE(TestSetSelfTokenId(tokenId));
     ASSERT_EQ(DLP_SERVICE_ERROR_API_NOT_FOR_SANDBOX_ERROR, DlpPermissionKit::GetDLPFileVisitRecord(infoVec));
@@ -1323,6 +1354,7 @@ HWTEST_F(DlpPermissionKitTest, GetDLPFileVisitRecord001, TestSize.Level1)
     ASSERT_EQ(DLP_OK, DlpPermissionKit::UninstallDlpSandbox(DLP_MANAGER_APP, sandboxInfo.appIndex, DEFAULT_USERID));
 
     TestRecoverProcessInfo(uid, selfTokenId);
+    chmod(DLP_VISIT_RECORD_JSON_PATH.c_str(), S_IRUSR | S_IWUSR);
 }
 
 /* *
