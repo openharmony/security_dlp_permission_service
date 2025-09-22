@@ -579,10 +579,12 @@ HWTEST_F(DlpPermissionKitTest, GenerateDlpCertificate001, TestSize.Level0)
 HWTEST_F(DlpPermissionKitTest, ParseDlpCertificate001, TestSize.Level0)
 {
     sptr<CertParcel> certParcel = new (std::nothrow) CertParcel();
+    sptr<CertParcel> certParcel2 = nullptr;
     PermissionPolicy policy;
     certParcel->contactAccount = "test";
     std::string appId = "test_appId_passed";
     ASSERT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, DlpPermissionKit::ParseDlpCertificate(certParcel, policy, appId, true));
+    ASSERT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, DlpPermissionKit::ParseDlpCertificate(certParcel2, policy, appId, true));
     certParcel->cert = {1, 2, 3};
     ASSERT_NE(DLP_OK, DlpPermissionKit::ParseDlpCertificate(certParcel, policy, appId, true));
 }
