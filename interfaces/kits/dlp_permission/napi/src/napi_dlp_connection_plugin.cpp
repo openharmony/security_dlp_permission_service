@@ -309,11 +309,9 @@ static bool ParseContextForRegisterPlugin(napi_env env, napi_callback_info cbInf
 
 static napi_value RegisterPlugin(napi_env env, napi_callback_info cbInfo)
 {
-    DLP_LOG_INFO(LABEL, "Enter RegisterPlugin.");
     JsDlpConnPlugin jsPlugin;
     if (!ParseContextForRegisterPlugin(env, cbInfo, jsPlugin)) {
-        std::string errMsg = "Parameter error of plugin";
-        DlpNapiThrow(env, ERR_JS_PARAMETER_ERROR, errMsg);
+        DlpNapiThrow(env, ERR_JS_PARAMETER_ERROR);
         return nullptr;
     }
     uint64_t pluginId = 0;
@@ -332,17 +330,20 @@ static napi_value RegisterPlugin(napi_env env, napi_callback_info cbInfo)
             g_dlpStaticHandle = dlopen(DLP_CREDENTIAL_STATIC_PLP_32_PATH.c_str(), RTLD_LAZY);
         }
         if (g_dlpStaticHandle == nullptr) {
+            delete plugin;
             return nullptr;
         }
     }
     void *func = dlsym(g_dlpStaticHandle, "Connection_Set");
     if (func == nullptr) {
         DLP_LOG_ERROR(LABEL, "get func is error.");
+        delete plugin;
         return nullptr;
     }
     Connection_Set dlpFunc = reinterpret_cast<Connection_Set>(func);
     if (dlpFunc == nullptr) {
         DLP_LOG_ERROR(LABEL, "get dlpFunc is error.");
+        delete plugin;
         return nullptr;
     }
     res = (*dlpFunc)(reinterpret_cast<void *>(plugin), &pluginId);
