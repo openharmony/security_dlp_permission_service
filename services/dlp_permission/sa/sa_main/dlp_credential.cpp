@@ -695,7 +695,6 @@ int32_t DlpCredential::ParseDlpCertificate(const sptr<CertParcel>& certParcel,
     std::string encDataJsonStr(certParcel->cert.begin(), certParcel->cert.end());
     auto jsonObj = unordered_json::parse(encDataJsonStr, nullptr, false);
     if (jsonObj.is_discarded() || (!jsonObj.is_object())) {
-        DLP_LOG_ERROR(LABEL, "JsonObj is discarded");
         return DLP_SERVICE_ERROR_JSON_OPERATE_FAIL;
     }
     EncAndDecOptions options;
@@ -725,6 +724,7 @@ int32_t DlpCredential::ParseDlpCertificate(const sptr<CertParcel>& certParcel,
     }
     encPolicy.realType = strdup(const_cast<char *>(certParcel->realFileType.c_str()));
     if (encPolicy.realType == nullptr) {
+        FreeDLPEncPolicyData(encPolicy);
         return DLP_CREDENTIAL_ERROR_MEMORY_OPERATE_FAIL;
     }
     encPolicy.reserved[IS_NEED_CHECK_CUSTOM_PROPERTY] = static_cast<uint8_t>(certParcel->needCheckCustomProperty);
@@ -975,6 +975,7 @@ int32_t DlpCredential::SetEnterprisePolicy(const std::string& policy)
     DlpSetEnterprisePolicyFunction dlpSetEnterprisePolicyFunc =
         reinterpret_cast<DlpSetEnterprisePolicyFunction>(GetDlpCredSdkLibFunc("DLP_SetEnterprisePolicy"));
     if (dlpSetEnterprisePolicyFunc == nullptr) {
+        free(policyCopy);
         DLP_LOG_ERROR(LABEL, "dlsym DLP_SetEnterprisePolicy error.");
         return DLP_SERVICE_ERROR_VALUE_INVALID;
     }
@@ -982,7 +983,7 @@ int32_t DlpCredential::SetEnterprisePolicy(const std::string& policy)
 #else
     int32_t res = DLP_SetEnterprisePolicy(reinterpret_cast<uint8_t *>(policyCopy), policyLen);
 #endif
-    delete policyCopy;
+    free(policyCopy);
     if (res != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "SetEnterprisePolicy request fail, error: %{public}d", res);
         return DLP_CREDENTIAL_ERROR_SET_ENTERPRISE_POLICY_FAIL;
