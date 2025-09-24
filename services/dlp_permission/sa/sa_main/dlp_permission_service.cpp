@@ -1216,6 +1216,15 @@ int DlpPermissionService::Dump(int fd, const std::vector<std::u16string>& args)
 
 int DlpPermissionService::SetEnterprisePolicy(const std::string& policy)
 {
+    std::string appIdentifier;
+    if (!PermissionManagerAdapter::GetAppIdentifierForCalling(appIdentifier)) {
+        return DLP_SERVICE_ERROR_PERMISSION_DENY;
+    }
+
+    if (!PermissionManagerAdapter::CheckPermission(PERMISSION_ENTERPRISE_ACCESS_DLP_FILE) &&
+        !(appIdentifier == MDM_APPIDENTIFIER || appIdentifier == YX_APPIDENTIFIER)) {
+        return DLP_SERVICE_ERROR_PERMISSION_DENY;
+    }
     return DlpCredential::GetInstance().SetEnterprisePolicy(policy);
 }
 } // namespace DlpPermission
