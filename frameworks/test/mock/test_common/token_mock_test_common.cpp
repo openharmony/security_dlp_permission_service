@@ -128,6 +128,24 @@ AccessTokenIDEx DlpPermissionTestCommon::GetHapTokenIdFromBundle(
     return tokenIdEx;
 }
 
+int32_t DlpPermissionTestCommon::GrantPermissionByTest(AccessTokenID tokenID,
+    const std::string& permission, uint32_t flag)
+{
+    std::vector<std::string> reqPerm;
+    reqPerm.emplace_back("ohos.permission.GRANT_SENSITIVE_PERMISSIONS");
+    MockHapToken mock("DlpPermissionTestGrant", reqPerm);
+    return AccessTokenKit::GrantPermission(tokenID, permission, flag);
+}
+
+int32_t DlpPermissionTestCommon::RevokePermissionByTest(AccessTokenID tokenID,
+    const std::string& permission, uint32_t flag)
+{
+    std::vector<std::string> reqPerm;
+    reqPerm.emplace_back("ohos.permission.REVOKE_SENSITIVE_PERMISSIONS");
+    MockHapToken mock("DlpPermissionTestRevoke", reqPerm);
+    return AccessTokenKit::RevokePermission(tokenID, permission, flag);
+}
+
 MockNativeToken::MockNativeToken(const std::string& process)
 {
     selfToken_ = GetSelfTokenID();

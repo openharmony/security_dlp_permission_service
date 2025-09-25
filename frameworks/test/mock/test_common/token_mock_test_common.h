@@ -56,6 +56,10 @@ public:
     static AccessToken::AccessTokenID GetNativeTokenIdFromProcess(const std::string& process);
     static AccessToken::AccessTokenIDEx GetHapTokenIdFromBundle(
         int32_t userID, const std::string& bundleName, int32_t instIndex);
+    static int32_t GrantPermissionByTest(AccessToken::AccessTokenID tokenID,
+        const std::string& permission, uint32_t flag);
+    static int32_t RevokePermissionByTest(AccessToken::AccessTokenID tokenID,
+        const std::string& permission, uint32_t flag);
 };
 }  // namespace DlpPermission
 }  // namespace Security

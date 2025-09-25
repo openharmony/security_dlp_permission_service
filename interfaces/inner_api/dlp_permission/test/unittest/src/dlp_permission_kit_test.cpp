@@ -87,6 +87,8 @@ static uint64_t g_selfTokenId = 0;
 const std::string PATH_SEPARATOR = "/";
 const std::string USER_INFO_BASE = "/data/service/el1/public/dlp_permission_service";
 const std::string DLP_VISIT_RECORD_JSON_PATH = USER_INFO_BASE + PATH_SEPARATOR + "dlp_file_visit_record_info.json";
+static bool g_isSetFoundationPerm = false;
+static uint64_t g_foundationTokenId = 0;
 }  // namespace
 
 static uint8_t GetRandNum()
@@ -238,6 +240,16 @@ void DlpPermissionKitTest::SetUpTestCase()
         g_dlpManagerTokenId = g_mock->GetMockToken();
         DLP_LOG_INFO(LABEL, "get mock dlp manager tokenId is %{public}d", g_dlpManagerTokenId);
     }
+
+    g_foundationTokenId = DlpPermissionTestCommon::GetNativeTokenIdFromProcess("foundation");
+    if (AccessToken::AccessTokenKit::VerifyAccessToken(g_foundationTokenId, "ohos.permission.MANAGE_HAP_TOKENID") ==
+        AccessToken::PermissionState::PERMISSION_GRANTED) {
+        return;
+    }
+    if (DlpPermissionTestCommon::GrantPermissionByTest(g_foundationTokenId, "ohos.permission.MANAGE_HAP_TOKENID",
+        TypePermissionFlag::PERMISSION_USER_FIXED) == 0) {
+        g_isSetFoundationPerm = true;
+    }
 }
 
 void DlpPermissionKitTest::TearDownTestCase()
@@ -249,6 +261,12 @@ void DlpPermissionKitTest::TearDownTestCase()
     }
     SetSelfTokenID(g_selfTokenId);
     DlpPermissionTestCommon::ResetTestEvironment();
+
+    if (g_isSetFoundationPerm) {
+        (void)DlpPermissionTestCommon::RevokePermissionByTest(g_foundationTokenId,
+            "ohos.permission.MANAGE_HAP_TOKENID", TypePermissionFlag::PERMISSION_USER_FIXED);
+        g_isSetFoundationPerm = false;
+    }
 }
 
 void DlpPermissionKitTest::SetUp()
