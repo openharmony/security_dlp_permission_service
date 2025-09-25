@@ -1222,7 +1222,7 @@ int DlpPermissionService::SetEnterprisePolicy(const std::string& policy)
     }
 
     if (!PermissionManagerAdapter::CheckPermission(PERMISSION_ENTERPRISE_ACCESS_DLP_FILE) &&
-        !(appIdentifier == MDM_APPIDENTIFIER || appIdentifier == YX_APPIDENTIFIER)) {
+        !(appIdentifier == MDM_APPIDENTIFIER)) {
         return DLP_SERVICE_ERROR_PERMISSION_DENY;
     }
     return DlpCredential::GetInstance().SetEnterprisePolicy(policy);
