@@ -49,6 +49,7 @@ using unordered_json = nlohmann::ordered_json;
 namespace {
 static const uint64_t SYSTEM_APP_MASK = 0x100000000;
 static const int32_t DEFAULT_USER_ID = 100;
+static const int32_t DATA_MIN_LEN = 8;
 } // namespace
 
 namespace OHOS {
@@ -193,6 +194,60 @@ static void ParseFUZZ(const uint8_t* data, size_t size)
     delete [] policy1;
 }
 
+static void IsError(const uint8_t* data, size_t size)
+{
+    if (data == nullptr) {
+        return;
+    }
+
+    FuzzedDataProvider fdp(data, size);
+    int32_t errorCode = fdp.ConsumeIntegral<int32_t>();
+    IsDlpCredentialHuksError(errorCode);
+    IsEnterpriseError(errorCode);
+    IsDlpCredentialIpcError(errorCode);
+    IsDlpCredentialServerError(errorCode);
+    IsNoPermissionError(errorCode);
+    IsNoInternetError(errorCode);
+    ConvertCredentialError(errorCode);
+}
+
+static void GetCallbackMap(const uint8_t* data, size_t size)
+{
+    if (data == nullptr || size < DATA_MIN_LEN) {
+        return;
+    }
+
+    FuzzedDataProvider fdp(data, size);
+    uint64_t requestId = fdp.ConsumeIntegral<uint64_t>();
+    int32_t errorCode = fdp.ConsumeIntegral<int32_t>();
+    RequestInfo info;
+    DLP_EncPolicyData outParams;
+    DLP_PackPolicyParams packPolicy;
+    DLP_RestorePolicyData outParamsRes;
+    GetCallbackFromRequestMap(requestId, info);
+    InsertCallbackToRequestMap(requestId, info);
+    GetCallbackFromRequestMap(requestId, info);
+    DlpPackPolicyCallback(requestId, errorCode, &outParams);
+    unordered_json plainPolicyJson;
+    std::vector<uint8_t> cert;
+    DlpAccountType ownerAccountType = DlpAccountType::CLOUD_ACCOUNT;
+    GetNewCert(plainPolicyJson, cert, ownerAccountType);
+    FreeBuffer(nullptr, 0);
+    RequestInfo requestInfo;
+    PermissionPolicy policyInfo;
+    CheckDebugPermission(requestInfo, policyInfo);
+    DlpRestorePolicyCallback(requestId, errorCode, &outParamsRes);
+    FreeDlpPackPolicyParams(packPolicy);
+    std::string account;
+    std::string contactAccount;
+    bool isOwner;
+    GetLocalAccountName(account, contactAccount, &isOwner);
+    GetDomainAccountName(account, contactAccount, &isOwner);
+    AccountInfo accountCfg;
+    std::string appId = "appId";
+    GetEnterpriseAccountName(accountCfg, appId, &isOwner);
+}
+
 bool BundleManagerAdapterFuzzTest(const uint8_t* data, size_t size)
 {
     CheckHapPermissionFUZZ(data, size);
@@ -202,6 +257,8 @@ bool BundleManagerAdapterFuzzTest(const uint8_t* data, size_t size)
     ParseDlpCertificateFUZZ(data, size);
     CheckMdmPermissionFUZZ(data, size);
     ParseFUZZ(data, size);
+    IsError(data, size);
+    GetCallbackMap(data, size);
     return true;
 }
 } // namespace OHOS
