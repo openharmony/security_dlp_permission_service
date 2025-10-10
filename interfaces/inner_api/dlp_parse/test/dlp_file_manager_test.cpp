@@ -587,11 +587,12 @@ HWTEST_F(DlpFileManagerTest, GenerateDlpFile001, TestSize.Level0)
     DlpFileManager::DlpFileMes dlpFileMes;
     DlpProperty rawProperty;
     std::shared_ptr<DlpFile> rawFilePtr = std::make_shared<DlpRawFile>(1000, "mp4");
+    std::shared_ptr<DlpFile> rawFilePtr2 = nullptr;
     DlpFileManager::GetInstance().GenRawDlpFile(dlpFileMes, rawProperty, rawFilePtr);
 
     std::vector<uint8_t> offlineCert;
-    DlpFileManager::GetInstance().DlpRawHmacCheckAndUpdata(rawFilePtr, offlineCert, 0);
-    DlpFileManager::GetInstance().DlpRawHmacCheckAndUpdata(rawFilePtr, offlineCert, 1);
+    DlpFileManager::GetInstance().DlpRawHmacCheckAndUpdate(rawFilePtr, offlineCert, 0);
+    DlpFileManager::GetInstance().DlpRawHmacCheckAndUpdate(rawFilePtr2, offlineCert, 1);
 }
 
 /**

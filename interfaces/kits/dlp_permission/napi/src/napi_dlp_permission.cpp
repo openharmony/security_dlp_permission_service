@@ -2076,9 +2076,6 @@ void NapiDlpPermission::QueryDlpPolicyComplete(napi_env env, napi_status status,
 napi_value NapiDlpPermission::SetEnterprisePolicy(napi_env env, napi_callback_info cbInfo)
 {
     DLP_LOG_INFO(LABEL, "Enter SetEnterprisePolicy.");
-    if (!CheckPermission(env, PERMISSION_ENTERPRISE_ACCESS_DLP_FILE)) {
-        return nullptr;
-    }
     auto* asyncContext = new (std::nothrow) SetEnterprisePolicyContext(env);
     if (asyncContext == nullptr) {
         DLP_LOG_ERROR(LABEL, "asyncContext is nullptr.");

@@ -129,6 +129,7 @@ ohos_shared_library("libdlpsetdlpfeature_napi") {
     "access_token:libaccesstoken_sdk",
     "ace_engine:ace_uicontent",
     "napi:ace_napi",
+    "ipc:ipc_single",
   ]
 
   relative_install_dir = "module"

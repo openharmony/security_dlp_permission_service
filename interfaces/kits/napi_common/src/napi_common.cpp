@@ -1278,7 +1278,6 @@ bool GetAllowedOpenCount(napi_env env, napi_value jsObject, DlpProperty& propert
     if (!GetInt32ValueByKey(env, jsObject, "allowedOpenCount", property.allowedOpenCount)) {
         DLP_LOG_DEBUG(LABEL, "js get allowed open count fail, will set zero");
         property.allowedOpenCount = jsAllowedOpenCount;
-        property.fileId = "";
         return true;
     }
     if (!GetStringValueByKey(env, jsObject, "fileId", property.fileId) ||
