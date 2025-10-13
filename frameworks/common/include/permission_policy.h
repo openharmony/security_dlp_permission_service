@@ -132,6 +132,7 @@ public:
     uint8_t* GetHmacKey() const;
     uint32_t GetHmacKeyLen() const;
     int32_t CheckActionUponExpiry();
+    int32_t GetAllowedOpenCount() const;
 
     std::string ownerAccount_;
     std::string ownerAccountId_;
@@ -151,6 +152,7 @@ public:
     std::string customProperty_ = "";
     std::string fileId = "";
     std::string appId = "";
+    int32_t allowedOpenCount_ = 0;
 
 private:
     uint8_t* aeskey_;

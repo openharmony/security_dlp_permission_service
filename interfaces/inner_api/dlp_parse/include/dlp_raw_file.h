@@ -34,7 +34,7 @@ public:
     int32_t DlpFileWrite(uint64_t offset, void* buf, uint32_t size);
 
     uint64_t GetFsContentSize() const;
-    void SetOfflineAccess(bool flag);
+    void SetOfflineAccess(bool flag, int32_t allowedOpenCount);
     int32_t ParseRawDlpHeader(uint64_t fileLen, uint32_t dlpHeaderSize);
     int32_t ParseEnterpriseFileId(uint64_t fileLen, uint32_t fileIdSize);
     int32_t ParseEnterpriseRawDlpHeader(uint64_t fileLen, uint32_t dlpHeaderSize);

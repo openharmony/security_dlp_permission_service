@@ -34,7 +34,7 @@ public:
     int32_t DlpFileWrite(uint64_t offset, void* buf, uint32_t size);
     uint64_t GetFsContentSize() const;
     int32_t CheckDlpFile();
-    void SetOfflineAccess(bool flag);
+    void SetOfflineAccess(bool flag, int32_t allowedOpenCount);
     bool CleanTmpFile();
     int32_t HmacCheck();
     uint32_t GetOfflineCertSize(void);

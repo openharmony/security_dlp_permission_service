@@ -224,8 +224,13 @@ int32_t DlpFileManager::PrepareDlpEncryptParms(PermissionPolicy& policy, struct 
     return DLP_OK;
 }
 
-int32_t DlpFileManager::UpdateDlpFile(const std::vector<uint8_t>& cert, std::shared_ptr<DlpFile>& filePtr)
+int32_t DlpFileManager::UpdateDlpFile(const std::vector<uint8_t>& cert, std::shared_ptr<DlpFile>& filePtr,
+    const int32_t &allowedOpenCount)
 {
+    if (allowedOpenCount >= 1) {
+        DLP_LOG_DEBUG(LABEL, "allowedOpenCount bigger than 1, no need UpdateDlpFile");
+        return DLP_OK;
+    }
     std::lock_guard<std::mutex> lock(g_offlineLock_);
     int32_t result = filePtr->CheckDlpFile();
     if (result != DLP_OK) {
@@ -269,9 +274,9 @@ void DlpFileManager::FreeChiperBlob(struct DlpBlob& key, struct DlpBlob& certDat
     }
 }
 
-int32_t DlpFileManager::SetDlpFileParams(std::shared_ptr<DlpFile>& filePtr, const DlpProperty& property) const
+int32_t DlpFileManager::PrepareParms(const std::shared_ptr<DlpFile>& filePtr, const DlpProperty& property,
+    PermissionPolicy& policy) const
 {
-    PermissionPolicy policy(property);
     struct DlpBlob key;
     struct DlpBlob certData;
     struct DlpUsageSpec usage;
@@ -285,44 +290,49 @@ int32_t DlpFileManager::SetDlpFileParams(std::shared_ptr<DlpFile>& filePtr, cons
 
     if (property.ownerAccountType == ENTERPRISE_ACCOUNT) {
         policy.appId = filePtr->GetAppId();
-        policy.fileId = property.fileId;
     }
+    policy.fileId = property.fileId;
+    policy.allowedOpenCount_ = property.allowedOpenCount;
+    filePtr->SetOfflineAccess(property.offlineAccess, property.allowedOpenCount);
 
     result = PrepareDlpEncryptParms(policy, key, usage, certData, hmacKey);
     if (result != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "Set dlp obj params fail, prepare encrypt params error, errno=%{public}d", result);
         return result;
     }
-    result = filePtr->SetCipher(key, usage, hmacKey);
-    if (result != DLP_OK) {
-        FreeChiperBlob(key, certData, usage, hmacKey);
-        DLP_LOG_ERROR(LABEL, "Set dlp obj params fail, set cipher error, errno=%{public}d", result);
-        return result;
-    }
-
-    result = filePtr->SetPolicy(policy);
-    if (result != DLP_OK) {
-        FreeChiperBlob(key, certData, usage, hmacKey);
-        DLP_LOG_ERROR(LABEL, "Set dlp obj params fail, set policy error, errno=%{public}d", result);
-        return result;
-    }
-
-    result = filePtr->SetEncryptCert(certData);
-    if (result != DLP_OK) {
-        FreeChiperBlob(key, certData, usage, hmacKey);
-        DLP_LOG_ERROR(LABEL, "Set dlp obj params fail, set cert error, errno=%{public}d", result);
-        return result;
-    }
-
-    result = (property.ownerAccountType == ENTERPRISE_ACCOUNT) ? DLP_OK :
-        filePtr->SetContactAccount(property.contactAccount);
-    if (result != DLP_OK) {
-        DLP_LOG_WARN(LABEL, "Set dlp obj params fail, set contact account error, errno=%{public}d", result);
-    }
-
-    filePtr->SetOfflineAccess(property.offlineAccess);
-
+    do {
+        result = filePtr->SetCipher(key, usage, hmacKey);
+        if (result != DLP_OK) {
+            DLP_LOG_ERROR(LABEL, "Set dlp obj params fail, set cipher error, errno=%{public}d", result);
+            break;
+        }
+        result = filePtr->SetPolicy(policy);
+        if (result != DLP_OK) {
+            DLP_LOG_ERROR(LABEL, "Set dlp obj params fail, set policy error, errno=%{public}d", result);
+            break;
+        }
+        result = filePtr->SetEncryptCert(certData);
+        if (result != DLP_OK) {
+            DLP_LOG_ERROR(LABEL, "Set dlp obj params fail, set cert error, errno=%{public}d", result);
+            break;
+        }
+        result = (property.ownerAccountType == ENTERPRISE_ACCOUNT) ? DLP_OK :
+            filePtr->SetContactAccount(property.contactAccount);
+        if (result != DLP_OK) {
+            DLP_LOG_WARN(LABEL, "Set dlp obj params fail, set contact account error, errno=%{public}d", result);
+        }
+    } while (0);
     FreeChiperBlob(key, certData, usage, hmacKey);
+    return result;
+}
+
+int32_t DlpFileManager::SetDlpFileParams(std::shared_ptr<DlpFile>& filePtr, const DlpProperty& property) const
+{
+    PermissionPolicy policy(property);
+    int result = PrepareParms(filePtr, property, policy);
+    if (result != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "PrepareParms fail, errno=%{public}d", result);
+    }
     return result;
 }
 
@@ -544,18 +554,19 @@ static int32_t SupportDlpWithAppId(const std::string &appId, const int32_t &dlpF
     return DLP_CREDENTIAL_ERROR_APPID_NOT_AUTHORIZED;
 }
 
-int32_t DlpFileManager::DlpRawHmacCheckAndUpdata(std::shared_ptr<DlpFile>& filePtr,
-                                                 const std::vector<uint8_t>& offlineCert)
+int32_t DlpFileManager::DlpRawHmacCheckAndUpdate(std::shared_ptr<DlpFile>& filePtr,
+                                                 const std::vector<uint8_t>& offlineCert,
+                                                 const int32_t &allowedOpenCount)
 {
     if (filePtr == nullptr) {
-        DLP_LOG_ERROR(LABEL, "DlpRawHmacCheckAndUpdata input null filePtr");
+        DLP_LOG_ERROR(LABEL, "DlpRawHmacCheckAndUpdate input null filePtr");
         return DLP_SERVICE_ERROR_VALUE_INVALID;
     }
     int32_t result = filePtr->HmacCheck();
     if (result != DLP_OK) {
         return result;
     }
-    result = UpdateDlpFile(offlineCert, filePtr);
+    result = UpdateDlpFile(offlineCert, filePtr, allowedOpenCount);
     if (result != DLP_OK) {
         return result;
     }
@@ -611,7 +622,7 @@ int32_t DlpFileManager::OpenRawDlpFile(int32_t dlpFileFd, std::shared_ptr<DlpFil
     if (result != DLP_OK) {
         return result;
     }
-    return DlpRawHmacCheckAndUpdata(filePtr, certParcel->offlineCert);
+    return DlpRawHmacCheckAndUpdate(filePtr, certParcel->offlineCert, policy.GetAllowedOpenCount());
 }
 
 int32_t DlpFileManager::ParseZipDlpFileAndAddNode(std::shared_ptr<DlpFile>& filePtr, const std::string& appId)
@@ -656,7 +667,7 @@ int32_t DlpFileManager::ParseZipDlpFileAndAddNode(std::shared_ptr<DlpFile>& file
     if (result != DLP_OK) {
         return result;
     }
-    result = UpdateDlpFile(certParcel->offlineCert, filePtr);
+    result = UpdateDlpFile(certParcel->offlineCert, filePtr, policy.GetAllowedOpenCount());
     if (result != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "UpdateDlpFile fail");
         return result;

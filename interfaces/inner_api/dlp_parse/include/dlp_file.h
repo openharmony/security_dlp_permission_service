@@ -156,7 +156,7 @@ public:
     int32_t SetPolicy(const PermissionPolicy& policy);
     virtual int32_t UpdateCertAndText(const std::vector<uint8_t>& cert, struct DlpBlob certBlob) = 0;
     virtual int32_t SetEncryptCert(const struct DlpBlob& cert) = 0;
-    virtual void SetOfflineAccess(bool flag) = 0;
+    virtual void SetOfflineAccess(bool flag, int32_t allowedOpenCount) = 0;
     virtual int32_t RemoveDlpPermission(int outPlainFileFd) = 0;
     virtual int32_t DlpFileRead(uint64_t offset, void* buf, uint32_t size, bool& hasRead, int32_t uid) = 0;
     virtual int32_t DlpFileWrite(uint64_t offset, void* buf, uint32_t size) = 0;
@@ -222,14 +222,24 @@ public:
         return appId_;
     };
 
-    std::string GetFileId()
+    void GetFileId(std::string& fileId) const
     {
-        return fileId_;
+        fileId = fileId_;
     };
 
     void GetRealType(std::string& realType) const
     {
         realType = realType_;
+    };
+
+    void SetAllowedOpenCount(int32_t allowedOpenCount)
+    {
+        allowedOpenCount_ = allowedOpenCount;
+    };
+
+    int32_t GetAllowedOpenCount()
+    {
+        return allowedOpenCount_;
     };
 
     int32_t dlpFd_;
@@ -267,6 +277,7 @@ private:
     std::string appId_;
     std::string fileId_;
     int32_t accountType_;
+    int32_t allowedOpenCount_;
 };
 }  // namespace DlpPermission
 }  // namespace Security

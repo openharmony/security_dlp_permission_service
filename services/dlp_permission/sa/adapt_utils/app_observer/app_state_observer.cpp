@@ -272,6 +272,28 @@ bool AppStateObserver::GetOpeningSandboxInfo(const std::string& bundleName, cons
     return false;
 }
 
+bool AppStateObserver::CanUninstallByGid(DlpSandboxInfo& appInfo, const AppExecFwk::ProcessData& processData)
+{
+    std::vector<RunningProcessInfo> infoVec;
+    (void)GetRunningProcessesInfo(infoVec);
+    for (auto it = infoVec.begin(); it != infoVec.end(); it++) {
+        if (it->uid_ != appInfo.uid || it->bundleNames[0] != appInfo.bundleName) {
+            continue;
+        }
+        if (it->state_ == AppProcessState::APP_STATE_END || it->state_ == AppProcessState::APP_STATE_TERMINATED) {
+            DLP_LOG_INFO(LABEL, "APP is dead, appName:%{public}s, state=%{public}d", it->processName_.c_str(),
+                it->state_);
+        }
+        if (it->pid_ != processData.pid) {
+            DLP_LOG_INFO(LABEL,
+                "APP is running, appName:%{public}s, state=%{public}d, dead pid:%{public}d, running pid:%{public}d",
+                it->processName_.c_str(), it->state_, processData.pid, it->pid_);
+            return false;
+        }
+    }
+    return true;
+}
+
 void AppStateObserver::GetOpeningReadOnlySandbox(const std::string& bundleName, int32_t userId, int32_t& appIndex)
 {
     std::lock_guard<std::mutex> lock(sandboxInfoLock_);
@@ -299,6 +321,19 @@ uint32_t AppStateObserver::EraseDlpSandboxInfo(int uid)
     return appInfo.tokenId;
 }
 
+void AppStateObserver::OnDlpmanagerDied(const AppExecFwk::ProcessData& processData)
+{
+    int32_t userId;
+    if (GetUserIdFromUid(processData.uid, &userId) != 0) {
+        return;
+    }
+    DLP_LOG_INFO(LABEL, "%{public}s in userId %{public}d is died", processData.bundleName.c_str(), userId);
+    UninstallAllDlpSandboxForUser(userId);
+    EraseUserId(userId);
+    ExitSaAfterAllDlpManagerDie();
+}
+
+
 void AppStateObserver::OnProcessDied(const AppExecFwk::ProcessData& processData)
 {
     DLP_LOG_DEBUG(LABEL, "%{public}s is died, uid: %{public}d", processData.bundleName.c_str(), processData.uid);
@@ -307,14 +342,7 @@ void AppStateObserver::OnProcessDied(const AppExecFwk::ProcessData& processData)
     if (processData.bundleName == DLP_MANAGER_BUNDLE_NAME &&
         processData.processName == DLP_MANAGER_BUNDLE_NAME &&
         BundleManagerAdapter::GetInstance().CheckHapPermission(processData.bundleName, PERMISSION_ACCESS_DLP_FILE)) {
-        int32_t userId;
-        if (GetUserIdFromUid(processData.uid, &userId) != 0) {
-            return;
-        }
-        DLP_LOG_INFO(LABEL, "%{public}s in userId %{public}d is died", processData.bundleName.c_str(), userId);
-        UninstallAllDlpSandboxForUser(userId);
-        EraseUserId(userId);
-        ExitSaAfterAllDlpManagerDie();
+        OnDlpmanagerDied(processData);
         return;
     }
     // current died process is dlpcredmgr
@@ -341,6 +369,10 @@ void AppStateObserver::OnProcessDied(const AppExecFwk::ProcessData& processData)
     // current died process is dlp sandbox app
     DlpSandboxInfo appInfo;
     if (!GetSandboxInfo(processData.uid, appInfo)) {
+        return;
+    }
+    if (!CanUninstallByGid(appInfo, processData)) {
+        DLP_LOG_INFO(LABEL, "Can not uninstall dlp sandbox by gid");
         return;
     }
     if (RetentionFileManager::GetInstance().CanUninstall(appInfo.tokenId)) {

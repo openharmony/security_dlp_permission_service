@@ -68,6 +68,8 @@ private:
     bool GetUidByTokenId(uint32_t tokenId, int32_t& uid);
     void EraseUidTokenIdMap(uint32_t tokenId);
     bool GetRunningProcessesInfo(std::vector<RunningProcessInfo>& infoVec);
+    bool CanUninstallByGid(DlpSandboxInfo& appInfo, const AppExecFwk::ProcessData& processData);
+    void OnDlpmanagerDied(const AppExecFwk::ProcessData& processData);
 
     std::unordered_map<uint32_t, int32_t> tokenIdToUidMap_;
     std::mutex tokenIdToUidMapLock_;

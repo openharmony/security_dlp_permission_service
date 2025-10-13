@@ -123,6 +123,9 @@ static int32_t ConvertCredentialError(int errorCode)
     if (errorCode == DLP_ERR_ACCOUNT_NOT_LOG_IN) {
         return DLP_CREDENTIAL_ERROR_NO_ACCOUNT_ERROR;
     }
+    if (errorCode == DLP_ERR_CONNECTION_ALLOWED_OPEN_COUNT_INVALID) {
+        return DLP_CREDENTIAL_ERROR_ALLOWED_OPEN_COUNT_INVALID;
+    }
     if (IsNoInternetError(errorCode)) {
         return DLP_CREDENTIAL_ERROR_NO_INTERNET;
     }

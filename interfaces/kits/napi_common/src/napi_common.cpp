@@ -1272,13 +1272,20 @@ void GetDlpPropertyExpireTime(napi_env env, napi_value jsObject, DlpProperty& pr
     property.actionUponExpiry = static_cast<ActionType>(jsActionUponExpiry);
 }
 
-void GetAllowedOpenCount(napi_env env, napi_value jsObject, DlpProperty& property)
+bool GetAllowedOpenCount(napi_env env, napi_value jsObject, DlpProperty& property)
 {
     int32_t jsAllowedOpenCount = 0;
-    if (!GetInt32ValueByKey(env, jsObject, "allowedOpenCount", jsAllowedOpenCount)) {
+    if (!GetInt32ValueByKey(env, jsObject, "allowedOpenCount", property.allowedOpenCount)) {
         DLP_LOG_DEBUG(LABEL, "js get allowed open count fail, will set zero");
+        property.allowedOpenCount = jsAllowedOpenCount;
+        return true;
     }
-    property.allowedOpenCount = jsAllowedOpenCount;
+    if (!GetStringValueByKey(env, jsObject, "fileId", property.fileId) ||
+        !IsStringLengthValid(property.fileId, MAX_ACCOUNT_LEN)) {
+        DLP_LOG_ERROR(LABEL, "js get fileId fail");
+        return false;
+    }
+    return true;
 }
 
 static bool GetEnterpriseDlpPropertyAccount(napi_env env, napi_value jsObject, DlpProperty& property)
@@ -1324,7 +1331,6 @@ bool GetEnterpriseDlpProperty(napi_env env, napi_value jsObject, DlpProperty& pr
         return false;
     }
     GetDlpPropertyExpireTime(env, jsObject, property);
-    GetAllowedOpenCount(env, jsObject, property);
 
     napi_value everyoneAccessListObj = GetNapiValue(env, jsObject, "everyoneAccessList");
     if (everyoneAccessListObj != nullptr) {
@@ -1344,6 +1350,24 @@ bool GetEnterpriseDlpProperty(napi_env env, napi_value jsObject, DlpProperty& pr
         !IsStringLengthValid(property.fileId, MAX_ACCOUNT_LEN)) {
         DLP_LOG_ERROR(LABEL, "js get fileId fail");
         return false;
+    }
+    return true;
+}
+
+bool GetEveryoneAccessList(napi_env env, napi_value jsObject, DlpProperty& property)
+{
+    napi_value everyoneAccessListObj = GetNapiValue(env, jsObject, "everyoneAccessList");
+    if (everyoneAccessListObj != nullptr) {
+        std::vector<uint32_t> permList = {};
+        if (!GetVectorUint32(env, everyoneAccessListObj, permList)) {
+            DLP_LOG_ERROR(LABEL, "js get everyoneAccessList fail");
+            return false;
+        }
+        if (permList.size() > 0) {
+            uint32_t perm = *(std::max_element(permList.begin(), permList.end()));
+            property.everyonePerm = static_cast<DLPFileAccess>(perm);
+            property.supportEveryone = true;
+        }
     }
     return true;
 }
@@ -1383,20 +1407,13 @@ bool GetDlpProperty(napi_env env, napi_value jsObject, DlpProperty& property)
         return false;
     }
     GetDlpPropertyExpireTime(env, jsObject, property);
-    GetAllowedOpenCount(env, jsObject, property);
-
-    napi_value everyoneAccessListObj = GetNapiValue(env, jsObject, "everyoneAccessList");
-    if (everyoneAccessListObj != nullptr) {
-        std::vector<uint32_t> permList = {};
-        if (!GetVectorUint32(env, everyoneAccessListObj, permList)) {
-            DLP_LOG_ERROR(LABEL, "js get everyoneAccessList fail");
-            return false;
-        }
-        if (permList.size() > 0) {
-            uint32_t perm = *(std::max_element(permList.begin(), permList.end()));
-            property.everyonePerm = static_cast<DLPFileAccess>(perm);
-            property.supportEveryone = true;
-        }
+    if (!GetAllowedOpenCount(env, jsObject, property)) {
+        DLP_LOG_ERROR(LABEL, "get allowed open count fail");
+        return false;
+    }
+    if (!GetEveryoneAccessList(env, jsObject, property)) {
+        DLP_LOG_ERROR(LABEL, "get GetEveryoneAccessList fail");
+        return false;
     }
     return true;
 }
@@ -1518,6 +1535,14 @@ napi_value DlpPropertyToJs(napi_env env, const DlpProperty& property)
     napi_value ownerAccountTypeJs;
     NAPI_CALL(env, napi_create_int64(env, property.ownerAccountType, &ownerAccountTypeJs));
     NAPI_CALL(env, napi_set_named_property(env, dlpPropertyJs, "ownerAccountType", ownerAccountTypeJs));
+
+    napi_value fileIdJs;
+    NAPI_CALL(env, napi_create_string_utf8(env, property.fileId.c_str(), NAPI_AUTO_LENGTH, &fileIdJs));
+    NAPI_CALL(env, napi_set_named_property(env, dlpPropertyJs, "fileId", fileIdJs));
+
+    napi_value allowedOpenCountJs;
+    NAPI_CALL(env, napi_create_int32(env, property.allowedOpenCount, &allowedOpenCountJs));
+    NAPI_CALL(env, napi_set_named_property(env, dlpPropertyJs, "allowedOpenCount", allowedOpenCountJs));
 
     return dlpPropertyJs;
 }

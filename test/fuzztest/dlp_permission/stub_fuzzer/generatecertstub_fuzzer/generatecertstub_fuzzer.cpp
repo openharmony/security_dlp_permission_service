@@ -73,6 +73,8 @@ static void InitPolicy(const uint8_t* data, size_t size, PermissionPolicy &encPo
     encPolicy.ownerAccountId_ = acount;
     encPolicy.ownerAccountType_ = DlpAccountType::DOMAIN_ACCOUNT;
     encPolicy.expireTime_ = DEFAULT_TIME;
+    encPolicy.fileId = "111";
+    encPolicy.expireTime_ = 1;
     uint8_t* aeskey = const_cast<uint8_t*>(data + KEY_LEN);
     uint8_t* iv = const_cast<uint8_t*>(data + KEY_LEN + KEY_LEN);
     uint8_t* mac = const_cast<uint8_t*>(data + KEY_LEN + KEY_LEN + KEY_LEN);
