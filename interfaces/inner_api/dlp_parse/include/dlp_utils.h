@@ -99,6 +99,14 @@ static const std::unordered_map<std::string, uint32_t> TYPE_TO_NUM_MAP = {
     {"wbmp", 63},
     {"nef", 64},
     {"cr2", 65},
+    {"mp3", 66},
+    {"flac", 67},
+    {"m4a", 68},
+    {"aac", 69},
+    {"wav", 70},
+    {"ogg", 71},
+    {"amr", 72},
+    {"m4b", 73},
 };
 
 static const std::unordered_map<uint32_t, std::string> NUM_TO_TYPE_MAP = {
@@ -167,6 +175,14 @@ static const std::unordered_map<uint32_t, std::string> NUM_TO_TYPE_MAP = {
     {63, "wbmp"},
     {64, "nef"},
     {65, "cr2"},
+    {66, "mp3"},
+    {67, "flac"},
+    {68, "m4a"},
+    {69, "aac"},
+    {70, "wav"},
+    {71, "ogg"},
+    {72, "amr"},
+    {73, "m4b"},
 };
 
 static const std::unordered_map<std::string, std::string> FILE_TYPE_MAP = {
@@ -235,6 +251,14 @@ static const std::unordered_map<std::string, std::string> FILE_TYPE_MAP = {
     {"wbmp", "support_photo_dlp"},
     {"nef", "support_photo_dlp"},
     {"cr2", "support_photo_dlp"},
+    {"mp3", "support_audio_dlp"},
+    {"flac", "support_audio_dlp"},
+    {"m4a", "support_audio_dlp"},
+    {"aac", "support_audio_dlp"},
+    {"wav", "support_audio_dlp"},
+    {"ogg", "support_audio_dlp"},
+    {"amr", "support_audio_dlp"},
+    {"m4b", "support_audio_dlp"},
 };
 
 class DlpUtils {

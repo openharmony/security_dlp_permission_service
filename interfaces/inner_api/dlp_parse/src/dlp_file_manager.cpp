@@ -43,6 +43,7 @@ static constexpr uint32_t DECRYPTTYPEFORUSER = 2;
 const std::string PATH_CACHE = "/cache";
 const std::string SUPPORT_PHOTO_DLP = "support_photo_dlp";
 const std::string SUPPORT_VIDEO_DLP = "support_video_dlp";
+const std::string SUPPORT_AUDIO_DLP = "support_audio_dlp";
 
 static const std::string DEFAULT_STRING = "";
 }
@@ -506,7 +507,7 @@ int32_t DlpFileManager::GenerateDlpFile(
         return DLP_PARSE_ERROR_VALUE_INVALID;
     }
     DlpFileMes dlpFileMes = {plainFileFd, dlpFileFd, realFileType};
-    if ((fileType == SUPPORT_PHOTO_DLP || fileType == SUPPORT_VIDEO_DLP) &&
+    if ((fileType == SUPPORT_PHOTO_DLP || fileType == SUPPORT_VIDEO_DLP || fileType == SUPPORT_AUDIO_DLP) &&
         property.ownerAccountType == CLOUD_ACCOUNT) {
         return GenRawDlpFile(dlpFileMes, property, filePtr);
     }
