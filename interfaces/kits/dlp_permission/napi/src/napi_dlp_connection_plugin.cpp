@@ -181,7 +181,12 @@ static void ConnectServerWork(JsDlpConnectionParam *param)
     napi_handle_scope scope = nullptr;
     int32_t res = 0;
     do {
-        napi_open_handle_scope(param->env, &scope);
+        napi_status status = napi_open_handle_scope(param->env, &scope);
+        if (status != napi_ok) {
+            DLP_LOG_ERROR(LABEL, "fail to get scope");
+            res = 1;
+            break;
+        }
         if (scope == nullptr) {
             DLP_LOG_ERROR(LABEL, "scope is error.");
             res = 1;
