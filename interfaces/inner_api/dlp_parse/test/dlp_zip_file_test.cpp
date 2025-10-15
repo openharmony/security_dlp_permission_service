@@ -78,3 +78,25 @@ HWTEST_F(DlpZipFileTest, GetOfflineCertSizeTest, TestSize.Level0)
     std::shared_ptr<DlpZipFile> filePtr = std::make_shared<DlpZipFile>(-1, DLP_TEST_DIR, 0, "txt");
     ASSERT_EQ(filePtr->GetOfflineCertSize(), 0);
 }
+
+/**
+ * @tc.name: SetOfflineAccessTest001
+ * @tc.desc: SetOfflineAccess test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpZipFileTest,SetOfflineAccessTest001 , TestSize.Level0)
+{
+    std::shared_ptr<DlpZipFile> testFile = std::make_shared<DlpZipFile>(1000, DLP_TEST_DIR, 0, "txt");
+    ASSERT_NE(testFile, nullptr);
+
+    int32_t allowedOpenCount = 0;
+    bool flag = true;
+
+    testFile->SetOfflineAccess(flag, allowedOpenCount);
+    EXPECT_EQ(1, testFile->offlineAccess_);
+
+    allowedOpenCount = 1;
+    testFile->SetOfflineAccess(flag, allowedOpenCount);
+    EXPECT_NE(1, testFile->offlineAccess_);
+}

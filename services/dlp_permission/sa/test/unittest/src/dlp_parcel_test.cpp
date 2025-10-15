@@ -26,6 +26,7 @@ using namespace OHOS::Security::DlpPermission;
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
     LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "DlpParcelTest"};
+constexpr uint32_t MAX_ACCOUNT_NUM = 100;
 }
 
 void DlpParcelTest::SetUpTestCase() {}
@@ -115,6 +116,49 @@ HWTEST_F(DlpParcelTest, DlpParcelTest004, TestSize.Level1)
     EXPECT_EQ(1, result->fileInfo.timeStamp);
     delete result;
     result = nullptr;
+}
+
+
+/**
+ * @tc.name: DlpPolicyParcelTest001
+ * @tc.desc: DlpPolicyParcel test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpParcelTest, DlpPolicyParcelTest001, TestSize.Level1)
+{
+    DlpPolicyParcel info;
+    Parcel out;
+
+    AuthUserInfo user;
+    user.authAccount = "user";
+    user.authPerm = DLPFileAccess::NO_PERMISSION;
+    user.permExpiryTime = 0;
+    user.authAccountType = DlpAccountType::INVALID_ACCOUNT;
+    info.policyParams_.authUsers_.emplace_back(user);
+
+    info.policyParams_.ownerAccount_ = "owner";
+    info.policyParams_.ownerAccountId_ = "ownerId";
+    info.policyParams_.ownerAccountType_ = DlpAccountType::CLOUD_ACCOUNT;
+    uint8_t key[16] = {0x11, 0x22, 0x33, 0x44,
+                            0x55, 0x66, 0x77, 0x88,
+                            0x99, 0xAA, 0xBB, 0xCC,
+                            0xDD, 0xEE, 0xFF, 0x00};
+    info.policyParams_.SetAeskey(key, sizeof(key));
+    info.policyParams_.SetIv(key, sizeof(key));
+
+    // Marshalling func normal test
+    EXPECT_EQ(true,info.Marshalling(out));
+
+    // Unmarshalling func normal test
+    auto result = DlpPolicyParcel::Unmarshalling(out);
+    EXPECT_NE(result, nullptr);
+    delete result;
+    result = nullptr;
+
+    // Marshalling func abnormal by MarshallingUserList test
+    info.policyParams_.authUsers_.resize(MAX_ACCOUNT_NUM + 1);
+    EXPECT_EQ(false, info.Marshalling(out));
 }
 
 /**

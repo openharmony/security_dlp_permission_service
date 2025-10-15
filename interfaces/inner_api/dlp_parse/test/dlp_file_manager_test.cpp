@@ -593,6 +593,7 @@ HWTEST_F(DlpFileManagerTest, GenerateDlpFile001, TestSize.Level0)
     std::vector<uint8_t> offlineCert;
     DlpFileManager::GetInstance().DlpRawHmacCheckAndUpdate(rawFilePtr, offlineCert, 0);
     DlpFileManager::GetInstance().DlpRawHmacCheckAndUpdate(rawFilePtr2, offlineCert, 1);
+    EXPECT_NE(DLP_OK, DlpFileManager::GetInstance().DlpRawHmacCheckAndUpdate(rawFilePtr2, offlineCert, 2));
 }
 
 /**

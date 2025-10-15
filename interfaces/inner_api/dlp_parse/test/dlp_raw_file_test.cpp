@@ -452,3 +452,27 @@ HWTEST_F(DlpRawFileTest, ParseEnterpriseRawDlpHeader, TestSize.Level1)
     ASSERT_NE(testFile->ParseEnterpriseRawDlpHeader(FILE_HEAD, MAX_CERT_SIZE), DLP_OK);
     ASSERT_NE(testFile->ParseEnterpriseRawDlpHeader(FILE_HEAD + FILE_HEAD, 1), DLP_OK);
 }
+
+/**
+ * @tc.name: SetOfflineAccessTest001
+ * @tc.desc: SetOfflineAccess test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpRawFileTest,SetOfflineAccessTest001 , TestSize.Level1)
+{
+    std::shared_ptr<DlpRawFile> testFile = std::make_shared<DlpRawFile>(1000, "txt");
+    ASSERT_NE(testFile, nullptr);
+
+    int32_t allowedOpenCount = 0;
+    bool flag = true;
+
+    testFile->SetOfflineAccess(flag, allowedOpenCount);
+    EXPECT_EQ(1, testFile->offlineAccess_);
+    EXPECT_EQ(1, testFile->head_.offlineAccess);
+
+    allowedOpenCount = 1;
+    testFile->SetOfflineAccess(flag, allowedOpenCount);
+    EXPECT_NE(1, testFile->offlineAccess_);
+    EXPECT_NE(1, testFile->head_.offlineAccess);
+}
