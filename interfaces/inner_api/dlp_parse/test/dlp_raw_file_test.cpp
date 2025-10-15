@@ -459,7 +459,7 @@ HWTEST_F(DlpRawFileTest, ParseEnterpriseRawDlpHeader, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpRawFileTest,SetOfflineAccessTest001 , TestSize.Level1)
+HWTEST_F(DlpRawFileTest, SetOfflineAccessTest001, TestSize.Level1)
 {
     std::shared_ptr<DlpRawFile> testFile = std::make_shared<DlpRawFile>(1000, "txt");
     ASSERT_NE(testFile, nullptr);

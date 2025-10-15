@@ -148,7 +148,7 @@ HWTEST_F(DlpParcelTest, DlpPolicyParcelTest001, TestSize.Level1)
     info.policyParams_.SetIv(key, sizeof(key));
 
     // Marshalling func normal test
-    EXPECT_EQ(true,info.Marshalling(out));
+    EXPECT_EQ(true, info.Marshalling(out));
 
     // Unmarshalling func normal test
     auto result = DlpPolicyParcel::Unmarshalling(out);

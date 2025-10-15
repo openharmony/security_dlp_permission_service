@@ -85,7 +85,7 @@ HWTEST_F(DlpZipFileTest, GetOfflineCertSizeTest, TestSize.Level0)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpZipFileTest,SetOfflineAccessTest001 , TestSize.Level0)
+HWTEST_F(DlpZipFileTest, SetOfflineAccessTest001, TestSize.Level0)
 {
     std::shared_ptr<DlpZipFile> testFile = std::make_shared<DlpZipFile>(1000, DLP_TEST_DIR, 0, "txt");
     ASSERT_NE(testFile, nullptr);
