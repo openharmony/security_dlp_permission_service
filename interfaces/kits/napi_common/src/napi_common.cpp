@@ -61,7 +61,12 @@ static void UvQueueWorkDlpSandboxChanged(RegisterDlpSandboxChangeWorker *worker)
 {
     DLP_LOG_INFO(LABEL, "enter UvQueueWorkDlpSandboxChanged");
     napi_handle_scope scope = nullptr;
-    napi_open_handle_scope(worker->env, &scope);
+    napi_status status = napi_open_handle_scope(worker->env, &scope);
+    if (status != napi_ok) {
+        DLP_LOG_ERROR(LABEL, "fail to get scope");
+        delete worker;
+        return;
+    }
     if (scope == nullptr) {
         DLP_LOG_ERROR(LABEL, "scope is nullptr");
         delete worker;
@@ -114,7 +119,12 @@ static void UvQueueWorkOpenDlpFile(OpenDlpFileSubscriberWorker *worker)
     DLP_LOG_INFO(LABEL, "enter UvQueueWorkOpenDlpFile");
 
     napi_handle_scope scope = nullptr;
-    napi_open_handle_scope(worker->env, &scope);
+    napi_status status = napi_open_handle_scope(worker->env, &scope);
+    if (status != napi_ok) {
+        DLP_LOG_ERROR(LABEL, "fail to get scope");
+        delete worker;
+        return;
+    }
     if (scope == nullptr) {
         DLP_LOG_ERROR(LABEL, "scope is nullptr");
         delete worker;
