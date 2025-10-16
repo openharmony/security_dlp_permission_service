@@ -294,6 +294,7 @@ int32_t DlpFileManager::PrepareParms(const std::shared_ptr<DlpFile>& filePtr, co
     }
     policy.fileId = property.fileId;
     policy.allowedOpenCount_ = property.allowedOpenCount;
+    filePtr->SetFileId(property.fileId);
     filePtr->SetOfflineAccess(property.offlineAccess, property.allowedOpenCount);
 
     result = PrepareDlpEncryptParms(policy, key, usage, certData, hmacKey);
@@ -604,6 +605,7 @@ int32_t DlpFileManager::OpenRawDlpFile(int32_t dlpFileFd, std::shared_ptr<DlpFil
         certParcel->appId = filePtr->GetAppId();
     }
     filePtr->GetRealType(certParcel->realFileType);
+    filePtr->GetFileIdPlaintext(certParcel->fileId);
     StartTrace(HITRACE_TAG_ACCESS_CONTROL, "DlpParseCertificate");
     result = DlpPermissionKit::ParseDlpCertificate(certParcel, policy, appId, filePtr->GetOfflineAccess());
     FinishTrace(HITRACE_TAG_ACCESS_CONTROL);
@@ -645,6 +647,7 @@ int32_t DlpFileManager::ParseZipDlpFileAndAddNode(std::shared_ptr<DlpFile>& file
     certParcel->isNeedAdapter = filePtr->NeedAdapter();
     certParcel->needCheckCustomProperty = true;
     filePtr->GetRealType(certParcel->realFileType);
+    filePtr->GetFileIdPlaintext(certParcel->fileId);
     StartTrace(HITRACE_TAG_ACCESS_CONTROL, "DlpParseCertificate");
     result = DlpPermissionKit::ParseDlpCertificate(certParcel, policy, appId, filePtr->GetOfflineAccess());
     FinishTrace(HITRACE_TAG_ACCESS_CONTROL);

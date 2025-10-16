@@ -70,6 +70,7 @@ typedef struct {
 typedef struct {
     char *featureName;
     char *realType;
+    char *fileId;
     uint8_t *data;
     uint32_t dataLen;
     EncAndDecOptions options;

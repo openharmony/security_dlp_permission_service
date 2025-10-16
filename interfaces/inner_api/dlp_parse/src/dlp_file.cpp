@@ -69,6 +69,7 @@ DlpFile::DlpFile(int32_t dlpFd, const std::string &realType)
     offlineAccess_ = 0;
     version_ = CURRENT_VERSION;
     accountType_ = 0;
+    fileIdPlaintext_ = "";
 }
 
 DlpFile::~DlpFile() = default;

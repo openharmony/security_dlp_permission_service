@@ -39,6 +39,7 @@ public:
     int32_t decryptType = 0;
     std::string appId;
     std::string realFileType;
+    std::string fileId;
 };
 } // namespace DlpPermission
 } // namespace Security

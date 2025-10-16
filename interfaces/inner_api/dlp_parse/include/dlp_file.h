@@ -227,6 +227,11 @@ public:
         fileId = fileId_;
     };
 
+    void GetFileIdPlaintext(std::string& fileIdPlaintext) const
+    {
+        fileIdPlaintext = fileIdPlaintext_;
+    };
+
     void GetRealType(std::string& realType) const
     {
         realType = realType_;
@@ -269,6 +274,7 @@ private:
     struct DlpBlob offlineCert_;
     struct DlpBlob hmac_;
     struct DlpCipher cipher_;
+    std::string fileIdPlaintext_;
     // policy in certificate
     PermissionPolicy policy_;
     std::string contactAccount_;

@@ -21,6 +21,7 @@
 #include "application_info.h"
 #include "bundle_constants.h"
 #include "cert_parcel.h"
+#include "dlp_credential_client.h"
 #include "idlp_permission_callback.h"
 #include "permission_policy.h"
 
@@ -47,6 +48,8 @@ public:
     int32_t RemoveMDMPolicy();
     int32_t CheckMdmPermission(const std::string& bundleName, int32_t userId);
     int32_t SetEnterprisePolicy(const std::string& policy);
+    int32_t ParseDlpInfo(const sptr<CertParcel>& certParcel, const sptr<IDlpPermissionCallback>& callback,
+        DLP_EncPolicyData& encPolicy, AppExecFwk::ApplicationInfo& applicationInfo, DlpAccountType accountType);
 private:
     DlpCredential();
     DISALLOW_COPY_AND_MOVE(DlpCredential);
