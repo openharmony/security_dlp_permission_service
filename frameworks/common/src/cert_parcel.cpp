@@ -28,6 +28,7 @@ CertParcel::CertParcel()
     isNeedAdapter = false;
     contactAccount = "";
     needCheckCustomProperty = false;
+    fileId = "";
 }
 
 bool CertParcel::Marshalling(Parcel& data) const
@@ -62,6 +63,10 @@ bool CertParcel::Marshalling(Parcel& data) const
     }
     if (!data.WriteString(this->realFileType)) {
         DLP_LOG_ERROR(LABEL, "Write string realFileType fail");
+        return false;
+    }
+    if (!data.WriteString(this->fileId)) {
+        DLP_LOG_ERROR(LABEL, "Write string fileId fail");
         return false;
     }
     return true;
@@ -110,6 +115,10 @@ CertParcel* CertParcel::Unmarshalling(Parcel& data)
     }
     if (!data.ReadString(parcel->realFileType)) {
         DLP_LOG_ERROR(LABEL, "Read realFileType fail");
+        return FreeCertParcel(parcel);
+    }
+    if (!data.ReadString(parcel->fileId)) {
+        DLP_LOG_ERROR(LABEL, "Read fileId fail");
         return FreeCertParcel(parcel);
     }
     return parcel;

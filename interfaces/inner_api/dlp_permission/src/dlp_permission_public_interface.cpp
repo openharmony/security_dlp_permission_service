@@ -16,7 +16,6 @@
 
 #include "dlp_permission_public_interface.h"
 #include "dlp_permission.h"
-#include "nlohmann/json.hpp"
 
 namespace OHOS {
 namespace Security {
@@ -33,6 +32,9 @@ static const std::string DLP_REAL_TYPE = "realFileType";
 static const std::string CERT_SIZE = "certSize";
 static const uint32_t MIN_REALY_TYPE_LENGTH = 2;
 static const uint32_t MAX_REALY_TYPE_LENGTH = 5;
+static const std::string FILEID = "fileId";
+static const uint32_t MIN_FILEID_LENGTH = 0;
+static const uint32_t MAX_FILEID_LENGTH = 100;
 static const uint32_t LIMIT_CERT_SIZE = 10000;
 static bool checkParams(GenerateInfoParams& params, const nlohmann::json& jsonObj,
                         const std::string& versionKey, const std::string& infoKey)
@@ -75,6 +77,9 @@ int32_t GenerateDlpGeneralInfo(const GenerateInfoParams& params, std::string& ge
     if (params.realType.size() >= MIN_REALY_TYPE_LENGTH && params.realType.size() <= MAX_REALY_TYPE_LENGTH) {
         dlp_general_info[DLP_REAL_TYPE] = params.realType;
     }
+    if (params.fileId.size() >= MIN_FILEID_LENGTH && params.fileId.size() <= MAX_FILEID_LENGTH) {
+        dlp_general_info[FILEID] = params.fileId;
+    }
     dlp_general_info[CERT_SIZE] = params.certSize;
     generalInfo = dlp_general_info.dump();
     size_t pos = generalInfo.find(CERT_SIZE);
@@ -104,6 +109,15 @@ int32_t ParseDlpGeneralInfo(const std::string& generalInfo, GenerateInfoParams& 
     } else {
         return DLP_PARSE_ERROR_VALUE_INVALID;
     }
+    int32_t res = ParseGeneralInfo(jsonObj, params);
+    if (res != DLP_OK) {
+        return res;
+    }
+    return DLP_OK;
+}
+
+int32_t ParseGeneralInfo(const nlohmann::json& jsonObj, GenerateInfoParams& params)
+{
     auto iter = jsonObj.find(DLP_OFFLINE_FLAG);
     if (iter != jsonObj.end() && iter->is_boolean()) {
         params.offlineAccessFlag = iter->get<bool>();
@@ -131,6 +145,10 @@ int32_t ParseDlpGeneralInfo(const std::string& generalInfo, GenerateInfoParams& 
     params.certSize = 0;
     if (iter != jsonObj.end() && iter->is_number_integer()) {
         params.certSize = iter->get<uint32_t>();
+    }
+    iter = jsonObj.find(FILEID);
+    if (iter != jsonObj.end() && iter->is_string()) {
+        params.fileId = iter->get<std::string>();
     }
     return DLP_OK;
 }

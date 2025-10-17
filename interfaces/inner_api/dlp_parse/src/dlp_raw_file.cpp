@@ -44,6 +44,8 @@ const uint32_t FILE_HEAD = 8;
 const uint32_t HMAC_SIZE = 32;
 const uint32_t MAX_CERT_SIZE = 30 * 1024;
 const std::string DEFAULT_STRINGS = "";
+const int32_t FILEID_SIZE = 46;
+const int32_t FILEID_SIZE_OPPOSITE = -46;
 } // namespace
 
 static int32_t GetFileSize(int32_t fd, uint64_t& fileLen);
@@ -385,6 +387,24 @@ int32_t DlpRawFile::GetRawDlpHmac(void)
         return DLP_SERVICE_ERROR_VALUE_INVALID;
     }
 
+    uint8_t *tmpBuf = new (std::nothrow)uint8_t[FILEID_SIZE];
+    if (tmpBuf == nullptr) {
+        return DLP_PARSE_ERROR_MEMORY_OPERATE_FAIL;
+    }
+    off_t fileLen = lseek(dlpFd_, FILEID_SIZE_OPPOSITE, SEEK_END);
+    if (fileLen == static_cast<off_t>(-1)) {
+        DLP_LOG_ERROR(LABEL, "get fileid fileLen invalid");
+        return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
+    }
+    if (read(dlpFd_, tmpBuf, FILEID_SIZE) != FILEID_SIZE) {
+        delete[] tmpBuf;
+        delete[] tempBufHmacStr;
+        DLP_LOG_ERROR(LABEL, "can not read fileId, %{public}s", strerror(errno));
+        return DLP_PARSE_ERROR_FILE_FORMAT_ERROR;
+    }
+    fileIdPlaintext_ = std::string(tmpBuf, tmpBuf + FILEID_SIZE);
+
+    delete[] tmpBuf;
     delete[] tempBufHmacStr;
     return DLP_OK;
 }
@@ -528,6 +548,16 @@ int32_t DlpRawFile::DoWriteHmacAndCert(uint32_t hmacStrLen, std::string& hmacStr
     (void)memset_s(buffer, MAX_CERT_SIZE - head_.certSize, 0, MAX_CERT_SIZE - head_.certSize);
     if (write(dlpFd_, buffer, MAX_CERT_SIZE - head_.certSize) != (ssize_t)(MAX_CERT_SIZE - head_.certSize)) {
         DLP_LOG_ERROR(LABEL, "write buffer is error");
+        delete[] buffer;
+        return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
+    }
+    off_t fileLen = lseek(dlpFd_, FILEID_SIZE_OPPOSITE, SEEK_END);
+    if (fileLen == static_cast<off_t>(-1)) {
+        DLP_LOG_ERROR(LABEL, "write fileid fileLen invalid");
+        return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
+    }
+    if (write(dlpFd_, fileId_.c_str(), fileId_.size()) != static_cast<int32_t>(fileId_.size())) {
+        DLP_LOG_ERROR(LABEL, "write dlpFd_ error");
         delete[] buffer;
         return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
     }

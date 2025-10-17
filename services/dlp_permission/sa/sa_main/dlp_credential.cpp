@@ -20,7 +20,6 @@
 #include <unordered_map>
 #include "account_adapt.h"
 #include "bundle_manager_adapter.h"
-#include "dlp_credential_client.h"
 #include "dlp_policy_mgr_client.h"
 #include "dlp_permission.h"
 #include "dlp_permission_log.h"
@@ -530,6 +529,10 @@ static void FreeDLPEncPolicyData(DLP_EncPolicyData& encPolicy)
         free(encPolicy.realType);
         encPolicy.realType = nullptr;
     }
+    if (encPolicy.fileId != nullptr) {
+        free(encPolicy.fileId);
+        encPolicy.fileId = nullptr;
+    }
 }
 
 static int32_t GetLocalAccountName(std::string& account, const std::string& contactAccount, bool* isOwner)
@@ -725,9 +728,21 @@ int32_t DlpCredential::ParseDlpCertificate(const sptr<CertParcel>& certParcel,
     if (certParcel->isNeedAdapter) {
         AdapterData(certParcel->offlineCert, isOwner, jsonObj, encPolicy);
     }
+    result = ParseDlpInfo(certParcel, callback, encPolicy, applicationInfo, accountType);
+    FreeDLPEncPolicyData(encPolicy);
+    return result;
+}
+
+int32_t DlpCredential::ParseDlpInfo(const sptr<CertParcel>& certParcel, const sptr<IDlpPermissionCallback>& callback,
+    DLP_EncPolicyData& encPolicy, AppExecFwk::ApplicationInfo& applicationInfo, DlpAccountType accountType)
+{
+    int result = DLP_OK;
     encPolicy.realType = strdup(const_cast<char *>(certParcel->realFileType.c_str()));
     if (encPolicy.realType == nullptr) {
-        FreeDLPEncPolicyData(encPolicy);
+        return DLP_CREDENTIAL_ERROR_MEMORY_OPERATE_FAIL;
+    }
+    encPolicy.fileId = strdup(const_cast<char *>(certParcel->fileId.c_str()));
+    if (encPolicy.fileId == nullptr) {
         return DLP_CREDENTIAL_ERROR_MEMORY_OPERATE_FAIL;
     }
     encPolicy.reserved[IS_NEED_CHECK_CUSTOM_PROPERTY] = static_cast<uint8_t>(certParcel->needCheckCustomProperty);
@@ -736,12 +751,10 @@ int32_t DlpCredential::ParseDlpCertificate(const sptr<CertParcel>& certParcel,
         std::lock_guard<std::mutex> lock(g_lockRequest);
         int32_t status = QueryRequestIdle();
         if (status != DLP_OK) {
-            FreeDLPEncPolicyData(encPolicy);
             return status;
         }
         result = RestorePolicy(encPolicy, applicationInfo, callback, accountType);
     }
-    FreeDLPEncPolicyData(encPolicy);
     return result;
 }
 

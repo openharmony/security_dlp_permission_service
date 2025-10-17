@@ -18,6 +18,7 @@
 
 #include <string>
 #include <vector>
+#include "nlohmann/json.hpp"
 
 namespace OHOS {
 namespace Security {
@@ -33,10 +34,12 @@ struct GenerateInfoParams {
     std::string hmacVal;
     std::string realType;
     uint32_t certSize;
+    std::string fileId;
 };
 
 int32_t GenerateDlpGeneralInfo(const GenerateInfoParams& params, std::string& generalInfo);
 int32_t ParseDlpGeneralInfo(const std::string& generalInfo, GenerateInfoParams& params);
+int32_t ParseGeneralInfo(const nlohmann::json& jsonObj, GenerateInfoParams& params);
 }  // namespace DlpPermission
 }  // namespace Security
 }  // namespace OHOS
