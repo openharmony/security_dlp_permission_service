@@ -303,6 +303,7 @@ HWTEST_F(DlpFileTest, TestDlpFile, TestSize.Level1)
 
     std::string fileId = "12345";
     g_Dlpfile->SetFileId(fileId);
+    ASSERT_EQ(g_Dlpfile->GetFileId(), fileId);
 
     int32_t accountType = 0;
     g_Dlpfile->SetAccountType(accountType);
