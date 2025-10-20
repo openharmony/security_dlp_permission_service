@@ -371,6 +371,22 @@ HWTEST_F(PermissionPolicyTest, SetIv001, TestSize.Level1)
 }
 
 /**
+ * @tc.name: GetAllowedOpenCount
+ * @tc.desc: GetAllowedOpenCount test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionPolicyTest, GetAllowedOpenCount001, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL, "GetAllowedOpenCount001");
+    std::shared_ptr<PermissionPolicy> policy = std::make_shared<PermissionPolicy>();
+    ASSERT_NE(policy, nullptr);
+
+    policy->allowedOpenCount_ = 1;
+    ASSERT_EQ(policy->allowedOpenCount_, 1);
+}
+
+/**
  * @tc.name: CopyPermissionPolicy001
  * @tc.desc: SetIv test
  * @tc.type: FUNC
