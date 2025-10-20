@@ -12,6 +12,7 @@
 # limitations under the License.
 
 import("//build/ohos.gni")
+import("//build/test.gni")
 import("../dlp_permission_service.gni")
 
 group("dlp_permission_build_module_test") {
@@ -422,7 +423,7 @@ ohos_unittest("dlp_utils_test") {
     "${dlp_root_dir}/interfaces/inner_api/dlp_parse/src/dlp_zip.cpp",
     "${dlp_root_dir}/interfaces/inner_api/dlp_parse/src/dlp_file_operator.cpp",
     "${dlp_root_dir}/services/dlp_permission/sa/adapt_utils/file_manager/file_operator.cpp",
-    "unittest/dllp_parse/dlp_utils_test.cpp",
+    "unittest/dlp_parse/dlp_utils_test.cpp",
   ]
 
   include_dirs = [
@@ -589,9 +590,9 @@ ohos_unittest("dlp_fuse_test") {
     "${dlp_root_dir}/frameworks/dlp_permission/src/auth_user_info_parcel.cpp",
     "${dlp_root_dir}/frameworks/dlp_permission/src/dlp_permission_info_parcel.cpp",
     "${dlp_root_dir}/frameworks/dlp_permission/src/dlp_policy_parcel.cpp",
-    "${dlp_root_dir}/frameworks/test/mock/c_mock_common.cpp",
-    "${dlp_root_dir}/frameworks/test/mock/dlp_permission_kit.cpp",
-    "${dlp_root_dir}/frameworks/test/mock/dlp_utils_mock.cpp",
+    "${dlp_root_dir}/test/unittest/mock/c_mock_common.cpp",
+    "${dlp_root_dir}/test/unittest/mock/dlp_permission_kit.cpp",
+    "${dlp_root_dir}/test/unittest/mock/dlp_utils_mock.cpp",
     "${dlp_root_dir}/interfaces/inner_api/dlp_fuse/src/dlp_fuse_fd.c",
     "${dlp_root_dir}/interfaces/inner_api/dlp_fuse/src/dlp_fuse_helper.cpp",
     "${dlp_root_dir}/interfaces/inner_api/dlp_fuse/src/dlp_fuse_utils.cpp",
