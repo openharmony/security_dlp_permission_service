@@ -377,6 +377,28 @@ bool DlpUtils::GetAppIdFromToken(std::string &appId)
     appId = bundleInfo.appId;
     return true;
 }
+
+int32_t DlpUtils::GetFilePathByFd(const int32_t& fd, std::string &filePath)
+{
+    char *fileName = new (std::nothrow) char[MAX_DLP_FILE_SIZE + 1];
+    if (fileName == nullptr) {
+        return DLP_PARSE_ERROR_MEMORY_OPERATE_FAIL;
+    }
+    (void)memset_s(fileName, MAX_DLP_FILE_SIZE + 1, 0, MAX_DLP_FILE_SIZE + 1);
+
+    std::string path = DESCRIPTOR_MAP_PATH + std::to_string(fd);
+
+    int readLinkRes = readlink(path.c_str(), fileName, MAX_DLP_FILE_SIZE);
+    if (readLinkRes < 0) {
+        DLP_LOG_ERROR(LABEL, "fail to readlink uri, errno = %{public}d", errno);
+        delete[] fileName;
+        return DLP_PARSE_ERROR_FD_ERROR;
+    }
+    fileName[readLinkRes] = '\0';
+    filePath = std::string(fileName);
+    delete[] fileName;
+    return DLP_OK;
+}
 }  // namespace DlpPermission
 }  // namespace Security
 }  // namespace OHOS

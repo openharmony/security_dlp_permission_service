@@ -272,6 +272,7 @@ public:
     static int32_t GetFileNameWithDlpFd(const int32_t &fd, std::string &srcFileName);
     static std::string GetRealTypeWithRawFile(const int32_t& fd);
     static int32_t GetFilePathWithFd(const int32_t& fd, std::string& srcFilePath);
+    static int32_t GetFilePathByFd(const int32_t& fd, std::string& filePath);
     static std::string ToLowerString(const std::string& str);
     static std::string GetRealTypeWithFd(const int32_t& fd, bool& isFromUriName);
     static bool GetBundleInfoWithBundleName(const std::string &bundleName, int32_t flag,

@@ -74,6 +74,7 @@ public:
     void CleanUpResource();
     int32_t SetDlpFeature(uint32_t dlpFeatureInfo, bool& statusSetInfo);
     int32_t SetEnterprisePolicy(const std::string& policy);
+    int32_t SetNotOwnerAndReadOnce(const std::string& uri, bool isNotOwnerAndReadOnce);
 
 private:
     DlpPermissionClient();

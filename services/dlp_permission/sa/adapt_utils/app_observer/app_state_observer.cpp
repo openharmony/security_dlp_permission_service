@@ -517,6 +517,40 @@ void AppStateObserver::DumpSandbox(int fd)
             appInfo.dlpFileAccess == DLPFileAccess::READ_ONLY ? "ReadOnly" : "FullControl");
     }
 }
+
+void AppStateObserver::EraseReadOnceUriInfoByUri(const std::string& uri)
+{
+    std::lock_guard<std::mutex> lock(readOnceUriMapLock_);
+    auto iter = readOnceUriMap_.find(uri);
+    if (iter != readOnceUriMap_.end()) {
+        DLP_LOG_INFO(LABEL, "erase ReadOnce");
+        readOnceUriMap_.erase(iter);
+    }
+}
+
+bool AppStateObserver::AddUriAndNotOwnerAndReadOnce(const std::string& uri, bool isNotOwnerAndReadOnce)
+{
+    if (uri.empty()) {
+        DLP_LOG_ERROR(LABEL, "uri is invalid");
+        return false;
+    }
+    std::lock_guard<std::mutex> lock(readOnceUriMapLock_);
+    DLP_LOG_INFO(LABEL, "add readOnceUriMap, isNotOwnerAndReadOnce: %{public}d", isNotOwnerAndReadOnce);
+    readOnceUriMap_[uri] = isNotOwnerAndReadOnce;
+    return true;
+}
+
+bool AppStateObserver::GetNotOwnerAndReadOnceByUri(const std::string& uri, bool& isNotOwnerAndReadOnce)
+{
+    std::lock_guard<std::mutex> lock(readOnceUriMapLock_);
+    auto iter = readOnceUriMap_.find(uri);
+    if (iter != readOnceUriMap_.end()) {
+        isNotOwnerAndReadOnce = iter->second;
+        DLP_LOG_INFO(LABEL, "isNotOwnerAndReadOnce: %{public}d", isNotOwnerAndReadOnce);
+        return true;
+    }
+    return false;
+}
 }  // namespace DlpPermission
 }  // namespace Security
 }  // namespace OHOS

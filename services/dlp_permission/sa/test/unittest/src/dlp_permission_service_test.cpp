@@ -1638,3 +1638,20 @@ HWTEST_F(DlpPermissionServiceTest, IsDLPFeatureProvided, TestSize.Level1)
     ASSERT_FALSE(isDLPFeatureProvided);
     ASSERT_EQ(ret, DLP_OK);
 }
+
+/**
+ * @tc.name: SetNotOwnerAndReadOnce
+ * @tc.desc: SetNotOwnerAndReadOnce test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionServiceTest, SetNotOwnerAndReadOnce, TestSize.Level1)
+{
+    DLP_LOG_DEBUG(LABEL, "SetNotOwnerAndReadOnce");
+    std::string uri = "";
+    int32_t ret = dlpPermissionService_->SetNotOwnerAndReadOnce(uri, true);
+    ASSERT_EQ(ret, DLP_SERVICE_ERROR_URI_EMPTY);
+    uri = "uri";
+    ret = dlpPermissionService_->SetNotOwnerAndReadOnce(uri, false);
+    ASSERT_EQ(ret, DLP_OK);
+}

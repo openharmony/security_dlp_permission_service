@@ -155,7 +155,7 @@ std::string DlpUtils::GetDlpFileRealSuffix(const std::string& dlpFileName, bool&
     return realFileName.substr(escapeLocate + 1);
 }
 
-int32_t DlpUtils::GetFileNameWithDlpFd(const int32_t &fd, std::string &srcFileName)
+int32_t DlpUtils::GetFilePathByFd(const int32_t &fd, std::string &filePath)
 {
     char *fileName = new (std::nothrow) char[MAX_DLP_FILE_SIZE + 1];
     if (fileName == nullptr) {
@@ -171,13 +171,25 @@ int32_t DlpUtils::GetFileNameWithDlpFd(const int32_t &fd, std::string &srcFileNa
         delete[] fileName;
         return DLP_PARSE_ERROR_FD_ERROR;
     }
-    std::string tmp(fileName);
+    fileName[readLinkRes] = '\0';
+    filePath = std::string(fileName);
     delete[] fileName;
-    std::size_t pos = tmp.find_last_of(".");
+    return DLP_OK;
+}
+
+int32_t DlpUtils::GetFileNameWithDlpFd(const int32_t &fd, std::string &srcFileName)
+{
+    std::string filePath;
+    int res = DlpUtils::GetFilePathByFd(fd, filePath);
+    if (res != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "GetFilePathByFd fail, err = %{public}d.", res);
+        return res;
+    }
+    std::size_t pos = filePath.find_last_of(".");
     if (std::string::npos == pos) {
         return DLP_PARSE_ERROR_FD_ERROR;
     }
-    srcFileName = tmp.substr(0, pos);
+    srcFileName = filePath.substr(0, pos);
     return DLP_OK;
 }
 
@@ -206,24 +218,14 @@ int32_t DlpUtils::GetFileNameWithFd(const int32_t &fd, std::string &srcFileName)
 
 int32_t DlpUtils::GetFilePathWithFd(const int32_t &fd, std::string &srcFilePath)
 {
-    char *fileName = new (std::nothrow) char[MAX_DLP_FILE_SIZE + 1];
-    if (fileName == nullptr) {
-        return DLP_PARSE_ERROR_MEMORY_OPERATE_FAIL;
+    std::string filePath;
+    int res = DlpUtils::GetFilePathByFd(fd, filePath);
+    if (res != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "GetFilePathByFd fail, err = %{public}d.", res);
+        return res;
     }
-    (void)memset_s(fileName, MAX_DLP_FILE_SIZE + 1, 0, MAX_DLP_FILE_SIZE + 1);
-
-    std::string path = DESCRIPTOR_MAP_PATH + std::to_string(fd);
-
-    int readLinkRes = readlink(path.c_str(), fileName, MAX_DLP_FILE_SIZE);
-    if (readLinkRes < 0) {
-        DLP_LOG_ERROR(LABEL, "fail to readlink uri, errno = %{public}d", errno);
-        delete[] fileName;
-        return DLP_PARSE_ERROR_FD_ERROR;
-    }
-    std::string tmp(fileName);
-    std::size_t pos = tmp.find_last_of(PATH_SEPARATOR);
-    srcFilePath = tmp.substr(0, pos + 1);
-    delete[] fileName;
+    std::size_t pos = filePath.find_last_of(PATH_SEPARATOR);
+    srcFilePath = filePath.substr(0, pos + 1);
     return DLP_OK;
 }
 

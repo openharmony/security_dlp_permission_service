@@ -171,6 +171,7 @@ public:
     virtual int32_t ProcessDlpFile() = 0;
     virtual int32_t DoDlpContentCryptyOperation(int32_t inFd, int32_t outFd, uint64_t inOffset,
                                                 uint64_t inFileLen, bool isEncrypt) = 0;
+    virtual int32_t GetLocalAccountName(std::string& account) const;
 
     void GetPolicy(PermissionPolicy& policy) const
     {
@@ -256,7 +257,6 @@ private:
     virtual int32_t CopyBlobParam(const struct DlpBlob& src, struct DlpBlob& dst) const;
     virtual int32_t CleanBlobParam(struct DlpBlob& blob) const;
     virtual int32_t PrepareBuff(struct DlpBlob& message1, struct DlpBlob& message2) const;
-    virtual int32_t GetLocalAccountName(std::string& account) const;
     virtual int32_t GetDomainAccountName(std::string& account) const;
     virtual int32_t DupUsageSpec(struct DlpUsageSpec& spec);
     virtual int32_t DoDlpBlockCryptOperation(struct DlpBlob& message1,

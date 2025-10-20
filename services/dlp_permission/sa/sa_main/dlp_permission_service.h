@@ -34,6 +34,12 @@ namespace OHOS {
 namespace Security {
 namespace DlpPermission {
 enum class ServiceRunningState { STATE_NOT_START, STATE_RUNNING };
+typedef struct GetAppIndexParams {
+    const std::string bundleName;
+    bool isReadOnly;
+    const std::string uri;
+    bool isNotOwnerAndReadOnce;
+} GetAppIndexParams;
 
 class DlpPermissionService final : public SystemAbility, public DlpPermissionServiceStub {
     DECLARE_DELAYED_SINGLETON(DlpPermissionService);
@@ -85,6 +91,7 @@ public:
     int Dump(int fd, const std::vector<std::u16string>& args) override;
     int32_t SetDlpFeature(const uint32_t dlpFeatureInfo, bool& statusSetInfo) override;
     int32_t SetEnterprisePolicy(const std::string& policy) override;
+    int32_t SetNotOwnerAndReadOnce(const std::string& uri, bool isNotOwnerAndReadOnce) override;
 
 private:
     bool InsertDlpSandboxInfo(DlpSandboxInfo& sandboxInfo, bool hasRetention);
