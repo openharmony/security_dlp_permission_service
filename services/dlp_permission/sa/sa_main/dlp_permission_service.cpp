@@ -33,6 +33,7 @@
 #include "dlp_sandbox_info.h"
 #include "dlp_dfx_define.h"
 #include "file_operator.h"
+#include "file_uri.h"
 #include "hap_token_info.h"
 #include "if_system_ability_manager.h"
 #include "ipc_skeleton.h"
@@ -290,30 +291,35 @@ bool DlpPermissionService::InsertDlpSandboxInfo(DlpSandboxInfo& sandboxInfo, boo
     return true;
 }
 
-static int32_t GetAppIndexFromRetentionInfo(const std::string& bundleName, bool isReadOnly, const std::string& uri,
+static bool FindMatchingSandbox(const RetentionSandBoxInfo& info, const GetAppIndexParams& params)
+{
+    if (params.isReadOnly && !params.isNotOwnerAndReadOnce && info.dlpFileAccess_ == DLPFileAccess::READ_ONLY) {
+        return true;
+    }
+    if (params.isReadOnly) {
+        return false;
+    }
+    auto setIter = info.docUriSet_.find(params.uri);
+    if (setIter != info.docUriSet_.end()) {
+        return true;
+    }
+    return false;
+}
+
+static int32_t GetAppIndexFromRetentionInfo(const GetAppIndexParams& params,
     DlpSandboxInfo& dlpSandBoxInfo, bool& isNeedInstall)
 {
     std::vector<RetentionSandBoxInfo> infoVec;
-    auto res = RetentionFileManager::GetInstance().GetRetentionSandboxList(bundleName, infoVec, true);
+    auto res = RetentionFileManager::GetInstance().GetRetentionSandboxList(params.bundleName, infoVec, true);
     if (res != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "GetRetentionSandboxList fail bundleName:%{public}s, error=%{public}d",
-            bundleName.c_str(), res);
+            params.bundleName.c_str(), res);
         return res;
     }
-    for (auto iter = infoVec.begin(); iter != infoVec.end(); ++iter) {
-        if (isReadOnly && iter->dlpFileAccess_ == DLPFileAccess::READ_ONLY) {
-            dlpSandBoxInfo.appIndex = iter->appIndex_;
-            dlpSandBoxInfo.hasRead = iter->hasRead_;
-            isNeedInstall = false;
-            break;
-        }
-        if (isReadOnly) {
-            continue;
-        }
-        auto setIter = iter->docUriSet_.find(uri);
-        if (setIter != iter->docUriSet_.end()) {
-            dlpSandBoxInfo.appIndex = iter->appIndex_;
-            dlpSandBoxInfo.hasRead = iter->hasRead_;
+    for (const auto& info: infoVec) {
+        if (FindMatchingSandbox(info, params)) {
+            dlpSandBoxInfo.appIndex = info.appIndex_;
+            dlpSandBoxInfo.hasRead = info.hasRead_;
             isNeedInstall = false;
             break;
         }
@@ -361,12 +367,17 @@ int32_t DlpPermissionService::InstallDlpSandbox(const std::string& bundleName, D
     }
     bool isReadOnly = dlpFileAccess == DLPFileAccess::READ_ONLY;
     bool isNeedInstall = true;
+    bool isNotOwnerAndReadOnce = false;
+    AppFileService::ModuleFileUri::FileUri fileUri(uri);
+    std::string path = fileUri.GetRealPath();
+    appStateObserver_->GetNotOwnerAndReadOnceByUri(path, isNotOwnerAndReadOnce);
     DlpSandboxInfo dlpSandboxInfo;
-    res = GetAppIndexFromRetentionInfo(bundleName, isReadOnly, uri, dlpSandboxInfo, isNeedInstall);
+    GetAppIndexParams params = {bundleName, isReadOnly, uri, isNotOwnerAndReadOnce};
+    res = GetAppIndexFromRetentionInfo(params, dlpSandboxInfo, isNeedInstall);
     if (res != DLP_OK) {
         return res;
     }
-    if (isNeedInstall && isReadOnly) {
+    if (isNeedInstall && isReadOnly && !isNotOwnerAndReadOnce) {
         appStateObserver_->GetOpeningReadOnlySandbox(bundleName, userId, dlpSandboxInfo.appIndex);
         isNeedInstall = (dlpSandboxInfo.appIndex != -1) ? false : true;
     }
@@ -377,8 +388,7 @@ int32_t DlpPermissionService::InstallDlpSandbox(const std::string& bundleName, D
         int32_t bundleClientRes = bundleMgrClient.InstallSandboxApp(bundleName,
             static_cast<int32_t>(permForBMS), userId, dlpSandboxInfo.appIndex);
         if (bundleClientRes != DLP_OK) {
-            DLP_LOG_ERROR(LABEL, "install sandbox %{public}s fail, error=%{public}d", bundleName.c_str(),
-                bundleClientRes);
+            DLP_LOG_ERROR(LABEL, "install sandbox %{public}s fail, %{public}d", bundleName.c_str(), bundleClientRes);
             return DLP_SERVICE_ERROR_INSTALL_SANDBOX_FAIL;
         }
     }
@@ -389,8 +399,7 @@ int32_t DlpPermissionService::InstallDlpSandbox(const std::string& bundleName, D
     sandboxInfo.appIndex = dlpSandboxInfo.appIndex;
     sandboxInfo.tokenId = dlpSandboxInfo.tokenId;
     std::unique_lock<std::shared_mutex> lock(dlpSandboxDataMutex_);
-    auto it = dlpSandboxData_.find(dlpSandboxInfo.uid);
-    if (it == dlpSandboxData_.end()) {
+    if (dlpSandboxData_.find(dlpSandboxInfo.uid) == dlpSandboxData_.end()) {
         dlpSandboxData_.insert(std::make_pair(dlpSandboxInfo.uid, dlpSandboxInfo.dlpFileAccess));
     }
     return DLP_OK;
@@ -1226,6 +1235,33 @@ int DlpPermissionService::SetEnterprisePolicy(const std::string& policy)
         return DLP_SERVICE_ERROR_PERMISSION_DENY;
     }
     return DlpCredential::GetInstance().SetEnterprisePolicy(policy);
+}
+
+int DlpPermissionService::SetNotOwnerAndReadOnce(const std::string& uri, bool isNotOwnerAndReadOnce)
+{
+    SetTimer(true);
+    std::string appIdentifier;
+    if (!PermissionManagerAdapter::GetAppIdentifierForCalling(appIdentifier)) {
+        return DLP_SERVICE_ERROR_PERMISSION_DENY;
+    }
+
+    if (!PermissionManagerAdapter::CheckPermission(PERMISSION_ACCESS_DLP_FILE) &&
+        !PermissionManagerAdapter::CheckPermission(PERMISSION_ENTERPRISE_ACCESS_DLP_FILE) &&
+        !(appIdentifier == MDM_APPIDENTIFIER || appIdentifier == YX_APPIDENTIFIER)) {
+        return DLP_SERVICE_ERROR_PERMISSION_DENY;
+    }
+
+    if (uri.empty()) {
+        DLP_LOG_ERROR(LABEL, "uri is empty");
+        return DLP_SERVICE_ERROR_URI_EMPTY;
+    }
+
+    bool res = appStateObserver_->AddUriAndNotOwnerAndReadOnce(uri, isNotOwnerAndReadOnce);
+    if (!res) {
+        DLP_LOG_ERROR(LABEL, "AddUriAndNotOwnerAndReadOnce error");
+        return DLP_SERVICE_ERROR_VALUE_INVALID;
+    }
+    return DLP_OK;
 }
 } // namespace DlpPermission
 } // namespace Security

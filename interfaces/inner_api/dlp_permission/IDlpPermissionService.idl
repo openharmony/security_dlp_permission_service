@@ -69,4 +69,5 @@ interface OHOS.Security.DlpPermission.IDlpPermissionService {
     void GetMDMPolicy([out] String[] appIdList);
     void RemoveMDMPolicy();
     void SetEnterprisePolicy([in] String policy);
+    void SetNotOwnerAndReadOnce([in] String uri, [in] boolean isNotOwnerAndReadOnce);
 }

@@ -20,6 +20,7 @@
 #include <mutex>
 #include <unordered_map>
 #include <string>
+#include "cert_parcel.h"
 #include "dlp_crypt.h"
 #include "dlp_file.h"
 #include "permission_policy.h"
@@ -57,9 +58,13 @@ public:
         const int32_t &allowedOpenCount);
     int32_t OpenRawDlpFile(int32_t dlpFileFd, std::shared_ptr<DlpFile>& filePtr, const std::string& appId,
                            const std::string& realType);
-    int32_t ParseZipDlpFileAndAddNode(std::shared_ptr<DlpFile>& filePtr, const std::string& appId);
+    int32_t ParseZipDlpFileAndAddNode(std::shared_ptr<DlpFile>& filePtr, const std::string& appId, int32_t dlpFileFd);
     int32_t OpenZipDlpFile(int32_t dlpFileFd, std::shared_ptr<DlpFile>& filePtr, const std::string& workDir,
                            const std::string& appId, const std::string& realType);
+    int32_t ParseRawDlpFile(int32_t dlpFileFd, std::shared_ptr<DlpFile>& filePtr, const std::string& appId,
+        const std::string& realType, sptr<CertParcel>& certParcel);
+    int32_t ParseZipDlpFile(std::shared_ptr<DlpFile>& filePtr, const std::string& appId, int32_t dlpFileFd,
+        sptr<CertParcel>& certParcel);
 
 private:
     DlpFileManager() {};

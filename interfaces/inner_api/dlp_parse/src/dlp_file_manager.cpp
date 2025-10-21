@@ -575,6 +575,83 @@ int32_t DlpFileManager::DlpRawHmacCheckAndUpdate(std::shared_ptr<DlpFile>& fileP
     return AddDlpFileNode(filePtr);
 }
 
+static int32_t SetNotOwnerAndReadOnce(const PermissionPolicy& policy, int32_t dlpFileFd,
+    std::shared_ptr<DlpFile>& filePtr)
+{
+    std::string filePath;
+    int32_t res = DlpUtils::GetFilePathByFd(dlpFileFd, filePath);
+    if (res != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "GetFilePathByFd fail, err = %{public}d.", res);
+        return res;
+    }
+
+    bool isNotOwnerAndReadOnce = false;
+    if (policy.ownerAccountType_ == CLOUD_ACCOUNT && policy.GetAllowedOpenCount() >= 1) {
+        DLP_LOG_DEBUG(LABEL, "cloud account and set allowedopencount, judge if owner.");
+        std::string account;
+        res = filePtr->GetLocalAccountName(account);
+        if (res != DLP_OK) {
+            DLP_LOG_ERROR(LABEL, "GetLocalAccountName fail, err = %{public}d.", res);
+            return res;
+        }
+        if (policy.ownerAccount_.compare("") != 0 && policy.ownerAccount_.compare(account) == 0) {
+            isNotOwnerAndReadOnce = false;
+        } else {
+            DLP_LOG_DEBUG(LABEL, "isNotOwnerAndReadOnce true.");
+            isNotOwnerAndReadOnce = true;
+        }
+    }
+    res = DlpPermissionKit::SetNotOwnerAndReadOnce(filePath, isNotOwnerAndReadOnce);
+    if (res != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "SetNotOwnerAndReadOnce fail, err = %{public}d.", res);
+        return res;
+    }
+    return DLP_OK;
+}
+
+int32_t DlpFileManager::ParseRawDlpFile(int32_t dlpFileFd, std::shared_ptr<DlpFile>& filePtr, const std::string& appId,
+    const std::string& realType, sptr<CertParcel>& certParcel)
+{
+    PermissionPolicy policy;
+    filePtr->GetContactAccount(certParcel->contactAccount);
+    certParcel->isNeedAdapter = filePtr->NeedAdapter();
+    certParcel->needCheckCustomProperty = true;
+    if (filePtr->GetAccountType() == ENTERPRISE_ACCOUNT) {
+        certParcel->decryptType = DECRYPTTYPEFORUSER;
+        certParcel->appId = filePtr->GetAppId();
+    }
+    filePtr->GetRealType(certParcel->realFileType);
+    filePtr->GetFileIdPlaintext(certParcel->fileId);
+    StartTrace(HITRACE_TAG_ACCESS_CONTROL, "DlpParseCertificate");
+    int32_t result = DlpPermissionKit::ParseDlpCertificate(certParcel, policy, appId, filePtr->GetOfflineAccess());
+    FinishTrace(HITRACE_TAG_ACCESS_CONTROL);
+    if (result != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "Parse cert fail, errno=%{public}d", result);
+        return result;
+    }
+    result = filePtr->SetPolicy(policy);
+    if (result != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "SetPolicy fail, errno=%{public}d", result);
+        return result;
+    }
+    struct DlpBlob key = {.size = policy.GetAeskeyLen(), .data = policy.GetAeskey()};
+    struct DlpCipherParam param = {.iv = {.size = policy.GetIvLen(), .data = policy.GetIv()}};
+    struct DlpUsageSpec usage = {.mode = DLP_MODE_CTR, .algParam = &param};
+    struct DlpBlob hmacKey = {.size = policy.GetHmacKeyLen(), .data = policy.GetHmacKey()};
+    result = filePtr->SetCipher(key, usage, hmacKey);
+    if (result != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "SetCipher fail, errno=%{public}d", result);
+        return result;
+    }
+    filePtr->SetAllowedOpenCount(policy.GetAllowedOpenCount());
+    result = SetNotOwnerAndReadOnce(policy, dlpFileFd, filePtr);
+    if (result != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "SetNotOwnerAndReadOnce fail, errno=%{public}d", result);
+        return result;
+    }
+    return DLP_OK;
+}
+
 int32_t DlpFileManager::OpenRawDlpFile(int32_t dlpFileFd, std::shared_ptr<DlpFile>& filePtr, const std::string& appId,
                                        const std::string& realType)
 {
@@ -596,18 +673,25 @@ int32_t DlpFileManager::OpenRawDlpFile(int32_t dlpFileFd, std::shared_ptr<DlpFil
         filePtr->GetOfflineCert(offlineCert);
         certParcel->cert = std::vector<uint8_t>(offlineCert.data, offlineCert.data + offlineCert.size);
     }
+    result = ParseRawDlpFile(dlpFileFd, filePtr, appId, realType, certParcel);
+    if (result != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "ParseRawDlpFile fail, errno=%{public}d", result);
+        return result;
+    }
+    return DlpRawHmacCheckAndUpdate(filePtr, certParcel->offlineCert, filePtr->GetAllowedOpenCount());
+}
+
+int32_t DlpFileManager::ParseZipDlpFile(std::shared_ptr<DlpFile>& filePtr, const std::string& appId, int32_t dlpFileFd,
+    sptr<CertParcel>& certParcel)
+{
     PermissionPolicy policy;
     filePtr->GetContactAccount(certParcel->contactAccount);
     certParcel->isNeedAdapter = filePtr->NeedAdapter();
     certParcel->needCheckCustomProperty = true;
-    if (filePtr->GetAccountType() == ENTERPRISE_ACCOUNT) {
-        certParcel->decryptType = DECRYPTTYPEFORUSER;
-        certParcel->appId = filePtr->GetAppId();
-    }
     filePtr->GetRealType(certParcel->realFileType);
     filePtr->GetFileIdPlaintext(certParcel->fileId);
     StartTrace(HITRACE_TAG_ACCESS_CONTROL, "DlpParseCertificate");
-    result = DlpPermissionKit::ParseDlpCertificate(certParcel, policy, appId, filePtr->GetOfflineAccess());
+    int32_t result = DlpPermissionKit::ParseDlpCertificate(certParcel, policy, appId, filePtr->GetOfflineAccess());
     FinishTrace(HITRACE_TAG_ACCESS_CONTROL);
     if (result != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "Parse cert fail, errno=%{public}d", result);
@@ -615,6 +699,7 @@ int32_t DlpFileManager::OpenRawDlpFile(int32_t dlpFileFd, std::shared_ptr<DlpFil
     }
     result = filePtr->SetPolicy(policy);
     if (result != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "SetPolicy fail, errno=%{public}d", result);
         return result;
     }
     struct DlpBlob key = {.size = policy.GetAeskeyLen(), .data = policy.GetAeskey()};
@@ -623,12 +708,29 @@ int32_t DlpFileManager::OpenRawDlpFile(int32_t dlpFileFd, std::shared_ptr<DlpFil
     struct DlpBlob hmacKey = {.size = policy.GetHmacKeyLen(), .data = policy.GetHmacKey()};
     result = filePtr->SetCipher(key, usage, hmacKey);
     if (result != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "SetCipher fail, errno=%{public}d", result);
         return result;
     }
-    return DlpRawHmacCheckAndUpdate(filePtr, certParcel->offlineCert, policy.GetAllowedOpenCount());
+    result = filePtr->HmacCheck();
+    if (result != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "HmacCheck fail, errno=%{public}d", result);
+        return result;
+    }
+    result = UpdateDlpFile(certParcel->offlineCert, filePtr, policy.GetAllowedOpenCount());
+    if (result != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "UpdateDlpFile fail, errno=%{public}d", result);
+        return result;
+    }
+    result = SetNotOwnerAndReadOnce(policy, dlpFileFd, filePtr);
+    if (result != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "SetNotOwnerAndReadOnce fail, errno=%{public}d", result);
+        return result;
+    }
+    return DLP_OK;
 }
 
-int32_t DlpFileManager::ParseZipDlpFileAndAddNode(std::shared_ptr<DlpFile>& filePtr, const std::string& appId)
+int32_t DlpFileManager::ParseZipDlpFileAndAddNode(std::shared_ptr<DlpFile>& filePtr, const std::string& appId,
+    int32_t dlpFileFd)
 {
     int32_t result = filePtr->ProcessDlpFile();
     if (result != DLP_OK) {
@@ -642,38 +744,9 @@ int32_t DlpFileManager::ParseZipDlpFileAndAddNode(std::shared_ptr<DlpFile>& file
         return DLP_PARSE_ERROR_MEMORY_OPERATE_FAIL;
     }
     certParcel->cert = std::vector<uint8_t>(cert.data, cert.data + cert.size);
-    PermissionPolicy policy;
-    filePtr->GetContactAccount(certParcel->contactAccount);
-    certParcel->isNeedAdapter = filePtr->NeedAdapter();
-    certParcel->needCheckCustomProperty = true;
-    filePtr->GetRealType(certParcel->realFileType);
-    filePtr->GetFileIdPlaintext(certParcel->fileId);
-    StartTrace(HITRACE_TAG_ACCESS_CONTROL, "DlpParseCertificate");
-    result = DlpPermissionKit::ParseDlpCertificate(certParcel, policy, appId, filePtr->GetOfflineAccess());
-    FinishTrace(HITRACE_TAG_ACCESS_CONTROL);
+    result = ParseZipDlpFile(filePtr, appId, dlpFileFd, certParcel);
     if (result != DLP_OK) {
-        DLP_LOG_ERROR(LABEL, "Parse cert fail, errno=%{public}d", result);
-        return result;
-    }
-    result = filePtr->SetPolicy(policy);
-    if (result != DLP_OK) {
-        return result;
-    }
-    struct DlpBlob key = {.size = policy.GetAeskeyLen(), .data = policy.GetAeskey()};
-    struct DlpCipherParam param = {.iv = {.size = policy.GetIvLen(), .data = policy.GetIv()}};
-    struct DlpUsageSpec usage = {.mode = DLP_MODE_CTR, .algParam = &param};
-    struct DlpBlob hmacKey = {.size = policy.GetHmacKeyLen(), .data = policy.GetHmacKey()};
-    result = filePtr->SetCipher(key, usage, hmacKey);
-    if (result != DLP_OK) {
-        return result;
-    }
-    result = filePtr->HmacCheck();
-    if (result != DLP_OK) {
-        return result;
-    }
-    result = UpdateDlpFile(certParcel->offlineCert, filePtr, policy.GetAllowedOpenCount());
-    if (result != DLP_OK) {
-        DLP_LOG_ERROR(LABEL, "UpdateDlpFile fail");
+        DLP_LOG_ERROR(LABEL, "ParseZipDlpFile fail, errno=%{public}d", result);
         return result;
     }
     return AddDlpFileNode(filePtr);
@@ -697,7 +770,7 @@ int32_t DlpFileManager::OpenZipDlpFile(int32_t dlpFileFd, std::shared_ptr<DlpFil
         .time_since_epoch()).count();
 
     filePtr = std::make_shared<DlpZipFile>(dlpFileFd, realWorkDir, timeStamp, realType);
-    return ParseZipDlpFileAndAddNode(filePtr, appId);
+    return ParseZipDlpFileAndAddNode(filePtr, appId, dlpFileFd);
 }
 
 int32_t DlpFileManager::OpenDlpFile(int32_t dlpFileFd, std::shared_ptr<DlpFile>& filePtr, const std::string& workDir,

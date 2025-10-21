@@ -60,7 +60,12 @@ int32_t DlpPermissionKit::ParseDlpCertificate(sptr<CertParcel>& certParcel, Perm
 
 int32_t DlpPermissionKit::SetReadFlag(uint32_t uid)
 {
-    return true;
+    return DLP_OK;
+}
+
+int32_t DlpPermissionKit::SetNotOwnerAndReadOnce(const std::string& uri, bool isNotOwnerAndReadOnce)
+{
+    return DLP_OK;
 }
 }  // namespace DlpPermission
 }  // namespace Security
