@@ -70,6 +70,7 @@ DlpFile::DlpFile(int32_t dlpFd, const std::string &realType)
     version_ = CURRENT_VERSION;
     accountType_ = 0;
     fileIdPlaintext_ = "";
+    allowedOpenCount_ = 0;
 }
 
 DlpFile::~DlpFile() = default;

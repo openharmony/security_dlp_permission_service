@@ -62,6 +62,8 @@ private:
     int32_t RemoveDlpPermissionInRaw(int32_t outPlainFileFd);
     int32_t DoDlpFileWrite(uint64_t offset, void* buf, uint32_t size);
     int32_t WriteFirstBlockData(uint64_t offset, void* buf, uint32_t size);
+    int32_t WriteHmacProcess(void);
+    int32_t WriteFileIdPlaintextProcess(void);
 
     struct DlpHeader head_;
 };
