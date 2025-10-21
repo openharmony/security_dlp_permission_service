@@ -454,3 +454,26 @@ HWTEST_F(AppStateObserverTest, GetOpeningReadOnlySandbox002, TestSize.Level1)
     observer.GetOpeningReadOnlySandbox(bundleName, userId, appIndex);
     ASSERT_TRUE(observer.CallbackListenerEmpty());
 }
+
+/**
+ * @tc.name: AddUriAndNotOwnerAndReadOnce001
+ * @tc.desc: AddUriAndNotOwnerAndReadOnce test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AppStateObserverTest, AddUriAndNotOwnerAndReadOnce001, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL, "AddUriAndNotOwnerAndReadOnce001");
+    AppStateObserver observer;
+    std::string uri1 = "uri";
+    std::string uri2 = "";
+    ASSERT_TRUE(observer.AddUriAndNotOwnerAndReadOnce(uri1, true));
+    ASSERT_FALSE(observer.AddUriAndNotOwnerAndReadOnce(uri2, false));
+    bool isNotOwnerAndReadOnce;
+    ASSERT_TRUE(observer.GetNotOwnerAndReadOnceByUri(uri1, isNotOwnerAndReadOnce));
+    ASSERT_FALSE(observer.GetNotOwnerAndReadOnceByUri(uri2, isNotOwnerAndReadOnce));
+    observer.EraseReadOnceUriInfoByUri(uri1);
+    observer.EraseReadOnceUriInfoByUri(uri2);
+    ASSERT_FALSE(observer.GetNotOwnerAndReadOnceByUri(uri1, isNotOwnerAndReadOnce));
+    ASSERT_FALSE(observer.GetNotOwnerAndReadOnceByUri(uri2, isNotOwnerAndReadOnce));
+}

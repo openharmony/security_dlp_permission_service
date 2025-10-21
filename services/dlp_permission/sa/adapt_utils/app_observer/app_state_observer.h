@@ -51,6 +51,9 @@ public:
     bool GetOpeningSandboxInfo(const std::string& bundleName, const std::string& uri,
         int32_t userId, SandboxInfo& sandboxInfo);
     void SetAppProxy(const sptr<AppExecFwk::AppMgrProxy>& appProxy);
+    bool AddUriAndNotOwnerAndReadOnce(const std::string& uri, bool isNotOwnerAndReadOnce);
+    bool GetNotOwnerAndReadOnceByUri(const std::string& uri, bool& isNotOwnerAndReadOnce);
+    void EraseReadOnceUriInfoByUri(const std::string& uri);
 private:
     void UninstallDlpSandbox(DlpSandboxInfo& appInfo);
     void UninstallAllDlpSandboxForUser(int32_t userId);
@@ -80,6 +83,8 @@ private:
     std::map<int32_t, int32_t> callbackList_;
     std::mutex callbackListLock_;
     sptr<AppExecFwk::AppMgrProxy> appProxy_ = nullptr;
+    std::unordered_map<std::string, bool> readOnceUriMap_;
+    std::mutex readOnceUriMapLock_;
 };
 }  // namespace DlpPermission
 }  // namespace Security

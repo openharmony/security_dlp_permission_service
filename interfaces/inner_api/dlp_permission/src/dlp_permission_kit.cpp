@@ -265,6 +265,12 @@ int32_t DlpPermissionKit::SetEnterprisePolicy(const std::string& policy)
 {
     return DlpPermissionClient::GetInstance().SetEnterprisePolicy(policy);
 }
+
+int32_t DlpPermissionKit::SetNotOwnerAndReadOnce(const std::string& uri, bool isNotOwnerAndReadOnce)
+{
+    return DlpPermissionClient::GetInstance().SetNotOwnerAndReadOnce(uri, isNotOwnerAndReadOnce);
+}
+
 }  // namespace DlpPermission
 }  // namespace Security
 }  // namespace OHOS

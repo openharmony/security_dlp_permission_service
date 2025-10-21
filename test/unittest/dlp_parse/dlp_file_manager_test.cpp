@@ -386,7 +386,7 @@ HWTEST_F(DlpFileManagerTest, ParseDlpFileFormat003, TestSize.Level0)
  */
 HWTEST_F(DlpFileManagerTest, ParseDlpFileFormat004, TestSize.Level0)
 {
-        DLP_LOG_INFO(LABEL, "UpdateDlpFileContentSize001");
+    DLP_LOG_INFO(LABEL, "UpdateDlpFileContentSize001");
     g_fdDlp = open("/data/fuse_test_dlp.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
     ASSERT_NE(g_fdDlp, -1);
     std::shared_ptr<DlpFile> filePtr = std::make_shared<DlpRawFile>(g_fdDlp, "txt");

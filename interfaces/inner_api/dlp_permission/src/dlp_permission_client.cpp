@@ -735,6 +735,16 @@ sptr<IDlpPermissionService> DlpPermissionClient::GetProxy(bool doLoadSa)
     std::unique_lock<std::mutex> lock(proxyMutex_);
     return proxy_;
 }
+
+int32_t DlpPermissionClient::SetNotOwnerAndReadOnce(const std::string& uri, bool isNotOwnerAndReadOnce)
+{
+    auto proxy = GetProxy(true);
+    if (proxy == nullptr) {
+        DLP_LOG_ERROR(LABEL, "Proxy is null");
+        return DLP_SERVICE_ERROR_SERVICE_NOT_EXIST;
+    }
+    return proxy->SetNotOwnerAndReadOnce(uri, isNotOwnerAndReadOnce);
+}
 }  // namespace DlpPermission
 }  // namespace Security
 }  // namespace OHOS

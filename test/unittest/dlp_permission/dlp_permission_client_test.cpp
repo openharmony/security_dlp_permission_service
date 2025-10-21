@@ -194,3 +194,20 @@ HWTEST_F(DlpPermissionClientTest, SetEnterprisePolicy001, TestSize.Level0)
     int32_t ret = DlpPermissionClient::GetInstance().SetEnterprisePolicy(policy);
     ASSERT_TRUE(ret != DLP_CALLBACK_SA_WORK_ABNORMAL);
 }
+
+/* *
+ * @tc.name: SetNotOwnerAndReadOnce001
+ * @tc.desc: SetNotOwnerAndReadOnce.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionClientTest, SetNotOwnerAndReadOnce001, TestSize.Level0)
+{
+    DLP_LOG_DEBUG(LABEL, "SetNotOwnerAndReadOnce001");
+    std::string uri = "";
+    int32_t ret = DlpPermissionClient::GetInstance().SetNotOwnerAndReadOnce(uri, true);
+    ASSERT_EQ(ret, DLP_SERVICE_ERROR_PERMISSION_DENY);
+    uri = "uri";
+    ret = DlpPermissionClient::GetInstance().SetNotOwnerAndReadOnce(uri, false);
+    ASSERT_EQ(ret, DLP_SERVICE_ERROR_PERMISSION_DENY);
+}

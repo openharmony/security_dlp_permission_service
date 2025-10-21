@@ -98,6 +98,7 @@ public:
     static int32_t SetReadFlag(uint32_t uid);
     static int32_t SetDlpFeature(uint32_t dlpFeatureInfo, bool& statusSetInfo);
     static int32_t SetEnterprisePolicy(const std::string& policy);
+    static int32_t SetNotOwnerAndReadOnce(const std::string& uri, bool isNotOwnerAndReadOnce);
 };
 }  // namespace DlpPermission
 }  // namespace Security
