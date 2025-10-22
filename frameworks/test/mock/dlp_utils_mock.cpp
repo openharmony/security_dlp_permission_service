@@ -220,6 +220,10 @@ int32_t DlpUtils::GetFilePathWithFd(const int32_t &fd, std::string &srcFilePath)
     }
     std::string tmp(fileName);
     std::size_t pos = tmp.find_last_of(PATH_SEPARATOR);
+    if (std::string::npos == pos) {
+        delete[] fileName;
+        return DLP_PARSE_ERROR_FD_ERROR;
+    }
     srcFilePath = tmp.substr(0, pos + 1);
     delete[] fileName;
     return DLP_OK;
