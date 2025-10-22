@@ -20,6 +20,11 @@
 #include "dlp_os_account_mock.h"
 #include "dlp_permission.h"
 #include "dlp_permission_log.h"
+#include "permission_manager_adapter.h"
+#include "bundle_manager_adapter.h"
+#include "bundle_mgr_client.h"
+#include "system_ability_definition.h"
+#include "iservice_registry.h"
 #define  private public
 #include "dlp_permission_serializer.h"
 #undef private
@@ -33,6 +38,7 @@ using namespace std;
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
     LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "DlpPermissionSerializerTest"};
+static const int32_t DEFAULT_USERID = 100;
 }
 
 void DlpPermissionSerializerTest::SetUpTestCase() {}
@@ -42,6 +48,22 @@ void DlpPermissionSerializerTest::TearDownTestCase() {}
 void DlpPermissionSerializerTest::SetUp() {}
 
 void DlpPermissionSerializerTest::TearDown() {}
+
+static sptr<AppExecFwk::IBundleMgr> GetBundleMgr(void)
+{
+    sptr<ISystemAbilityManager> systemAbilityManager =
+        SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+    if (systemAbilityManager == nullptr) {
+        return nullptr;
+    }
+
+    sptr<IRemoteObject> remoteObj = systemAbilityManager->CheckSystemAbility(BUNDLE_MGR_SERVICE_SYS_ABILITY_ID);
+    if (remoteObj == nullptr) {
+        return nullptr;
+    }
+
+    return iface_cast<AppExecFwk::IBundleMgr>(remoteObj);
+}
 
 /**
  * @tc.name: SerializeDlpPermission001
@@ -386,4 +408,36 @@ HWTEST_F(DlpPermissionSerializerTest, DeserializeAuthUserInfo001, TestSize.Level
     permJson1["everyone"] = everyoneJson;
     ret = serialize.DeserializeAuthUserInfo(permJson1, userInfo);
     ASSERT_EQ(DLP_OK, ret);
+}
+
+/**
+ * @tc.name: CheckAuthPolicy
+ * @tc.desc: CheckAuthPolicy test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionSerializerTest, CheckAuthPolicy, TestSize.Level1)
+{
+    int32_t ret = PermissionManagerAdapter::CheckAuthPolicy("test_appId", "test_type");
+    ASSERT_NE(DLP_OK, ret);
+    ret = PermissionManagerAdapter::CheckAuthPolicy("test_appId", "test_type");
+    ASSERT_NE(DLP_OK, ret);
+    ret = PermissionManagerAdapter::CheckAuthPolicy("test_appId", "txt");
+    ASSERT_NE(DLP_OK, ret);
+
+    auto bundleMgr = GetBundleMgr();
+    ASSERT_NE(bundleMgr, nullptr);
+    AppExecFwk::BundleInfo bundleInfo;
+    ret = bundleMgr->GetBundleInfoV9("com.ohos.dlpmanager",
+        static_cast<int32_t>(AppExecFwk::GetBundleInfoFlag::GET_BUNDLE_INFO_WITH_SIGNATURE_INFO),
+        bundleInfo, DEFAULT_USERID);
+    ASSERT_EQ(ret, 0);
+    (void)PermissionManagerAdapter::CheckAuthPolicy(bundleInfo.appId, "txt");
+
+    AppExecFwk::BundleInfo bundleInfo1;
+    ret = bundleMgr->GetBundleInfoV9("com.ohos.permissionmanager",
+        static_cast<int32_t>(AppExecFwk::GetBundleInfoFlag::GET_BUNDLE_INFO_WITH_SIGNATURE_INFO),
+        bundleInfo1, DEFAULT_USERID);
+    ASSERT_EQ(ret, 0);
+    (void)PermissionManagerAdapter::CheckAuthPolicy(bundleInfo1.appId, "txt");
 }

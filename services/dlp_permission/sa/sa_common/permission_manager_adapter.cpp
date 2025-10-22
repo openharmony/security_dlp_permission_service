@@ -24,6 +24,7 @@
 #include "system_ability_definition.h"
 #include "iservice_registry.h"
 #include "ipc_skeleton.h"
+#include "dlp_utils.h"
 
 namespace OHOS {
 namespace Security {
@@ -35,6 +36,8 @@ namespace {
 constexpr OHOS::HiviewDFX::HiLogLabel LABEL = { LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "PermissionManagerAdapter" };
 static const std::string CRED_HAP_IDENTIFIER = "5765880207854232861";
 static const std::string MDM_HAP_IDENTIFIER = "6917562860841254665";
+static const std::string APPIDENTIFIER = "_appIdentifier";
+static const std::string DEFAULT_STRING = "";
 }
 static int32_t GetOsAccountId(int32_t &osAccountId)
 {
@@ -206,6 +209,33 @@ int32_t PermissionManagerAdapter::CheckSandboxFlagWithService(AccessToken::Acces
     }
     sandboxFlag = (res == 1);
     return DLP_OK;
+}
+
+int32_t PermissionManagerAdapter::CheckAuthPolicy(const std::string& appId, const std::string& realFileType)
+{
+    std::string fileType = DlpUtils::GetFileTypeBySuffix(realFileType, false);
+    if (fileType == DEFAULT_STRING) {
+        DLP_LOG_ERROR(LABEL, "get fileType error.");
+        return DLP_PARSE_ERROR_NOT_SUPPORT_FILE_TYPE;
+    }
+
+    int32_t osAccountId = -1;
+    int32_t ret = GetOsAccountId(osAccountId);
+    if (ret != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "Failed to GetOsAccountId, error code: %{public}d.", ret);
+        return ret;
+    }
+
+    std::vector<std::string> authPolicy;
+    if (!DlpUtils::GetAuthPolicyWithType(DLP_AUTH_POLICY, fileType + APPIDENTIFIER, authPolicy)) {
+        return DLP_OK;
+    }
+    if (std::find(authPolicy.begin(), authPolicy.end(), DlpUtils::GetAppIdentifierByAppId(appId, osAccountId))
+        != authPolicy.end()) {
+        return DLP_OK;
+    }
+    DLP_LOG_ERROR(LABEL, "Check DLP auth policy error.");
+    return DLP_CREDENTIAL_ERROR_APPID_NOT_AUTHORIZED;
 }
 }  // namespace DlpPermission
 }  // namespace Security

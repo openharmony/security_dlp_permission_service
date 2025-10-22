@@ -121,6 +121,7 @@ public:
     ~OsAccountManager() = default;
     static int GetForegroundOsAccountLocalId(int32_t &localId);
     static int QueryOsAccountById(const int id, OsAccountInfo &osAccountInfo);
+    static int QueryActiveOsAccountIds(std::vector<int32_t>& ids);
 };
 
 } // namespace AccountSA
