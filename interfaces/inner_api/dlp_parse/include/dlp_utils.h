@@ -281,6 +281,7 @@ public:
     static bool GetAppIdFromToken(std::string& appId);
     static bool GetUserIdByForegroundAccount(int32_t &userId);
     static std::string GetRealTypeForEnterpriseWithFd(const int32_t& fd, bool& isFromUriName);
+    static std::string GetAppIdentifierByAppId(const std::string &appId, const int32_t &userId);
 };
 }  // namespace DlpPermission
 }  // namespace Security

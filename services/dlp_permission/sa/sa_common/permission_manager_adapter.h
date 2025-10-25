@@ -29,6 +29,7 @@ public:
     static bool CheckPermissionAndGetAppId(std::string& appId);
     static int32_t CheckSandboxFlagWithService(AccessToken::AccessTokenID tokenId, bool& sandboxFlag);
     static bool GetAppIdentifierForCalling(std::string &appIdentifier);
+    static int32_t CheckAuthPolicy(const std::string& appId, const std::string& realFileType);
 };
 }  // namespace DlpPermission
 }  // namespace Security

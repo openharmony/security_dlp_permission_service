@@ -83,6 +83,12 @@ int OsAccountManager::QueryOsAccountById(const int id, OsAccountInfo &osAccountI
 {
     return 0;
 }
+
+int OsAccountManager::QueryActiveOsAccountIds(std::vector<int32_t>& ids)
+{
+    ids.push_back(MAIN_OS_ACCOUNT_ID);
+    return 0;
+}
 } // namespace AccountSA
 } // namespace OHOS
 
