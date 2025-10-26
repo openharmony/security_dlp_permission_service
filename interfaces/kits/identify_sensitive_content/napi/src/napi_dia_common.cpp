@@ -18,7 +18,9 @@
 #include "napi_dia_log_adapter.h"
 
 namespace OHOS::Security::DIA {
+#ifdef FILE_IDENTIFY_ENABLE
 constexpr uint32_t MAX_POLICY_SIZE = 1024;
+#endif
 constexpr uint32_t MAX_KEYWORDS_SIZE = 50;
 
 CommonAsyncContext::CommonAsyncContext(napi_env napiEnv)
