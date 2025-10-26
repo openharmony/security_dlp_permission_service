@@ -18,6 +18,8 @@
 #include "napi_dia_log_adapter.h"
 
 namespace OHOS::Security::DIA {
+constexpr uint32_t MAX_POLICY_SIZE = 1024;
+constexpr uint32_t MAX_KEYWORDS_SIZE = 50;
 
 CommonAsyncContext::CommonAsyncContext(napi_env napiEnv)
 {
@@ -128,6 +130,11 @@ bool GetStringArrayValueByKey(
     if (!IsArrayFromNapiValue(env, arrayValue, length)) {
         return false;
     }
+    if (length > MAX_KEYWORDS_SIZE) {
+        LOG_ERROR("keywords length error!");
+        DIANapiThrow(env, ERR_DIA_JS_INVALID_PARAMETER, GetDIAJsErrMsg(ERR_DIA_JS_INVALID_PARAMETER));
+        return false;
+    }
     for (uint32_t i = 0; i < length; i++) {
         napi_value element;
         NAPI_CALL_BASE(env, napi_get_element(env, arrayValue, i, &element), false);
@@ -165,6 +172,12 @@ bool NapiParsePolicyArray(napi_env env, std::vector<Policy> &policies, napi_valu
     if (!IsArrayFromNapiValue(env, args, length)) {
         return false;
     }
+    if (length < 1 || length > MAX_POLICY_SIZE) {
+        LOG_ERROR("policies length error!");
+        DIANapiThrow(env, ERR_DIA_JS_INVALID_PARAMETER, GetDIAJsErrMsg(ERR_DIA_JS_INVALID_PARAMETER));
+        return false;
+    }
+
     for (uint32_t i = 0; i < length; i++) {
         napi_value element;
         NAPI_CALL_BASE(env, napi_get_element(env, args, i, &element), false);
