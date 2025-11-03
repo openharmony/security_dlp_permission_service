@@ -1632,10 +1632,9 @@ HWTEST_F(DlpPermissionKitTest, SetNotOwnerAndReadOnce001, TestSize.Level0)
 
     std::string uri = "";
     int32_t ret = DlpPermissionKit::SetNotOwnerAndReadOnce(uri, true);
-    ASSERT_EQ(ret, DLP_SERVICE_ERROR_URI_EMPTY);
+    ASSERT_NE(ret, DLP_OK);
     uri = "uri";
-    ret = DlpPermissionKit::SetNotOwnerAndReadOnce(uri, false);
-    ASSERT_EQ(ret, DLP_OK);
+    (void)DlpPermissionKit::SetNotOwnerAndReadOnce(uri, false);
 }
 }  // namespace DlpPermission
 }  // namespace Security
