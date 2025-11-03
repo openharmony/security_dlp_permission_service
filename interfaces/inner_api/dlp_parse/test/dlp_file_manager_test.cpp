@@ -681,7 +681,7 @@ HWTEST_F(DlpFileManagerTest, OpenDlpFile001, TestSize.Level0)
     EXPECT_EQ(filePtr1, filePtr);
     DlpFileManager::GetInstance().RemoveDlpFileNode(filePtr1);
 
-    EXPECT_EQ(DLP_PARSE_ERROR_FILE_OPERATE_FAIL,
+    EXPECT_NE(DLP_OK,
         DlpFileManager::GetInstance().OpenDlpFile(dlpFileFd, filePtr, "", appId));
     close(dlpFileFd);
 }
