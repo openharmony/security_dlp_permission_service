@@ -262,6 +262,10 @@ int32_t DlpPermissionService::ParseDlpCertificate(const sptr<CertParcel>& certPa
         DLP_LOG_ERROR(LABEL, "AppId is empty");
         return DLP_CREDENTIAL_ERROR_APPID_NOT_AUTHORIZED;
     }
+    int32_t ret = PermissionManagerAdapter::CheckAuthPolicy(appId, certParcel->realFileType);
+    if (ret != DLP_OK) {
+        return ret;
+    }
     AppExecFwk::ApplicationInfo applicationInfo;
     if (!GetApplicationInfo(appId, applicationInfo)) {
         DLP_LOG_ERROR(LABEL, "Permission check fail.");

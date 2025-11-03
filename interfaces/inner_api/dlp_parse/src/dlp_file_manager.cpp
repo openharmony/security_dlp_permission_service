@@ -515,47 +515,6 @@ int32_t DlpFileManager::GenerateDlpFile(
     return GenZipDlpFile(dlpFileMes, property, filePtr, workDir);
 }
 
-static std::string GetAppIdWithBundleName(const std::string &bundleName, const int32_t &userId)
-{
-    AppExecFwk::BundleInfo bundleInfo;
-    bool result = DlpUtils::GetBundleInfoWithBundleName(bundleName,
-        static_cast<int32_t>(AppExecFwk::GetBundleInfoFlag::GET_BUNDLE_INFO_WITH_SIGNATURE_INFO), bundleInfo, userId);
-    if (!result) {
-        DLP_LOG_ERROR(LABEL, "get appId error");
-        return DEFAULT_STRING;
-    }
-    return bundleInfo.appId;
-}
-
-static int32_t SupportDlpWithAppId(const std::string &appId, const int32_t &dlpFileFd, const std::string &realSuffix,
-    const bool isFromUriName)
-{
-    std::string fileType = DlpUtils::GetFileTypeBySuffix(realSuffix, isFromUriName);
-    if (fileType == DEFAULT_STRING) {
-        DLP_LOG_ERROR(LABEL, "get fileType error.");
-        return DLP_PARSE_ERROR_NOT_SUPPORT_FILE_TYPE;
-    }
-
-    int32_t userId = 0;
-    if (!DlpUtils::GetUserIdByForegroundAccount(userId)) {
-        DLP_LOG_ERROR(LABEL, "Get os account localId error");
-        return DLP_PARSE_ERROR_GET_ACCOUNT_FAIL;
-    }
-
-    std::vector<std::string> authPolicy;
-    if (!DlpUtils::GetAuthPolicyWithType(DLP_AUTH_POLICY, fileType, authPolicy)) {
-        DLP_LOG_DEBUG(LABEL, "not have auth policy.");
-        return DLP_OK;
-    }
-    for (size_t i = 0; i < authPolicy.size(); i++) {
-        if (appId == GetAppIdWithBundleName(authPolicy[i], userId)) {
-            return DLP_OK;
-        }
-    }
-    DLP_LOG_ERROR(LABEL, "Check DLP auth policy error.");
-    return DLP_CREDENTIAL_ERROR_APPID_NOT_AUTHORIZED;
-}
-
 int32_t DlpFileManager::DlpRawHmacCheckAndUpdate(std::shared_ptr<DlpFile>& filePtr,
                                                  const std::vector<uint8_t>& offlineCert,
                                                  const int32_t &allowedOpenCount)
@@ -787,11 +746,6 @@ int32_t DlpFileManager::OpenDlpFile(int32_t dlpFileFd, std::shared_ptr<DlpFile>&
         return DLP_PARSE_ERROR_NOT_SUPPORT_FILE_TYPE;
     }
     DLP_LOG_DEBUG(LABEL, "realSuffix is %{public}s", realSuffix.c_str());
-    int32_t ret = SupportDlpWithAppId(appId, dlpFileFd, realSuffix, isFromUriName);
-    if (ret != DLP_OK) {
-        DLP_LOG_ERROR(LABEL, "SupportDlpWithAppId fail");
-        return ret;
-    }
     filePtr = GetDlpFile(dlpFileFd);
     if (filePtr != nullptr) {
         DLP_LOG_ERROR(LABEL, "Open dlp file fail, fd %{public}d has opened", dlpFileFd);

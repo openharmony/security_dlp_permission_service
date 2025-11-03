@@ -225,6 +225,9 @@ int32_t DlpUtils::GetFilePathWithFd(const int32_t &fd, std::string &srcFilePath)
         return res;
     }
     std::size_t pos = filePath.find_last_of(PATH_SEPARATOR);
+    if (std::string::npos == pos) {
+        return DLP_PARSE_ERROR_FD_ERROR;
+    }
     srcFilePath = filePath.substr(0, pos + 1);
     return DLP_OK;
 }
@@ -438,6 +441,36 @@ std::string DlpUtils::GetRealTypeForEnterpriseWithFd(const int32_t& fd, bool& is
         return DEFAULT_STRINGS;
     }
     return DlpUtils::GetDlpFileRealSuffix(fileName, isFromUriName);
+}
+
+std::string DlpUtils::GetAppIdentifierByAppId(const std::string &appId, const int32_t &userId)
+{
+    auto bundleMgr = DlpUtils::GetBundleMgrProxy();
+    if (bundleMgr == nullptr) {
+        DLP_LOG_ERROR(LABEL, "GetAppIdentifier not get bundleMgr.");
+        return DEFAULT_STRINGS;
+    }
+
+    std::string bundleName = DEFAULT_STRINGS;
+    int ret = bundleMgr->GetBundleNameByAppId(appId, bundleName);
+    if (ret != 0) {
+        DLP_LOG_ERROR(LABEL, "GetBundleNameByAppId failed to errCode %{public}d.", ret);
+        return DEFAULT_STRINGS;
+    }
+
+    AppExecFwk::BundleInfo bundleInfo;
+    ret = bundleMgr->GetBundleInfoV9(bundleName,
+        static_cast<int32_t>(AppExecFwk::GetBundleInfoFlag::GET_BUNDLE_INFO_WITH_SIGNATURE_INFO), bundleInfo, userId);
+    if (ret != 0) {
+        DLP_LOG_ERROR(LABEL, "GetAppIdentifier failed to get bundle info for %{public}s due to errCode %{public}d.",
+            bundleName.c_str(), ret);
+        return DEFAULT_STRINGS;
+    }
+    if (bundleInfo.signatureInfo.appIdentifier.empty()) {
+        DLP_LOG_ERROR(LABEL, "GetAppIdentifier not get appIdentifier.");
+        return DEFAULT_STRINGS;
+    }
+    return bundleInfo.signatureInfo.appIdentifier;
 }
 }  // namespace DlpPermission
 }  // namespace Security

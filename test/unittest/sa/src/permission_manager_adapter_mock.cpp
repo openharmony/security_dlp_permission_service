@@ -82,6 +82,13 @@ bool PermissionManagerAdapter::GetAppIdentifierForCalling(std::string &appIdenti
     appIdentifier = "1234567890";
     return true;
 }
+
+int32_t PermissionManagerAdapter::CheckAuthPolicy(const std::string& appId, const std::string& realFileType)
+{
+    (void)appId;
+    (void)realFileType;
+    return DLP_OK;
+}
 }  // namespace DlpPermission
 }  // namespace Security
 }  // namespace OHOS

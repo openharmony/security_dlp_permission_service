@@ -36,6 +36,7 @@ using namespace std;
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "DlpUtilsTest"};
 static const std::string DEFAULT_STRINGS = "";
+static const int32_t DEFAULT_USERID = 100;
 }
 
 void DlpUtilsTest::SetUpTestCase() {}
@@ -407,4 +408,27 @@ HWTEST_F(DlpUtilsTest, GetBundleInfoWithBundleName, TestSize.Level1)
     ASSERT_EQ(DlpUtils::GetAppIdFromToken(appId), false);
     int32_t userId = 0;
     (void)DlpUtils::GetUserIdByForegroundAccount(userId);
+}
+
+/**
+ * @tc.name: GetAppIdentifierByAppId
+ * @tc.desc: test GetAppIdentifierByAppId
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpUtilsTest, GetAppIdentifierByAppId, TestSize.Level1)
+{
+    std::string result = DlpUtils::GetAppIdentifierByAppId("test_appId", DEFAULT_USERID);
+    ASSERT_EQ(result, DEFAULT_STRINGS);
+
+    auto bundleMgrProxy = DlpUtils::GetBundleMgrProxy();
+    ASSERT_NE(bundleMgrProxy, nullptr);
+    OHOS::AppExecFwk::BundleInfo bundleInfo;
+    int ret = bundleMgrProxy->GetBundleInfoV9("com.ohos.dlpmanager",
+        static_cast<int32_t>(OHOS::AppExecFwk::GetBundleInfoFlag::GET_BUNDLE_INFO_WITH_SIGNATURE_INFO),
+        bundleInfo, DEFAULT_USERID);
+    ASSERT_EQ(ret, 0);
+
+    result = DlpUtils::GetAppIdentifierByAppId(bundleInfo.appId, DEFAULT_USERID);
+    ASSERT_NE(result, DEFAULT_STRINGS);
 }
