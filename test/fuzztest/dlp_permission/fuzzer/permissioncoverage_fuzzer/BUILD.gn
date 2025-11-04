@@ -21,7 +21,7 @@ ohos_fuzztest("PermissionCoverageFuzzTest") {
   module_out_path = module_output_path
   fuzz_config_file = "${dlp_root_dir}/test/fuzztest/dlp_permission/fuzzer/permissioncoverage_fuzzer"
 
-  configs = [ "${dlp_root_dir}/test/fuzztest/dlp_permission:napi_fuzz_config" ]
+  configs = [ "${dlp_root_dir}/test/fuzztest/dlp_permission:stub_fuzz_config" ]
 
   include_dirs = [
     "${dlp_root_dir}/services/dlp_permission/sa/adapt_utils/account_adapt",

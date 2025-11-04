@@ -129,9 +129,23 @@ static void FuzzTest(const uint8_t* data, size_t size)
     AdapterData(offlineCert, isOwner, jsonObj, encpolicy);
 }
 
+static void FuzzTestCert(const uint8_t* data, size_t size)
+{
+    if ((data == nullptr) || (size < BUFFER_LENGTH)) {
+        return;
+    }
+    FuzzedDataProvider fdp(data, size);
+    unordered_json jsonObj;
+    jsonObj["policyCert"] = "123456789";
+    std::vector<uint8_t> cert;
+    DlpAccountType ownerAccountType = GenerateDlpAccountType(fdp.ConsumeIntegral<int32_t>());
+    GetNewCert(jsonObj, cert, ownerAccountType);
+}
+
 bool CredentialCoverageFuzzTest(const uint8_t* data, size_t size)
 {
     FuzzTest(data, size);
+    FuzzTestCert(data, size);
     return true;
 }
 } // namespace OHOS
