@@ -353,12 +353,8 @@ uint32_t DlpRawFile::GetOfflineCertSize(void)
     return head_.offlineCertSize;
 }
 
-int32_t DlpRawFile::GetRawDlpHmac(void)
+int32_t DlpRawFile::WriteHmacProcess(void)
 {
-    if (head_.txtSize == 0) {
-        CleanBlobParam(hmac_);
-        return DLP_OK;
-    }
     (void)lseek(dlpFd_, head_.hmacOffset, SEEK_SET);
     uint8_t *tempBufHmacStr = new (std::nothrow) uint8_t[head_.hmacSize + 1];
     if (tempBufHmacStr == nullptr) {
@@ -386,27 +382,45 @@ int32_t DlpRawFile::GetRawDlpHmac(void)
         DLP_LOG_ERROR(LABEL, "HexStringToByte failed");
         return DLP_SERVICE_ERROR_VALUE_INVALID;
     }
+    delete[] tempBufHmacStr;
+    return DLP_OK;
+}
 
+int32_t DlpRawFile::WriteFileIdPlaintextProcess(void)
+{
     uint8_t *tmpBuf = new (std::nothrow)uint8_t[FILEID_SIZE];
     if (tmpBuf == nullptr) {
         return DLP_PARSE_ERROR_MEMORY_OPERATE_FAIL;
     }
     off_t fileLen = lseek(dlpFd_, FILEID_SIZE_OPPOSITE, SEEK_END);
     if (fileLen == static_cast<off_t>(-1)) {
+        delete[] tmpBuf;
         DLP_LOG_ERROR(LABEL, "get fileid fileLen invalid");
         return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
     }
     if (read(dlpFd_, tmpBuf, FILEID_SIZE) != FILEID_SIZE) {
         delete[] tmpBuf;
-        delete[] tempBufHmacStr;
         DLP_LOG_ERROR(LABEL, "can not read fileId, %{public}s", strerror(errno));
         return DLP_PARSE_ERROR_FILE_FORMAT_ERROR;
     }
     fileIdPlaintext_ = std::string(tmpBuf, tmpBuf + FILEID_SIZE);
 
     delete[] tmpBuf;
-    delete[] tempBufHmacStr;
     return DLP_OK;
+}
+
+int32_t DlpRawFile::GetRawDlpHmac(void)
+{
+    if (head_.txtSize == 0) {
+        CleanBlobParam(hmac_);
+        return DLP_OK;
+    }
+    int32_t flag = WriteHmacProcess();
+    if (flag != DLP_OK) {
+        return flag;
+    }
+
+    return WriteFileIdPlaintextProcess();
 }
 
 int32_t DlpRawFile::ProcessDlpFile()

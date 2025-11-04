@@ -721,6 +721,83 @@ HWTEST_F(DlpFileTest, ParseDlpHeader001, TestSize.Level0)
 }
 
 /**
+ * @tc.name: GetRawDlpHmac001
+ * @tc.desc: test txtSize of parse dlp file header is 0
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpFileTest, GetRawDlpHmac001, TestSize.Level0)
+{
+    DLP_LOG_INFO(LABEL, "GetRawDlpHmac001");
+
+    int fd = open("/data/fuse_test.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
+    ASSERT_NE(fd, -1);
+    DlpRawFile testFile(fd, "txt");
+
+    testFile.head_.txtSize = 0;
+
+    EXPECT_EQ(DLP_OK, testFile.GetRawDlpHmac());
+    close(fd);
+    unlink("/data/fuse_test.txt");
+}
+
+/**
+ * @tc.name: GetRawDlpHmac002
+ * @tc.desc: test WriteHmacProcess
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpFileTest, GetRawDlpHmac002, TestSize.Level0)
+{
+    DLP_LOG_INFO(LABEL, "GetRawDlpHmac002");
+
+    int fd = open("/data/fuse_test.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
+    ASSERT_NE(fd, -1);
+    DlpRawFile testFile(fd, "txt");
+
+    struct DlpHeader header = {
+        .magic = DLP_FILE_MAGIC,
+        .certSize = 20,
+        .contactAccountSize = 20,
+        .txtSize = 20,
+        .hmacOffset = 0,
+        .hmacSize = 0,
+    };
+    testFile.head_ = header;
+    EXPECT_NE(DLP_OK, testFile.GetRawDlpHmac());
+    close(fd);
+    unlink("/data/fuse_test.txt");
+}
+
+/**
+ * @tc.name: GetRawDlpHmac003
+ * @tc.desc: test WriteFileIdPlaintextProcess
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpFileTest, GetRawDlpHmac003, TestSize.Level0)
+{
+    DLP_LOG_INFO(LABEL, "GetRawDlpHmac003");
+
+    int fd = open("/data/fuse_test.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
+    ASSERT_NE(fd, -1);
+    DlpRawFile testFile(fd, "txt");
+
+    struct DlpHeader header = {
+        .magic = DLP_FILE_MAGIC,
+        .certSize = 20,
+        .contactAccountSize = 20,
+        .txtSize = 20,
+        .hmacOffset = 0,
+        .hmacSize = 20,
+    };
+    testFile.head_ = header;
+    EXPECT_NE(DLP_OK, testFile.GetRawDlpHmac());
+    close(fd);
+    unlink("/data/fuse_test.txt");
+}
+
+/**
  * @tc.name: ParseDlpHeader002
  * @tc.desc: test parse dlp file header failed when file header too short
  * @tc.type: FUNC
@@ -739,7 +816,6 @@ HWTEST_F(DlpFileTest, ParseDlpHeader002, TestSize.Level0)
         .certSize = 20,
         .contactAccountSize = 20,
     };
-
     // write less than header size
     write(fd, &header, sizeof(header) - 1);
     EXPECT_NE(DLP_OK, testFile.ProcessDlpFile());
