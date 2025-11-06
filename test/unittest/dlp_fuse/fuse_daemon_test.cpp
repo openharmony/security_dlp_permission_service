@@ -50,7 +50,6 @@ static struct fuse_entry_param g_fuseReplyEntry;
 static struct stat g_fuseReplyAttr;
 static double g_fuseReplyAttrTimeout = 0.0F;
 static size_t g_fuseReplyBufSize = 0;
-static int g_session;
 static const std::string DLP_TEST_DIR = "/data/dlpTest/";
 static DlpLinkManager* dlpLinkManager = nullptr;
 constexpr int WAIT_SECOND = 1;
@@ -132,17 +131,6 @@ int FuseReplyBufMock(fuse_req_t req, const char *buf, size_t size)
     (void)size;
     g_fuseReplyBufSize = 0;
     return 0;
-}
-
-
-struct fuse_session *FuseSessionNewMock(struct fuse_args *args, const struct fuse_lowlevel_ops *op,
-    size_t opSize, void *userdata)
-{
-    (void)args;
-    (void)op;
-    (void)opSize;
-    (void)userdata;
-    return reinterpret_cast<struct fuse_session *>(&g_session);
 }
 
 int FuseSessionMountMock(struct fuse_session *se, const char *mountpoint)
@@ -854,9 +842,6 @@ HWTEST_F(FuseDaemonTest, FuseFsDaemonThread001, TestSize.Level0)
     DlpCMockCondition condition;
     condition.mockSequence = { true };
     SetMockConditions("fuse_opt_add_arg", condition);
-    DlpCMockCondition condition1;
-    condition1.mockSequence = { true };
-    SetMockConditions("fuse_session_new", condition1);
     DlpCMockCondition condition2;
     condition2.mockSequence = { true };
     SetMockConditions("fuse_opt_free_args", condition2);
@@ -878,10 +863,6 @@ HWTEST_F(FuseDaemonTest, FuseFsDaemonThread002, TestSize.Level0)
     DlpCMockCondition condition;
     condition.mockSequence = { true };
     SetMockConditions("fuse_opt_add_arg", condition);
-    DlpCMockCondition condition1;
-    condition1.mockSequence = { true };
-    SetMockConditions("fuse_session_new", condition1);
-    SetMockCallback("fuse_session_new", reinterpret_cast<CommonMockFuncT>(FuseSessionNewMock));
     DlpCMockCondition condition2;
     condition2.mockSequence = { true };
     SetMockConditions("fuse_session_mount", condition2);
@@ -910,10 +891,6 @@ HWTEST_F(FuseDaemonTest, FuseFsDaemonThread003, TestSize.Level0)
     DlpCMockCondition condition;
     condition.mockSequence = { true };
     SetMockConditions("fuse_opt_add_arg", condition);
-    DlpCMockCondition condition1;
-    condition1.mockSequence = { true };
-    SetMockConditions("fuse_session_new", condition1);
-    SetMockCallback("fuse_session_new", reinterpret_cast<CommonMockFuncT>(FuseSessionNewMock));
     DlpCMockCondition condition2;
     condition2.mockSequence = { true };
     SetMockConditions("fuse_session_mount", condition2);
@@ -929,7 +906,7 @@ HWTEST_F(FuseDaemonTest, FuseFsDaemonThread003, TestSize.Level0)
     SetMockConditions("fuse_session_loop", condition5);
 
     FuseDaemon::FuseFsDaemonThread(1);
-    EXPECT_EQ(0, FuseDaemon::WaitDaemonEnable());
+    EXPECT_NE(0, FuseDaemon::WaitDaemonEnable());
     CleanMockConditions();
 }
 

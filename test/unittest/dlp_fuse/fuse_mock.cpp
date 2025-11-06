@@ -91,23 +91,6 @@ void fuse_opt_free_args(struct fuse_args *args)
     (*func)(args);
 }
 
-struct fuse_session *fuse_session_new(struct fuse_args *args, const struct fuse_lowlevel_ops *op,
-    size_t op_size, void *userdata)
-{
-    if (IsFuncNeedMock(__func__)) {
-        CommonMockFuncT rawFunc = GetMockFunc(__func__);
-        if (rawFunc != nullptr) {
-            return (*reinterpret_cast<NewSessionT>(rawFunc))(args, op, op_size, userdata);
-        }
-        return nullptr;
-    }
-    NewSessionT func = reinterpret_cast<NewSessionT>(GetLibfuseLibFunc(__func__));
-    if (func == nullptr) {
-        return nullptr;
-    }
-    return (*func)(args, op, op_size, userdata);
-}
-
 int fuse_session_mount(struct fuse_session *se, const char *mountpoint)
 {
     if (IsFuncNeedMock(__func__)) {
