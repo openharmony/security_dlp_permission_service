@@ -86,7 +86,7 @@ errno_t memcpy_s(void *dest, size_t destMax, const void *src, size_t count)
     return (*func)(dest, destMax, src, count);
 }
 
-int read(int fd, void *dest, uint32_t maxCount)
+ssize_t read(int fd, void *dest, uint32_t maxCount)
 {
     if (IsFuncNeedMock("read")) {
         CommonMockFuncT rawFunc = GetMockFunc(__func__);
