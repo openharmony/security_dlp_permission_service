@@ -740,7 +740,8 @@ int32_t DlpFileManager::OpenDlpFile(int32_t dlpFileFd, std::shared_ptr<DlpFile>&
         return DLP_PARSE_ERROR_FD_ERROR;
     }
     bool isFromUriName = false;
-    std::string realSuffix = DlpUtils::GetRealTypeWithFd(dlpFileFd, isFromUriName);
+    std::string generateInfoStr;
+    std::string realSuffix = DlpUtils::GetRealTypeWithFd(dlpFileFd, isFromUriName, generateInfoStr);
     if (realSuffix == DEFAULT_STRING) {
         DLP_LOG_ERROR(LABEL, "GetRealTypeWithFd fail");
         return DLP_PARSE_ERROR_NOT_SUPPORT_FILE_TYPE;

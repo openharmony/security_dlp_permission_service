@@ -37,6 +37,11 @@ namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "DlpUtilsTest"};
 static const std::string DEFAULT_STRINGS = "";
 static const int32_t DEFAULT_USERID = 100;
+static const std::string TXT_STRINGS = "txt";
+static const std::string PPT_STRINGS = "ppt";
+const int32_t FILEID_SIZE = 46;
+const int32_t FILEID_SIZE_VALID = 1;
+const int32_t FILEID_SIZE_OPPOSITE = -46;
 }
 
 void DlpUtilsTest::SetUpTestCase() {}
@@ -241,14 +246,14 @@ HWTEST_F(DlpUtilsTest, GetFilePathWithFd, TestSize.Level0)
 }
 
 /**
- * @tc.name: GetRealTypeForEnterpriseWithFd001
- * @tc.desc: test GetRealTypeForEnterpriseWithFd
+ * @tc.name: GetRealTypeWithFd001
+ * @tc.desc: test GetRealTypeWithFd
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpUtilsTest, GetRealTypeForEnterpriseWithFd001, TestSize.Level0)
+HWTEST_F(DlpUtilsTest, GetRealTypeWithFd001, TestSize.Level0)
 {
-    DLP_LOG_INFO(LABEL, "GetRealTypeForEnterpriseWithFd001");
+    DLP_LOG_INFO(LABEL, "GetRealTypeWithFd001");
 
     int fd = open("/data/fuse_test.txt.dlp", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
     ASSERT_NE(fd, -1);
@@ -263,20 +268,22 @@ HWTEST_F(DlpUtilsTest, GetRealTypeForEnterpriseWithFd001, TestSize.Level0)
     write(fd, &header, sizeof(header));
     lseek(fd, 0, SEEK_SET);
     bool isFromUriName = true;
-    DlpUtils::GetRealTypeForEnterpriseWithFd(fd, isFromUriName);
+    std::string generateInfoStr;
+    ASSERT_EQ(DlpUtils::GetRealTypeWithFd(fd, isFromUriName, generateInfoStr, true), TXT_STRINGS);
+    ASSERT_EQ(DlpUtils::GetRealTypeWithFd(fd, isFromUriName, generateInfoStr, false), TXT_STRINGS);
     close(fd);
     unlink("/data/fuse_test.txt.dlp");
 }
 
 /**
- * @tc.name: GetRealTypeForEnterpriseWithFd002
- * @tc.desc: test GetRealTypeForEnterpriseWithFd
+ * @tc.name: GetRealTypeWithFd002
+ * @tc.desc: test GetRealTypeWithFd
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpUtilsTest, GetRealTypeForEnterpriseWithFd002, TestSize.Level0)
+HWTEST_F(DlpUtilsTest, GetRealTypeWithFd002, TestSize.Level0)
 {
-    DLP_LOG_INFO(LABEL, "GetRealTypeForEnterpriseWithFd002");
+    DLP_LOG_INFO(LABEL, "GetRealTypeWithFd002");
     int fd = open("/data/fuse_test.txt.dlp", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
     ASSERT_NE(fd, -1);
     struct DlpHeader header = {
@@ -290,20 +297,22 @@ HWTEST_F(DlpUtilsTest, GetRealTypeForEnterpriseWithFd002, TestSize.Level0)
     write(fd, &header, sizeof(header));
     lseek(fd, 0, SEEK_SET);
     bool isFromUriName = true;
-    DlpUtils::GetRealTypeForEnterpriseWithFd(fd, isFromUriName);
+    std::string generateInfoStr;
+    ASSERT_EQ(DlpUtils::GetRealTypeWithFd(fd, isFromUriName, generateInfoStr, true), PPT_STRINGS);
+    ASSERT_EQ(DlpUtils::GetRealTypeWithFd(fd, isFromUriName, generateInfoStr, false), PPT_STRINGS);
     close(fd);
     unlink("/data/fuse_test.txt.dlp");
 }
 
 /**
- * @tc.name: GetRealTypeForEnterpriseWithFd003
- * @tc.desc: test GetRealTypeForEnterpriseWithFd
+ * @tc.name: GetRealTypeWithFd003
+ * @tc.desc: test GetRealTypeWithFd
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpUtilsTest, GetRealTypeForEnterpriseWithFd003, TestSize.Level0)
+HWTEST_F(DlpUtilsTest, GetRealTypeWithFd003, TestSize.Level0)
 {
-    DLP_LOG_INFO(LABEL, "GetRealTypeForEnterpriseWithFd003");
+    DLP_LOG_INFO(LABEL, "GetRealTypeWithFd003");
     int fd = open("/data/fuse_test.txt.dlp", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
     ASSERT_NE(fd, -1);
     struct DlpHeader header = {
@@ -317,20 +326,22 @@ HWTEST_F(DlpUtilsTest, GetRealTypeForEnterpriseWithFd003, TestSize.Level0)
     write(fd, &header, sizeof(header));
     lseek(fd, 0, SEEK_SET);
     bool isFromUriName = true;
-    DlpUtils::GetRealTypeForEnterpriseWithFd(fd, isFromUriName);
+    std::string generateInfoStr;
+    ASSERT_EQ(DlpUtils::GetRealTypeWithFd(fd, isFromUriName, generateInfoStr, true), TXT_STRINGS);
+    ASSERT_EQ(DlpUtils::GetRealTypeWithFd(fd, isFromUriName, generateInfoStr, false), DEFAULT_STRINGS);
     close(fd);
     unlink("/data/fuse_test.txt.dlp");
 }
 
 /**
- * @tc.name: GetRealTypeForEnterpriseWithFd004
- * @tc.desc: test GetRealTypeForEnterpriseWithFd
+ * @tc.name: GetRealTypeWithFd004
+ * @tc.desc: test GetRealTypeWithFd
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpUtilsTest, GetRealTypeForEnterpriseWithFd004, TestSize.Level0)
+HWTEST_F(DlpUtilsTest, GetRealTypeWithFd004, TestSize.Level0)
 {
-    DLP_LOG_INFO(LABEL, "GetRealTypeForEnterpriseWithFd004");
+    DLP_LOG_INFO(LABEL, "GetRealTypeWithFd004");
     int fd = open("/data/fuse_test.txt.dlp", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
     ASSERT_NE(fd, -1);
     struct DlpHeader header = {
@@ -344,7 +355,72 @@ HWTEST_F(DlpUtilsTest, GetRealTypeForEnterpriseWithFd004, TestSize.Level0)
     write(fd, &header, sizeof(header) - 1);
     lseek(fd, 0, SEEK_SET);
     bool isFromUriName = true;
-    DlpUtils::GetRealTypeForEnterpriseWithFd(fd, isFromUriName);
+    std::string generateInfoStr;
+    ASSERT_EQ(DlpUtils::GetRealTypeWithFd(fd, isFromUriName, generateInfoStr, true), TXT_STRINGS);
+    ASSERT_EQ(DlpUtils::GetRealTypeWithFd(fd, isFromUriName, generateInfoStr, false), DEFAULT_STRINGS);
+    close(fd);
+    unlink("/data/fuse_test.txt.dlp");
+}
+
+/**
+ * @tc.name: GetRawFileFileId001
+ * @tc.desc: test GetRawFileFileId
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpUtilsTest, GetRawFileFileId001, TestSize.Level0)
+{
+    DLP_LOG_INFO(LABEL, "GetRawFileFileId001");
+    int fd = open("/data/fuse_test.txt.dlp", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
+    ASSERT_NE(fd, -1);
+    uint8_t buffer[FILEID_SIZE] = {0};
+    write(fd, buffer, FILEID_SIZE);
+    std::string field = "1111111111111111111111111111111111111111111111";
+    lseek(fd, FILEID_SIZE_OPPOSITE, SEEK_END);
+    write(fd, field.c_str(), field.size());
+    ASSERT_EQ(DlpUtils::GetRawFileFileId(fd, field), DLP_OK);
+    close(fd);
+    unlink("/data/fuse_test.txt.dlp");
+}
+
+/**
+ * @tc.name: GetRawFileFileId002
+ * @tc.desc: test GetRawFileFileId
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpUtilsTest, GetRawFileFileId002, TestSize.Level0)
+{
+    DLP_LOG_INFO(LABEL, "GetRawFileFileId002");
+    int fd = open("/data/fuse_test.txt.dlp", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
+    ASSERT_NE(fd, -1);
+    uint8_t buffer[FILEID_SIZE] = {0};
+    write(fd, buffer, FILEID_SIZE);
+    std::string field = "111";
+    lseek(fd, FILEID_SIZE_OPPOSITE, SEEK_END);
+    write(fd, field.c_str(), field.size());
+    ASSERT_EQ(DlpUtils::GetRawFileFileId(fd, field), DLP_OK);
+    close(fd);
+    unlink("/data/fuse_test.txt.dlp");
+}
+
+/**
+ * @tc.name: GetRawFileFileId003
+ * @tc.desc: test GetRawFileFileId
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpUtilsTest, GetRawFileFileId003, TestSize.Level0)
+{
+    DLP_LOG_INFO(LABEL, "GetRawFileFileId003");
+    int fd = open("/data/fuse_test.txt.dlp", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
+    ASSERT_NE(fd, -1);
+    uint8_t buffer[FILEID_SIZE_VALID] = {0};
+    write(fd, buffer, FILEID_SIZE_VALID);
+    std::string field = "";
+    lseek(fd, FILEID_SIZE_VALID, SEEK_END);
+    write(fd, field.c_str(), field.size());
+    ASSERT_NE(DlpUtils::GetRawFileFileId(fd, field), DLP_OK);
     close(fd);
     unlink("/data/fuse_test.txt.dlp");
 }
@@ -374,9 +450,10 @@ HWTEST_F(DlpUtilsTest, GetFileType, TestSize.Level1)
 HWTEST_F(DlpUtilsTest, GetRealTypeWithFd, TestSize.Level1)
 {
     bool isFromUriName = false;
-    ASSERT_EQ(DlpUtils::GetRealTypeWithFd(-1, isFromUriName), DEFAULT_STRINGS);
+    std::string generateInfoStr;
+    ASSERT_EQ(DlpUtils::GetRealTypeWithFd(-1, isFromUriName, generateInfoStr), DEFAULT_STRINGS);
     isFromUriName = true;
-    ASSERT_EQ(DlpUtils::GetRealTypeWithFd(-1, isFromUriName), DEFAULT_STRINGS);
+    ASSERT_EQ(DlpUtils::GetRealTypeWithFd(-1, isFromUriName, generateInfoStr), DEFAULT_STRINGS);
     int fd = open("/data/fuse_test.txt.dlp", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
     ASSERT_NE(fd, -1);
     struct DlpHeader header = {
@@ -389,7 +466,7 @@ HWTEST_F(DlpUtilsTest, GetRealTypeWithFd, TestSize.Level1)
     write(fd, buffer, 8);
     write(fd, &header, sizeof(header));
     lseek(fd, 0, SEEK_SET);
-    ASSERT_EQ(DlpUtils::GetRealTypeWithFd(fd, isFromUriName), DEFAULT_STRINGS);
+    ASSERT_EQ(DlpUtils::GetRealTypeWithFd(fd, isFromUriName, generateInfoStr), DEFAULT_STRINGS);
     close(fd);
     unlink("/data/fuse_test.txt.dlp");
 }

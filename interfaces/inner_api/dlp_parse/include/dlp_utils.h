@@ -274,14 +274,15 @@ public:
     static int32_t GetFilePathWithFd(const int32_t& fd, std::string& srcFilePath);
     static int32_t GetFilePathByFd(const int32_t& fd, std::string& filePath);
     static std::string ToLowerString(const std::string& str);
-    static std::string GetRealTypeWithFd(const int32_t& fd, bool& isFromUriName);
+    static std::string GetRealTypeWithFd(const int32_t& fd, bool& isFromUriName, std::string& generateInfoStr,
+        bool isEnterprise = false);
     static bool GetBundleInfoWithBundleName(const std::string &bundleName, int32_t flag,
         AppExecFwk::BundleInfo &bundleInfo, int32_t userId);
     static bool GetFileType(const std::string& realFileType);
     static bool GetAppIdFromToken(std::string& appId);
     static bool GetUserIdByForegroundAccount(int32_t &userId);
-    static std::string GetRealTypeForEnterpriseWithFd(const int32_t& fd, bool& isFromUriName);
     static std::string GetAppIdentifierByAppId(const std::string &appId, const int32_t &userId);
+    static int32_t GetRawFileFileId(const int32_t& fd, std::string& fileId);
 };
 }  // namespace DlpPermission
 }  // namespace Security
