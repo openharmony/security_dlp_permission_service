@@ -27,10 +27,15 @@ typedef off_t (*LseekFuncT)(int fd, off_t offset, int whence);
 typedef ssize_t (*WriteFuncT)(int fd, const void *buf, size_t count);
 typedef int (*FtruncateFuncT)(int fd, off_t length);
 typedef errno_t (*MemcpyFuncT)(void *dest, size_t destMax, const void *src, size_t count);
+typedef int (*ReadFuncT)(int fd, void *dest, uint32_t maxCount);
 
 off_t lseek(int fd, off_t offset, int whence)
 {
     if (IsFuncNeedMock("lseek")) {
+        CommonMockFuncT rawFunc = GetMockFunc(__func__);
+        if (rawFunc != nullptr) {
+            return (*reinterpret_cast<LseekFuncT>(rawFunc))(fd, offset, whence);
+        }
         return -1;
     }
 
@@ -79,6 +84,23 @@ errno_t memcpy_s(void *dest, size_t destMax, const void *src, size_t count)
         return -1;
     }
     return (*func)(dest, destMax, src, count);
+}
+
+int read(int fd, void *dest, uint32_t maxCount)
+{
+    if (IsFuncNeedMock("read")) {
+        CommonMockFuncT rawFunc = GetMockFunc(__func__);
+        if (rawFunc != nullptr) {
+            return (*reinterpret_cast<ReadFuncT>(rawFunc))(fd, dest, maxCount);
+        }
+        return -1;
+    }
+
+    ReadFuncT func = reinterpret_cast<ReadFuncT>(dlsym(RTLD_NEXT, "read"));
+    if (func == nullptr) {
+        return -1;
+    }
+    return (*func)(fd, dest, maxCount);
 }
 #ifdef __cplusplus
 }
