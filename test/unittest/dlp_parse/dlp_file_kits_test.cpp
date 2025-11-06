@@ -82,6 +82,9 @@ static const int FIVE = 5;
 static const uint32_t DLPHEADER_SIZE = sizeof(struct DlpHeader);
 static const uint32_t ADDHEADER_SIZE = 8;
 static const uint32_t CURRENT_VERSION = 3;
+static constexpr int FIRST_COUNT = 1;
+static constexpr int SECOND_COUNT = 2;
+static constexpr int THIRD_COUNT = 3;
 
 static off_t LseekReplyMock(int fd, off_t offset, int whence)
 {
@@ -92,13 +95,13 @@ static int ReadReplyMock(int fd, void *dest, uint32_t maxCount)
 {
     static int callCount = 0;
     callCount++;
-    if (callCount == 1) {
+    if (callCount == FIRST_COUNT) {
         *(static_cast<uint32_t*>(dest)) = CURRENT_VERSION;
         return sizeof(uint32_t);
-    } else if (callCount == 2) {
+    } else if (callCount == SECOND_COUNT) {
         *(static_cast<uint32_t*>(dest)) = DLPHEADER_SIZE;
         return sizeof(uint32_t);
-    } else if (callCount == 3) {
+    } else if (callCount == THIRD_COUNT) {
         DlpHeader mockHeader = {
             .magic = 0x87f4922,
             .fileType = 1,
@@ -126,13 +129,13 @@ static int ReadReplyMockEnterprise(int fd, void *dest, uint32_t maxCount)
 {
     static int callCount = 0;
     callCount++;
-    if (callCount == 1) {
+    if (callCount == FIRST_COUNT) {
         *(static_cast<uint32_t*>(dest)) = CURRENT_VERSION;
         return sizeof(uint32_t);
-    } else if (callCount == 2) {
+    } else if (callCount == SECOND_COUNT) {
         *(static_cast<uint32_t*>(dest)) = DLPHEADER_SIZE + ADDHEADER_SIZE;
         return sizeof(uint32_t);
-    } else if (callCount == 3) {
+    } else if (callCount == THIRD_COUNT) {
         DlpHeader mockHeader = {
             .magic = 0x87f4922,
             .fileType = 1,
