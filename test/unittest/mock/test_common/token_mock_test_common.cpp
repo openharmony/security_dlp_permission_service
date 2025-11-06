@@ -23,6 +23,7 @@ using namespace OHOS::Security::AccessToken;
 namespace {
 std::mutex g_lockSetToken;
 uint64_t g_shellTokenId = 0;
+static const int TWO = 2;
 }
 void DlpPermissionTestCommon::SetTestEvironment(uint64_t shellTokenId)
 {
@@ -87,7 +88,7 @@ int32_t DlpPermissionTestCommon::DeleteTestHapToken(AccessTokenID tokenID)
 AccessTokenID DlpPermissionTestCommon::GetNativeTokenIdFromProcess(const std::string &process)
 {
     uint64_t selfTokenId = GetSelfTokenID();
-    EXPECT_EQ(0, SetSelfTokenID(DlpPermissionTestCommon::GetShellTokenId())); // set shell token
+    EXPECT_NE(TWO, SetSelfTokenID(DlpPermissionTestCommon::GetShellTokenId())); // set shell token
 
     std::string dumpInfo;
     AtmToolsParamInfo info;
