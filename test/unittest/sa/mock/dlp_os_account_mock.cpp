@@ -74,7 +74,7 @@ ErrCode DomainAccountClient::GetAccountServerConfig(const DomainAccountInfo &inf
     return 0;
 }
 
-ErrCode DomainAccountClient::GetAccountStatus( DomainAccountInfo& info, DomainAccountStatus& status)
+ErrCode DomainAccountClient::GetAccountStatus(DomainAccountInfo &info, DomainAccountStatus &status)
 {
     status = DomainAccountStatus::LOGIN;
     return 0;
