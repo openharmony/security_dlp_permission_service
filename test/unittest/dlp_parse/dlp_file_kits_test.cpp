@@ -91,7 +91,7 @@ static off_t LseekReplyMock(int fd, off_t offset, int whence)
     return 0;
 }
 
-static ssize_t ReadReplyMock(int fd, void *dest, size_t maxCount)
+static ssize_t ReadReplyMock(int fd, void *dest, size_t MaxCount)
 {
     static int callCount = 0;
     callCount++;
@@ -125,7 +125,7 @@ static ssize_t ReadReplyMock(int fd, void *dest, size_t maxCount)
     return -1;
 }
 
-static ssize_t ReadReplyMockEnterprise(int fd, void *dest, size_t maxCount)
+static ssize_t ReadReplyMockEnterprise(int fd, void *dest, size_t MaxCount)
 {
     static int callCount = 0;
     callCount++;
