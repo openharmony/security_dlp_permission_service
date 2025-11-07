@@ -28,7 +28,7 @@ namespace DlpPermission {
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "DlpPermissionKit"};
 const int64_t TIME_WAIT_TIME_OUT = 30;
-const int64_t PARSE_WAIT_TIME_OUT = 10;
+const int64_t PARSE_WAIT_TIME_OUT = 30;
 }  // namespace
 
 void ClientGenerateDlpCertificateCallback::OnGenerateDlpCertificate(int32_t result, const std::vector<uint8_t>& cert)
