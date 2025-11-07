@@ -66,6 +66,7 @@ public:
 
     static DomainAccountClient& GetInstance();
     ErrCode GetAccountServerConfig(const DomainAccountInfo &info, DomainServerConfig &config);
+    ErrCode GetAccountStatus(DomainAccountInfo &info, DomainAccountStatus &status);
 };
 
 class OhosAccountInfo {
@@ -122,6 +123,7 @@ public:
     static int GetForegroundOsAccountLocalId(int32_t &localId);
     static int QueryOsAccountById(const int id, OsAccountInfo &osAccountInfo);
     static int QueryActiveOsAccountIds(std::vector<int32_t>& ids);
+    static int GetOsAccountLocalIdFromUid(const int32_t uid, int32_t &id);
 };
 
 } // namespace AccountSA

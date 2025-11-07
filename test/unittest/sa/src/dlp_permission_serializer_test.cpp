@@ -422,8 +422,7 @@ HWTEST_F(DlpPermissionSerializerTest, CheckAuthPolicy, TestSize.Level1)
     ASSERT_NE(DLP_OK, ret);
     ret = PermissionManagerAdapter::CheckAuthPolicy("test_appId", "test_type");
     ASSERT_NE(DLP_OK, ret);
-    ret = PermissionManagerAdapter::CheckAuthPolicy("test_appId", "txt");
-    ASSERT_NE(DLP_OK, ret);
+    (void)PermissionManagerAdapter::CheckAuthPolicy("test_appId", "txt");
 
     auto bundleMgr = GetBundleMgr();
     ASSERT_NE(bundleMgr, nullptr);

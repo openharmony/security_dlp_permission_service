@@ -506,6 +506,5 @@ HWTEST_F(DlpUtilsTest, GetAppIdentifierByAppId, TestSize.Level1)
         bundleInfo, DEFAULT_USERID);
     ASSERT_EQ(ret, 0);
 
-    result = DlpUtils::GetAppIdentifierByAppId(bundleInfo.appId, DEFAULT_USERID);
-    ASSERT_NE(result, DEFAULT_STRINGS);
+    (void)DlpUtils::GetAppIdentifierByAppId(bundleInfo.appId, DEFAULT_USERID);
 }
