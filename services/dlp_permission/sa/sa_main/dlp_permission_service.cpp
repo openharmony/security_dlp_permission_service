@@ -275,7 +275,8 @@ int32_t DlpPermissionService::ParseDlpCertificate(const sptr<CertParcel>& certPa
         certParcel, callback, appId, offlineAccess, applicationInfo);
 }
 
-bool DlpPermissionService::InsertDlpSandboxInfo(DlpSandboxInfo& sandboxInfo, bool hasRetention)
+bool DlpPermissionService::InsertDlpSandboxInfo(DlpSandboxInfo& sandboxInfo, bool hasRetention,
+    bool isNotOwnerAndReadOnce)
 {
     AppExecFwk::BundleInfo info;
     AppExecFwk::BundleMgrClient bundleMgrClient;
@@ -290,6 +291,7 @@ bool DlpPermissionService::InsertDlpSandboxInfo(DlpSandboxInfo& sandboxInfo, boo
     sandboxInfo.uid = info.uid;
     sandboxInfo.tokenId = AccessToken::AccessTokenKit::GetHapTokenID(sandboxInfo.userId, sandboxInfo.bundleName,
         sandboxInfo.appIndex);
+    sandboxInfo.isReadOnce = isNotOwnerAndReadOnce;
     appStateObserver_->AddDlpSandboxInfo(sandboxInfo);
     VisitRecordFileManager::GetInstance().AddVisitRecord(sandboxInfo.bundleName, sandboxInfo.userId, sandboxInfo.uri);
     return true;
@@ -297,7 +299,18 @@ bool DlpPermissionService::InsertDlpSandboxInfo(DlpSandboxInfo& sandboxInfo, boo
 
 static bool FindMatchingSandbox(const RetentionSandBoxInfo& info, const GetAppIndexParams& params)
 {
-    if (params.isReadOnly && !params.isNotOwnerAndReadOnce && info.dlpFileAccess_ == DLPFileAccess::READ_ONLY) {
+    DLP_LOG_ERROR(LABEL, "bsx FindMatchingSandbox appIndex_=%{public}d", info.appIndex_);
+    DLP_LOG_ERROR(LABEL, "bsx FindMatchingSandbox dlpFileAccess_=%{public}d", info.dlpFileAccess_);
+    DLP_LOG_ERROR(LABEL, "bsx FindMatchingSandbox hasRead_=%{public}d", info.hasRead_);
+    DLP_LOG_ERROR(LABEL, "bsx FindMatchingSandbox bundleName_=%{public}d", info.bundleName_.c_str());
+    DLP_LOG_ERROR(LABEL, "bsx FindMatchingSandbox isReadOnly=%{public}d", params.isReadOnly);
+    DLP_LOG_ERROR(LABEL, "bsx FindMatchingSandbox isNotOwnerAndReadOnce=%{public}d", params.isNotOwnerAndReadOnce);
+    DLP_LOG_ERROR(LABEL, "bsx FindMatchingSandbox bundleName=%{public}d", params.bundleName.c_str());
+    DLP_LOG_ERROR(LABEL, "bsx FindMatchingSandbox uri=%{public}d", params.uri.c_str());
+
+    // 只读沙箱，不是仅查看一次文件，不是仅查看一次沙箱，可以不用重新安装
+    if (params.isReadOnly && !params.isNotOwnerAndReadOnce && !info.isReadOnce_ &&
+        info.dlpFileAccess_ == DLPFileAccess::READ_ONLY) {
         return true;
     }
     if (params.isReadOnly) {
@@ -321,6 +334,7 @@ static int32_t GetAppIndexFromRetentionInfo(const GetAppIndexParams& params,
         return res;
     }
     for (const auto& info: infoVec) {
+        // 是否能找到匹配的沙箱信息，能找到的就不需要重新安装
         if (FindMatchingSandbox(info, params)) {
             dlpSandBoxInfo.appIndex = info.appIndex_;
             dlpSandBoxInfo.hasRead = info.hasRead_;
@@ -397,7 +411,7 @@ int32_t DlpPermissionService::InstallDlpSandbox(const std::string& bundleName, D
         }
     }
     FillDlpSandboxInfo(dlpSandboxInfo, bundleName, dlpFileAccess, userId, uri);
-    if (!InsertDlpSandboxInfo(dlpSandboxInfo, !isNeedInstall)) {
+    if (!InsertDlpSandboxInfo(dlpSandboxInfo, !isNeedInstall, isNotOwnerAndReadOnce)) {
         return DLP_SERVICE_ERROR_INSTALL_SANDBOX_FAIL;
     }
     sandboxInfo.appIndex = dlpSandboxInfo.appIndex;

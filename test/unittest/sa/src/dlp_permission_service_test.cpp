@@ -1024,14 +1024,14 @@ HWTEST_F(DlpPermissionServiceTest, InsertDlpSandboxInfo001, TestSize.Level1)
 {
     auto appStateObserver = dlpPermissionService_->appStateObserver_;
     DlpSandboxInfo sandboxInfo;
-    dlpPermissionService_->InsertDlpSandboxInfo(sandboxInfo, false);
+    dlpPermissionService_->InsertDlpSandboxInfo(sandboxInfo, false, true);
     std::string bundleName;
     int32_t appIndex = 111;
     int32_t userId = 111;
     ASSERT_TRUE(0 == dlpPermissionService_->DeleteDlpSandboxInfo(bundleName, appIndex, userId));
     dlpPermissionService_->appStateObserver_ = appStateObserver;
 
-    dlpPermissionService_->InsertDlpSandboxInfo(sandboxInfo, true);
+    dlpPermissionService_->InsertDlpSandboxInfo(sandboxInfo, true, false);
 }
 
 /**

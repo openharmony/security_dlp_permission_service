@@ -37,6 +37,7 @@ public:
     DLPFileAccess dlpFileAccess_;
     bool hasRead_;
     std::set<std::string> docUriSet_;
+    bool isReadOnce_;
 };
 } // namespace DlpPermission
 } // namespace Security

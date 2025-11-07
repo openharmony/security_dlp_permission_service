@@ -41,6 +41,7 @@ struct RetentionInfo {
     std::set<std::string> docUriSet;
     int32_t userId = -1;
     bool hasRead = false;
+    bool isReadOnce = false;
 };
 
 class SandboxJsonManager : public IJsonOperator {
