@@ -25,6 +25,7 @@
 #include "accesstoken_kit.h"
 #include "base_obj.h"
 #include "dlp_file.h"
+#include "c_mock_common.h"
 #include "dlp_file_kits.h"
 #include "dlp_file_manager.h"
 #include "dlp_permission.h"
@@ -78,6 +79,85 @@ static const std::string DLP_FILE_ERR_SUFFIX_URI_2 = "file://data/test/fuse_test
 static const std::string DLP_TEST_DIR = "/data/test/dlpTest/";
 static const int DLP_FILE_PERMISSION = 0777;
 static const int FIVE = 5;
+static const uint32_t DLPHEADER_SIZE = sizeof(struct DlpHeader);
+static const uint32_t ADDHEADER_SIZE = 8;
+static const uint32_t CURRENT_VERSION = 3;
+static constexpr int FIRST_COUNT = 1;
+static constexpr int SECOND_COUNT = 2;
+static constexpr int THIRD_COUNT = 3;
+
+static off_t LseekReplyMock(int fd, off_t offset, int whence)
+{
+    return 0;
+}
+
+static ssize_t ReadReplyMock(int fd, void *dest, size_t maxCount)
+{
+    static int callCount = 0;
+    callCount++;
+    if (callCount == FIRST_COUNT) {
+        *(static_cast<uint32_t*>(dest)) = CURRENT_VERSION;
+        return sizeof(uint32_t);
+    } else if (callCount == SECOND_COUNT) {
+        *(static_cast<uint32_t*>(dest)) = DLPHEADER_SIZE;
+        return sizeof(uint32_t);
+    } else if (callCount == THIRD_COUNT) {
+        DlpHeader mockHeader = {
+            .magic = 0x87f4922,
+            .fileType = 1,
+            .offlineAccess = 0,
+            .algType = 2,
+            .certSize = 128,
+            .hmacSize = 32 * 2,
+            .contactAccountOffset = DLPHEADER_SIZE + 8,
+            .contactAccountSize = 1,
+            .offlineCertSize = 0,
+            .txtOffset = DLPHEADER_SIZE + 8 + 1,
+            .txtSize = 200,
+            .certOffset = DLPHEADER_SIZE + 8 + 1,
+            .hmacOffset = DLPHEADER_SIZE + 8 + 1 + 200,
+            .offlineCertOffset = 500
+        };
+        *(static_cast<DlpHeader*>(dest)) = mockHeader;
+        return DLPHEADER_SIZE;
+    }
+
+    return -1;
+}
+
+static ssize_t ReadReplyMockEnterprise(int fd, void *dest, size_t maxCount)
+{
+    static int callCount = 0;
+    callCount++;
+    if (callCount == FIRST_COUNT) {
+        *(static_cast<uint32_t*>(dest)) = CURRENT_VERSION;
+        return sizeof(uint32_t);
+    } else if (callCount == SECOND_COUNT) {
+        *(static_cast<uint32_t*>(dest)) = DLPHEADER_SIZE + ADDHEADER_SIZE;
+        return sizeof(uint32_t);
+    } else if (callCount == THIRD_COUNT) {
+        DlpHeader mockHeader = {
+            .magic = 0x87f4922,
+            .fileType = 1,
+            .offlineAccess = 0,
+            .algType = 2,
+            .certSize = 128,
+            .hmacSize = 32 * 2,
+            .contactAccountOffset = DLPHEADER_SIZE + 8 + 8,
+            .contactAccountSize = 0,
+            .offlineCertSize = 0,
+            .txtOffset = DLPHEADER_SIZE + 8 + 8,
+            .txtSize = 200,
+            .certOffset = DLPHEADER_SIZE + 8 + 8,
+            .hmacOffset = DLPHEADER_SIZE + 8 + 8 + 200,
+            .offlineCertOffset = 500
+        };
+        *(static_cast<DlpHeader*>(dest)) = mockHeader;
+        return DLPHEADER_SIZE;
+    }
+
+    return -1;
+}
 
 void CreateDlpFileFd()
 {
@@ -456,6 +536,58 @@ HWTEST_F(DlpFileKitsTest, IsDlpFile001, TestSize.Level0)
     ASSERT_GE(dlpFd, 0);
     ASSERT_FALSE(DlpFileKits::IsDlpFile(dlpFd));
     ASSERT_EQ(close(dlpFd), 0);
+}
+
+/**
+ * @tc.name: IsDlpFile002
+ * @tc.desc: IsDlpFile test IsValidDlpHeader
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpFileKitsTest, IsDlpFile002, TestSize.Level0)
+{
+    DLP_LOG_INFO(LABEL, "IsDlpFile002");
+
+    int32_t dlpFd = 1;
+
+    DlpCMockCondition condition;
+    condition.mockSequence = {true, true, true};
+    SetMockConditions("lseek", condition);
+    SetMockCallback("lseek", reinterpret_cast<CommonMockFuncT>(LseekReplyMock));
+
+    DlpCMockCondition condition1;
+    condition1.mockSequence = {true, true, true};
+    SetMockConditions("read", condition1);
+    SetMockCallback("read", reinterpret_cast<CommonMockFuncT>(ReadReplyMock));
+
+    EXPECT_EQ(true, DlpFileKits::IsDlpFile(dlpFd));
+    CleanMockConditions();
+}
+
+/**
+ * @tc.name: IsDlpFile003
+ * @tc.desc: IsDlpFile test IsValidEnterpriseDlpHeader
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpFileKitsTest, IsDlpFile003, TestSize.Level0)
+{
+    DLP_LOG_INFO(LABEL, "IsDlpFile003");
+
+    int32_t dlpFd = 1;
+
+    DlpCMockCondition condition;
+    condition.mockSequence = {true, true, true};
+    SetMockConditions("lseek", condition);
+    SetMockCallback("lseek", reinterpret_cast<CommonMockFuncT>(LseekReplyMock));
+
+    DlpCMockCondition condition1;
+    condition1.mockSequence = {true, true, true};
+    SetMockConditions("read", condition1);
+    SetMockCallback("read", reinterpret_cast<CommonMockFuncT>(ReadReplyMockEnterprise));
+
+    EXPECT_EQ(true, DlpFileKits::IsDlpFile(dlpFd));
+    CleanMockConditions();
 }
 
 /**
