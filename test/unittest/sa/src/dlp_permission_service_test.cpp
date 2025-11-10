@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -57,6 +57,7 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
     LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "DlpPermissionServiceTest"};
 const std::string TEST_URI = "/data/service/el1/public/dlp_permission_service1/retention_sandbox_info_test.json";
 static const int32_t DEFAULT_USERID = 100;
+static const int32_t INCORRECT_UID = 777;
 static constexpr int32_t SA_ID_DLP_PERMISSION_SERVICE = 3521;
 static const std::string DLP_MANAGER_APP = "com.ohos.dlpmanager";
 static const std::string PERMISSION_APP = "com.ohos.permissionmanager";
@@ -208,6 +209,10 @@ namespace AccountSA {
 ErrCode OsAccountManager::GetOsAccountLocalIdFromUid(const int uid, int &id)
 {
     id = DEFAULT_USERID;
+
+    if (uid == INCORRECT_UID) {
+        return 1;
+    }
     return DLP_OK;
 }
 }
@@ -1423,7 +1428,10 @@ HWTEST_F(DlpPermissionServiceTest, SetRetentionState001, TestSize.Level1)
     docUriVec.push_back("hh");
     int32_t uid = IPCSkeleton::GetCallingUid();
     int32_t userId;
+    ASSERT_EQ(GetUserIdFromUid(INCORRECT_UID, &userId), -1);
+    uid = uid == INCORRECT_UID ? uid + 1 : uid;
     GetUserIdFromUid(uid, &userId);
+    userId = uid == INCORRECT_UID ? INCORRECT_UID : userId;
     DlpSandboxInfo appInfo;
     appInfo = {
         .uid = uid,

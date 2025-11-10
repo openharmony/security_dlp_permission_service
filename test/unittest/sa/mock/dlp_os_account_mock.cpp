@@ -18,6 +18,7 @@
 namespace OHOS {
 namespace AccountSA {
 static const int32_t MAIN_OS_ACCOUNT_ID = 100;
+static const int32_t DEFAULT_USERID = 100;
 std::string g_accountId = "accountIdA";
 std::string g_accountName = "accountIdA";
 std::string g_parameters = R"({"parameters":{"adConfig":{"adDomain":"test"},"type":"AD"}})";
@@ -73,6 +74,12 @@ ErrCode DomainAccountClient::GetAccountServerConfig(const DomainAccountInfo &inf
     return 0;
 }
 
+ErrCode DomainAccountClient::GetAccountStatus(DomainAccountInfo &info, DomainAccountStatus &status)
+{
+    status = DomainAccountStatus::LOGIN;
+    return 0;
+}
+
 int OsAccountManager::GetForegroundOsAccountLocalId(int32_t &localId)
 {
     localId = MAIN_OS_ACCOUNT_ID;
@@ -87,6 +94,12 @@ int OsAccountManager::QueryOsAccountById(const int id, OsAccountInfo &osAccountI
 int OsAccountManager::QueryActiveOsAccountIds(std::vector<int32_t>& ids)
 {
     ids.push_back(MAIN_OS_ACCOUNT_ID);
+    return 0;
+}
+
+int OsAccountManager::GetOsAccountLocalIdFromUid(const int uid, int &id)
+{
+    id = DEFAULT_USERID;
     return 0;
 }
 } // namespace AccountSA

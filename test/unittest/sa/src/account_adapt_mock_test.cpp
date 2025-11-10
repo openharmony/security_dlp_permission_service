@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2025 Huawei Device Co., Ltd.
+ * Copyright (c) 2023 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-#include "account_adapt_test.h"
+#include "account_adapt_mock_test.h"
 #include <cerrno>
 #include <gtest/gtest.h>
 #include <securec.h>
@@ -26,16 +26,16 @@ using namespace OHOS::Security::DlpPermission;
 using namespace std;
 
 namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "AccountAdaptTest"};
+static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "AccountAdaptMockTest"};
 }
 
-void AccountAdaptTest::SetUpTestCase() {}
+void AccountAdaptMockTest::SetUpTestCase() {}
 
-void AccountAdaptTest::TearDownTestCase() {}
+void AccountAdaptMockTest::TearDownTestCase() {}
 
-void AccountAdaptTest::SetUp() {}
+void AccountAdaptMockTest::SetUp() {}
 
-void AccountAdaptTest::TearDown() {}
+void AccountAdaptMockTest::TearDown() {}
 
 /**
  * @tc.name: IsAccountLogIn001
@@ -43,31 +43,21 @@ void AccountAdaptTest::TearDown() {}
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccountAdaptTest, IsAccountLogIn001, TestSize.Level1)
+HWTEST_F(AccountAdaptMockTest, IsAccountLogIn001, TestSize.Level1)
 {
     DLP_LOG_INFO(LABEL, "IsAccountLogIn001");
 
     uint32_t osAccountId = 0;
-    AccountType accountType = APPLICATION_ACCOUNT;
+    AccountType accountType = CLOUD_ACCOUNT;
     DlpBlob accountId;
 
     uint8_t data = 1;
     accountId.data = &data;
     accountId.size = 0;
-
-    bool ret = IsAccountLogIn(osAccountId, accountType, &accountId);
-    ASSERT_TRUE(ret);
-
-    ret = IsAccountLogIn(osAccountId, accountType, nullptr);
-    ASSERT_FALSE(ret);
-
-    accountType = CLOUD_ACCOUNT;
-    ret = IsAccountLogIn(osAccountId, accountType, &accountId);
-    ASSERT_FALSE(ret);
+    ASSERT_TRUE(IsAccountLogIn(osAccountId, accountType, &accountId));
 
     accountType = DOMAIN_ACCOUNT;
-    ret = IsAccountLogIn(osAccountId, accountType, &accountId);
-    ASSERT_FALSE(ret);
+    ASSERT_TRUE(IsAccountLogIn(osAccountId, accountType, &accountId));
 }
 
 /**
@@ -76,14 +66,11 @@ HWTEST_F(AccountAdaptTest, IsAccountLogIn001, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccountAdaptTest, GetDomainAccountName001, TestSize.Level1)
+HWTEST_F(AccountAdaptMockTest, GetDomainAccountName001, TestSize.Level1)
 {
     DLP_LOG_INFO(LABEL, "GetDomainAccountName001");
 
     char** account = new (std::nothrow) char*[10];
-    if (account != nullptr) {
-        int32_t ret = GetDomainAccountName(account);
-        ASSERT_EQ(DLP_PARSE_ERROR_ACCOUNT_INVALID, ret);
-        delete[] account;
-    }
+    ASSERT_EQ(DLP_OK, GetDomainAccountName(account));
+    delete[] account;
 }
