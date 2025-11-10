@@ -775,6 +775,26 @@ HWTEST_F(DlpFileManagerTest, GenerateCertBlob001, TestSize.Level0)
     certData.data = nullptr;
     certData.size = 0;
 }
+
+/**
+ * @tc.name: ParseRawDlpFile001
+ * @tc.desc: ParseRawDlpFile
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpFileManagerTest, ParseRawDlpFile001, TestSize.Level0)
+{
+    DLP_LOG_INFO(LABEL, "ParseRawDlpFile001");
+    std::string appId = "dlp_file_manager_test";
+    std::string realType = "txt";
+    std::shared_ptr<DlpFile> filePtr = std::make_shared<DlpRawFile>(1, realType);
+    sptr<CertParcel> certParcel = new (std::nothrow) CertParcel();
+
+    certParcel->cert = {};
+    EXPECT_EQ(0, certParcel->cert.size());
+
+    EXPECT_NE(DLP_OK, DlpFileManager::GetInstance().ParseRawDlpFile(1, filePtr, appId, realType, certParcel));
+}
 }  // namespace DlpPermission
 }  // namespace Security
 }  // namespace OHOS
