@@ -961,6 +961,8 @@ int32_t DlpCredential::CheckMdmPermission(const std::string& bundleName, int32_t
         reinterpret_cast<DlpCheckPermissionFunction>(GetDlpCredSdkLibFunc("DLP_CheckPermission"));
     if (dlpCheckPermissionFunc == nullptr) {
         DLP_LOG_ERROR(LABEL, "dlsym DLP_CheckPermission error.");
+        free(handle.id);
+        handle.id = nullptr;
         return DLP_SERVICE_ERROR_VALUE_INVALID;
     }
     int32_t res = (*dlpCheckPermissionFunc)(PolicyType::AUTHORIZED_APPLICATION_LIST, handle);
