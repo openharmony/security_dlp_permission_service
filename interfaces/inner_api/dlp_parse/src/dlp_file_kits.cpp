@@ -375,7 +375,7 @@ void DlpFileKits::ConvertAbilityInfoWithSupportDlp(AAFwk::Want &want,
 
     for (auto it = abilityInfos.begin(); it != abilityInfos.end();) {
         if (!IsSupportDlp(authPolicy, it->bundleName)) {
-            abilityInfos.erase(it);
+            it = abilityInfos.erase(it);
         } else {
             ++it;
         }
