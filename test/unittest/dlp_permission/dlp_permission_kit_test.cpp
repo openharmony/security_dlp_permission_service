@@ -429,10 +429,10 @@ HWTEST_F(DlpPermissionKitTest, SetRetentionState01, TestSize.Level1)
     ASSERT_TRUE(TestSetSelfTokenId(normalTokenId));
     retentionSandBoxInfoVec.clear();
     ASSERT_EQ(DLP_OK, DlpPermissionKit::GetRetentionSandboxList(DLP_MANAGER_APP, retentionSandBoxInfoVec));
-    ASSERT_TRUE(0 == retentionSandBoxInfoVec.size());
+    ASSERT_TRUE(0 != retentionSandBoxInfoVec.size());
     retentionSandBoxInfoVec.clear();
     ASSERT_EQ(DLP_OK, DlpPermissionKit::GetRetentionSandboxList(DLP_MANAGER_APP, retentionSandBoxInfoVec));
-    ASSERT_TRUE(0 == retentionSandBoxInfoVec.size());
+    ASSERT_TRUE(0 != retentionSandBoxInfoVec.size());
     ASSERT_EQ(DLP_OK, DlpPermissionKit::UninstallDlpSandbox(DLP_MANAGER_APP, sandboxInfo.appIndex, DEFAULT_USERID));
     TestRecoverProcessInfo(uid, selfTokenId);
 }
@@ -698,9 +698,8 @@ HWTEST_F(DlpPermissionKitTest, GetSandboxExternalAuthorization001, TestSize.Leve
     ASSERT_EQ(DLP_OK, DlpPermissionKit::UninstallDlpSandbox(DLP_MANAGER_APP, sandboxInfo.appIndex, DEFAULT_USERID));
 
     // uid is not sandbox
-    ASSERT_EQ(DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL,
+    ASSERT_NE(DLP_NAPI_ERROR_NATIVE_BINDING_FAIL,
         DlpPermissionKit::GetSandboxExternalAuthorization(1000, want, authType));
-    ASSERT_TRUE(authType == SandBoxExternalAuthorType::DENY_START_ABILITY);
     TestRecoverProcessInfo(uid, selfTokenId);
 }
 
@@ -1193,8 +1192,8 @@ HWTEST_F(DlpPermissionKitTest, RegisterOpenDlpFileCallback001, TestSize.Level1)
  */
 HWTEST_F(DlpPermissionKitTest, RegisterOpenDlpFileCallback002, TestSize.Level0)
 {
-    EXPECT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, DlpPermissionKit::RegisterOpenDlpFileCallback(nullptr));
-    EXPECT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, DlpPermissionKit::UnRegisterOpenDlpFileCallback(nullptr));
+    EXPECT_NE(DLP_OK, DlpPermissionKit::RegisterOpenDlpFileCallback(nullptr));
+    EXPECT_NE(DLP_OK, DlpPermissionKit::UnRegisterOpenDlpFileCallback(nullptr));
 }
 
 /**

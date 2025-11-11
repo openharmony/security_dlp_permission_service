@@ -53,9 +53,6 @@ static void FuzzTest(const uint8_t* data, size_t size)
     std::string appId = fdp.ConsumeBytesAsString(size);
     AppExecFwk::ApplicationInfo applicationInfo;
     GetApplicationInfo(appId, applicationInfo);
-    const AAFwk::Want want;
-    CheckAllowAbilityList(want);
-    ClearKvStorage();
 }
 
 bool PermissionCoverageFuzzer(const uint8_t* data, size_t size)

@@ -216,6 +216,7 @@ void AppStateObserver::AddDlpSandboxInfo(const DlpSandboxInfo& appInfo)
         .bundleName = appInfo.bundleName,
         .dlpFileAccess = appInfo.dlpFileAccess,
         .userId = appInfo.userId,
+        .docUriSet = { appInfo.uri },
         .isReadOnce = appInfo.isReadOnce
     };
     RetentionFileManager::GetInstance().AddSandboxInfo(retentionInfo);
