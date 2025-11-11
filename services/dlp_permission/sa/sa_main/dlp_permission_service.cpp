@@ -299,16 +299,6 @@ bool DlpPermissionService::InsertDlpSandboxInfo(DlpSandboxInfo& sandboxInfo, boo
 
 static bool FindMatchingSandbox(const RetentionSandBoxInfo& info, const GetAppIndexParams& params)
 {
-    DLP_LOG_ERROR(LABEL, "bsx FindMatchingSandbox appIndex_=%{public}d", info.appIndex_);
-    DLP_LOG_ERROR(LABEL, "bsx FindMatchingSandbox dlpFileAccess_=%{public}d", info.dlpFileAccess_);
-    DLP_LOG_ERROR(LABEL, "bsx FindMatchingSandbox hasRead_=%{public}d", info.hasRead_);
-    DLP_LOG_ERROR(LABEL, "bsx FindMatchingSandbox bundleName_=%{public}d", info.bundleName_.c_str());
-    DLP_LOG_ERROR(LABEL, "bsx FindMatchingSandbox isReadOnly=%{public}d", params.isReadOnly);
-    DLP_LOG_ERROR(LABEL, "bsx FindMatchingSandbox isNotOwnerAndReadOnce=%{public}d", params.isNotOwnerAndReadOnce);
-    DLP_LOG_ERROR(LABEL, "bsx FindMatchingSandbox bundleName=%{public}d", params.bundleName.c_str());
-    DLP_LOG_ERROR(LABEL, "bsx FindMatchingSandbox uri=%{public}d", params.uri.c_str());
-
-    // 只读沙箱，不是仅查看一次文件，不是仅查看一次沙箱，可以不用重新安装
     if (params.isReadOnly && !params.isNotOwnerAndReadOnce && !info.isReadOnce_ &&
         info.dlpFileAccess_ == DLPFileAccess::READ_ONLY) {
         return true;
@@ -334,7 +324,6 @@ static int32_t GetAppIndexFromRetentionInfo(const GetAppIndexParams& params,
         return res;
     }
     for (const auto& info: infoVec) {
-        // 是否能找到匹配的沙箱信息，能找到的就不需要重新安装
         if (FindMatchingSandbox(info, params)) {
             dlpSandBoxInfo.appIndex = info.appIndex_;
             dlpSandBoxInfo.hasRead = info.hasRead_;

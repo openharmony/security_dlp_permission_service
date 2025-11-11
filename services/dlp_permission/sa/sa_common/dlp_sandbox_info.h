@@ -34,7 +34,7 @@ public:
     std::string uri = "";
     uint64_t timeStamp = 0;
     bool hasRead = false;
-    bool isReadOnce = false
+    bool isReadOnce = false;
 };
 }  // namespace DlpPermission
 }  // namespace Security
