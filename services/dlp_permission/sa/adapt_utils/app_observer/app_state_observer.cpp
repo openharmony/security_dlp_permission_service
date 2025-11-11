@@ -215,7 +215,8 @@ void AppStateObserver::AddDlpSandboxInfo(const DlpSandboxInfo& appInfo)
         .tokenId = appInfo.tokenId,
         .bundleName = appInfo.bundleName,
         .dlpFileAccess = appInfo.dlpFileAccess,
-        .userId = appInfo.userId
+        .userId = appInfo.userId,
+        .docUriSet = { appInfo.uri }
     };
     RetentionFileManager::GetInstance().AddSandboxInfo(retentionInfo);
     OpenDlpFileCallbackManager::GetInstance().ExecuteCallbackAsync(appInfo);
