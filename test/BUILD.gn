@@ -341,6 +341,7 @@ ohos_unittest("dlp_parse_test") {
     "${dlp_root_dir}/test/unittest/mock/dlp_utils_mock.cpp",
     "${dlp_root_dir}/test/unittest/mock/file_io_mock.cpp",
     "${dlp_root_dir}/test/unittest/mock/openssl_mock.cpp",
+    "${dlp_root_dir}/test/unittest/mock/zlib_mock.cpp",
     "${dlp_root_dir}/interfaces/inner_api/dlp_parse/src/dlp_crypt.cpp",
     "${dlp_root_dir}/interfaces/inner_api/dlp_parse/src/dlp_file.cpp",
     "${dlp_root_dir}/interfaces/inner_api/dlp_parse/src/dlp_raw_file.cpp",
