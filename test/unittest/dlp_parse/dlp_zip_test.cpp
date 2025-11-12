@@ -46,20 +46,18 @@ static int ZipCloseFileInZipReply(zipFile file)
 {
     zipCloseFileInZip(file);
     return DLP_ZIP_FAIL;
-    
 }
 
-static int ZipCloseReply(zipFile file, const char* global_comment)
+static int ZipCloseReply(zipFile file, const char* globalComment)
 {
     zipClose(file, NULL);
     return DLP_ZIP_FAIL;
 }
 
-static int UnzGetFileInfoReply(unzFile file,
-                            unz_file_info64* pfile_info,
-                            char* szFileName, uLong fileNameBufferSize,
-                            void* extraField, uLong extraFiledBufferSize,
-                            char* szComment, uLong commentBufferSize)
+static int UnzGetFileInfoReply(unzFile file, unz_file_info64* pfile_info,
+                                char* szFileName, uLong fileNameBufferSize,
+                                void* extraField, uLong extraFiledBufferSize,
+                                char* szComment, uLong commentBufferSize)
 {
     static bool success = true;
     unzGetCurrentFileInfo64(file, pfile_info, szFileName, fileNameBufferSize,
@@ -509,13 +507,11 @@ HWTEST_F(DlpZipTest, CheckUnzipFileInfo001, TestSize.Level0)
 {
     DLP_LOG_INFO(LABEL, "CheckUnzipFileInfo001");
 
-    int32_t fd =-1;
-
     DlpCMockCondition condition;
     condition.mockSequence = {true};
     SetMockConditions("unzOpen2", condition);
 
-    int32_t res = CheckUnzipFileInfo(fd);
+    int32_t res = CheckUnzipFileInfo(-1);
     ASSERT_EQ(false, res);  // fail at unzOpen2
 
     CleanMockConditions();
@@ -526,7 +522,7 @@ HWTEST_F(DlpZipTest, CheckUnzipFileInfo001, TestSize.Level0)
  * @tc.name: CheckUnzipFileInfo002
  * @tc.desc: CheckUnzipFileInfo abnormal test
  * @tc.type: FUNC
- * @tc.require: 
+ * @tc.require:
  */
 HWTEST_F(DlpZipTest, CheckUnzipFileInfo002, TestSize.Level0)
 {

@@ -27,18 +27,18 @@ static const std::string ZLIB_PATH = "libshared_libz.z.so";
 
 typedef int (*ZipWriteInFileInZipFuncT)(zipFile file, const void* buf, unsigned int len);
 typedef int (*ZipCloseFileInZipFunT)(zipFile file);
-typedef int (*ZipCloseFuncT)(zipFile file, const char* global_comment);
+typedef int (*ZipCloseFuncT)(zipFile file, const char* globalComment);
 typedef zipFile (*ZipOpen64FuncT)(const void *pathname, int append);
-typedef int (*ZipOpenNewFileInZip3_64)(zipFile file, const char *filename, const zip_fileinfo *zipfi,
-                                        const void *extrafield_local, uInt size_extrafield_local,
-                                        const void *extrafield_global, uInt size_extrafield_global,
+typedef int (*ZipOpenNewFileInZip3)(zipFile file, const char *filename, const zip_fileinfo *zipfi,
+                                        const void *extrafieldLocal, uInt sizeExtrafieldLocal,
+                                        const void *extrafieldGlobal, uInt sizeExtrafieldGlobal,
                                         const char *comment, int method, int level, int raw,
                                         int windowBits, int memLevel, int strategy,
                                         const char *password, uLong crcForCrypting, int zip64);
-typedef unzFile (*UnzOpen2FuncT)(const char *path, zlib_filefunc_def* pzlib_filefunc_def);
-typedef int (*UnzGetGlobalInfo64FuncT)(unzFile file, unz_global_info64* pglobal_info);
+typedef unzFile (*UnzOpen2FuncT)(const char *path, zlib_filefunc_def* pzlibFilefuncDef);
+typedef int (*UnzGetGlobalInfo64FuncT)(unzFile file, unz_global_info64* pglobalInfo);
 typedef int (*UnzGetCurrentFileInfo64FuncT)(unzFile file,
-                                            unz_file_info64* pfile_info,
+                                            unz_file_info64* pfileInfo,
                                             char* szFileName, uLong fileNameBufferSize,
                                             void* extraField, uLong extraFiledBufferSize,
                                             char* szComment, uLong commentBufferSize);
@@ -49,18 +49,18 @@ typedef int (*UnzReadCurrentFileFuncT)(unzFile file, void *buf, uint32_t size);
 typedef int (*UnzCloseCurrentFileFuncT)(unzFile file);
 typedef int (*UnzCloseFuncT)(zipFile file);
 
-static void *g_ZlibHandle = nullptr;
+static void *g_zlibHandle = nullptr;
 
 static void *GetZibFunc(const char *funcName)
 {
-    if (g_ZlibHandle == nullptr) {
-        g_ZlibHandle = dlopen(ZLIB_PATH.c_str(), RTLD_LAZY);
-        if (g_ZlibHandle == nullptr) {
+    if (g_zlibHandle == nullptr) {
+        g_zlibHandle = dlopen(ZLIB_PATH.c_str(), RTLD_LAZY);
+        if (g_zlibHandle == nullptr) {
             return nullptr;
         }
     }
 
-    return dlsym(g_ZlibHandle, funcName);
+    return dlsym(g_zlibHandle, funcName);
 }
 
 int zipWriteInFileInZip(zipFile file, const void* buf, unsigned int len)
@@ -91,7 +91,7 @@ int zipCloseFileInZip(zipFile file)
         return -1;
     }
 
-    ZipCloseFileInZipFunT func = 
+    ZipCloseFileInZipFunT func =
         reinterpret_cast<ZipCloseFileInZipFunT>(GetZibFunc("zipCloseFileInZip"));
     if (func == nullptr) {
         return -1;
@@ -99,12 +99,12 @@ int zipCloseFileInZip(zipFile file)
     return (*func)(file);
 }
 
-int zipClose(zipFile file, const char* global_comment)
+int zipClose(zipFile file, const char* globalComment)
 {
     if (IsFuncNeedMock("zipClose")) {
         CommonMockFuncT rawFunc = GetMockFunc(__func__);
         if (rawFunc != nullptr) {
-            return (*reinterpret_cast<ZipCloseFuncT>(rawFunc))(file, global_comment);
+            return (*reinterpret_cast<ZipCloseFuncT>(rawFunc))(file, globalComment);
         }
         return -1;
     }
@@ -114,7 +114,7 @@ int zipClose(zipFile file, const char* global_comment)
     if (func == nullptr) {
         return -1;
     }
-    return (*func)(file, global_comment);
+    return (*func)(file, globalComment);
 }
 
 zipFile zipOpen64(const void *pathname, int append)
@@ -127,7 +127,7 @@ zipFile zipOpen64(const void *pathname, int append)
         return nullptr;
     }
 
-    ZipOpen64FuncT func = 
+    ZipOpen64FuncT func =
         reinterpret_cast<ZipOpen64FuncT>(GetZibFunc("zipOpen64"));
     if (func == nullptr) {
         return nullptr;
@@ -135,32 +135,33 @@ zipFile zipOpen64(const void *pathname, int append)
     return (*func)(pathname, append);
 }
 
-int zipOpenNewFileInZip3_64(zipFile file, const char *filename, const zip_fileinfo *zipfi,
-                                        const void *extrafield_local, uInt size_extrafield_local,
-                                        const void *extrafield_global, uInt size_extrafield_global,
-                                        const char *comment, int method, int level, int raw,
-                                        int windowBits, int memLevel, int strategy,
-                                        const char *password, uLong crcForCrypting, int zip64)
+int ZipOpenNewFileInZip3(zipFile file, const char *filename, const zip_fileinfo *zipfi,
+                            const void *extrafieldLocal, uInt sizeExtrafieldLocal,
+                            const void *extrafieldGlobal, uInt sizeExtrafieldGlobal,
+                            const char *comment, int method, int level, int raw,
+                            int windowBits, int memLevel, int strategy,
+                            const char *password, uLong crcForCrypting,
+                            int zip64)
 {
     if (IsFuncNeedMock("zipOpenNewFileInZip3_64")) {
         CommonMockFuncT rawFunc = GetMockFunc(__func__);
         if (rawFunc != nullptr) {
-            return (*reinterpret_cast<ZipOpenNewFileInZip3_64>(rawFunc))(
-                file, filename, zipfi, extrafield_local, size_extrafield_local,
-                extrafield_global, size_extrafield_global, comment, method,
+            return (*reinterpret_cast<ZipOpenNewFileInZip3>(rawFunc))(
+                file, filename, zipfi, extrafieldLocal, sizeExtrafieldLocal,
+                extrafieldGlobal, sizeExtrafieldGlobal, comment, method,
                 level, raw, windowBits, memLevel, strategy, password, crcForCrypting, zip64);
         }
         return -1;
     }
 
-    ZipOpenNewFileInZip3_64 func = 
-        reinterpret_cast<ZipOpenNewFileInZip3_64>(GetZibFunc("zipOpenNewFileInZip3_64"));
+    ZipOpenNewFileInZip3 func =
+        reinterpret_cast<ZipOpenNewFileInZip3>(GetZibFunc("zipOpenNewFileInZip3_64"));
     if (func == nullptr) {
         return -1;
     }
-    return (*func)(file, filename, zipfi, extrafield_local, size_extrafield_local,
-        extrafield_global, size_extrafield_global, comment, method,
-        level, raw, windowBits, memLevel, strategy, password, crcForCrypting, zip64);
+    return (*func)(file, filename, zipfi, extrafieldLocal, sizeExtrafieldLocal,
+                    extrafieldGlobal, sizeExtrafieldGlobal, comment, method,
+                    level, raw, windowBits, memLevel, strategy, password, crcForCrypting, zip64);
 }
 
 unzFile unzOpen2(const char *path, zlib_filefunc_def* pzlib_filefunc_def)
@@ -173,7 +174,7 @@ unzFile unzOpen2(const char *path, zlib_filefunc_def* pzlib_filefunc_def)
         return nullptr;
     }
 
-    UnzOpen2FuncT func = 
+    UnzOpen2FuncT func =
         reinterpret_cast<UnzOpen2FuncT>(GetZibFunc("unzOpen2"));
     if (func == nullptr) {
         return nullptr;
@@ -181,26 +182,26 @@ unzFile unzOpen2(const char *path, zlib_filefunc_def* pzlib_filefunc_def)
     return (*func)(path, pzlib_filefunc_def);
 }
 
-int unzGetGlobalInfo64(unzFile file, unz_global_info64* pglobal_info)
+int unzGetGlobalInfo64(unzFile file, unz_global_info64* pglobalInfo)
 {
     if (IsFuncNeedMock("unzGetGlobalInfo64")) {
         CommonMockFuncT rawFunc = GetMockFunc(__func__);
         if (rawFunc != nullptr) {
-            return (*reinterpret_cast<UnzGetGlobalInfo64FuncT>(rawFunc))(file, pglobal_info);
+            return (*reinterpret_cast<UnzGetGlobalInfo64FuncT>(rawFunc))(file, pglobalInfo);
         }
         return -1;
     }
 
-    UnzGetGlobalInfo64FuncT func = 
+    UnzGetGlobalInfo64FuncT func =
         reinterpret_cast<UnzGetGlobalInfo64FuncT>(GetZibFunc("unzGetGlobalInfo64"));
     if (func == nullptr) {
         return -1;
     }
-    return (*func)(file, pglobal_info);
+    return (*func)(file, pglobalInfo);
 }
 
 int unzGetCurrentFileInfo64(unzFile file,
-                            unz_file_info64* pfile_info,
+                            unz_file_info64* pfileInfo,
                             char* szFileName, uLong fileNameBufferSize,
                             void* extraField, uLong extraFiledBufferSize,
                             char* szComment, uLong commentBufferSize)
@@ -209,18 +210,18 @@ int unzGetCurrentFileInfo64(unzFile file,
         CommonMockFuncT rawFunc = GetMockFunc(__func__);
         if (rawFunc != nullptr) {
             return (*reinterpret_cast<UnzGetCurrentFileInfo64FuncT>(rawFunc))(
-                file, pfile_info, szFileName, fileNameBufferSize,
+                file, pfileInfo, szFileName, fileNameBufferSize,
                 extraField, extraFiledBufferSize, szComment, commentBufferSize);
         }
         return -1;
     }
 
-    UnzGetCurrentFileInfo64FuncT func = 
+    UnzGetCurrentFileInfo64FuncT func =
         reinterpret_cast<UnzGetCurrentFileInfo64FuncT>(GetZibFunc("unzGetCurrentFileInfo64"));
     if (func == nullptr) {
         return -1;
     }
-    return (*func)(file, pfile_info, szFileName, fileNameBufferSize,
+    return (*func)(file, pfileInfo, szFileName, fileNameBufferSize,
         extraField, extraFiledBufferSize, szComment, commentBufferSize);
 }
 
@@ -234,7 +235,7 @@ int unzGoToNextFile(unzFile file)
         return -1;
     }
 
-    UnzGoToNextFileFuncT func = 
+    UnzGoToNextFileFuncT func =
         reinterpret_cast<UnzGoToNextFileFuncT>(GetZibFunc("unzGoToNextFile"));
     if (func == nullptr) {
         return -1;
@@ -252,7 +253,7 @@ int unzLocateFile(unzFile file, const char *filename, int iCaseSensitivity)
         return -1;
     }
 
-    UnzLocateFileFuncT func = 
+    UnzLocateFileFuncT func =
         reinterpret_cast<UnzLocateFileFuncT>(GetZibFunc("unzLocateFile"));
     if (func == nullptr) {
         return -1;
@@ -270,7 +271,7 @@ int unzOpenCurrentFile(unzFile file)
         return -1;
     }
 
-    UnzOpenCurrentFileFuncT func = 
+    UnzOpenCurrentFileFuncT func =
         reinterpret_cast<UnzOpenCurrentFileFuncT>(GetZibFunc("unzOpenCurrentFile"));
     if (func == nullptr) {
         return -1;
@@ -288,7 +289,7 @@ int unzReadCurrentFile(unzFile file, void *buf, uint32_t size)
         return -1;
     }
 
-    UnzReadCurrentFileFuncT func = 
+    UnzReadCurrentFileFuncT func =
         reinterpret_cast<UnzReadCurrentFileFuncT>(GetZibFunc("unzReadCurrentFile"));
     if (func == nullptr) {
         return -1;
@@ -306,7 +307,7 @@ int unzCloseCurrentFile(unzFile file)
         return -1;
     }
 
-    UnzCloseCurrentFileFuncT func = 
+    UnzCloseCurrentFileFuncT func =
         reinterpret_cast<UnzCloseCurrentFileFuncT>(GetZibFunc("unzCloseCurrentFile"));
     if (func == nullptr) {
         return -1;
@@ -324,7 +325,7 @@ int unzClose(zipFile file)
         return -1;
     }
 
-    UnzCloseFuncT func = 
+    UnzCloseFuncT func =
         reinterpret_cast<UnzCloseFuncT>(GetZibFunc("unzClose"));
     if (func == nullptr) {
         return -1;
