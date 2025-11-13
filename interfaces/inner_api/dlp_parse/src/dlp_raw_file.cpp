@@ -46,6 +46,7 @@ const uint32_t MAX_CERT_SIZE = 30 * 1024;
 const std::string DEFAULT_STRINGS = "";
 const int32_t FILEID_SIZE = 46;
 const int32_t FILEID_SIZE_OPPOSITE = -46;
+const int32_t FILEID_ALLOWEDOPEN_OPPOSITE = -54;
 } // namespace
 
 static int32_t GetFileSize(int32_t fd, uint64_t& fileLen);
@@ -388,6 +389,23 @@ int32_t DlpRawFile::WriteHmacProcess(void)
 
 int32_t DlpRawFile::WriteFileIdPlaintextProcess(void)
 {
+    if (lseek(dlpFd_, FILEID_ALLOWEDOPEN_OPPOSITE, SEEK_END) == static_cast<off_t>(-1)) {
+        DLP_LOG_ERROR(LABEL, "get to allowedopen invalid");
+        return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
+    }
+    int32_t flag = 0;
+    if (read(dlpFd_, &flag, sizeof(int32_t)) != sizeof(int32_t)) {
+        DLP_LOG_ERROR(LABEL, "can not read flag, %{public}s", strerror(errno));
+        return DLP_PARSE_ERROR_FILE_FORMAT_ERROR;
+    }
+    allowedOpenCount_ = 0;
+    if (flag == 1) {
+        if (read(dlpFd_, &allowedOpenCount_, sizeof(int32_t)) != sizeof(int32_t)) {
+            DLP_LOG_ERROR(LABEL, "can not read allowedOpenCount_, %{public}s", strerror(errno));
+            return DLP_PARSE_ERROR_FILE_FORMAT_ERROR;
+        }
+    }
+
     uint8_t *tmpBuf = new (std::nothrow)uint8_t[FILEID_SIZE];
     if (tmpBuf == nullptr) {
         return DLP_PARSE_ERROR_MEMORY_OPERATE_FAIL;
@@ -404,6 +422,9 @@ int32_t DlpRawFile::WriteFileIdPlaintextProcess(void)
         return DLP_PARSE_ERROR_FILE_FORMAT_ERROR;
     }
     fileIdPlaintext_ = std::string(tmpBuf, tmpBuf + FILEID_SIZE);
+    if (tmpBuf[0] != 0 && flag == 0) {
+        allowedOpenCount_ = 1;
+    }
 
     delete[] tmpBuf;
     return DLP_OK;
@@ -411,10 +432,6 @@ int32_t DlpRawFile::WriteFileIdPlaintextProcess(void)
 
 int32_t DlpRawFile::GetRawDlpHmac(void)
 {
-    if (head_.txtSize == 0) {
-        CleanBlobParam(hmac_);
-        return DLP_OK;
-    }
     int32_t flag = WriteHmacProcess();
     if (flag != DLP_OK) {
         return flag;
@@ -565,17 +582,25 @@ int32_t DlpRawFile::DoWriteHmacAndCert(uint32_t hmacStrLen, std::string& hmacStr
         delete[] buffer;
         return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
     }
-    off_t fileLen = lseek(dlpFd_, FILEID_SIZE_OPPOSITE, SEEK_END);
-    if (fileLen == static_cast<off_t>(-1)) {
-        DLP_LOG_ERROR(LABEL, "write fileid fileLen invalid");
+    delete[] buffer;
+
+    if (lseek(dlpFd_, FILEID_ALLOWEDOPEN_OPPOSITE, SEEK_END) == static_cast<off_t>(-1)) {
+        DLP_LOG_ERROR(LABEL, "get allow offsize invalid");
+        return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
+    }
+    int32_t flag = 1;
+    if (write(dlpFd_, &flag, sizeof(int32_t)) != sizeof(int32_t)) {
+        DLP_LOG_ERROR(LABEL, "write flag error");
+        return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
+    }
+    if (write(dlpFd_, &allowedOpenCount_, sizeof(int32_t)) != sizeof(int32_t)) {
+        DLP_LOG_ERROR(LABEL, "write allowedOpenCount_ error");
         return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
     }
     if (write(dlpFd_, fileId_.c_str(), fileId_.size()) != static_cast<int32_t>(fileId_.size())) {
         DLP_LOG_ERROR(LABEL, "write dlpFd_ error");
-        delete[] buffer;
         return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
     }
-    delete[] buffer;
     return DLP_OK;
 }
 
@@ -655,14 +680,6 @@ int32_t DlpRawFile::DoWriteHeaderAndContactAccount(int32_t inPlainFileFd, uint64
             return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
         }
     }
-    if (head_.txtSize == 0) {
-        DLP_LOG_INFO(LABEL, "Plaintext file len is 0, do not need encrypt");
-        if (write(dlpFd_, cert_.data, head_.certSize) != (ssize_t)head_.certSize) {
-            DLP_LOG_ERROR(LABEL, "write dlp cert data failed, %{public}s", strerror(errno));
-            return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
-        }
-        return DLP_OK;
-    }
     DLP_LOG_DEBUG(LABEL, "begin DoHmacAndCrypty");
     return DoHmacAndCrypty(inPlainFileFd, fileLen);
 }
@@ -676,17 +693,11 @@ int32_t DlpRawFile::GenFileInRaw(int32_t inPlainFileFd)
         head_.txtOffset = head_.contactAccountOffset + head_.contactAccountSize;
     }
     head_.txtSize = static_cast<uint64_t>(fileLen);
-    if (fileLen == 0) {
-        head_.hmacOffset = head_.txtOffset + head_.txtSize;
-        head_.hmacSize = 0;
-        head_.certOffset = head_.hmacOffset + head_.hmacSize;
-        head_.offlineCertOffset = head_.hmacOffset + head_.hmacSize;
-    } else {
-        head_.hmacOffset = head_.txtOffset + head_.txtSize;
-        head_.hmacSize = HMAC_SIZE * BYTE_TO_HEX_OPER_LENGTH;
-        head_.certOffset = head_.hmacOffset + head_.hmacSize;
-        head_.offlineCertOffset = head_.hmacOffset + head_.hmacSize;
-    }
+    head_.hmacOffset = head_.txtOffset + head_.txtSize;
+    head_.hmacSize = HMAC_SIZE * BYTE_TO_HEX_OPER_LENGTH;
+    head_.certOffset = head_.hmacOffset + head_.hmacSize;
+    head_.offlineCertOffset = head_.hmacOffset + head_.hmacSize;
+
     DLP_LOG_DEBUG(LABEL, "fileLen %{public}s", std::to_string(head_.txtSize).c_str());
     auto iter = TYPE_TO_NUM_MAP.find(realType_);
     if (iter == TYPE_TO_NUM_MAP.end()) {

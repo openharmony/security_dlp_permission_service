@@ -35,6 +35,7 @@ struct GenerateInfoParams {
     std::string realType;
     uint32_t certSize;
     std::string fileId;
+    int32_t allowedOpenCount;
 };
 
 int32_t GenerateDlpGeneralInfo(const GenerateInfoParams& params, std::string& generalInfo);

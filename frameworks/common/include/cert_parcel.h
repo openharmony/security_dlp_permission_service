@@ -40,6 +40,7 @@ public:
     std::string appId;
     std::string realFileType;
     std::string fileId;
+    int32_t allowedOpenCount = 0;
 };
 } // namespace DlpPermission
 } // namespace Security

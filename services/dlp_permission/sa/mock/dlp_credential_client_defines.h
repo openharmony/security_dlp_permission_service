@@ -71,6 +71,7 @@ typedef struct {
     char *featureName;
     char *realType;
     char *fileId;
+    int32_t allowedOpenCount;
     uint8_t *data;
     uint32_t dataLen;
     EncAndDecOptions options;
