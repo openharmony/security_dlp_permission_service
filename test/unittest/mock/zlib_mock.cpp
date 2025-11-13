@@ -135,7 +135,7 @@ zipFile zipOpen64(const void *pathname, int append)
     return (*func)(pathname, append);
 }
 
-int ZipOpenNewFileInZip3(zipFile file, const char *filename, const zip_fileinfo *zipfi,
+int zipOpenNewFileInZip3_64(zipFile file, const char *filename, const zip_fileinfo *zipfi,
                             const void *extrafieldLocal, uInt sizeExtrafieldLocal,
                             const void *extrafieldGlobal, uInt sizeExtrafieldGlobal,
                             const char *comment, int method, int level, int raw,
