@@ -55,9 +55,9 @@ static int ZipCloseReply(zipFile file, const char* globalComment)
 }
 
 static int UnzGetFileInfoReply(unzFile file, unz_file_info64* pfile_info,
-                                char* szFileName, uLong fileNameBufferSize,
-                                void* extraField, uLong extraFiledBufferSize,
-                                char* szComment, uLong commentBufferSize)
+                               char* szFileName, uLong fileNameBufferSize,
+                               void* extraField, uLong extraFiledBufferSize,
+                               char* szComment, uLong commentBufferSize)
 {
     static bool success = true;
     unzGetCurrentFileInfo64(file, pfile_info, szFileName, fileNameBufferSize,
@@ -706,14 +706,12 @@ HWTEST_F(DlpZipTest, UnzipSpecificFile001, TestSize.Level0)
     std::string unZip("unzip");
     std::string inZip("dlp_general_info");
     std::string zipFile("test_zip");
-    
-    int32_t fd =-1;
 
     DlpCMockCondition condition;
     condition.mockSequence = {true};
     SetMockConditions("unzOpen2", condition);
 
-    int32_t res = UnzipSpecificFile(fd, inZip.c_str(), unZip.c_str());
+    int32_t res = UnzipSpecificFile(-1, inZip.c_str(), unZip.c_str());
     ASSERT_EQ(DLP_ZIP_FAIL, res);  // fail at OpenZipFile
 
     CleanMockConditions();

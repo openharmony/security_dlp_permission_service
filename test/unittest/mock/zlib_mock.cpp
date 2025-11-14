@@ -30,11 +30,11 @@ typedef int (*ZipCloseFileInZipFunT)(zipFile file);
 typedef int (*ZipCloseFuncT)(zipFile file, const char* globalComment);
 typedef zipFile (*ZipOpen64FuncT)(const void *pathname, int append);
 typedef int (*ZipOpenNewFileInZip3)(zipFile file, const char *filename, const zip_fileinfo *zipfi,
-                                        const void *extrafieldLocal, uInt sizeExtrafieldLocal,
-                                        const void *extrafieldGlobal, uInt sizeExtrafieldGlobal,
-                                        const char *comment, int method, int level, int raw,
-                                        int windowBits, int memLevel, int strategy,
-                                        const char *password, uLong crcForCrypting, int zip64);
+                                    const void *extrafieldLocal, uInt sizeExtrafieldLocal,
+                                    const void *extrafieldGlobal, uInt sizeExtrafieldGlobal,
+                                    const char *comment, int method, int level, int raw,
+                                    int windowBits, int memLevel, int strategy,
+                                    const char *password, uLong crcForCrypting, int zip64);
 typedef unzFile (*UnzOpen2FuncT)(const char *path, zlib_filefunc_def* pzlibFilefuncDef);
 typedef int (*UnzGetGlobalInfo64FuncT)(unzFile file, unz_global_info64* pglobalInfo);
 typedef int (*UnzGetCurrentFileInfo64FuncT)(unzFile file,
@@ -73,7 +73,7 @@ int zipWriteInFileInZip(zipFile file, const void* buf, unsigned int len)
         return -1;
     }
 
-    ZipWriteInFileInZipFuncT func = 
+    ZipWriteInFileInZipFuncT func =
         reinterpret_cast<ZipWriteInFileInZipFuncT>(GetZibFunc("zipWriteInFileInZip"));
     if (func == nullptr) {
         return -1;
@@ -109,7 +109,7 @@ int zipClose(zipFile file, const char* globalComment)
         return -1;
     }
 
-    ZipCloseFuncT func = 
+    ZipCloseFuncT func =
         reinterpret_cast<ZipCloseFuncT>(GetZibFunc("zipClose"));
     if (func == nullptr) {
         return -1;
