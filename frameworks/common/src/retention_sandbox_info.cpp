@@ -33,6 +33,7 @@ RetentionSandBoxInfo::RetentionSandBoxInfo()
     dlpFileAccess_ = DLPFileAccess::NO_PERMISSION;
     hasRead_ = false;
     docUriSet_.clear();
+    isReadOnce_ = false;
 }
 
 bool RetentionSandBoxInfo::Marshalling(Parcel& out) const

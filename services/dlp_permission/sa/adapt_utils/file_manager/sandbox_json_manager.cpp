@@ -275,6 +275,7 @@ int32_t SandboxJsonManager::GetRetentionSandboxList(const std::string& bundleNam
         info.docUriSet_ = iter->docUriSet;
         info.dlpFileAccess_ = iter->dlpFileAccess;
         info.hasRead_ = iter->hasRead;
+        info.isReadOnce_ = iter->isReadOnce;
         retentionSandBoxInfoVec.emplace_back(info);
     }
     return DLP_OK;

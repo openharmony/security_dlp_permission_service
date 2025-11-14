@@ -275,7 +275,8 @@ int32_t DlpPermissionService::ParseDlpCertificate(const sptr<CertParcel>& certPa
         certParcel, callback, appId, offlineAccess, applicationInfo);
 }
 
-bool DlpPermissionService::InsertDlpSandboxInfo(DlpSandboxInfo& sandboxInfo, bool hasRetention)
+bool DlpPermissionService::InsertDlpSandboxInfo(DlpSandboxInfo& sandboxInfo, bool hasRetention,
+    bool isNotOwnerAndReadOnce)
 {
     AppExecFwk::BundleInfo info;
     AppExecFwk::BundleMgrClient bundleMgrClient;
@@ -290,6 +291,7 @@ bool DlpPermissionService::InsertDlpSandboxInfo(DlpSandboxInfo& sandboxInfo, boo
     sandboxInfo.uid = info.uid;
     sandboxInfo.tokenId = AccessToken::AccessTokenKit::GetHapTokenID(sandboxInfo.userId, sandboxInfo.bundleName,
         sandboxInfo.appIndex);
+    sandboxInfo.isReadOnce = isNotOwnerAndReadOnce;
     appStateObserver_->AddDlpSandboxInfo(sandboxInfo);
     VisitRecordFileManager::GetInstance().AddVisitRecord(sandboxInfo.bundleName, sandboxInfo.userId, sandboxInfo.uri);
     return true;
@@ -297,7 +299,8 @@ bool DlpPermissionService::InsertDlpSandboxInfo(DlpSandboxInfo& sandboxInfo, boo
 
 static bool FindMatchingSandbox(const RetentionSandBoxInfo& info, const GetAppIndexParams& params)
 {
-    if (params.isReadOnly && !params.isNotOwnerAndReadOnce && info.dlpFileAccess_ == DLPFileAccess::READ_ONLY) {
+    if (params.isReadOnly && !params.isNotOwnerAndReadOnce && !info.isReadOnce_ &&
+        info.dlpFileAccess_ == DLPFileAccess::READ_ONLY) {
         return true;
     }
     if (params.isReadOnly) {
@@ -397,7 +400,7 @@ int32_t DlpPermissionService::InstallDlpSandbox(const std::string& bundleName, D
         }
     }
     FillDlpSandboxInfo(dlpSandboxInfo, bundleName, dlpFileAccess, userId, uri);
-    if (!InsertDlpSandboxInfo(dlpSandboxInfo, !isNeedInstall)) {
+    if (!InsertDlpSandboxInfo(dlpSandboxInfo, !isNeedInstall, isNotOwnerAndReadOnce)) {
         return DLP_SERVICE_ERROR_INSTALL_SANDBOX_FAIL;
     }
     sandboxInfo.appIndex = dlpSandboxInfo.appIndex;
