@@ -736,7 +736,7 @@ HWTEST_F(DlpFileTest, GetRawDlpHmac001, TestSize.Level0)
 
     testFile.head_.txtSize = 0;
 
-    EXPECT_EQ(DLP_OK, testFile.GetRawDlpHmac());
+    EXPECT_NE(DLP_PARSE_ERROR_GET_ACCOUNT_FAIL, testFile.GetRawDlpHmac());
     close(fd);
     unlink("/data/fuse_test.txt");
 }

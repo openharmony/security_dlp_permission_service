@@ -58,6 +58,7 @@ struct GenerInfoParams {
     std::string realType;
     uint32_t certSize;
     std::string fileId;
+    int32_t allowedOpenCount;
 };
 } // namespace
 
@@ -188,6 +189,7 @@ bool DlpZipFile::ParseDlpInfo()
     contactAccount_ = params.contactAccount;
     certSize_ = params.certSize;
     fileIdPlaintext_ = params.fileId;
+    allowedOpenCount_ = params.allowedOpenCount;
     if (!params.hmacVal.empty()) {
         CleanBlobParam(hmac_);
         hmac_.size = params.hmacVal.size() / BYTE_TO_HEX_OPER_LENGTH;
@@ -442,6 +444,7 @@ static std::string SetDlpGeneralInfo(GenerInfoParams &genInfo)
         .realType = genInfo.realType,
         .certSize = genInfo.certSize,
         .fileId = genInfo.fileId,
+        .allowedOpenCount = genInfo.allowedOpenCount,
     };
     std::string out;
     GenerateDlpGeneralInfo(params, out);
@@ -550,6 +553,7 @@ int32_t DlpZipFile::AddGeneralInfoToBuff(int32_t encFile)
         .realType = realType_,
         .certSize = cert_.size,
         .fileId = fileId_,
+        .allowedOpenCount = allowedOpenCount_,
     };
 
     std::string ja = SetDlpGeneralInfo(genInfo);

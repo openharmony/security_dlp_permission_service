@@ -295,6 +295,7 @@ int32_t DlpFileManager::PrepareParms(const std::shared_ptr<DlpFile>& filePtr, co
     policy.fileId = property.fileId;
     policy.allowedOpenCount_ = property.allowedOpenCount;
     filePtr->SetFileId(property.fileId);
+    filePtr->SetAllowedOpenCount(property.allowedOpenCount);
     filePtr->SetOfflineAccess(property.offlineAccess, property.allowedOpenCount);
 
     result = PrepareDlpEncryptParms(policy, key, usage, certData, hmacKey);
@@ -508,8 +509,7 @@ int32_t DlpFileManager::GenerateDlpFile(
         return DLP_PARSE_ERROR_VALUE_INVALID;
     }
     DlpFileMes dlpFileMes = {plainFileFd, dlpFileFd, realFileType};
-    if ((fileType == SUPPORT_PHOTO_DLP || fileType == SUPPORT_VIDEO_DLP || fileType == SUPPORT_AUDIO_DLP) &&
-        property.ownerAccountType == CLOUD_ACCOUNT) {
+    if (property.ownerAccountType == CLOUD_ACCOUNT && fileLen > 0) {
         return GenRawDlpFile(dlpFileMes, property, filePtr);
     }
     return GenZipDlpFile(dlpFileMes, property, filePtr, workDir);
@@ -575,6 +575,7 @@ int32_t DlpFileManager::ParseRawDlpFile(int32_t dlpFileFd, std::shared_ptr<DlpFi
     filePtr->GetContactAccount(certParcel->contactAccount);
     certParcel->isNeedAdapter = filePtr->NeedAdapter();
     certParcel->needCheckCustomProperty = true;
+    certParcel->allowedOpenCount = filePtr->GetAllowedOpenCount();
     if (filePtr->GetAccountType() == ENTERPRISE_ACCOUNT) {
         certParcel->decryptType = DECRYPTTYPEFORUSER;
         certParcel->appId = filePtr->GetAppId();
@@ -648,6 +649,7 @@ int32_t DlpFileManager::ParseZipDlpFile(std::shared_ptr<DlpFile>& filePtr, const
     certParcel->isNeedAdapter = filePtr->NeedAdapter();
     certParcel->needCheckCustomProperty = true;
     filePtr->GetRealType(certParcel->realFileType);
+    certParcel->allowedOpenCount = filePtr->GetAllowedOpenCount();
     filePtr->GetFileIdPlaintext(certParcel->fileId);
     StartTrace(HITRACE_TAG_ACCESS_CONTROL, "DlpParseCertificate");
     int32_t result = DlpPermissionKit::ParseDlpCertificate(certParcel, policy, appId, filePtr->GetOfflineAccess());

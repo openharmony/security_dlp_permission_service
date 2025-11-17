@@ -33,6 +33,7 @@ static const std::string CERT_SIZE = "certSize";
 static const uint32_t MIN_REALY_TYPE_LENGTH = 2;
 static const uint32_t MAX_REALY_TYPE_LENGTH = 5;
 static const std::string FILEID = "fileId";
+static const std::string ALLOWEDOPENCOUNT = "allowedOpenCount";
 static const uint32_t MIN_FILEID_LENGTH = 0;
 static const uint32_t MAX_FILEID_LENGTH = 100;
 static const uint32_t LIMIT_CERT_SIZE = 10000;
@@ -80,6 +81,7 @@ int32_t GenerateDlpGeneralInfo(const GenerateInfoParams& params, std::string& ge
     if (params.fileId.size() >= MIN_FILEID_LENGTH && params.fileId.size() <= MAX_FILEID_LENGTH) {
         dlp_general_info[FILEID] = params.fileId;
     }
+    dlp_general_info[ALLOWEDOPENCOUNT] = params.allowedOpenCount;
     dlp_general_info[CERT_SIZE] = params.certSize;
     generalInfo = dlp_general_info.dump();
     size_t pos = generalInfo.find(CERT_SIZE);
@@ -149,6 +151,10 @@ int32_t ParseGeneralInfo(const nlohmann::json& jsonObj, GenerateInfoParams& para
     iter = jsonObj.find(FILEID);
     if (iter != jsonObj.end() && iter->is_string()) {
         params.fileId = iter->get<std::string>();
+    }
+    iter = jsonObj.find(ALLOWEDOPENCOUNT);
+    if (iter != jsonObj.end() && iter->is_number_integer()) {
+        params.allowedOpenCount = iter->get<int32_t>();
     }
     return DLP_OK;
 }

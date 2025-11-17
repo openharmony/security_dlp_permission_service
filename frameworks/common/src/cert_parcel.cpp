@@ -69,6 +69,10 @@ bool CertParcel::Marshalling(Parcel& data) const
         DLP_LOG_ERROR(LABEL, "Write string fileId fail");
         return false;
     }
+    if (!data.WriteInt32(this->allowedOpenCount)) {
+        DLP_LOG_ERROR(LABEL, "Write allowedOpenCount fail");
+        return false;
+    }
     return true;
 }
 
@@ -119,6 +123,10 @@ CertParcel* CertParcel::Unmarshalling(Parcel& data)
     }
     if (!data.ReadString(parcel->fileId)) {
         DLP_LOG_ERROR(LABEL, "Read fileId fail");
+        return FreeCertParcel(parcel);
+    }
+    if (!data.ReadInt32(parcel->allowedOpenCount)) {
+        DLP_LOG_ERROR(LABEL, "Read allowedOpenCount fail");
         return FreeCertParcel(parcel);
     }
     return parcel;

@@ -745,6 +745,7 @@ int32_t DlpCredential::ParseDlpInfo(const sptr<CertParcel>& certParcel, const sp
     if (encPolicy.fileId == nullptr) {
         return DLP_CREDENTIAL_ERROR_MEMORY_OPERATE_FAIL;
     }
+    encPolicy.allowedOpenCount = certParcel->allowedOpenCount;
     encPolicy.reserved[IS_NEED_CHECK_CUSTOM_PROPERTY] = static_cast<uint8_t>(certParcel->needCheckCustomProperty);
     (void)memcpy_s(&(encPolicy.reserved[ENTERPRISE_ONE]), DECTYPE_SIZE, &(certParcel->decryptType), DECTYPE_SIZE);
     {
