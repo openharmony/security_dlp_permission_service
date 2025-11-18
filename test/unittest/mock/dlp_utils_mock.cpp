@@ -20,6 +20,7 @@
 #include <fstream>
 #include <sstream>
 #include <filesystem>
+#include "dlp_file.h"
 #include "dlp_permission.h"
 #include "dlp_permission_log.h"
 #include "dlp_permission_public_interface.h"
@@ -43,6 +44,7 @@ const std::string CACHE_PATH = "/data/storage/el2/base/files/cache/";
 const uint32_t DLP_CWD_MAX = 256;
 const uint32_t OS_ACCOUNT = 100;
 std::mutex g_fileOpLock;
+const uint32_t DLP_RAW_HEAD_OFFSET = 8;
 }
 
 
@@ -319,24 +321,52 @@ static std::string GetGenerateInfoStr(const int32_t& fd)
     return generateInfoStr;
 }
 
-std::string DlpUtils::GetRealTypeWithFd(const int32_t& fd, bool& isFromUriName)
+std::string DlpUtils::GetRealTypeWithRawFile(const int32_t& fd)
+{
+    if (lseek(fd, DLP_RAW_HEAD_OFFSET, SEEK_SET) == static_cast<off_t>(-1)) {
+        DLP_LOG_ERROR(LABEL, "file head is error: %{public}s", strerror(errno));
+        return DEFAULT_STRINGS;
+    }
+    struct DlpHeader head;
+    if (read(fd, &head, sizeof(head)) != sizeof(head)) {
+        DLP_LOG_ERROR(LABEL, "can not read file head : %{public}s", strerror(errno));
+        return DEFAULT_STRINGS;
+    }
+    auto iter = NUM_TO_TYPE_MAP.find(head.fileType);
+    if (iter != NUM_TO_TYPE_MAP.end()) {
+        return iter->second;
+    }
+    DLP_LOG_DEBUG(LABEL, "find file type of raw is error");
+    return DEFAULT_STRINGS;
+}
+
+std::string DlpUtils::GetRealTypeWithFd(const int32_t& fd, bool& isFromUriName, std::string& generateInfoStr,
+    bool isEnterprise)
 {
     std::string realType = DEFAULT_STRINGS;
     do {
-        std::string generateInfoStr = GetGenerateInfoStr(fd);
-        if (generateInfoStr == DEFAULT_STRINGS) {
-            break;
-        }
-        GenerateInfoParams params;
-        if (ParseDlpGeneralInfo(generateInfoStr, params) != DLP_OK) {
-            DLP_LOG_ERROR(LABEL, "ParseDlpGeneralInfo error: %{public}s", generateInfoStr.c_str());
-            break;
-        }
-        realType = params.realType;
-        if (realType.size() >= MIN_REALY_TYPE_LENGTH && realType.size() <= MAX_REALY_TYPE_LENGTH) {
-            return realType;
+        if (IsZipFile(fd)) {
+            generateInfoStr = GetGenerateInfoStr(fd);
+            if (generateInfoStr == DEFAULT_STRINGS) {
+                break;
+            }
+            GenerateInfoParams params;
+            if (ParseDlpGeneralInfo(generateInfoStr, params) != DLP_OK) {
+                DLP_LOG_ERROR(LABEL, "ParseDlpGeneralInfo error: %{public}s", generateInfoStr.c_str());
+                break;
+            }
+            realType = params.realType;
+        } else {
+            if (!isEnterprise) {
+                return GetRealTypeWithRawFile(fd);
+            }
+            realType = GetRealTypeWithRawFile(fd);
         }
     } while (0);
+
+    if (realType.size() >= MIN_REALY_TYPE_LENGTH && realType.size() <= MAX_REALY_TYPE_LENGTH) {
+        return realType;
+    }
     DLP_LOG_DEBUG(LABEL, "not get real file type in dlp_general_info, will get to file name.");
 
     std::string fileName;
@@ -358,11 +388,6 @@ bool DlpUtils::GetUserIdByForegroundAccount(int32_t &userId)
 {
     userId = OS_ACCOUNT;
     return true;
-}
-
-std::string DlpUtils::GetRealTypeForEnterpriseWithFd(const int32_t& fd, bool& isFromUriName)
-{
-    return DlpUtils::GetRealTypeWithFd(fd, isFromUriName);
 }
 
 bool DlpUtils::GetAppIdFromToken(std::string &appId)
@@ -401,6 +426,11 @@ int32_t DlpUtils::GetFilePathByFd(const int32_t& fd, std::string &filePath)
     fileName[readLinkRes] = '\0';
     filePath = std::string(fileName);
     delete[] fileName;
+    return DLP_OK;
+}
+
+int32_t DlpUtils::GetRawFileFileId(const int32_t& fd, std::string& fileId)
+{
     return DLP_OK;
 }
 }  // namespace DlpPermission

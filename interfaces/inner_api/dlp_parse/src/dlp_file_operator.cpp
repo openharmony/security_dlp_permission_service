@@ -258,7 +258,8 @@ int32_t EnterpriseSpaceDlpPermissionKit::EnterpriseSpacePrepareWorkDir(int32_t d
         std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch())
             .count();
     bool isFromUriName = false;
-    std::string realSuffix = DlpUtils::GetRealTypeForEnterpriseWithFd(dlpFileFd, isFromUriName);
+    std::string generateInfoStr;
+    std::string realSuffix = DlpUtils::GetRealTypeWithFd(dlpFileFd, isFromUriName, generateInfoStr, true);
     if (realSuffix == "") {
         DLP_LOG_ERROR(LABEL, "Get real suffix error.");
         return DLP_PARSE_ERROR_VALUE_INVALID;
@@ -462,7 +463,8 @@ int32_t EnterpriseSpaceDlpPermissionKit::DecryptEnterpriseDlpFile(int32_t plainF
 {
     std::shared_ptr<DlpFile> filePtr = nullptr;
     bool isFromUriName;
-    std::string realType = DlpUtils::GetRealTypeWithFd(dlpFileFd, isFromUriName);
+    std::string generateInfoStr;
+    std::string realType = DlpUtils::GetRealTypeWithFd(dlpFileFd, isFromUriName, generateInfoStr);
     if (realType == DEFAULT_STRING) {
         DLP_LOG_ERROR(LABEL, "Get realType failed");
         return DLP_PARSE_ERROR_FD_ERROR;
@@ -527,7 +529,8 @@ int32_t EnterpriseSpaceDlpPermissionKit::QueryDlpFileProperty(int32_t dlpFileFd,
     std::shared_ptr<DlpFile> filePtr = nullptr;
     if (!IsZipFile(dlpFileFd) && DecryptRawDlpFileAndGetAccountType(dlpFileFd) == ENTERPRISE_ACCOUNT) {
         bool isFromUriName;
-        std::string realType = DlpUtils::GetRealTypeWithFd(dlpFileFd, isFromUriName);
+        std::string generateInfoStr;
+        std::string realType = DlpUtils::GetRealTypeWithFd(dlpFileFd, isFromUriName, generateInfoStr);
         if (realType == DEFAULT_STRING) {
             DLP_LOG_ERROR(LABEL, "Get realType failed");
             return DLP_PARSE_ERROR_FD_ERROR;
