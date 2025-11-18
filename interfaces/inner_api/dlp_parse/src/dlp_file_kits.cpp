@@ -28,6 +28,7 @@
 #include "securec.h"
 #include "dlp_utils.h"
 #include "dlp_permission.h"
+#include "dlp_permission_public_interface.h"
 
 namespace OHOS {
 namespace Security {
@@ -38,7 +39,6 @@ namespace {
     static const std::string DEFAULT_STRINGS = "";
     static const std::string DLP_TYPE = "dlp";
     static const uint32_t BYTE_TO_HEX_OPER_LENGTH = 2;
-    static const uint32_t CURRENT_VERSION = 3;
     static const uint32_t FILE_HEAD = 8;
     static const uint32_t HMAC_SIZE = 32;
     static const uint32_t ENTERPRISE_HEAD_MAX = 1024;
@@ -238,6 +238,57 @@ bool DlpFileKits::IsDlpFile(int32_t dlpFd)
         IsValidEnterpriseDlpHeader(head, dlpHeaderSize);
 }
 
+static bool GetIsReadOnce(const int32_t& fd, std::string& generateInfoStr)
+{
+    std::string fileId = DEFAULT_STRING;
+    if (IsZipFile(fd)) {
+        GenerateInfoParams params;
+        if (ParseDlpGeneralInfo(generateInfoStr, params) != DLP_OK) {
+            DLP_LOG_ERROR(LABEL, "ParseDlpGeneralInfo error: %{public}s", generateInfoStr.c_str());
+            return false;
+        }
+        fileId = params.fileId;
+    } else {
+        int32_t res = DlpUtils::GetRawFileFileId(fd, fileId);
+        if (res != DLP_OK) {
+            DLP_LOG_ERROR(LABEL, "GetRawFileFileId error");
+            return false;
+        }
+    }
+
+    if (fileId.compare(DEFAULT_STRING) == 0) {
+        DLP_LOG_ERROR(LABEL, "fileId empty");
+        return false;
+    }
+    return true;
+}
+
+static void SetWantType(Want& want, const int32_t& fd)
+{
+    bool isFromUriName = false;
+    std::string generateInfoStr = DEFAULT_STRINGS;
+    std::string realSuffix = DlpUtils::GetRealTypeWithFd(fd, isFromUriName, generateInfoStr);
+    if (realSuffix != DEFAULT_STRING) {
+        DLP_LOG_DEBUG(LABEL, "Real suffix is %{public}s", realSuffix.c_str());
+        std::string realType = GetMimeTypeBySuffix(realSuffix);
+        if (realType != DEFAULT_STRING) {
+            want.SetType(realType);
+        } else {
+            DLP_LOG_INFO(LABEL, "Real suffix %{public}s not match known type, using origin type %{public}s",
+                realSuffix.c_str(), want.GetType().c_str());
+            want.SetType("image/jpeg");
+        }
+    } else {
+        DLP_LOG_INFO(LABEL, "GetRealTypeWithFd empty");
+        want.SetType("image/jpeg");
+    }
+    bool isReadOnce = GetIsReadOnce(fd, generateInfoStr);
+    DLP_LOG_DEBUG(LABEL, "isReadOnce %{public}d", isReadOnce);
+    if (isReadOnce) {
+        want.SetType("image/jpeg");
+    }
+}
+
 bool DlpFileKits::GetSandboxFlag(Want& want)
 {
     std::string action = want.GetAction();
@@ -266,22 +317,7 @@ bool DlpFileKits::GetSandboxFlag(Want& want)
     if (!IsDlpFile(fd)) {
         DLP_LOG_WARN(LABEL, "Fd %{public}d is not dlp file", fd);
     }
-    bool isFromUriName = false;
-    std::string realSuffix = DlpUtils::GetRealTypeWithFd(fd, isFromUriName);
-    if (realSuffix != DEFAULT_STRING) {
-        DLP_LOG_DEBUG(LABEL, "Real suffix is %{public}s", realSuffix.c_str());
-        std::string realType = GetMimeTypeBySuffix(realSuffix);
-        if (realType != DEFAULT_STRING) {
-            want.SetType(realType);
-        } else {
-            DLP_LOG_INFO(LABEL, "Real suffix %{public}s not match known type, using origin type %{public}s",
-                realSuffix.c_str(), want.GetType().c_str());
-            want.SetType("image/jpeg");
-        }
-    } else {
-        DLP_LOG_INFO(LABEL, "GetRealTypeWithFd empty");
-        want.SetType("image/jpeg");
-    }
+    SetWantType(want, fd);
     close(fd);
     fd = -1;
     DLP_LOG_INFO(LABEL, "Sanbox flag is true");

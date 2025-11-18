@@ -198,7 +198,8 @@ static void UtilTest(const uint8_t* data, size_t size)
     int fd = open(filePath.c_str(), O_CREAT | O_RDWR | O_TRUNC, S_IRWXU | S_IRWXG | S_IRWXO);
     DlpUtils::GetFileNameWithFd(fd, srcFile);
     bool isFromUriName = false;
-    DlpUtils::GetRealTypeWithFd(fd, isFromUriName);
+    std::string generateInfoStr;
+    DlpUtils::GetRealTypeWithFd(fd, isFromUriName, generateInfoStr);
     std::string dlpFile;
     DlpUtils::GetFileNameWithDlpFd(fd, dlpFile);
     DlpUtils::GetFileType(DLP_HIAE_TYPE);
