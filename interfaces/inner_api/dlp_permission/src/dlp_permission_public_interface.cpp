@@ -155,6 +155,8 @@ int32_t ParseGeneralInfo(const nlohmann::json& jsonObj, GenerateInfoParams& para
     iter = jsonObj.find(ALLOWEDOPENCOUNT);
     if (iter != jsonObj.end() && iter->is_number_integer()) {
         params.allowedOpenCount = iter->get<int32_t>();
+    } else {
+        params.allowedOpenCount = params.fileId.empty() ? 0 : 1;
     }
     return DLP_OK;
 }

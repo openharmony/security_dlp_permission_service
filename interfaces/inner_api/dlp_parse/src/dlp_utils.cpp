@@ -46,6 +46,7 @@ const uint32_t DLP_RAW_HEAD_OFFSET = 8;
 std::mutex g_fileOpLock;
 const int32_t FILEID_SIZE = 46;
 const int32_t FILEID_SIZE_OPPOSITE = -46;
+const int32_t FILEID_ALLOWEDOPEN_OPPOSITE = -54;
 }
 
 
@@ -342,8 +343,25 @@ std::string DlpUtils::GetRealTypeWithRawFile(const int32_t& fd)
     return DEFAULT_STRINGS;
 }
 
-int32_t DlpUtils::GetRawFileFileId(const int32_t& fd, std::string& fileId)
+int32_t DlpUtils::GetRawFileAllowedOpenCount(const int32_t& fd, int32_t& allowedOpenCount)
 {
+    if (lseek(fd, FILEID_ALLOWEDOPEN_OPPOSITE, SEEK_END) == static_cast<off_t>(-1)) {
+        DLP_LOG_ERROR(LABEL, "get to allowedopen invalid");
+        return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
+    }
+    int32_t flag = 0;
+    if (read(fd, &flag, sizeof(int32_t)) != sizeof(int32_t)) {
+        DLP_LOG_ERROR(LABEL, "can not read flag, %{public}s", strerror(errno));
+        return DLP_PARSE_ERROR_FILE_FORMAT_ERROR;
+    }
+    allowedOpenCount = 0;
+    if (flag == 1) {
+        if (read(fd, &allowedOpenCount, sizeof(int32_t)) != sizeof(int32_t)) {
+            DLP_LOG_ERROR(LABEL, "can not read allowedOpenCount, %{public}s", strerror(errno));
+            return DLP_PARSE_ERROR_FILE_FORMAT_ERROR;
+        }
+    }
+
     uint8_t *fileIdtmpBuf = new (std::nothrow)uint8_t[FILEID_SIZE];
     if (fileIdtmpBuf == nullptr) {
         DLP_LOG_ERROR(LABEL, "fileId memory operate fail");
@@ -351,6 +369,7 @@ int32_t DlpUtils::GetRawFileFileId(const int32_t& fd, std::string& fileId)
     }
     off_t fileLen = lseek(fd, FILEID_SIZE_OPPOSITE, SEEK_END);
     if (fileLen == static_cast<off_t>(-1)) {
+        delete[] fileIdtmpBuf;
         DLP_LOG_ERROR(LABEL, "get fileid fileLen invalid, %{public}s", strerror(errno));
         return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
     }
@@ -359,9 +378,10 @@ int32_t DlpUtils::GetRawFileFileId(const int32_t& fd, std::string& fileId)
         DLP_LOG_ERROR(LABEL, "can not read fileId, %{public}s", strerror(errno));
         return DLP_PARSE_ERROR_FILE_FORMAT_ERROR;
     }
-    fileId = std::string(fileIdtmpBuf, fileIdtmpBuf + FILEID_SIZE);
+    if (fileIdtmpBuf[0] != 0 && flag == 0) {
+        allowedOpenCount = 1;
+    }
     delete[] fileIdtmpBuf;
-
     return DLP_OK;
 }
 

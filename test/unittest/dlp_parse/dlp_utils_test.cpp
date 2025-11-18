@@ -363,14 +363,14 @@ HWTEST_F(DlpUtilsTest, GetRealTypeWithFd004, TestSize.Level0)
 }
 
 /**
- * @tc.name: GetRawFileFileId001
- * @tc.desc: test GetRawFileFileId
+ * @tc.name: GetRawFileAllowedOpenCount01
+ * @tc.desc: test GetRawFileAllowedOpenCount
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpUtilsTest, GetRawFileFileId001, TestSize.Level0)
+HWTEST_F(DlpUtilsTest, GetRawFileAllowedOpenCount01, TestSize.Level0)
 {
-    DLP_LOG_INFO(LABEL, "GetRawFileFileId001");
+    DLP_LOG_INFO(LABEL, "GetRawFileAllowedOpenCount01");
     int fd = open("/data/fuse_test.txt.dlp", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
     ASSERT_NE(fd, -1);
     uint8_t buffer[FILEID_SIZE] = {0};
@@ -378,20 +378,21 @@ HWTEST_F(DlpUtilsTest, GetRawFileFileId001, TestSize.Level0)
     std::string field = "1111111111111111111111111111111111111111111111";
     lseek(fd, FILEID_SIZE_OPPOSITE, SEEK_END);
     write(fd, field.c_str(), field.size());
-    ASSERT_EQ(DlpUtils::GetRawFileFileId(fd, field), DLP_OK);
+    int32_t allowedOpenCount;
+    ASSERT_NE(DlpUtils::GetRawFileAllowedOpenCount(fd, allowedOpenCount), DLP_OK);
     close(fd);
     unlink("/data/fuse_test.txt.dlp");
 }
 
 /**
- * @tc.name: GetRawFileFileId002
- * @tc.desc: test GetRawFileFileId
+ * @tc.name: GetRawFileAllowedOpenCount02
+ * @tc.desc: test GetRawFileAllowedOpenCount
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpUtilsTest, GetRawFileFileId002, TestSize.Level0)
+HWTEST_F(DlpUtilsTest, GetRawFileAllowedOpenCount02, TestSize.Level0)
 {
-    DLP_LOG_INFO(LABEL, "GetRawFileFileId002");
+    DLP_LOG_INFO(LABEL, "GetRawFileAllowedOpenCount02");
     int fd = open("/data/fuse_test.txt.dlp", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
     ASSERT_NE(fd, -1);
     uint8_t buffer[FILEID_SIZE] = {0};
@@ -399,20 +400,21 @@ HWTEST_F(DlpUtilsTest, GetRawFileFileId002, TestSize.Level0)
     std::string field = "111";
     lseek(fd, FILEID_SIZE_OPPOSITE, SEEK_END);
     write(fd, field.c_str(), field.size());
-    ASSERT_EQ(DlpUtils::GetRawFileFileId(fd, field), DLP_OK);
+    int32_t allowedOpenCount;
+    ASSERT_NE(DlpUtils::GetRawFileAllowedOpenCount(fd, allowedOpenCount), DLP_OK);
     close(fd);
     unlink("/data/fuse_test.txt.dlp");
 }
 
 /**
- * @tc.name: GetRawFileFileId003
- * @tc.desc: test GetRawFileFileId
+ * @tc.name: GetRawFileAllowedOpenCount03
+ * @tc.desc: test GetRawFileAllowedOpenCount
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpUtilsTest, GetRawFileFileId003, TestSize.Level0)
+HWTEST_F(DlpUtilsTest, GetRawFileAllowedOpenCount03, TestSize.Level0)
 {
-    DLP_LOG_INFO(LABEL, "GetRawFileFileId003");
+    DLP_LOG_INFO(LABEL, "GetRawFileAllowedOpenCount03");
     int fd = open("/data/fuse_test.txt.dlp", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
     ASSERT_NE(fd, -1);
     uint8_t buffer[FILEID_SIZE_VALID] = {0};
@@ -420,7 +422,8 @@ HWTEST_F(DlpUtilsTest, GetRawFileFileId003, TestSize.Level0)
     std::string field = "";
     lseek(fd, FILEID_SIZE_VALID, SEEK_END);
     write(fd, field.c_str(), field.size());
-    ASSERT_NE(DlpUtils::GetRawFileFileId(fd, field), DLP_OK);
+    int32_t allowedOpenCount;
+    ASSERT_NE(DlpUtils::GetRawFileAllowedOpenCount(fd, allowedOpenCount), DLP_OK);
     close(fd);
     unlink("/data/fuse_test.txt.dlp");
 }
@@ -507,4 +510,18 @@ HWTEST_F(DlpUtilsTest, GetAppIdentifierByAppId, TestSize.Level1)
     ASSERT_EQ(ret, 0);
 
     (void)DlpUtils::GetAppIdentifierByAppId(bundleInfo.appId, DEFAULT_USERID);
+}
+
+/**
+ * @tc.name: GetFilePathByFd001
+ * @tc.desc: test GetFilePathByFd
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpUtilsTest, GetFilePathByFd001, TestSize.Level0)
+{
+    DLP_LOG_INFO(LABEL, "GetFilePathByFd001");
+    std::string filePath;
+    int32_t fd = 0;
+    ASSERT_EQ(DlpUtils::GetFilePathByFd(fd, filePath), DLP_OK);
 }

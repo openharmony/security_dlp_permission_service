@@ -557,6 +557,30 @@ HWTEST_F(DlpFileManagerTest, SetDlpFileParams004, TestSize.Level0)
 }
 
 /**
+ * @tc.name: PrepareParms001
+ * @tc.desc: test PrepareParms
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpFileManagerTest, PrepareParms001, TestSize.Level0)
+{
+    DLP_LOG_INFO(LABEL, "PrepareParms001");
+    std::shared_ptr<DlpFile> filePtr = std::make_shared<DlpZipFile>(1000, DLP_TEST_DIR, 0, "txt");
+    ASSERT_NE(filePtr, nullptr);
+    DlpProperty property;
+
+    // SetPolicy fail
+    property.ownerAccount = "ownerAccount";
+    property.ownerAccountId = "ownerAccountId";
+    property.contactAccount = "contactAccount";
+    property.ownerAccountType = CLOUD_ACCOUNT;
+    property.expireTime = 1;
+    PermissionPolicy policy(property);
+    EXPECT_EQ(DLP_OK, DlpFileManager::GetInstance().PrepareParms(filePtr, property, policy));
+    CleanMockConditions();
+}
+
+/**
  * @tc.name: GenerateDlpFile001
  * @tc.desc: test generate dlp file with wrong params
  * @tc.type: FUNC
