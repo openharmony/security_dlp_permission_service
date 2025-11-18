@@ -246,6 +246,7 @@ int32_t DlpPermissionService::ParseDlpCertificate(const sptr<CertParcel>& certPa
 {
     std::string appIdentifier;
     if (!PermissionManagerAdapter::GetAppIdentifierForCalling(appIdentifier)) {
+        DLP_LOG_ERROR(LABEL, "GetAppIdentifierForCalling error");
         return DLP_SERVICE_ERROR_PERMISSION_DENY;
     }
 
@@ -262,8 +263,10 @@ int32_t DlpPermissionService::ParseDlpCertificate(const sptr<CertParcel>& certPa
         DLP_LOG_ERROR(LABEL, "AppId is empty");
         return DLP_CREDENTIAL_ERROR_APPID_NOT_AUTHORIZED;
     }
-    int32_t ret = PermissionManagerAdapter::CheckAuthPolicy(appId, certParcel->realFileType);
+    int32_t ret = PermissionManagerAdapter::CheckAuthPolicy(appId, certParcel->realFileType,
+        certParcel->allowedOpenCount);
     if (ret != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "CheckAuthPolicy error");
         return ret;
     }
     AppExecFwk::ApplicationInfo applicationInfo;

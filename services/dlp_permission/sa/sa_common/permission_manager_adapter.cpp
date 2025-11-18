@@ -37,6 +37,7 @@ constexpr OHOS::HiviewDFX::HiLogLabel LABEL = { LOG_CORE, SECURITY_DOMAIN_DLP_PE
 static const std::string CRED_HAP_IDENTIFIER = "5765880207854232861";
 static const std::string MDM_HAP_IDENTIFIER = "6917562860841254665";
 static const std::string APPIDENTIFIER = "_appIdentifier";
+static const std::string PHOTO_APPIDENTIFIER = "support_photo_dlp_appIdentifier";
 static const std::string DEFAULT_STRING = "";
 }
 static int32_t GetOsAccountId(int32_t &osAccountId)
@@ -211,7 +212,8 @@ int32_t PermissionManagerAdapter::CheckSandboxFlagWithService(AccessToken::Acces
     return DLP_OK;
 }
 
-int32_t PermissionManagerAdapter::CheckAuthPolicy(const std::string& appId, const std::string& realFileType)
+int32_t PermissionManagerAdapter::CheckAuthPolicy(const std::string& appId, const std::string& realFileType,
+    const int32_t allowedOpenCount)
 {
     std::string fileType = DlpUtils::GetFileTypeBySuffix(realFileType, false);
     if (fileType == DEFAULT_STRING) {
@@ -227,7 +229,10 @@ int32_t PermissionManagerAdapter::CheckAuthPolicy(const std::string& appId, cons
     }
 
     std::vector<std::string> authPolicy;
-    if (!DlpUtils::GetAuthPolicyWithType(DLP_AUTH_POLICY, fileType + APPIDENTIFIER, authPolicy)) {
+    std::string fileIdAppIdentifier = allowedOpenCount > 0 ? PHOTO_APPIDENTIFIER : fileType + APPIDENTIFIER;
+    DLP_LOG_ERROR(LABEL, "bsx allowedOpenCount: %{public}d.", allowedOpenCount);
+    DLP_LOG_ERROR(LABEL, "bsx fileIdAppIdentifier: %{public}s.", fileIdAppIdentifier.c_str());
+    if (!DlpUtils::GetAuthPolicyWithType(DLP_AUTH_POLICY, fileIdAppIdentifier, authPolicy)) {
         return DLP_OK;
     }
     if (std::find(authPolicy.begin(), authPolicy.end(), DlpUtils::GetAppIdentifierByAppId(appId, osAccountId))
