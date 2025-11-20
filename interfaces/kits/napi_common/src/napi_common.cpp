@@ -1340,6 +1340,10 @@ bool GetEnterpriseDlpProperty(napi_env env, napi_value jsObject, DlpProperty& pr
         DLP_LOG_ERROR(LABEL, "js get offline access flag fail");
         return false;
     }
+    if (!GetBoolValueByKey(env, jsObject, "waterMarkConfig", property.waterMarkConfig)) {
+        DLP_LOG_ERROR(LABEL, "js get waterMarkConfig fail");
+        return false;
+    }
     GetDlpPropertyExpireTime(env, jsObject, property);
 
     napi_value everyoneAccessListObj = GetNapiValue(env, jsObject, "everyoneAccessList");
@@ -1414,6 +1418,10 @@ bool GetDlpProperty(napi_env env, napi_value jsObject, DlpProperty& property)
     }
     if (!GetBoolValueByKey(env, jsObject, "offlineAccess", property.offlineAccess)) {
         DLP_LOG_ERROR(LABEL, "js get offline access flag fail");
+        return false;
+    }
+    if (!GetBoolValueByKey(env, jsObject, "waterMarkConfig", property.waterMarkConfig)) {
+        DLP_LOG_ERROR(LABEL, "js get waterMarkConfig fail");
         return false;
     }
     GetDlpPropertyExpireTime(env, jsObject, property);

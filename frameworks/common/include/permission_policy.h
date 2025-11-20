@@ -109,6 +109,7 @@ struct DlpProperty {
     CustomProperty customProperty;
     std::string fileId;
     int32_t allowedOpenCount = 0;
+    bool waterMarkConfig = false;
 };
 
 class PermissionPolicy final {
