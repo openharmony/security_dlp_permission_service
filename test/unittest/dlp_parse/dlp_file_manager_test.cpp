@@ -795,6 +795,58 @@ HWTEST_F(DlpFileManagerTest, ParseRawDlpFile001, TestSize.Level0)
 
     EXPECT_NE(DLP_OK, DlpFileManager::GetInstance().ParseRawDlpFile(1, filePtr, appId, realType, certParcel));
 }
+
+/**
+ * @tc.name: ParseZipDlpFile001
+ * @tc.desc: ParseZipDlpFile
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpFileManagerTest, ParseZipDlpFile001, TestSize.Level0)
+{
+    DLP_LOG_INFO(LABEL, "ParseZipDlpFile001");
+    std::string appId = "dlp_file_manager_test";
+    std::string realType = "txt";
+    std::shared_ptr<DlpFile> filePtr = std::make_shared<DlpZipFile>(1001, DLP_TEST_DIR, 0, realType);
+    sptr<CertParcel> certParcel = new (std::nothrow) CertParcel();
+
+    certParcel->cert = {};
+    EXPECT_EQ(0, certParcel->cert.size());
+    EXPECT_NE(DLP_OK, DlpFileManager::GetInstance().ParseZipDlpFile(filePtr, appId, 1001, certParcel));
+}
+
+/**
+ * @tc.name: ParseZipDlpFileAndAddNode001
+ * @tc.desc: ParseZipDlpFileAndAddNode
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpFileManagerTest, ParseZipDlpFileAndAddNode001, TestSize.Level0)
+{
+    DLP_LOG_INFO(LABEL, "ParseZipDlpFileAndAddNode001");
+    std::string appId = "dlp_file_manager_test";
+    std::string realType = "txt";
+    std::shared_ptr<DlpFile> filePtr = std::make_shared<DlpZipFile>(1001, DLP_TEST_DIR, 0, realType);
+
+    EXPECT_NE(DLP_OK, DlpFileManager::GetInstance().ParseZipDlpFileAndAddNode(filePtr, appId, 1));
+}
+
+/**
+ * @tc.name: OpenZipDlpFile001
+ * @tc.desc: OpenZipDlpFile
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpFileManagerTest, OpenZipDlpFile001, TestSize.Level0)
+{
+    DLP_LOG_INFO(LABEL, "OpenZipDlpFile001");
+    std::string appId = "dlp_file_manager_test";
+    std::string realType = "txt";
+    std::shared_ptr<DlpFile> filePtr = std::make_shared<DlpZipFile>(1001, DLP_TEST_DIR, 0, realType);
+
+    EXPECT_NE(DLP_OK, DlpFileManager::GetInstance().OpenZipDlpFile(1001, filePtr, DLP_TEST_DIR, appId, realType));
+}
+
 }  // namespace DlpPermission
 }  // namespace Security
 }  // namespace OHOS

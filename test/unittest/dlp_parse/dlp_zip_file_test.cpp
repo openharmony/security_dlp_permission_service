@@ -100,3 +100,33 @@ HWTEST_F(DlpZipFileTest, SetOfflineAccessTest001, TestSize.Level0)
     testFile->SetOfflineAccess(flag, allowedOpenCount);
     EXPECT_NE(1, testFile->offlineAccess_);
 }
+
+/**
+ * @tc.name: CheckDlpFile001
+ * @tc.desc: CheckDlpFile test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpZipFileTest, CheckDlpFile001, TestSize.Level0)
+{
+    std::shared_ptr<DlpZipFile> testFile = std::make_shared<DlpZipFile>(1000, DLP_TEST_DIR, 0, "txt");
+    ASSERT_NE(testFile, nullptr);
+
+    EXPECT_EQ(DLP_OK, testFile->CheckDlpFile());
+}
+
+/**
+ * @tc.name: CheckDlpFile002
+ * @tc.desc: CheckDlpFile test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpZipFileTest, CheckDlpFile002, TestSize.Level0)
+{
+    std::shared_ptr<DlpZipFile> testFile = std::make_shared<DlpZipFile>(0, DLP_TEST_DIR, 0, "txt");
+    ASSERT_NE(testFile, nullptr);
+
+    testFile->SetLinkStatus();
+
+    EXPECT_EQ(DLP_PARSE_ERROR_FILE_LINKING, testFile->CheckDlpFile());
+}
