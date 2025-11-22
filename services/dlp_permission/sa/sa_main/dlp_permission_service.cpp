@@ -463,6 +463,7 @@ int32_t DlpPermissionService::UninstallDlpSandbox(const std::string& bundleName,
             appIndex);
         return DLP_SERVICE_ERROR_UNINSTALL_SANDBOX_FAIL;
     }
+    RetentionFileManager::GetInstance().SetInitStatus(tokenId);
     if (RetentionFileManager::GetInstance().CanUninstall(tokenId)) {
         return UninstallDlpSandboxApp(bundleName, appIndex, userId);
     }

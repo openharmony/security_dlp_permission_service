@@ -95,13 +95,24 @@ bool SandboxJsonManager::CanUninstall(const uint32_t& tokenId)
     std::lock_guard<std::mutex> lock(mutex_);
     for (auto iter = infoVec_.begin(); iter != infoVec_.end(); ++iter) {
         if (iter->tokenId == tokenId) {
-            if (iter->docUriSet.empty()) {
+            if (iter->docUriSet.empty() && iter->isInit == false) {
                 return true;
             }
             return false;
         }
     }
     return true;
+}
+
+void SandboxJsonManager::SetInitStatus(const uint32_t& tokenId)
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    for (auto iter = infoVec_.begin(); iter != infoVec_.end(); ++iter) {
+        if (iter->tokenId == tokenId) {
+            iter->isInit = false;
+            return;
+        }
+    }
 }
 
 int32_t SandboxJsonManager::DelSandboxInfo(const uint32_t& tokenId)
@@ -292,7 +303,7 @@ int32_t SandboxJsonManager::ClearUnreservedSandbox()
     bool isChanged = false;
     AppExecFwk::BundleMgrClient bundleMgrClient;
     for (auto iter = infoVec_.begin(); iter != infoVec_.end();) {
-        if (!iter->docUriSet.empty() || iter->userId != userId) {
+        if (!iter->docUriSet.empty() || iter->userId != userId || iter->isInit) {
             ++iter;
             continue;
         }

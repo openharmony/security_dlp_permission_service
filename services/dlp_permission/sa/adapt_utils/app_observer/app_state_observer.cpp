@@ -36,6 +36,7 @@ const std::string DLP_MANAGER_BUNDLE_NAME = "com.ohos.dlpmanager";
 const std::string DLP_CREDMGR_BUNDLE_NAME = "com.huawei.hmos.dlpcredmgr";
 const std::string DLP_CREDMGR_PROCESS_NAME = "com.huawei.hmos.dlpcredmgr:DlpCredActionExtAbility";
 constexpr int32_t SA_ID_DLP_PERMISSION_SERVICE = 3521;
+const std::string FLAG_OF_MINI = "svr";
 }
 AppStateObserver::AppStateObserver()
 {}
@@ -67,6 +68,7 @@ void AppStateObserver::UninstallAllDlpSandboxForUser(int32_t userId)
             ++iter;
             continue;
         }
+        RetentionFileManager::GetInstance().SetInitStatus(appInfo.tokenId);
         if (RetentionFileManager::GetInstance().CanUninstall(appInfo.tokenId)) {
             UninstallDlpSandbox(appInfo);
         }
@@ -216,8 +218,8 @@ void AppStateObserver::AddDlpSandboxInfo(const DlpSandboxInfo& appInfo)
         .bundleName = appInfo.bundleName,
         .dlpFileAccess = appInfo.dlpFileAccess,
         .userId = appInfo.userId,
-        .docUriSet = { appInfo.uri },
-        .isReadOnce = appInfo.isReadOnce
+        .isReadOnce = appInfo.isReadOnce,
+        .isInit = true
     };
     RetentionFileManager::GetInstance().AddSandboxInfo(retentionInfo);
     OpenDlpFileCallbackManager::GetInstance().ExecuteCallbackAsync(appInfo);
@@ -286,7 +288,7 @@ bool AppStateObserver::CanUninstallByGid(DlpSandboxInfo& appInfo, const AppExecF
             DLP_LOG_INFO(LABEL, "APP is dead, appName:%{public}s, state=%{public}d", it->processName_.c_str(),
                 it->state_);
         }
-        if (it->pid_ != processData.pid) {
+        if (it->pid_ != processData.pid && it->processName_.find(FLAG_OF_MINI) == std::string::npos) {
             DLP_LOG_INFO(LABEL,
                 "APP is running, appName:%{public}s, state=%{public}d, dead pid:%{public}d, running pid:%{public}d",
                 it->processName_.c_str(), it->state_, processData.pid, it->pid_);
@@ -377,6 +379,7 @@ void AppStateObserver::OnProcessDied(const AppExecFwk::ProcessData& processData)
         DLP_LOG_INFO(LABEL, "Can not uninstall dlp sandbox by gid");
         return;
     }
+    RetentionFileManager::GetInstance().SetInitStatus(appInfo.tokenId);
     if (RetentionFileManager::GetInstance().CanUninstall(appInfo.tokenId)) {
         UninstallDlpSandbox(appInfo);
     }
