@@ -1298,6 +1298,16 @@ bool GetAllowedOpenCount(napi_env env, napi_value jsObject, DlpProperty& propert
     return true;
 }
 
+bool GetWaterMarkConfig(napi_env env, napi_value jsObject, DlpProperty& property)
+{
+    bool jsWaterMarkConfig = false;
+    if (!GetBoolValueByKey(env, jsObject, "waterMarkConfig", property.waterMarkConfig)) {
+        DLP_LOG_ERROR(LABEL, "js get waterMarkConfig fail, will set false");
+        property.waterMarkConfig = jsWaterMarkConfig;
+    }
+    return true;
+}
+
 static bool GetEnterpriseDlpPropertyAccount(napi_env env, napi_value jsObject, DlpProperty& property)
 {
     if (!GetStringValueByKey(env, jsObject, "ownerAccount", property.ownerAccount) ||
@@ -1340,6 +1350,7 @@ bool GetEnterpriseDlpProperty(napi_env env, napi_value jsObject, DlpProperty& pr
         DLP_LOG_ERROR(LABEL, "js get offline access flag fail");
         return false;
     }
+    GetWaterMarkConfig(env, jsObject, property);
     GetDlpPropertyExpireTime(env, jsObject, property);
 
     napi_value everyoneAccessListObj = GetNapiValue(env, jsObject, "everyoneAccessList");
@@ -1416,6 +1427,7 @@ bool GetDlpProperty(napi_env env, napi_value jsObject, DlpProperty& property)
         DLP_LOG_ERROR(LABEL, "js get offline access flag fail");
         return false;
     }
+    GetWaterMarkConfig(env, jsObject, property);
     GetDlpPropertyExpireTime(env, jsObject, property);
     if (!GetAllowedOpenCount(env, jsObject, property)) {
         DLP_LOG_ERROR(LABEL, "get allowed open count fail");
