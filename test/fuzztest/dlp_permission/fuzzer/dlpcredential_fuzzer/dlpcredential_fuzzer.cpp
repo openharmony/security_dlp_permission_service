@@ -36,7 +36,9 @@
 #include "token_setproc.h"
 #include "hex_string.h"
 #include "dlp_credential.h"
+#define private public
 #include "dlp_permission_client.h"
+#undef private
 #include "dlp_utils.h"
 #include "dlp_policy_mgr_client.h"
 #include "dlp_zip.h"
@@ -149,8 +151,10 @@ static void ClientFuzzTest(const uint8_t* data, size_t size)
     }
     FuzzedDataProvider fdp(data, size);
     DlpPermissionClient::GetInstance().OnRemoteDiedHandle();
-    std::shared_ptr<UnregisterOpenDlpFileCallbackFuzzer> callback =
-        std::make_shared<UnregisterOpenDlpFileCallbackFuzzer>();
+    std::shared_ptr<UnregisterOpenDlpFileCallbackFuzzer> callback = nullptr;
+    (void)DlpPermissionClient::GetInstance().UnRegisterOpenDlpFileCallback(callback);
+    (void)DlpPermissionClient::GetInstance().RegisterOpenDlpFileCallback(callback);
+    callback = std::make_shared<UnregisterOpenDlpFileCallbackFuzzer>();
     DlpPermissionClient::GetInstance().UnRegisterOpenDlpFileCallback(callback);
     PermissionPolicy policy;
     policy.ownerAccount_ = fdp.ConsumeBytesAsString(size);
@@ -169,6 +173,24 @@ static void ClientFuzzTest(const uint8_t* data, size_t size)
     std::shared_ptr<ClientGenerateDlpCertificateCallback> callback1 =
         std::make_shared<ClientGenerateDlpCertificateCallback>();
     DlpPermissionClient::GetInstance().GenerateDlpCertificate(policy, callback1);
+
+    std::string uri = "";
+    (void)DlpPermissionClient::GetInstance().SetNotOwnerAndReadOnce(uri, true);
+    uri = "uri";
+    (void)DlpPermissionClient::GetInstance().SetNotOwnerAndReadOnce(uri, false);
+
+    sptr<IRemoteObject> remoteObject;
+    DlpPermissionClient::GetInstance().GetProxyFromRemoteObject(nullptr);
+    DlpPermissionClient::GetInstance().GetProxyFromRemoteObject(remoteObject);
+
+    std::string policyStr = "policy";
+    (void)DlpPermissionClient::GetInstance().SetEnterprisePolicy(policyStr);
+
+    uint32_t dlpFeatureInfo = 0;
+    bool statusSetInfo;
+    (void)DlpPermissionClient::GetInstance().SetDlpFeature(dlpFeatureInfo, statusSetInfo);
+    dlpFeatureInfo = 1;
+    (void)DlpPermissionClient::GetInstance().SetDlpFeature(dlpFeatureInfo, statusSetInfo);
 }
 
 static void GenerateDlpFileType(uint32_t data, std::string& filePath)
