@@ -429,10 +429,10 @@ HWTEST_F(DlpPermissionKitTest, SetRetentionState01, TestSize.Level1)
     ASSERT_TRUE(TestSetSelfTokenId(normalTokenId));
     retentionSandBoxInfoVec.clear();
     ASSERT_EQ(DLP_OK, DlpPermissionKit::GetRetentionSandboxList(DLP_MANAGER_APP, retentionSandBoxInfoVec));
-    ASSERT_TRUE(0 != retentionSandBoxInfoVec.size());
+    ASSERT_TRUE(USER_NUM != retentionSandBoxInfoVec.size());
     retentionSandBoxInfoVec.clear();
     ASSERT_EQ(DLP_OK, DlpPermissionKit::GetRetentionSandboxList(DLP_MANAGER_APP, retentionSandBoxInfoVec));
-    ASSERT_TRUE(0 != retentionSandBoxInfoVec.size());
+    ASSERT_TRUE(USER_NUM != retentionSandBoxInfoVec.size());
     ASSERT_EQ(DLP_OK, DlpPermissionKit::UninstallDlpSandbox(DLP_MANAGER_APP, sandboxInfo.appIndex, DEFAULT_USERID));
     TestRecoverProcessInfo(uid, selfTokenId);
 }

@@ -125,6 +125,15 @@ bool RetentionFileManager::CanUninstall(const uint32_t& tokenId)
     return sandboxJsonManager_->CanUninstall(tokenId);
 }
 
+void RetentionFileManager::SetInitStatus(const uint32_t& tokenId)
+{
+    if (!Init()) {
+        DLP_LOG_ERROR(LABEL, "Init failed!");
+        return;
+    }
+    return sandboxJsonManager_->SetInitStatus(tokenId);
+}
+
 int32_t RetentionFileManager::UpdateSandboxInfo(const std::set<std::string>& docUriSet, RetentionInfo& info,
     bool isRetention)
 {

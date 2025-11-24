@@ -490,6 +490,7 @@ HWTEST_F(DlpPermissionServiceTest, SandboxJsonManager002, TestSize.Level1)
     ASSERT_EQ(DLP_RETENTION_SERVICE_ERROR, sandboxJsonManager_->DelSandboxInfo(827878));
     sandboxJsonManager_->UpdateRetentionState(docUriSet, info, false);
     ASSERT_EQ(DLP_OK, sandboxJsonManager_->DelSandboxInfo(827878));
+    sandboxJsonManager_->SetInitStatus(827878);
     setuid(uid);
 }
 
@@ -580,6 +581,7 @@ HWTEST_F(DlpPermissionServiceTest, RetentionFileManager001, TestSize.Level1)
     ASSERT_EQ(DLP_RETENTION_SERVICE_ERROR, RetentionFileManager::GetInstance().DelSandboxInfo(8888));
     RetentionFileManager::GetInstance().hasInit_ = false;
     ASSERT_TRUE(RetentionFileManager::GetInstance().CanUninstall(8888));
+    RetentionFileManager::GetInstance().SetInitStatus(8888);
     RetentionFileManager::GetInstance().hasInit_ = false;
     ASSERT_EQ(DLP_RETENTION_GET_DATA_FROM_BASE_CONSTRAINTS_FILE_EMPTY,
         RetentionFileManager::GetInstance().RemoveRetentionState("testbundle1", -1));
