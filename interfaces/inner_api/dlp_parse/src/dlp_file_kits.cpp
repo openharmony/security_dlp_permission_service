@@ -240,27 +240,27 @@ bool DlpFileKits::IsDlpFile(int32_t dlpFd)
 
 static bool GetIsReadOnce(const int32_t& fd, std::string& generateInfoStr)
 {
-    std::string fileId = DEFAULT_STRING;
+    int32_t allowedOpenCount = 0;
     if (IsZipFile(fd)) {
         GenerateInfoParams params;
         if (ParseDlpGeneralInfo(generateInfoStr, params) != DLP_OK) {
             DLP_LOG_ERROR(LABEL, "ParseDlpGeneralInfo error: %{public}s", generateInfoStr.c_str());
             return false;
         }
-        fileId = params.fileId;
+        allowedOpenCount = params.allowedOpenCount;
     } else {
-        int32_t res = DlpUtils::GetRawFileFileId(fd, fileId);
+        int32_t res = DlpUtils::GetRawFileAllowedOpenCount(fd, allowedOpenCount);
         if (res != DLP_OK) {
-            DLP_LOG_ERROR(LABEL, "GetRawFileFileId error");
+            DLP_LOG_ERROR(LABEL, "GetRawFileAllowedOpenCount error");
             return false;
         }
     }
 
-    if (fileId.compare(DEFAULT_STRING) == 0) {
-        DLP_LOG_ERROR(LABEL, "fileId empty");
-        return false;
+    if (allowedOpenCount > 0) {
+        DLP_LOG_INFO(LABEL, "allowedOpenCount is bigger than 0");
+        return true;
     }
-    return true;
+    return false;
 }
 
 static void SetWantType(Want& want, const int32_t& fd)

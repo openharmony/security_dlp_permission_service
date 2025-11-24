@@ -411,18 +411,18 @@ HWTEST_F(DlpPermissionSerializerTest, DeserializeAuthUserInfo001, TestSize.Level
 }
 
 /**
- * @tc.name: CheckAuthPolicy
- * @tc.desc: CheckAuthPolicy test
+ * @tc.name: CheckAuthPolicy001
+ * @tc.desc: CheckAuthPolicy001 test
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpPermissionSerializerTest, CheckAuthPolicy, TestSize.Level1)
+HWTEST_F(DlpPermissionSerializerTest, CheckAuthPolicy001, TestSize.Level1)
 {
-    int32_t ret = PermissionManagerAdapter::CheckAuthPolicy("test_appId", "test_type");
+    int32_t ret = PermissionManagerAdapter::CheckAuthPolicy("test_appId", "test_type", 0);
     ASSERT_NE(DLP_OK, ret);
-    ret = PermissionManagerAdapter::CheckAuthPolicy("test_appId", "test_type");
+    ret = PermissionManagerAdapter::CheckAuthPolicy("test_appId", "test_type", 1);
     ASSERT_NE(DLP_OK, ret);
-    (void)PermissionManagerAdapter::CheckAuthPolicy("test_appId", "txt");
+    (void)PermissionManagerAdapter::CheckAuthPolicy("test_appId", "txt", 0);
 
     auto bundleMgr = GetBundleMgr();
     ASSERT_NE(bundleMgr, nullptr);
@@ -431,12 +431,12 @@ HWTEST_F(DlpPermissionSerializerTest, CheckAuthPolicy, TestSize.Level1)
         static_cast<int32_t>(AppExecFwk::GetBundleInfoFlag::GET_BUNDLE_INFO_WITH_SIGNATURE_INFO),
         bundleInfo, DEFAULT_USERID);
     ASSERT_EQ(ret, 0);
-    (void)PermissionManagerAdapter::CheckAuthPolicy(bundleInfo.appId, "txt");
+    (void)PermissionManagerAdapter::CheckAuthPolicy(bundleInfo.appId, "txt", 1);
 
     AppExecFwk::BundleInfo bundleInfo1;
     ret = bundleMgr->GetBundleInfoV9("com.ohos.permissionmanager",
         static_cast<int32_t>(AppExecFwk::GetBundleInfoFlag::GET_BUNDLE_INFO_WITH_SIGNATURE_INFO),
         bundleInfo1, DEFAULT_USERID);
     ASSERT_EQ(ret, 0);
-    (void)PermissionManagerAdapter::CheckAuthPolicy(bundleInfo1.appId, "txt");
+    (void)PermissionManagerAdapter::CheckAuthPolicy(bundleInfo1.appId, "txt", 0);
 }

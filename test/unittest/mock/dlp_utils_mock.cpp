@@ -429,7 +429,7 @@ int32_t DlpUtils::GetFilePathByFd(const int32_t& fd, std::string &filePath)
     return DLP_OK;
 }
 
-int32_t DlpUtils::GetRawFileFileId(const int32_t& fd, std::string& fileId)
+int32_t DlpUtils::GetRawFileAllowedOpenCount(const int32_t& fd, int32_t& allowedOpenCount)
 {
     return DLP_OK;
 }

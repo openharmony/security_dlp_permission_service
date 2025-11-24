@@ -83,10 +83,12 @@ bool PermissionManagerAdapter::GetAppIdentifierForCalling(std::string &appIdenti
     return true;
 }
 
-int32_t PermissionManagerAdapter::CheckAuthPolicy(const std::string& appId, const std::string& realFileType)
+int32_t PermissionManagerAdapter::CheckAuthPolicy(const std::string& appId, const std::string& realFileType,
+    const int32_t allowedOpenCount)
 {
     (void)appId;
     (void)realFileType;
+    (void)allowedOpenCount;
     return DLP_OK;
 }
 }  // namespace DlpPermission

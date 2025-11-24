@@ -534,6 +534,28 @@ int32_t DlpFileManager::DlpRawHmacCheckAndUpdate(std::shared_ptr<DlpFile>& fileP
     return AddDlpFileNode(filePtr);
 }
 
+// 校验明文中存储的信息是否与policy中的一致
+static bool VerifyConsistent(const PermissionPolicy& policy, std::shared_ptr<DlpFile>& filePtr)
+{
+    if (policy.GetAllowedOpenCount() != filePtr->GetAllowedOpenCount()) {
+        DLP_LOG_ERROR(LABEL, "allowedOpenCount not consistent");
+        return false;
+    }
+    std::string filePtrFileId;
+    filePtr->GetFileIdPlaintext(filePtrFileId);
+    if (policy.fileId.empty() !=
+        (filePtrFileId.empty() || filePtrFileId.find_first_not_of('\0') == std::string::npos)) {
+        DLP_LOG_ERROR(LABEL, "fileId not consistent with fileId empty");
+        return false;
+    }
+    if (!policy.fileId.empty() && !filePtrFileId.empty() &&
+        filePtrFileId.find_first_not_of('\0') != std::string::npos && policy.fileId.compare(filePtrFileId) != 0) {
+        DLP_LOG_ERROR(LABEL, "fileId not consistent with fileId not empty");
+        return false;
+    }
+    return true;
+}
+
 static int32_t SetNotOwnerAndReadOnce(const PermissionPolicy& policy, int32_t dlpFileFd,
     std::shared_ptr<DlpFile>& filePtr)
 {
@@ -593,6 +615,10 @@ int32_t DlpFileManager::ParseRawDlpFile(int32_t dlpFileFd, std::shared_ptr<DlpFi
     if (result != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "SetPolicy fail, errno=%{public}d", result);
         return result;
+    }
+    if (!VerifyConsistent(policy, filePtr)) {
+        DLP_LOG_ERROR(LABEL, "VerifyConsistent fail");
+        return DLP_PARSE_ERROR_FILE_VERIFICATION_FAIL;
     }
     struct DlpBlob key = {.size = policy.GetAeskeyLen(), .data = policy.GetAeskey()};
     struct DlpCipherParam param = {.iv = {.size = policy.GetIvLen(), .data = policy.GetIv()}};
@@ -662,6 +688,10 @@ int32_t DlpFileManager::ParseZipDlpFile(std::shared_ptr<DlpFile>& filePtr, const
     if (result != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "SetPolicy fail, errno=%{public}d", result);
         return result;
+    }
+    if (!VerifyConsistent(policy, filePtr)) {
+        DLP_LOG_ERROR(LABEL, "VerifyConsistent fail");
+        return DLP_PARSE_ERROR_FILE_VERIFICATION_FAIL;
     }
     struct DlpBlob key = {.size = policy.GetAeskeyLen(), .data = policy.GetAeskey()};
     struct DlpCipherParam param = {.iv = {.size = policy.GetIvLen(), .data = policy.GetIv()}};
