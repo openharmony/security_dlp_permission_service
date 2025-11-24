@@ -138,9 +138,14 @@ void DlpSandboxChangeCallbackManager::ExecuteCallbackAsync(const DlpSandboxInfo 
         }
     }
     auto callbackStart = [&goalCallback, &dlpSandboxInfo]() {
+        std::lock_guard<std::mutex> lock(mutex_);
         std::string name = "DlpCallback";
         pthread_setname_np(pthread_self(), name.substr(0, MAX_PTHREAD_NAME_LEN).c_str());
         std::vector<sptr<IRemoteObject>> list;
+        if (goalCallback == nullptr || goalCallback->second == nullptr) {
+            DLP_LOG_ERROR(LABEL, "goalCallback or DlpSandboxChangeCallbackRecord nullpter", dlpSandboxInfo.pid);
+            return;
+        }
         auto callback = iface_cast<IDlpSandboxStateChangeCallback>(goalCallback->second.callbackObject_);
         if (callback != nullptr) {
             DLP_LOG_INFO(LABEL, "callback excute");

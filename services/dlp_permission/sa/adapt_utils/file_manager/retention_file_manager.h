@@ -36,6 +36,7 @@ public:
     int32_t AddSandboxInfo(const RetentionInfo& retentionInfo);
     int32_t DelSandboxInfo(uint32_t tokenId);
     bool CanUninstall(const uint32_t& tokenId);
+    void SetInitStatus(const uint32_t& tokenId);
     int32_t UpdateSandboxInfo(const std::set<std::string>& docUriSet, RetentionInfo& info, bool isRetention);
     int32_t RemoveRetentionState(const std::string& bundleName, const int32_t& appIndex);
     int32_t GetRetentionSandboxList(const std::string& bundleName,
