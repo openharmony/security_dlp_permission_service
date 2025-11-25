@@ -15,6 +15,7 @@
 
 #include "algmanager_fuzzer.h"
 
+
 #include <fuzzer/FuzzedDataProvider.h>
 #include <iostream>
 #include <string>
@@ -50,17 +51,29 @@ using unordered_json = nlohmann::ordered_json;
 namespace {
 static const uint64_t SYSTEM_APP_MASK = 0x100000000;
 static const int32_t DEFAULT_USER_ID = 100;
+static const uint32_t PARCEL_NORMAL_SIZE = 16;
+static const uint32_t PARCEL_NORMAL_DATA_SIZE = sizeof(int64_t) + 1;
+static const uint32_t PARCEL_NORMAL_ALLOC_UNIT = 0;
+static const uint32_t PARCEL_NORMAL_BEGIN = 0;
+static const uint32_t PARCEL_NORMAL_END = 12;
+static const uint32_t PARCEL_OVERSIZE_DATA_SIZE = 16;
+static const uint32_t PARCEL_LARGE_BEGIN = 10;
+static const uint32_t PARCEL_SMALL_END = 1;
+static const uint32_t PARCEL_UINT_MAX = 0xffffffffU;
+static const uint32_t PARCEL_MAX_BEGIN = PARCEL_UINT_MAX - PARCEL_NORMAL_DATA_SIZE + 1;
 } // namespace
 
 namespace OHOS {
 
 void MemoryFuzzTest(const uint8_t* data, size_t size)
 {
+    (void)HcMalloc(0, '0');
     uint8_t *data1 = static_cast<uint8_t *>(HcMalloc(size, 0));
     if (data1 == nullptr) {
         return;
     }
     HcFree(data1);
+    (void)ClibMalloc(0, '0');
     uint8_t *data2 = static_cast<uint8_t *>(ClibMalloc(size, 0));
     if (data2 == nullptr) {
         return;
@@ -87,22 +100,74 @@ void BlobFuzzTest(const uint8_t* data, size_t size)
     BlobData blob2 = {size, nullptr};
     ret = IsBlobDataValid(&blob2);
     FreeBlobData(&blob2);
+    BlobData blob3 = {0, nullptr};
+    ret = IsBlobDataValid(&blob3);
+    FreeBlobData(&blob3);
+    FreeBlobData(nullptr);
     unsigned char *newdata = static_cast<unsigned char *>(HcMalloc(size, 0));
     int ret2 = memcpy_s(newdata, size, data, size);
     if (ret2 == -1) {
         HcFree(newdata);
         return;
     }
-    BlobData blob3 = {size, newdata};
-    ret = IsBlobDataValid(&blob3);
-    FreeBlobData(&blob3);
+    BlobData blob4 = {size, newdata};
+    ret = IsBlobDataValid(&blob4);
+    FreeBlobData(&blob4);
     return;
+}
+
+void DeleteParcelTest1()
+{
+    HcBool ret = HC_TRUE;
+    HcParcel testData = CreateParcel(PARCEL_NORMAL_SIZE, PARCEL_NORMAL_ALLOC_UNIT);
+    do {
+        if (testData.data == nullptr) {
+            ret = HC_FALSE;
+            break;
+        }
+        testData.beginPos = PARCEL_MAX_BEGIN;
+        testData.endPos = PARCEL_UINT_MAX;
+        uint32_t dataSize = PARCEL_NORMAL_DATA_SIZE;
+        char dst = 0;
+        ret = ParcelRead(&testData, &dst, dataSize);
+    } while (0);
+    DeleteParcel(&testData);
+}
+
+void DeleteParcelTest2()
+{
+    HcBool ret = HC_TRUE;
+    HcParcel testData = CreateParcel(PARCEL_NORMAL_SIZE, PARCEL_NORMAL_ALLOC_UNIT);
+    do {
+        if (testData.data == nullptr) {
+            ret = HC_FALSE;
+            break;
+        }
+        testData.beginPos = PARCEL_NORMAL_BEGIN;
+        testData.endPos = PARCEL_NORMAL_END;
+        uint32_t dataSize = PARCEL_OVERSIZE_DATA_SIZE;
+        char dst = 0;
+        ret = ParcelRead(&testData, &dst, dataSize);
+    } while (0);
+    DeleteParcel(&testData);
 }
 
 void ParcelFuzzTest(const uint8_t* data, size_t size)
 {
-    HcParcel testData = CreateParcel(0, 0);
-    uint32_t ret = GetParcelDataSize(nullptr);
+    uint32_t ret = 0;
+    HcParcel testData = CreateParcel(PARCEL_NORMAL_SIZE, PARCEL_NORMAL_ALLOC_UNIT);
+    do {
+        if (testData.data == nullptr) {
+            break;
+        }
+        testData.beginPos = PARCEL_LARGE_BEGIN;
+        testData.endPos = PARCEL_SMALL_END;
+        ret = GetParcelDataSize(&testData);
+    } while (0);
+    DeleteParcel(&testData);
+
+    testData = CreateParcel(0, 0);
+    ret = GetParcelDataSize(nullptr);
     ret = ParcelRead(nullptr, nullptr, 0);
     ret = ParcelRead(&testData, nullptr, 0);
     ret = ParcelRead(&testData, &testData, 0);
@@ -110,8 +175,12 @@ void ParcelFuzzTest(const uint8_t* data, size_t size)
     ret = ParcelWrite(&testData, nullptr, 0);
     ret = ParcelWrite(&testData, data, size);
     DeleteParcel(&testData);
+    DeleteParcel(nullptr);
 
-    return;
+    (void)GetParcelData(nullptr);
+    (void)GetParcelData(&testData);
+    DeleteParcelTest1();
+    DeleteParcelTest2();
 }
 
 void FileFuzzTest(const uint8_t* data, size_t size)
