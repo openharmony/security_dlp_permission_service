@@ -292,12 +292,16 @@ HWTEST_F(AppStateObserverTest, AddDlpSandboxInfo001, TestSize.Level1)
 
     AppStateObserver observer;
     DlpSandboxInfo appInfo;
+    SandboxInfo sandboxInfo;
 
     observer.AddDlpSandboxInfo(appInfo);
+    bool res = observer.GetOpeningSandboxInfo(appInfo.bundleName, appInfo.uri, appInfo.userId, sandboxInfo);
+    ASSERT_EQ(res, false);
     appInfo.uid = INCORRECT_UID;
 
     observer.AddDlpSandboxInfo(appInfo);
-    ASSERT_EQ(INCORRECT_UID, appInfo.uid);
+    res = observer.GetOpeningSandboxInfo(appInfo.bundleName, appInfo.uri, appInfo.userId, sandboxInfo);
+    ASSERT_EQ(res, false);
 }
 
 /**
