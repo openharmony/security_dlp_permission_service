@@ -543,6 +543,7 @@ static bool VerifyConsistent(const PermissionPolicy& policy, std::shared_ptr<Dlp
     }
     std::string filePtrFileId;
     filePtr->GetFileIdPlaintext(filePtrFileId);
+    filePtr->SetFileId(policy.fileId);
     if (policy.fileId.empty() !=
         (filePtrFileId.empty() || filePtrFileId.find_first_not_of('\0') == std::string::npos)) {
         DLP_LOG_ERROR(LABEL, "fileId not consistent with fileId empty");
@@ -616,6 +617,7 @@ int32_t DlpFileManager::ParseRawDlpFile(int32_t dlpFileFd, std::shared_ptr<DlpFi
         DLP_LOG_ERROR(LABEL, "SetPolicy fail, errno=%{public}d", result);
         return result;
     }
+    filePtr->SetFileId(policy.fileId);
     if (!VerifyConsistent(policy, filePtr)) {
         DLP_LOG_ERROR(LABEL, "VerifyConsistent fail");
         return DLP_PARSE_ERROR_FILE_VERIFICATION_FAIL;
