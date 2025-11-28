@@ -230,8 +230,6 @@ int32_t PermissionManagerAdapter::CheckAuthPolicy(const std::string& appId, cons
 
     std::vector<std::string> authPolicy;
     std::string fileIdAppIdentifier = allowedOpenCount > 0 ? PHOTO_APPIDENTIFIER : fileType + APPIDENTIFIER;
-    DLP_LOG_ERROR(LABEL, "bsx allowedOpenCount: %{public}d.", allowedOpenCount);
-    DLP_LOG_ERROR(LABEL, "bsx fileIdAppIdentifier: %{public}s.", fileIdAppIdentifier.c_str());
     if (!DlpUtils::GetAuthPolicyWithType(DLP_AUTH_POLICY, fileIdAppIdentifier, authPolicy)) {
         return DLP_OK;
     }
