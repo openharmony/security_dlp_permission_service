@@ -62,7 +62,8 @@ typedef enum {
     /** @error Indicates the memory error. */
     ERR_OH_OUT_OF_MEMORY = 19100012,
     /** @error DisplayName missing in want. */
-    ERR_OH_APPLICATION_NOT_AUTHORIZED = 19100018
+    ERR_OH_APPLICATION_NOT_AUTHORIZED = 19100018,
+    ERR_OH_CAPABILITY_NOT_SUPPORTED = 801
 } DLP_ErrCode;
 
 /**
