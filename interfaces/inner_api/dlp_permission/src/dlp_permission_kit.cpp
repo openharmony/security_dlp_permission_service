@@ -261,9 +261,9 @@ int32_t DlpPermissionKit::SetDlpFeature(uint32_t dlpFeatureInfo, bool& statusSet
     return res;
 }
 
-int32_t DlpPermissionKit::SetEnterprisePolicy(const std::string& policy)
+int32_t DlpPermissionKit::SetEnterprisePolicy(EnterprisePolicy policy)
 {
-    return DlpPermissionClient::GetInstance().SetEnterprisePolicy(policy);
+    return DlpPermissionClient::GetInstance().SetEnterprisePolicy(policy.policyString);
 }
 
 int32_t DlpPermissionKit::SetNotOwnerAndReadOnce(const std::string& uri, bool isNotOwnerAndReadOnce)
