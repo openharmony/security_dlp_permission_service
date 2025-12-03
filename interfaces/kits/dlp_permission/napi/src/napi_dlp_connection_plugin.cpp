@@ -372,7 +372,7 @@ static napi_value RegisterPlugin(napi_env env, napi_callback_info cbInfo)
     return result;
 }
 
-static napi_value UnregistrePlugin(napi_env env, napi_callback_info cbInfo)
+static napi_value UnregisterPlugin(napi_env env, napi_callback_info cbInfo)
 {
     CheckEmulator(env);
     DLP_LOG_INFO(LABEL, "Enter UnregisterPlugin.");
