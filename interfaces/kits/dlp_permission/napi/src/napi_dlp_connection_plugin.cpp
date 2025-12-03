@@ -30,6 +30,13 @@ namespace DlpConnection {
 
 using namespace OHOS::Security::DlpPermission;
 namespace {
+#ifdef IS_EMULATOR
+#define CheckEmulator(env)                                 \
+    DlpNapiThrow(env, DLP_DEVICE_ERROR_CAPABILITY_NOT_SUPPORTED);   \
+    return nullptr;
+#else
+#define CheckEmulator(env)
+#endif
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "NapiConnectionPlugin"};
 #ifdef SUPPORT_DLP_CREDENTIAL
 static const size_t SIZE_64_BIT = 8;
@@ -314,6 +321,7 @@ static bool ParseContextForRegisterPlugin(napi_env env, napi_callback_info cbInf
 
 static napi_value RegisterPlugin(napi_env env, napi_callback_info cbInfo)
 {
+    CheckEmulator(env);
     JsDlpConnPlugin jsPlugin;
     if (!ParseContextForRegisterPlugin(env, cbInfo, jsPlugin)) {
         DlpNapiThrow(env, ERR_JS_PARAMETER_ERROR);
@@ -364,8 +372,9 @@ static napi_value RegisterPlugin(napi_env env, napi_callback_info cbInfo)
     return result;
 }
 
-static napi_value UnregisterPlugin(napi_env env, napi_callback_info cbInfo)
+static napi_value UnregistrePlugin(napi_env env, napi_callback_info cbInfo)
 {
+    CheckEmulator(env);
     DLP_LOG_INFO(LABEL, "Enter UnregisterPlugin.");
     (void)cbInfo;
 #ifdef SUPPORT_DLP_CREDENTIAL
