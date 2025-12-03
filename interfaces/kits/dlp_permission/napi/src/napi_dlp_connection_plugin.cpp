@@ -31,7 +31,7 @@ namespace DlpConnection {
 using namespace OHOS::Security::DlpPermission;
 namespace {
 #ifdef IS_EMULATOR
-#define CheckEmulator(env)                                 \
+#define CheckEmulator(env)                                          \
     DlpNapiThrow(env, DLP_DEVICE_ERROR_CAPABILITY_NOT_SUPPORTED);   \
     return nullptr;
 #else
