@@ -61,7 +61,7 @@ public:
     int32_t GetRetentionSandboxList(const std::string& bundleName,
         std::vector<RetentionSandBoxInfo>& retentionSandBoxInfoVec, bool isRetention);
     void RetentionInfoToJson(Json& json, const RetentionInfo& info) const;
-    int32_t ClearUnreservedSandbox();
+    int32_t ClearUnreservedSandbox(int32_t isNotMatch = 0);
     Json ToJson() const override;
     void FromJson(const Json& jsonObject) override;
     std::string ToString() const override;

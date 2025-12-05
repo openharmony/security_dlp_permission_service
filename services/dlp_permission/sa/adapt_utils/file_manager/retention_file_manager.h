@@ -42,7 +42,7 @@ public:
     int32_t GetRetentionSandboxList(const std::string& bundleName,
         std::vector<RetentionSandBoxInfo>& retentionSandBoxInfoVec, bool isRetention);
     bool HasRetentionSandboxInfo(const std::string& bundleName);
-    int32_t ClearUnreservedSandbox();
+    int32_t ClearUnreservedSandbox(int32_t isNotMatch = 0);
     int32_t UpdateReadFlag(uint32_t tokenId);
     int32_t GetBundleNameSetByUserId(const int32_t userId, std::set<std::string>& bundleNameSet);
     int32_t RemoveRetentionInfoByUserId(const int32_t userId, const std::set<std::string>& bundleNameSet);

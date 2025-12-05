@@ -292,7 +292,7 @@ int32_t SandboxJsonManager::GetRetentionSandboxList(const std::string& bundleNam
     return DLP_OK;
 }
 
-int32_t SandboxJsonManager::ClearUnreservedSandbox()
+int32_t SandboxJsonManager::ClearUnreservedSandbox(int32_t isNotMatch)
 {
     DLP_LOG_INFO(LABEL, "ClearUnreservedSandbox called");
     int32_t userId;
@@ -303,7 +303,7 @@ int32_t SandboxJsonManager::ClearUnreservedSandbox()
     bool isChanged = false;
     AppExecFwk::BundleMgrClient bundleMgrClient;
     for (auto iter = infoVec_.begin(); iter != infoVec_.end();) {
-        if (!iter->docUriSet.empty() || iter->userId != userId || iter->isInit) {
+        if (!isNotMatch && (!iter->docUriSet.empty() || iter->userId != userId || iter->isInit)) {
             ++iter;
             continue;
         }

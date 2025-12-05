@@ -306,6 +306,9 @@ void AppStateObserver::GetOpeningReadOnlySandbox(const std::string& bundleName, 
         if (appInfo.userId == userId && appInfo.bundleName == bundleName &&
             appInfo.dlpFileAccess == DLPFileAccess::READ_ONLY && !appInfo.isReadOnce) {
             appIndex = appInfo.appIndex;
+            DLP_LOG_INFO(LABEL,
+                "GetOpeningReadOnlySandbox, appIndex:%{public}d, bundleName=%{public}s",
+                appIndex, bundleName.c_str());
             return;
         }
     }
