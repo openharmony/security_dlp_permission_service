@@ -347,10 +347,9 @@ static napi_value RegisterPlugin(napi_env env, napi_callback_info cbInfo)
     int32_t res = 0;
 #ifdef SUPPORT_DLP_CREDENTIAL
     std::lock_guard<std::mutex> lock(g_lockDlpStatic);
-    GetDlpSaticHandle();
-    if (g_dlpStaticHandle == nullptr) {	
-        if (sizeof(void *) == SIZE_64_BIT) {	
-            g_dlpStaticHandle = dlopen(DLP_CREDENTIAL_STATIC_PLP_64_PATH.c_str(), RTLD_LAZY);	
+    if (g_dlpStaticHandle == nullptr) {
+        if (sizeof(void *) == SIZE_64_BIT) {
+            g_dlpStaticHandle = dlopen(DLP_CREDENTIAL_STATIC_PLP_64_PATH.c_str(), RTLD_LAZY);
         } else {
             g_dlpStaticHandle = dlopen(DLP_CREDENTIAL_STATIC_PLP_32_PATH.c_str(), RTLD_LAZY);
         }
