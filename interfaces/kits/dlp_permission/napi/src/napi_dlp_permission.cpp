@@ -36,6 +36,7 @@
 #include "tokenid_kit.h"
 #include "token_setproc.h"
 #include "napi_dlp_connection_plugin.h"
+#include "napi_dlp_permission_tool.h"
 
 namespace OHOS {
 namespace Security {
@@ -44,9 +45,11 @@ namespace DlpPermission {
 using namespace OHOS::Security::DlpConnection;
 namespace {
 #ifdef IS_EMULATOR
-#define CheckEmulator(env)                                          \
-    DlpNapiThrow(env, DLP_DEVICE_ERROR_CAPABILITY_NOT_SUPPORTED);   \
-    return nullptr;
+#define CheckEmulator(env)                                              \
+    do {                                                                \
+        DlpNapiThrow(env, DLP_DEVICE_ERROR_CAPABILITY_NOT_SUPPORTED);   \
+        return nullptr;                                                 \
+    } while (0)
 #else
 #define CheckEmulator(env)
 #endif
@@ -60,35 +63,6 @@ static thread_local napi_ref dlpFileRef_;
 const std::string DLP_FILE_CLASS_NAME = "dlpFile";
 static constexpr size_t MAX_TYPE_LEN = 64;
 }  // namespace
-
-static bool CheckPermission(napi_env env, const std::string& permission)
-{
-    Security::AccessToken::AccessTokenID selfToken = GetSelfTokenID();
-    int res = Security::AccessToken::AccessTokenKit::VerifyAccessToken(selfToken, permission);
-    if (res == Security::AccessToken::PermissionState::PERMISSION_GRANTED) {
-        DLP_LOG_INFO(LABEL, "Check permission %{public}s pass", permission.c_str());
-        return true;
-    }
-    DLP_LOG_ERROR(LABEL, "Check permission %{public}s fail", permission.c_str());
-    int32_t jsErrCode = ERR_JS_PERMISSION_DENIED;
-    NAPI_CALL_BASE(env, napi_throw(env, GenerateBusinessError(env, jsErrCode, GetJsErrMsg(jsErrCode))), false);
-    return false;
-}
-
-static napi_value BindingJsWithNative(napi_env env, napi_value* argv, size_t argc)
-{
-    napi_value instance = nullptr;
-    napi_value constructor = nullptr;
-    if (napi_get_reference_value(env, dlpFileRef_, &constructor) != napi_ok) {
-        return nullptr;
-    }
-    DLP_LOG_DEBUG(LABEL, "Get a reference to the global variable dlpFileRef_ complete");
-    if (napi_new_instance(env, constructor, argc, argv, &instance) != napi_ok) {
-        return nullptr;
-    }
-    DLP_LOG_DEBUG(LABEL, "New the js instance complete");
-    return instance;
-}
 
 napi_value NapiDlpPermission::GenerateDlpFile(napi_env env, napi_callback_info cbInfo)
 {
@@ -175,7 +149,7 @@ void NapiDlpPermission::GenerateDlpFileComplete(napi_env env, napi_status status
 
         napi_value dlpPropertyJs = DlpPropertyToJs(env, asyncContext->property);
         napi_value argv[PARAM_SIZE_TWO] = {nativeObjJs, dlpPropertyJs};
-        napi_value instance = BindingJsWithNative(env, argv, PARAM_SIZE_TWO);
+        napi_value instance = NapiDlpPermissionTools::BindingJsWithNative(env, argv, PARAM_SIZE_TWO);
         if (instance == nullptr) {
             DLP_LOG_ERROR(LABEL, "native instance binding fail");
             asyncContext->errCode = DLP_NAPI_ERROR_NATIVE_BINDING_FAIL;
@@ -297,7 +271,7 @@ void NapiDlpPermission::OpenDlpFileComplete(napi_env env, napi_status status, vo
         GetDlpProperty(asyncContext->dlpFileNative, property);
         napi_value dlpPropertyJs = DlpPropertyToJs(env, property);
         napi_value argv[PARAM_SIZE_TWO] = {nativeObjJs, dlpPropertyJs};
-        napi_value instance = BindingJsWithNative(env, argv, PARAM_SIZE_TWO);
+        napi_value instance = NapiDlpPermissionTools::BindingJsWithNative(env, argv, PARAM_SIZE_TWO);
         if (instance == nullptr) {
             asyncContext->errCode = DLP_NAPI_ERROR_NATIVE_BINDING_FAIL;
         } else {
@@ -386,7 +360,7 @@ napi_value NapiDlpPermission::AddDlpLinkFile(napi_env env, napi_callback_info cb
     if (!IsSystemApp(env)) {
         return nullptr;
     }
-    if (!CheckPermission(env, PERMISSION_ACCESS_DLP_FILE)) {
+    if (!NapiDlpPermissionTools::CheckPermission(env, PERMISSION_ACCESS_DLP_FILE)) {
         return nullptr;
     }
     auto* asyncContext = new (std::nothrow) DlpLinkFileAsyncContext(env);
@@ -454,7 +428,7 @@ napi_value NapiDlpPermission::StopDlpLinkFile(napi_env env, napi_callback_info c
     if (!IsSystemApp(env)) {
         return nullptr;
     }
-    if (!CheckPermission(env, PERMISSION_ACCESS_DLP_FILE)) {
+    if (!NapiDlpPermissionTools::CheckPermission(env, PERMISSION_ACCESS_DLP_FILE)) {
         return nullptr;
     }
     auto* asyncContext = new (std::nothrow) DlpLinkFileAsyncContext(env);
@@ -522,7 +496,7 @@ napi_value NapiDlpPermission::RestartDlpLinkFile(napi_env env, napi_callback_inf
     if (!IsSystemApp(env)) {
         return nullptr;
     }
-    if (!CheckPermission(env, PERMISSION_ACCESS_DLP_FILE)) {
+    if (!NapiDlpPermissionTools::CheckPermission(env, PERMISSION_ACCESS_DLP_FILE)) {
         return nullptr;
     }
     auto* asyncContext = new (std::nothrow) DlpLinkFileAsyncContext(env);
@@ -590,7 +564,7 @@ napi_value NapiDlpPermission::ReplaceDlpLinkFile(napi_env env, napi_callback_inf
     if (!IsSystemApp(env)) {
         return nullptr;
     }
-    if (!CheckPermission(env, PERMISSION_ACCESS_DLP_FILE)) {
+    if (!NapiDlpPermissionTools::CheckPermission(env, PERMISSION_ACCESS_DLP_FILE)) {
         return nullptr;
     }
     auto* asyncContext = new (std::nothrow) DlpLinkFileAsyncContext(env);
@@ -658,7 +632,7 @@ napi_value NapiDlpPermission::DeleteDlpLinkFile(napi_env env, napi_callback_info
     if (!IsSystemApp(env)) {
         return nullptr;
     }
-    if (!CheckPermission(env, PERMISSION_ACCESS_DLP_FILE)) {
+    if (!NapiDlpPermissionTools::CheckPermission(env, PERMISSION_ACCESS_DLP_FILE)) {
         return nullptr;
     }
     auto* asyncContext = new (std::nothrow) DlpLinkFileAsyncContext(env);
@@ -726,7 +700,7 @@ napi_value NapiDlpPermission::RecoverDlpFile(napi_env env, napi_callback_info cb
     if (!IsSystemApp(env)) {
         return nullptr;
     }
-    if (!CheckPermission(env, PERMISSION_ACCESS_DLP_FILE)) {
+    if (!NapiDlpPermissionTools::CheckPermission(env, PERMISSION_ACCESS_DLP_FILE)) {
         return nullptr;
     }
     auto* asyncContext = new (std::nothrow) RecoverDlpFileAsyncContext(env);

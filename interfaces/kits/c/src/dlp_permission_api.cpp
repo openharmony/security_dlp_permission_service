@@ -25,8 +25,10 @@ using namespace OHOS::Security::DlpPermission;
 
 namespace {
 #ifdef IS_EMULATOR
-#define CheckEmulator(env)                                          \
-    return ERR_OH_CAPABILITY_NOT_SUPPORTED;
+#define CheckEmulator(env)                      \
+    do {                                        \
+        return ERR_OH_CAPABILITY_NOT_SUPPORTED; \
+    } while (0)
 #else
 #define CheckEmulator(env)
 #endif

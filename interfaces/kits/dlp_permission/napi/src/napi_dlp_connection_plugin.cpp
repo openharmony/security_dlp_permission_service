@@ -31,16 +31,20 @@ namespace DlpConnection {
 using namespace OHOS::Security::DlpPermission;
 namespace {
 #ifdef IS_EMULATOR
-#define CheckEmulator(env)                                          \
-    DlpNapiThrow(env, DLP_DEVICE_ERROR_CAPABILITY_NOT_SUPPORTED);   \
-    return nullptr;
+#define CheckEmulator(env)                                              \
+    do {                                                                \
+        DlpNapiThrow(env, DLP_DEVICE_ERROR_CAPABILITY_NOT_SUPPORTED);   \
+        return nullptr;                                                 \
+    } while (0)
 #else
 #define CheckEmulator(env)
 #endif
 #ifdef IS_EMULATOR
-#define CheckEmulatorBool(env)                                      \
-    DlpNapiThrow(env, DLP_DEVICE_ERROR_CAPABILITY_NOT_SUPPORTED);   \
-    return false;
+#define CheckEmulatorBool(env)                                          \
+    do {                                                                \
+        DlpNapiThrow(env, DLP_DEVICE_ERROR_CAPABILITY_NOT_SUPPORTED);   \
+        return false;                                                   \
+    } while (0)
 #else
 #define CheckEmulatorBool(env)
 #endif
@@ -327,6 +331,17 @@ static bool ParseContextForRegisterPlugin(napi_env env, napi_callback_info cbInf
     return true;
 }
 
+static void GetDlpSaticHandle()
+{
+    if (g_dlpStaticHandle == nullptr) {
+        if (sizeof(void *) == SIZE_64_BIT) {
+            g_dlpStaticHandle = dlopen(DLP_CREDENTIAL_STATIC_PLP_64_PATH.c_str(), RTLD_LAZY);
+        } else {
+            g_dlpStaticHandle = dlopen(DLP_CREDENTIAL_STATIC_PLP_32_PATH.c_str(), RTLD_LAZY);
+        }
+    }
+}
+
 static napi_value RegisterPlugin(napi_env env, napi_callback_info cbInfo)
 {
     CheckEmulator(env);
@@ -344,16 +359,10 @@ static napi_value RegisterPlugin(napi_env env, napi_callback_info cbInfo)
     int32_t res = 0;
 #ifdef SUPPORT_DLP_CREDENTIAL
     std::lock_guard<std::mutex> lock(g_lockDlpStatic);
+    GetDlpSaticHandle();
     if (g_dlpStaticHandle == nullptr) {
-        if (sizeof(void *) == SIZE_64_BIT) {
-            g_dlpStaticHandle = dlopen(DLP_CREDENTIAL_STATIC_PLP_64_PATH.c_str(), RTLD_LAZY);
-        } else {
-            g_dlpStaticHandle = dlopen(DLP_CREDENTIAL_STATIC_PLP_32_PATH.c_str(), RTLD_LAZY);
-        }
-        if (g_dlpStaticHandle == nullptr) {
-            delete plugin;
-            return nullptr;
-        }
+        delete plugin;
+        return nullptr;
     }
     void *func = dlsym(g_dlpStaticHandle, "Connection_Set");
     if (func == nullptr) {
