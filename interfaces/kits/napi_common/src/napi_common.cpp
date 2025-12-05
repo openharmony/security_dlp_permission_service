@@ -34,6 +34,7 @@ const std::string SYS_COMMON_UI = "sys/commonUI";
 const std::string DLP_MANAGER_BUNDLENAME = "com.ohos.dlpmanager";
 const std::string DLP_MANAGER_ABILITYNAME = "MainAbilityEx";
 const std::string ON_OFF_SANDBOX = "uninstallDLPSandbox";
+const std::string DLP_PERMISSION_SERVICE_NAME = "dlpPermissionService";
 
 static constexpr size_t MAX_ACCOUNT_LEN = 255;
 static constexpr size_t MIN_APPID_LEN = 8;
@@ -190,7 +191,8 @@ void RegisterDlpSandboxChangeScopePtr::DlpSandboxChangeCallback(DlpSandboxCallba
     auto task = [registerSandboxChangeWorker]() {
         UvQueueWorkDlpSandboxChanged(registerSandboxChangeWorker);
     };
-    if (napi_send_event(env_, task, napi_eprio_immediate) != napi_status::napi_ok) {
+    if (napi_send_event(env_, task, napi_eprio_immediate,
+        DLP_PERMISSION_SERVICE_NAME.c_str()) != napi_status::napi_ok) {
         DLP_LOG_ERROR(LABEL, "Failed to SendEvent");
         delete registerSandboxChangeWorker;
     }
@@ -227,7 +229,7 @@ void DlpSandboxChangeContext::DeleteNapiRef(napi_env env, napi_ref callbackRef)
     auto task = [env, callbackRef]() {
         napi_delete_reference(env, callbackRef);
     };
-    if (napi_send_event(env, task, napi_eprio_immediate) != napi_status::napi_ok) {
+    if (napi_send_event(env, task, napi_eprio_immediate, DLP_PERMISSION_SERVICE_NAME.c_str()) != napi_status::napi_ok) {
         DLP_LOG_ERROR(LABEL, "Failed to SendEvent");
     }
 }
@@ -259,7 +261,8 @@ void OpenDlpFileSubscriberPtr::OnOpenDlpFile(OpenDlpFileCallbackInfo &result)
     auto task = [openDlpFileWorker]() {
         UvQueueWorkOpenDlpFile(openDlpFileWorker);
     };
-    if (napi_send_event(env_, task, napi_eprio_immediate) != napi_status::napi_ok) {
+    if (napi_send_event(env_, task, napi_eprio_immediate,
+        DLP_PERMISSION_SERVICE_NAME.c_str()) != napi_status::napi_ok) {
         DLP_LOG_ERROR(LABEL, "Failed to SendEvent");
         delete openDlpFileWorker;
     }
@@ -296,7 +299,7 @@ void OpenDlpFileSubscriberContext::DeleteNapiRef(napi_env env, napi_ref callback
     auto task = [env, callbackRef]() {
         napi_delete_reference(env, callbackRef);
     };
-    if (napi_send_event(env, task, napi_eprio_immediate) != napi_status::napi_ok) {
+    if (napi_send_event(env, task, napi_eprio_immediate, DLP_PERMISSION_SERVICE_NAME.c_str()) != napi_status::napi_ok) {
         DLP_LOG_ERROR(LABEL, "Failed to SendEvent");
     }
 }
