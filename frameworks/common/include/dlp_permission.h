@@ -133,6 +133,8 @@ enum DLPErrCode : int32_t {
     DLP_ERROR_FILE_READ = -750,
     DLP_ERROR_FILE_SIZE = -751,
     DLP_ERROR_FILE_NOT_EXIST = -752,
+
+    DLP_DEVICE_ERROR_CAPABILITY_NOT_SUPPORTED = -800,
 };
 }  // namespace DlpPermission
 }  // namespace Security

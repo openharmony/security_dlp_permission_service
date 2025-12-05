@@ -24,6 +24,14 @@
 using namespace OHOS::Security::DlpPermission;
 
 namespace {
+#ifdef IS_EMULATOR
+#define CheckEmulator(env)                      \
+    do {                                        \
+        return ERR_OH_CAPABILITY_NOT_SUPPORTED; \
+    } while (0)
+#else
+#define CheckEmulator(env)
+#endif
 static const char *DLP_FILE_SUFFIX = ".dlp";
 static const uint32_t MAX_FILE_NAME_LEN = 256;
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "DlpPermissionCapi"};
@@ -87,6 +95,7 @@ static DLP_ErrCode ConvertApiResult(int32_t result)
 
 DLP_ErrCode OH_DLP_GetDlpPermissionInfo(DLP_FileAccess *dlpFileAccess, uint32_t *flag)
 {
+    CheckEmulator(env);
     if (dlpFileAccess == nullptr || flag == nullptr) {
         DLP_LOG_ERROR(LABEL, "Invalid parameter.");
         return ERR_OH_INVALID_PARAMETER;
@@ -106,6 +115,7 @@ DLP_ErrCode OH_DLP_GetDlpPermissionInfo(DLP_FileAccess *dlpFileAccess, uint32_t 
 
 DLP_ErrCode OH_DLP_GetOriginalFileName(const char *fileName, char **originalFileName)
 {
+    CheckEmulator(env);
     *originalFileName = nullptr;
     if (fileName == nullptr) {
         DLP_LOG_ERROR(LABEL, "Invalid parameter.");
@@ -137,6 +147,7 @@ DLP_ErrCode OH_DLP_GetOriginalFileName(const char *fileName, char **originalFile
 
 DLP_ErrCode OH_DLP_IsInSandbox(bool *isInSandbox)
 {
+    CheckEmulator(env);
     if (isInSandbox == nullptr) {
         DLP_LOG_ERROR(LABEL, "Invalid parameter.");
         return ERR_OH_INVALID_PARAMETER;
@@ -150,6 +161,7 @@ DLP_ErrCode OH_DLP_IsInSandbox(bool *isInSandbox)
 
 DLP_ErrCode OH_DLP_SetSandboxAppConfig(const char *configInfo)
 {
+    CheckEmulator(env);
     if (configInfo == nullptr) {
         DLP_LOG_ERROR(LABEL, "Invalid parameter.");
         return ERR_OH_INVALID_PARAMETER;
@@ -164,6 +176,7 @@ DLP_ErrCode OH_DLP_SetSandboxAppConfig(const char *configInfo)
 
 DLP_ErrCode OH_DLP_GetSandboxAppConfig(char **configInfo)
 {
+    CheckEmulator(env);
     *configInfo = nullptr;
     std::string strConfigInfo = "";
     int32_t result = DlpPermissionKit::GetSandboxAppConfig(strConfigInfo);
@@ -183,6 +196,7 @@ DLP_ErrCode OH_DLP_GetSandboxAppConfig(char **configInfo)
 
 DLP_ErrCode OH_DLP_CleanSandboxAppConfig()
 {
+    CheckEmulator(env);
     int32_t result = DlpPermissionKit::CleanSandboxAppConfig();
     if (result != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "clean sandboxAppConfig error.");

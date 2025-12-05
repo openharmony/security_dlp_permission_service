@@ -51,6 +51,7 @@ extern "C" {
 typedef enum {
     /** @error The operation is successful. */
     ERR_OH_SUCCESS = 0,
+    ERR_OH_CAPABILITY_NOT_SUPPORTED = 801,
     /** @error Invalid parameter value. */
     ERR_OH_INVALID_PARAMETER = 19100001,
     /** @error No permission to call this API, which is available only for DLP sandbox applications. */

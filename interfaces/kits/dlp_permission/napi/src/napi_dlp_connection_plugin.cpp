@@ -30,6 +30,24 @@ namespace DlpConnection {
 
 using namespace OHOS::Security::DlpPermission;
 namespace {
+#ifdef IS_EMULATOR
+#define CheckEmulator(env)                                              \
+    do {                                                                \
+        DlpNapiThrow(env, DLP_DEVICE_ERROR_CAPABILITY_NOT_SUPPORTED);   \
+        return nullptr;                                                 \
+    } while (0)
+#else
+#define CheckEmulator(env)
+#endif
+#ifdef IS_EMULATOR
+#define CheckEmulatorBool(env)                                          \
+    do {                                                                \
+        DlpNapiThrow(env, DLP_DEVICE_ERROR_CAPABILITY_NOT_SUPPORTED);   \
+        return false;                                                   \
+    } while (0)
+#else
+#define CheckEmulatorBool(env)
+#endif
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "NapiConnectionPlugin"};
 #ifdef SUPPORT_DLP_CREDENTIAL
 static const size_t SIZE_64_BIT = 8;
@@ -278,6 +296,7 @@ static bool GetCallbackProperty(napi_env env, napi_value obj, napi_ref &property
 
 static bool GetNamedJsFunction(napi_env env, napi_value object, const std::string &name, napi_ref &callback)
 {
+    CheckEmulatorBool(env);
     napi_valuetype valueType = napi_undefined;
     NAPI_CALL_BASE(env, napi_typeof(env, object, &valueType), false);
     if (valueType != napi_object) {
@@ -314,6 +333,7 @@ static bool ParseContextForRegisterPlugin(napi_env env, napi_callback_info cbInf
 
 static napi_value RegisterPlugin(napi_env env, napi_callback_info cbInfo)
 {
+    CheckEmulator(env);
     JsDlpConnPlugin jsPlugin;
     if (!ParseContextForRegisterPlugin(env, cbInfo, jsPlugin)) {
         DlpNapiThrow(env, ERR_JS_PARAMETER_ERROR);
@@ -322,7 +342,6 @@ static napi_value RegisterPlugin(napi_env env, napi_callback_info cbInfo)
     uint64_t pluginId = 0;
     auto plugin = new (std::nothrow) NapiDlpConnectionPlugin(env, jsPlugin);
     if (plugin == nullptr) {
-        DLP_LOG_ERROR(LABEL, "malloc is error.");
         return nullptr;
     }
     int32_t res = 0;
@@ -366,6 +385,7 @@ static napi_value RegisterPlugin(napi_env env, napi_callback_info cbInfo)
 
 static napi_value UnregisterPlugin(napi_env env, napi_callback_info cbInfo)
 {
+    CheckEmulator(env);
     DLP_LOG_INFO(LABEL, "Enter UnregisterPlugin.");
     (void)cbInfo;
 #ifdef SUPPORT_DLP_CREDENTIAL
@@ -380,6 +400,7 @@ static napi_value UnregisterPlugin(napi_env env, napi_callback_info cbInfo)
 
 static napi_value JsConstructor(napi_env env, napi_callback_info cbinfo)
 {
+    CheckEmulator(env);
     napi_value thisVar = nullptr;
     NAPI_CALL(env, napi_get_cb_info(env, cbinfo, nullptr, nullptr, &thisVar, nullptr));
     return thisVar;

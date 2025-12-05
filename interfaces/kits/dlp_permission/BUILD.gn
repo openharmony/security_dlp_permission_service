@@ -33,8 +33,13 @@ ohos_shared_library("libdlppermission_napi") {
     "${dlp_root_dir}/interfaces/inner_api/dlp_fuse/include",
   ]
 
+  if(is_emulator){
+    defines = [ "IS_EMULATOR" ]
+  }
+
   sources = [
     "${dlp_root_dir}/interfaces/kits/dlp_permission/napi/src/napi_dlp_permission.cpp",
+    "${dlp_root_dir}/interfaces/kits/dlp_permission/napi/src/napi_dlp_permission_tool.cpp",
     "${dlp_root_dir}/interfaces/kits/dlp_permission/napi/src/napi_dlp_permission_manager.cpp",
     "${dlp_root_dir}/interfaces/kits/dlp_permission/napi/src/napi_dlp_connection_plugin.cpp",
     "${dlp_root_dir}/interfaces/kits/napi_common/src/napi_common.cpp",
@@ -75,7 +80,7 @@ ohos_shared_library("libdlppermission_napi") {
     "ipc:ipc_core",
     "napi:ace_napi",
     "samgr:samgr_proxy"
-  ] 
+  ]
 
   if (dlp_credential_enable == true) {
     cflags_cc += [ "-DSUPPORT_DLP_CREDENTIAL" ]

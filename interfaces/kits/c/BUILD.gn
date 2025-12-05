@@ -25,6 +25,10 @@ ohos_shared_library("ohdlp_permission") {
     "${dlp_root_dir}/interfaces/kits/c/include",
   ]
 
+  if(is_emulator){
+    defines = [ "IS_EMULATOR" ]
+  }
+
   sources = [ "${dlp_root_dir}/interfaces/kits/c/src/dlp_permission_api.cpp" ]
 
   deps = [
