@@ -231,9 +231,10 @@ static void ConnectServerWork(JsDlpConnectionParam *param)
         napi_value argv[] = {napiRequestId, napiRequestData, napiCallback};
         NapiCallVoidFunction(param->env, argv, PARAM3, param->func, param->context);
     } while (0);
-    std::unique_lock<std::mutex> lock(param->lockInfo->mutex);
+    param->lockInfo->mutex.lock();
     param->lockInfo->count--;
     param->lockInfo->condition.notify_all();
+    param->lockInfo->mutex.unlock();
     napi_close_handle_scope(param->env, scope);
     if (res != 0) {
         delete param;
