@@ -39,7 +39,6 @@ ohos_shared_library("libdlppermission_napi") {
 
   sources = [
     "${dlp_root_dir}/interfaces/kits/dlp_permission/napi/src/napi_dlp_permission.cpp",
-    "${dlp_root_dir}/interfaces/kits/dlp_permission/napi/src/napi_dlp_permission_tool.cpp",
     "${dlp_root_dir}/interfaces/kits/dlp_permission/napi/src/napi_dlp_permission_manager.cpp",
     "${dlp_root_dir}/interfaces/kits/dlp_permission/napi/src/napi_dlp_connection_plugin.cpp",
     "${dlp_root_dir}/interfaces/kits/napi_common/src/napi_common.cpp",
@@ -132,6 +131,7 @@ ohos_shared_library("libdlpsetdlpfeature_napi") {
     "ability_runtime:napi_base_context",
     "ability_runtime:napi_common",
     "access_token:libaccesstoken_sdk",
+    "access_token:libtokensetproc_shared",
     "ace_engine:ace_uicontent",
     "napi:ace_napi",
     "ipc:ipc_single",
