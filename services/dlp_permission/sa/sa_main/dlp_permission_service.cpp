@@ -18,6 +18,7 @@
 #include "accesstoken_kit.h"
 #include "access_token_adapter.h"
 #include "account_adapt.h"
+#include "appexecfwk_errors.h"
 #include "app_mgr_client.h"
 #include "bundle_manager_adapter.h"
 #include "bundle_mgr_client.h"
@@ -283,11 +284,17 @@ bool DlpPermissionService::InsertDlpSandboxInfo(DlpSandboxInfo& sandboxInfo, boo
 {
     AppExecFwk::BundleInfo info;
     AppExecFwk::BundleMgrClient bundleMgrClient;
-    if (bundleMgrClient.GetSandboxBundleInfo(sandboxInfo.bundleName, sandboxInfo.appIndex, sandboxInfo.userId, info) !=
-        DLP_OK) {
-        DLP_LOG_ERROR(LABEL, "Get sandbox bundle info fail appIndex=%{public}d", sandboxInfo.appIndex);
+    int32_t res = bundleMgrClient.GetSandboxBundleInfo(sandboxInfo.bundleName, sandboxInfo.appIndex,
+        sandboxInfo.userId, info);
+    if (res != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "Get sandbox bundle info fail appIndex=%{public}d, res = %{public}d",
+            sandboxInfo.appIndex, res);
+        int32_t isNotMatch = res == ERR_APPEXECFWK_SANDBOX_INSTALL_NO_SANDBOX_APP_INFO ? 1 : 0;
         if (hasRetention) {
-            RetentionFileManager::GetInstance().ClearUnreservedSandbox();
+            DLP_LOG_INFO(LABEL,
+                "APP is sandboxInfo.bundleName :%{public}s, isNotMatch=%{public}d",
+                sandboxInfo.bundleName.c_str(), isNotMatch);
+            RetentionFileManager::GetInstance().ClearUnreservedSandbox(isNotMatch);
         }
         return false;
     }
@@ -296,6 +303,7 @@ bool DlpPermissionService::InsertDlpSandboxInfo(DlpSandboxInfo& sandboxInfo, boo
         sandboxInfo.appIndex);
     sandboxInfo.isReadOnce = isNotOwnerAndReadOnce;
     appStateObserver_->AddDlpSandboxInfo(sandboxInfo);
+    DLP_LOG_INFO(LABEL, "isNotOwnerAndReadOnce=%{public}d", isNotOwnerAndReadOnce);
     VisitRecordFileManager::GetInstance().AddVisitRecord(sandboxInfo.bundleName, sandboxInfo.userId, sandboxInfo.uri);
     return true;
 }
@@ -304,6 +312,7 @@ static bool FindMatchingSandbox(const RetentionSandBoxInfo& info, const GetAppIn
 {
     if (params.isReadOnly && !params.isNotOwnerAndReadOnce && !info.isReadOnce_ &&
         info.dlpFileAccess_ == DLPFileAccess::READ_ONLY) {
+        DLP_LOG_INFO(LABEL, "FindMatchingSandbox is success in first stage");
         return true;
     }
     if (params.isReadOnly) {
@@ -311,6 +320,7 @@ static bool FindMatchingSandbox(const RetentionSandBoxInfo& info, const GetAppIn
     }
     auto setIter = info.docUriSet_.find(params.uri);
     if (setIter != info.docUriSet_.end()) {
+        DLP_LOG_INFO(LABEL, "FindMatchingSandbox is success in second stage");
         return true;
     }
     return false;
@@ -319,6 +329,7 @@ static bool FindMatchingSandbox(const RetentionSandBoxInfo& info, const GetAppIn
 static int32_t GetAppIndexFromRetentionInfo(const GetAppIndexParams& params,
     DlpSandboxInfo& dlpSandBoxInfo, bool& isNeedInstall)
 {
+    DLP_LOG_INFO(LABEL, "GetAppIndexFromRetentionInfo");
     std::vector<RetentionSandBoxInfo> infoVec;
     auto res = RetentionFileManager::GetInstance().GetRetentionSandboxList(params.bundleName, infoVec, true);
     if (res != DLP_OK) {
@@ -328,6 +339,7 @@ static int32_t GetAppIndexFromRetentionInfo(const GetAppIndexParams& params,
     }
     for (const auto& info: infoVec) {
         if (FindMatchingSandbox(info, params)) {
+            DLP_LOG_INFO(LABEL, "FindMatchingSandbox is success");
             dlpSandBoxInfo.appIndex = info.appIndex_;
             dlpSandBoxInfo.hasRead = info.hasRead_;
             isNeedInstall = false;
@@ -353,6 +365,9 @@ static int32_t CheckWithInstallDlpSandbox(const std::string& bundleName, DLPFile
 static void FillDlpSandboxInfo(DlpSandboxInfo& dlpSandboxInfo, const std::string& bundleName,
     DLPFileAccess dlpFileAccess, int32_t userId, const std::string& uri)
 {
+    DLP_LOG_INFO(LABEL,
+        "bundleName :%{public}s, dlpFileAccess=%{public}d, userId:%{public}d",
+        bundleName.c_str(), dlpFileAccess, userId);
     dlpSandboxInfo.bundleName = bundleName;
     dlpSandboxInfo.dlpFileAccess = dlpFileAccess;
     dlpSandboxInfo.userId = userId;

@@ -155,13 +155,13 @@ int32_t RetentionFileManager::RemoveRetentionState(const std::string& bundleName
     return UpdateFile(res);
 }
 
-int32_t RetentionFileManager::ClearUnreservedSandbox()
+int32_t RetentionFileManager::ClearUnreservedSandbox(int32_t isNotMatch)
 {
     if (!Init()) {
         DLP_LOG_ERROR(LABEL, "Init failed!");
         return DLP_RETENTION_UPDATE_ERROR;
     }
-    int32_t res = sandboxJsonManager_->ClearUnreservedSandbox();
+    int32_t res = sandboxJsonManager_->ClearUnreservedSandbox(isNotMatch);
     return UpdateFile(res);
 }
 
