@@ -23,6 +23,11 @@
 #include "securec.h"
 #include "string_wrapper.h"
 #include "want_params_wrapper.h"
+#include "permission_policy.h"
+#include "js_native_api_types.h"
+#include "tokenid_kit.h"
+#include "token_setproc.h"
+#include "accesstoken_kit.h"
 
 namespace OHOS {
 namespace Security {
@@ -325,6 +330,57 @@ void DlpNapiThrow(napi_env env, int32_t nativeErrCode)
 void DlpNapiThrow(napi_env env, int32_t jsErrCode, const std::string &jsErrMsg)
 {
     NAPI_CALL_RETURN_VOID(env, napi_throw(env, GenerateBusinessError(env, jsErrCode, jsErrMsg)));
+}
+
+bool CheckPermission(napi_env env, const std::string& permission)
+{
+    Security::AccessToken::AccessTokenID selfToken = GetSelfTokenID();
+    int res = Security::AccessToken::AccessTokenKit::VerifyAccessToken(selfToken, permission);
+    if (res == Security::AccessToken::PermissionState::PERMISSION_GRANTED) {
+        DLP_LOG_INFO(LABEL, "Check permission %{public}s pass", permission.c_str());
+        return true;
+    }
+    DLP_LOG_ERROR(LABEL, "Check permission %{public}s fail", permission.c_str());
+    int32_t jsErrCode = ERR_JS_PERMISSION_DENIED;
+    NAPI_CALL_BASE(env, napi_throw(env, GenerateBusinessError(env, jsErrCode, GetJsErrMsg(jsErrCode))), false);
+    return false;
+}
+
+napi_value BindingJsWithNative(napi_env env, napi_value* argv, size_t argc, napi_ref& dlpFileRef_)
+{
+    napi_value instance = nullptr;
+    napi_value constructor = nullptr;
+    if (napi_get_reference_value(env, dlpFileRef_, &constructor) != napi_ok) {
+        return nullptr;
+    }
+    DLP_LOG_DEBUG(LABEL, "Get a reference to the global variable dlpFileRef_ complete");
+    if (napi_new_instance(env, constructor, argc, argv, &instance) != napi_ok) {
+        return nullptr;
+    }
+    DLP_LOG_DEBUG(LABEL, "New the js instance complete");
+    return instance;
+}
+
+void GetDlpProperty(std::shared_ptr<DlpFile>& dlpFileNative, DlpProperty& property)
+{
+    PermissionPolicy policy;
+    dlpFileNative->GetPolicy(policy);
+    std::string contactAccount;
+    dlpFileNative->GetContactAccount(contactAccount);
+    std::string fileId;
+    dlpFileNative->GetFileId(fileId);
+    property = {
+        .ownerAccount = policy.ownerAccount_,
+        .ownerAccountId = policy.ownerAccountId_,
+        .authUsers = policy.authUsers_,
+        .contactAccount = contactAccount,
+        .ownerAccountType = policy.ownerAccountType_,
+        .offlineAccess = dlpFileNative->GetOfflineAccess(),
+        .supportEveryone = policy.supportEveryone_,
+        .everyonePerm = policy.everyonePerm_,
+        .expireTime = policy.expireTime_,
+        .allowedOpenCount = policy.allowedOpenCount_,
+    };
 }
 
 void ThrowParamError(const napi_env env, const std::string& param, const std::string& type)
