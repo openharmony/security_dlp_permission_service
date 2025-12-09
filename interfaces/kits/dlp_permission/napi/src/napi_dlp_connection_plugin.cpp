@@ -49,6 +49,7 @@ namespace {
 #define CheckEmulatorBool(env)
 #endif
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "NapiConnectionPlugin"};
+const std::string DLP_PERMISSION_SERVICE_NAME = "dlpPermissionService";
 #ifdef SUPPORT_DLP_CREDENTIAL
 static const size_t SIZE_64_BIT = 8;
 static const std::string DLP_CREDENTIAL_STATIC_PLP_32_PATH = "/system/lib/libdlp_connection_static.z.so";
@@ -76,7 +77,7 @@ static void ReleaseNapiRefArray(napi_env env, const std::vector<napi_ref> &napiR
             }
         }
     };
-    if (napi_ok != napi_send_event(env, task, napi_eprio_high)) {
+    if (napi_ok != napi_send_event(env, task, napi_eprio_high, DLP_PERMISSION_SERVICE_NAME.c_str())) {
         DLP_LOG_ERROR(LABEL, "napi_send_event is error.");
     }
 }
@@ -267,7 +268,7 @@ void NapiDlpConnectionPlugin::ConnectServer(const std::string requestId, const s
     auto task = [param]() {
         ConnectServerWork(param);
     };
-    if (napi_ok != napi_send_event(env_, task, napi_eprio_high)) {
+    if (napi_ok != napi_send_event(env_, task, napi_eprio_high, DLP_PERMISSION_SERVICE_NAME.c_str())) {
         DLP_LOG_ERROR(LABEL, "napi_send_event error");
         delete param;
         return;
