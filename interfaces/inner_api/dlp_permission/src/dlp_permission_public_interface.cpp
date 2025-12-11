@@ -149,6 +149,12 @@ int32_t ParseGeneralInfo(const nlohmann::json& jsonObj, GenerateInfoParams& para
     if (iter != jsonObj.end() && iter->is_number_integer()) {
         params.certSize = iter->get<uint32_t>();
     }
+    ParseFeatures(jsonObj, params);
+    return DLP_OK;
+}
+
+void ParseFeatures(const nlohmann::json& jsonObj, GenerateInfoParams& params)
+{
     iter = jsonObj.find(FILEID);
     if (iter != jsonObj.end() && iter->is_string()) {
         params.fileId = iter->get<std::string>();
@@ -163,10 +169,10 @@ int32_t ParseGeneralInfo(const nlohmann::json& jsonObj, GenerateInfoParams& para
     if (iter != jsonObj.end() && iter->is_boolean()) {
         params.waterMarkConfig = iter->get<bool>();
     } else {
-        params.waterMarkConfig = false;   // 如果没有该字段或者被篡改，默认false，后面会和policy中的waterMarkConfig做校验
+        params.waterMarkConfig = false;
     }
-    return DLP_OK;
 }
+
 }  // namespace DlpPermission
 }  // namespace Security
 }  // namespace OHOS

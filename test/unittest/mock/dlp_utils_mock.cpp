@@ -429,7 +429,8 @@ int32_t DlpUtils::GetFilePathByFd(const int32_t& fd, std::string &filePath)
     return DLP_OK;
 }
 
-int32_t DlpUtils::GetRawFileAllowedOpenCount(const int32_t& fd, int32_t& allowedOpenCount)
+int32_t DlpUtils::GetRawFileAllowedOpenCount(const int32_t& fd,
+    int32_t& allowedOpenCount, bool& waterMarkConfig)
 {
     return DLP_OK;
 }

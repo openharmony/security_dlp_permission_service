@@ -31,6 +31,7 @@ public:
         const std::string& appId, bool offlineAccess);
     static int32_t SetReadFlag(uint32_t uid);
     static int32_t SetNotOwnerAndReadOnce(const std::string& uri, bool isNotOwnerAndReadOnce);
+    static int32_t GetWaterMark(const bool waterMarkConfig);
 };
 }  // namespace DlpPermission
 }  // namespace Security

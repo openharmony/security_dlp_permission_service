@@ -67,6 +67,12 @@ int32_t DlpPermissionKit::SetNotOwnerAndReadOnce(const std::string& uri, bool is
 {
     return DLP_OK;
 }
+
+static int32_t GetWaterMark(const bool waterMarkConfig)
+{
+    return DLP_OK;
+}
+
 }  // namespace DlpPermission
 }  // namespace Security
 }  // namespace OHOS

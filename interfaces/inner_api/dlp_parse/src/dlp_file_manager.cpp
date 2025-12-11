@@ -536,7 +536,6 @@ int32_t DlpFileManager::DlpRawHmacCheckAndUpdate(std::shared_ptr<DlpFile>& fileP
     return AddDlpFileNode(filePtr);
 }
 
-// 校验明文中存储的信息是否与policy中的一致
 static bool VerifyConsistent(const PermissionPolicy& policy, std::shared_ptr<DlpFile>& filePtr)
 {
     if (policy.GetAllowedOpenCount() != filePtr->GetAllowedOpenCount()) {
@@ -597,6 +596,28 @@ static int32_t SetNotOwnerAndReadOnce(const PermissionPolicy& policy, int32_t dl
     return DLP_OK;
 }
 
+static int32_t VerifyAndGetWaterMark(PermissionPolicy& policy, std::shared_ptr<DlpFile>& filePtr)
+{
+    policy.waterMarkConfig_ = filePtr->GetWaterMarkConfig();
+    result = filePtr->SetPolicy(policy);
+    if (result != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "SetPolicy fail, errno=%{public}d", result);
+        return result;
+    }
+    filePtr->SetFileId(policy.fileId);
+    if (!VerifyConsistent(policy, filePtr)) {
+        DLP_LOG_ERROR(LABEL, "VerifyConsistent fail");
+        return DLP_PARSE_ERROR_FILE_VERIFICATION_FAIL;
+    }
+    if (policy.GetwaterMarkConfig()) {
+        result = DlpPermissionKit::GetWaterMark(policy.GetwaterMarkConfig());
+        if (result != DLP_OK) {
+            DLP_LOG_ERROR(LABEL, "GetWaterMark fail, errno=%{public}d", result);
+        }
+    }
+    return DLP_OK;
+}
+
 int32_t DlpFileManager::ParseRawDlpFile(int32_t dlpFileFd, std::shared_ptr<DlpFile>& filePtr, const std::string& appId,
     const std::string& realType, sptr<CertParcel>& certParcel)
 {
@@ -619,22 +640,10 @@ int32_t DlpFileManager::ParseRawDlpFile(int32_t dlpFileFd, std::shared_ptr<DlpFi
         DLP_LOG_ERROR(LABEL, "Parse cert fail, errno=%{public}d", result);
         return result;
     }
-    policy.waterMarkConfig_ = filePtr->SetWaterMarkConfig();
-    result = filePtr->SetPolicy(policy);
+    result = VerifyAndGetWaterMark(policy, filePtr);
     if (result != DLP_OK) {
-        DLP_LOG_ERROR(LABEL, "SetPolicy fail, errno=%{public}d", result);
+        DLP_LOG_ERROR(LABEL, "get watermark failed, errno=%{public}d", result);
         return result;
-    }
-    filePtr->SetFileId(policy.fileId);
-    if (!VerifyConsistent(policy, filePtr)) {
-        DLP_LOG_ERROR(LABEL, "VerifyConsistent fail");
-        return DLP_PARSE_ERROR_FILE_VERIFICATION_FAIL;
-    }
-    if (policy.GetwaterMarkConfig()) {
-        result = DlpPermissionKit::GetWaterMark(policy.GetwaterMarkConfig());
-        if (result != DLP_OK) {
-            DLP_LOG_ERROR(LABEL, "GetWaterMark fail, errno=%{public}d", result);
-        }
     }
     struct DlpBlob key = {.size = policy.GetAeskeyLen(), .data = policy.GetAeskey()};
     struct DlpCipherParam param = {.iv = {.size = policy.GetIvLen(), .data = policy.GetIv()}};
@@ -683,6 +692,32 @@ int32_t DlpFileManager::OpenRawDlpFile(int32_t dlpFileFd, std::shared_ptr<DlpFil
     return DlpRawHmacCheckAndUpdate(filePtr, certParcel->offlineCert, filePtr->GetAllowedOpenCount());
 }
 
+static int32_t CheckZipFileParams(std::shared_ptr<DlpFile>& filePtr, const struct DlpBlob& key,
+    const struct DlpUsageSpec& usage, const struct DlpBlob& hmacKey)
+{
+    int32_t result = filePtr->SetCipher(key, usage, hmacKey);
+    if (result != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "SetCipher fail, errno=%{public}d", result);
+        return result;
+    }
+    result = filePtr->HmacCheck();
+    if (result != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "HmacCheck fail, errno=%{public}d", result);
+        return result;
+    }
+    result = UpdateDlpFile(certParcel->offlineCert, filePtr, policy.GetAllowedOpenCount());
+    if (result != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "UpdateDlpFile fail, errno=%{public}d", result);
+        return result;
+    }
+    result = SetNotOwnerAndReadOnce(policy, dlpFileFd, filePtr);
+    if (result != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "SetNotOwnerAndReadOnce fail, errno=%{public}d", result);
+        return result;
+    }
+    return DLP_OK;
+}
+
 int32_t DlpFileManager::ParseZipDlpFile(std::shared_ptr<DlpFile>& filePtr, const std::string& appId, int32_t dlpFileFd,
     sptr<CertParcel>& certParcel)
 {
@@ -706,7 +741,7 @@ int32_t DlpFileManager::ParseZipDlpFile(std::shared_ptr<DlpFile>& filePtr, const
         DLP_LOG_ERROR(LABEL, "SetPolicy fail, errno=%{public}d", result);
         return result;
     }
-    policy.waterMarkConfig_ = filePtr->SetWaterMarkConfig();
+    policy.waterMarkConfig_ = filePtr->GetWaterMarkConfig();
     if (!VerifyConsistent(policy, filePtr)) {
         DLP_LOG_ERROR(LABEL, "VerifyConsistent fail");
         return DLP_PARSE_ERROR_FILE_VERIFICATION_FAIL;
@@ -721,24 +756,9 @@ int32_t DlpFileManager::ParseZipDlpFile(std::shared_ptr<DlpFile>& filePtr, const
     struct DlpCipherParam param = {.iv = {.size = policy.GetIvLen(), .data = policy.GetIv()}};
     struct DlpUsageSpec usage = {.mode = DLP_MODE_CTR, .algParam = &param};
     struct DlpBlob hmacKey = {.size = policy.GetHmacKeyLen(), .data = policy.GetHmacKey()};
-    result = filePtr->SetCipher(key, usage, hmacKey);
+    result = CheckZipFileParams(fileptr, key, usage, hmacKey);
     if (result != DLP_OK) {
-        DLP_LOG_ERROR(LABEL, "SetCipher fail, errno=%{public}d", result);
-        return result;
-    }
-    result = filePtr->HmacCheck();
-    if (result != DLP_OK) {
-        DLP_LOG_ERROR(LABEL, "HmacCheck fail, errno=%{public}d", result);
-        return result;
-    }
-    result = UpdateDlpFile(certParcel->offlineCert, filePtr, policy.GetAllowedOpenCount());
-    if (result != DLP_OK) {
-        DLP_LOG_ERROR(LABEL, "UpdateDlpFile fail, errno=%{public}d", result);
-        return result;
-    }
-    result = SetNotOwnerAndReadOnce(policy, dlpFileFd, filePtr);
-    if (result != DLP_OK) {
-        DLP_LOG_ERROR(LABEL, "SetNotOwnerAndReadOnce fail, errno=%{public}d", result);
+        DLP_LOG_ERROR(LABEL, "Check zip file params fail, errno=%{public}d", result);
         return result;
     }
     return DLP_OK;

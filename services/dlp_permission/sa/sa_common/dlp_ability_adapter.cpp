@@ -77,6 +77,14 @@ void DlpAbilityAdapter::DisconnectPermServiceAbility()
     return;
 }
 
+static void handleErrCondition(WaterMarkInfo &waterMarkInfo, std::shared_mutex &waterMarkInfoMutex, 
+    std::condition_variable_any &waterMarkInfoCv)
+{
+    std::unique_lock<std::shared_mutex> lock(waterMarkInfoMutex);
+    waterMarkInfo.waterMarkStatus = -1;
+    waterMarkInfoCv.notify_all();
+}
+
 int32_t DlpAbilityAdapter::HandleGetWaterMark(int32_t userId,
     WaterMarkInfo &waterMarkInfo, std::shared_mutex &waterMarkInfoMutex, std::condition_variable_any &waterMarkInfoCv)
 {
@@ -85,11 +93,7 @@ int32_t DlpAbilityAdapter::HandleGetWaterMark(int32_t userId,
         [this, &waterMarkInfo, &waterMarkInfoMutex, &waterMarkInfoCv](sptr<IRemoteObject> remoteObj) -> void {
         if (remoteObj == nullptr) {
             DLP_LOG_ERROR(LABEL, "ConnectCallback is nullptr.");
-            {
-                std::unique_lock<std::shared_mutex> lock(waterMarkInfoMutex);
-                waterMarkInfo.waterMarkStatus = -1;
-                waterMarkInfoCv.notify_all();
-            }
+            handleErrCondition(waterMarkInfo, waterMarkInfoMutex, waterMarkInfoCv);
             return;
         }
 
@@ -97,21 +101,13 @@ int32_t DlpAbilityAdapter::HandleGetWaterMark(int32_t userId,
         sptr<DlpAbilityStub> stub = DlpAbilityStub::GetInstance(callback_);
         if (stub == nullptr) {
             DLP_LOG_ERROR(LABEL, "DlpAbilityStub is nullptr.");
-            {
-                std::unique_lock<std::shared_mutex> lock(waterMarkInfoMutex);
-                waterMarkInfo.waterMarkStatus = -1;
-                waterMarkInfoCv.notify_all();
-            }
+            handleErrCondition(waterMarkInfo, waterMarkInfoMutex, waterMarkInfoCv);
             return;
         }
         int32_t waterMarkFd = proxy.HandleGetWaterMark(stub);
         if (waterMarkFd < 0) {
             DLP_LOG_ERROR(LABEL, "HandleGetWaterMark failed, fd: %{public}d", waterMarkFd);
-            {
-                std::unique_lock<std::shared_mutex> lock(waterMarkInfoMutex);
-                waterMarkInfo.waterMarkStatus = -1;
-                waterMarkInfoCv.notify_all();
-            }
+            handleErrCondition(waterMarkInfo, waterMarkInfoMutex, waterMarkInfoCv);
         }
         {
             std::unique_lock<std::shared_mutex> lock(waterMarkInfoMutex);
@@ -124,11 +120,7 @@ int32_t DlpAbilityAdapter::HandleGetWaterMark(int32_t userId,
     if (res != DLP_OK) {
         DLP_LOG_ERROR(LABEL,
             "ConnectPermServiceAbility failed, errCode: %{public}d", res);
-        {
-            std::unique_lock<std::shared_mutex> lock(waterMarkInfoMutex);
-            waterMarkInfo.waterMarkStatus = -1;
-            waterMarkInfoCv.notify_all();
-        }
+        handleErrCondition(waterMarkInfo, waterMarkInfoMutex, waterMarkInfoCv);
     }
     return res;
 }

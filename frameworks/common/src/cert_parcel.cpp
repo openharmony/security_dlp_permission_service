@@ -113,6 +113,15 @@ CertParcel* CertParcel::Unmarshalling(Parcel& data)
         DLP_LOG_ERROR(LABEL, "Read needCheckCustomProperty fail");
         return FreeCertParcel(parcel);
     }
+    if (UnmarshallingProperty(parcel) == nullptr) {
+        DLP_LOG_ERROR(LABEL, "unmarshall property fail");
+        return nullptr;
+    }
+    return parcel;
+}
+
+static CertParcel* UnmarshallingProperty(Parcel& data)
+{
     if (!data.ReadInt32(parcel->decryptType)) {
         DLP_LOG_ERROR(LABEL, "Read decryptType fail");
         return FreeCertParcel(parcel);
