@@ -599,7 +599,7 @@ static int32_t SetNotOwnerAndReadOnce(const PermissionPolicy& policy, int32_t dl
 static int32_t VerifyAndGetWaterMark(PermissionPolicy& policy, std::shared_ptr<DlpFile>& filePtr)
 {
     policy.waterMarkConfig_ = filePtr->GetWaterMarkConfig();
-    result = filePtr->SetPolicy(policy);
+    int32_t result = filePtr->SetPolicy(policy);
     if (result != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "SetPolicy fail, errno=%{public}d", result);
         return result;
