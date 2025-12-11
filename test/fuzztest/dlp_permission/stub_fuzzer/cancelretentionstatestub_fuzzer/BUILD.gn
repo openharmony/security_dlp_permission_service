@@ -25,6 +25,10 @@ ohos_fuzztest("CancelRetentionStateStubFuzzTest") {
 
   sources = [
     "${dlp_root_dir}/services/dlp_permission/sa/sa_main/dlp_permission_service.cpp",
+    "${dlp_root_dir}/services/dlp_permission/sa/sa_common/dlp_ability_adapter.cpp",
+    "${dlp_root_dir}/services/dlp_permission/sa/sa_common/dlp_ability_conn.cpp",
+    "${dlp_root_dir}/services/dlp_permission/sa/sa_common/dlp_ability_proxy.cpp",
+    "${dlp_root_dir}/services/dlp_permission/sa/sa_common/dlp_ability_stub.cpp",
     "${dlp_root_dir}/services/dlp_permission/sa/mock/access_token_adapter_mock.cpp",
     "cancelretentionstatestub_fuzzer.cpp",
   ]
@@ -58,5 +62,15 @@ ohos_fuzztest("CancelRetentionStateStubFuzzTest") {
     "os_account:os_account_innerkits",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
+    "ability_runtime:extension_manager",
+    "window_manager:libwm",
+    "image_framework:image_native",
+    "image_framework:image_source",
+    "image_framework:image_source_ndk",
+    "image_framework:pixelmap_ndk",
+    "image_framework:pixelmap",
+    "resource_management:librawfile",
+    "graphic_2d:librender_service_client",
+    "graphic_2d:librender_service_base",
   ]
 }
