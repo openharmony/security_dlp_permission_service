@@ -323,12 +323,12 @@ static int32_t ReceiveCallback(int32_t errCode, uint64_t reqId, uint8_t *outData
     return DLP_OK;
 }
 
-static int32_t GetPixelmapFromFd(WaterMarkInfo& waterMarkInfo_, std::shared_mutex &waterMarkInfoMutex)
+static int32_t GetPixelmapFromFd(WaterMarkInfo& waterMarkInfo, std::shared_mutex &waterMarkInfoMutex)
 {
     int32_t fd = -1;
     {
         std::shared_lock<std::shared_mutex> lock(waterMarkInfoMutex);
-        fd = waterMarkInfo_.waterMarkFd;
+        fd = waterMarkInfo.waterMarkFd;
     }
     if (fd < 0) {
         DLP_LOG_ERROR(LABEL, 
@@ -362,7 +362,7 @@ static int32_t GetPixelmapFromFd(WaterMarkInfo& waterMarkInfo_, std::shared_mute
     std::shared_ptr<Media::PixelMap> pixelMap = resPixelmap->GetInnerPixelmap();
     {
         std::unique_lock<std::shared_mutex> lock(waterMarkInfoMutex);
-        waterMarkInfo_.waterMarkImg = pixelMap;
+        waterMarkInfo.waterMarkImg = pixelMap;
     }
     DLP_LOG_INFO(LABEL, "Create pixel map success.");
     return DLP_OK;
