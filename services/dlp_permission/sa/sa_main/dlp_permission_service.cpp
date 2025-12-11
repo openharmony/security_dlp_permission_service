@@ -345,8 +345,7 @@ static int32_t GetPixelmapFromFd(WaterMarkInfo& waterMarkInfo, std::shared_mutex
     OH_ImageSourceInfo_Create(&imageInfo);
     errCode = OH_ImageSourceNative_GetImageInfo(source, 0, imageInfo);
     if (errCode != IMAGE_SUCCESS) {
-        DLP_LOG_ERROR(LABEL,
-            "OH_ImageSourceNative_GetImageInfo failed, errCode: %{public}d", errCode);
+        DLP_LOG_ERROR(LABEL, "OH_ImageSourceNative_GetImageInfo failed, errCode: %{public}d", errCode);
         return DLP_CREATE_PIXELMAP_ERROR;
     }
 
