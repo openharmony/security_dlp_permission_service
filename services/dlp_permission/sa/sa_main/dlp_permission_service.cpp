@@ -331,8 +331,7 @@ static int32_t GetPixelmapFromFd(WaterMarkInfo& waterMarkInfo, std::shared_mutex
         fd = waterMarkInfo.waterMarkFd;
     }
     if (fd < 0) {
-        DLP_LOG_ERROR(LABEL, 
-            "unexpect watermark fd: %{public}d", fd);
+        DLP_LOG_ERROR(LABEL, "unexpect watermark fd: %{public}d", fd);
         return DLP_IPC_CALLBACK_ERROR;
     }
     OH_ImageSourceNative *source = nullptr;
