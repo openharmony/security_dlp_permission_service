@@ -67,7 +67,6 @@ napi_value NapiDlpPermission::GenerateDlpFile(napi_env env, napi_callback_info c
 {
     CheckEmulator(env);
     if (!IsSystemApp(env)) {
-        DlpNapiThrow(env, DLP_SERVICE_ERROR_NOT_SYSTEM_APP);
         return nullptr;
     }
     auto* asyncContext = new (std::nothrow) GenerateDlpFileAsyncContext(env);
@@ -79,7 +78,6 @@ napi_value NapiDlpPermission::GenerateDlpFile(napi_env env, napi_callback_info c
     std::unique_ptr<GenerateDlpFileAsyncContext> asyncContextPtr { asyncContext };
 
     if (!GetGenerateDlpFileParams(env, cbInfo, *asyncContext)) {
-        DlpNapiThrow(env, DLP_SERVICE_ERROR_VALUE_INVALID);
         return nullptr;
     }
 
@@ -167,7 +165,6 @@ napi_value NapiDlpPermission::OpenDlpFile(napi_env env, napi_callback_info cbInf
 {
     CheckEmulator(env);
     if (!IsSystemApp(env)) {
-        DlpNapiThrow(env, DLP_SERVICE_ERROR_NOT_SYSTEM_APP);
         return nullptr;
     }
     auto* asyncContext = new (std::nothrow) DlpFileAsyncContext(env);
@@ -179,7 +176,6 @@ napi_value NapiDlpPermission::OpenDlpFile(napi_env env, napi_callback_info cbInf
     std::unique_ptr<DlpFileAsyncContext> asyncContextPtr { asyncContext };
 
     if (!GetOpenDlpFileParams(env, cbInfo, *asyncContext)) {
-        DlpNapiThrow(env, DLP_SERVICE_ERROR_VALUE_INVALID);
         return nullptr;
     }
 
@@ -287,7 +283,6 @@ napi_value NapiDlpPermission::IsDlpFile(napi_env env, napi_callback_info cbInfo)
     std::unique_ptr<DlpFileAsyncContext> asyncContextPtr { asyncContext };
 
     if (!GetIsDlpFileParams(env, cbInfo, *asyncContext)) {
-        DlpNapiThrow(env, DLP_SERVICE_ERROR_VALUE_INVALID);
         return nullptr;
     }
 
@@ -809,7 +804,6 @@ napi_value NapiDlpPermission::InstallDlpSandbox(napi_env env, napi_callback_info
 {
     CheckEmulator(env);
     if (!IsSystemApp(env)) {
-        DlpNapiThrow(env, DLP_SERVICE_ERROR_NOT_SYSTEM_APP);
         return nullptr;
     }
 
@@ -822,7 +816,6 @@ napi_value NapiDlpPermission::InstallDlpSandbox(napi_env env, napi_callback_info
     std::unique_ptr<DlpSandboxAsyncContext> asyncContextPtr { asyncContext };
 
     if (!GetInstallDlpSandboxParams(env, cbInfo, *asyncContext)) {
-        DlpNapiThrow(env, DLP_SERVICE_ERROR_VALUE_INVALID);
         return nullptr;
     }
 
@@ -948,7 +941,6 @@ napi_value NapiDlpPermission::GetDLPPermissionInfo(napi_env env, napi_callback_i
     std::unique_ptr<GetPermInfoAsyncContext> asyncContextPtr { asyncContext };
 
     if (!GetThirdInterfaceParams(env, cbInfo, *asyncContext)) {
-        DlpNapiThrow(env, DLP_SERVICE_ERROR_VALUE_INVALID);
         return nullptr;
     }
 
@@ -1010,7 +1002,6 @@ napi_value NapiDlpPermission::IsInSandbox(napi_env env, napi_callback_info cbInf
     std::unique_ptr<IsInSandboxAsyncContext> asyncContextPtr { asyncContext };
 
     if (!GetThirdInterfaceParams(env, cbInfo, *asyncContext)) {
-        DlpNapiThrow(env, DLP_SERVICE_ERROR_VALUE_INVALID);
         return nullptr;
     }
 
@@ -1072,7 +1063,6 @@ napi_value NapiDlpPermission::GetDlpSupportFileType(napi_env env, napi_callback_
     std::unique_ptr<GetDlpSupportFileTypeAsyncContext> asyncContextPtr { asyncContext };
 
     if (!GetThirdInterfaceParams(env, cbInfo, *asyncContext)) {
-        DlpNapiThrow(env, DLP_SERVICE_ERROR_VALUE_INVALID);
         return nullptr;
     }
 
@@ -1354,7 +1344,6 @@ napi_value NapiDlpPermission::GetDlpGatheringPolicy(napi_env env, napi_callback_
     std::unique_ptr<GetGatheringPolicyContext> asyncContextPtr { asyncContext };
 
     if (!GetThirdInterfaceParams(env, cbInfo, *asyncContext)) {
-        DlpNapiThrow(env, DLP_SERVICE_ERROR_VALUE_INVALID);
         return nullptr;
     }
 
@@ -1540,7 +1529,6 @@ napi_value NapiDlpPermission::GetRetentionSandboxList(napi_env env, napi_callbac
     std::unique_ptr<GetRetentionSandboxListAsyncContext> asyncContextPtr { asyncContext };
 
     if (!GetRetentionSandboxListParams(env, cbInfo, *asyncContext)) {
-        DlpNapiThrow(env, DLP_SERVICE_ERROR_VALUE_INVALID);
         return nullptr;
     }
 
@@ -1595,7 +1583,6 @@ napi_value NapiDlpPermission::GetDLPFileVisitRecord(napi_env env, napi_callback_
     std::unique_ptr<GetDLPFileVisitRecordAsyncContext> asyncContextPtr { asyncContext };
 
     if (!GetThirdInterfaceParams(env, cbInfo, *asyncContext)) {
-        DlpNapiThrow(env, DLP_SERVICE_ERROR_VALUE_INVALID);
         return nullptr;
     }
 
@@ -1731,7 +1718,6 @@ napi_value NapiDlpPermission::GetSandboxAppConfig(napi_env env, napi_callback_in
     CheckEmulator(env);
     auto asyncContextPtr = std::make_unique<SandboxAppConfigAsyncContext>(env);
     if (!GetThirdInterfaceParams(env, cbInfo, *asyncContextPtr.get())) {
-        DlpNapiThrow(env, DLP_SERVICE_ERROR_VALUE_INVALID);
         return nullptr;
     }
     napi_value result = nullptr;
@@ -1780,7 +1766,6 @@ napi_value NapiDlpPermission::IsDLPFeatureProvided(napi_env env, napi_callback_i
     CheckEmulator(env);
     auto asyncContextPtr = std::make_unique<IsDLPFeatureProvidedAsyncContext>(env);
     if (!GetThirdInterfaceParams(env, cbInfo, *asyncContextPtr.get())) {
-        DlpNapiThrow(env, DLP_PARSE_ERROR_OPERATION_UNSUPPORTED);
         return nullptr;
     }
     napi_value result = nullptr;
@@ -2040,7 +2025,6 @@ napi_value NapiDlpPermission::QueryDlpPolicy(napi_env env, napi_callback_info cb
     auto asyncContextPtr = std::make_unique<QueryDlpPolicyAsyncContext>(env);
 
     if (!GetQueryDlpPolicyParam(env, cbInfo, *asyncContextPtr)) {
-        DlpNapiThrow(env, DLP_PARSE_ERROR_OPERATION_UNSUPPORTED);
         return nullptr;
     }
     napi_value result = nullptr;
