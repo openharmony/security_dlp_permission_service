@@ -119,6 +119,26 @@ int32_t ParseDlpGeneralInfo(const std::string& generalInfo, GenerateInfoParams& 
     return DLP_OK;
 }
 
+void ParseFeatures(const nlohmann::json& jsonObj, GenerateInfoParams& params)
+{
+    auto iter = jsonObj.find(FILEID);
+    if (iter != jsonObj.end() && iter->is_string()) {
+        params.fileId = iter->get<std::string>();
+    }
+    iter = jsonObj.find(ALLOWEDOPENCOUNT);
+    if (iter != jsonObj.end() && iter->is_number_integer()) {
+        params.allowedOpenCount = iter->get<int32_t>();
+    } else {
+        params.allowedOpenCount = params.fileId.empty() ? 0 : 1;
+    }
+    iter = jsonObj.find(WATERMARK);
+    if (iter != jsonObj.end() && iter->is_boolean()) {
+        params.waterMarkConfig = iter->get<bool>();
+    } else {
+        params.waterMarkConfig = false;
+    }
+}
+
 int32_t ParseGeneralInfo(const nlohmann::json& jsonObj, GenerateInfoParams& params)
 {
     auto iter = jsonObj.find(DLP_OFFLINE_FLAG);
@@ -151,26 +171,6 @@ int32_t ParseGeneralInfo(const nlohmann::json& jsonObj, GenerateInfoParams& para
     }
     ParseFeatures(jsonObj, params);
     return DLP_OK;
-}
-
-void ParseFeatures(const nlohmann::json& jsonObj, GenerateInfoParams& params)
-{
-    auto iter = jsonObj.find(FILEID);
-    if (iter != jsonObj.end() && iter->is_string()) {
-        params.fileId = iter->get<std::string>();
-    }
-    iter = jsonObj.find(ALLOWEDOPENCOUNT);
-    if (iter != jsonObj.end() && iter->is_number_integer()) {
-        params.allowedOpenCount = iter->get<int32_t>();
-    } else {
-        params.allowedOpenCount = params.fileId.empty() ? 0 : 1;
-    }
-    iter = jsonObj.find(WATERMARK);
-    if (iter != jsonObj.end() && iter->is_boolean()) {
-        params.waterMarkConfig = iter->get<bool>();
-    } else {
-        params.waterMarkConfig = false;
-    }
 }
 
 }  // namespace DlpPermission

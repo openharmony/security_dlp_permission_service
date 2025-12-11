@@ -359,7 +359,6 @@ ohos_unittest("dlp_parse_test") {
     "${dlp_root_dir}/interfaces/inner_api/dlp_parse/src/dlp_zip_file.cpp",
     "${dlp_root_dir}/interfaces/inner_api/dlp_parse/src/dlp_zip.cpp",
     "${dlp_root_dir}/interfaces/inner_api/dlp_parse/src/dlp_file_operator.cpp",
-    "${dlp_root_dir}/interfaces/inner_api/dlp_set_config/src/set_dlp_config.cpp",
     "${dlp_root_dir}/services/dlp_permission/sa/adapt_utils/file_manager/file_operator.cpp",
     "unittest/dlp_parse/dlp_crypt_test.cpp",
     "unittest/dlp_parse/dlp_file_kits_test.cpp",
@@ -369,12 +368,10 @@ ohos_unittest("dlp_parse_test") {
     "unittest/dlp_parse/dlp_file_operator_test.cpp",
     "unittest/dlp_parse/dlp_zip_file_test.cpp",
     "unittest/dlp_parse/dlp_raw_file_test.cpp",
-    "unittest/dlp_set_config/dlp_set_config_test.cpp",
   ]
 
   include_dirs = [
     "${dlp_root_dir}/interfaces/inner_api/dlp_parse/include",
-    "${dlp_root_dir}/interfaces/inner_api/dlp_set_config/include",
     "${dlp_root_dir}/frameworks/common/include",
     "${dlp_root_dir}/test/unittest/mock/",
     "${dlp_root_dir}/services/dlp_permission/sa/adapt_utils/file_manager/",

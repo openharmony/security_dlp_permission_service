@@ -379,7 +379,8 @@ HWTEST_F(DlpUtilsTest, GetRawFileAllowedOpenCount01, TestSize.Level0)
     lseek(fd, FILEID_SIZE_OPPOSITE, SEEK_END);
     write(fd, field.c_str(), field.size());
     int32_t allowedOpenCount;
-    ASSERT_NE(DlpUtils::GetRawFileAllowedOpenCount(fd, allowedOpenCount), DLP_OK);
+    bool watermark = false;
+    ASSERT_NE(DlpUtils::GetRawFileAllowedOpenCount(fd, allowedOpenCount, watermark), DLP_OK);
     close(fd);
     unlink("/data/fuse_test.txt.dlp");
 }
@@ -401,7 +402,8 @@ HWTEST_F(DlpUtilsTest, GetRawFileAllowedOpenCount02, TestSize.Level0)
     lseek(fd, FILEID_SIZE_OPPOSITE, SEEK_END);
     write(fd, field.c_str(), field.size());
     int32_t allowedOpenCount;
-    ASSERT_NE(DlpUtils::GetRawFileAllowedOpenCount(fd, allowedOpenCount), DLP_OK);
+    bool watermark = false;
+    ASSERT_NE(DlpUtils::GetRawFileAllowedOpenCount(fd, allowedOpenCount, watermark), DLP_OK);
     close(fd);
     unlink("/data/fuse_test.txt.dlp");
 }
@@ -423,7 +425,8 @@ HWTEST_F(DlpUtilsTest, GetRawFileAllowedOpenCount03, TestSize.Level0)
     lseek(fd, FILEID_SIZE_VALID, SEEK_END);
     write(fd, field.c_str(), field.size());
     int32_t allowedOpenCount;
-    ASSERT_NE(DlpUtils::GetRawFileAllowedOpenCount(fd, allowedOpenCount), DLP_OK);
+    bool watermark = false;
+    ASSERT_NE(DlpUtils::GetRawFileAllowedOpenCount(fd, allowedOpenCount, watermark), DLP_OK);
     close(fd);
     unlink("/data/fuse_test.txt.dlp");
 }
