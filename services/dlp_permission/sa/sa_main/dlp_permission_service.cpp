@@ -337,8 +337,7 @@ static int32_t GetPixelmapFromFd(WaterMarkInfo& waterMarkInfo, std::shared_mutex
     OH_ImageSourceNative *source = nullptr;
     Image_ErrorCode errCode = OH_ImageSourceNative_CreateFromFd(fd, &source);
     if (errCode != IMAGE_SUCCESS) {
-        DLP_LOG_ERROR(LABEL, 
-            "OH_ImageSourceNative_CreateFromFd failed, errCode: %{public}d", errCode);
+        DLP_LOG_ERROR(LABEL, "OH_ImageSourceNative_CreateFromFd failed, errCode: %{public}d", errCode);
         return DLP_SERVICE_ERROR_VALUE_INVALID;
     }
     DLP_LOG_INFO(LABEL, "Image Source Create From Fd success");
