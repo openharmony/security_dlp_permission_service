@@ -29,6 +29,10 @@
 #include "sandbox_config_kv_data_storage.h"
 #include "singleton.h"
 #include "system_ability.h"
+#include "transaction/rs_interfaces.h"
+#include "window_manager.h"
+#include "wm_common.h"
+// 直接找pixelmap的宏
 
 namespace OHOS {
 namespace Security {
@@ -40,6 +44,15 @@ typedef struct GetAppIndexParams {
     const std::string uri;
     bool isNotOwnerAndReadOnce;
 } GetAppIndexParams;
+
+struct WaterMarkInfo {
+public:
+    int32_t userId = -1;
+    std::string accountName = "";
+    std::shared_ptr<Media::PixelMap> waterMarkImg = nullptr;
+    int32_t waterMarkFd = -1;
+    int32_t waterMarkStatus = 0; // 0:就绪, -1:返回错误, 1:返回成功
+};
 
 class DlpPermissionService final : public SystemAbility, public DlpPermissionServiceStub {
     DECLARE_DELAYED_SINGLETON(DlpPermissionService);
@@ -57,6 +70,9 @@ public:
         const sptr<DlpPolicyParcel>& policyParcel, const sptr<IDlpPermissionCallback>& callback) override;
     int32_t ParseDlpCertificate(const sptr<CertParcel>& certParcel, const sptr<IDlpPermissionCallback>& callback,
         const std::string& appId, bool offlineAccess) override;
+    int32_t GetWaterMark(const bool waterMarkConfig,
+        const sptr<IDlpPermissionCallback>& callback) override;
+    int32_t SetWaterMark(const int32_t pid) override;
     int32_t InstallDlpSandbox(const std::string& bundleName, DLPFileAccess dlpFileAccess, int32_t userId,
         SandboxInfo& sandboxInfo, const std::string& uri) override;
     int32_t UninstallDlpSandbox(const std::string& bundleName, int32_t appIndex, int32_t userId) override;
@@ -108,17 +124,21 @@ private:
     void InitConfig(std::vector<std::string>& typeList);
     void SetTimer(bool isNeedStartTimer);
     int32_t CheckIfEnterpriseAccount();
+    int32_t CheckWaterMarkInfo();
 
     std::atomic<int32_t> repeatTime_;
     std::shared_ptr<std::thread> thread_ = nullptr;
     std::mutex mutex_;
     std::mutex terminalMutex_;
     std::shared_mutex dlpSandboxDataMutex_;
+    std::shared_mutex waterMarkInfoMutex_;
+    std::condition_variable_any waterMarkInfoCv_;
     ServiceRunningState state_;
     sptr<AppExecFwk::IAppMgr> iAppMgr_;
     sptr<AppStateObserver> appStateObserver_;
     std::shared_ptr<DlpEventSubSubscriber> dlpEventSubSubscriber_ = nullptr;
     std::map<int, DLPFileAccess> dlpSandboxData_;
+    WaterMarkInfo waterMarkInfo_;
 };
 }  // namespace DlpPermission
 }  // namespace Security

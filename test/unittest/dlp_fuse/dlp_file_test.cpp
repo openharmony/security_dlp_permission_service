@@ -315,6 +315,10 @@ HWTEST_F(DlpFileTest, TestDlpFile, TestSize.Level1)
     g_Dlpfile->SetAllowedOpenCount(allowedOpenCount);
     ASSERT_EQ(g_Dlpfile->GetAllowedOpenCount(), allowedOpenCount);
 
+    bool waterMarkConfig = false;
+    g_Dlpfile->SetWaterMarkConfig(waterMarkConfig);
+    ASSERT_EQ(g_Dlpfile->GetWaterMarkConfig(), waterMarkConfig);
+
     result = DlpFileManager::GetInstance().CloseDlpFile(g_Dlpfile);
     ASSERT_EQ(result, 0);
     g_Dlpfile = nullptr;

@@ -299,9 +299,10 @@ bool DlpFileKits::IsDlpFile(int32_t dlpFd)
         IsValidEnterpriseDlpHeader(head, dlpHeaderSize);
 }
 
-static bool GetIsReadOnce(const int32_t& fd, std::string& generateInfoStr)
+static bool GetIsReadOnceOrWaterMark(const int32_t& fd, std::string& generateInfoStr)
 {
     int32_t allowedOpenCount = 0;
+    bool waterMarkConfig = false;
     if (IsZipFile(fd)) {
         GenerateInfoParams params;
         if (ParseDlpGeneralInfo(generateInfoStr, params) != DLP_OK) {
@@ -309,8 +310,9 @@ static bool GetIsReadOnce(const int32_t& fd, std::string& generateInfoStr)
             return false;
         }
         allowedOpenCount = params.allowedOpenCount;
+        waterMarkConfig = params.waterMarkConfig;
     } else {
-        int32_t res = DlpUtils::GetRawFileAllowedOpenCount(fd, allowedOpenCount);
+        int32_t res = DlpUtils::GetRawFileAllowedOpenCount(fd, allowedOpenCount, waterMarkConfig);
         if (res != DLP_OK) {
             DLP_LOG_ERROR(LABEL, "GetRawFileAllowedOpenCount error");
             return false;
@@ -319,6 +321,10 @@ static bool GetIsReadOnce(const int32_t& fd, std::string& generateInfoStr)
 
     if (allowedOpenCount > 0) {
         DLP_LOG_INFO(LABEL, "allowedOpenCount is bigger than 0");
+        return true;
+    }
+    if (waterMarkConfig) {
+        DLP_LOG_INFO(LABEL, "waterMarkConfig is true");
         return true;
     }
     return false;
@@ -343,9 +349,9 @@ static void SetWantType(Want& want, const int32_t& fd)
         DLP_LOG_INFO(LABEL, "GetRealTypeWithFd empty");
         want.SetType("image/jpeg");
     }
-    bool isReadOnce = GetIsReadOnce(fd, generateInfoStr);
-    DLP_LOG_DEBUG(LABEL, "isReadOnce %{public}d", isReadOnce);
-    if (isReadOnce) {
+    bool isReadOnceOrWaterMark = GetIsReadOnceOrWaterMark(fd, generateInfoStr);
+    DLP_LOG_DEBUG(LABEL, "isReadOnceOrWaterMark %{public}d", isReadOnceOrWaterMark);
+    if (isReadOnceOrWaterMark) {
         want.SetType("image/jpeg");
     }
 }

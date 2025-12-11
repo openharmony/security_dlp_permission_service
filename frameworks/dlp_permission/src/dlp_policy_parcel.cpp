@@ -86,6 +86,10 @@ bool DlpPolicyParcel::MarshallingDlpPolicy(Parcel& out) const
         DLP_LOG_ERROR(LABEL, "Write allowedOpenCount_ fail");
         return false;
     }
+    if (!(out.WriteBool(this->policyParams_.waterMarkConfig_))) {
+        DLP_LOG_ERROR(LABEL, "Write waterMarkConfig_ fail");
+        return false;
+    }
     return true;
 }
 
@@ -373,6 +377,10 @@ static bool ReadParcel(Parcel& in, DlpPolicyParcel* policyParcel)
     }
     if (!(in.ReadInt32(policyParcel->policyParams_.allowedOpenCount_))) {
         DLP_LOG_ERROR(LABEL, "Read allowedOpenCount fail");
+        return false;
+    }
+    if (!(in.ReadBool(policyParcel->policyParams_.waterMarkConfig_))) {
+        DLP_LOG_ERROR(LABEL, "Read waterMarkConfig_ fail");
         return false;
     }
     return true;

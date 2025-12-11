@@ -46,7 +46,8 @@ const uint32_t DLP_RAW_HEAD_OFFSET = 8;
 std::mutex g_fileOpLock;
 const int32_t FILEID_SIZE = 46;
 const int32_t FILEID_SIZE_OPPOSITE = -46;
-const int32_t FILEID_ALLOWEDOPEN_OPPOSITE = -54;
+// const int32_t FILEID_ALLOWEDOPEN_OPPOSITE = -54;
+const int32_t WATERMARK_OPPOSITE = -58;
 }
 
 
@@ -343,12 +344,19 @@ std::string DlpUtils::GetRealTypeWithRawFile(const int32_t& fd)
     return DEFAULT_STRINGS;
 }
 
-int32_t DlpUtils::GetRawFileAllowedOpenCount(const int32_t& fd, int32_t& allowedOpenCount)
+int32_t DlpUtils::GetRawFileAllowedOpenCount(const int32_t& fd,
+    int32_t& allowedOpenCount, bool& waterMarkConfig)
 {
-    if (lseek(fd, FILEID_ALLOWEDOPEN_OPPOSITE, SEEK_END) == static_cast<off_t>(-1)) {
-        DLP_LOG_ERROR(LABEL, "get to allowedopen invalid");
+    if (lseek(fd, WATERMARK_OPPOSITE, SEEK_END) == static_cast<off_t>(-1)) {
+        DLP_LOG_ERROR(LABEL, "get to waterMarkConfig invalid");
         return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
     }
+    int32_t waterMarkTmp = 0;
+    if (read(fd, &waterMarkTmp, sizeof(int32_t)) != sizeof(int32_t)) {
+        DLP_LOG_ERROR(LABEL, "can not read waterMarkConfig, %{public}s", strerror(errno));
+        return DLP_PARSE_ERROR_FILE_FORMAT_ERROR;
+    }
+    waterMarkConfig = (waterMarkTmp == 1);
     int32_t flag = 0;
     if (read(fd, &flag, sizeof(int32_t)) != sizeof(int32_t)) {
         DLP_LOG_ERROR(LABEL, "can not read flag, %{public}s", strerror(errno));

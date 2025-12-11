@@ -465,7 +465,7 @@ public:
     static bool GetAppIdFromToken(std::string& appId);
     static bool GetUserIdByForegroundAccount(int32_t &userId);
     static std::string GetAppIdentifierByAppId(const std::string &appId, const int32_t &userId);
-    static int32_t GetRawFileAllowedOpenCount(const int32_t& fd, int32_t& allowedOpenCount);
+    static int32_t GetRawFileAllowedOpenCount(const int32_t& fd, int32_t& allowedOpenCount, bool& waterMarkConfig);
 };
 }  // namespace DlpPermission
 }  // namespace Security

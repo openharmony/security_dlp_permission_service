@@ -71,6 +71,7 @@ DlpFile::DlpFile(int32_t dlpFd, const std::string &realType)
     accountType_ = 0;
     fileIdPlaintext_ = "";
     allowedOpenCount_ = 0;
+    waterMarkConfig_ = false;
 }
 
 DlpFile::~DlpFile() = default;

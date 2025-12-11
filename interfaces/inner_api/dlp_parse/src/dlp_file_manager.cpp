@@ -294,9 +294,11 @@ int32_t DlpFileManager::PrepareParms(const std::shared_ptr<DlpFile>& filePtr, co
     }
     policy.fileId = property.fileId;
     policy.allowedOpenCount_ = property.allowedOpenCount;
+    policy.waterMarkConfig_ = property.waterMarkConfig;
     filePtr->SetFileId(property.fileId);
     filePtr->SetAllowedOpenCount(property.allowedOpenCount);
     filePtr->SetOfflineAccess(property.offlineAccess, property.allowedOpenCount);
+    filePtr->SetWaterMarkConfig(property.waterMarkConfig);
 
     result = PrepareDlpEncryptParms(policy, key, usage, certData, hmacKey);
     if (result != DLP_OK) {
@@ -541,6 +543,10 @@ static bool VerifyConsistent(const PermissionPolicy& policy, std::shared_ptr<Dlp
         DLP_LOG_ERROR(LABEL, "allowedOpenCount not consistent");
         return false;
     }
+    if (policy.waterMarkConfig_ != filePtr->GetWaterMarkConfig()) {
+        DLP_LOG_ERROR(LABEL, "waterMarkConfig not consistent");
+        return false;
+    }
     std::string filePtrFileId;
     filePtr->GetFileIdPlaintext(filePtrFileId);
     filePtr->SetFileId(policy.fileId);
@@ -599,6 +605,7 @@ int32_t DlpFileManager::ParseRawDlpFile(int32_t dlpFileFd, std::shared_ptr<DlpFi
     certParcel->isNeedAdapter = filePtr->NeedAdapter();
     certParcel->needCheckCustomProperty = true;
     certParcel->allowedOpenCount = filePtr->GetAllowedOpenCount();
+    certParcel->waterMarkConfig = filePtr->GetWaterMarkConfig();
     if (filePtr->GetAccountType() == ENTERPRISE_ACCOUNT) {
         certParcel->decryptType = DECRYPTTYPEFORUSER;
         certParcel->appId = filePtr->GetAppId();
@@ -612,6 +619,7 @@ int32_t DlpFileManager::ParseRawDlpFile(int32_t dlpFileFd, std::shared_ptr<DlpFi
         DLP_LOG_ERROR(LABEL, "Parse cert fail, errno=%{public}d", result);
         return result;
     }
+    policy.waterMarkConfig_ = filePtr->SetWaterMarkConfig();
     result = filePtr->SetPolicy(policy);
     if (result != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "SetPolicy fail, errno=%{public}d", result);
@@ -621,6 +629,12 @@ int32_t DlpFileManager::ParseRawDlpFile(int32_t dlpFileFd, std::shared_ptr<DlpFi
     if (!VerifyConsistent(policy, filePtr)) {
         DLP_LOG_ERROR(LABEL, "VerifyConsistent fail");
         return DLP_PARSE_ERROR_FILE_VERIFICATION_FAIL;
+    }
+    if (policy.GetwaterMarkConfig()) {
+        result = DlpPermissionKit::GetWaterMark(policy.GetwaterMarkConfig());
+        if (result != DLP_OK) {
+            DLP_LOG_ERROR(LABEL, "GetWaterMark fail, errno=%{public}d", result);
+        }
     }
     struct DlpBlob key = {.size = policy.GetAeskeyLen(), .data = policy.GetAeskey()};
     struct DlpCipherParam param = {.iv = {.size = policy.GetIvLen(), .data = policy.GetIv()}};
@@ -678,6 +692,7 @@ int32_t DlpFileManager::ParseZipDlpFile(std::shared_ptr<DlpFile>& filePtr, const
     certParcel->needCheckCustomProperty = true;
     filePtr->GetRealType(certParcel->realFileType);
     certParcel->allowedOpenCount = filePtr->GetAllowedOpenCount();
+    certParcel->waterMarkConfig = filePtr->GetWaterMarkConfig();
     filePtr->GetFileIdPlaintext(certParcel->fileId);
     StartTrace(HITRACE_TAG_ACCESS_CONTROL, "DlpParseCertificate");
     int32_t result = DlpPermissionKit::ParseDlpCertificate(certParcel, policy, appId, filePtr->GetOfflineAccess());
@@ -691,9 +706,16 @@ int32_t DlpFileManager::ParseZipDlpFile(std::shared_ptr<DlpFile>& filePtr, const
         DLP_LOG_ERROR(LABEL, "SetPolicy fail, errno=%{public}d", result);
         return result;
     }
+    policy.waterMarkConfig_ = filePtr->SetWaterMarkConfig();
     if (!VerifyConsistent(policy, filePtr)) {
         DLP_LOG_ERROR(LABEL, "VerifyConsistent fail");
         return DLP_PARSE_ERROR_FILE_VERIFICATION_FAIL;
+    }
+    if (policy.GetwaterMarkConfig()) {
+        result = DlpPermissionKit::GetWaterMark(policy.GetwaterMarkConfig());
+        if (result != DLP_OK) {
+            DLP_LOG_ERROR(LABEL, "GetWaterMark fail, errno=%{public}d", result);
+        }
     }
     struct DlpBlob key = {.size = policy.GetAeskeyLen(), .data = policy.GetAeskey()};
     struct DlpCipherParam param = {.iv = {.size = policy.GetIvLen(), .data = policy.GetIv()}};

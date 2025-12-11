@@ -46,7 +46,8 @@ const uint32_t MAX_CERT_SIZE = 30 * 1024;
 const std::string DEFAULT_STRINGS = "";
 const int32_t FILEID_SIZE = 46;
 const int32_t FILEID_SIZE_OPPOSITE = -46;
-const int32_t FILEID_ALLOWEDOPEN_OPPOSITE = -54;
+// const int32_t FILEID_ALLOWEDOPEN_OPPOSITE = -54;
+const int32_t WATERMARK_OPPOSITE = -58;
 } // namespace
 
 static int32_t GetFileSize(int32_t fd, uint64_t& fileLen);
@@ -389,10 +390,16 @@ int32_t DlpRawFile::WriteHmacProcess(void)
 
 int32_t DlpRawFile::WriteFileIdPlaintextProcess(void)
 {
-    if (lseek(dlpFd_, FILEID_ALLOWEDOPEN_OPPOSITE, SEEK_END) == static_cast<off_t>(-1)) {
-        DLP_LOG_ERROR(LABEL, "get to allowedopen invalid");
+    if (lseek(dlpFd_, WATERMARK_OPPOSITE, SEEK_END) == static_cast<off_t>(-1)) {
+        DLP_LOG_ERROR(LABEL, "get to waterConfig invalid");
         return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
     }
+    int32_t waterMarkTmp = 0;
+    if (read(dlpFd_, &waterMarkTmp, sizeof(int32_t)) != sizeof(int32_t)) {
+        DLP_LOG_ERROR(LABEL, "can not read waterMarkConfig, %{public}s", strerror(errno));
+        return DLP_PARSE_ERROR_FILE_FORMAT_ERROR;
+    }
+    waterMarkConfig_ = (waterMarkTmp == 1);
     int32_t flag = 0;
     if (read(dlpFd_, &flag, sizeof(int32_t)) != sizeof(int32_t)) {
         DLP_LOG_ERROR(LABEL, "can not read flag, %{public}s", strerror(errno));
@@ -584,9 +591,14 @@ int32_t DlpRawFile::DoWriteHmacAndCert(uint32_t hmacStrLen, std::string& hmacStr
     }
     delete[] buffer;
 
-    if (lseek(dlpFd_, FILEID_ALLOWEDOPEN_OPPOSITE, SEEK_END) == static_cast<off_t>(-1)) {
-        DLP_LOG_ERROR(LABEL, "get allow offsize invalid");
+    if (lseek(dlpFd_, WATERMARK_OPPOSITE, SEEK_END) == static_cast<off_t>(-1)) {
+         DLP_LOG_ERROR(LABEL, "get offsize invalid");
         return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
+    }
+    
+    int32_t waterMark = static_cast<int32_t>(waterMarkConfig_);
+    if (write(dlpFd_, &waterMark, sizeof(int32_t)) != sizeof(int32_t)) {
+        DLP_LOG_ERROR(LABEL, "write waterMark_ error");
     }
     int32_t flag = 1;
     if (write(dlpFd_, &flag, sizeof(int32_t)) != sizeof(int32_t)) {

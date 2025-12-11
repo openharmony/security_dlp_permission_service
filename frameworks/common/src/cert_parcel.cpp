@@ -73,6 +73,10 @@ bool CertParcel::Marshalling(Parcel& data) const
         DLP_LOG_ERROR(LABEL, "Write allowedOpenCount fail");
         return false;
     }
+    if (!data.WriteBool(this->waterMarkConfig)) {
+        DLP_LOG_ERROR(LABEL, "Write bool waterMarkConfig fail");
+        return false;
+    }
     return true;
 }
 
@@ -127,6 +131,10 @@ CertParcel* CertParcel::Unmarshalling(Parcel& data)
     }
     if (!data.ReadInt32(parcel->allowedOpenCount)) {
         DLP_LOG_ERROR(LABEL, "Read allowedOpenCount fail");
+        return FreeCertParcel(parcel);
+    }
+    if (!data.ReadBool(parcel->waterMarkConfig)) {
+        DLP_LOG_ERROR(LABEL, "Read waterMarkConfig fail");
         return FreeCertParcel(parcel);
     }
     return parcel;

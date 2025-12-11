@@ -35,6 +35,12 @@ public:
     virtual void OnParseDlpCertificate(int32_t result, const PermissionPolicy& policy,
         const std::vector<uint8_t>& cert) = 0;
 };
+class GeneralCallback {
+public:
+    GeneralCallback() {};
+    virtual ~GeneralCallback() {};
+    virtual void OnCall(int32_t result, const GeneralInfo& info) = 0;
+};
 }  // namespace DlpPermission
 }  // namespace Security
 }  // namespace OHOS

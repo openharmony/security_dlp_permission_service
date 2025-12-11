@@ -23,6 +23,7 @@ namespace DlpPermission {
 enum DlpPermissionCallbackInterfaceCode {
     ON_GENERATE_DLP_CERTIFICATE = 0,
     ON_PARSE_DLP_CERTIFICATE,
+    ON_GET_DLP_WATERMARK,
 };
 } // namespace DlpPermission
 } // namespace Security

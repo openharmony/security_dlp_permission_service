@@ -34,6 +34,7 @@ static const uint32_t MIN_REALY_TYPE_LENGTH = 2;
 static const uint32_t MAX_REALY_TYPE_LENGTH = 5;
 static const std::string FILEID = "fileId";
 static const std::string ALLOWEDOPENCOUNT = "allowedOpenCount";
+static const std::string WATERMARK = "waterMarkConfig";
 static const uint32_t MIN_FILEID_LENGTH = 0;
 static const uint32_t MAX_FILEID_LENGTH = 100;
 static const uint32_t LIMIT_CERT_SIZE = 10000;
@@ -157,6 +158,12 @@ int32_t ParseGeneralInfo(const nlohmann::json& jsonObj, GenerateInfoParams& para
         params.allowedOpenCount = iter->get<int32_t>();
     } else {
         params.allowedOpenCount = params.fileId.empty() ? 0 : 1;
+    }
+    iter = jsonObj.find(WATERMARK);
+    if (iter != jsonObj.end() && iter->is_boolean()) {
+        params.waterMarkConfig = iter->get<bool>();
+    } else {
+        params.waterMarkConfig = false;   // 如果没有该字段或者被篡改，默认false，后面会和policy中的waterMarkConfig做校验
     }
     return DLP_OK;
 }

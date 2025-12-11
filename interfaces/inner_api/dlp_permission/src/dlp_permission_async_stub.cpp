@@ -36,6 +36,10 @@ DlpPermissionAsyncStub::DlpPermissionAsyncStub(const std::shared_ptr<ParseDlpCer
     : parseDlpCertificateCallback_(impl)
 {}
 
+DlpPermissionAsyncStub::DlpPermissionAsyncStub(const std::shared_ptr<GetWaterMarkCallback>& impl)
+    : getWaterMarkCallback_(impl)
+{}
+
 int32_t DlpPermissionAsyncStub::OnRemoteRequest(
     uint32_t code, MessageParcel& data, MessageParcel& reply, MessageOption& option)
 {
@@ -54,6 +58,8 @@ int32_t DlpPermissionAsyncStub::OnRemoteRequest(
             return OnGenerateDlpCertificateStub(data, reply);
         case static_cast<int32_t>(DlpPermissionCallbackInterfaceCode::ON_PARSE_DLP_CERTIFICATE):
             return OnParseDlpCertificateStub(data, reply);
+        case static_cast<int32_t>(DlpPermissionCallbackInterfaceCode::ON_GET_DLP_WATERMARK):
+            return OnGetDlpWaterMarkStub(data, reply);
         default:
             return IPCObjectStub::OnRemoteRequest(code, data, reply, option);
     }
@@ -132,6 +138,27 @@ void DlpPermissionAsyncStub::OnParseDlpCertificate(int32_t result, const Permiss
     }
 
     parseDlpCertificateCallback_->OnParseDlpCertificate(result, policy, cert);
+}
+
+int32_t DlpPermissionAsyncStub::OnGetDlpWaterMarkStub(MessageParcel& data, MessageParcel& reply)
+{
+    int32_t result;
+    if (!data.ReadInt32(result)) {
+        DLP_LOG_ERROR(LABEL, "OnGetDlpWaterMarkStub read int32 fail");
+        this->OnGetDlpWaterMark(DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL, {});
+        return DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL;
+    }
+    return DLP_OK;
+}
+
+void DlpPermissionAsyncStub::OnGetDlpWaterMark(int32_t result, const GeneralInfo& info)
+{
+    if (getWaterMarkCallback_ == nullptr) {
+        DLP_LOG_ERROR(LABEL, "getDlpWatermark Callback is null");
+        return;
+    }
+    getWaterMarkCallback_->OnCall(result, info);
+    return;
 }
 }  // namespace DlpPermission
 }  // namespace Security

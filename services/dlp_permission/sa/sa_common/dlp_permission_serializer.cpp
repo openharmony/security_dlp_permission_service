@@ -75,6 +75,7 @@ const std::string ENTERPRISE = "enterprise";
 const std::string APPID = "appId";
 const std::string FILEID = "fileId";
 const std::string ALLOWED_OPEN_COUNT = "allowedOpenCount";
+const std::string WATERMARK_CONFIG = "waterMarkConfig";
 constexpr uint64_t  VALID_TIME_STAMP = 2147483647;
 static const uint32_t DOMAIN_VERSION = 2;
 static const uint32_t CLOUD_VERSION = 1;
@@ -399,6 +400,7 @@ int32_t DlpPermissionSerializer::SerializeDlpPermission(const PermissionPolicy& 
     }
     policyJson[FILEID] = policy.fileId;
     policyJson[ALLOWED_OPEN_COUNT] = policy.allowedOpenCount_;
+    policyJson[WATERMARK_CONFIG] = policy.waterMarkConfig_;
     permInfoJson[POLICY_INDEX] = policyJson;
 
     unordered_json fileEnc;
@@ -519,6 +521,9 @@ static void InitPermissionPolicy(PermissionPolicy& policy, const std::vector<Aut
     }
     if (policyJson.find(ALLOWED_OPEN_COUNT) != policyJson.end() && policyJson.at(ALLOWED_OPEN_COUNT).is_number()) {
         policyJson.at(ALLOWED_OPEN_COUNT).get_to(policy.allowedOpenCount_);
+    }
+    if (policyJson.find(WATERMARK_CONFIG) != policyJson.end() && policyJson.at(WATERMARK_CONFIG).is_boolean()) {
+        policyJson.at(WATERMARK_CONFIG).get_to(policy.waterMarkConfig_);
     }
     policy.ownerAccountType_ = CLOUD_ACCOUNT;
 }

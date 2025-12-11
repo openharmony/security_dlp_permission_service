@@ -21,6 +21,7 @@
 #include "dlp_permission.h"
 #include "idlp_permission_callback.h"
 #include "iremote_proxy.h"
+#include "dlp_permission_kit.h"
 
 namespace OHOS {
 namespace Security {
@@ -35,6 +36,7 @@ public:
     void OnGenerateDlpCertificate(int32_t result, const std::vector<uint8_t>& cert) override;
     void OnParseDlpCertificate(int32_t result, const PermissionPolicy& policy,
         const std::vector<uint8_t>& cert) override;
+    void OnGetDlpWaterMark(int32_t result, const GeneralInfo& info) override;
 
 private:
     static inline BrokerDelegator<DlpPermissionAsyncProxy> delegator_;
