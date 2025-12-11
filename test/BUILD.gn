@@ -175,6 +175,15 @@ ohos_unittest("dlp_permission_service_test") {
     "os_account:os_account_innerkits",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
+    "window_manager:libwm",
+    "image_framework:image_native",
+    "image_framework:image_source",
+    "image_framework:image_source_ndk",
+    "image_framework:pixelmap_ndk",
+    "image_framework:pixelmap",
+    "resource_management:librawfile",
+    "graphic_2d:librender_service_client",
+    "graphic_2d:librender_service_base",
   ]
 }
 

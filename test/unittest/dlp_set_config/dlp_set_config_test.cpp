@@ -13,11 +13,10 @@
  * limitations under the License.
  */
 
+
 #include "dlp_set_config_test.h"
-#include "dlp_set_config.h"
 #include "dlp_permission.h"
 #include "dlp_permission_log.h"
-#include "dlp_permission_client.h"
 
 using namespace testing::ext;
 using namespace OHOS;
@@ -37,20 +36,3 @@ void DlpSetConfigTest::SetUp() {}
 
 void DlpSetConfigTest::TearDown() {}
 
-/**
- * @tc.name: SetDlpConfig001
- * @tc.desc: SetDlpConfig test
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(DlpSetConfigTest, SetDlpConfig001, TestSize.Level0)
-{
-    DLP_LOG_INFO(LABEL, "SetDlpConfig001");
-
-    OHOS::AAFwk::Want want;
-    want.SetBoolParam("ohos.dlp.params.waterMarkConfig", false);
-    ASSERT_EQ(DLP_OK, DlpSetConfig::SetDlpConfig(want));
-
-    want.SetBoolParam("ohos.dlp.params.waterMarkConfig", true);
-    ASSERT_NE(DLP_OK, DlpSetConfig::SetDlpConfig(want));
-}

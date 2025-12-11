@@ -155,7 +155,7 @@ int32_t ParseGeneralInfo(const nlohmann::json& jsonObj, GenerateInfoParams& para
 
 void ParseFeatures(const nlohmann::json& jsonObj, GenerateInfoParams& params)
 {
-    iter = jsonObj.find(FILEID);
+    auto iter = jsonObj.find(FILEID);
     if (iter != jsonObj.end() && iter->is_string()) {
         params.fileId = iter->get<std::string>();
     }
