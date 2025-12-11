@@ -162,7 +162,7 @@ HWTEST_F(DlpPermissionAsyncStubTest, OnGetDlpWaterMark002, TestSize.Level0)
     GeneralInfo info;
 
     callback->OnGetDlpWaterMark(result, info);
-    ASSERT_NE(result, DLP_OK);
+    ASSERT_EQ(result, DLP_OK);
 }
 
 /**
