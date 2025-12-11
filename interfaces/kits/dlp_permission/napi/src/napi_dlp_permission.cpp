@@ -72,6 +72,7 @@ napi_value NapiDlpPermission::GenerateDlpFile(napi_env env, napi_callback_info c
     auto* asyncContext = new (std::nothrow) GenerateDlpFileAsyncContext(env);
     if (asyncContext == nullptr) {
         DLP_LOG_ERROR(LABEL, "insufficient memory for asyncContext!");
+        DlpNapiThrow(env, DLP_SERVICE_ERROR_VALUE_INVALID);
         return nullptr;
     }
     std::unique_ptr<GenerateDlpFileAsyncContext> asyncContextPtr { asyncContext };
@@ -169,6 +170,7 @@ napi_value NapiDlpPermission::OpenDlpFile(napi_env env, napi_callback_info cbInf
     auto* asyncContext = new (std::nothrow) DlpFileAsyncContext(env);
     if (asyncContext == nullptr) {
         DLP_LOG_ERROR(LABEL, "insufficient memory for asyncContext!");
+        DlpNapiThrow(env, DLP_SERVICE_ERROR_VALUE_INVALID);
         return nullptr;
     }
     std::unique_ptr<DlpFileAsyncContext> asyncContextPtr { asyncContext };
@@ -275,6 +277,7 @@ napi_value NapiDlpPermission::IsDlpFile(napi_env env, napi_callback_info cbInfo)
     auto* asyncContext = new (std::nothrow) DlpFileAsyncContext(env);
     if (asyncContext == nullptr) {
         DLP_LOG_ERROR(LABEL, "insufficient memory for asyncContext!");
+        DlpNapiThrow(env, DLP_SERVICE_ERROR_VALUE_INVALID);
         return nullptr;
     }
     std::unique_ptr<DlpFileAsyncContext> asyncContextPtr { asyncContext };
@@ -807,6 +810,7 @@ napi_value NapiDlpPermission::InstallDlpSandbox(napi_env env, napi_callback_info
     auto* asyncContext = new (std::nothrow) DlpSandboxAsyncContext(env);
     if (asyncContext == nullptr) {
         DLP_LOG_ERROR(LABEL, "insufficient memory for asyncContext!");
+        DlpNapiThrow(env, DLP_SERVICE_ERROR_VALUE_INVALID);
         return nullptr;
     }
     std::unique_ptr<DlpSandboxAsyncContext> asyncContextPtr { asyncContext };
@@ -931,6 +935,7 @@ napi_value NapiDlpPermission::GetDLPPermissionInfo(napi_env env, napi_callback_i
     auto* asyncContext = new (std::nothrow) GetPermInfoAsyncContext(env);
     if (asyncContext == nullptr) {
         DLP_LOG_ERROR(LABEL, "insufficient memory for asyncContext!");
+        DlpNapiThrow(env, DLP_SERVICE_ERROR_VALUE_INVALID);
         return nullptr;
     }
     std::unique_ptr<GetPermInfoAsyncContext> asyncContextPtr { asyncContext };
@@ -991,6 +996,7 @@ napi_value NapiDlpPermission::IsInSandbox(napi_env env, napi_callback_info cbInf
     auto* asyncContext = new (std::nothrow) IsInSandboxAsyncContext(env);
     if (asyncContext == nullptr) {
         DLP_LOG_ERROR(LABEL, "insufficient memory for asyncContext!");
+        DlpNapiThrow(env, DLP_SERVICE_ERROR_VALUE_INVALID);
         return nullptr;
     }
     std::unique_ptr<IsInSandboxAsyncContext> asyncContextPtr { asyncContext };
@@ -1051,6 +1057,7 @@ napi_value NapiDlpPermission::GetDlpSupportFileType(napi_env env, napi_callback_
     auto* asyncContext = new (std::nothrow) GetDlpSupportFileTypeAsyncContext(env);
     if (asyncContext == nullptr) {
         DLP_LOG_ERROR(LABEL, "insufficient memory for asyncContext!");
+        DlpNapiThrow(env, DLP_SERVICE_ERROR_VALUE_INVALID);
         return nullptr;
     }
     std::unique_ptr<GetDlpSupportFileTypeAsyncContext> asyncContextPtr { asyncContext };
@@ -1331,6 +1338,7 @@ napi_value NapiDlpPermission::GetDlpGatheringPolicy(napi_env env, napi_callback_
     auto* asyncContext = new (std::nothrow) GetGatheringPolicyContext(env);
     if (asyncContext == nullptr) {
         DLP_LOG_ERROR(LABEL, "insufficient memory for asyncContext!");
+        DlpNapiThrow(env, DLP_SERVICE_ERROR_VALUE_INVALID);
         return nullptr;
     }
     std::unique_ptr<GetGatheringPolicyContext> asyncContextPtr { asyncContext };
@@ -1515,6 +1523,7 @@ napi_value NapiDlpPermission::GetRetentionSandboxList(napi_env env, napi_callbac
     auto* asyncContext = new (std::nothrow) GetRetentionSandboxListAsyncContext(env);
     if (asyncContext == nullptr) {
         DLP_LOG_ERROR(LABEL, "insufficient memory for asyncContext!");
+        DlpNapiThrow(env, DLP_SERVICE_ERROR_VALUE_INVALID);
         return nullptr;
     }
     std::unique_ptr<GetRetentionSandboxListAsyncContext> asyncContextPtr { asyncContext };
@@ -1568,6 +1577,7 @@ napi_value NapiDlpPermission::GetDLPFileVisitRecord(napi_env env, napi_callback_
     auto* asyncContext = new (std::nothrow) GetDLPFileVisitRecordAsyncContext(env);
     if (asyncContext == nullptr) {
         DLP_LOG_ERROR(LABEL, "insufficient memory for asyncContext!");
+        DlpNapiThrow(env, DLP_SERVICE_ERROR_VALUE_INVALID);
         return nullptr;
     }
     std::unique_ptr<GetDLPFileVisitRecordAsyncContext> asyncContextPtr { asyncContext };
@@ -1802,6 +1812,7 @@ napi_value NapiDlpPermission::GetDLPSuffix(napi_env env, napi_callback_info cbIn
     GetSuffixAsyncContext *asyncContext = new (std::nothrow) GetSuffixAsyncContext(env);
     if (asyncContext == nullptr) {
         DLP_LOG_ERROR(LABEL, "insufficient memory for GetSuffixAsyncContext!");
+        DlpNapiThrow(env, DLP_PARSE_ERROR_OPERATION_UNSUPPORTED);
         return nullptr;
     }
     std::unique_ptr<GetSuffixAsyncContext> callbackPtr { asyncContext };
@@ -1817,6 +1828,7 @@ napi_value NapiDlpPermission::GetOriginalFileName(napi_env env, napi_callback_in
     GetOriginalFileAsyncContext *asyncContext = new (std::nothrow) GetOriginalFileAsyncContext(env);
     if (asyncContext == nullptr) {
         DLP_LOG_ERROR(LABEL, "insufficient memory for GetFileNameAsyncContext!");
+        DlpNapiThrow(env, DLP_PARSE_ERROR_OPERATION_UNSUPPORTED);
         return nullptr;
     }
     std::unique_ptr<GetOriginalFileAsyncContext> callbackPtr { asyncContext };
