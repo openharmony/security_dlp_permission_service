@@ -137,7 +137,6 @@ int32_t DlpPermissionKit::GetWaterMark(const bool waterMarkConfig) // 解密过�
     }
     std::shared_ptr<GetWaterMarkCallback> callback = std::make_shared<GetWaterMarkCallback>();
     int32_t res = DlpPermissionClient::GetInstance().GetWaterMark(waterMarkConfig, callback);
-
     if (res != DLP_OK) {
         DLP_LOG_INFO(LABEL, "GetWaterMark returns %{public}d", res);
         return res;

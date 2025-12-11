@@ -27,7 +27,7 @@ constexpr OHOS::HiviewDFX::HiLogLabel LABEL = { LOG_CORE, SECURITY_DOMAIN_DLP_PE
 }
 
 int32_t DlpAbilityProxy::CheckRemoteAndSendRequest(uint32_t code, MessageParcel &data,
-        MessageParcel &reply, MessageOption &opt)
+    MessageParcel &reply, MessageOption &opt)
 {
     sptr<IRemoteObject> remoteObj = Remote();
     if (remoteObj == nullptr) {
@@ -77,9 +77,7 @@ int32_t DlpAbilityProxy::HandleGetWaterMark(sptr<IRemoteObject> stubInstance)
     watermarkFd = reply.ReadFileDescriptor();
     DLP_LOG_INFO(LABEL, "recv watermarkFd %{public}d", watermarkFd);
     return watermarkFd;
-    
 }
-
 } // namespace DlpPermission
 } // namespace Security
 } // namespace OHOS

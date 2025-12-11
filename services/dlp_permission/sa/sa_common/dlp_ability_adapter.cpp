@@ -26,7 +26,7 @@ namespace DlpPermission {
 using namespace OHOS;
 namespace {
 constexpr OHOS::HiviewDFX::HiLogLabel LABEL = { LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "DlpAbilityAdapter" };
-static const std::string BUNDLE_NAME = "com.huawei.hmos.dlpcredmgr"; // 做一次base64
+static const std::string BUNDLE_NAME = "com.huawei.hmos.dlpcredmgr";
 static const std::string PERM_ABILITY_NAME = "DlpPermServiceAbility";
 }
 
@@ -36,7 +36,7 @@ DlpAbilityAdapter::DlpAbilityAdapter(ReceiveDataCallback &callback)
 }
 
 int32_t DlpAbilityAdapter::ConnectPermServiceAbility(int32_t userId,
-        std::function<void(sptr<IRemoteObject>)> connectCallback)
+    std::function<void(sptr<IRemoteObject>)> connectCallback)
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
     if (abilityConnection_ != nullptr && abilityConnection_->IsConnected()) {
@@ -77,7 +77,7 @@ void DlpAbilityAdapter::DisconnectPermServiceAbility()
     return;
 }
 
-static void handleErrCondition(WaterMarkInfo &waterMarkInfo, std::shared_mutex &waterMarkInfoMutex, 
+static void handleErrCondition(WaterMarkInfo &waterMarkInfo, std::shared_mutex &waterMarkInfoMutex,
     std::condition_variable_any &waterMarkInfoCv)
 {
     std::unique_lock<std::shared_mutex> lock(waterMarkInfoMutex);

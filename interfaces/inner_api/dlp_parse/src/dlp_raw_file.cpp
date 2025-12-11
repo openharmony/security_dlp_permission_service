@@ -592,7 +592,7 @@ int32_t DlpRawFile::DoWriteHmacAndCert(uint32_t hmacStrLen, std::string& hmacStr
     delete[] buffer;
 
     if (lseek(dlpFd_, WATERMARK_OPPOSITE, SEEK_END) == static_cast<off_t>(-1)) {
-         DLP_LOG_ERROR(LABEL, "get offsize invalid");
+        DLP_LOG_ERROR(LABEL, "get offsize invalid");
         return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
     }
     

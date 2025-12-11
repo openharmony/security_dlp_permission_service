@@ -26,7 +26,7 @@ constexpr OHOS::HiviewDFX::HiLogLabel LABEL = { LOG_CORE, SECURITY_DOMAIN_DLP_PE
 }
 
 DlpAbilityConnection::DlpAbilityConnection(ConnectCallback connectCallback,
-        DisconnectCallback disconnectCallback)
+    DisconnectCallback disconnectCallback)
 {
     if (connectCallback == nullptr) {
         DLP_LOG_ERROR(LABEL, "connectCallback is nullptr.");
@@ -57,7 +57,7 @@ void DlpAbilityConnection::ClearProxy()
 }
 
 void DlpAbilityConnection::OnAbilityConnectDone(const AppExecFwk::ElementName &element,
-        const sptr<IRemoteObject> &remoteObj, int res)
+    const sptr<IRemoteObject> &remoteObj, int res)
 {
     if (remoteObj == nullptr) {
         DLP_LOG_ERROR(LABEL, "Invaild Ability Connection.");
@@ -83,8 +83,6 @@ void DlpAbilityConnection::OnAbilityDisconnectDone(const AppExecFwk::ElementName
     ClearProxy();
     DLP_LOG_INFO(LABEL, "Disconnect ability, DestroyFlag is %{public}d", isDestroyFlag_);
 }
-
-
 
 bool DlpAbilityConnection::IsConnected()
 {

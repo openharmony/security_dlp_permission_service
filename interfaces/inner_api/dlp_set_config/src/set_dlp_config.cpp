@@ -30,12 +30,10 @@ using Want = OHOS::AAFwk::Want;
 
 int32_t DlpSetConfig::SetDlpConfig(const Want &want)
 {
-    
     bool waterMarkConfig = want.GetBoolParam(WATER_MARK_CONFIG_KEY, false);
-    
     if (!waterMarkConfig) {
         DLP_LOG_WARN(LABEL, "waterMarkConfig is false or null");
-        return DLP_OK; // 给 ams 的返回 code
+        return DLP_OK;
     }
 
     int32_t pid = getprocpid();

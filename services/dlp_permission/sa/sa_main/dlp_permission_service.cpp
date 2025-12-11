@@ -303,7 +303,7 @@ int32_t DlpPermissionService::CheckWaterMarkInfo()
         AccountSA::OhosAccountKits::GetInstance().QueryOhosAccountInfo();
     if (!accountInfo.first) {
         DLP_LOG_ERROR(LABEL, "Get accountInfo error.");
-        return DLP_SERVICE_ERROR_GET_ACCOUNT_FAIL; 
+        return DLP_SERVICE_ERROR_GET_ACCOUNT_FAIL;
     }
     std::string accountName = accountInfo.second.name_;
     {
@@ -347,7 +347,7 @@ static int32_t GetPixelmapFromFd(WaterMarkInfo& waterMarkInfo, std::shared_mutex
     OH_ImageSourceInfo_Create(&imageInfo);
     errCode = OH_ImageSourceNative_GetImageInfo(source, 0, imageInfo);
     if (errCode != IMAGE_SUCCESS) {
-        DLP_LOG_ERROR(LABEL, 
+        DLP_LOG_ERROR(LABEL,
             "OH_ImageSourceNative_GetImageInfo failed, errCode: %{public}d", errCode);
         return DLP_CREATE_PIXELMAP_ERROR;
     }
@@ -392,7 +392,7 @@ int32_t DlpPermissionService::GetWaterMark(const bool waterMarkConfig,
         }
     }
     res = GetPixelmapFromFd(waterMarkInfo_, waterMarkInfoMutex_);
-    if (res != DLP_OK){
+    if (res != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "GetPixelmapFromFd failed.");
         return DLP_CREATE_PIXELMAP_ERROR;
     }

@@ -38,8 +38,7 @@ public:
 
 class DlpAbilityProxy : public IRemoteProxy<IDlpAbility> {
 public:
-    explicit DlpAbilityProxy(const sptr<IRemoteObject> &remoteObj) :
-        IRemoteProxy<IDlpAbility>(remoteObj) {}
+    explicit DlpAbilityProxy(const sptr<IRemoteObject> &remoteObj) : IRemoteProxy<IDlpAbility>(remoteObj) {}
     virtual ~DlpAbilityProxy() {}
     int32_t HandleGetWaterMark(sptr<IRemoteObject> stubInstance) override;
 
