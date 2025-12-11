@@ -86,41 +86,7 @@ static CertParcel* FreeCertParcel(CertParcel* parcel)
     return nullptr;
 }
 
-CertParcel* CertParcel::Unmarshalling(Parcel& data)
-{
-    auto* parcel = new (std::nothrow) CertParcel();
-    if (parcel == nullptr) {
-        DLP_LOG_ERROR(LABEL, "Alloc buff for parcel fail");
-        return nullptr;
-    }
-    if (!data.ReadBool(parcel->isNeedAdapter)) {
-        DLP_LOG_ERROR(LABEL, "Read isNeedAdapter fail");
-        return FreeCertParcel(parcel);
-    }
-    if (!data.ReadString(parcel->contactAccount)) {
-        DLP_LOG_ERROR(LABEL, "Read contactAccount fail");
-        return FreeCertParcel(parcel);
-    }
-    if (!data.ReadUInt8Vector(&parcel->cert)) {
-        DLP_LOG_ERROR(LABEL, "Read cert fail");
-        return FreeCertParcel(parcel);
-    }
-    if (!data.ReadUInt8Vector(&parcel->offlineCert)) {
-        DLP_LOG_ERROR(LABEL, "Read offlineCert fail");
-        return FreeCertParcel(parcel);
-    }
-    if (!data.ReadBool(parcel->needCheckCustomProperty)) {
-        DLP_LOG_ERROR(LABEL, "Read needCheckCustomProperty fail");
-        return FreeCertParcel(parcel);
-    }
-    if (UnmarshallingProperty(parcel) == nullptr) {
-        DLP_LOG_ERROR(LABEL, "unmarshall property fail");
-        return nullptr;
-    }
-    return parcel;
-}
-
-static CertParcel* UnmarshallingProperty(Parcel& data)
+static CertParcel* UnmarshallingProperty(Parcel& data, CertParcel* parcel)
 {
     if (!data.ReadInt32(parcel->decryptType)) {
         DLP_LOG_ERROR(LABEL, "Read decryptType fail");
@@ -148,6 +114,41 @@ static CertParcel* UnmarshallingProperty(Parcel& data)
     }
     return parcel;
 }
+
+CertParcel* CertParcel::Unmarshalling(Parcel& data)
+{
+    auto* parcel = new (std::nothrow) CertParcel();
+    if (parcel == nullptr) {
+        DLP_LOG_ERROR(LABEL, "Alloc buff for parcel fail");
+        return nullptr;
+    }
+    if (!data.ReadBool(parcel->isNeedAdapter)) {
+        DLP_LOG_ERROR(LABEL, "Read isNeedAdapter fail");
+        return FreeCertParcel(parcel);
+    }
+    if (!data.ReadString(parcel->contactAccount)) {
+        DLP_LOG_ERROR(LABEL, "Read contactAccount fail");
+        return FreeCertParcel(parcel);
+    }
+    if (!data.ReadUInt8Vector(&parcel->cert)) {
+        DLP_LOG_ERROR(LABEL, "Read cert fail");
+        return FreeCertParcel(parcel);
+    }
+    if (!data.ReadUInt8Vector(&parcel->offlineCert)) {
+        DLP_LOG_ERROR(LABEL, "Read offlineCert fail");
+        return FreeCertParcel(parcel);
+    }
+    if (!data.ReadBool(parcel->needCheckCustomProperty)) {
+        DLP_LOG_ERROR(LABEL, "Read needCheckCustomProperty fail");
+        return FreeCertParcel(parcel);
+    }
+    if (UnmarshallingProperty(data, parcel) == nullptr) {
+        DLP_LOG_ERROR(LABEL, "unmarshall property fail");
+        return nullptr;
+    }
+    return parcel;
+}
+
 } // namespace DlpPermission
 } // namespace Security
 } // namespace OHOS
