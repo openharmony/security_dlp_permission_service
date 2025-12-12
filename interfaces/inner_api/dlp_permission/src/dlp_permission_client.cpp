@@ -147,6 +147,38 @@ int32_t DlpPermissionClient::ParseDlpCertificate(sptr<CertParcel>& certParcel,
     return proxy->ParseDlpCertificate(certParcel, asyncStub, appId, offlineAccess);
 }
 
+int32_t DlpPermissionClient::GetWaterMark(const bool waterMarkConfig,
+    std::shared_ptr<GetWaterMarkCallback> callback)
+{
+    if (callback == nullptr || !waterMarkConfig) {
+        DLP_LOG_ERROR(LABEL, "GetWaterMark no callback.");
+        return DLP_SERVICE_ERROR_VALUE_INVALID;
+    }
+    auto proxy = GetProxy(true);
+    if (proxy == nullptr) {
+        DLP_LOG_ERROR(LABEL, "Proxy is null");
+        return DLP_SERVICE_ERROR_SERVICE_NOT_EXIST;
+    }
+
+    sptr<IDlpPermissionCallback> asyncStub = new (std::nothrow) DlpPermissionAsyncStub(callback);
+    if (asyncStub == nullptr) {
+        DLP_LOG_ERROR(LABEL, "GetWaterMark new memory fail");
+        return DLP_SERVICE_ERROR_MEMORY_OPERATE_FAIL;
+    }
+
+    return proxy->GetWaterMark(waterMarkConfig, asyncStub);
+}
+
+int32_t DlpPermissionClient::SetWaterMark(const int32_t pid)
+{
+    auto proxy = GetProxy(false);
+    if (proxy == nullptr) {
+        DLP_LOG_ERROR(LABEL, "Proxy is null, dlpmgr service no start.");
+        return DLP_SERVICE_ERROR_SERVICE_NOT_EXIST;
+    }
+    return proxy->SetWaterMark(pid);
+}
+
 int32_t DlpPermissionClient::InstallDlpSandbox(const std::string& bundleName, DLPFileAccess dlpFileAccess,
     int32_t userId, SandboxInfo& sandboxInfo, const std::string& uri)
 {

@@ -34,6 +34,7 @@ static const uint32_t MIN_REALY_TYPE_LENGTH = 2;
 static const uint32_t MAX_REALY_TYPE_LENGTH = 5;
 static const std::string FILEID = "fileId";
 static const std::string ALLOWEDOPENCOUNT = "allowedOpenCount";
+static const std::string WATERMARK = "waterMarkConfig";
 static const uint32_t MIN_FILEID_LENGTH = 0;
 static const uint32_t MAX_FILEID_LENGTH = 100;
 static const uint32_t LIMIT_CERT_SIZE = 10000;
@@ -118,6 +119,26 @@ int32_t ParseDlpGeneralInfo(const std::string& generalInfo, GenerateInfoParams& 
     return DLP_OK;
 }
 
+void ParseFeatures(const nlohmann::json& jsonObj, GenerateInfoParams& params)
+{
+    auto iter = jsonObj.find(FILEID);
+    if (iter != jsonObj.end() && iter->is_string()) {
+        params.fileId = iter->get<std::string>();
+    }
+    iter = jsonObj.find(ALLOWEDOPENCOUNT);
+    if (iter != jsonObj.end() && iter->is_number_integer()) {
+        params.allowedOpenCount = iter->get<int32_t>();
+    } else {
+        params.allowedOpenCount = params.fileId.empty() ? 0 : 1;
+    }
+    iter = jsonObj.find(WATERMARK);
+    if (iter != jsonObj.end() && iter->is_boolean()) {
+        params.waterMarkConfig = iter->get<bool>();
+    } else {
+        params.waterMarkConfig = false;
+    }
+}
+
 int32_t ParseGeneralInfo(const nlohmann::json& jsonObj, GenerateInfoParams& params)
 {
     auto iter = jsonObj.find(DLP_OFFLINE_FLAG);
@@ -148,18 +169,10 @@ int32_t ParseGeneralInfo(const nlohmann::json& jsonObj, GenerateInfoParams& para
     if (iter != jsonObj.end() && iter->is_number_integer()) {
         params.certSize = iter->get<uint32_t>();
     }
-    iter = jsonObj.find(FILEID);
-    if (iter != jsonObj.end() && iter->is_string()) {
-        params.fileId = iter->get<std::string>();
-    }
-    iter = jsonObj.find(ALLOWEDOPENCOUNT);
-    if (iter != jsonObj.end() && iter->is_number_integer()) {
-        params.allowedOpenCount = iter->get<int32_t>();
-    } else {
-        params.allowedOpenCount = params.fileId.empty() ? 0 : 1;
-    }
+    ParseFeatures(jsonObj, params);
     return DLP_OK;
 }
+
 }  // namespace DlpPermission
 }  // namespace Security
 }  // namespace OHOS

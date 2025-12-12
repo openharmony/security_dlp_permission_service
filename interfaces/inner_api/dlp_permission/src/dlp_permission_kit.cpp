@@ -57,6 +57,16 @@ void ClientParseDlpCertificateCallback::OnParseDlpCertificate(int32_t result, co
     parseCv_.notify_all();
 }
 
+void GetWaterMarkCallback::OnCall(int32_t result, const GeneralInfo& info)
+{
+    this->result_ = result;
+    if (result == DLP_OK) {
+        this->info_.SetWaterMark = true;
+    }
+    this->isCallBack_ = true;
+    getWaterMarkCv_.notify_all();
+}
+
 int32_t DlpPermissionKit::GenerateDlpCertificate(const PermissionPolicy& policy, std::vector<uint8_t>& cert)
 {
     std::shared_ptr<ClientGenerateDlpCertificateCallback> callback =
@@ -117,6 +127,21 @@ int32_t DlpPermissionKit::ParseDlpCertificate(sptr<CertParcel>& certParcel, Perm
     }
 
     return callback->result_;
+}
+
+int32_t DlpPermissionKit::GetWaterMark(const bool waterMarkConfig) // 解密过程去拿watermark
+{
+    if (!waterMarkConfig) {
+        DLP_LOG_INFO(LABEL, "waterMarkConfig is %{public}d", waterMarkConfig);
+        return DLP_OK;
+    }
+    std::shared_ptr<GetWaterMarkCallback> callback = std::make_shared<GetWaterMarkCallback>();
+    int32_t res = DlpPermissionClient::GetInstance().GetWaterMark(waterMarkConfig, callback);
+    if (res != DLP_OK) {
+        DLP_LOG_INFO(LABEL, "GetWaterMark returns %{public}d", res);
+        return res;
+    }
+    return DLP_OK;
 }
 
 int32_t DlpPermissionKit::InstallDlpSandbox(const std::string& bundleName, DLPFileAccess dlpFileAccess, int32_t userId,

@@ -34,6 +34,9 @@ interface OHOS.Security.DlpPermission.IDlpPermissionService {
         [in] IDlpPermissionCallback dlpPermissionCallback,
         [in] String appId,
         [in] boolean offlineAccess);
+    void GetWaterMark(
+        [in] boolean waterMarkConfig,
+        [in] IDlpPermissionCallback dlpPermissionCallback);
     void InstallDlpSandbox(
         [in] String bundleName,
         [in] DLPFileAccess dlpFileAccess,
@@ -45,6 +48,7 @@ interface OHOS.Security.DlpPermission.IDlpPermissionService {
         [in] int sandboxUid,
         [in] Want want,
         [out] enum SandBoxExternalAuthorType authType);
+    void SetWaterMark([in] int pid);
     void QueryDlpFileCopyableByTokenId([out] boolean copyable, [in] unsigned int tokenId);
     void QueryDlpFileAccess([out] DLPPermissionInfoParcel permInfoParcel);
     void IsInDlpSandbox([out] boolean inSandbox);

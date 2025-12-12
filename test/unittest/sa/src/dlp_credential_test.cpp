@@ -107,6 +107,7 @@ public:
     void OnGenerateDlpCertificate(int32_t result, const std::vector<uint8_t>& cert) override {};
     void OnParseDlpCertificate(int32_t result, const PermissionPolicy& policy,
         const std::vector<uint8_t>& cert) override {};
+    void OnGetDlpWaterMark(int32_t result, const GeneralInfo& info) override {};
 };
 
 /**

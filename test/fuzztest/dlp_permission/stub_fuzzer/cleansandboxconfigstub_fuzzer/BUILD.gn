@@ -25,6 +25,10 @@ ohos_fuzztest("CleanSandboxConfigStubFuzzTest") {
 
   sources = [
     "${dlp_root_dir}/services/dlp_permission/sa/sa_main/dlp_permission_service.cpp",
+    "${dlp_root_dir}/services/dlp_permission/sa/sa_common/dlp_ability_adapter.cpp",
+    "${dlp_root_dir}/services/dlp_permission/sa/sa_common/dlp_ability_conn.cpp",
+    "${dlp_root_dir}/services/dlp_permission/sa/sa_common/dlp_ability_proxy.cpp",
+    "${dlp_root_dir}/services/dlp_permission/sa/sa_common/dlp_ability_stub.cpp",
     "${dlp_root_dir}/services/dlp_permission/sa/mock/access_token_adapter_mock.cpp",
     "cleansandboxconfigstub_fuzzer.cpp",
   ]
@@ -39,6 +43,8 @@ ohos_fuzztest("CleanSandboxConfigStubFuzzTest") {
     "ability_base:want",
     "ability_base:zuri",
     "ability_runtime:app_manager",
+    "ability_runtime:ability_manager",
+    "ability_runtime:ability_connect_callback_stub",
     "access_token:libaccesstoken_sdk",
     "access_token:libtokensetproc_shared",
     "app_file_service:fileuri_native",
@@ -58,5 +64,15 @@ ohos_fuzztest("CleanSandboxConfigStubFuzzTest") {
     "os_account:os_account_innerkits",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
+    "ability_runtime:extension_manager",
+    "window_manager:libwm",
+    "image_framework:image_native",
+    "image_framework:image_source",
+    "image_framework:image_source_ndk",
+    "image_framework:pixelmap_ndk",
+    "image_framework:pixelmap",
+    "resource_management:librawfile",
+    "graphic_2d:librender_service_client",
+    "graphic_2d:librender_service_base",
   ]
 }

@@ -55,7 +55,11 @@
         "json",
         "zlib",
         "openssl",
-        "libfuse"
+        "libfuse",
+        "graphic_2d",
+        "image_framework",
+        "window_manager",
+        "resource_management"
       ],
       "third_party": []
     },
@@ -81,6 +85,15 @@
             ],
             "header_base": "//base/security/dlp_permission_service"
           }
+        },
+        {
+          "name": "//base/security/dlp_permission_service/interfaces/inner_api/dlp_set_config:libdlp_setconfig_sdk",
+          "header": {
+            "header_files": [
+              "interfaces/inner_api/dlp_set_config/include/set_dlp_config.h"
+            ],
+            "header_base": "//base/security/dlp_permission_service"
+          } 
         },
         {
           "name": "//base/security/dlp_permission_service/interfaces/inner_api/dlp_parse:libdlpparse",

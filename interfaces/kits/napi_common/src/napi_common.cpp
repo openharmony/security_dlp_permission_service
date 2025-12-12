@@ -383,6 +383,7 @@ void GetDlpProperty(std::shared_ptr<DlpFile>& dlpFileNative, DlpProperty& proper
         .everyonePerm = policy.everyonePerm_,
         .expireTime = policy.expireTime_,
         .allowedOpenCount = policy.allowedOpenCount_,
+        .waterMarkConfig = policy.waterMarkConfig_,
     };
 }
 
@@ -1357,14 +1358,13 @@ bool GetAllowedOpenCount(napi_env env, napi_value jsObject, DlpProperty& propert
     return true;
 }
 
-bool GetWaterMarkConfig(napi_env env, napi_value jsObject, DlpProperty& property)
+void GetWaterMarkConfig(napi_env env, napi_value jsObject, DlpProperty& property)
 {
     bool jsWaterMarkConfig = false;
     if (!GetBoolValueByKey(env, jsObject, "waterMarkConfig", property.waterMarkConfig)) {
         DLP_LOG_ERROR(LABEL, "js get waterMarkConfig fail, will set false");
         property.waterMarkConfig = jsWaterMarkConfig;
     }
-    return true;
 }
 
 static bool GetEnterpriseDlpPropertyAccount(napi_env env, napi_value jsObject, DlpProperty& property)
@@ -1409,7 +1409,6 @@ bool GetEnterpriseDlpProperty(napi_env env, napi_value jsObject, DlpProperty& pr
         DLP_LOG_ERROR(LABEL, "js get offline access flag fail");
         return false;
     }
-    GetWaterMarkConfig(env, jsObject, property);
     GetDlpPropertyExpireTime(env, jsObject, property);
 
     napi_value everyoneAccessListObj = GetNapiValue(env, jsObject, "everyoneAccessList");
@@ -1625,6 +1624,9 @@ napi_value DlpPropertyToJs(napi_env env, const DlpProperty& property)
     NAPI_CALL(env, napi_create_int32(env, property.allowedOpenCount, &allowedOpenCountJs));
     NAPI_CALL(env, napi_set_named_property(env, dlpPropertyJs, "allowedOpenCount", allowedOpenCountJs));
 
+    napi_value waterMarkConfigJs;
+    napi_get_boolean(env, property.waterMarkConfig, &waterMarkConfigJs);
+    NAPI_CALL(env, napi_set_named_property(env, dlpPropertyJs, "waterMarkConfig", waterMarkConfigJs));
     return dlpPropertyJs;
 }
 

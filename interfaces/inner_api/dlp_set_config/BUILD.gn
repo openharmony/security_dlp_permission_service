@@ -1,0 +1,71 @@
+# Copyright (c) 2025-2025 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/ohos.gni")
+import("../../../dlp_permission_service.gni")
+
+ROOT_DIR = "${dlp_root_dir}/interfaces/inner_api/dlp_set_config"
+
+config("dlpsetconfig_public_config") {
+  visibility = [ ":*" ]
+  include_dirs = [
+    "${dlp_root_dir}/frameworks/common/include",
+    "${dlp_root_dir}/interfaces/inner_api/dlp_permission/include/",
+    "$ROOT_DIR/include",
+  ]
+}
+
+ohos_shared_library("libdlp_setconfig_sdk") {
+  branch_protector_ret = "pac_ret"
+
+  sanitize = {
+    integer_overflow = true
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
+
+  subsystem_name = "security"
+  part_name = "dlp_permission_service"
+
+  public_configs = [
+    ":dlpsetconfig_public_config",
+    "${dlp_permission_public_config_path}/:dlp_permission_sdk_config",
+  ]
+
+  sources = [
+    "$ROOT_DIR/src/set_dlp_config.cpp",
+  ]
+
+  include_dirs = [
+    "include",
+    "${dlp_root_dir}/frameworks/common/include",
+    "${dlp_root_dir}/frameworks/dlp_permission/include",
+  ]
+
+  deps = [
+    "${dlp_root_dir}/interfaces/inner_api/dlp_permission:libdlp_permission_sdk",
+  ]
+
+  external_deps = [
+    "ability_base:want",
+    "hilog:libhilog",
+  ]
+
+  cflags_cc = [ "-DHILOG_ENABLE" ]
+  
+  configs = [
+    "${dlp_root_dir}/config:coverage_flags",
+    "${dlp_root_dir}/config:common_build_options_flags",
+  ]
+}

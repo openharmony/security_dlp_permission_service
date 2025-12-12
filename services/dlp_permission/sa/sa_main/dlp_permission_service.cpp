@@ -52,6 +52,12 @@
 #include "permission_manager_adapter.h"
 #include "alg_utils.h"
 #include "dlp_feature_info.h"
+#include "image_source_native_impl.h"
+#include "pixelmap_native_impl.h"
+#include "directory_ex.h"
+#include "ohos_account_kits.h"
+#include "dlp_ability_stub.h"
+#include "dlp_ability_adapter.h"
 
 namespace OHOS {
 namespace Security {
@@ -87,6 +93,8 @@ static const std::string MDM_ENABLE_VALUE = "status";
 static const std::string MDM_BUNDLE_NAME = "appId";
 static const uint32_t ENABLE_VALUE_TRUE = 1;
 static const char *FEATURE_INFO_DATA_FILE_PATH = "/data/service/el1/public/dlp_permission_service/dlp_feature_info.txt";
+static const std::string WATERMARK_NAME = "dlpWaterMark";
+constexpr int32_t PARSE_WAIT_TIME_OUT = 20;
 }
 REGISTER_SYSTEM_ABILITY_BY_ID(DlpPermissionService, SA_ID_DLP_PERMISSION_SERVICE, true);
 
@@ -277,6 +285,154 @@ int32_t DlpPermissionService::ParseDlpCertificate(const sptr<CertParcel>& certPa
     }
     return DlpCredential::GetInstance().ParseDlpCertificate(
         certParcel, callback, appId, offlineAccess, applicationInfo);
+}
+
+int32_t DlpPermissionService::CheckWaterMarkInfo()
+{
+    int32_t uid = IPCSkeleton::GetCallingRealPid();
+    int32_t userId;
+    if (GetUserIdFromUid(uid, &userId) != 0) {
+        DLP_LOG_ERROR(LABEL, "Get userId from uid error.");
+        return DLP_SERVICE_ERROR_VALUE_INVALID;
+    }
+    if (userId < 0) {
+        DLP_LOG_ERROR(LABEL, "Get userId error.");
+        return DLP_SERVICE_ERROR_GET_ACCOUNT_FAIL;
+    }
+    std::pair<bool, AccountSA::OhosAccountInfo> accountInfo =
+        AccountSA::OhosAccountKits::GetInstance().QueryOhosAccountInfo();
+    if (!accountInfo.first) {
+        DLP_LOG_ERROR(LABEL, "Get accountInfo error.");
+        return DLP_SERVICE_ERROR_GET_ACCOUNT_FAIL;
+    }
+    std::string accountName = accountInfo.second.name_;
+    {
+        std::shared_lock<std::shared_mutex> lock(waterMarkInfoMutex_);
+        if (waterMarkInfo_.userId == userId && waterMarkInfo_.accountName == accountName &&
+            waterMarkInfo_.waterMarkImg != nullptr) {
+            return DLP_OK;
+        }
+    }
+    DLP_LOG_INFO(LABEL, "Watermark have not generated.");
+    return DLP_SERVICE_ERROR_VALUE_INVALID;
+}
+
+static int32_t ReceiveCallback(int32_t errCode, uint64_t reqId, uint8_t *outData, uint32_t outDataLen)
+{
+    DLP_LOG_INFO(LABEL, "Enter receive data callback.");
+    return DLP_OK;
+}
+
+static int32_t GetPixelmapFromFd(WaterMarkInfo& waterMarkInfo, std::shared_mutex &waterMarkInfoMutex)
+{
+    int32_t fd = -1;
+    {
+        std::shared_lock<std::shared_mutex> lock(waterMarkInfoMutex);
+        fd = waterMarkInfo.waterMarkFd;
+    }
+    if (fd < 0) {
+        DLP_LOG_ERROR(LABEL, "unexpect watermark fd: %{public}d", fd);
+        return DLP_IPC_CALLBACK_ERROR;
+    }
+    OH_ImageSourceNative *source = nullptr;
+    Image_ErrorCode errCode = OH_ImageSourceNative_CreateFromFd(fd, &source);
+    if (errCode != IMAGE_SUCCESS) {
+        DLP_LOG_ERROR(LABEL, "OH_ImageSourceNative_CreateFromFd failed, errCode: %{public}d", errCode);
+        return DLP_SERVICE_ERROR_VALUE_INVALID;
+    }
+    DLP_LOG_INFO(LABEL, "Image Source Create From Fd success");
+    OH_ImageSource_Info *imageInfo;
+    OH_ImageSourceInfo_Create(&imageInfo);
+    errCode = OH_ImageSourceNative_GetImageInfo(source, 0, imageInfo);
+    if (errCode != IMAGE_SUCCESS) {
+        DLP_LOG_ERROR(LABEL, "OH_ImageSourceNative_GetImageInfo failed, errCode: %{public}d", errCode);
+        return DLP_CREATE_PIXELMAP_ERROR;
+    }
+
+    OH_PixelmapNative *resPixelmap = nullptr;
+    errCode = OH_ImageSourceNative_CreatePixelmap(source, nullptr, &resPixelmap);
+    if (errCode != IMAGE_SUCCESS) {
+        DLP_LOG_ERROR(LABEL, "OH_ImageSourceNative_CreatePixelmap failed, errCode: %{public}d", errCode);
+        return DLP_CREATE_PIXELMAP_ERROR;
+    }
+    std::shared_ptr<Media::PixelMap> pixelMap = resPixelmap->GetInnerPixelmap();
+    {
+        std::unique_lock<std::shared_mutex> lock(waterMarkInfoMutex);
+        waterMarkInfo.waterMarkImg = pixelMap;
+    }
+    DLP_LOG_INFO(LABEL, "Create pixel map success.");
+    return DLP_OK;
+}
+
+int32_t DlpPermissionService::GetWaterMark(const bool waterMarkConfig,
+    const sptr<IDlpPermissionCallback>& callback)
+{
+    if (callback == nullptr) {
+        DLP_LOG_ERROR(LABEL, "GetWaterMark callback is null");
+        return DLP_SERVICE_ERROR_VALUE_INVALID;
+    }
+    int32_t res = CheckWaterMarkInfo();
+    if (res == DLP_OK) {
+        return DLP_OK;
+    }
+
+    int32_t userId = GetCallingUserId();
+    ReceiveDataCallback recvCallback = ReceiveCallback;
+    DlpAbilityAdapter dlpAbilityAdapter(recvCallback);
+    dlpAbilityAdapter.HandleGetWaterMark(userId, waterMarkInfo_, waterMarkInfoMutex_, waterMarkInfoCv_);
+    
+    {
+        std::unique_lock<std::shared_mutex> lock(waterMarkInfoMutex_);
+        if (waterMarkInfo_.waterMarkStatus == 0) {
+            waterMarkInfoCv_.wait_for(lock, std::chrono::seconds(PARSE_WAIT_TIME_OUT));
+        }
+    }
+    res = GetPixelmapFromFd(waterMarkInfo_, waterMarkInfoMutex_);
+    if (res != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "GetPixelmapFromFd failed.");
+        return DLP_CREATE_PIXELMAP_ERROR;
+    }
+    return DLP_OK;
+}
+
+bool SetWatermarkToRS(const std::string &name, std::shared_ptr<Media::PixelMap> watermarkImg)
+{
+    DLP_LOG_INFO(LABEL, "SetWatermarkToRS %{public}s", name.c_str());
+    bool res = Rosen::RSInterfaces::GetInstance().SetWatermark(name, watermarkImg);
+    if (!res) {
+        DLP_LOG_ERROR(LABEL, "SetWatermarkToRS SetWatermark fail");
+    }
+    return res;
+}
+
+int32_t DlpPermissionService::SetWaterMark(const int32_t pid)
+{
+    std::shared_ptr<Media::PixelMap> watermarkImg = nullptr;
+    {
+        std::shared_lock<std::shared_mutex> lock(waterMarkInfoMutex_);
+        watermarkImg = waterMarkInfo_.waterMarkImg;
+    }
+    if (watermarkImg == nullptr) {
+        DLP_LOG_ERROR(LABEL, "SetWaterMark waterMarkImg is null");
+        return DLP_SET_WATERMARK_ERROR;
+    }
+    bool res = SetWatermarkToRS(WATERMARK_NAME, watermarkImg);
+    if (!res) {
+        DLP_LOG_ERROR(LABEL, "SetWatermark to RS failed, will try again");
+        res = SetWatermarkToRS(WATERMARK_NAME, watermarkImg);
+    }
+    if (!res) {
+        DLP_LOG_ERROR(LABEL, "SetWatermark to RS failed again.");
+        return DLP_SET_WATERMARK_ERROR;
+    }
+
+    int32_t ret = static_cast<int32_t>(Rosen::WindowManager::
+        GetInstance().SetProcessWatermark(pid, WATERMARK_NAME, true));
+    if (ret != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "SetProcessWatermark failed! errcode: %{public}d", ret); //todo 没有水印的错误进行处理
+        return DLP_SET_WATERMARK_ERROR;
+    }
+    return DLP_OK;
 }
 
 bool DlpPermissionService::InsertDlpSandboxInfo(DlpSandboxInfo& sandboxInfo, bool hasRetention,

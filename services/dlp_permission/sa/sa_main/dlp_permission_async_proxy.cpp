@@ -102,6 +102,33 @@ void DlpPermissionAsyncProxy::OnParseDlpCertificate(int32_t result, const Permis
         return;
     }
 }
+
+void DlpPermissionAsyncProxy::OnGetDlpWaterMark(int32_t result, const GeneralInfo& info)
+{
+    MessageParcel data;
+    if (!data.WriteInterfaceToken(DlpPermissionAsyncProxy::GetDescriptor())) {
+        DLP_LOG_ERROR(LABEL, "Write descriptor fail");
+        return;
+    }
+    if (!data.WriteInt32(result)) {
+        DLP_LOG_ERROR(LABEL, "Write int32 fail");
+        return;
+    }
+    
+    MessageParcel reply;
+    MessageOption option(MessageOption::TF_SYNC);
+    sptr<IRemoteObject> remote = Remote();
+    if (remote == nullptr) {
+        DLP_LOG_ERROR(LABEL, "Remote service is null.");
+        return;
+    }
+    int32_t requestResult = remote->SendRequest(
+        static_cast<uint32_t>(DlpPermissionCallbackInterfaceCode::ON_GET_DLP_WATERMARK), data, reply, option);
+    if (requestResult != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "SendRequest fail, result: %{public}d", requestResult);
+        return;
+    }
+}
 }  // namespace DlpPermission
 }  // namespace Security
 }  // namespace OHOS

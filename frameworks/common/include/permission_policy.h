@@ -95,6 +95,10 @@ struct EnterprisePolicy {
     std::string policyString = "";
 };
 
+struct GeneralInfo {
+    bool SetWaterMark = false;
+};
+
 struct DlpProperty {
     std::string ownerAccount;
     std::string ownerAccountId;
@@ -134,6 +138,7 @@ public:
     uint32_t GetHmacKeyLen() const;
     int32_t CheckActionUponExpiry();
     int32_t GetAllowedOpenCount() const;
+    bool GetwaterMarkConfig() const;
 
     std::string ownerAccount_;
     std::string ownerAccountId_;
@@ -154,6 +159,7 @@ public:
     std::string fileId = "";
     std::string appId = "";
     int32_t allowedOpenCount_ = 0;
+    bool waterMarkConfig_ = false;
 
 private:
     uint8_t* aeskey_;

@@ -294,9 +294,11 @@ int32_t DlpFileManager::PrepareParms(const std::shared_ptr<DlpFile>& filePtr, co
     }
     policy.fileId = property.fileId;
     policy.allowedOpenCount_ = property.allowedOpenCount;
+    policy.waterMarkConfig_ = property.waterMarkConfig;
     filePtr->SetFileId(property.fileId);
     filePtr->SetAllowedOpenCount(property.allowedOpenCount);
     filePtr->SetOfflineAccess(property.offlineAccess, property.allowedOpenCount);
+    filePtr->SetWaterMarkConfig(property.waterMarkConfig);
 
     result = PrepareDlpEncryptParms(policy, key, usage, certData, hmacKey);
     if (result != DLP_OK) {
@@ -534,11 +536,14 @@ int32_t DlpFileManager::DlpRawHmacCheckAndUpdate(std::shared_ptr<DlpFile>& fileP
     return AddDlpFileNode(filePtr);
 }
 
-// 校验明文中存储的信息是否与policy中的一致
 static bool VerifyConsistent(const PermissionPolicy& policy, std::shared_ptr<DlpFile>& filePtr)
 {
     if (policy.GetAllowedOpenCount() != filePtr->GetAllowedOpenCount()) {
         DLP_LOG_ERROR(LABEL, "allowedOpenCount not consistent");
+        return false;
+    }
+    if (policy.waterMarkConfig_ != filePtr->GetWaterMarkConfig()) {
+        DLP_LOG_ERROR(LABEL, "waterMarkConfig not consistent");
         return false;
     }
     std::string filePtrFileId;
@@ -591,6 +596,28 @@ static int32_t SetNotOwnerAndReadOnce(const PermissionPolicy& policy, int32_t dl
     return DLP_OK;
 }
 
+static int32_t VerifyAndGetWaterMark(PermissionPolicy& policy, std::shared_ptr<DlpFile>& filePtr)
+{
+    policy.waterMarkConfig_ = filePtr->GetWaterMarkConfig();
+    int32_t result = filePtr->SetPolicy(policy);
+    if (result != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "SetPolicy fail, errno=%{public}d", result);
+        return result;
+    }
+    filePtr->SetFileId(policy.fileId);
+    if (!VerifyConsistent(policy, filePtr)) {
+        DLP_LOG_ERROR(LABEL, "VerifyConsistent fail");
+        return DLP_PARSE_ERROR_FILE_VERIFICATION_FAIL;
+    }
+    if (policy.GetwaterMarkConfig()) {
+        result = DlpPermissionKit::GetWaterMark(policy.GetwaterMarkConfig());
+        if (result != DLP_OK) {
+            DLP_LOG_ERROR(LABEL, "GetWaterMark fail, errno=%{public}d", result);
+        }
+    }
+    return DLP_OK;
+}
+
 int32_t DlpFileManager::ParseRawDlpFile(int32_t dlpFileFd, std::shared_ptr<DlpFile>& filePtr, const std::string& appId,
     const std::string& realType, sptr<CertParcel>& certParcel)
 {
@@ -599,6 +626,7 @@ int32_t DlpFileManager::ParseRawDlpFile(int32_t dlpFileFd, std::shared_ptr<DlpFi
     certParcel->isNeedAdapter = filePtr->NeedAdapter();
     certParcel->needCheckCustomProperty = true;
     certParcel->allowedOpenCount = filePtr->GetAllowedOpenCount();
+    certParcel->waterMarkConfig = filePtr->GetWaterMarkConfig();
     if (filePtr->GetAccountType() == ENTERPRISE_ACCOUNT) {
         certParcel->decryptType = DECRYPTTYPEFORUSER;
         certParcel->appId = filePtr->GetAppId();
@@ -612,15 +640,10 @@ int32_t DlpFileManager::ParseRawDlpFile(int32_t dlpFileFd, std::shared_ptr<DlpFi
         DLP_LOG_ERROR(LABEL, "Parse cert fail, errno=%{public}d", result);
         return result;
     }
-    result = filePtr->SetPolicy(policy);
+    result = VerifyAndGetWaterMark(policy, filePtr);
     if (result != DLP_OK) {
-        DLP_LOG_ERROR(LABEL, "SetPolicy fail, errno=%{public}d", result);
+        DLP_LOG_ERROR(LABEL, "get watermark failed, errno=%{public}d", result);
         return result;
-    }
-    filePtr->SetFileId(policy.fileId);
-    if (!VerifyConsistent(policy, filePtr)) {
-        DLP_LOG_ERROR(LABEL, "VerifyConsistent fail");
-        return DLP_PARSE_ERROR_FILE_VERIFICATION_FAIL;
     }
     struct DlpBlob key = {.size = policy.GetAeskeyLen(), .data = policy.GetAeskey()};
     struct DlpCipherParam param = {.iv = {.size = policy.GetIvLen(), .data = policy.GetIv()}};
@@ -669,6 +692,27 @@ int32_t DlpFileManager::OpenRawDlpFile(int32_t dlpFileFd, std::shared_ptr<DlpFil
     return DlpRawHmacCheckAndUpdate(filePtr, certParcel->offlineCert, filePtr->GetAllowedOpenCount());
 }
 
+static int32_t CheckZipFileParams(std::shared_ptr<DlpFile>& filePtr, PermissionPolicy& policy)
+{
+    int32_t result = filePtr->SetPolicy(policy);
+    if (result != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "SetPolicy fail, errno=%{public}d", result);
+        return result;
+    }
+    policy.waterMarkConfig_ = filePtr->GetWaterMarkConfig();
+    if (!VerifyConsistent(policy, filePtr)) {
+        DLP_LOG_ERROR(LABEL, "VerifyConsistent fail");
+        return DLP_PARSE_ERROR_FILE_VERIFICATION_FAIL;
+    }
+    if (policy.GetwaterMarkConfig()) {
+        result = DlpPermissionKit::GetWaterMark(policy.GetwaterMarkConfig());
+        if (result != DLP_OK) {
+            DLP_LOG_ERROR(LABEL, "GetWaterMark fail, errno=%{public}d", result);
+        }
+    }
+    return DLP_OK;
+}
+
 int32_t DlpFileManager::ParseZipDlpFile(std::shared_ptr<DlpFile>& filePtr, const std::string& appId, int32_t dlpFileFd,
     sptr<CertParcel>& certParcel)
 {
@@ -678,6 +722,7 @@ int32_t DlpFileManager::ParseZipDlpFile(std::shared_ptr<DlpFile>& filePtr, const
     certParcel->needCheckCustomProperty = true;
     filePtr->GetRealType(certParcel->realFileType);
     certParcel->allowedOpenCount = filePtr->GetAllowedOpenCount();
+    certParcel->waterMarkConfig = filePtr->GetWaterMarkConfig();
     filePtr->GetFileIdPlaintext(certParcel->fileId);
     StartTrace(HITRACE_TAG_ACCESS_CONTROL, "DlpParseCertificate");
     int32_t result = DlpPermissionKit::ParseDlpCertificate(certParcel, policy, appId, filePtr->GetOfflineAccess());
@@ -686,14 +731,10 @@ int32_t DlpFileManager::ParseZipDlpFile(std::shared_ptr<DlpFile>& filePtr, const
         DLP_LOG_ERROR(LABEL, "Parse cert fail, errno=%{public}d", result);
         return result;
     }
-    result = filePtr->SetPolicy(policy);
+    result = CheckZipFileParams(filePtr, policy);
     if (result != DLP_OK) {
-        DLP_LOG_ERROR(LABEL, "SetPolicy fail, errno=%{public}d", result);
+        DLP_LOG_ERROR(LABEL, "Check zip file params failed, errno=%{public}d", result);
         return result;
-    }
-    if (!VerifyConsistent(policy, filePtr)) {
-        DLP_LOG_ERROR(LABEL, "VerifyConsistent fail");
-        return DLP_PARSE_ERROR_FILE_VERIFICATION_FAIL;
     }
     struct DlpBlob key = {.size = policy.GetAeskeyLen(), .data = policy.GetAeskey()};
     struct DlpCipherParam param = {.iv = {.size = policy.GetIvLen(), .data = policy.GetIv()}};

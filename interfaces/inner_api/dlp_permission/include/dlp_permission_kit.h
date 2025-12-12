@@ -63,6 +63,20 @@ public:
     std::condition_variable parseCv_;
 };
 
+class GetWaterMarkCallback : public GeneralCallback {
+public:
+    GetWaterMarkCallback() = default;
+    virtual ~GetWaterMarkCallback() = default;
+
+    void OnCall(int32_t result, const GeneralInfo& info) override;
+
+    int32_t result_ = -1;
+    GeneralInfo info_;
+    bool isCallBack_ = false;
+    std::mutex getWaterMarkMtx_;
+    std::condition_variable getWaterMarkCv_;
+};
+
 class DlpPermissionKit {
 public:
     static int32_t GenerateDlpCertificate(const PermissionPolicy& policy, std::vector<uint8_t>& cert);
@@ -99,6 +113,7 @@ public:
     static int32_t SetDlpFeature(uint32_t dlpFeatureInfo, bool& statusSetInfo);
     static int32_t SetEnterprisePolicy(EnterprisePolicy policy);
     static int32_t SetNotOwnerAndReadOnce(const std::string& uri, bool isNotOwnerAndReadOnce);
+    static int32_t GetWaterMark(const bool waterMarkConfig);
 };
 }  // namespace DlpPermission
 }  // namespace Security

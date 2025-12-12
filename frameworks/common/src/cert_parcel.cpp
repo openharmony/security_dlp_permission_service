@@ -73,6 +73,10 @@ bool CertParcel::Marshalling(Parcel& data) const
         DLP_LOG_ERROR(LABEL, "Write allowedOpenCount fail");
         return false;
     }
+    if (!data.WriteBool(this->waterMarkConfig)) {
+        DLP_LOG_ERROR(LABEL, "Write bool waterMarkConfig fail");
+        return false;
+    }
     return true;
 }
 
@@ -80,6 +84,35 @@ static CertParcel* FreeCertParcel(CertParcel* parcel)
 {
     delete parcel;
     return nullptr;
+}
+
+static CertParcel* UnmarshallingProperty(Parcel& data, CertParcel* parcel)
+{
+    if (!data.ReadInt32(parcel->decryptType)) {
+        DLP_LOG_ERROR(LABEL, "Read decryptType fail");
+        return FreeCertParcel(parcel);
+    }
+    if (!data.ReadString(parcel->appId)) {
+        DLP_LOG_ERROR(LABEL, "Read appId fail");
+        return FreeCertParcel(parcel);
+    }
+    if (!data.ReadString(parcel->realFileType)) {
+        DLP_LOG_ERROR(LABEL, "Read realFileType fail");
+        return FreeCertParcel(parcel);
+    }
+    if (!data.ReadString(parcel->fileId)) {
+        DLP_LOG_ERROR(LABEL, "Read fileId fail");
+        return FreeCertParcel(parcel);
+    }
+    if (!data.ReadInt32(parcel->allowedOpenCount)) {
+        DLP_LOG_ERROR(LABEL, "Read allowedOpenCount fail");
+        return FreeCertParcel(parcel);
+    }
+    if (!data.ReadBool(parcel->waterMarkConfig)) {
+        DLP_LOG_ERROR(LABEL, "Read waterMarkConfig fail");
+        return FreeCertParcel(parcel);
+    }
+    return parcel;
 }
 
 CertParcel* CertParcel::Unmarshalling(Parcel& data)
@@ -109,28 +142,13 @@ CertParcel* CertParcel::Unmarshalling(Parcel& data)
         DLP_LOG_ERROR(LABEL, "Read needCheckCustomProperty fail");
         return FreeCertParcel(parcel);
     }
-    if (!data.ReadInt32(parcel->decryptType)) {
-        DLP_LOG_ERROR(LABEL, "Read decryptType fail");
-        return FreeCertParcel(parcel);
-    }
-    if (!data.ReadString(parcel->appId)) {
-        DLP_LOG_ERROR(LABEL, "Read appId fail");
-        return FreeCertParcel(parcel);
-    }
-    if (!data.ReadString(parcel->realFileType)) {
-        DLP_LOG_ERROR(LABEL, "Read realFileType fail");
-        return FreeCertParcel(parcel);
-    }
-    if (!data.ReadString(parcel->fileId)) {
-        DLP_LOG_ERROR(LABEL, "Read fileId fail");
-        return FreeCertParcel(parcel);
-    }
-    if (!data.ReadInt32(parcel->allowedOpenCount)) {
-        DLP_LOG_ERROR(LABEL, "Read allowedOpenCount fail");
-        return FreeCertParcel(parcel);
+    if (UnmarshallingProperty(data, parcel) == nullptr) {
+        DLP_LOG_ERROR(LABEL, "unmarshall property fail");
+        return nullptr;
     }
     return parcel;
 }
+
 } // namespace DlpPermission
 } // namespace Security
 } // namespace OHOS

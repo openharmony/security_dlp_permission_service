@@ -125,6 +125,47 @@ HWTEST_F(DlpPermissionAsyncStubTest, OnParseDlpCertificate002, TestSize.Level0)
 }
 
 /**
+ * @tc.name: OnGetDlpWaterMark001
+ * @tc.desc: OnGetDlpWaterMark test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionAsyncStubTest, OnGetDlpWaterMark001, TestSize.Level0)
+{
+    DLP_LOG_INFO(LABEL, "OnGetDlpWaterMark001");
+
+    std::shared_ptr<GetWaterMarkCallback> callback1 = nullptr;
+    sptr<DlpPermissionAsyncStub> callback = new (std::nothrow) DlpPermissionAsyncStub(callback1);
+
+    int32_t result = 0;
+    GeneralInfo info;
+
+    callback->OnGetDlpWaterMark(result, info);
+    ASSERT_EQ(nullptr, callback->getWaterMarkCallback_);
+}
+
+/**
+ * @tc.name: OnGetDlpWaterMark002
+ * @tc.desc: OnParseDlpCertificate test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionAsyncStubTest, OnGetDlpWaterMark002, TestSize.Level0)
+{
+    DLP_LOG_INFO(LABEL, "OnGetDlpWaterMark002");
+
+    std::shared_ptr<GetWaterMarkCallback> callback1 =
+        std::make_shared<GetWaterMarkCallback>();
+    sptr<DlpPermissionAsyncStub> callback = new (std::nothrow) DlpPermissionAsyncStub(callback1);
+
+    int32_t result = 0;
+    GeneralInfo info;
+
+    callback->OnGetDlpWaterMark(result, info);
+    ASSERT_EQ(result, DLP_OK);
+}
+
+/**
  * @tc.name: OnParseDlpCertificateStub001
  * @tc.desc: OnParseDlpCertificateStub test
  * @tc.type: FUNC
@@ -158,6 +199,28 @@ HWTEST_F(DlpPermissionAsyncStubTest, OnRemoteRequest001, TestSize.Level0)
     sptr<DlpPermissionAsyncStub> callback = new (std::nothrow) DlpPermissionAsyncStub(callback1);
 
     uint32_t code = 0;
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    int32_t ret = callback->OnRemoteRequest(code, data, reply, option);
+    ASSERT_EQ(DLP_SERVICE_ERROR_IPC_REQUEST_FAIL, ret);
+}
+
+/**
+ * @tc.name: OnRemoteRequest002
+ * @tc.desc: OnRemoteRequest test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionAsyncStubTest, OnRemoteRequest002, TestSize.Level0)
+{
+    DLP_LOG_INFO(LABEL, "OnRemoteRequest002");
+
+    std::shared_ptr<GetWaterMarkCallback> callback1 = nullptr;
+    sptr<DlpPermissionAsyncStub> callback = new (std::nothrow) DlpPermissionAsyncStub(callback1);
+
+    uint32_t code = 2;
     MessageParcel data;
     MessageParcel reply;
     MessageOption option;

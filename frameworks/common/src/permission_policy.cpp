@@ -143,6 +143,7 @@ PermissionPolicy::PermissionPolicy()
     customProperty_ = "";
     fileId = "";
     allowedOpenCount_ = 0;
+    waterMarkConfig_ = false;
 }
 
 PermissionPolicy::PermissionPolicy(const DlpProperty& property)
@@ -167,6 +168,7 @@ PermissionPolicy::PermissionPolicy(const DlpProperty& property)
     customProperty_ = property.customProperty.enterprise;
     fileId = property.fileId;
     allowedOpenCount_ = property.allowedOpenCount;
+    waterMarkConfig_ = property.waterMarkConfig;
 }
 
 PermissionPolicy::~PermissionPolicy()
@@ -274,6 +276,11 @@ int32_t PermissionPolicy::GetAllowedOpenCount() const
     return allowedOpenCount_;
 }
 
+bool PermissionPolicy::GetwaterMarkConfig() const
+{
+    return waterMarkConfig_;
+}
+
 void PermissionPolicy::CopyPolicyHmac(const PermissionPolicy& srcPolicy)
 {
     if (srcPolicy.hmacKeyLen_ == 0 || srcPolicy.hmacKey_ == nullptr) {
@@ -308,6 +315,7 @@ void PermissionPolicy::CopyPermissionPolicy(const PermissionPolicy& srcPolicy)
     }
     fileId = srcPolicy.fileId;
     allowedOpenCount_ = srcPolicy.allowedOpenCount_;
+    waterMarkConfig_ = srcPolicy.waterMarkConfig_;
 }
 
 int32_t PermissionPolicy::CheckActionUponExpiry()
