@@ -333,7 +333,7 @@ static bool ParseContextForRegisterPlugin(napi_env env, napi_callback_info cbInf
     return true;
 }
 
-static void * DlpStaticHandle(napi_env env)
+static void* DlpStaticHandle(napi_env env)
 {
     if (g_dlpStaticHandle == nullptr) {
         if (sizeof(void *) == SIZE_64_BIT) {
