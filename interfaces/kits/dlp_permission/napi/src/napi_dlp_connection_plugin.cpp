@@ -55,11 +55,12 @@ static const size_t SIZE_64_BIT = 8;
 static const std::string DLP_CREDENTIAL_STATIC_PLP_32_PATH = "/system/lib/libdlp_connection_static.z.so";
 static const std::string DLP_CREDENTIAL_STATIC_PLP_64_PATH = "/system/lib64/libdlp_connection_static.z.so";
 std::mutex g_lockDlpStatic;
-static void *g_dlpStaticHandle;
+static void *g_dlpStaticHandle = nullptr;
 #endif
 }  // namespace
 
 typedef int32_t (*Connection_Set)(void *plugin, uint64_t *pluginId);
+static void* DlpStaticHandle(napi_env env);
 
 NapiDlpConnectionPlugin::NapiDlpConnectionPlugin(napi_env env, const JsDlpConnPlugin &jsPlugin)
     : env_(env), jsPlugin_(jsPlugin)
