@@ -376,13 +376,13 @@ int32_t DlpPermissionService::GetWaterMark(const bool waterMarkConfig,
         return DLP_OK;
     }
 
-    int32_t userId = 100; //todo 确定id
+    int32_t userId = GetCallingUserId();
     ReceiveDataCallback recvCallback = ReceiveCallback;
     DlpAbilityAdapter dlpAbilityAdapter(recvCallback);
     dlpAbilityAdapter.HandleGetWaterMark(userId, waterMarkInfo_, waterMarkInfoMutex_, waterMarkInfoCv_);
     
     {
-        std::shared_lock<std::shared_mutex> lock(waterMarkInfoMutex_);
+        std::unique_lock<std::shared_mutex> lock(waterMarkInfoMutex_);
         if (waterMarkInfo_.waterMarkStatus == 0) {
             waterMarkInfoCv_.wait_for(lock, std::chrono::seconds(PARSE_WAIT_TIME_OUT));
         }

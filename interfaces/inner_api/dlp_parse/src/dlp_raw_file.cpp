@@ -46,7 +46,6 @@ const uint32_t MAX_CERT_SIZE = 30 * 1024;
 const std::string DEFAULT_STRINGS = "";
 const int32_t FILEID_SIZE = 46;
 const int32_t FILEID_SIZE_OPPOSITE = -46;
-// const int32_t FILEID_ALLOWEDOPEN_OPPOSITE = -54;
 const int32_t WATERMARK_OPPOSITE = -58;
 } // namespace
 

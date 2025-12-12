@@ -157,6 +157,7 @@ ohos_unittest("dlp_permission_service_test") {
     "ability_base:zuri",
     "ability_runtime:app_manager",
     "ability_runtime:extension_manager",
+    "ability_runtime:ability_manager",
     "access_token:libaccesstoken_sdk",
     "access_token:libnativetoken_shared",
     "access_token:libtokensetproc_shared",

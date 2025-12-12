@@ -169,7 +169,7 @@ int32_t DlpPermissionClient::GetWaterMark(const bool waterMarkConfig,
     return proxy->GetWaterMark(waterMarkConfig, asyncStub);
 }
 
-int32_t DlpPermissionClient::SetWaterMark(const int32_t pid) // 给动态库调用
+int32_t DlpPermissionClient::SetWaterMark(const int32_t pid)
 {
     auto proxy = GetProxy(false);
     if (proxy == nullptr) {

@@ -32,7 +32,6 @@
 #include "transaction/rs_interfaces.h"
 #include "window_manager.h"
 #include "wm_common.h"
-// 直接找pixelmap的宏
 
 namespace OHOS {
 namespace Security {
@@ -51,7 +50,7 @@ public:
     std::string accountName = "";
     std::shared_ptr<Media::PixelMap> waterMarkImg = nullptr;
     int32_t waterMarkFd = -1;
-    int32_t waterMarkStatus = 0; // 0:就绪, -1:返回错误, 1:返回成功
+    int32_t waterMarkStatus = 0;
 };
 
 class DlpPermissionService final : public SystemAbility, public DlpPermissionServiceStub {

@@ -46,6 +46,7 @@ ohos_fuzztest("BundleManagerAdapterFuzzTest") {
     "ability_runtime:app_manager",
     "access_token:libaccesstoken_sdk",
     "access_token:libtokensetproc_shared",
+    "ability_runtime:ability_manager",
     "app_file_service:fileuri_native",
     "bundle_framework:appexecfwk_base",
     "bundle_framework:appexecfwk_core",

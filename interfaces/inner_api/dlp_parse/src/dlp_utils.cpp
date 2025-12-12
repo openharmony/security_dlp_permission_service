@@ -46,7 +46,6 @@ const uint32_t DLP_RAW_HEAD_OFFSET = 8;
 std::mutex g_fileOpLock;
 const int32_t FILEID_SIZE = 46;
 const int32_t FILEID_SIZE_OPPOSITE = -46;
-// const int32_t FILEID_ALLOWEDOPEN_OPPOSITE = -54;
 const int32_t WATERMARK_OPPOSITE = -58;
 }
 
