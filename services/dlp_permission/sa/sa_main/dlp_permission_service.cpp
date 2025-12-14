@@ -84,7 +84,6 @@ static const std::string FALSE_VALUE = "false";
 static const std::string SEPARATOR = "_";
 static const std::string FOUNDATION_SERVICE_NAME = "foundation";
 static const std::string MDM_APPIDENTIFIER = "6917562860841254665";
-static const std::string YX_APPIDENTIFIER = "5765880207854689865";
 static const uint32_t MAX_SUPPORT_FILE_TYPE_NUM = 1024;
 static const uint32_t MAX_RETENTION_SIZE = 1024;
 static const uint32_t MAX_FILE_RECORD_SIZE = 1024;
@@ -204,7 +203,7 @@ int32_t DlpPermissionService::GenerateDlpCertificate(
 
     if (!PermissionManagerAdapter::CheckPermission(PERMISSION_ACCESS_DLP_FILE) &&
         !PermissionManagerAdapter::CheckPermission(PERMISSION_ENTERPRISE_ACCESS_DLP_FILE) &&
-        !(appIdentifier == MDM_APPIDENTIFIER || appIdentifier == YX_APPIDENTIFIER)) {
+        !(appIdentifier == MDM_APPIDENTIFIER)) {
         return DLP_SERVICE_ERROR_PERMISSION_DENY;
     }
 
@@ -261,7 +260,7 @@ int32_t DlpPermissionService::ParseDlpCertificate(const sptr<CertParcel>& certPa
 
     if (!PermissionManagerAdapter::CheckPermission(PERMISSION_ACCESS_DLP_FILE) &&
         !PermissionManagerAdapter::CheckPermission(PERMISSION_ENTERPRISE_ACCESS_DLP_FILE) &&
-        !(appIdentifier == MDM_APPIDENTIFIER || appIdentifier == YX_APPIDENTIFIER)) {
+        !(appIdentifier == MDM_APPIDENTIFIER)) {
         return DLP_SERVICE_ERROR_PERMISSION_DENY;
     }
     if (callback == nullptr) {
@@ -1429,7 +1428,7 @@ int DlpPermissionService::SetNotOwnerAndReadOnce(const std::string& uri, bool is
 
     if (!PermissionManagerAdapter::CheckPermission(PERMISSION_ACCESS_DLP_FILE) &&
         !PermissionManagerAdapter::CheckPermission(PERMISSION_ENTERPRISE_ACCESS_DLP_FILE) &&
-        !(appIdentifier == MDM_APPIDENTIFIER || appIdentifier == YX_APPIDENTIFIER)) {
+        !(appIdentifier == MDM_APPIDENTIFIER)) {
         return DLP_SERVICE_ERROR_PERMISSION_DENY;
     }
 

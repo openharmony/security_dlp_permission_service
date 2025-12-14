@@ -1896,10 +1896,6 @@ napi_value NapiDlpPermission::StartDLPManagerForResult(napi_env env, napi_callba
 
 napi_value NapiDlpPermission::ProcessDomainAccount(napi_env env, napi_callback_info cbInfo)
 {
-    if (!IsSystemApp(env)) {
-        return nullptr;
-    }
-
     auto asyncContextPtr = std::make_unique<GenerateDlpFileForEnterpriseAsyncContext>(env);
     if (!GetGenerateDlpFileForDomainParam(env, cbInfo, *asyncContextPtr)) {
         return nullptr;

@@ -640,7 +640,7 @@ int32_t DlpFileManager::ParseRawDlpFile(int32_t dlpFileFd, std::shared_ptr<DlpFi
         DLP_LOG_ERROR(LABEL, "Parse cert fail, errno=%{public}d", result);
         return result;
     }
-    result = VerifyAndGetWaterMark(policy, filePtr);
+    result = filePtr->GetAccountType() == ENTERPRISE_ACCOUNT ? DLP_OK : VerifyAndGetWaterMark(policy, filePtr);
     if (result != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "get watermark failed, errno=%{public}d", result);
         return result;
@@ -655,7 +655,8 @@ int32_t DlpFileManager::ParseRawDlpFile(int32_t dlpFileFd, std::shared_ptr<DlpFi
         return result;
     }
     filePtr->SetAllowedOpenCount(policy.GetAllowedOpenCount());
-    result = SetNotOwnerAndReadOnce(policy, dlpFileFd, filePtr);
+    result = filePtr->GetAccountType() == ENTERPRISE_ACCOUNT ? DLP_OK :
+        SetNotOwnerAndReadOnce(policy, dlpFileFd, filePtr);
     if (result != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "SetNotOwnerAndReadOnce fail, errno=%{public}d", result);
         return result;
