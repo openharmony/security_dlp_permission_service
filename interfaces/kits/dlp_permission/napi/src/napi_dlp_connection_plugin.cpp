@@ -60,7 +60,6 @@ static void *g_dlpStaticHandle;
 }  // namespace
 
 typedef int32_t (*Connection_Set)(void *plugin, uint64_t *pluginId);
-static void* DlpStaticHandle(napi_env env);
 
 NapiDlpConnectionPlugin::NapiDlpConnectionPlugin(napi_env env, const JsDlpConnPlugin &jsPlugin)
     : env_(env), jsPlugin_(jsPlugin)
