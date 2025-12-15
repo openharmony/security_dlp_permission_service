@@ -336,6 +336,7 @@ static bool ParseContextForRegisterPlugin(napi_env env, napi_callback_info cbInf
 
 static void* DlpStaticHandle(napi_env env)
 {
+#ifdef SUPPORT_DLP_CREDENTIAL
     if (g_dlpStaticHandle == nullptr) {
         if (sizeof(void *) == SIZE_64_BIT) {
             g_dlpStaticHandle = dlopen(DLP_CREDENTIAL_STATIC_PLP_64_PATH.c_str(), RTLD_LAZY);
@@ -347,6 +348,10 @@ static void* DlpStaticHandle(napi_env env)
         }
     }
     return g_dlpStaticHandle;
+#else
+    DlpNapiThrow(env, DLP_SERVICE_ERROR_VALUE_INVALID);
+    return nullptr;
+#endif
 }
 
 static napi_value RegisterPlugin(napi_env env, napi_callback_info cbInfo)
