@@ -342,9 +342,6 @@ static void* DlpStaticHandle(napi_env env)
         } else {
             g_dlpStaticHandle = dlopen(DLP_CREDENTIAL_STATIC_PLP_32_PATH.c_str(), RTLD_LAZY);
         }
-        if (g_dlpStaticHandle == nullptr) {
-            DlpNapiThrow(env, DLP_SERVICE_ERROR_VALUE_INVALID);
-        }
     }
     return g_dlpStaticHandle;
 }
@@ -368,6 +365,7 @@ static napi_value RegisterPlugin(napi_env env, napi_callback_info cbInfo)
 #ifdef SUPPORT_DLP_CREDENTIAL
     std::lock_guard<std::mutex> lock(g_lockDlpStatic);
     if (DlpStaticHandle(env) == nullptr) {
+        DlpNapiThrow(env, DLP_SERVICE_ERROR_VALUE_INVALID);
         delete plugin;
         return nullptr;
     }
