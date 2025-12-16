@@ -73,10 +73,6 @@ bool CertParcel::Marshalling(Parcel& data) const
         DLP_LOG_ERROR(LABEL, "Write allowedOpenCount fail");
         return false;
     }
-    if (!data.WriteBool(this->waterMarkConfig)) {
-        DLP_LOG_ERROR(LABEL, "Write bool waterMarkConfig fail");
-        return false;
-    }
     return true;
 }
 

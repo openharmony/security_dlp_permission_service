@@ -83,6 +83,7 @@ int32_t GenerateDlpGeneralInfo(const GenerateInfoParams& params, std::string& ge
         dlp_general_info[FILEID] = params.fileId;
     }
     dlp_general_info[ALLOWEDOPENCOUNT] = params.allowedOpenCount;
+    dlp_general_info[WATERMARK] = params.waterMarkConfig;
     dlp_general_info[CERT_SIZE] = params.certSize;
     generalInfo = dlp_general_info.dump();
     size_t pos = generalInfo.find(CERT_SIZE);

@@ -589,6 +589,7 @@ static int32_t SetNotOwnerAndReadOnce(const PermissionPolicy& policy, int32_t dl
         }
     }
     if (policy.GetwaterMarkConfig()) {
+        DLP_LOG_DEBUG(LABEL, "watermarkConfig is true.");
         isNotOwnerAndReadOnce = true;
     }
     res = DlpPermissionKit::SetNotOwnerAndReadOnce(filePath, isNotOwnerAndReadOnce);
@@ -629,7 +630,6 @@ int32_t DlpFileManager::ParseRawDlpFile(int32_t dlpFileFd, std::shared_ptr<DlpFi
     certParcel->isNeedAdapter = filePtr->NeedAdapter();
     certParcel->needCheckCustomProperty = true;
     certParcel->allowedOpenCount = filePtr->GetAllowedOpenCount();
-    certParcel->waterMarkConfig = filePtr->GetWaterMarkConfig();
     if (filePtr->GetAccountType() == ENTERPRISE_ACCOUNT) {
         certParcel->decryptType = DECRYPTTYPEFORUSER;
         certParcel->appId = filePtr->GetAppId();
@@ -695,27 +695,6 @@ int32_t DlpFileManager::OpenRawDlpFile(int32_t dlpFileFd, std::shared_ptr<DlpFil
     return DlpRawHmacCheckAndUpdate(filePtr, certParcel->offlineCert, filePtr->GetAllowedOpenCount());
 }
 
-static int32_t CheckZipFileParams(std::shared_ptr<DlpFile>& filePtr, PermissionPolicy& policy)
-{
-    int32_t result = filePtr->SetPolicy(policy);
-    if (result != DLP_OK) {
-        DLP_LOG_ERROR(LABEL, "SetPolicy fail, errno=%{public}d", result);
-        return result;
-    }
-    policy.waterMarkConfig_ = filePtr->GetWaterMarkConfig();
-    if (!VerifyConsistent(policy, filePtr)) {
-        DLP_LOG_ERROR(LABEL, "VerifyConsistent fail");
-        return DLP_PARSE_ERROR_FILE_VERIFICATION_FAIL;
-    }
-    if (policy.GetwaterMarkConfig()) {
-        result = DlpPermissionKit::GetWaterMark(policy.GetwaterMarkConfig());
-        if (result != DLP_OK) {
-            DLP_LOG_ERROR(LABEL, "GetWaterMark fail, errno=%{public}d", result);
-        }
-    }
-    return DLP_OK;
-}
-
 int32_t DlpFileManager::ParseZipDlpFile(std::shared_ptr<DlpFile>& filePtr, const std::string& appId, int32_t dlpFileFd,
     sptr<CertParcel>& certParcel)
 {
@@ -734,9 +713,9 @@ int32_t DlpFileManager::ParseZipDlpFile(std::shared_ptr<DlpFile>& filePtr, const
         DLP_LOG_ERROR(LABEL, "Parse cert fail, errno=%{public}d", result);
         return result;
     }
-    result = CheckZipFileParams(filePtr, policy);
+    result = VerifyAndGetWaterMark(policy, filePtr);
     if (result != DLP_OK) {
-        DLP_LOG_ERROR(LABEL, "Check zip file params failed, errno=%{public}d", result);
+        DLP_LOG_ERROR(LABEL, "Get watermark failed, errno=%{public}d", result);
         return result;
     }
     struct DlpBlob key = {.size = policy.GetAeskeyLen(), .data = policy.GetAeskey()};

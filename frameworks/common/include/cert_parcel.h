@@ -41,7 +41,6 @@ public:
     std::string realFileType;
     std::string fileId;
     int32_t allowedOpenCount = 0;
-    bool waterMarkConfig = false;
 };
 } // namespace DlpPermission
 } // namespace Security
