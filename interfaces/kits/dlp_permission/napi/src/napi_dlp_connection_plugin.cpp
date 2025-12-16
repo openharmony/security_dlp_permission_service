@@ -333,6 +333,20 @@ static bool ParseContextForRegisterPlugin(napi_env env, napi_callback_info cbInf
     return true;
 }
 
+#ifdef SUPPORT_DLP_CREDENTIAL
+static void* DlpStaticHandle(napi_env env)
+{
+    if (g_dlpStaticHandle == nullptr) {
+        if (sizeof(void *) == SIZE_64_BIT) {
+            g_dlpStaticHandle = dlopen(DLP_CREDENTIAL_STATIC_PLP_64_PATH.c_str(), RTLD_LAZY);
+        } else {
+            g_dlpStaticHandle = dlopen(DLP_CREDENTIAL_STATIC_PLP_32_PATH.c_str(), RTLD_LAZY);
+        }
+    }
+    return g_dlpStaticHandle;
+}
+#endif
+
 static napi_value RegisterPlugin(napi_env env, napi_callback_info cbInfo)
 {
     CheckEmulator(env);
@@ -344,32 +358,29 @@ static napi_value RegisterPlugin(napi_env env, napi_callback_info cbInfo)
     uint64_t pluginId = 0;
     auto plugin = new (std::nothrow) NapiDlpConnectionPlugin(env, jsPlugin);
     if (plugin == nullptr) {
+        DlpNapiThrow(env, DLP_SERVICE_ERROR_VALUE_INVALID);
         return nullptr;
     }
     int32_t res = 0;
 #ifdef SUPPORT_DLP_CREDENTIAL
     std::lock_guard<std::mutex> lock(g_lockDlpStatic);
-    if (g_dlpStaticHandle == nullptr) {
-        if (sizeof(void *) == SIZE_64_BIT) {
-            g_dlpStaticHandle = dlopen(DLP_CREDENTIAL_STATIC_PLP_64_PATH.c_str(), RTLD_LAZY);
-        } else {
-            g_dlpStaticHandle = dlopen(DLP_CREDENTIAL_STATIC_PLP_32_PATH.c_str(), RTLD_LAZY);
-        }
-        if (g_dlpStaticHandle == nullptr) {
-            delete plugin;
-            return nullptr;
-        }
+    if (DlpStaticHandle(env) == nullptr) {
+        delete plugin;
+        DlpNapiThrow(env, DLP_SERVICE_ERROR_VALUE_INVALID);
+        return nullptr;
     }
     void *func = dlsym(g_dlpStaticHandle, "Connection_Set");
     if (func == nullptr) {
         DLP_LOG_ERROR(LABEL, "get func is error.");
         delete plugin;
+        DlpNapiThrow(env, DLP_SERVICE_ERROR_VALUE_INVALID);
         return nullptr;
     }
     Connection_Set dlpFunc = reinterpret_cast<Connection_Set>(func);
     if (dlpFunc == nullptr) {
         DLP_LOG_ERROR(LABEL, "get dlpFunc is error.");
         delete plugin;
+        DlpNapiThrow(env, DLP_SERVICE_ERROR_VALUE_INVALID);
         return nullptr;
     }
     res = (*dlpFunc)(reinterpret_cast<void *>(plugin), &pluginId);
