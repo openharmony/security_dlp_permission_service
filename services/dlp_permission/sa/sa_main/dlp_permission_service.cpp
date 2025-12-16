@@ -319,6 +319,7 @@ int32_t DlpPermissionService::CheckWaterMarkInfo()
 
 static int32_t ReceiveCallback(int32_t errCode, uint64_t reqId, uint8_t *outData, uint32_t outDataLen)
 {
+    (void)errCode;
     DLP_LOG_INFO(LABEL, "Enter receive data callback.");
     return DLP_OK;
 }
@@ -367,6 +368,7 @@ static int32_t GetPixelmapFromFd(WaterMarkInfo& waterMarkInfo, std::shared_mutex
 int32_t DlpPermissionService::GetWaterMark(const bool waterMarkConfig,
     const sptr<IDlpPermissionCallback>& callback)
 {
+    (void)waterMarkConfig;
     if (callback == nullptr) {
         DLP_LOG_ERROR(LABEL, "GetWaterMark callback is null");
         return DLP_SERVICE_ERROR_VALUE_INVALID;

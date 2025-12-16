@@ -47,12 +47,17 @@ sptr<DlpAbilityStub> DlpAbilityStub::GetInstance(ReceiveDataCallback callback)
 
 void DlpAbilityStub::OnResult(uint64_t reqId, int32_t userId, std::string &jsonRes)
 {
+    (void)reqId;
+    (void)userId;
+    (void)jsonRes;
     return;
 }
 
 int32_t DlpAbilityStub::OnRemoteRequest(uint32_t errCode, MessageParcel &data,
     MessageParcel &reply, MessageOption &opt)
 {
+    (void)errCode;
+    (void)opt;
     if (GetDescriptor() != data.ReadInterfaceToken()) {
         DLP_LOG_ERROR(LABEL, "RemoteRequest failed with dismatch descriptor.");
         return DLP_IPC_DISMATCH_DESCRIPTOR;
