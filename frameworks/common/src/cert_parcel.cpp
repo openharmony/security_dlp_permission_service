@@ -104,10 +104,6 @@ static CertParcel* UnmarshallingProperty(Parcel& data, CertParcel* parcel)
         DLP_LOG_ERROR(LABEL, "Read allowedOpenCount fail");
         return FreeCertParcel(parcel);
     }
-    if (!data.ReadBool(parcel->waterMarkConfig)) {
-        DLP_LOG_ERROR(LABEL, "Read waterMarkConfig fail");
-        return FreeCertParcel(parcel);
-    }
     return parcel;
 }
 
