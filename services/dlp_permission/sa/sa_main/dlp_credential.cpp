@@ -577,7 +577,7 @@ static int32_t GetDomainAccountName(std::string& account, const std::string& con
 
 static int32_t GetEnterpriseAccountName(AccountInfo& accountCfg, const std::string& appId, bool* isOwner)
 {
-    void(isOwner);
+    (void)isOwner;
     std::string account = appId;
     accountCfg.accountId = reinterpret_cast<uint8_t *>(strdup(account.c_str()));
     accountCfg.accountIdLen = strlen(account.c_str());

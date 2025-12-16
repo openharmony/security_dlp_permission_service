@@ -50,7 +50,7 @@ static int ZipCloseFileInZipReply(zipFile file)
 
 static int ZipCloseReply(zipFile file, const char* globalComment)
 {
-    void(globalComment);
+    (void)globalComment;
     zipClose(file, NULL);
     return DLP_ZIP_FAIL;
 }
