@@ -704,7 +704,6 @@ int32_t DlpFileManager::ParseZipDlpFile(std::shared_ptr<DlpFile>& filePtr, const
     certParcel->needCheckCustomProperty = true;
     filePtr->GetRealType(certParcel->realFileType);
     certParcel->allowedOpenCount = filePtr->GetAllowedOpenCount();
-    certParcel->waterMarkConfig = filePtr->GetWaterMarkConfig();
     filePtr->GetFileIdPlaintext(certParcel->fileId);
     StartTrace(HITRACE_TAG_ACCESS_CONTROL, "DlpParseCertificate");
     int32_t result = DlpPermissionKit::ParseDlpCertificate(certParcel, policy, appId, filePtr->GetOfflineAccess());
