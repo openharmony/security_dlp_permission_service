@@ -65,11 +65,14 @@ int32_t DlpPermissionKit::SetReadFlag(uint32_t uid)
 
 int32_t DlpPermissionKit::SetNotOwnerAndReadOnce(const std::string& uri, bool isNotOwnerAndReadOnce)
 {
+    void(uri);
+    void(isNotOwnerAndReadOnce);
     return DLP_OK;
 }
 
 int32_t DlpPermissionKit::GetWaterMark(const bool waterMarkConfig)
 {
+    void(waterMarkConfig);
     return DLP_OK;
 }
 

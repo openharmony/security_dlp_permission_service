@@ -104,7 +104,7 @@ bool SandboxJsonManager::CanUninstall(const uint32_t& tokenId)
     return true;
 }
 
-void SandboxJsonManager::SetInitStatus(const uint32_t& tokenId)
+void SandboxJsonManager::SetInitStatus(const uint32_t& tokenId) const
 {
     std::lock_guard<std::mutex> lock(mutex_);
     for (auto iter = infoVec_.begin(); iter != infoVec_.end(); ++iter) {
