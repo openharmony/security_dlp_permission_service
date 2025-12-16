@@ -588,6 +588,9 @@ static int32_t SetNotOwnerAndReadOnce(const PermissionPolicy& policy, int32_t dl
             isNotOwnerAndReadOnce = true;
         }
     }
+    if (policy.GetwaterMarkConfig()) {
+        isNotOwnerAndReadOnce = true;
+    }
     res = DlpPermissionKit::SetNotOwnerAndReadOnce(filePath, isNotOwnerAndReadOnce);
     if (res != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "SetNotOwnerAndReadOnce fail, err = %{public}d.", res);
