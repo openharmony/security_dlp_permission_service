@@ -365,22 +365,22 @@ static napi_value RegisterPlugin(napi_env env, napi_callback_info cbInfo)
 #ifdef SUPPORT_DLP_CREDENTIAL
     std::lock_guard<std::mutex> lock(g_lockDlpStatic);
     if (DlpStaticHandle(env) == nullptr) {
-        DlpNapiThrow(env, DLP_SERVICE_ERROR_VALUE_INVALID);
         delete plugin;
+        DlpNapiThrow(env, DLP_SERVICE_ERROR_VALUE_INVALID);
         return nullptr;
     }
     void *func = dlsym(g_dlpStaticHandle, "Connection_Set");
     if (func == nullptr) {
         DLP_LOG_ERROR(LABEL, "get func is error.");
-        DlpNapiThrow(env, DLP_SERVICE_ERROR_VALUE_INVALID);
         delete plugin;
+        DlpNapiThrow(env, DLP_SERVICE_ERROR_VALUE_INVALID);
         return nullptr;
     }
     Connection_Set dlpFunc = reinterpret_cast<Connection_Set>(func);
     if (dlpFunc == nullptr) {
         DLP_LOG_ERROR(LABEL, "get dlpFunc is error.");
-        DlpNapiThrow(env, DLP_SERVICE_ERROR_VALUE_INVALID);
         delete plugin;
+        DlpNapiThrow(env, DLP_SERVICE_ERROR_VALUE_INVALID);
         return nullptr;
     }
     res = (*dlpFunc)(reinterpret_cast<void *>(plugin), &pluginId);
