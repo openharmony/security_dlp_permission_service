@@ -46,7 +46,7 @@ namespace {
 #ifdef IS_EMULATOR
 #define CheckEmulator(env)                                              \
     do {                                                                \
-        DlpNapiThrow(env, DLP_DEVICE_ERROR_CAPABILITY_NOT_SUPPORTED);   \
+        DlpNapiThrow(env, DLP_DEVICE_ERROR_CAPABILITY_NOT_SUPPORTED_EMULATOR);   \
         return nullptr;                                                 \
     } while (0)
 #else
