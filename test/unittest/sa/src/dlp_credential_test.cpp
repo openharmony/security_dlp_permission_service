@@ -61,6 +61,7 @@ const uint32_t ERROR_CODE_NUM = 12;
 constexpr size_t MAX_MALLOC_SIZE = 1024 * 1024 * 1024; // bigger may over rss litmit
 const uint32_t MALLOC_SIZE = 10;
 const uint8_t MALLOC_VAL = 0;
+const int32_t DLP_CREDENTIAL_SERVER_ERROR_TEST = 0x00004000;
 
 static void *HcMalloc(uint32_t size, char val)
 {
@@ -294,11 +295,11 @@ HWTEST_F(DlpCredentialTest, SetEnterprisePolicy001, TestSize.Level1)
  */
 HWTEST_F(DlpCredentialTest, DlpCredentialTest004, TestSize.Level1)
 {
-    int32_t errorCode[ERROR_CODE_NUM] = { DLP_SUCCESS, DLP_ERR_ENTERPRISE_MIN,
-        DLP_ERR_CONNECTION_POLICY_PERMISSION_EXPIRED, DLP_ERR_APPID_NOT_AUTHORIZED, DLP_ERR_CALLBACK_TIME_OUT,
-        DLP_ERR_ACCOUNT_NOT_LOG_IN, DLP_ERR_CONNECTION_ALLOWED_OPEN_COUNT_INVALID,
-        DLP_ERR_CONNECTION_TIME_OUT, DLP_ERR_CONNECTION_VIP_RIGHT_EXPIRED, DLP_ERR_GENERATE_KEY_FAILED,
-        DLP_ERR_IPC_INTERNAL_FAILED, DLP_ERR_CONNECTION_TIME_OUT};
+    int32_t errorCode[ERROR_CODE_NUM] = { DLP_SUCCESS, DLP_ERR_ENTERPRISE_MIN, DLP_ERR_CONNECTION_POLICY_PERMISSION_EXPIRED, 
+        DLP_ERR_APPID_NOT_AUTHORIZED, DLP_ERR_CALLBACK_TIME_OUT, DLP_ERR_ACCOUNT_NOT_LOG_IN,
+        DLP_ERR_CONNECTION_ALLOWED_OPEN_COUNT_INVALID, DLP_ERR_CONNECTION_TIME_OUT,
+        DLP_ERR_CONNECTION_VIP_RIGHT_EXPIRED, DLP_ERR_GENERATE_KEY_FAILED, DLP_ERR_IPC_INTERNAL_FAILED,
+        DLP_CREDENTIAL_SERVER_ERROR_TEST};
 
     int32_t retCode[ERROR_CODE_NUM] = { DLP_OK, DLP_ERR_ENTERPRISE_MIN, DLP_CREDENTIAL_ERROR_TIME_EXPIRED,
         DLP_CREDENTIAL_ERROR_APPID_NOT_AUTHORIZED, DLP_CREDENTIAL_ERROR_SERVER_TIME_OUT_ERROR,
@@ -322,6 +323,8 @@ HWTEST_F(DlpCredentialTest, DlpCredentialTest005, TestSize.Level1)
     uint64_t requestId = MAX_REQUEST_NUM;
     uint64_t invalidRequestId = 114514;
     RequestInfo info;
+    sptr<IDlpPermissionCallback> stub = new (std::nothrow) DlpPermissionAsyncStubTest();
+    info.callback = stub;
 
     EXPECT_EQ(false, GetCallbackFromRequestMap(invalidRequestId, info));
     DlpPackPolicyCallback(invalidRequestId, DLP_CREDENTIAL_ERROR_COMMON_ERROR, nullptr);
@@ -346,6 +349,9 @@ HWTEST_F(DlpCredentialTest, DlpCredentialTest005, TestSize.Level1)
     PermissionPolicy policyInfo;
     EXPECT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID,
         DlpRestorePolicyCallbackCheck(nullptr, accountType, DLP_OK, nullptr, policyInfo));
+    delete info.callback;
+    info.callback = nullptr;
+    g_requestMap.clear();
 }
 
 /**
