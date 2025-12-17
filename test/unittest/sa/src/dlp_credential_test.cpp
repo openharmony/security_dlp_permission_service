@@ -57,7 +57,29 @@ static const std::string POLICY_PLAINTTEXT =
     "3322c226976223a224245303230323430393136434436394538333842463631383038333238333346222c2269764c656e223a31362c22686d"
     "61634b6579223a223146393533374535343432444339374546394442344634413133374543304239343539463445314545303846364644344"
     "4304245414141444336424539414644222c22686d61634b65794c656e223a33322c22646c7056657273696f6e223a337d7d";
-const uint32_t ERROR_CODE_NUM = 11;
+const uint32_t ERROR_CODE_NUM = 12;
+constexpr size_t MAX_MALLOC_SIZE = 1024 * 1024 * 1024; // bigger may over rss litmit
+const uint32_t MALLOC_SIZE = 10;
+const uint8_t MALLOC_VAL = 0;
+
+static void *HcMalloc(uint32_t size, char val)
+{
+    if (size == 0 || size > MAX_MALLOC_SIZE) {
+        return nullptr;
+    }
+    void *addr = malloc(size);
+    if (addr != nullptr) {
+        (void)memset_s(addr, size, val, size);
+    }
+    return addr;
+}
+
+static void HcFree(void *addr)
+{
+    if (addr != nullptr) {
+        free(addr);
+    }
+}
 
 void DlpCredentialTest::SetUpTestCase() {}
 
@@ -310,13 +332,12 @@ HWTEST_F(DlpCredentialTest, DlpCredentialTest005, TestSize.Level1)
     }
     EXPECT_EQ(DLP_SERVICE_ERROR_CREDENTIAL_BUSY, QueryRequestIdle());
 
-    uint32_t mallocLen = MAX_REQUEST_NUM;
     DlpPackPolicyCallback(requestId--, DLP_OK, nullptr);
     DLP_EncPolicyData params;
     DlpPackPolicyCallback(requestId--, DLP_OK, &params);
-    params.data = (uint8_t *)HcMalloc(mallocLen, 0);
+    params.data = (uint8_t *)HcMalloc(MALLOC_SIZE, MALLOC_VAL);
     DlpPackPolicyCallback(requestId--, DLP_OK, &params);
-    params.featureName = (char *)HcMalloc(mallocLen, 0);
+    params.featureName = (char *)HcMalloc(MALLOC_SIZE, MALLOC_VAL);
     DlpPackPolicyCallback(requestId--, DLP_OK, &params);
     HcFree(params.data);
     HcFree(params.featureName);
@@ -335,12 +356,12 @@ HWTEST_F(DlpCredentialTest, DlpCredentialTest005, TestSize.Level1)
  */
 HWTEST_F(DlpCredentialTest, DlpCredentialTest006, TestSize.Level1)
 {
-    uint32_t buffLen = MAX_REQUEST_NUM;
+    uint32_t buffLen = MALLOC_SIZE;
     char *buff = nullptr;
     FreeBuffer(nullptr, buffLen);
     FreeBuffer(&buff, buffLen);
 
-    buff = (char *)HcMalloc(buffLen, 0);
+    buff = (char *)HcMalloc(buffLen, MALLOC_VAL);
     FreeBuffer(&buff, buffLen);
     EXPECT_EQ(nullptr, buff);
 }
@@ -353,23 +374,22 @@ HWTEST_F(DlpCredentialTest, DlpCredentialTest006, TestSize.Level1)
  */
 HWTEST_F(DlpCredentialTest, DlpCredentialTest007, TestSize.Level1)
 {
-    uint32_t mallocLen = MAX_REQUEST_NUM;
     DLP_PackPolicyParams packPolicy;
     FreeDlpPackPolicyParams(packPolicy);
 
-    packPolicy.featureName = (char *)HcMalloc(mallocLen, 0);
+    packPolicy.featureName = (char *)HcMalloc(MALLOC_SIZE, MALLOC_VAL);
     FreeDlpPackPolicyParams(packPolicy);
     EXPECT_EQ(nullptr, packPolicy.featureName);
 
-    packPolicy.featureName = (char *)HcMalloc(mallocLen, 0);
-    packPolicy.data = (uint8_t *)HcMalloc(mallocLen, 0);
+    packPolicy.featureName = (char *)HcMalloc(MALLOC_SIZE, MALLOC_VAL);
+    packPolicy.data = (uint8_t *)HcMalloc(MALLOC_SIZE, MALLOC_VAL);
     FreeDlpPackPolicyParams(packPolicy);
     EXPECT_EQ(nullptr, packPolicy.featureName);
     EXPECT_EQ(nullptr, packPolicy.data);
 
-    packPolicy.featureName = (char *)HcMalloc(mallocLen, 0);
-    packPolicy.data = (uint8_t *)HcMalloc(mallocLen, 0);
-    packPolicy.senderAccountInfo.accountId = (uint8_t *)HcMalloc(mallocLen, 0);
+    packPolicy.featureName = (char *)HcMalloc(MALLOC_SIZE, MALLOC_VAL);
+    packPolicy.data = (uint8_t *)HcMalloc(MALLOC_SIZE, MALLOC_VAL);
+    packPolicy.senderAccountInfo.accountId = (uint8_t *)HcMalloc(MALLOC_SIZE, MALLOC_VAL);
     FreeDlpPackPolicyParams(packPolicy);
     EXPECT_EQ(nullptr, packPolicy.featureName);
     EXPECT_EQ(nullptr, packPolicy.data);
@@ -378,37 +398,26 @@ HWTEST_F(DlpCredentialTest, DlpCredentialTest007, TestSize.Level1)
 
 /**
  * @tc.name: DlpCredentialTest008
- * @tc.desc: DestroyDlpCredentialSdk test
+ * @tc.desc: GetEnterpriseAccountName test
  * @tc.type: FUNC
  * @tc.require:
  */
 HWTEST_F(DlpCredentialTest, DlpCredentialTest008, TestSize.Level1)
 {
-    DestroyDlpCredentialSdk();
-}
-
-/**
- * @tc.name: DlpCredentialTest009
- * @tc.desc: GetEnterpriseAccountName test
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(DlpCredentialTest, DlpCredentialTest009, TestSize.Level1)
-{
     AccountInfo info;
     std::string appId = "appId";
     bool isOwner = false;
-    EXPECT_EQ(DLP_OK, GetEnterpriseAccountName(info, appId, *isOwner));
+    EXPECT_EQ(DLP_OK, GetEnterpriseAccountName(info, appId, &isOwner));
     HcFree(info.accountId);
 }
 
 /**
- * @tc.name: DlpCredentialTest010
+ * @tc.name: DlpCredentialTest009
  * @tc.desc: RemovePresetDLPPolicy test
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpCredentialTest, DlpCredentialTest010, TestSize.Level1)
+HWTEST_F(DlpCredentialTest, DlpCredentialTest009, TestSize.Level1)
 {
     std::vector<std::string> appIdList;
     EXPECT_EQ(DLP_OK, RemovePresetDLPPolicy(appIdList));
@@ -418,39 +427,38 @@ HWTEST_F(DlpCredentialTest, DlpCredentialTest010, TestSize.Level1)
 }
 
 /**
- * @tc.name: DlpCredentialTest011
+ * @tc.name: DlpCredentialTest010
  * @tc.desc: FreeDLPEncPolicyData test
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpCredentialTest, DlpCredentialTest011, TestSize.Level1)
+HWTEST_F(DlpCredentialTest, DlpCredentialTest010, TestSize.Level1)
 {
-    uint32_t mallocLen = MAX_REQUEST_NUM;
     DLP_EncPolicyData encPolicy;
     FreeDLPEncPolicyData(encPolicy);
 
-    encPolicy.featureName = (char *)HcMalloc(mallocLen, 0);
+    encPolicy.featureName = (char *)HcMalloc(MALLOC_SIZE, MALLOC_VAL);
     FreeDLPEncPolicyData(encPolicy);
     EXPECT_EQ(nullptr, encPolicy.featureName);
 
-    encPolicy.featureName = (char *)HcMalloc(mallocLen, 0);
-    encPolicy.data = (uint8_t *)HcMalloc(mallocLen, 0);
+    encPolicy.featureName = (char *)HcMalloc(MALLOC_SIZE, MALLOC_VAL);
+    encPolicy.data = (uint8_t *)HcMalloc(MALLOC_SIZE, MALLOC_VAL);
     FreeDLPEncPolicyData(encPolicy);
     EXPECT_EQ(nullptr, encPolicy.featureName);
     EXPECT_EQ(nullptr, encPolicy.data);
 
-    encPolicy.featureName = (char *)HcMalloc(mallocLen, 0);
-    encPolicy.data = (uint8_t *)HcMalloc(mallocLen, 0);
-    encPolicy.options.extraInfo = (uint8_t *)HcMalloc(mallocLen, 0);
+    encPolicy.featureName = (char *)HcMalloc(MALLOC_SIZE, MALLOC_VAL);
+    encPolicy.data = (uint8_t *)HcMalloc(MALLOC_SIZE, MALLOC_VAL);
+    encPolicy.options.extraInfo = (uint8_t *)HcMalloc(MALLOC_SIZE, MALLOC_VAL);
     FreeDLPEncPolicyData(encPolicy);
     EXPECT_EQ(nullptr, encPolicy.featureName);
     EXPECT_EQ(nullptr, encPolicy.data);
     EXPECT_EQ(nullptr, encPolicy.options.extraInfo);
 
-    encPolicy.featureName = (char *)HcMalloc(mallocLen, 0);
-    encPolicy.data = (uint8_t *)HcMalloc(mallocLen, 0);
-    encPolicy.options.extraInfo = (uint8_t *)HcMalloc(mallocLen, 0);
-    encPolicy.receiverAccountInfo.accountId = (uint8_t *)HcMalloc(mallocLen, 0);
+    encPolicy.featureName = (char *)HcMalloc(MALLOC_SIZE, MALLOC_VAL);
+    encPolicy.data = (uint8_t *)HcMalloc(MALLOC_SIZE, MALLOC_VAL);
+    encPolicy.options.extraInfo = (uint8_t *)HcMalloc(MALLOC_SIZE, MALLOC_VAL);
+    encPolicy.receiverAccountInfo.accountId = (uint8_t *)HcMalloc(MALLOC_SIZE, MALLOC_VAL);
     FreeDLPEncPolicyData(encPolicy);
     EXPECT_EQ(nullptr, encPolicy.featureName);
     EXPECT_EQ(nullptr, encPolicy.data);
