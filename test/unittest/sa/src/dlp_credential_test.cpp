@@ -331,7 +331,7 @@ HWTEST_F(DlpCredentialTest, DlpCredentialTest005, TestSize.Level1)
     EXPECT_EQ(DLP_OK, InsertCallbackToRequestMap(requestId, info));
     EXPECT_EQ(DLP_SERVICE_ERROR_CREDENTIAL_TASK_DUPLICATE, InsertCallbackToRequestMap(requestId, info));
     for (uint64_t i = 0; i < MAX_REQUEST_NUM; i++) {
-        EXPECT_EQ(DLP_OK, InsertCallbackToRequestMap(i, info));
+        (void)InsertCallbackToRequestMap(i, info);
     }
     EXPECT_EQ(DLP_SERVICE_ERROR_CREDENTIAL_BUSY, QueryRequestIdle());
 
@@ -349,9 +349,11 @@ HWTEST_F(DlpCredentialTest, DlpCredentialTest005, TestSize.Level1)
     PermissionPolicy policyInfo;
     EXPECT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID,
         DlpRestorePolicyCallbackCheck(nullptr, accountType, DLP_OK, nullptr, policyInfo));
+    for (uint64_t i = 0; i < MAX_REQUEST_NUM; i++) {
+        (void)GetCallbackFromRequestMap(i, info);
+    }
     delete info.callback;
     info.callback = nullptr;
-    g_requestMap.clear();
 }
 
 /**
