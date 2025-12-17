@@ -51,6 +51,7 @@ static const std::unordered_map<int32_t, std::string> JS_ERROR_MSG_MAP = {
     { ERR_JS_PARAM_DISPLAY_NAME_NOT_EXIST, "The displayName field is missing in the want parameter." },
     { ERR_JS_DLP_SET_ENTERPRISE_POLICY_FAIL, "Failed to set the enterprise policy." },
     { ERR_JS_DLP_ALLOWED_OPEN_COUNT_INVALID, "Allowed open count invalid." },
+    { ERR_JS_CAPABILITY_NOT_SUPPORTED_EMULATOR, "The capability is not supported on the emulator at this time." },
 };
 
 static const std::unordered_map<int32_t, int32_t> NATIVE_CODE_TO_JS_CODE_MAP = {
@@ -169,8 +170,8 @@ static const std::unordered_map<int32_t, int32_t> NATIVE_CODE_TO_JS_CODE_MAP = {
     // ERR_JS_DLP_ALLOWED_OPEN_COUNT_INVALID
     { DLP_CREDENTIAL_ERROR_ALLOWED_OPEN_COUNT_INVALID, ERR_JS_DLP_ALLOWED_OPEN_COUNT_INVALID },
 
-    // ERR_JS_CAPABILITY_NOT_SUPPORTED
-    { DLP_DEVICE_ERROR_CAPABILITY_NOT_SUPPORTED, ERR_JS_CAPABILITY_NOT_SUPPORTED },
+    // ERR_JS_CAPABILITY_NOT_SUPPORTED_EMULATOR
+    { DLP_DEVICE_ERROR_CAPABILITY_NOT_SUPPORTED_EMULATOR, ERR_JS_CAPABILITY_NOT_SUPPORTED_EMULATOR },
 };
 
 std::string GetJsErrMsg(int32_t jsErrCode)

@@ -30,24 +30,6 @@ namespace DlpConnection {
 
 using namespace OHOS::Security::DlpPermission;
 namespace {
-#ifdef IS_EMULATOR
-#define CheckEmulator(env)                                              \
-    do {                                                                \
-        DlpNapiThrow(env, DLP_DEVICE_ERROR_CAPABILITY_NOT_SUPPORTED);   \
-        return nullptr;                                                 \
-    } while (0)
-#else
-#define CheckEmulator(env)
-#endif
-#ifdef IS_EMULATOR
-#define CheckEmulatorBool(env)                                          \
-    do {                                                                \
-        DlpNapiThrow(env, DLP_DEVICE_ERROR_CAPABILITY_NOT_SUPPORTED);   \
-        return false;                                                   \
-    } while (0)
-#else
-#define CheckEmulatorBool(env)
-#endif
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "NapiConnectionPlugin"};
 const std::string DLP_PERMISSION_SERVICE_NAME = "dlpPermissionService";
 #ifdef SUPPORT_DLP_CREDENTIAL
@@ -64,6 +46,15 @@ typedef int32_t (*Connection_Set)(void *plugin, uint64_t *pluginId);
 NapiDlpConnectionPlugin::NapiDlpConnectionPlugin(napi_env env, const JsDlpConnPlugin &jsPlugin)
     : env_(env), jsPlugin_(jsPlugin)
 {}
+
+static bool CheckEmulator(napi_env env)
+{
+#ifdef IS_EMULATOR
+    DlpNapiThrow(env, DLP_DEVICE_ERROR_CAPABILITY_NOT_SUPPORTED_EMULATOR);
+    return true;
+#endif
+    return false;
+}
 
 static void ReleaseNapiRefArray(napi_env env, const std::vector<napi_ref> &napiRefVec)
 {
@@ -298,7 +289,9 @@ static bool GetCallbackProperty(napi_env env, napi_value obj, napi_ref &property
 
 static bool GetNamedJsFunction(napi_env env, napi_value object, const std::string &name, napi_ref &callback)
 {
-    CheckEmulatorBool(env);
+    if (CheckEmulator(env)) {
+        return false;
+    }
     napi_valuetype valueType = napi_undefined;
     NAPI_CALL_BASE(env, napi_typeof(env, object, &valueType), false);
     if (valueType != napi_object) {
@@ -349,7 +342,9 @@ static void* DlpStaticHandle(napi_env env)
 
 static napi_value RegisterPlugin(napi_env env, napi_callback_info cbInfo)
 {
-    CheckEmulator(env);
+    if (CheckEmulator(env)) {
+        return nullptr;
+    }
     JsDlpConnPlugin jsPlugin;
     if (!ParseContextForRegisterPlugin(env, cbInfo, jsPlugin)) {
         DlpNapiThrow(env, ERR_JS_PARAMETER_ERROR);
@@ -398,7 +393,9 @@ static napi_value RegisterPlugin(napi_env env, napi_callback_info cbInfo)
 
 static napi_value UnregisterPlugin(napi_env env, napi_callback_info cbInfo)
 {
-    CheckEmulator(env);
+    if (CheckEmulator(env)) {
+        return nullptr;
+    }
     DLP_LOG_INFO(LABEL, "Enter UnregisterPlugin.");
     (void)cbInfo;
 #ifdef SUPPORT_DLP_CREDENTIAL
@@ -413,7 +410,9 @@ static napi_value UnregisterPlugin(napi_env env, napi_callback_info cbInfo)
 
 static napi_value JsConstructor(napi_env env, napi_callback_info cbinfo)
 {
-    CheckEmulator(env);
+    if (CheckEmulator(env)) {
+        return nullptr;
+    }
     napi_value thisVar = nullptr;
     NAPI_CALL(env, napi_get_cb_info(env, cbinfo, nullptr, nullptr, &thisVar, nullptr));
     return thisVar;
