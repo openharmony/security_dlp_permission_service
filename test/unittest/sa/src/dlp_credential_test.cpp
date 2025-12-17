@@ -27,13 +27,14 @@
 #include "dlp_permission_log.h"
 #include "dlp_permission_serializer.h"
 #include "dlp_policy_parcel.h"
-#include "dlp_credential.h"
 #include "ipc_skeleton.h"
 #include "iremote_broker.h"
 #include "iremote_stub.h"
 #include "nlohmann/json.hpp"
 #include "permission_policy.h"
 #include "securec.h"
+
+#include "dlp_credential.cpp"
 
 namespace OHOS {
 namespace Security {
@@ -56,6 +57,7 @@ static const std::string POLICY_PLAINTTEXT =
     "3322c226976223a224245303230323430393136434436394538333842463631383038333238333346222c2269764c656e223a31362c22686d"
     "61634b6579223a223146393533374535343432444339374546394442344634413133374543304239343539463445314545303846364644344"
     "4304245414141444336424539414644222c22686d61634b65794c656e223a33322c22646c7056657273696f6e223a337d7d";
+const uint32_t ERROR_CODE_NUM = 11;
 
 void DlpCredentialTest::SetUpTestCase() {}
 
@@ -260,6 +262,200 @@ HWTEST_F(DlpCredentialTest, SetEnterprisePolicy001, TestSize.Level1)
     std::string policy = "policy";
     int32_t ret = DlpCredential::GetInstance().SetEnterprisePolicy(policy);
     ASSERT_EQ(DLP_OK, ret);
+}
+
+/**
+ * @tc.name: DlpCredentialTest004
+ * @tc.desc: ConvertCredentialError test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpCredentialTest, DlpCredentialTest004, TestSize.Level1)
+{
+    int32_t errorCode[ERROR_CODE_NUM] = { DLP_SUCCESS, DLP_ERR_ENTERPRISE_MIN, DLP_ERR_CONNECTION_POLICY_PERMISSION_EXPIRED, 
+        DLP_ERR_APPID_NOT_AUTHORIZED, DLP_ERR_CALLBACK_TIME_OUT, DLP_ERR_ACCOUNT_NOT_LOG_IN,
+        DLP_ERR_CONNECTION_ALLOWED_OPEN_COUNT_INVALID, DLP_ERR_CONNECTION_TIME_OUT,
+        DLP_ERR_CONNECTION_VIP_RIGHT_EXPIRED, DLP_ERR_GENERATE_KEY_FAILED, DLP_ERR_IPC_INTERNAL_FAILED,
+        DLP_ERR_CONNECTION_TIME_OUT};
+
+    int32_t retCode[ERROR_CODE_NUM] = { DLP_OK, DLP_ERR_ENTERPRISE_MIN, DLP_CREDENTIAL_ERROR_TIME_EXPIRED,
+        DLP_CREDENTIAL_ERROR_APPID_NOT_AUTHORIZED, DLP_CREDENTIAL_ERROR_SERVER_TIME_OUT_ERROR,
+        DLP_CREDENTIAL_ERROR_NO_ACCOUNT_ERROR, DLP_CREDENTIAL_ERROR_ALLOWED_OPEN_COUNT_INVALID,
+        DLP_CREDENTIAL_ERROR_NO_INTERNET, DLP_CREDENTIAL_ERROR_NO_PERMISSION_ERROR, DLP_CREDENTIAL_ERROR_HUKS_ERROR,
+        DLP_CREDENTIAL_ERROR_IPC_ERROR, DLP_CREDENTIAL_ERROR_SERVER_ERROR};
+
+    for (uint32_t i = 0; i < ERROR_CODE_NUM; i++) {
+        EXPECT_EQ(retCode[i], ConvertCredentialError(errorCode[i]));
+    }
+}
+
+/**
+ * @tc.name: DlpCredentialTest005
+ * @tc.desc: CallbackRequestMap test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpCredentialTest, DlpCredentialTest005, TestSize.Level1)
+{
+    uint64_t requestId = MAX_REQUEST_NUM;
+    uint64_t invalidRequestId = 114514;
+    RequestInfo info;
+
+    EXPECT_EQ(false, GetCallbackFromRequestMap(invalidRequestId, info));
+    DlpPackPolicyCallback(invalidRequestId, DLP_CREDENTIAL_ERROR_COMMON_ERROR, nullptr);
+    EXPECT_EQ(DLP_OK, InsertCallbackToRequestMap(requestId, info));
+    EXPECT_EQ(DLP_SERVICE_ERROR_CREDENTIAL_TASK_DUPLICATE, InsertCallbackToRequestMap(requestId, info));
+    for (uint64_t i = 0; i < MAX_REQUEST_NUM; i++) {
+        EXPECT_EQ(DLP_OK, InsertCallbackToRequestMap(i, info));
+    }
+    EXPECT_EQ(DLP_SERVICE_ERROR_CREDENTIAL_BUSY, QueryRequestIdle());
+
+    uint32_t mallocLen = MAX_REQUEST_NUM;
+    DlpPackPolicyCallback(requestId--, DLP_OK, nullptr);
+    DLP_EncPolicyData params;
+    DlpPackPolicyCallback(requestId--, DLP_OK, &params);
+    params.data = (uint8_t *)HcMalloc(mallocLen, 0);
+    DlpPackPolicyCallback(requestId--, DLP_OK, &params);
+    params.featureName = (char *)HcMalloc(mallocLen, 0);
+    DlpPackPolicyCallback(requestId--, DLP_OK, &params);
+    HcFree(params.data);
+    HcFree(params.featureName);
+
+    DlpAccountType accountType = INVALID_ACCOUNT;
+    PermissionPolicy policyInfo;
+    EXPECT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID,
+        DlpRestorePolicyCallbackCheck(nullptr, accountType, DLP_OK, nullptr, policyInfo));
+}
+
+/**
+ * @tc.name: DlpCredentialTest006
+ * @tc.desc: FreeBuffer test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpCredentialTest, DlpCredentialTest006, TestSize.Level1)
+{
+    uint32_t buffLen = MAX_REQUEST_NUM;
+    char *buff = nullptr;
+    FreeBuffer(nullptr, buffLen);
+    FreeBuffer(&buff, buffLen);
+
+    buff = (char *)HcMalloc(buffLen, 0);
+    FreeBuffer(&buff, buffLen);
+    EXPECT_EQ(nullptr, buff);
+}
+
+/**
+ * @tc.name: DlpCredentialTest007
+ * @tc.desc: FreeDlpPackPolicyParams test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpCredentialTest, DlpCredentialTest007, TestSize.Level1)
+{
+    uint32_t mallocLen = MAX_REQUEST_NUM;
+    DLP_PackPolicyParams packPolicy;
+    FreeDlpPackPolicyParams(packPolicy);
+
+    packPolicy.featureName = (char *)HcMalloc(mallocLen, 0);
+    FreeDlpPackPolicyParams(packPolicy);
+    EXPECT_EQ(nullptr, packPolicy.featureName);
+
+    packPolicy.featureName = (char *)HcMalloc(mallocLen, 0);
+    packPolicy.data = (uint8_t *)HcMalloc(mallocLen, 0);
+    FreeDlpPackPolicyParams(packPolicy);
+    EXPECT_EQ(nullptr, packPolicy.featureName);
+    EXPECT_EQ(nullptr, packPolicy.data);
+
+    packPolicy.featureName = (char *)HcMalloc(mallocLen, 0);
+    packPolicy.data = (uint8_t *)HcMalloc(mallocLen, 0);
+    packPolicy.senderAccountInfo.accountId = (uint8_t *)HcMalloc(mallocLen, 0);
+    FreeDlpPackPolicyParams(packPolicy);
+    EXPECT_EQ(nullptr, packPolicy.featureName);
+    EXPECT_EQ(nullptr, packPolicy.data);
+    EXPECT_EQ(nullptr, packPolicy.senderAccountInfo.accountId);
+}
+
+/**
+ * @tc.name: DlpCredentialTest008
+ * @tc.desc: DestroyDlpCredentialSdk test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpCredentialTest, DlpCredentialTest008, TestSize.Level1)
+{
+    DestroyDlpCredentialSdk();
+}
+
+/**
+ * @tc.name: DlpCredentialTest009
+ * @tc.desc: GetEnterpriseAccountName test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpCredentialTest, DlpCredentialTest009, TestSize.Level1)
+{
+    AccountInfo info;
+    std::string appId = "appId";
+    bool isOwner = false;
+    EXPECT_EQ(DLP_OK, GetEnterpriseAccountName(info, appId, *isOwner));
+    HcFree(info.accountId);
+}
+
+/**
+ * @tc.name: DlpCredentialTest010
+ * @tc.desc: RemovePresetDLPPolicy test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpCredentialTest, DlpCredentialTest010, TestSize.Level1)
+{
+    std::vector<std::string> appIdList;
+    EXPECT_EQ(DLP_OK, RemovePresetDLPPolicy(appIdList));
+    std::string appId = "appId";
+    appIdList.push_back(appId);
+    EXPECT_EQ(DLP_OK, RemovePresetDLPPolicy(appIdList));
+}
+
+/**
+ * @tc.name: DlpCredentialTest011
+ * @tc.desc: FreeDLPEncPolicyData test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpCredentialTest, DlpCredentialTest011, TestSize.Level1)
+{
+    uint32_t mallocLen = MAX_REQUEST_NUM;
+    DLP_EncPolicyData encPolicy;
+    FreeDLPEncPolicyData(encPolicy);
+
+    encPolicy.featureName = (char *)HcMalloc(mallocLen, 0);
+    FreeDLPEncPolicyData(encPolicy);
+    EXPECT_EQ(nullptr, encPolicy.featureName);
+
+    encPolicy.featureName = (char *)HcMalloc(mallocLen, 0);
+    encPolicy.data = (uint8_t *)HcMalloc(mallocLen, 0);
+    FreeDLPEncPolicyData(encPolicy);
+    EXPECT_EQ(nullptr, encPolicy.featureName);
+    EXPECT_EQ(nullptr, encPolicy.data);
+
+    encPolicy.featureName = (char *)HcMalloc(mallocLen, 0);
+    encPolicy.data = (uint8_t *)HcMalloc(mallocLen, 0);
+    encPolicy.options.extraInfo = (uint8_t *)HcMalloc(mallocLen, 0);
+    FreeDLPEncPolicyData(encPolicy);
+    EXPECT_EQ(nullptr, encPolicy.featureName);
+    EXPECT_EQ(nullptr, encPolicy.data);
+    EXPECT_EQ(nullptr, encPolicy.options.extraInfo);
+
+    encPolicy.featureName = (char *)HcMalloc(mallocLen, 0);
+    encPolicy.data = (uint8_t *)HcMalloc(mallocLen, 0);
+    encPolicy.options.extraInfo = (uint8_t *)HcMalloc(mallocLen, 0);
+    encPolicy.receiverAccountInfo.accountId = (uint8_t *)HcMalloc(mallocLen, 0);
+    FreeDLPEncPolicyData(encPolicy);
+    EXPECT_EQ(nullptr, encPolicy.featureName);
+    EXPECT_EQ(nullptr, encPolicy.data);
+    EXPECT_EQ(nullptr, encPolicy.options.extraInfo);
+    EXPECT_EQ(nullptr, encPolicy.receiverAccountInfo.accountId);
 }
 }  // namespace DlpPermission
 }  // namespace Security
