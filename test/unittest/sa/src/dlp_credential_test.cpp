@@ -325,7 +325,6 @@ HWTEST_F(DlpCredentialTest, DlpCredentialTest005, TestSize.Level1)
     RequestInfo info;
     sptr<IDlpPermissionCallback> stub = new (std::nothrow) DlpPermissionAsyncStubTest();
     info.callback = stub;
-    g_requestMap.clear();
 
     EXPECT_EQ(false, GetCallbackFromRequestMap(invalidRequestId, info));
     DlpPackPolicyCallback(invalidRequestId, DLP_CREDENTIAL_ERROR_COMMON_ERROR, nullptr);
