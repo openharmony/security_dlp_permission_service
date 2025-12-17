@@ -373,7 +373,8 @@ static int32_t GetPixelmapFromFd(WaterMarkInfo& waterMarkInfo, std::shared_mutex
 
 static int32_t SetWatermarkToRS(const std::string &name, std::shared_ptr<Media::PixelMap> watermarkImg)
 {
-    uint32_t pixelmapSize = 1;
+    Rosen::SaSurfaceWatermarkMaxSize pixelmapSize =
+        Rosen::SaSurfaceWatermarkMaxSize::SA_WATER_MARK_MIDDLE_SIZE;
     auto &rs = Rosen::RSInterfaces::GetInstance();
     bool res = rs.SetWatermark(name, watermarkImg, pixelmapSize);
     if (!res) {
