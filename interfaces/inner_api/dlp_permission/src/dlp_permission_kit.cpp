@@ -129,7 +129,7 @@ int32_t DlpPermissionKit::ParseDlpCertificate(sptr<CertParcel>& certParcel, Perm
     return callback->result_;
 }
 
-int32_t DlpPermissionKit::GetWaterMark(const bool waterMarkConfig) // 解密过程去拿watermark
+int32_t DlpPermissionKit::GetWaterMark(const bool waterMarkConfig)
 {
     if (!waterMarkConfig) {
         DLP_LOG_INFO(LABEL, "waterMarkConfig is %{public}d", waterMarkConfig);
