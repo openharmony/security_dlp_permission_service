@@ -373,11 +373,12 @@ static int32_t GetPixelmapFromFd(WaterMarkInfo& waterMarkInfo, std::shared_mutex
 
 static int32_t SetWatermarkToRS(const std::string &name, std::shared_ptr<Media::PixelMap> watermarkImg)
 {
+    uint32_t pixelmapSize = 1;
     auto &rs = Rosen::RSInterfaces::GetInstance();
-    bool res = rs.SetWatermark(name, watermarkImg);
+    bool res = rs.SetWatermark(name, watermarkImg, pixelmapSize);
     if (!res) {
         DLP_LOG_WARN(LABEL, "SetWatermark to RS failed, will try again");
-        res = rs.SetWatermark(name, watermarkImg);
+        res = rs.SetWatermark(name, watermarkImg, pixelmapSize);
     }
     if (!res) {
         DLP_LOG_ERROR(LABEL, "SetWatermark to RS failed again");
