@@ -1636,6 +1636,23 @@ HWTEST_F(DlpPermissionKitTest, SetNotOwnerAndReadOnce001, TestSize.Level0)
     uri = "uri";
     (void)DlpPermissionKit::SetNotOwnerAndReadOnce(uri, false);
 }
+
+/* *
+ * @tc.name: GetWaterMark001
+ * @tc.desc: GetWaterMark.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionKitTest, GetWaterMark001, TestSize.Level0)
+{
+    DLP_LOG_DEBUG(LABEL, "GetWaterMark001");
+
+    bool waterMark = false;
+    ASSERT_EQ(DlpPermissionKit::GetWaterMark(waterMark), DLP_OK);
+
+    waterMark = true;
+    ASSERT_NE(DlpPermissionKit::GetWaterMark(waterMark), DLP_OK);
+}
 }  // namespace DlpPermission
 }  // namespace Security
 }  // namespace OHOS
