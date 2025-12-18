@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -97,7 +97,7 @@ HWTEST_F(DlpCredentialStaticTest, DlpCredentialStaticTest001, TestSize.Level1)
  * @tc.name: DlpCredentialStaticTest002
  * @tc.desc: Test IsDlpCredentialHuksError case
  * @tc.type: FUNC
- * @tc.require: 
+ * @tc.require:
  */
 HWTEST_F(DlpCredentialStaticTest, DlpCredentialStaticTest002, TestSize.Level1) {
     // Test IsDlpCredentialHuksError case
@@ -111,7 +111,7 @@ HWTEST_F(DlpCredentialStaticTest, DlpCredentialStaticTest002, TestSize.Level1) {
  * @tc.name: DlpCredentialStaticTest003
  * @tc.desc: Test IsEnterpriseError case
  * @tc.type: FUNC
- * @tc.require: 
+ * @tc.require:
  */
 HWTEST_F(DlpCredentialStaticTest, DlpCredentialStaticTest003, TestSize.Level1) {
     // Test IsEnterpriseError case
@@ -125,7 +125,7 @@ HWTEST_F(DlpCredentialStaticTest, DlpCredentialStaticTest003, TestSize.Level1) {
  * @tc.name: DlpCredentialStaticTest004
  * @tc.desc: Test IsDlpCredentialIpcError case
  * @tc.type: FUNC
- * @tc.require: 
+ * @tc.require:
  */
 HWTEST_F(DlpCredentialStaticTest, DlpCredentialStaticTest004, TestSize.Level1) {
     // Test IsDlpCredentialIpcError case
@@ -139,7 +139,7 @@ HWTEST_F(DlpCredentialStaticTest, DlpCredentialStaticTest004, TestSize.Level1) {
  * @tc.name: DlpCredentialStaticTest005
  * @tc.desc: Test IsDlpCredentialServerError case
  * @tc.type: FUNC
- * @tc.require: 
+ * @tc.require:
  */
 HWTEST_F(DlpCredentialStaticTest, DlpCredentialStaticTest005, TestSize.Level1) {
     // Test IsDlpCredentialServerError case
@@ -153,7 +153,7 @@ HWTEST_F(DlpCredentialStaticTest, DlpCredentialStaticTest005, TestSize.Level1) {
  * @tc.name: DlpCredentialStaticTest006
  * @tc.desc: Test IsNoPermissionError case
  * @tc.type: FUNC
- * @tc.require: 
+ * @tc.require:
  */
 HWTEST_F(DlpCredentialStaticTest, DlpCredentialStaticTest006, TestSize.Level1) {
     // Test IsNoPermissionError case
@@ -165,7 +165,7 @@ HWTEST_F(DlpCredentialStaticTest, DlpCredentialStaticTest006, TestSize.Level1) {
  * @tc.name: DlpCredentialStaticTest007
  * @tc.desc: Test IsNoInternetError case
  * @tc.type: FUNC
- * @tc.require: 
+ * @tc.require:
  */
 HWTEST_F(DlpCredentialStaticTest, DlpCredentialStaticTest007, TestSize.Level1) {
     // Test IsNoInternetError case
@@ -177,7 +177,7 @@ HWTEST_F(DlpCredentialStaticTest, DlpCredentialStaticTest007, TestSize.Level1) {
  * @tc.name: RemovePresetDLPPolicyTest001
  * @tc.desc: Test RemovePresetDLPPolicy with non-empty appIdList
  * @tc.type: FUNC
- * @tc.require: 
+ * @tc.require:
  */
 HWTEST_F(DlpCredentialStaticTest, RemovePresetDLPPolicyTest001, TestSize.Level1) {
     std::vector<std::string> appIdList = {"testAppId"};
@@ -189,7 +189,7 @@ HWTEST_F(DlpCredentialStaticTest, RemovePresetDLPPolicyTest001, TestSize.Level1)
  * @tc.name: RemovePresetDLPPolicyTest002
  * @tc.desc: Test RemovePresetDLPPolicy with empty appIdList
  * @tc.type: FUNC
- * @tc.require: 
+ * @tc.require:
  */
 HWTEST_F(DlpCredentialStaticTest, RemovePresetDLPPolicyTest002, TestSize.Level1) {
     std::vector<std::string> appIdList;
@@ -201,7 +201,7 @@ HWTEST_F(DlpCredentialStaticTest, RemovePresetDLPPolicyTest002, TestSize.Level1)
  * @tc.name: GetNewCertTest001
  * @tc.desc: Test GetNewCert with valid policyCert
  * @tc.type: FUNC
- * @tc.require: 
+ * @tc.require:
  */
 HWTEST_F(DlpCredentialStaticTest, GetNewCertTest001, TestSize.Level1) {
     unordered_json plainPolicyJson;
@@ -215,7 +215,7 @@ HWTEST_F(DlpCredentialStaticTest, GetNewCertTest001, TestSize.Level1) {
  * @tc.name: GetNewCertTest002
  * @tc.desc: Test GetNewCert with invalid policyCert
  * @tc.type: FUNC
- * @tc.require: 
+ * @tc.require:
  */
 HWTEST_F(DlpCredentialStaticTest, GetNewCertTest002, TestSize.Level1) {
     unordered_json plainPolicyJson;
@@ -229,7 +229,7 @@ HWTEST_F(DlpCredentialStaticTest, GetNewCertTest002, TestSize.Level1) {
  * @tc.name: CheckDebugPermissionTest001
  * @tc.desc: Test CheckDebugPermission with non-debug app
  * @tc.type: FUNC
- * @tc.require: 
+ * @tc.require:
  */
 HWTEST_F(DlpCredentialStaticTest, CheckDebugPermissionTest001, TestSize.Level1) {
     RequestInfo requestInfo;
@@ -243,7 +243,7 @@ HWTEST_F(DlpCredentialStaticTest, CheckDebugPermissionTest001, TestSize.Level1) 
  * @tc.name: CheckDebugPermissionTest003
  * @tc.desc: Test CheckDebugPermission with debug app and non-developer mode
  * @tc.type: FUNC
- * @tc.require: 
+ * @tc.require:
  */
 HWTEST_F(DlpCredentialStaticTest, CheckDebugPermissionTest003, TestSize.Level1) {
     RequestInfo requestInfo;
@@ -257,7 +257,7 @@ HWTEST_F(DlpCredentialStaticTest, CheckDebugPermissionTest003, TestSize.Level1) 
  * @tc.name: GetEnterpriseAccountNameTest001
  * @tc.desc: Test GetEnterpriseAccountName with valid appId
  * @tc.type: FUNC
- * @tc.require: 
+ * @tc.require:
  */
 HWTEST_F(DlpCredentialStaticTest, GetEnterpriseAccountNameTest001, TestSize.Level1) {
     AccountInfo accountCfg;
@@ -271,7 +271,7 @@ HWTEST_F(DlpCredentialStaticTest, GetEnterpriseAccountNameTest001, TestSize.Leve
  * @tc.name: AdapterDataTest001
  * @tc.desc: Test AdapterData with valid offlineCert
  * @tc.type: FUNC
- * @tc.require: 
+ * @tc.require:
  */
 HWTEST_F(DlpCredentialStaticTest, AdapterDataTest001, TestSize.Level1) {
     std::vector<uint8_t> offlineCert = {1, 2, 3};
