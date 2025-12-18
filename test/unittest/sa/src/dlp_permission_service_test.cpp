@@ -1665,3 +1665,50 @@ HWTEST_F(DlpPermissionServiceTest, SetNotOwnerAndReadOnce, TestSize.Level1)
     ret = dlpPermissionService_->SetNotOwnerAndReadOnce(uri, false);
     ASSERT_EQ(ret, DLP_OK);
 }
+
+/**
+ * @tc.name: SetWaterMark001
+ * @tc.desc: SetNotOwnerAndReadOnce test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionServiceTest, SetWaterMark001, TestSize.Level1)
+{
+    DLP_LOG_DEBUG(LABEL, "SetWaterMark001");
+    const int32_t pid = 1234;
+    int32_t ret = dlpPermissionService_->SetWaterMark(pid);
+    ASSERT_EQ(ret, DLP_OK);
+}
+
+/**
+ * @tc.name: GetWaterMark001
+ * @tc.desc: GetWaterMark test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionServiceTest, GetWaterMark001, TestSize.Level1)
+{
+    DLP_LOG_DEBUG(LABEL, "GetWaterMark001");
+
+    sptr<IDlpPermissionCallback> callback = nullptr;
+    int32_t res = dlpPermissionService_->GetWaterMark(true, callback);
+    EXPECT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, res);
+}
+
+/**
+ * @tc.name: GetWaterMark002
+ * @tc.desc: GetWaterMark test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionServiceTest, GetWaterMark002, TestSize.Level1)
+{
+    DLP_LOG_DEBUG(LABEL, "GetWaterMark002");
+
+    sptr<DlpTestRemoteObj> callback = new (std::nothrow)IRemoteStub<DlpTestRemoteObj>();
+    EXPECT_TRUE(callback != nullptr);
+
+    sptr<IDlpPermissionCallback> callback2 = iface_cast<IDlpPermissionCallback>(callback->AsObject());
+    int32_t res = dlpPermissionService_->GetWaterMark(true, callback2);
+    EXPECT_NE(DLP_OK, res);
+}
