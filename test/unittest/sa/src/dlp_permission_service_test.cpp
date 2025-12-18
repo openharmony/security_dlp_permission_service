@@ -1691,7 +1691,7 @@ HWTEST_F(DlpPermissionServiceTest, GetWaterMark001, TestSize.Level1)
     DLP_LOG_DEBUG(LABEL, "GetWaterMark001");
 
     sptr<IDlpPermissionCallback> callback = nullptr;
-    res = dlpPermissionService_->GetWaterMark(true, callback);
+    int32_t res = dlpPermissionService_->GetWaterMark(true, callback);
     EXPECT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, res);
 }
 
@@ -1709,6 +1709,6 @@ HWTEST_F(DlpPermissionServiceTest, GetWaterMark002, TestSize.Level1)
     EXPECT_TRUE(callback != nullptr);
 
     sptr<IDlpPermissionCallback> callback2 = iface_cast<IDlpPermissionCallback>(callback->AsObject());
-    res = dlpPermissionService_->GetWaterMark(true, callback2);
+    int32_t res = dlpPermissionService_->GetWaterMark(true, callback2);
     EXPECT_NE(DLP_OK, res);
 }
