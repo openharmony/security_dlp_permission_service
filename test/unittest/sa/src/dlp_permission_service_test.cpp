@@ -45,6 +45,7 @@
 #include "visit_record_file_manager.h"
 #include "visit_record_json_manager.h"
 #undef private
+#include "dlp_permission_service.cpp"
 
 using namespace testing::ext;
 using namespace OHOS;
@@ -1664,4 +1665,99 @@ HWTEST_F(DlpPermissionServiceTest, SetNotOwnerAndReadOnce, TestSize.Level1)
     uri = "uri";
     ret = dlpPermissionService_->SetNotOwnerAndReadOnce(uri, false);
     ASSERT_EQ(ret, DLP_OK);
+}
+
+/**
+ * @tc.name: SetWaterMark001
+ * @tc.desc: SetNotOwnerAndReadOnce test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionServiceTest, SetWaterMark001, TestSize.Level1)
+{
+    DLP_LOG_DEBUG(LABEL, "SetWaterMark001");
+    const int32_t pid = 1234;
+    int32_t ret = dlpPermissionService_->SetWaterMark(pid);
+    ASSERT_NE(ret, DLP_OK);
+}
+
+/**
+ * @tc.name: GetWaterMark001
+ * @tc.desc: GetWaterMark test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionServiceTest, GetWaterMark001, TestSize.Level1)
+{
+    DLP_LOG_DEBUG(LABEL, "GetWaterMark001");
+
+    int32_t res;
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+    res = stub->OnRemoteRequest(static_cast<uint32_t>(IDlpPermissionServiceIpcCode::COMMAND_GENERATE_DLP_CERTIFICATE),
+        data, reply, option);
+    EXPECT_EQ(false, !res);
+
+
+    res = data.WriteRemoteObject(callback->AsObject());
+    EXPECT_EQ(false, !res);
+
+    res = stub->OnRemoteRequest(static_cast<uint32_t>(IDlpPermissionServiceIpcCode::COMMAND_GENERATE_DLP_CERTIFICATE),
+        data, reply, option);
+    EXPECT_EQ(false, !res);
+
+    sptr<IDlpPermissionCallback> callback2 = nullptr;
+    res = dlpPermissionService_->GetWaterMark(true, callback2);
+    EXPECT_NE(DLP_OK, res);
+
+    sptr<IDlpPermissionCallback> callback3 = iface_cast<IDlpPermissionCallback>(callback->AsObject());
+    res = dlpPermissionService_->GetWaterMark(true, callback3);
+    EXPECT_NE(DLP_OK, res);
+}
+
+/**
+ * @tc.name: SetWatermarkToRS001
+ * @tc.desc: SetWatermarkToRS test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionServiceTest, SetWatermarkToRS001, TestSize.Level1)
+{
+    DLP_LOG_DEBUG(LABEL, "SetWatermarkToRS001");
+    const std::string name = "dlpwatereeee";
+    ASSERT_NE(SetWatermarkToRS(name, nullptr), DLP_OK);
+}
+
+static int32_t GetPixelmapFromFd(WaterMarkInfo& waterMarkInfo, std::shared_mutex &waterMarkInfoMutex)
+{
+    int32_t fd;
+    {
+        std::shared_lock<std::shared_mutex> lock(waterMarkInfoMutex);
+        fd = waterMarkInfo.waterMarkFd;
+    }
+    if (fd < 0) {
+        DLP_LOG_ERROR(LABEL, "unexpect watermark fd: %{public}d", fd);
+        return DLP_IPC_CALLBACK_ERROR;
+    }
+
+    OH_ImageSourceNative *source = nullptr;
+    OH_DecodingOptions *decodingOpts = nullptr;
+    OH_PixelmapNative *resPixelmap = nullptr;
+}
+
+/**
+ * @tc.name: GetPixelmapFromFd001
+ * @tc.desc: GetPixelmapFromFd test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionServiceTest, GetPixelmapFromFd001, TestSize.Level1)
+{
+    DLP_LOG_DEBUG(LABEL, "GetPixelmapFromFd001");
+    
+    WaterMarkInfo info;
+    std::shared_mutex  mutex;
+
+    ASSERT_NE(GetPixelmapFromFd(info, mutex), DLP_OK);
 }
