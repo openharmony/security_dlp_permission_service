@@ -178,3 +178,41 @@ HWTEST_F(SandboxJsonManagerTest, FromJson001, TestSize.Level1)
     sandboxJsonManager_->FromJson(jsonObject);
     ASSERT_TRUE(sandboxJsonManager_->infoVec_.size() == 1);
 }
+
+/**
+ * @tc.name: RemoveRetentionInfoByUserIdTest001
+ * @tc.desc: Test RemoveRetentionInfoByUserId with userId not matching
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(SandboxJsonManagerTest, RemoveRetentionInfoByUserIdTest001, TestSize.Level1) {
+    SandboxJsonManager manager;
+    int32_t userId = 1;
+    std::set<std::string> bundleNameSet = {"bundle1"};
+    RetentionInfo info;
+    info.userId = 2;
+    info.bundleName = "bundle1";
+    info.appIndex = 0;
+    manager.infoVec_.push_back(info);
+ 
+    ASSERT_EQ(manager.RemoveRetentionInfoByUserId(userId, bundleNameSet), DLP_FILE_NO_NEED_UPDATE);
+}
+ 
+/**
+ * @tc.name: RemoveRetentionInfoByUserIdTest002
+ * @tc.desc: Test RemoveRetentionInfoByUserId with bundleName not matching and CheckReInstall returns false
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(SandboxJsonManagerTest, RemoveRetentionInfoByUserIdTest002, TestSize.Level1) {
+    SandboxJsonManager manager;
+    int32_t userId = 1;
+    std::set<std::string> bundleNameSet = {"bundle2"};
+    RetentionInfo info;
+    info.userId = 1;
+    info.bundleName = "bundle1";
+    info.appIndex = 0;
+    manager.infoVec_.push_back(info);
+ 
+    ASSERT_EQ(manager.RemoveRetentionInfoByUserId(userId, bundleNameSet), DLP_FILE_NO_NEED_UPDATE);
+}
