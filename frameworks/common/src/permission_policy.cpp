@@ -300,6 +300,7 @@ void PermissionPolicy::CopyPermissionPolicy(const PermissionPolicy& srcPolicy)
     ownerAccountId_ = srcPolicy.ownerAccountId_;
     ownerAccountType_ = srcPolicy.ownerAccountType_;
     authUsers_ = srcPolicy.authUsers_;
+    authGroups_ = srcPolicy.authGroups_;
     supportEveryone_ = srcPolicy.supportEveryone_;
     everyonePerm_ = srcPolicy.everyonePerm_;
     expireTime_ = srcPolicy.expireTime_;
@@ -329,6 +330,30 @@ int32_t PermissionPolicy::CheckActionUponExpiry()
         actionUponExpiry_ = static_cast<uint32_t>(ActionType::NOTOPEN);
     }
     return DLP_OK;
+}
+
+int32_t PermissionPolicy::SetWaterMarkCfgToGroup()
+{
+    for (const auto &group : authGroups_) {
+        if (group.groupName == "waterMarkConfig") {
+            return DLP_OK;
+        }
+    }
+    authGroups_.emplace_back(GroupInfo{
+        .groupName = "waterMarkConfig",
+        .waterMarkConfig = waterMarkConfig_
+    });
+    return DLP_OK;
+}
+
+void PermissionPolicy::GetWaterMarkCfgFromGroup()
+{
+    for (const auto &group : authGroups_) {
+        if (group.groupName == "waterMarkConfig") {
+            waterMarkConfig_ = group.waterMarkConfig;
+            break;
+        }
+    }
 }
 
 bool CheckAccountType(DlpAccountType accountType)

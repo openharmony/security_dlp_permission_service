@@ -218,7 +218,8 @@ int32_t DlpPermissionService::GenerateDlpCertificate(
     }
     policyParcel->policyParams_.SetDebug(OHOS::system::GetBoolParameter(DEVELOPER_MODE, false));
     unordered_json jsonObj;
-    int32_t res = DlpPermissionSerializer::GetInstance().SerializeDlpPermission(policyParcel->policyParams_, jsonObj);
+    int32_t res = DlpPermissionSerializer::GetInstance().SerializeDlpPermission(
+        policyParcel->policyParams_, jsonObj);
     if (res != DLP_OK) {
         return res;
     }

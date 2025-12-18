@@ -275,14 +275,9 @@ void DlpFileManager::FreeChiperBlob(struct DlpBlob& key, struct DlpBlob& certDat
     }
 }
 
-int32_t DlpFileManager::PrepareParms(const std::shared_ptr<DlpFile>& filePtr, const DlpProperty& property,
-    PermissionPolicy& policy) const
+static int32_t SetDlpParams(const std::shared_ptr<DlpFile>& filePtr, const DlpProperty& property,
+    PermissionPolicy& policy)
 {
-    struct DlpBlob key;
-    struct DlpBlob certData;
-    struct DlpUsageSpec usage;
-    struct DlpBlob hmacKey;
-
     int result = policy.CheckActionUponExpiry();
     if (result != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "Check action upon expiry fail, errno=%{public}d", result);
@@ -295,16 +290,34 @@ int32_t DlpFileManager::PrepareParms(const std::shared_ptr<DlpFile>& filePtr, co
     policy.fileId = property.fileId;
     policy.allowedOpenCount_ = property.allowedOpenCount;
     policy.waterMarkConfig_ = property.waterMarkConfig;
+    policy.SetWaterMarkCfgToGroup();
     filePtr->SetFileId(property.fileId);
     filePtr->SetAllowedOpenCount(property.allowedOpenCount);
     filePtr->SetOfflineAccess(property.offlineAccess, property.allowedOpenCount);
     filePtr->SetWaterMarkConfig(property.waterMarkConfig);
 
+    return DLP_OK;
+}
+
+int32_t DlpFileManager::PrepareParms(const std::shared_ptr<DlpFile>& filePtr, const DlpProperty& property,
+    PermissionPolicy& policy) const
+{
+    struct DlpBlob key;
+    struct DlpBlob certData;
+    struct DlpUsageSpec usage;
+    struct DlpBlob hmacKey;
+
+    int32_t result = SetDlpParams(filePtr, property, policy);
+    if (result != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "Set params fail, errno=%{public}d", result);
+        return result;
+    }
     result = PrepareDlpEncryptParms(policy, key, usage, certData, hmacKey);
     if (result != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "Set dlp obj params fail, prepare encrypt params error, errno=%{public}d", result);
         return result;
     }
+
     do {
         result = filePtr->SetCipher(key, usage, hmacKey);
         if (result != DLP_OK) {
@@ -334,6 +347,7 @@ int32_t DlpFileManager::PrepareParms(const std::shared_ptr<DlpFile>& filePtr, co
 int32_t DlpFileManager::SetDlpFileParams(std::shared_ptr<DlpFile>& filePtr, const DlpProperty& property) const
 {
     PermissionPolicy policy(property);
+    policy.SetWaterMarkCfgToGroup();
     int result = PrepareParms(filePtr, property, policy);
     if (result != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "PrepareParms fail, errno=%{public}d", result);
@@ -602,7 +616,7 @@ static int32_t SetNotOwnerAndReadOnce(const PermissionPolicy& policy, int32_t dl
 
 static int32_t VerifyAndGetWaterMark(PermissionPolicy& policy, std::shared_ptr<DlpFile>& filePtr)
 {
-    policy.waterMarkConfig_ = filePtr->GetWaterMarkConfig();
+    policy.GetWaterMarkCfgFromGroup();
     int32_t result = filePtr->SetPolicy(policy);
     if (result != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "SetPolicy fail, errno=%{public}d", result);

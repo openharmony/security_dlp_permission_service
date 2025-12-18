@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,32 +13,27 @@
  * limitations under the License.
  */
 
-#ifndef DLP_POLICY_PARCEL_H
-#define DLP_POLICY_PARCEL_H
+#ifndef GROUP_INFO_PARCEL_H
+#define GROUP_INFO_PARCEL_H
 
-#include "auth_user_info_parcel.h"
 #include "parcel.h"
 #include "permission_policy.h"
 
 namespace OHOS {
 namespace Security {
 namespace DlpPermission {
-struct DlpPolicyParcel final : public Parcelable {
-    DlpPolicyParcel() = default;
-    ~DlpPolicyParcel() override = default;
-    bool Marshalling(Parcel& out) const override;
-    static DlpPolicyParcel* Unmarshalling(Parcel& in);
-    PermissionPolicy policyParams_;
+struct GroupInfoParcel final : public Parcelable {
+    GroupInfoParcel() = default;
 
-private:
-    bool MarshallingAccountInfo(Parcel& out) const;
-    bool MarshallingExpireTime(Parcel& out) const;
-    bool MarshallingKey(Parcel& out) const;
-    bool MarshallingUserList(Parcel& out) const;
-    bool MarshallingDlpPolicy(Parcel& out) const;
-    bool MarshallingGroupList(Parcel& out) const;
+    ~GroupInfoParcel() override = default;
+
+    bool Marshalling(Parcel& out) const override;
+
+    static GroupInfoParcel* Unmarshalling(Parcel& in);
+
+    GroupInfo groupInfo_;
 };
 }  // namespace DlpPermission
 }  // namespace Security
 }  // namespace OHOS
-#endif  // DLP_POLICY_PARCEL_H
+#endif
