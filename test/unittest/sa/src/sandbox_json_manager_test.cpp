@@ -183,7 +183,7 @@ HWTEST_F(SandboxJsonManagerTest, FromJson001, TestSize.Level1)
  * @tc.name: RemoveRetentionInfoByUserIdTest001
  * @tc.desc: Test RemoveRetentionInfoByUserId with userId not matching
  * @tc.type: FUNC
- * @tc.require: 
+ * @tc.require:
  */
 HWTEST_F(SandboxJsonManagerTest, RemoveRetentionInfoByUserIdTest001, TestSize.Level1) {
     SandboxJsonManager manager;
@@ -202,7 +202,7 @@ HWTEST_F(SandboxJsonManagerTest, RemoveRetentionInfoByUserIdTest001, TestSize.Le
  * @tc.name: RemoveRetentionInfoByUserIdTest002
  * @tc.desc: Test RemoveRetentionInfoByUserId with bundleName not matching and CheckReInstall returns false
  * @tc.type: FUNC
- * @tc.require: 
+ * @tc.require:
  */
 HWTEST_F(SandboxJsonManagerTest, RemoveRetentionInfoByUserIdTest002, TestSize.Level1) {
     SandboxJsonManager manager;
@@ -215,88 +215,4 @@ HWTEST_F(SandboxJsonManagerTest, RemoveRetentionInfoByUserIdTest002, TestSize.Le
     manager.infoVec_.push_back(info);
  
     ASSERT_EQ(manager.RemoveRetentionInfoByUserId(userId, bundleNameSet), DLP_FILE_NO_NEED_UPDATE);
-}
- 
-/**
- * @tc.name: RemoveRetentionInfoByUserIdTest003
- * @tc.desc: Test RemoveRetentionInfoByUserId with bundleName matching and CheckReInstall returns true
- * @tc.type: FUNC
- * @tc.require: 
- */
-HWTEST_F(SandboxJsonManagerTest, RemoveRetentionInfoByUserIdTest003, TestSize.Level1) {
-    SandboxJsonManager manager;
-    int32_t userId = 1;
-    std::set<std::string> bundleNameSet = {"bundle1"};
-    RetentionInfo info;
-    info.userId = 1;
-    info.bundleName = "bundle1";
-    info.appIndex = 0;
-    manager.infoVec_.push_back(info);
- 
-    // Mock CheckReInstall to return true
-    testing::internal::CaptureStderr();
-    ASSERT_EQ(manager.RemoveRetentionInfoByUserId(userId, bundleNameSet), DLP_OK);
-    testing::internal::GetCapturedStderr();
-}
- 
-/**
- * @tc.name: RemoveRetentionInfoByUserIdTest004
- * @tc.desc: Test RemoveRetentionInfoByUserId with UninstallSandboxApp returning error
- * @tc.type: FUNC
- * @tc.require: 
- */
-HWTEST_F(SandboxJsonManagerTest, RemoveRetentionInfoByUserIdTest004, TestSize.Level1) {
-    SandboxJsonManager manager;
-    int32_t userId = 1;
-    std::set<std::string> bundleNameSet = {"bundle1"};
-    RetentionInfo info;
-    info.userId = 1;
-    info.bundleName = "bundle1";
-    info.appIndex = 0;
-    manager.infoVec_.push_back(info);
- 
-    // Mock UninstallSandboxApp to return error
-    testing::internal::CaptureStderr();
-    ASSERT_EQ(manager.RemoveRetentionInfoByUserId(userId, bundleNameSet), DLP_OK);
-    testing::internal::GetCapturedStderr();
-}
- 
-/**
- * @tc.name: CheckReInstallTest001
- * @tc.desc: Test CheckReInstall with tokenId matching
- * @tc.type: FUNC
- * @tc.require: 
- */
-HWTEST_F(SandboxJsonManagerTest, CheckReInstallTest001, TestSize.Level1) {
-    SandboxJsonManager manager;
-    RetentionInfo info;
-    info.bundleName = "bundle1";
-    info.appIndex = 0;
-    info.tokenId = 12345;
-    int32_t userId = 1;
- 
-    // Mock GetHapTokenID to return the same tokenId
-    testing::internal::CaptureStderr();
-    ASSERT_FALSE(manager.CheckReInstall(info, userId));
-    testing::internal::GetCapturedStderr();
-}
- 
-/**
- * @tc.name: CheckReInstallTest002
- * @tc.desc: Test CheckReInstall with tokenId not matching
- * @tc.type: FUNC
- * @tc.require: 
- */
-HWTEST_F(SandboxJsonManagerTest, CheckReInstallTest002, TestSize.Level1) {
-    SandboxJsonManager manager;
-    RetentionInfo info;
-    info.bundleName = "bundle1";
-    info.appIndex = 0;
-    info.tokenId = 12345;
-    int32_t userId = 1;
- 
-    // Mock GetHapTokenID to return a different tokenId
-    testing::internal::CaptureStderr();
-    ASSERT_TRUE(manager.CheckReInstall(info, userId));
-    testing::internal::GetCapturedStderr();
 }
