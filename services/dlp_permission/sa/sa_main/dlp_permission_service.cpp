@@ -437,6 +437,7 @@ int32_t DlpPermissionService::GetWaterMark(const bool waterMarkConfig,
     {
         std::unique_lock<std::shared_mutex> lock(waterMarkInfoMutex_);
         waterMarkInfo_.waterMarkImg = nullptr;
+        waterMarkInfo_.waterMarkStatus = 0;
     }
     return DLP_OK;
 }
