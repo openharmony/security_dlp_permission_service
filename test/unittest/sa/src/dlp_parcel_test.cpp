@@ -118,7 +118,6 @@ HWTEST_F(DlpParcelTest, DlpParcelTest004, TestSize.Level1)
     result = nullptr;
 }
 
-
 /**
  * @tc.name: DlpPolicyParcelTest001
  * @tc.desc: DlpPolicyParcel test
@@ -162,6 +161,46 @@ HWTEST_F(DlpParcelTest, DlpPolicyParcelTest001, TestSize.Level1)
 }
 
 /**
+ * @tc.name: DlpPolicyParcelTest002
+ * @tc.desc: DlpPolicyParcel test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpParcelTest, DlpPolicyParcelTest002, TestSize.Level1)
+{
+    DlpPolicyParcel info;
+    Parcel out;
+    AuthUserInfo user;
+    GroupInfoParcel group;
+    user.authAccount = "user";
+    user.authPerm = DLPFileAccess::NO_PERMISSION;
+    user.permExpiryTime = 0;
+    user.authAccountType = DlpAccountType::INVALID_ACCOUNT;
+    info.policyParams_.authUsers_.emplace_back(user);
+    group.groupInfo_.groupName = "waterMarkConfig";
+    group.groupInfo_.waterMarkConfig = false;
+    info.policyParams_.authGroups_.emplace_back(group.groupInfo_);
+
+    info.policyParams_.ownerAccount_ = "owner";
+    info.policyParams_.ownerAccountId_ = "ownerId";
+    info.policyParams_.ownerAccountType_ = DlpAccountType::CLOUD_ACCOUNT;
+    uint8_t key[16] = {0x11, 0x22, 0x33, 0x44,
+                            0x55, 0x66, 0x77, 0x88,
+                            0x99, 0xAA, 0xBB, 0xCC,
+                            0xDD, 0xEE, 0xFF, 0x00};
+    info.policyParams_.SetAeskey(key, sizeof(key));
+    info.policyParams_.SetIv(key, sizeof(key));
+
+    EXPECT_EQ(true, info.Marshalling(out));
+    auto result = DlpPolicyParcel::Unmarshalling(out);
+    EXPECT_NE(result, nullptr);
+    delete result;
+    result = nullptr;
+    info.policyParams_.authGroups_.resize(MAX_ACCOUNT_NUM + 1);
+    EXPECT_EQ(false, info.Marshalling(out));
+}
+
+/**
  * @tc.name: RetentionSandBoxInfo001
  * @tc.desc: RetentionSandBoxInfo test
  * @tc.type: FUNC
@@ -200,6 +239,27 @@ HWTEST_F(DlpParcelTest, VisitedDLPFileInfo001, TestSize.Level1)
     auto result = VisitedDLPFileInfo::Unmarshalling(out);
     ASSERT_NE(result, nullptr);
     EXPECT_EQ(0, result->docUri.compare("abc"));
+    delete result;
+    result = nullptr;
+}
+
+/**
+ * @tc.name: GroupInfoParcel001
+ * @tc.desc: GroupInfoParcel test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpParcelTest, GroupInfoParcel001, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL, "GroupInfoParcel001");
+    GroupInfoParcel info;
+    info.groupInfo_.groupName = "abc";
+    Parcel out;
+
+    EXPECT_EQ(true, info.Marshalling(out));
+    auto result =  GroupInfoParcel::Unmarshalling(out);
+    ASSERT_NE(result, nullptr);
+    EXPECT_EQ(false, result->groupInfo_.waterMarkConfig);
     delete result;
     result = nullptr;
 }

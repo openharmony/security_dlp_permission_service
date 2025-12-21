@@ -209,6 +209,30 @@ HWTEST_F(DlpPermissionSerializerTest, SerializeDlpPermission005, TestSize.Level1
 }
 
 /**
+ * @tc.name: SerializeDlpPermission006
+ * @tc.desc: SerializeDlpPermission test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionSerializerTest, SerializeDlpPermission006, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL, "SerializeDlpPermission006");
+
+    std::vector<GroupInfo> groups;
+    GroupInfo info;
+    info.groupName = "watermarkconfig";
+    groups.push_back(info);
+
+    PermissionPolicy policy;
+    policy.authGroups_ = groups;
+    unordered_json permInfoJson;
+
+    DlpPermissionSerializer serialize;
+    int32_t ret = serialize.SerializeDlpPermission(policy, permInfoJson);
+    ASSERT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, ret);
+}
+
+/**
  * @tc.name: DeserializeDlpPermission001
  * @tc.desc: DeserializeDlpPermission test
  * @tc.type: FUNC
@@ -366,6 +390,32 @@ HWTEST_F(DlpPermissionSerializerTest, DeserializeEveryoneInfo001, TestSize.Level
     permJson1["everyone"] = everyoneJson;
     ret = serialize.DeserializeEveryoneInfo(permJson1, policy);
     ASSERT_EQ(true, ret);
+}
+
+/**
+ * @tc.name: DeserializeGroupList001
+ * @tc.desc: DeserializeGroupList test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionSerializerTest, DeserializeGroupList001, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL, "DeserializeGroupList001");
+
+    unordered_json groupsJson;
+    unordered_json watermarkJson;
+    unordered_json watermarkTestJson;
+    watermarkJson["waterMarkConfig"] = true;
+    watermarkTestJson["test"] = false;
+    groupsJson["waterMarkConfig"] = watermarkJson;
+    groupsJson["test"] = watermarkTestJson;
+    std::vector<GroupInfo> groupList;
+    DlpPermissionSerializer serialize;
+    int32_t ret = serialize.DeserializeGroupList(groupsJson, groupList);
+    ASSERT_EQ(DLP_OK, ret);
+    ASSERT_EQ(2, static_cast<int32_t>(groupList.size()));
+    ASSERT_EQ(true, groupList[0].waterMarkConfig);
+    ASSERT_EQ(false, groupList[1].waterMarkConfig);
 }
 
 /**
