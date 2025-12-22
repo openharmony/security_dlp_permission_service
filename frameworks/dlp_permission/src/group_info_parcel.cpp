@@ -45,7 +45,7 @@ GroupInfoParcel* GroupInfoParcel::Unmarshalling(Parcel& in)
     }
 
     if (!(in.ReadString(groupInfoParcel->groupInfo_.groupName))) {
-        DLP_LOG_ERROR(LABEL, "Read group account fail");
+        DLP_LOG_ERROR(LABEL, "Read group name fail");
         delete groupInfoParcel;
         groupInfoParcel = nullptr;
         return nullptr;

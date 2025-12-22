@@ -655,6 +655,9 @@ int32_t DlpPermissionSerializer::DeserializeDlpPermission(const unordered_json& 
     }
     std::vector<GroupInfo> groupList;
     res = DeserializeGroupList(groupListJson, groupList);
+    if (res != DLP_OK) {
+        return res;
+    }
     InitPermissionPolicy(policy, userList, policyJson, groupList);
 
     res = DeserializeFileEncJson(policy, plainPolicyJson);
