@@ -217,7 +217,8 @@ int32_t DlpPermissionService::GenerateDlpCertificate(
     }
     policyParcel->policyParams_.SetDebug(OHOS::system::GetBoolParameter(DEVELOPER_MODE, false));
     unordered_json jsonObj;
-    int32_t res = DlpPermissionSerializer::GetInstance().SerializeDlpPermission(policyParcel->policyParams_, jsonObj);
+    int32_t res = DlpPermissionSerializer::GetInstance().SerializeDlpPermission(
+        policyParcel->policyParams_, jsonObj);
     if (res != DLP_OK) {
         return res;
     }
@@ -435,6 +436,7 @@ int32_t DlpPermissionService::GetWaterMark(const bool waterMarkConfig,
     {
         std::unique_lock<std::shared_mutex> lock(waterMarkInfoMutex_);
         waterMarkInfo_.waterMarkImg = nullptr;
+        waterMarkInfo_.waterMarkStatus = 0;
     }
     return DLP_OK;
 }
