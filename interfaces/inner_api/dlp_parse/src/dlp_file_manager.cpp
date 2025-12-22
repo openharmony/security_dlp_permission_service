@@ -525,7 +525,8 @@ int32_t DlpFileManager::GenerateDlpFile(
         return DLP_PARSE_ERROR_VALUE_INVALID;
     }
     DlpFileMes dlpFileMes = {plainFileFd, dlpFileFd, realFileType};
-    if (property.ownerAccountType == CLOUD_ACCOUNT && fileLen > 0) {
+    if ((fileType == SUPPORT_PHOTO_DLP || fileType == SUPPORT_VIDEO_DLP || fileType == SUPPORT_AUDIO_DLP) &&
+        property.ownerAccountType == CLOUD_ACCOUNT) {
         return GenRawDlpFile(dlpFileMes, property, filePtr);
     }
     return GenZipDlpFile(dlpFileMes, property, filePtr, workDir);
