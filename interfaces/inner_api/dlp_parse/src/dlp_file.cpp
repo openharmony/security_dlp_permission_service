@@ -174,7 +174,12 @@ int32_t DlpFile::GetDomainAccountName(std::string& account) const
     }
     if (OHOS::AccountSA::OsAccountManager::GetOsAccountDomainInfo(userId, domainInfo) != 0) {
         DLP_LOG_ERROR(LABEL, "GetOsAccountDomainInfo return not 0");
-        return DLP_PARSE_ERROR_ACCOUNT_INVALID;
+        AccountSA::OsAccountInfo osAccountInfo;
+        if (OHOS::AccountSA::OsAccountManager::QueryCurrentOsAccount(osAccountInfo) != 0) {
+            DLP_LOG_ERROR(LABEL, "QueryCurrentOsAccount return not 0");
+            return DLP_PARSE_ERROR_ACCOUNT_INVALID;
+        }
+        osAccountInfo.GetDomainInfo(domainInfo);
     }
     if (domainInfo.accountName_.empty()) {
         DLP_LOG_ERROR(LABEL, "accountName_ empty");
