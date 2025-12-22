@@ -384,6 +384,7 @@ void GetDlpProperty(std::shared_ptr<DlpFile>& dlpFileNative, DlpProperty& proper
         .expireTime = policy.expireTime_,
         .allowedOpenCount = policy.allowedOpenCount_,
         .waterMarkConfig = policy.waterMarkConfig_,
+        .countdown = policy.countdown_,
     };
 }
 
@@ -1344,16 +1345,18 @@ void GetDlpPropertyExpireTime(napi_env env, napi_value jsObject, DlpProperty& pr
 
 bool GetAllowedOpenCount(napi_env env, napi_value jsObject, DlpProperty& property)
 {
-    int32_t jsAllowedOpenCount = 0;
     if (!GetInt32ValueByKey(env, jsObject, "allowedOpenCount", property.allowedOpenCount)) {
         DLP_LOG_DEBUG(LABEL, "js get allowed open count fail, will set zero");
-        property.allowedOpenCount = jsAllowedOpenCount;
-        return true;
+        property.allowedOpenCount = 0;
     }
     if (!GetStringValueByKey(env, jsObject, "fileId", property.fileId) ||
         !IsStringLengthValid(property.fileId, MAX_ACCOUNT_LEN)) {
-        DLP_LOG_ERROR(LABEL, "js get fileId fail");
-        return false;
+        DLP_LOG_DEBUG(LABEL, "js get fileId fail, will set empty");
+        property.fileId = "";
+    }
+    if (!GetInt32ValueByKey(env, jsObject, "countdown", property.countdown)) {
+        DLP_LOG_DEBUG(LABEL, "js get countdown fail, will set zero");
+        property.countdown = 0;
     }
     return true;
 }
@@ -1627,6 +1630,10 @@ napi_value DlpPropertyToJs(napi_env env, const DlpProperty& property)
     napi_value waterMarkConfigJs;
     napi_get_boolean(env, property.waterMarkConfig, &waterMarkConfigJs);
     NAPI_CALL(env, napi_set_named_property(env, dlpPropertyJs, "waterMarkConfig", waterMarkConfigJs));
+    
+    napi_value countdownJs;
+    NAPI_CALL(env, napi_create_int32(env, property.countdown, &countdownJs));
+    NAPI_CALL(env, napi_set_named_property(env, dlpPropertyJs, "countdown", countdownJs));
     return dlpPropertyJs;
 }
 

@@ -114,6 +114,7 @@ struct DlpProperty {
     std::string fileId;
     int32_t allowedOpenCount = 0;
     bool waterMarkConfig = false;
+    int32_t countdown = 0;
 };
 
 class PermissionPolicy final {
@@ -160,6 +161,7 @@ public:
     std::string appId = "";
     int32_t allowedOpenCount_ = 0;
     bool waterMarkConfig_ = false;
+    int32_t countdown_ = 0;
 
 private:
     uint8_t* aeskey_;
