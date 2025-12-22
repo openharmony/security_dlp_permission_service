@@ -65,5 +65,5 @@ HWTEST_F(DlpSetConfigTest, SerDlpConfig002, TestSize.Level0)
 
     OHOS::AAFwk::Want want;
     want.SetParam(WATER_MARK_CONFIG_KEY, true);
-    ASSERT_NE(DlpSetConfig::SetDlpConfig(want), DLP_OK);
+    ASSERT_NE(DlpSetConfig::SetDlpConfig(want), DLP_SERVICE_ERROR_VALUE_INVALID);
 }
