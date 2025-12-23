@@ -387,6 +387,51 @@ HWTEST_F(PermissionPolicyTest, GetAllowedOpenCount001, TestSize.Level1)
 }
 
 /**
+ * @tc.name: SetWaterMarkCfgToGroup
+ * @tc.desc: SetWaterMarkCfgToGroup test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionPolicyTest, SetWaterMarkCfgToGroup001, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL, "SetWaterMarkCfgToGroup001");
+    std::shared_ptr<PermissionPolicy> policy = std::make_shared<PermissionPolicy>();
+    ASSERT_NE(policy, nullptr);
+
+    policy->SetWaterMarkCfgToGroup();
+    
+    policy->waterMarkConfig_ = true;
+    policy->acountType_ = CLOUD_ACCOUNT;
+    policy->SetWaterMarkCfgToGroup();
+    ASSERT_EQ(policy->authGroups_.size(), 1);
+
+    policy->SetWaterMarkCfgToGroup();
+}
+
+/**
+ * @tc.name: GetWaterMarkCfgFromGroup
+ * @tc.desc: GetWaterMarkCfgFromGroup test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionPolicyTest, GetWaterMarkCfgFromGroup001, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL, "GetWaterMarkCfgFromGroup001");
+    std::shared_ptr<PermissionPolicy> policy = std::make_shared<PermissionPolicy>();
+    ASSERT_NE(policy, nullptr);
+
+    policy->GetWaterMarkCfgFromGroup();
+    
+    policy->waterMarkConfig_ = true;
+    policy->acountType_ = CLOUD_ACCOUNT;
+    policy->GetWaterMarkCfgFromGroup();
+    ASSERT_EQ(policy->authGroups_.size(), 0);
+
+    policy->SetWaterMarkCfgToGroup();
+    policy->GetWaterMarkCfgFromGroup();
+}
+
+/**
  * @tc.name: CopyPermissionPolicy001
  * @tc.desc: SetIv test
  * @tc.type: FUNC
