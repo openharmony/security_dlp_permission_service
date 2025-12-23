@@ -334,6 +334,9 @@ int32_t PermissionPolicy::CheckActionUponExpiry()
 
 int32_t PermissionPolicy::SetWaterMarkCfgToGroup()
 {
+    if (acountType_ != CLOUD_ACCOUNT) {
+        return DLP_OK;
+    }
     for (const auto &group : authGroups_) {
         if (group.groupName == "waterMarkConfig") {
             return DLP_OK;
@@ -348,6 +351,9 @@ int32_t PermissionPolicy::SetWaterMarkCfgToGroup()
 
 void PermissionPolicy::GetWaterMarkCfgFromGroup()
 {
+    if (acountType_ != CLOUD_ACCOUNT) {
+        return;
+    }
     for (const auto &group : authGroups_) {
         if (group.groupName == "waterMarkConfig") {
             waterMarkConfig_ = group.waterMarkConfig;
