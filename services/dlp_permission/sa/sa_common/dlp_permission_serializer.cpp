@@ -441,7 +441,9 @@ int32_t DlpPermissionSerializer::SerializeDlpPermission(const PermissionPolicy& 
     policyJson[NEED_ONLINE] = policy.needOnline_;
     policyJson[DLP_FILE_DEBUG_FLAG] = policy.debug_;
     policyJson[ACCOUNT_INDEX] = authUsersJson;
-    policyJson[GROUP_INDEX] = groupsJson;
+    if (policy.acountType_ == CLOUD_ACCOUNT) {
+        policyJson[GROUP_INDEX] = groupsJson;
+    }
     SerializeCustomProperty(policy, policyJson);
     SerializeEveryoneInfo(policy, policyJson);
     if (policy.ownerAccountType_ == ENTERPRISE_ACCOUNT) {
