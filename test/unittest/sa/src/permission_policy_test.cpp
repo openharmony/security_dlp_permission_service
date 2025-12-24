@@ -399,7 +399,6 @@ HWTEST_F(PermissionPolicyTest, SetWaterMarkCfgToGroup001, TestSize.Level1)
     ASSERT_NE(policy, nullptr);
     
     policy->waterMarkConfig_ = true;
-    policy->acountType_ = CLOUD_ACCOUNT;
     policy->SetWaterMarkCfgToGroup();
     ASSERT_EQ(policy->authGroups_.size(), 1);
 
@@ -420,14 +419,13 @@ HWTEST_F(PermissionPolicyTest, GetWaterMarkCfgFromGroup001, TestSize.Level1)
     ASSERT_NE(policy, nullptr);
     
     policy->waterMarkConfig_ = true;
-    policy->acountType_ = CLOUD_ACCOUNT;
     policy->GetWaterMarkCfgFromGroup();
     ASSERT_EQ(policy->authGroups_.size(), 0);
 
     policy->SetWaterMarkCfgToGroup();
     policy->GetWaterMarkCfgFromGroup();
     ASSERT_EQ(policy->authGroups_.size(), 1);
-    ASSERT_EQ(policy->waterMarkConfig_, false);
+    ASSERT_EQ(policy->waterMarkConfig_, true);
 }
 
 /**
