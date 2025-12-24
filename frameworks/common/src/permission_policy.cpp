@@ -332,28 +332,22 @@ int32_t PermissionPolicy::CheckActionUponExpiry()
     return DLP_OK;
 }
 
-int32_t PermissionPolicy::SetWaterMarkCfgToGroup()
+void PermissionPolicy::SetWaterMarkCfgToGroup()
 {
-    if (acountType_ != CLOUD_ACCOUNT) {
-        return DLP_OK;
-    }
     for (const auto &group : authGroups_) {
         if (group.groupName == "waterMarkConfig") {
-            return DLP_OK;
+            return;
         }
     }
     authGroups_.emplace_back(GroupInfo{
         .groupName = "waterMarkConfig",
         .waterMarkConfig = waterMarkConfig_
     });
-    return DLP_OK;
+    return;
 }
 
 void PermissionPolicy::GetWaterMarkCfgFromGroup()
 {
-    if (acountType_ != CLOUD_ACCOUNT) {
-        return;
-    }
     for (const auto &group : authGroups_) {
         if (group.groupName == "waterMarkConfig") {
             waterMarkConfig_ = group.waterMarkConfig;
