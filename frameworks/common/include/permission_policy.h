@@ -145,7 +145,7 @@ public:
     int32_t CheckActionUponExpiry();
     int32_t GetAllowedOpenCount() const;
     bool GetwaterMarkConfig() const;
-    int32_t SetWaterMarkCfgToGroup();
+    void SetWaterMarkCfgToGroup();
     void GetWaterMarkCfgFromGroup();
 
     std::string ownerAccount_;
