@@ -139,6 +139,8 @@ void DlpPermissionService::OnStart()
     }
     state_ = ServiceRunningState::STATE_RUNNING;
     DLP_LOG_INFO(LABEL, "Congratulations, DlpPermissionService start successfully!");
+    SetTimer(true);
+    DLP_LOG_INFO(LABEL, "DlpPermissionService set timer to destroy itself!");
 }
 
 void DlpPermissionService::OnStop()
