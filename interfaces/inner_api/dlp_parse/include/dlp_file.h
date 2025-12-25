@@ -258,6 +258,16 @@ public:
         return waterMarkConfig_;
     };
 
+    void SetCountdown(int32_t countdown)
+    {
+        countdown_ = countdown;
+    };
+
+    int32_t GetCountdown()
+    {
+        return countdown_;
+    };
+
     int32_t dlpFd_;
     friend class DlpRawFile;
     friend class DlpZipFile;
@@ -295,6 +305,7 @@ private:
     int32_t accountType_;
     int32_t allowedOpenCount_;
     bool waterMarkConfig_;
+    int32_t countdown_;
 };
 }  // namespace DlpPermission
 }  // namespace Security

@@ -65,6 +65,7 @@ const std::string PATH_CACHE = "cache";
 const std::string FILEID = "fileId";
 const std::string ALLOWED_OPEN_COUNT = "allowedOpenCount";
 const std::string WATERMARK_CONFIG = "waterMarkConfig";
+const std::string COUNTDOWN = "countdown";
 
 static const uint32_t FILE_HEAD = 8;
 static const uint32_t MAX_DLP_HEAD_SIZE = 1024;
@@ -179,6 +180,7 @@ static int32_t SerializePermissionPolicy(const PermissionPolicy& policy, std::st
     policyJson[FILEID] = policy.fileId;
     policyJson[ALLOWED_OPEN_COUNT] = policy.allowedOpenCount_;
     policyJson[WATERMARK_CONFIG] = policy.waterMarkConfig_;
+    policyJson[COUNTDOWN] = policy.countdown_;
     SerializeEveryoneInfo(policy, policyJson);
     policyString = policyJson.dump();
     return DLP_OK;

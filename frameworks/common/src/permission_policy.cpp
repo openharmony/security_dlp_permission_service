@@ -169,6 +169,7 @@ PermissionPolicy::PermissionPolicy(const DlpProperty& property)
     fileId = property.fileId;
     allowedOpenCount_ = property.allowedOpenCount;
     waterMarkConfig_ = property.waterMarkConfig;
+    countdown_ = property.countdown;
 }
 
 PermissionPolicy::~PermissionPolicy()
@@ -281,6 +282,11 @@ bool PermissionPolicy::GetwaterMarkConfig() const
     return waterMarkConfig_;
 }
 
+int32_t PermissionPolicy::GetCountdown() const
+{
+    return countdown_;
+}
+
 void PermissionPolicy::CopyPolicyHmac(const PermissionPolicy& srcPolicy)
 {
     if (srcPolicy.hmacKeyLen_ == 0 || srcPolicy.hmacKey_ == nullptr) {
@@ -317,6 +323,7 @@ void PermissionPolicy::CopyPermissionPolicy(const PermissionPolicy& srcPolicy)
     fileId = srcPolicy.fileId;
     allowedOpenCount_ = srcPolicy.allowedOpenCount_;
     waterMarkConfig_ = srcPolicy.waterMarkConfig_;
+    countdown_ = srcPolicy.countdown_;
 }
 
 int32_t PermissionPolicy::CheckActionUponExpiry()

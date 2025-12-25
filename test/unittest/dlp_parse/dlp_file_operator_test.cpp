@@ -60,6 +60,7 @@ static const std::string READ_INDEX = "read";
 static const std::string RIGHT_INDEX = "right";
 static const std::string CUSTOM_PROPERTY = "customProperty";
 static const std::string ALLOWED_OPEN_COUNT = "allowedOpenCount";
+static const std::string COUNTDOWN = "countdown";
 static const std::string FILEID = "fileId";
 
 static const std::string DEFAULT_CURRENT_ACCOUNT = "ohosAnonymousName";
@@ -236,6 +237,9 @@ static void InitPermissionPolicy(PermissionPolicy& policy, json policyJson)
     if (policyJson.find(ALLOWED_OPEN_COUNT) != policyJson.end() && policyJson.at(ALLOWED_OPEN_COUNT).is_number()) {
         policyJson.at(ALLOWED_OPEN_COUNT).get_to(policy.allowedOpenCount_);
     }
+    if (policyJson.find(COUNTDOWN) != policyJson.end() && policyJson.at(COUNTDOWN).is_number()) {
+        policyJson.at(COUNTDOWN).get_to(policy.countdown_);
+    }
 }
 
 static uint32_t DeserializeDlpPermission(const std::string& queryResult, PermissionPolicy& policy)
@@ -286,6 +290,7 @@ static bool IsSameProperty(const PermissionPolicy& property, const PermissionPol
         property.needOnline_ == queryProperty.needOnline_ &&
         property.actionUponExpiry_ == queryProperty.actionUponExpiry_ &&
         property.allowedOpenCount_ == queryProperty.allowedOpenCount_ &&
+        property.countdown_ == queryProperty.countdown_ &&
         IsSameAuthInfo(property.authUsers_, queryProperty.authUsers_);
 }
 
@@ -323,7 +328,8 @@ HWTEST_F(DlpFileOperatorTest, EnterpriseSpaceEncryptDlpFile001, TestSize.Level0)
         .expireTime = 0,
         .actionUponExpiry = ActionType::NOTOPEN,
         .fileId = "111",
-        .allowedOpenCount = 1
+        .allowedOpenCount = 1,
+        .countdown = 1
     };
     CustomProperty customProperty = {
         .enterprise = DEFAULT_CUSTOM_PROPERTY
@@ -377,7 +383,8 @@ HWTEST_F(DlpFileOperatorTest, EnterpriseSpaceDecryptDlpFile001, TestSize.Level0)
         .expireTime = 0,
         .actionUponExpiry = ActionType::NOTOPEN,
         .fileId = "111",
-        .allowedOpenCount = 1
+        .allowedOpenCount = 1,
+        .countdown = 1
     };
     CustomProperty customProperty = {
         .enterprise = DEFAULT_CUSTOM_PROPERTY
@@ -441,7 +448,8 @@ HWTEST_F(DlpFileOperatorTest, EnterpriseSpaceQueryDlpProperty001, TestSize.Level
         .expireTime = 0,
         .actionUponExpiry = ActionType::NOTOPEN,
         .fileId = "111",
-        .allowedOpenCount = 1
+        .allowedOpenCount = 1,
+        .countdown = 1
     };
     CustomProperty customProperty = {
         .enterprise = DEFAULT_CUSTOM_PROPERTY
@@ -492,7 +500,8 @@ HWTEST_F(DlpFileOperatorTest, EnterpriseSpaceQueryDlpProperty002, TestSize.Level
         .expireTime = 0,
         .actionUponExpiry = ActionType::NOTOPEN,
         .fileId = "111",
-        .allowedOpenCount = 1
+        .allowedOpenCount = 1,
+        .countdown = 1
     };
     CustomProperty customProperty = {
         .enterprise = DEFAULT_CUSTOM_PROPERTY

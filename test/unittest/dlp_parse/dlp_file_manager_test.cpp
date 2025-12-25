@@ -146,6 +146,7 @@ HWTEST_F(DlpFileManagerTest, GenerateCertData001, TestSize.Level0)
     policy.hmacKey_ = new (std::nothrow) uint8_t[16];
     ASSERT_NE(policy.hmacKey_, nullptr);
     policy.hmacKeyLen_ = 16;
+    policy.countdown_ = 1;
 
     policy.ownerAccountType_ = CLOUD_ACCOUNT;
     policy.ownerAccount_ = std::string(DLP_MAX_CERT_SIZE + 1, 'a');
