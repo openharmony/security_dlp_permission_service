@@ -32,7 +32,6 @@
 #include "dlp_permission_serializer.h"
 #include "dlp_policy_parcel.h"
 #include "dlp_credential.h"
-#include "dlp_credential.cpp"
 #include "ipc_skeleton.h"
 #include "iremote_broker.h"
 #include "iremote_stub.h"
@@ -42,7 +41,7 @@
 #include "idlp_permission_service.h"
 #include "securec.h"
 #include "token_setproc.h"
-#include "alg_utils.h"
+#include "alg_utils.cpp"
 
 using namespace OHOS::Security::DlpPermission;
 using namespace OHOS::Security::AccessToken;
@@ -52,6 +51,7 @@ namespace {
 static const uint64_t SYSTEM_APP_MASK = 0x100000000;
 static const int32_t DEFAULT_USER_ID = 100;
 static const uint32_t PARCEL_NORMAL_SIZE = 16;
+static const uint32_t PARCEL_LARGE_SIZE = 32;
 static const uint32_t PARCEL_NORMAL_DATA_SIZE = sizeof(int64_t) + 1;
 static const uint32_t PARCEL_NORMAL_ALLOC_UNIT = 0;
 static const uint32_t PARCEL_NORMAL_BEGIN = 0;
@@ -59,7 +59,6 @@ static const uint32_t PARCEL_NORMAL_END = 12;
 static const uint32_t PARCEL_OVERSIZE_DATA_SIZE = 16;
 static const uint32_t PARCEL_LARGE_BEGIN = 10;
 static const uint32_t PARCEL_SMALL_END = 1;
-static const uint32_t PARCEL_UINT_MAX = 0xffffffffU;
 static const uint32_t PARCEL_MAX_BEGIN = PARCEL_UINT_MAX - PARCEL_NORMAL_DATA_SIZE + 1;
 } // namespace
 
@@ -90,6 +89,7 @@ void MemoryFuzzTest(const uint8_t* data, size_t size)
     if (len != size) {
         return;
     }
+    (void)HcStrlen(nullptr);
     return;
 }
 
@@ -101,7 +101,6 @@ void BlobFuzzTest(const uint8_t* data, size_t size)
     ret = IsBlobDataValid(&blob2);
     FreeBlobData(&blob2);
     BlobData blob3 = {0, nullptr};
-    ret = IsBlobDataValid(&blob3);
     FreeBlobData(&blob3);
     FreeBlobData(nullptr);
     unsigned char *newdata = static_cast<unsigned char *>(HcMalloc(size, 0));
@@ -113,7 +112,10 @@ void BlobFuzzTest(const uint8_t* data, size_t size)
     BlobData blob4 = {size, newdata};
     ret = IsBlobDataValid(&blob4);
     FreeBlobData(&blob4);
-    return;
+    uint8_t value = 0;
+    uint8_t* valuePtr = &value;
+    BlobData blob5 = {0, valuePtr};
+    ret = IsBlobDataValid(&blob5);
 }
 
 void DeleteParcelTest1()
@@ -152,6 +154,32 @@ void DeleteParcelTest2()
     DeleteParcel(&testData);
 }
 
+void ParcelFileFuzzTest()
+{
+    HcParcel testData;
+    testData.data = nullptr;
+    testData.length = 1;
+    (void)ParcelIncrease(&testData, 0);
+
+    ParcelRecycle(nullptr);
+
+    testData = CreateParcel(PARCEL_LARGE_SIZE, PARCEL_NORMAL_ALLOC_UNIT);
+    testData.beginPos = PARCEL_SMALL_END;
+    testData.endPos = PARCEL_LARGE_BEGIN;
+    ParcelRecycle(&testData);
+    DeleteParcel(&testData);
+
+    (void)GetParcelIncreaseSize(nullptr, 0);
+
+    (void)CreateDirectory("");
+
+    (void)HcFileOpenWrite("", 0);
+
+    FileHandle file;
+    file.pfd = nullptr;
+    HcFileClose(file);
+}
+
 void ParcelFuzzTest(const uint8_t* data, size_t size)
 {
     uint32_t ret = 0;
@@ -175,12 +203,37 @@ void ParcelFuzzTest(const uint8_t* data, size_t size)
     ret = ParcelWrite(&testData, nullptr, 0);
     ret = ParcelWrite(&testData, data, size);
     DeleteParcel(&testData);
+
+    testData = CreateParcel(PARCEL_NORMAL_SIZE, PARCEL_NORMAL_ALLOC_UNIT);
+    do {
+        if (testData.data == nullptr) {
+            break;
+        }
+        testData.beginPos = PARCEL_SMALL_END;
+        testData.endPos = PARCEL_LARGE_BEGIN;
+        ret = GetParcelDataSize(&testData);
+    } while (0);
+    uint8_t* mData = nullptr;
+    ret = ParcelWrite(&testData, mData, size);
+    if (ret == HC_TRUE) {
+        free(mData);
+    }
+    DeleteParcel(&testData);
     DeleteParcel(nullptr);
 
     (void)GetParcelData(nullptr);
     (void)GetParcelData(&testData);
     DeleteParcelTest1();
     DeleteParcelTest2();
+
+    testData = CreateParcel(PARCEL_NORMAL_SIZE, PARCEL_NORMAL_ALLOC_UNIT);
+    (void)ParcelRealloc(&testData, 0);
+    (void)ParcelIncrease(&testData, 0);
+    DeleteParcel(&testData);
+
+    (void)ParcelIncrease(nullptr, 0);
+
+    ParcelFileFuzzTest();
 }
 
 void FileFuzzTest(const uint8_t* data, size_t size)

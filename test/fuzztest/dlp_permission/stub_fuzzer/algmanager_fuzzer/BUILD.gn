@@ -38,6 +38,10 @@ ohos_fuzztest("AlgManagerFuzzTest") {
     "${dlp_root_dir}/services/dlp_permission/sa:dlp_permission_service",
   ]
 
+  include_dirs = [
+    "${dlp_root_dir}/services/dlp_permission/sa/adapt_utils/alg_adapt/alg_manager/src",
+  ]
+
   external_deps = [
     "ability_base:want",
     "ability_base:zuri",

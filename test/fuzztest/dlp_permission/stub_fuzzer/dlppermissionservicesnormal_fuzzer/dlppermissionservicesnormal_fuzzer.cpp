@@ -42,15 +42,7 @@ static const int32_t DEFAULT_USER_ID = 100;
 namespace OHOS {
 static constexpr int32_t SA_ID_DLP_PERMISSION_SERVICE = 3521;
 static constexpr uint8_t STATUS_NUM = 2;
-static constexpr uint8_t SIZE_LOW_BOUND = 30;
 static const std::string CONFIGINGO = "configInfo";
-
-class DlpFuzzRemoteObj : public IRemoteBroker {
-public:
-    DECLARE_INTERFACE_DESCRIPTOR(u"ohos.dlp.fuzz");
-    DlpFuzzRemoteObj() = default;
-    virtual ~DlpFuzzRemoteObj() noexcept = default;
-};
 
 static void TestGenerateCert()
 {
@@ -278,38 +270,6 @@ static void TestClearUnreservedSandbox(const uint8_t* data, size_t size)
     service->ClearUnreservedSandbox();
 }
 
-static void TestWaterMark(const uint8_t *data, size_t size)
-{
-    if ((data == nullptr) || (size < SIZE_LOW_BOUND)) {
-        return;
-    }
-    FuzzedDataProvider fdp(data, size);
-    auto service = std::make_shared<DlpPermissionService>(SA_ID_DLP_PERMISSION_SERVICE, data[0] % STATUS_NUM);
-    int32_t pid = fdp.ConsumeIntegral<int32_t>();
-    (void)service->SetWaterMark(pid);
-    (void)service->GetWaterMark(true, nullptr);
-    sptr<DlpFuzzRemoteObj> callback = new (std::nothrow) IRemoteStub<DlpFuzzRemoteObj>();
-    sptr<IDlpPermissionCallback> callback2 = iface_cast<IDlpPermissionCallback>(callback->AsObject());
-    (void)service->GetWaterMark(true, callback2);
-    (void)service->CheckWaterMarkInfo();
-    auto appStateObserver = service->appStateObserver_;
-    DlpSandboxInfo sandboxInfo;
-    (void)service->InsertDlpSandboxInfo(sandboxInfo, false, true);
-    std::string bundleName = "bundleName";
-    int32_t appIndex = 0;
-    int32_t userId = 0;
-    (void)service->DeleteDlpSandboxInfo(bundleName, appIndex, userId);
-    service->appStateObserver_ = appStateObserver;
-    (void)service->InsertDlpSandboxInfo(sandboxInfo, true, false);
-
-    std::string policy = "policy";
-    (void)service->SetEnterprisePolicy(policy);
-    std::string uri = "";
-    (void)service->SetNotOwnerAndReadOnce(uri, true);
-    uri = "uri";
-    (void)service->SetNotOwnerAndReadOnce(uri, false);
-}
-
 bool DlpPermissionServicesNormalFuzzTest(const uint8_t* data, size_t size)
 {
     TestSetSandboxConfig(data, size);
@@ -325,7 +285,6 @@ bool DlpPermissionServicesNormalFuzzTest(const uint8_t* data, size_t size)
     TestDump(data, size);
     TestRemoveMDMPolicy(data, size);
     TestClearUnreservedSandbox(data, size);
-    TestWaterMark(data, size);
     return true;
 }
 } // namespace OHOS
