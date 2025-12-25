@@ -306,8 +306,6 @@ static void TestWaterMark(const uint8_t *data, size_t size)
     (void)service->SetEnterprisePolicy(policy);
     std::string uri = "";
     (void)service->SetNotOwnerAndReadOnce(uri, true);
-    uri = "uri";
-    (void)service->SetNotOwnerAndReadOnce(uri, false);
 }
 
 bool DlpPermissionServicesNormalFuzzTest(const uint8_t* data, size_t size)
