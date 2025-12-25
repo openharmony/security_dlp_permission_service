@@ -644,13 +644,6 @@ bool GetGenerateDlpFileParams(
         }
     }
 
-    DLP_LOG_DEBUG(LABEL,
-        "Fd: %{private}" PRId64 ",ownerAccount:%{private}s,ownerAccountId: %{private}s, ownerAccountType: %{private}d,"
-        "contactAccount: %{private}s, size: %{private}zu, expireTime: %{public}" PRId64,
-        asyncContext.plaintextFd, asyncContext.property.ownerAccount.c_str(),
-        asyncContext.property.ownerAccountId.c_str(), asyncContext.property.ownerAccountType,
-        asyncContext.property.contactAccount.c_str(), asyncContext.property.authUsers.size(),
-        asyncContext.property.expireTime);
     return true;
 }
 
