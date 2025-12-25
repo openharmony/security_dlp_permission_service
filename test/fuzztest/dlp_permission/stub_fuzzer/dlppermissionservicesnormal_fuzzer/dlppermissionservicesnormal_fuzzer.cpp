@@ -42,15 +42,7 @@ static const int32_t DEFAULT_USER_ID = 100;
 namespace OHOS {
 static constexpr int32_t SA_ID_DLP_PERMISSION_SERVICE = 3521;
 static constexpr uint8_t STATUS_NUM = 2;
-static constexpr uint8_t SIZE_LOW_BOUND = 30;
 static const std::string CONFIGINGO = "configInfo";
-
-class DlpFuzzRemoteObj : public IRemoteBroker {
-public:
-    DECLARE_INTERFACE_DESCRIPTOR(u"ohos.dlp.fuzz");
-    DlpFuzzRemoteObj() = default;
-    virtual ~DlpFuzzRemoteObj() noexcept = default;
-};
 
 static void TestGenerateCert()
 {
