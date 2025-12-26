@@ -18,6 +18,7 @@
 
 #define FUZZ_PROJECT_NAME "isindlpsandboxstub_fuzzer"
 
+//disable keyword private to public
 #define private public
 #include "dlp_permission_service.h"
 #undef private
