@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef TEST_FUZZTEST_IS_IN_DLP_SANDBOX_STUB_FUZZER_H
-#define TEST_FUZZTEST_IS_IN_DLP_SANDBOX_STUB_FUZZER_H
+#ifndef TEST_FUZZTEST_PARALLEL_FUZZER_H
+#define TEST_FUZZTEST_PARALLEL_FUZZER_H
 
 #define FUZZ_PROJECT_NAME "isindlpsandboxstub_fuzzer"
 
@@ -23,4 +23,4 @@
 #include "dlp_permission_service.h"
 #undef private
 
-#endif // TEST_FUZZTEST_IS_IN_DLP_SANDBOX_STUB_FUZZER_H
+#endif // TEST_FUZZTEST_PARALLEL_FUZZER_H
