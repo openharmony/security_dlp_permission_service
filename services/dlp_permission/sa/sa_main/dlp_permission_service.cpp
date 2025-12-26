@@ -367,6 +367,10 @@ static int32_t GetPixelmapFromFd(WaterMarkInfo& waterMarkInfo, std::shared_mutex
     }
     if (source) {
         OH_ImageSourceNative_Release(source);
+        if (source) {
+            delete source;
+            source = nullptr;
+        }
     }
     return err == IMAGE_SUCCESS ? DLP_OK : DLP_CREATE_PIXELMAP_ERROR;
 }

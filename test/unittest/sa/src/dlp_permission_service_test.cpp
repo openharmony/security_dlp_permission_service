@@ -1696,6 +1696,25 @@ HWTEST_F(DlpPermissionServiceTest, GetWaterMark001, TestSize.Level1)
 }
 
 /**
+ * @tc.name: GetWaterMark003
+ * @tc.desc: GetWaterMark test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionServiceTest, GetWaterMark003, TestSize.Level1)
+{
+    DLP_LOG_DEBUG(LABEL, "GetWaterMark003");
+
+    sptr<DlpTestRemoteObj> callback = new (std::nothrow)IRemoteStub<DlpTestRemoteObj>();
+    if (callback == nullptr) {
+        return;
+    }
+
+    sptr<IDlpPermissionCallback> callback3 = iface_cast<IDlpPermissionCallback>(callback->AsObject());
+    EXPECT_NE(DLP_OK, dlpPermissionService_->GetWaterMark(false, callback3));
+}
+
+/**
  * @tc.name: GetWaterMark002
  * @tc.desc: GetWaterMark test
  * @tc.type: FUNC
