@@ -102,9 +102,11 @@ public:
     virtual ~DlpFuzzRemoteObj() noexcept = default;
 };
 
-static std::string ConsumeString(FuzzedDataProvider& fdp) {
+static std::string ConsumeString(FuzzedDataProvider& fdp)
+{
     return fdp.ConsumeBytesAsString(BUFFER_LENGTH);
 }
+
 static void CallInterfaceByIndexFirst(FuzzedDataProvider& fdp, int index)
 {
     DlpPermissionServiceMethod newMethod = static_cast<DlpPermissionServiceMethod>(index);
@@ -243,7 +245,7 @@ static void CallInterfaceByIndexFourth(FuzzedDataProvider& fdp, int index)
             bool isGathering;
             service->GetDlpGatheringPolicy(isGathering);
             break;
-        }    
+        }
         default:
             break;
     }
@@ -399,7 +401,7 @@ void ParallelFuzzTest(const uint8_t* data, size_t size)
     size_t callCount = fdp.ConsumeIntegral<size_t>() % METHOD_NUMBER + 1;
     for (size_t i = 0; i < callCount && fdp.remaining_bytes() > 0; ++i) {
         int methodIndex = fdp.ConsumeIntegral<int>() % METHOD_NUMBER;
-        switch(static_cast<DlpPermissionServiceMethodGroup>(methodIndex / METHOD_NUMBER_GROUP)) {
+        switch (static_cast<DlpPermissionServiceMethodGroup>(methodIndex / METHOD_NUMBER_GROUP)) {
             case DlpPermissionServiceMethodGroup::FIRSTGROUP: {
                 CallInterfaceByIndexFirst(fdp, methodIndex);
                 break;
