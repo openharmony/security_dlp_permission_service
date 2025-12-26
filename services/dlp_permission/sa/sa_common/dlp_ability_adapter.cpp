@@ -127,6 +127,7 @@ int32_t DlpAbilityAdapter::HandleGetWaterMark(int32_t userId,
 
 void DlpAbilityAdapter::SetIsDestroyFlag(bool flag)
 {
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
     if (abilityConnection_ == nullptr) {
         DLP_LOG_ERROR(LABEL, "No any ability connection.");
         return;
