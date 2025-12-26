@@ -95,6 +95,10 @@ bool DlpPolicyParcel::MarshallingDlpPolicy(Parcel& out) const
         DLP_LOG_ERROR(LABEL, "Write waterMarkConfig_ fail");
         return false;
     }
+    if (!(out.WriteInt32(this->policyParams_.countdown_))) {
+        DLP_LOG_ERROR(LABEL, "Write countdown_ fail");
+        return false;
+    }
     return true;
 }
 
@@ -392,6 +396,23 @@ static bool ReadParcelGroupList(Parcel& in, DlpPolicyParcel* policyParcel)
     return true;
 }
 
+static bool ReadPropertyParcel(Parcel& in, DlpPolicyParcel* policyParcel)
+{
+    if (!(in.ReadInt32(policyParcel->policyParams_.allowedOpenCount_))) {
+        DLP_LOG_ERROR(LABEL, "Read allowedOpenCount fail");
+        return false;
+    }
+    if (!(in.ReadBool(policyParcel->policyParams_.waterMarkConfig_))) {
+        DLP_LOG_ERROR(LABEL, "Read waterMarkConfig_ fail");
+        return false;
+    }
+    if (!(in.ReadInt32(policyParcel->policyParams_.countdown_))) {
+        DLP_LOG_ERROR(LABEL, "Read countdown fail");
+        return false;
+    }
+    return true;
+}
+
 static bool ReadParcel(Parcel& in, DlpPolicyParcel* policyParcel)
 {
     if (!ReadParcelList(in, policyParcel)) {
@@ -432,15 +453,7 @@ static bool ReadParcel(Parcel& in, DlpPolicyParcel* policyParcel)
         DLP_LOG_ERROR(LABEL, "Read fileId fail");
         return false;
     }
-    if (!(in.ReadInt32(policyParcel->policyParams_.allowedOpenCount_))) {
-        DLP_LOG_ERROR(LABEL, "Read allowedOpenCount fail");
-        return false;
-    }
-    if (!(in.ReadBool(policyParcel->policyParams_.waterMarkConfig_))) {
-        DLP_LOG_ERROR(LABEL, "Read waterMarkConfig_ fail");
-        return false;
-    }
-    return true;
+    return ReadPropertyParcel(in, policyParcel);
 }
 
 DlpPolicyParcel* DlpPolicyParcel::Unmarshalling(Parcel& in)

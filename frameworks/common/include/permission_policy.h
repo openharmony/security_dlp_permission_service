@@ -147,6 +147,7 @@ public:
     bool GetwaterMarkConfig() const;
     void SetWaterMarkCfgToGroup();
     void GetWaterMarkCfgFromGroup();
+    int32_t GetCountdown() const;
 
     std::string ownerAccount_;
     std::string ownerAccountId_;

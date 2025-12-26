@@ -44,6 +44,7 @@ static const std::string DLP_TEST_DIR = "/data/dlpTest/";
 static const std::string FUSE_DEV = "/dev/fuse";
 static const std::string FUSE_TYPE = "fuse";
 static const std::string DEFAULT_CURRENT_ACCOUNT = "ohosAnonymousName";
+static const int32_t DEFAULT_COUNTDOWN = 5;
 static const int32_t TEST_USER_COUNT = 2;
 static const int32_t RAND_STR_SIZE = 16;
 static const uint8_t ARRAY_CHAR_SIZE = 62;
@@ -111,6 +112,7 @@ static void GenerateRandProperty(struct DlpProperty& encProp)
     encProp.ownerAccount = DEFAULT_CURRENT_ACCOUNT;
     encProp.ownerAccountId = DEFAULT_CURRENT_ACCOUNT;
     encProp.ownerAccountType = CLOUD_ACCOUNT;
+    encProp.countdown = DEFAULT_COUNTDOWN;
     for (uint32_t user = 0; user < TEST_USER_COUNT; ++user) {
         std::string accountName;
         GenerateRandStr(RAND_STR_SIZE, accountName);
@@ -318,6 +320,10 @@ HWTEST_F(DlpFileTest, TestDlpFile, TestSize.Level1)
     bool waterMarkConfig = false;
     g_Dlpfile->SetWaterMarkConfig(waterMarkConfig);
     ASSERT_EQ(g_Dlpfile->GetWaterMarkConfig(), waterMarkConfig);
+
+    int32_t countdown = 1;
+    g_Dlpfile->SetCountdown(countdown);
+    ASSERT_EQ(g_Dlpfile->GetCountdown(), countdown);
 
     result = DlpFileManager::GetInstance().CloseDlpFile(g_Dlpfile);
     ASSERT_EQ(result, 0);

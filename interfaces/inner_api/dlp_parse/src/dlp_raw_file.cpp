@@ -46,7 +46,8 @@ const uint32_t MAX_CERT_SIZE = 30 * 1024;
 const std::string DEFAULT_STRINGS = "";
 const int32_t FILEID_SIZE = 46;
 const int32_t FILEID_SIZE_OPPOSITE = -46;
-const int32_t WATERMARK_OPPOSITE = -58;
+const int32_t COUNTDOWN_OPPOSITE = -62;
+const int32_t COUNTDOWN_FILETYPE = 10000;
 } // namespace
 
 static int32_t GetFileSize(int32_t fd, uint64_t& fileLen);
@@ -389,9 +390,14 @@ int32_t DlpRawFile::WriteHmacProcess(void)
 
 int32_t DlpRawFile::WriteFileIdPlaintextProcess(void)
 {
-    if (lseek(dlpFd_, WATERMARK_OPPOSITE, SEEK_END) == static_cast<off_t>(-1)) {
+    if (lseek(dlpFd_, COUNTDOWN_OPPOSITE, SEEK_END) == static_cast<off_t>(-1)) {
         DLP_LOG_ERROR(LABEL, "get to waterConfig invalid");
         return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
+    }
+    countdown_ = 0;
+    if (read(dlpFd_, &countdown_, sizeof(int32_t)) != sizeof(int32_t)) {
+        DLP_LOG_ERROR(LABEL, "can not read countdown, %{public}s", strerror(errno));
+        return DLP_PARSE_ERROR_FILE_FORMAT_ERROR;
     }
     int32_t waterMarkTmp = 0;
     if (read(dlpFd_, &waterMarkTmp, sizeof(int32_t)) != sizeof(int32_t)) {
@@ -407,7 +413,7 @@ int32_t DlpRawFile::WriteFileIdPlaintextProcess(void)
     allowedOpenCount_ = 0;
     if (flag == 1) {
         if (read(dlpFd_, &allowedOpenCount_, sizeof(int32_t)) != sizeof(int32_t)) {
-            DLP_LOG_ERROR(LABEL, "can not read allowedOpenCount_, %{public}s", strerror(errno));
+            DLP_LOG_ERROR(LABEL, "can not read allowedOpenCount, %{public}s", strerror(errno));
             return DLP_PARSE_ERROR_FILE_FORMAT_ERROR;
         }
     }
@@ -563,6 +569,37 @@ static int32_t GetFileSize(int32_t fd, uint64_t& fileLen)
     return ret;
 }
 
+int32_t DlpRawFile::WriteRawFileProperty()
+{
+    if (lseek(dlpFd_, COUNTDOWN_OPPOSITE, SEEK_END) == static_cast<off_t>(-1)) {
+        DLP_LOG_ERROR(LABEL, "get offsize invalid");
+        return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
+    }
+    if (write(dlpFd_, &countdown_, sizeof(int32_t)) != sizeof(int32_t)) {
+        DLP_LOG_ERROR(LABEL, "write countdown_ error");
+        return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
+    }
+    int32_t waterMark = static_cast<int32_t>(waterMarkConfig_);
+    if (write(dlpFd_, &waterMark, sizeof(int32_t)) != sizeof(int32_t)) {
+        DLP_LOG_ERROR(LABEL, "write waterMark_ error");
+        return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
+    }
+    int32_t flag = 1;
+    if (write(dlpFd_, &flag, sizeof(int32_t)) != sizeof(int32_t)) {
+        DLP_LOG_ERROR(LABEL, "write flag error");
+        return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
+    }
+    if (write(dlpFd_, &allowedOpenCount_, sizeof(int32_t)) != sizeof(int32_t)) {
+        DLP_LOG_ERROR(LABEL, "write allowedOpenCount_ error");
+        return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
+    }
+    if (write(dlpFd_, fileId_.c_str(), fileId_.size()) != static_cast<int32_t>(fileId_.size())) {
+        DLP_LOG_ERROR(LABEL, "write dlpFd_ error");
+        return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
+    }
+    return DLP_OK;
+}
+
 int32_t DlpRawFile::DoWriteHmacAndCert(uint32_t hmacStrLen, std::string& hmacStr)
 {
     if (write(dlpFd_, hmacStr.c_str(), hmacStrLen) != static_cast<int32_t>(hmacStrLen)) {
@@ -589,30 +626,7 @@ int32_t DlpRawFile::DoWriteHmacAndCert(uint32_t hmacStrLen, std::string& hmacStr
         return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
     }
     delete[] buffer;
-
-    if (lseek(dlpFd_, WATERMARK_OPPOSITE, SEEK_END) == static_cast<off_t>(-1)) {
-        DLP_LOG_ERROR(LABEL, "get offsize invalid");
-        return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
-    }
-    
-    int32_t waterMark = static_cast<int32_t>(waterMarkConfig_);
-    if (write(dlpFd_, &waterMark, sizeof(int32_t)) != sizeof(int32_t)) {
-        DLP_LOG_ERROR(LABEL, "write waterMark_ error");
-    }
-    int32_t flag = 1;
-    if (write(dlpFd_, &flag, sizeof(int32_t)) != sizeof(int32_t)) {
-        DLP_LOG_ERROR(LABEL, "write flag error");
-        return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
-    }
-    if (write(dlpFd_, &allowedOpenCount_, sizeof(int32_t)) != sizeof(int32_t)) {
-        DLP_LOG_ERROR(LABEL, "write allowedOpenCount_ error");
-        return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
-    }
-    if (write(dlpFd_, fileId_.c_str(), fileId_.size()) != static_cast<int32_t>(fileId_.size())) {
-        DLP_LOG_ERROR(LABEL, "write dlpFd_ error");
-        return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
-    }
-    return DLP_OK;
+    return WriteRawFileProperty();
 }
 
 int32_t DlpRawFile::DoHmacAndCrypty(int32_t inPlainFileFd, off_t fileLen)
@@ -716,6 +730,10 @@ int32_t DlpRawFile::GenFileInRaw(int32_t inPlainFileFd)
         return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
     }
     head_.fileType = iter->second;
+    if (countdown_ > 0) {
+        DLP_LOG_DEBUG(LABEL, "raw set countdown");
+        head_.fileType = head_.fileType + COUNTDOWN_FILETYPE;
+    }
     // clean dlpFile
     if (ftruncate(dlpFd_, 0) == -1) {
         DLP_LOG_ERROR(LABEL, "truncate dlp file to zero failed, %{public}s", strerror(errno));

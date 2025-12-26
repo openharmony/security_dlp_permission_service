@@ -355,7 +355,7 @@ std::string DlpUtils::GetRealTypeWithFd(const int32_t& fd, bool& isFromUriName, 
                 DLP_LOG_ERROR(LABEL, "ParseDlpGeneralInfo error: %{public}s", generateInfoStr.c_str());
                 break;
             }
-            realType = params.realType;
+            realType = DlpUtils::GetExtractRealType(params.realType);
         } else {
             if (!isEnterprise) {
                 return GetRealTypeWithRawFile(fd);
@@ -433,6 +433,15 @@ int32_t DlpUtils::GetRawFileAllowedOpenCount(const int32_t& fd,
     int32_t& allowedOpenCount, bool& waterMarkConfig)
 {
     return DLP_OK;
+}
+
+std::string DlpUtils::GetExtractRealType(const std::string& typeStr)
+{
+    size_t lastUnderscore = typeStr.find_last_of('_');
+    if (lastUnderscore == std::string::npos) {
+        return typeStr;
+    }
+    return typeStr.substr(lastUnderscore + 1);
 }
 }  // namespace DlpPermission
 }  // namespace Security

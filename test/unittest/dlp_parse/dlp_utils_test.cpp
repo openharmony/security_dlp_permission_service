@@ -363,6 +363,35 @@ HWTEST_F(DlpUtilsTest, GetRealTypeWithFd004, TestSize.Level0)
 }
 
 /**
+ * @tc.name: GetRealTypeWithFd005
+ * @tc.desc: test GetRealTypeWithFd
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpUtilsTest, GetRealTypeWithFd005, TestSize.Level0)
+{
+    DLP_LOG_INFO(LABEL, "GetRealTypeWithFd004");
+    int fd = open("/data/fuse_test.txt.dlp", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
+    ASSERT_NE(fd, -1);
+    struct DlpHeader header = {
+        .magic = DLP_FILE_MAGIC,
+        .certSize = 20,
+        .contactAccountSize = 20,
+        .fileType = 10001,
+    };
+    uint8_t buffer[8] = {0};
+    write(fd, buffer, 8);
+    write(fd, &header, sizeof(header) - 1);
+    lseek(fd, 0, SEEK_SET);
+    bool isFromUriName = true;
+    std::string generateInfoStr;
+    ASSERT_EQ(DlpUtils::GetRealTypeWithFd(fd, isFromUriName, generateInfoStr, true), TXT_STRINGS);
+    ASSERT_EQ(DlpUtils::GetRealTypeWithFd(fd, isFromUriName, generateInfoStr, false), DEFAULT_STRINGS);
+    close(fd);
+    unlink("/data/fuse_test.txt.dlp");
+}
+
+/**
  * @tc.name: GetRawFileAllowedOpenCount01
  * @tc.desc: test GetRawFileAllowedOpenCount
  * @tc.type: FUNC
@@ -527,4 +556,20 @@ HWTEST_F(DlpUtilsTest, GetFilePathByFd001, TestSize.Level0)
     std::string filePath;
     int32_t fd = 0;
     ASSERT_EQ(DlpUtils::GetFilePathByFd(fd, filePath), DLP_OK);
+}
+
+/**
+ * @tc.name: GetExtractRealType001
+ * @tc.desc: test GetExtractRealType
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpUtilsTest, GetExtractRealType001, TestSize.Level0)
+{
+    DLP_LOG_INFO(LABEL, "GetExtractRealType001");
+    std::string typeStr1 = "_txt";
+    std::string typeStr2 = "txt";
+    std::string reslTypeStr = "txt";
+    ASSERT_EQ(DlpUtils::GetExtractRealType(typeStr1), reslTypeStr);
+    ASSERT_EQ(DlpUtils::GetExtractRealType(typeStr2), reslTypeStr);
 }

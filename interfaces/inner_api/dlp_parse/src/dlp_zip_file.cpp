@@ -49,6 +49,7 @@ const std::string DLP_ENC_DATA = "encrypted_data";
 const std::string DLP_OPENING_ENC_DATA = "opened_encrypted_data";
 const std::string DLP_GEN_FILE = "gen_dlp_file";
 const std::string DEFAULT_STRINGS = "";
+const std::string COUNTDOWN_STRING = "_";
 
 struct GenerInfoParams {
     bool accessFlag;
@@ -60,6 +61,7 @@ struct GenerInfoParams {
     std::string fileId;
     int32_t allowedOpenCount;
     bool waterMarkConfig;
+    int32_t countdown;
 };
 } // namespace
 
@@ -192,6 +194,7 @@ bool DlpZipFile::ParseDlpInfo()
     fileIdPlaintext_ = params.fileId;
     allowedOpenCount_ = params.allowedOpenCount;
     waterMarkConfig_ = params.waterMarkConfig;
+    countdown_ = params.countdown;
     if (!params.hmacVal.empty()) {
         CleanBlobParam(hmac_);
         hmac_.size = params.hmacVal.size() / BYTE_TO_HEX_OPER_LENGTH;
@@ -448,6 +451,7 @@ static std::string SetDlpGeneralInfo(GenerInfoParams &genInfo)
         .fileId = genInfo.fileId,
         .allowedOpenCount = genInfo.allowedOpenCount,
         .waterMarkConfig = genInfo.waterMarkConfig,
+        .countdown = genInfo.countdown,
     };
     std::string out;
     GenerateDlpGeneralInfo(params, out);
@@ -548,6 +552,10 @@ int32_t DlpZipFile::AddGeneralInfoToBuff(int32_t encFile)
         DLP_LOG_ERROR(LABEL, "GetHmacVal fail");
         return ret;
     }
+    if (countdown_ > 0) {
+        DLP_LOG_DEBUG(LABEL, "zip set countdown");
+        realType_ = COUNTDOWN_STRING + realType_;
+    }
     GenerInfoParams genInfo = {
         .accessFlag = static_cast<bool>(offlineAccess_),
         .contactAccount = contactAccount_,
@@ -558,6 +566,7 @@ int32_t DlpZipFile::AddGeneralInfoToBuff(int32_t encFile)
         .fileId = fileId_,
         .allowedOpenCount = allowedOpenCount_,
         .waterMarkConfig = waterMarkConfig_,
+        .countdown = countdown_,
     };
 
     std::string ja = SetDlpGeneralInfo(genInfo);

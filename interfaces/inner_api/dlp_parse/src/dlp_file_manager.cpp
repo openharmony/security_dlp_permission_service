@@ -291,11 +291,12 @@ static int32_t SetDlpParams(const std::shared_ptr<DlpFile>& filePtr, const DlpPr
     policy.allowedOpenCount_ = property.allowedOpenCount;
     policy.waterMarkConfig_ = property.waterMarkConfig;
     policy.SetWaterMarkCfgToGroup();
+    policy.countdown_ = property.countdown;
     filePtr->SetFileId(property.fileId);
     filePtr->SetAllowedOpenCount(property.allowedOpenCount);
     filePtr->SetOfflineAccess(property.offlineAccess, property.allowedOpenCount);
     filePtr->SetWaterMarkConfig(property.waterMarkConfig);
-
+    filePtr->SetCountdown(property.countdown);
     return DLP_OK;
 }
 
@@ -306,7 +307,6 @@ int32_t DlpFileManager::PrepareParms(const std::shared_ptr<DlpFile>& filePtr, co
     struct DlpBlob certData;
     struct DlpUsageSpec usage;
     struct DlpBlob hmacKey;
-
     int32_t result = SetDlpParams(filePtr, property, policy);
     if (result != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "Set params fail, errno=%{public}d", result);
@@ -561,6 +561,10 @@ static bool VerifyConsistent(const PermissionPolicy& policy, std::shared_ptr<Dlp
         DLP_LOG_ERROR(LABEL, "waterMarkConfig not consistent");
         return false;
     }
+    if (policy.GetCountdown() != filePtr->GetCountdown()) {
+        DLP_LOG_ERROR(LABEL, "countdown not consistent");
+        return false;
+    }
     std::string filePtrFileId;
     filePtr->GetFileIdPlaintext(filePtrFileId);
     filePtr->SetFileId(policy.fileId);
@@ -617,6 +621,7 @@ static int32_t SetNotOwnerAndReadOnce(const PermissionPolicy& policy, int32_t dl
 
 static int32_t VerifyAndGetWaterMark(PermissionPolicy& policy, std::shared_ptr<DlpFile>& filePtr)
 {
+    policy.countdown_ = filePtr->GetCountdown();
     policy.GetWaterMarkCfgFromGroup();
     int32_t result = filePtr->SetPolicy(policy);
     if (result != DLP_OK) {

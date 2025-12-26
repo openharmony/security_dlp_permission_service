@@ -1351,6 +1351,10 @@ bool GetAllowedOpenCount(napi_env env, napi_value jsObject, DlpProperty& propert
         DLP_LOG_DEBUG(LABEL, "js get countdown fail, will set zero");
         property.countdown = 0;
     }
+    if (!GetInt32ValueByKey(env, jsObject, "countdown", property.countdown)) {
+        DLP_LOG_DEBUG(LABEL, "js get countdown fail, will set zero");
+        property.countdown = 0;
+    }
     return true;
 }
 
@@ -1623,7 +1627,7 @@ napi_value DlpPropertyToJs(napi_env env, const DlpProperty& property)
     napi_value waterMarkConfigJs;
     napi_get_boolean(env, property.waterMarkConfig, &waterMarkConfigJs);
     NAPI_CALL(env, napi_set_named_property(env, dlpPropertyJs, "waterMarkConfig", waterMarkConfigJs));
-    
+
     napi_value countdownJs;
     NAPI_CALL(env, napi_create_int32(env, property.countdown, &countdownJs));
     NAPI_CALL(env, napi_set_named_property(env, dlpPropertyJs, "countdown", countdownJs));
