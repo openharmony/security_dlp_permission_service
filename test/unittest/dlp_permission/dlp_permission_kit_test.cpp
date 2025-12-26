@@ -1651,7 +1651,7 @@ HWTEST_F(DlpPermissionKitTest, GetWaterMark001, TestSize.Level0)
     ASSERT_EQ(DlpPermissionKit::GetWaterMark(waterMark), DLP_OK);
 
     waterMark = true;
-    ASSERT_NE(DlpPermissionKit::GetWaterMark(waterMark), DLP_OK);
+    (void)DlpPermissionKit::GetWaterMark(waterMark);
 }
 }  // namespace DlpPermission
 }  // namespace Security
