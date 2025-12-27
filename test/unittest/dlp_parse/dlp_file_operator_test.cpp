@@ -329,7 +329,8 @@ HWTEST_F(DlpFileOperatorTest, EnterpriseSpaceEncryptDlpFile001, TestSize.Level0)
         .actionUponExpiry = ActionType::NOTOPEN,
         .fileId = "111",
         .allowedOpenCount = 1,
-        .countdown = 1
+        .countdown = 1,
+        .waterMarkConfig = false,
     };
     CustomProperty customProperty = {
         .enterprise = DEFAULT_CUSTOM_PROPERTY
@@ -384,7 +385,8 @@ HWTEST_F(DlpFileOperatorTest, EnterpriseSpaceDecryptDlpFile001, TestSize.Level0)
         .actionUponExpiry = ActionType::NOTOPEN,
         .fileId = "111",
         .allowedOpenCount = 1,
-        .countdown = 1
+        .countdown = 1,
+        .waterMarkConfig = false,
     };
     CustomProperty customProperty = {
         .enterprise = DEFAULT_CUSTOM_PROPERTY
@@ -449,7 +451,8 @@ HWTEST_F(DlpFileOperatorTest, EnterpriseSpaceQueryDlpProperty001, TestSize.Level
         .actionUponExpiry = ActionType::NOTOPEN,
         .fileId = "111",
         .allowedOpenCount = 1,
-        .countdown = 1
+        .countdown = 1,
+        .waterMarkConfig = true,
     };
     CustomProperty customProperty = {
         .enterprise = DEFAULT_CUSTOM_PROPERTY
@@ -501,7 +504,8 @@ HWTEST_F(DlpFileOperatorTest, EnterpriseSpaceQueryDlpProperty002, TestSize.Level
         .actionUponExpiry = ActionType::NOTOPEN,
         .fileId = "111",
         .allowedOpenCount = 1,
-        .countdown = 1
+        .countdown = 1,
+        .waterMarkConfig = true,
     };
     CustomProperty customProperty = {
         .enterprise = DEFAULT_CUSTOM_PROPERTY

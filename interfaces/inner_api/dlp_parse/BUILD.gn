@@ -44,7 +44,6 @@ ohos_shared_library("libdlpparse") {
     "${dlp_root_dir}/frameworks/common/src/retention_sandbox_info.cpp",
     "${dlp_root_dir}/frameworks/common/src/visited_dlp_file_info.cpp",
     "${dlp_root_dir}/frameworks/dlp_permission/src/auth_user_info_parcel.cpp",
-    "${dlp_root_dir}/frameworks/dlp_permission/src/group_info_parcel.cpp",
     "${dlp_root_dir}/frameworks/dlp_permission/src/dlp_permission_info_parcel.cpp",
     "${dlp_root_dir}/frameworks/dlp_permission/src/dlp_policy_parcel.cpp",
     "${dlp_root_dir}/services/dlp_permission/sa/adapt_utils/file_manager/file_operator.cpp",
