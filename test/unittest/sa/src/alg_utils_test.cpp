@@ -16,9 +16,9 @@
 #include "alg_utils_test.h"
 #include <gtest/gtest.h>
 #include <securec.h>
-#include "alg_utils.h"
 #include "dlp_permission.h"
 #include "dlp_permission_log.h"
+#include "alg_utils.cpp"
 
 using namespace testing::ext;
 using namespace OHOS;
@@ -26,7 +26,7 @@ using namespace OHOS::Security::DlpPermission;
 using namespace std;
 
 namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = { LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "AlgUtilsTest" };
+static constexpr OHOS::HiviewDFX::HiLogLabel LABEL_TEST = { LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "AlgUtilsTest" };
 static const uint32_t HC_OVERSIZE_MALLOC_SIZE = MAX_MALLOC_SIZE + 1;
 static const uint32_t CLIB_OVERSIZE_MALLOC_SIZE = CLIB_MAX_MALLOC_SIZE + 1;
 static const uint32_t PARCEL_ZERO_DATA_SIZE = 0;
@@ -37,11 +37,11 @@ static const uint32_t PARCEL_SMALL_END = 1;
 static const uint32_t PARCEL_NORMAL_BEGIN = 0;
 static const uint32_t PARCEL_NORMAL_END = 12;
 static const uint32_t PARCEL_NORMAL_DATA_SIZE = sizeof(int64_t) + 1;
-static const uint32_t PARCEL_UINT_MAX = 0xffffffffU;
 static const uint32_t PARCEL_MAX_BEGIN = PARCEL_UINT_MAX - PARCEL_NORMAL_DATA_SIZE + 1;
 static const uint32_t PARCEL_OVERSIZE_DATA_SIZE = 16;
 static const uint32_t PARCEL_WRITE_SIZE = 7;
 static const char *const PARCEL_WRITE_STR = "PARCEL";
+static const uint32_t PARCEL_LARGE_ALLOC_UNIT = 7;
 }
 
 void AlgUtilsTest::SetUpTestCase() {}
@@ -60,7 +60,7 @@ void AlgUtilsTest::TearDown() {}
  */
 HWTEST_F(AlgUtilsTest, HcMalloc001, TestSize.Level3)
 {
-    DLP_LOG_INFO(LABEL, "HcMalloc001");
+    DLP_LOG_INFO(LABEL_TEST, "HcMalloc001");
 
     uint32_t size = 0;
     char val = '0';
@@ -77,7 +77,7 @@ HWTEST_F(AlgUtilsTest, HcMalloc001, TestSize.Level3)
  */
 HWTEST_F(AlgUtilsTest, HcMalloc002, TestSize.Level3)
 {
-    DLP_LOG_INFO(LABEL, "HcMalloc002");
+    DLP_LOG_INFO(LABEL_TEST, "HcMalloc002");
 
     uint32_t size = HC_OVERSIZE_MALLOC_SIZE;
     char val = '0';
@@ -93,7 +93,7 @@ HWTEST_F(AlgUtilsTest, HcMalloc002, TestSize.Level3)
  */
 HWTEST_F(AlgUtilsTest, HcStrlen001, TestSize.Level3)
 {
-    DLP_LOG_INFO(LABEL, "HcStrlen001");
+    DLP_LOG_INFO(LABEL_TEST, "HcStrlen001");
 
     const char *str = nullptr;
     int ret = HcStrlen(str);
@@ -108,7 +108,7 @@ HWTEST_F(AlgUtilsTest, HcStrlen001, TestSize.Level3)
  */
 HWTEST_F(AlgUtilsTest, ClibMalloc001, TestSize.Level3)
 {
-    DLP_LOG_INFO(LABEL, "ClibMalloc001");
+    DLP_LOG_INFO(LABEL_TEST, "ClibMalloc001");
 
     uint32_t size = 0;
     char val = '0';
@@ -124,7 +124,7 @@ HWTEST_F(AlgUtilsTest, ClibMalloc001, TestSize.Level3)
  */
 HWTEST_F(AlgUtilsTest, ClibMalloc002, TestSize.Level3)
 {
-    DLP_LOG_INFO(LABEL, "ClibMalloc002");
+    DLP_LOG_INFO(LABEL_TEST, "ClibMalloc002");
 
     uint32_t size = CLIB_OVERSIZE_MALLOC_SIZE;
     char val = '0';
@@ -140,7 +140,7 @@ HWTEST_F(AlgUtilsTest, ClibMalloc002, TestSize.Level3)
  */
 HWTEST_F(AlgUtilsTest, IsBlobDataValid001, TestSize.Level3)
 {
-    DLP_LOG_INFO(LABEL, "IsBlobDataValid001");
+    DLP_LOG_INFO(LABEL_TEST, "IsBlobDataValid001");
 
     bool ret = IsBlobDataValid(nullptr);
     EXPECT_EQ(ret, false);
@@ -155,7 +155,7 @@ HWTEST_F(AlgUtilsTest, IsBlobDataValid001, TestSize.Level3)
  */
 HWTEST_F(AlgUtilsTest, IsBlobDataValid002, TestSize.Level3)
 {
-    DLP_LOG_INFO(LABEL, "IsBlobDataValid002");
+    DLP_LOG_INFO(LABEL_TEST, "IsBlobDataValid002");
 
     const uint32_t dataSize = 10;
     BlobData blob = { dataSize, nullptr };
@@ -172,7 +172,7 @@ HWTEST_F(AlgUtilsTest, IsBlobDataValid002, TestSize.Level3)
  */
 HWTEST_F(AlgUtilsTest, IsBlobDataValid003, TestSize.Level3)
 {
-    DLP_LOG_INFO(LABEL, "IsBlobDataValid003");
+    DLP_LOG_INFO(LABEL_TEST, "IsBlobDataValid003");
 
     const uint32_t dataSize = 10;
     BlobData blob = { 0, static_cast<uint8_t *>(HcMalloc(dataSize, 0)) };
@@ -189,7 +189,7 @@ HWTEST_F(AlgUtilsTest, IsBlobDataValid003, TestSize.Level3)
  */
 HWTEST_F(AlgUtilsTest, IsBlobDataValid004, TestSize.Level3)
 {
-    DLP_LOG_INFO(LABEL, "IsBlobDataValid004");
+    DLP_LOG_INFO(LABEL_TEST, "IsBlobDataValid004");
 
     const uint32_t dataSize = 10;
     BlobData blob = { dataSize, static_cast<uint8_t *>(HcMalloc(dataSize, 0)) };
@@ -206,7 +206,7 @@ HWTEST_F(AlgUtilsTest, IsBlobDataValid004, TestSize.Level3)
  */
 HWTEST_F(AlgUtilsTest, CreateParcel001, TestSize.Level3)
 {
-    DLP_LOG_INFO(LABEL, "CreateParcel001");
+    DLP_LOG_INFO(LABEL_TEST, "CreateParcel001");
 
     HcParcel testData = CreateParcel(PARCEL_ZERO_DATA_SIZE, PARCEL_ZERO_DATA_SIZE);
     DeleteParcel(&testData);
@@ -222,7 +222,7 @@ HWTEST_F(AlgUtilsTest, CreateParcel001, TestSize.Level3)
  */
 HWTEST_F(AlgUtilsTest, GetParcelDataSize001, TestSize.Level3)
 {
-    DLP_LOG_INFO(LABEL, "GetParcelDataSize001");
+    DLP_LOG_INFO(LABEL_TEST, "GetParcelDataSize001");
 
     uint32_t ret = GetParcelDataSize(nullptr);
     EXPECT_EQ(ret, 0);
@@ -236,7 +236,7 @@ HWTEST_F(AlgUtilsTest, GetParcelDataSize001, TestSize.Level3)
  */
 HWTEST_F(AlgUtilsTest, GetParcelDataSize002, TestSize.Level3)
 {
-    DLP_LOG_INFO(LABEL, "GetParcelDataSize002");
+    DLP_LOG_INFO(LABEL_TEST, "GetParcelDataSize002");
 
     uint32_t ret = 0;
     HcParcel testData = CreateParcel(PARCEL_NORMAL_SIZE, PARCEL_NORMAL_ALLOC_UNIT);
@@ -260,7 +260,7 @@ HWTEST_F(AlgUtilsTest, GetParcelDataSize002, TestSize.Level3)
  */
 HWTEST_F(AlgUtilsTest, GetParcelData001, TestSize.Level3)
 {
-    DLP_LOG_INFO(LABEL, "GetParcelData001");
+    DLP_LOG_INFO(LABEL_TEST, "GetParcelData001");
 
     const char *ret = GetParcelData(nullptr);
     EXPECT_EQ(ret, nullptr);
@@ -274,7 +274,7 @@ HWTEST_F(AlgUtilsTest, GetParcelData001, TestSize.Level3)
  */
 HWTEST_F(AlgUtilsTest, ParcelRead001, TestSize.Level3)
 {
-    DLP_LOG_INFO(LABEL, "ParcelRead001");
+    DLP_LOG_INFO(LABEL_TEST, "ParcelRead001");
 
     HcParcel *testData = nullptr;
     void *dst = nullptr;
@@ -291,7 +291,7 @@ HWTEST_F(AlgUtilsTest, ParcelRead001, TestSize.Level3)
  */
 HWTEST_F(AlgUtilsTest, ParcelRead002, TestSize.Level3)
 {
-    DLP_LOG_INFO(LABEL, "ParcelRead002");
+    DLP_LOG_INFO(LABEL_TEST, "ParcelRead002");
 
     HcBool ret = HC_TRUE;
     HcParcel testData = CreateParcel(PARCEL_NORMAL_SIZE, PARCEL_NORMAL_ALLOC_UNIT);
@@ -318,7 +318,7 @@ HWTEST_F(AlgUtilsTest, ParcelRead002, TestSize.Level3)
  */
 HWTEST_F(AlgUtilsTest, ParcelRead003, TestSize.Level3)
 {
-    DLP_LOG_INFO(LABEL, "ParcelRead003");
+    DLP_LOG_INFO(LABEL_TEST, "ParcelRead003");
 
     HcBool ret = HC_TRUE;
     HcParcel testData = CreateParcel(PARCEL_NORMAL_SIZE, PARCEL_NORMAL_ALLOC_UNIT);
@@ -345,7 +345,7 @@ HWTEST_F(AlgUtilsTest, ParcelRead003, TestSize.Level3)
  */
 HWTEST_F(AlgUtilsTest, ParcelTest, TestSize.Level3)
 {
-    DLP_LOG_INFO(LABEL, "ParcelTest");
+    DLP_LOG_INFO(LABEL_TEST, "ParcelTest");
 
     EXPECT_EQ(ParcelRead(nullptr, nullptr, 0), HC_FALSE);
     HcParcel parcel;
@@ -365,7 +365,7 @@ HWTEST_F(AlgUtilsTest, ParcelTest, TestSize.Level3)
  */
 HWTEST_F(AlgUtilsTest, ParcelWrite001, TestSize.Level3)
 {
-    DLP_LOG_INFO(LABEL, "ParcelWrite001");
+    DLP_LOG_INFO(LABEL_TEST, "ParcelWrite001");
 
     HcParcel *testData = nullptr;
     void *src = nullptr;
@@ -382,7 +382,7 @@ HWTEST_F(AlgUtilsTest, ParcelWrite001, TestSize.Level3)
  */
 HWTEST_F(AlgUtilsTest, ParcelWrite002, TestSize.Level3)
 {
-    DLP_LOG_INFO(LABEL, "ParcelWrite002");
+    DLP_LOG_INFO(LABEL_TEST, "ParcelWrite002");
 
     HcBool ret = HC_TRUE;
     HcParcel testData = CreateParcel(PARCEL_NORMAL_SIZE, PARCEL_NORMAL_ALLOC_UNIT);
@@ -408,7 +408,7 @@ HWTEST_F(AlgUtilsTest, ParcelWrite002, TestSize.Level3)
  */
 HWTEST_F(AlgUtilsTest, ParcelWrite003, TestSize.Level3)
 {
-    DLP_LOG_INFO(LABEL, "ParcelWrite003");
+    DLP_LOG_INFO(LABEL_TEST, "ParcelWrite003");
 
     HcBool ret = HC_FALSE;
     HcParcel testData = CreateParcel(PARCEL_NORMAL_SIZE, PARCEL_NORMAL_ALLOC_UNIT);
@@ -434,7 +434,7 @@ HWTEST_F(AlgUtilsTest, ParcelWrite003, TestSize.Level3)
  */
 HWTEST_F(AlgUtilsTest, HcFileTest, TestSize.Level3)
 {
-    DLP_LOG_INFO(LABEL, "HcFileTest");
+    DLP_LOG_INFO(LABEL_TEST, "HcFileTest");
 
     EXPECT_EQ(HcFileOpen(nullptr, 0, nullptr, 0), -1);
     EXPECT_EQ(HcFileOpen("", 0, nullptr, 0), -1);
@@ -453,4 +453,39 @@ HWTEST_F(AlgUtilsTest, HcFileTest, TestSize.Level3)
     EXPECT_EQ(HcFileWrite(file, nullptr, 0), -1);
 
     EXPECT_EQ(HcIsFileExist(nullptr), false);
+}
+
+/**
+ * @tc.name: HcFileSubTest
+ * @tc.desc: HcFileSub test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AlgUtilsTest, HcFileSubTest, TestSize.Level3)
+{
+    DLP_LOG_INFO(LABEL_TEST, "HcFileSubTest");
+    HcParcel testData;
+    testData.length = 0;
+    EXPECT_EQ(ParcelRealloc(&testData, testData.length), HC_FALSE);
+
+    EXPECT_EQ(ParcelIncrease(nullptr, 0), HC_FALSE);
+
+    testData.data = nullptr;
+    testData.length = 1;
+    EXPECT_EQ(ParcelIncrease(&testData, 0), HC_FALSE);
+
+    ParcelRecycle(nullptr);
+
+    char charData;
+    testData.data = &charData;
+    testData.beginPos = 0;
+    testData.allocUnit = 0;
+    testData.beginPos = 0;
+    ParcelRecycle(&testData);
+    EXPECT_EQ(testData.endPos, 0);
+
+    GetParcelIncreaseSize(nullptr, 0);
+
+    testData.allocUnit = PARCEL_LARGE_ALLOC_UNIT;
+    EXPECT_EQ(GetParcelIncreaseSize(&testData, PARCEL_LARGE_ALLOC_UNIT), PARCEL_LARGE_ALLOC_UNIT);
 }

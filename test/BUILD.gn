@@ -27,6 +27,7 @@ group("dlp_permission_build_module_test") {
       ":dlp_permission_kit_test",
       ":dlp_permission_service_test",
       ":dlp_permission_serializer_test",
+      ":dlp_permission_serializer_sub_test",
       ":dlp_credential_static_test",
     ]
   }
@@ -197,6 +198,7 @@ ohos_unittest("dlp_permission_service_test") {
     "${dlp_root_dir}/services/dlp_permission/sa/adapt_utils/account_adapt",
     "${dlp_root_dir}/services/dlp_permission/sa/adapt_utils/alg_adapt/alg_manager/include",
     "${dlp_root_dir}/services/dlp_permission/sa/adapt_utils/alg_adapt/huks_adapt_manager/include",
+    "${dlp_root_dir}/services/dlp_permission/sa/adapt_utils/alg_adapt/alg_manager/src",
     "${dlp_root_dir}/services/dlp_permission/sa/adapt_utils/app_observer",
     "${dlp_root_dir}/services/dlp_permission/sa/adapt_utils/file_manager",
     "${dlp_root_dir}/services/dlp_permission/sa/mock",
@@ -227,7 +229,6 @@ ohos_unittest("dlp_permission_service_test") {
     "${dlp_root_dir}/interfaces/inner_api/dlp_permission/src/open_dlp_file_callback_stub.cpp",
     "${dlp_root_dir}/services/dlp_permission/sa/adapt_utils/account_adapt/account_adapt.cpp",
     "${dlp_root_dir}/services/dlp_permission/sa/adapt_utils/alg_adapt/alg_manager/src/alg_manager.cpp",
-    "${dlp_root_dir}/services/dlp_permission/sa/adapt_utils/alg_adapt/alg_manager/src/alg_utils.cpp",
     "${dlp_root_dir}/services/dlp_permission/sa/adapt_utils/alg_adapt/huks_adapt_manager/src/huks_adapt_manager.cpp",
     "${dlp_root_dir}/services/dlp_permission/sa/adapt_utils/app_observer/app_state_observer.cpp",
     "${dlp_root_dir}/services/dlp_permission/sa/adapt_utils/app_observer/app_uninstall_observer.cpp",
@@ -372,6 +373,75 @@ ohos_unittest("dlp_permission_serializer_test") {
     "unittest/sa/src/dlp_permission_serializer_test.cpp",
     "unittest/sa/src/account_adapt_mock_test.cpp",
     "unittest/sa/mock/dlp_os_account_mock.cpp",
+  ]
+
+  configs = [
+    "${dlp_permission_public_config_path}/:dlp_permission_sdk_config",
+    "${dlp_root_dir}/config:coverage_flags"
+  ]
+
+  cflags_cc = [
+    "-DHILOG_ENABLE",
+    "-DDLP_UNIT_TEST",
+  ]
+  cflags = [ "-DHILOG_ENABLE" ]
+
+  deps = [
+    "${dlp_root_dir}/interfaces/inner_api/dlp_permission:dlp_permission_interface",
+    "${dlp_root_dir}/services/dlp_permission/sa:dlp_hex_string_static",
+  ]
+
+  external_deps = [
+    "access_token:libaccesstoken_sdk",
+    "access_token:libtokenid_sdk",
+    "bundle_framework:appexecfwk_base",
+    "bundle_framework:appexecfwk_core",
+    "c_utils:utils",
+    "hilog:libhilog",
+    "hisysevent:libhisysevent",
+    "ipc:ipc_core",
+    "json:nlohmann_json_static",
+    "safwk:system_ability_fwk",
+    "samgr:samgr_proxy",
+    "zlib:shared_libz",
+  ]
+}
+
+ohos_unittest("dlp_permission_serializer_sub_test") {
+  branch_protector_ret = "pac_ret"
+
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
+
+  subsystem_name = "security"
+  part_name = "dlp_permission_service"
+  module_out_path = part_name + "/" + part_name
+
+  include_dirs = [
+    "${dlp_root_dir}/services/dlp_permission/sa/mock",
+    "${dlp_root_dir}/services/dlp_permission/sa/sa_common",
+    "${dlp_root_dir}/frameworks/common/include",
+    "${dlp_root_dir}/frameworks/dlp_permission/include",
+    "${dlp_root_dir}/interfaces/inner_api/dlp_parse/include",
+    "${dlp_root_dir}/interfaces/inner_api/dlp_permission/include",
+    "${dlp_root_dir}/services/dlp_permission/sa/adapt_utils/file_manager",
+    "${dlp_root_dir}/services/dlp_permission/sa/adapt_utils/account_adapt",
+    "${dlp_root_dir}/test/unittest/sa/mock",
+    "${dlp_root_dir}/test/unittest/sa/src",
+  ]
+
+  sources = [
+    "${dlp_root_dir}/frameworks/common/src/permission_policy.cpp",
+    "${dlp_root_dir}/interfaces/inner_api/dlp_parse/src/dlp_utils.cpp",
+    "${dlp_root_dir}/services/dlp_permission/sa/adapt_utils/account_adapt/account_adapt.cpp",
+    "${dlp_root_dir}/services/dlp_permission/sa/sa_common/dlp_permission_serializer.cpp",
+    "${dlp_root_dir}/services/dlp_permission/sa/adapt_utils/file_manager/file_operator.cpp",
+    "unittest/sa/src/dlp_permission_serializer_sub_test.cpp",
+    "unittest/sa/src/account_adapt_mock_test.cpp",
+    "unittest/sa/mock/dlp_os_account_sub_mock.cpp",
   ]
 
   configs = [
