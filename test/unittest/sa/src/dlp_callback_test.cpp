@@ -472,3 +472,16 @@ HWTEST_F(DlpCallbackTest, OpenDlpFileCallback016, TestSize.Level1)
     res = OpenDlpFileCallbackManager::GetInstance().RemoveCallback(callback->AsObject());
     EXPECT_EQ(DLP_OK, res);
 }
+
+/**
+ * @tc.name: IsCallbackEmpty001
+ * @tc.desc: IsCallbackEmpty if not found
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpCallbackTest, IsCallbackEmpty001, TestSize.Level1)
+{
+    OpenDlpFileCallbackManager::GetInstance().openDlpFileCallbackMap_.clear();
+    bool ret = OpenDlpFileCallbackManager::GetInstance().IsCallbackEmpty();
+    EXPECT_EQ(true, ret);
+}
