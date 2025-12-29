@@ -1706,9 +1706,7 @@ HWTEST_F(DlpPermissionServiceTest, GetWaterMark003, TestSize.Level1)
     DLP_LOG_DEBUG(LABEL, "GetWaterMark003");
 
     sptr<DlpTestRemoteObj> callback = new (std::nothrow)IRemoteStub<DlpTestRemoteObj>();
-    if (callback == nullptr) {
-        return;
-    }
+    EXPECT_TRUE(callback != nullptr);
 
     sptr<IDlpPermissionCallback> callback3 = iface_cast<IDlpPermissionCallback>(callback->AsObject());
     EXPECT_NE(DLP_OK, dlpPermissionService_->GetWaterMark(false, callback3));
