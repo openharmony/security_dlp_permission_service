@@ -56,6 +56,10 @@ namespace OHOS {
     const std::string ENC_DATA_LEN = "encDataLen";
     const std::string ENC_DATA = "encData";
     const std::string ENC_ACCOUNT_TYPE = "accountType";
+    static const uint8_t TWO = 2;
+    static const uint8_t FOUR = 4;
+    static const uint8_t EIGHT = 8;
+    static const uint8_t BUFFER_LENGTH = 32;
     static const uint8_t CONST_SIZE = 100;
     static const std::string POLICY_PLAINTTEXT =
     "7b22706f6c696379223a7b224b4941223a22222c226f776e65724163636f756e744e616d65223a226f686f73416e6f6e796d6f75734e616d6"
@@ -71,49 +75,49 @@ namespace OHOS {
 
 static void CheckHapPermissionFUZZ(const uint8_t* data, size_t size)
 {
-    if (data == nullptr) {
+    if (data == nullptr || (size < BUFFER_LENGTH)) {
         return;
     }
     FuzzedDataProvider fdp(data, size);
-    BundleManagerAdapter::GetInstance().CheckHapPermission(fdp.ConsumeBytesAsString(size),
-        fdp.ConsumeBytesAsString(size));
+    BundleManagerAdapter::GetInstance().CheckHapPermission(fdp.ConsumeBytesAsString(size / TWO),
+        fdp.ConsumeBytesAsString(size / TWO));
 }
 
 static void GetBundleInfoFUZZ(const uint8_t* data, size_t size)
 {
-    if (data == nullptr) {
+    if (data == nullptr || (size < BUFFER_LENGTH)) {
         return;
     }
     AppExecFwk::BundleInfo bundleInfo;
 
     FuzzedDataProvider fdp(data, size);
-    BundleManagerAdapter::GetInstance().GetBundleInfo(fdp.ConsumeBytesAsString(size),
+    BundleManagerAdapter::GetInstance().GetBundleInfo(fdp.ConsumeBytesAsString(size - EIGHT),
         fdp.ConsumeIntegral<int32_t>(), bundleInfo, fdp.ConsumeIntegral<int32_t>());
 }
 
 static void GetApplicationInfoFUZZ(const uint8_t* data, size_t size)
 {
-    if (data == nullptr) {
+    if (data == nullptr || (size < BUFFER_LENGTH)) {
         return;
     }
     AppExecFwk::ApplicationInfo applicationInfo;
 
     FuzzedDataProvider fdp(data, size);
-    BundleManagerAdapter::GetInstance().GetApplicationInfo(fdp.ConsumeBytesAsString(size),
+    BundleManagerAdapter::GetInstance().GetApplicationInfo(fdp.ConsumeBytesAsString(size - EIGHT),
         fdp.ConsumeIntegral<int32_t>(), fdp.ConsumeIntegral<int32_t>(), applicationInfo);
 }
 
 static void GetBundleInfoV9FUZZ(const uint8_t* data, size_t size)
 {
-    if (data == nullptr) {
+    if (data == nullptr || (size < BUFFER_LENGTH)) {
         return;
     }
     AppExecFwk::BundleInfo bundleInfo;
     AppExecFwk::BundleFlag flag = AppExecFwk::BundleFlag::GET_BUNDLE_WITH_ABILITIES;
 
     FuzzedDataProvider fdp(data, size);
-    BundleManagerAdapter::GetInstance().GetBundleInfoV9(fdp.ConsumeBytesAsString(size), flag, bundleInfo,
-        fdp.ConsumeIntegral<int32_t>());
+    BundleManagerAdapter::GetInstance().GetBundleInfoV9(fdp.ConsumeBytesAsString(size - FOUR),
+        flag, bundleInfo, fdp.ConsumeIntegral<int32_t>());
 }
 
 class DlpPermissionAsyncStubTests : public IRemoteStub<IDlpPermissionCallback> {
@@ -130,7 +134,7 @@ public:
 
 static void ParseDlpCertificateFUZZ(const uint8_t* data, size_t size)
 {
-    if (data == nullptr) {
+    if (data == nullptr || (size < BUFFER_LENGTH)) {
         return;
     }
 
@@ -159,14 +163,15 @@ static void ParseDlpCertificateFUZZ(const uint8_t* data, size_t size)
 
 static void CheckMdmPermissionFUZZ(const uint8_t* data, size_t size)
 {
-    if (data == nullptr) {
+    if (data == nullptr || (size < BUFFER_LENGTH)) {
         return;
     }
 
     FuzzedDataProvider fdp(data, size);
     std::vector<std::string> appList;
-    appList.push_back(fdp.ConsumeBytesAsString(size));
-    DlpCredential::GetInstance().CheckMdmPermission(fdp.ConsumeBytesAsString(size), fdp.ConsumeIntegral<int32_t>());
+    appList.push_back(fdp.ConsumeBytesAsString(size / TWO - TWO));
+    DlpCredential::GetInstance().CheckMdmPermission(fdp.ConsumeBytesAsString(size / TWO - TWO),
+        fdp.ConsumeIntegral<int32_t>());
     DlpCredential::GetInstance().RemoveMDMPolicy();
     DlpCredential::GetInstance().SetMDMPolicy(appList);
     DlpCredential::GetInstance().GetMDMPolicy(appList);
@@ -176,7 +181,7 @@ static void CheckMdmPermissionFUZZ(const uint8_t* data, size_t size)
 
 static void ParseFUZZ(const uint8_t* data, size_t size)
 {
-    if (data == nullptr) {
+    if (data == nullptr || (size < BUFFER_LENGTH)) {
         return;
     }
 
@@ -197,7 +202,7 @@ static void ParseFUZZ(const uint8_t* data, size_t size)
 
 static void IsError(const uint8_t* data, size_t size)
 {
-    if (data == nullptr) {
+    if (data == nullptr || (size < BUFFER_LENGTH)) {
         return;
     }
 
