@@ -78,6 +78,7 @@ static const int32_t ARRRY_SIZE = 3;
 static const std::string LOGIN_EVENT = "Ohos.account.event.LOGIN";
 static const std::string LOGOUT_EVENT = "Ohos.account.event.LOGOUT";
 static const int32_t TWO = 2;
+static const int32_t FOUR = 4;
 static const int32_t FIVE = 5;
 const int32_t TEXT_LENGTH = 5;
 const int32_t ACCOUNT_LENGTH = 10;
@@ -208,12 +209,12 @@ static void GDlpFileFuzzTest()
 
 static void UnzipSpecificFileFUZZ(const uint8_t* data, size_t size)
 {
-    if (data == nullptr) {
+    if (data == nullptr || size < FOUR) {
         return;
     }
     FuzzedDataProvider fdp(data, size);
-    UnzipSpecificFile(fdp.ConsumeIntegral<int32_t>(), fdp.ConsumeBytesAsString(size).c_str(),
-        fdp.ConsumeBytesAsString(size).c_str());
+    UnzipSpecificFile(fdp.ConsumeIntegral<int32_t>(), fdp.ConsumeBytesAsString(size / TWO - TWO).c_str(),
+        fdp.ConsumeBytesAsString(size / TWO - TWO).c_str());
 }
 
 static void FuzzTest(const uint8_t* data, size_t size, bool flag)

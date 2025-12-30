@@ -38,6 +38,8 @@ using namespace OHOS::Security::AccessToken;
 namespace {
 const uint32_t BUFFER_LENGTH = 64;
 const uint32_t TWO = 2;
+const uint32_t THREE = 3;
+const uint32_t TEN = 10;
 static const uint64_t SYSTEM_APP_MASK = 0x100000000;
 static const int32_t DEFAULT_USER_ID = 100;
 }
@@ -100,7 +102,7 @@ static void FuzzTest(const uint8_t* data, size_t size)
     std::vector<uint8_t> cert;
     DlpAccountType ownerAccountType = GenerateDlpAccountType(fdp.ConsumeIntegral<int32_t>());
     GetNewCert(plainPolicyJson, cert, ownerAccountType);
-    plainPolicyJson[POLICY_CERT] = fdp.ConsumeBytesAsString(size);
+    plainPolicyJson[POLICY_CERT] = fdp.ConsumeBytesAsString(size / THREE - TEN);
     GetNewCert(plainPolicyJson, cert, ownerAccountType);
 
     DlpAccountType accountType = GenerateDlpAccountType(fdp.ConsumeIntegral<int32_t>());
@@ -117,13 +119,13 @@ static void FuzzTest(const uint8_t* data, size_t size)
     DlpRestorePolicyCallback(requestId, errorCode, &outParams);
 
     std::string account;
-    std::string contactAccount = fdp.ConsumeBytesAsString(size);
+    std::string contactAccount = fdp.ConsumeBytesAsString(size / THREE - TEN);
     bool isOwner;
     GetDomainAccountName(account, contactAccount, &isOwner);
 
     std::vector<uint8_t> offlineCert;
     DLP_EncPolicyData encpolicy;
-    std::string accountStr = fdp.ConsumeBytesAsString(size);
+    std::string accountStr = fdp.ConsumeBytesAsString(size / THREE - TEN);
     encpolicy.receiverAccountInfo.accountIdLen = accountStr.length();
     encpolicy.receiverAccountInfo.accountId = reinterpret_cast<uint8_t*>(strdup(accountStr.c_str()));
     isOwner = fdp.ConsumeIntegral<int32_t>() % TWO;
