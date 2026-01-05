@@ -290,7 +290,6 @@ static int32_t SetDlpParams(const std::shared_ptr<DlpFile>& filePtr, const DlpPr
     policy.fileId = property.fileId;
     policy.allowedOpenCount_ = property.allowedOpenCount;
     policy.waterMarkConfig_ = property.waterMarkConfig;
-    policy.SetWaterMarkCfgToGroup();
     policy.countdown_ = property.countdown;
     filePtr->SetFileId(property.fileId);
     filePtr->SetAllowedOpenCount(property.allowedOpenCount);
@@ -347,7 +346,6 @@ int32_t DlpFileManager::PrepareParms(const std::shared_ptr<DlpFile>& filePtr, co
 int32_t DlpFileManager::SetDlpFileParams(std::shared_ptr<DlpFile>& filePtr, const DlpProperty& property) const
 {
     PermissionPolicy policy(property);
-    policy.SetWaterMarkCfgToGroup();
     int result = PrepareParms(filePtr, property, policy);
     if (result != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "PrepareParms fail, errno=%{public}d", result);
@@ -622,7 +620,10 @@ static int32_t SetNotOwnerAndReadOnce(const PermissionPolicy& policy, int32_t dl
 static int32_t VerifyAndGetWaterMark(PermissionPolicy& policy, std::shared_ptr<DlpFile>& filePtr)
 {
     policy.countdown_ = filePtr->GetCountdown();
-    policy.GetWaterMarkCfgFromGroup();
+    if (!policy.canFindWaterMarkConfig_) {
+        DLP_LOG_DEBUG(LABEL, "can not find waterMarkConfig.");
+        policy.waterMarkConfig_ = filePtr->GetWaterMarkConfig();
+    }
     int32_t result = filePtr->SetPolicy(policy);
     if (result != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "SetPolicy fail, errno=%{public}d", result);

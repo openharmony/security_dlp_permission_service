@@ -37,7 +37,6 @@ const std::string PERM_DOMAIN = "domain";
 const std::string PARAMETER_KEY = "parameters";
 const std::string TYPE_KEY = "type";
 const std::string ACCOUNT_INDEX = "account";
-const std::string GROUP_INDEX = "group";
 const std::string AESKEY = "filekey";
 const std::string AESKEY_LEN = "filekeyLen";
 const std::string IV = "iv";
@@ -187,15 +186,6 @@ static void SerializeAuthUserInfo(unordered_json& authUsersJson,
     return;
 }
 
-static void SerializeGroupInfo(unordered_json& groupsJson,
-    const GroupInfo& groupInfo)
-{
-    unordered_json watermarkJson;
-    watermarkJson[WATERMARK_CONFIG] = groupInfo.waterMarkConfig;
-    groupsJson[groupInfo.groupName.c_str()] = watermarkJson;
-    return;
-}
-
 int32_t DlpPermissionSerializer::DeserializeAuthUserInfo(const unordered_json& accountInfoJson,
     AuthUserInfo& userInfo)
 {
@@ -229,15 +219,6 @@ int32_t DlpPermissionSerializer::DeserializeAuthUserInfo(const unordered_json& a
     return DLP_OK;
 }
 
-int32_t DlpPermissionSerializer::DeserializeGroupInfo(const unordered_json& infoJson,
-    GroupInfo& groupInfo)
-{
-    if (infoJson.find(WATERMARK_CONFIG) != infoJson.end() && infoJson.at(WATERMARK_CONFIG).is_boolean()) {
-        infoJson.at(WATERMARK_CONFIG).get_to(groupInfo.waterMarkConfig);
-    }
-    return DLP_OK;
-}
-
 static unordered_json SerializeAuthUserList(const std::vector<AuthUserInfo>& authUsers)
 {
     unordered_json authUsersJson;
@@ -245,15 +226,6 @@ static unordered_json SerializeAuthUserList(const std::vector<AuthUserInfo>& aut
         SerializeAuthUserInfo(authUsersJson, *it);
     }
     return authUsersJson;
-}
-
-static unordered_json SerializeGroupList(const std::vector<GroupInfo>& groups)
-{
-    unordered_json groupsJson;
-    for (auto it = groups.begin(); it != groups.end(); ++it) {
-        SerializeGroupInfo(groupsJson, *it);
-    }
-    return groupsJson;
 }
 
 int32_t DlpPermissionSerializer::DeserializeAuthUserList(
@@ -269,25 +241,6 @@ int32_t DlpPermissionSerializer::DeserializeAuthUserList(
             userList.emplace_back(authInfo);
         } else {
             userList.clear();
-            return res;
-        }
-    }
-    return DLP_OK;
-}
-
-int32_t DlpPermissionSerializer::DeserializeGroupList(
-    const unordered_json& groupsJson, std::vector<GroupInfo>& groupList)
-{
-    for (auto iter = groupsJson.begin(); iter != groupsJson.end(); ++iter) {
-        GroupInfo groupInfo;
-        std::string name = iter.key();
-        groupInfo.groupName = name;
-        unordered_json info = iter.value();
-        int32_t res = DeserializeGroupInfo(info, groupInfo);
-        if (res == DLP_OK) {
-            groupList.emplace_back(groupInfo);
-        } else {
-            groupList.clear();
             return res;
         }
     }
@@ -375,7 +328,10 @@ static void SerializeEveryoneInfo(const PermissionPolicy& policy, unordered_json
         unordered_json everyoneJson;
         everyoneJson[RIGHT_INDEX] = rightInfoJson;
         permInfoJson[EVERYONE_INDEX] = everyoneJson;
-        return;
+    }
+    if (policy.ownerAccountType_ == CLOUD_ACCOUNT) {
+        DLP_LOG_DEBUG(LABEL, "waterMarkConfig: %{public}d.", policy.waterMarkConfig_);
+        permInfoJson[EVERYONE_INDEX][WATERMARK_CONFIG] = policy.waterMarkConfig_;
     }
 }
 
@@ -427,7 +383,6 @@ static int32_t SerializeFileEncInfo(const PermissionPolicy& policy, unordered_js
 int32_t DlpPermissionSerializer::SerializeDlpPermission(const PermissionPolicy& policy, unordered_json& permInfoJson)
 {
     unordered_json authUsersJson = SerializeAuthUserList(policy.authUsers_);
-    unordered_json groupsJson = SerializeGroupList(policy.authGroups_);
     unordered_json policyJson;
     policyJson[KIA_INDEX] = "";
     policyJson[OWNER_ACCOUNT_NAME] = policy.ownerAccount_;
@@ -442,9 +397,6 @@ int32_t DlpPermissionSerializer::SerializeDlpPermission(const PermissionPolicy& 
     policyJson[NEED_ONLINE] = policy.needOnline_;
     policyJson[DLP_FILE_DEBUG_FLAG] = policy.debug_;
     policyJson[ACCOUNT_INDEX] = authUsersJson;
-    if (policy.ownerAccountType_ == CLOUD_ACCOUNT) {
-        policyJson[GROUP_INDEX] = groupsJson;
-    }
     SerializeCustomProperty(policy, policyJson);
     SerializeEveryoneInfo(policy, policyJson);
     if (policy.ownerAccountType_ == ENTERPRISE_ACCOUNT) {
@@ -487,6 +439,25 @@ static int32_t GetPolicyJson(const unordered_json& permJson, unordered_json& pla
         plainPolicyJson = permJson;
     }
     return DLP_OK;
+}
+
+void DlpPermissionSerializer::DeserializeProperty(const unordered_json& policyJson, PermissionPolicy& policy)
+{
+    policy.canFindWaterMarkConfig_ = false;
+    if (policyJson.find(EVERYONE_INDEX) == policyJson.end() || !policyJson.at(EVERYONE_INDEX).is_object()) {
+        DLP_LOG_DEBUG(LABEL, "no everyone");
+        return;
+    }
+
+    unordered_json everyoneInfoJson;
+    policyJson.at(EVERYONE_INDEX).get_to(everyoneInfoJson);
+    if (everyoneInfoJson.find(WATERMARK_CONFIG) != everyoneInfoJson.end() &&
+        everyoneInfoJson.at(WATERMARK_CONFIG).is_boolean()) {
+        everyoneInfoJson.at(WATERMARK_CONFIG).get_to(policy.waterMarkConfig_);
+        policy.canFindWaterMarkConfig_ = true;
+        DLP_LOG_INFO(LABEL, "get waterMarkConfig from everyone, %{public}d.", policy.waterMarkConfig_);
+    }
+    return;
 }
 
 bool DlpPermissionSerializer::DeserializeEveryoneInfo(const unordered_json& policyJson, PermissionPolicy& policy)
@@ -553,6 +524,8 @@ static void InitPermissionExtendPolicy(PermissionPolicy& policy, unordered_json 
     }
     if (policyJson.find(WATERMARK_CONFIG) != policyJson.end() && policyJson.at(WATERMARK_CONFIG).is_boolean()) {
         policyJson.at(WATERMARK_CONFIG).get_to(policy.waterMarkConfig_);
+        policy.canFindWaterMarkConfig_ = true;
+        DLP_LOG_DEBUG(LABEL, "find waterMarkConfig from policy, %{public}d", policy.waterMarkConfig_);
     }
     if (policyJson.find(COUNTDOWN) != policyJson.end() && policyJson.at(COUNTDOWN).is_number()) {
         policyJson.at(COUNTDOWN).get_to(policy.countdown_);
@@ -560,10 +533,9 @@ static void InitPermissionExtendPolicy(PermissionPolicy& policy, unordered_json 
 }
 
 static void InitPermissionPolicy(PermissionPolicy& policy, const std::vector<AuthUserInfo>& userList,
-    unordered_json policyJson, const std::vector<GroupInfo>& groupList)
+    unordered_json policyJson)
 {
     policy.authUsers_ = userList;
-    policy.authGroups_ = groupList;
     InitPermissionAccountInfo(policy, policyJson);
     if (policyJson.find(FILEID) != policyJson.end() && policyJson.at(FILEID).is_string()) {
         policyJson.at(FILEID).get_to(policy.fileId);
@@ -654,23 +626,15 @@ int32_t DlpPermissionSerializer::DeserializeDlpPermission(const unordered_json& 
     if (policyJson.find(ACCOUNT_INDEX) != policyJson.end() && policyJson.at(ACCOUNT_INDEX).is_object()) {
         policyJson.at(ACCOUNT_INDEX).get_to(accountListJson);
     }
-    unordered_json groupListJson;
-    if (policyJson.find(GROUP_INDEX) != policyJson.end() && policyJson.at(GROUP_INDEX).is_object()) {
-        policyJson.at(GROUP_INDEX).get_to(groupListJson);
-    }
     DeserializeEveryoneInfo(policyJson, policy);
+    DeserializeProperty(policyJson, policy);
 
     std::vector<AuthUserInfo> userList;
     res = DeserializeAuthUserList(accountListJson, userList);
     if (res != DLP_OK) {
         return res;
     }
-    std::vector<GroupInfo> groupList;
-    res = DeserializeGroupList(groupListJson, groupList);
-    if (res != DLP_OK) {
-        return res;
-    }
-    InitPermissionPolicy(policy, userList, policyJson, groupList);
+    InitPermissionPolicy(policy, userList, policyJson);
 
     res = DeserializeFileEncJson(policy, plainPolicyJson);
     if (res != DLP_OK) {

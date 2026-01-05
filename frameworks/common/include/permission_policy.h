@@ -75,11 +75,6 @@ typedef struct AuthUserInfo {
     DlpAccountType authAccountType = INVALID_ACCOUNT;
 } AuthUserInfo;
 
-typedef struct GroupInfo {
-    std::string groupName;
-    bool waterMarkConfig = false;
-} GroupInfo;
-
 typedef struct SandboxInfo : public Parcelable {
     int32_t appIndex = -1;
     uint32_t tokenId = 0;
@@ -145,8 +140,6 @@ public:
     int32_t CheckActionUponExpiry();
     int32_t GetAllowedOpenCount() const;
     bool GetwaterMarkConfig() const;
-    void SetWaterMarkCfgToGroup();
-    void GetWaterMarkCfgFromGroup();
     int32_t GetCountdown() const;
 
     std::string ownerAccount_;
@@ -157,7 +150,6 @@ public:
     DlpAccountType acountType_ = INVALID_ACCOUNT;
     DLPFileAccess perm_ = DLPFileAccess::NO_PERMISSION;
     std::vector<AuthUserInfo> authUsers_;
-    std::vector<GroupInfo> authGroups_;
     bool supportEveryone_ = false;
     DLPFileAccess everyonePerm_ = DLPFileAccess::NO_PERMISSION;
     uint64_t expireTime_ = 0;
@@ -171,6 +163,7 @@ public:
     int32_t allowedOpenCount_ = 0;
     bool waterMarkConfig_ = false;
     int32_t countdown_ = 0;
+    bool canFindWaterMarkConfig_ = false;
 
 private:
     uint8_t* aeskey_;

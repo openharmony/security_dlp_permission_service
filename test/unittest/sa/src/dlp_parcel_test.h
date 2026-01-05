@@ -18,7 +18,6 @@
 
 #include <gtest/gtest.h>
 #include "auth_user_info_parcel.h"
-#include "group_info_parcel.h"
 #include "dlp_policy_parcel.h"
 #include "dlp_sandbox_callback_info_parcel.h"
 #include "open_dlp_file_callback_info_parcel.h"

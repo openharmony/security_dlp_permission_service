@@ -14,7 +14,6 @@
  */
 
 #include "dlp_policy_parcel.h"
-#include "group_info_parcel.h"
 #include "dlp_permission_log.h"
 #include "permission_policy.h"
 #include "securec.h"
@@ -30,10 +29,6 @@ bool DlpPolicyParcel::Marshalling(Parcel& out) const
 {
     if (!MarshallingUserList(out)) {
         DLP_LOG_ERROR(LABEL, "Marshalling user list fail");
-        return false;
-    }
-    if (!MarshallingGroupList(out)) {
-        DLP_LOG_ERROR(LABEL, "Marshalling group list fail");
         return false;
     }
     if (!(out.WriteBool(this->policyParams_.supportEveryone_))) {
@@ -99,6 +94,10 @@ bool DlpPolicyParcel::MarshallingDlpPolicy(Parcel& out) const
         DLP_LOG_ERROR(LABEL, "Write countdown_ fail");
         return false;
     }
+    if (!(out.WriteBool(this->policyParams_.canFindWaterMarkConfig_))) {
+        DLP_LOG_ERROR(LABEL, "Write canFindWaterMarkConfig_ fail");
+        return false;
+    }
     return true;
 }
 
@@ -123,33 +122,6 @@ bool DlpPolicyParcel::MarshallingUserList(Parcel& out) const
         authUserInfoParcel->authUserInfo_ = userList[i];
         if (!(out.WriteParcelable(authUserInfoParcel))) {
             DLP_LOG_ERROR(LABEL, "Write auth user info parcel fail");
-            return false;
-        }
-    }
-    return true;
-}
-
-bool DlpPolicyParcel::MarshallingGroupList(Parcel& out) const
-{
-    const std::vector<GroupInfo>& groupList = this->policyParams_.authGroups_;
-    uint32_t listSize = groupList.size();
-    if (listSize > MAX_ACCOUNT_NUM) {
-        DLP_LOG_ERROR(LABEL, "Group number exceeds %{public}u, total=%{public}u", MAX_ACCOUNT_NUM, listSize);
-        return false;
-    }
-    if (!(out.WriteUint32(listSize))) {
-        DLP_LOG_ERROR(LABEL, "Write group num fail");
-        return false;
-    }
-    for (uint32_t i = 0; i < listSize; i++) {
-        sptr<GroupInfoParcel> groupInfoParcel = new (std::nothrow) GroupInfoParcel();
-        if (groupInfoParcel == nullptr) {
-            DLP_LOG_ERROR(LABEL, "Alloc group info parcel fail");
-            return false;
-        }
-        groupInfoParcel->groupInfo_ = groupList[i];
-        if (!(out.WriteParcelable(groupInfoParcel))) {
-            DLP_LOG_ERROR(LABEL, "Write group info parcel fail");
             return false;
         }
     }
@@ -374,28 +346,6 @@ static bool ReadParcelList(Parcel& in, DlpPolicyParcel* policyParcel)
     return true;
 }
 
-static bool ReadParcelGroupList(Parcel& in, DlpPolicyParcel* policyParcel)
-{
-    uint32_t listSize;
-    if (!in.ReadUint32(listSize)) {
-        DLP_LOG_ERROR(LABEL, "Read group num fail");
-        return false;
-    }
-    if (listSize > MAX_ACCOUNT_NUM) {
-        DLP_LOG_ERROR(LABEL, "Group num exceeds %{public}u, total=%{public}u", MAX_ACCOUNT_NUM, listSize);
-        return false;
-    }
-    for (uint32_t i = 0; i < listSize; i++) {
-        sptr<GroupInfoParcel> groupInfoParcel = in.ReadParcelable<GroupInfoParcel>();
-        if (groupInfoParcel == nullptr) {
-            DLP_LOG_ERROR(LABEL, "Read group info parcel fail");
-            return false;
-        }
-        policyParcel->policyParams_.authGroups_.emplace_back(groupInfoParcel->groupInfo_);
-    }
-    return true;
-}
-
 static bool ReadPropertyParcel(Parcel& in, DlpPolicyParcel* policyParcel)
 {
     if (!(in.ReadInt32(policyParcel->policyParams_.allowedOpenCount_))) {
@@ -410,15 +360,16 @@ static bool ReadPropertyParcel(Parcel& in, DlpPolicyParcel* policyParcel)
         DLP_LOG_ERROR(LABEL, "Read countdown fail");
         return false;
     }
+    if (!(in.ReadBool(policyParcel->policyParams_.canFindWaterMarkConfig_))) {
+        DLP_LOG_ERROR(LABEL, "Read canFindWaterMarkConfig_ fail");
+        return false;
+    }
     return true;
 }
 
 static bool ReadParcel(Parcel& in, DlpPolicyParcel* policyParcel)
 {
     if (!ReadParcelList(in, policyParcel)) {
-        return false;
-    }
-    if (!ReadParcelGroupList(in, policyParcel)) {
         return false;
     }
     if (!(in.ReadBool(policyParcel->policyParams_.supportEveryone_))) {

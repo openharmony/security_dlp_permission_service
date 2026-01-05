@@ -144,6 +144,7 @@ PermissionPolicy::PermissionPolicy()
     fileId = "";
     allowedOpenCount_ = 0;
     waterMarkConfig_ = false;
+    canFindWaterMarkConfig_ = false;
 }
 
 PermissionPolicy::PermissionPolicy(const DlpProperty& property)
@@ -170,6 +171,7 @@ PermissionPolicy::PermissionPolicy(const DlpProperty& property)
     allowedOpenCount_ = property.allowedOpenCount;
     waterMarkConfig_ = property.waterMarkConfig;
     countdown_ = property.countdown;
+    canFindWaterMarkConfig_ = false;
 }
 
 PermissionPolicy::~PermissionPolicy()
@@ -306,7 +308,6 @@ void PermissionPolicy::CopyPermissionPolicy(const PermissionPolicy& srcPolicy)
     ownerAccountId_ = srcPolicy.ownerAccountId_;
     ownerAccountType_ = srcPolicy.ownerAccountType_;
     authUsers_ = srcPolicy.authUsers_;
-    authGroups_ = srcPolicy.authGroups_;
     supportEveryone_ = srcPolicy.supportEveryone_;
     everyonePerm_ = srcPolicy.everyonePerm_;
     expireTime_ = srcPolicy.expireTime_;
@@ -324,6 +325,7 @@ void PermissionPolicy::CopyPermissionPolicy(const PermissionPolicy& srcPolicy)
     allowedOpenCount_ = srcPolicy.allowedOpenCount_;
     waterMarkConfig_ = srcPolicy.waterMarkConfig_;
     countdown_ = srcPolicy.countdown_;
+    canFindWaterMarkConfig_ = srcPolicy.canFindWaterMarkConfig_;
 }
 
 int32_t PermissionPolicy::CheckActionUponExpiry()
@@ -337,30 +339,6 @@ int32_t PermissionPolicy::CheckActionUponExpiry()
         actionUponExpiry_ = static_cast<uint32_t>(ActionType::NOTOPEN);
     }
     return DLP_OK;
-}
-
-void PermissionPolicy::SetWaterMarkCfgToGroup()
-{
-    for (const auto &group : authGroups_) {
-        if (group.groupName == "waterMarkConfig") {
-            return;
-        }
-    }
-    authGroups_.emplace_back(GroupInfo{
-        .groupName = "waterMarkConfig",
-        .waterMarkConfig = waterMarkConfig_
-    });
-    return;
-}
-
-void PermissionPolicy::GetWaterMarkCfgFromGroup()
-{
-    for (const auto &group : authGroups_) {
-        if (group.groupName == "waterMarkConfig") {
-            waterMarkConfig_ = group.waterMarkConfig;
-            break;
-        }
-    }
 }
 
 bool CheckAccountType(DlpAccountType accountType)

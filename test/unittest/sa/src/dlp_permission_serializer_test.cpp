@@ -209,30 +209,6 @@ HWTEST_F(DlpPermissionSerializerTest, SerializeDlpPermission005, TestSize.Level1
 }
 
 /**
- * @tc.name: SerializeDlpPermission006
- * @tc.desc: SerializeDlpPermission test
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(DlpPermissionSerializerTest, SerializeDlpPermission006, TestSize.Level1)
-{
-    DLP_LOG_INFO(LABEL, "SerializeDlpPermission006");
-
-    std::vector<GroupInfo> groups;
-    GroupInfo info;
-    info.groupName = "watermarkconfig";
-    groups.push_back(info);
-
-    PermissionPolicy policy;
-    policy.authGroups_ = groups;
-    unordered_json permInfoJson;
-
-    DlpPermissionSerializer serialize;
-    int32_t ret = serialize.SerializeDlpPermission(policy, permInfoJson);
-    ASSERT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, ret);
-}
-
-/**
  * @tc.name: DeserializeDlpPermission001
  * @tc.desc: DeserializeDlpPermission test
  * @tc.type: FUNC
@@ -393,29 +369,104 @@ HWTEST_F(DlpPermissionSerializerTest, DeserializeEveryoneInfo001, TestSize.Level
 }
 
 /**
- * @tc.name: DeserializeGroupList001
- * @tc.desc: DeserializeGroupList test
+ * @tc.name: DeserializeProperty001
+ * @tc.desc: DeserializeProperty test
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpPermissionSerializerTest, DeserializeGroupList001, TestSize.Level1)
+HWTEST_F(DlpPermissionSerializerTest, DeserializeProperty001, TestSize.Level1)
 {
-    DLP_LOG_INFO(LABEL, "DeserializeGroupList001");
+    DLP_LOG_INFO(LABEL, "DeserializeProperty001");
 
-    unordered_json groupsJson;
-    unordered_json watermarkJson;
-    unordered_json watermarkTestJson;
-    watermarkJson["waterMarkConfig"] = true;
-    watermarkTestJson["test"] = false;
-    groupsJson["waterMarkConfig"] = watermarkJson;
-    groupsJson["test"] = watermarkTestJson;
-    std::vector<GroupInfo> groupList;
+    unordered_json permJson1;
+    unordered_json everyoneJson;
+    everyoneJson["waterMarkConfig"] = true;
+    permJson1["everyone"] = everyoneJson;
+    PermissionPolicy policy;
     DlpPermissionSerializer serialize;
-    int32_t ret = serialize.DeserializeGroupList(groupsJson, groupList);
-    ASSERT_EQ(DLP_OK, ret);
-    ASSERT_EQ(2, static_cast<int32_t>(groupList.size()));
-    ASSERT_EQ(true, groupList[0].waterMarkConfig);
-    ASSERT_EQ(false, groupList[1].waterMarkConfig);
+    policy.ownerAccountType_ = OHOS::Security::DlpPermission::CLOUD_ACCOUNT;
+    serialize.DeserializeProperty(permJson1, policy);
+    ASSERT_EQ(policy.waterMarkConfig_, true);
+}
+
+/**
+ * @tc.name: DeserializeProperty002
+ * @tc.desc: DeserializeProperty test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionSerializerTest, DeserializeProperty002, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL, "DeserializeProperty002");
+    unordered_json permJson1;
+    unordered_json everyoneJson;
+    everyoneJson["waterMarkConfig"] = false;
+    permJson1["everyone"] = everyoneJson;
+    PermissionPolicy policy;
+    DlpPermissionSerializer serialize;
+    policy.ownerAccountType_ = OHOS::Security::DlpPermission::CLOUD_ACCOUNT;
+    serialize.DeserializeProperty(permJson1, policy);
+    ASSERT_EQ(policy.waterMarkConfig_, false);
+}
+
+/**
+ * @tc.name: DeserializeProperty003
+ * @tc.desc: DeserializeProperty test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionSerializerTest, DeserializeProperty003, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL, "DeserializeProperty003");
+    unordered_json permJson1;
+    unordered_json everyoneJson;
+    everyoneJson["waterMarkConfig111"] = false;
+    permJson1["everyone"] = everyoneJson;
+    PermissionPolicy policy;
+    DlpPermissionSerializer serialize;
+    policy.ownerAccountType_ = OHOS::Security::DlpPermission::CLOUD_ACCOUNT;
+    serialize.DeserializeProperty(permJson1, policy);
+    ASSERT_EQ(policy.waterMarkConfig_, false);
+}
+
+/**
+ * @tc.name: DeserializeProperty004
+ * @tc.desc: DeserializeProperty test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionSerializerTest, DeserializeProperty004, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL, "DeserializeProperty004");
+    unordered_json permJson1;
+    unordered_json everyoneJson;
+    everyoneJson["waterMarkConfig111"] = false;
+    permJson1["everyone111"] = everyoneJson;
+    PermissionPolicy policy;
+    DlpPermissionSerializer serialize;
+    policy.ownerAccountType_ = OHOS::Security::DlpPermission::CLOUD_ACCOUNT;
+    serialize.DeserializeProperty(permJson1, policy);
+    ASSERT_EQ(policy.waterMarkConfig_, false);
+}
+
+/**
+ * @tc.name: DeserializeProperty005
+ * @tc.desc: DeserializeProperty test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionSerializerTest, DeserializeProperty005, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL, "DeserializeProperty005");
+    unordered_json permJson1;
+    unordered_json everyoneJson;
+    everyoneJson["waterMarkConfig111"] = false;
+    permJson1["everyone111"] = everyoneJson;
+    PermissionPolicy policy;
+    DlpPermissionSerializer serialize;
+    policy.ownerAccountType_ = OHOS::Security::DlpPermission::INVALID_ACCOUNT;
+    serialize.DeserializeProperty(permJson1, policy);
+    ASSERT_EQ(policy.waterMarkConfig_, false);
 }
 
 /**
