@@ -37,13 +37,43 @@ const std::string DLP_CREDMGR_BUNDLE_NAME = "com.huawei.hmos.dlpcredmgr";
 const std::string DLP_CREDMGR_PROCESS_NAME = "com.huawei.hmos.dlpcredmgr:DlpCredActionExtAbility";
 constexpr int32_t SA_ID_DLP_PERMISSION_SERVICE = 3521;
 const std::string FLAG_OF_MINI = "svr";
+static const std::string TASK_ID = "dlpPermissionServiceUnloadTask";
+constexpr int32_t SA_SHORT_LIFT_TIME = 60 * 1000; // SA life time for short task, in 60 seconds
+constexpr int32_t SA_LONG_LIFT_TIME = 120 * 1000; // SA life time for long task, in 120 seconds
 }
+
 AppStateObserver::AppStateObserver()
-{}
+{
+    DLP_LOG_INFO(LABEL, "AppStateObserver instatance create");
+    taskState_ = CurrentTaskState::IDLE;
+    if (!InitUnloadHandler()) {
+        DLP_LOG_ERROR(LABEL, "InitUnloadHandler failed");
+        InitUnloadHandler();
+    }
+}
 
 AppStateObserver::~AppStateObserver()
 {
     UninstallAllDlpSandbox();
+}
+
+bool AppStateObserver::InitUnloadHandler()
+{
+    if (unloadHandler_ == nullptr) {
+        std::shared_ptr<AppExecFwk::EventRunner> runner =
+            AppExecFwk::EventRunner::Create(SA_ID_DLP_PERMISSION_SERVICE);
+        unloadHandler_ = std::make_shared<AppExecFwk::EventHandler>(runner);
+    }
+    if (unloadHandler_ == nullptr) {
+        DLP_LOG_ERROR(LABEL, "init unloadHandler_ failed");
+        return false;
+    }
+    return true;
+}
+
+std::mutex& AppStateObserver::GetTerminalMutex()
+{
+    return terminalMutex_;
 }
 
 void AppStateObserver::UninstallDlpSandbox(DlpSandboxInfo& appInfo)
@@ -102,24 +132,25 @@ bool AppStateObserver::HasDlpSandboxForUser(int32_t userId)
     return false;
 }
 
-void AppStateObserver::ExitSaAfterAllDlpManagerDie()
+int32_t AppStateObserver::ExitSaAfterAllDlpManagerDie()
 {
     std::lock_guard<std::mutex> lock(userIdListLock_);
-    DLP_LOG_DEBUG(LABEL, "userIdList_ size:%{public}zu", userIdList_.size());
+    DLP_LOG_DEBUG(LABEL, "ExitSaAfterAllDlpManagerDie userIdList_ size:%{public}zu", userIdList_.size());
     if (userIdList_.empty() && CallbackListenerEmpty()) {
         DLP_LOG_INFO(LABEL, "all dlp manager app die, and callbacks are empty, start service exit");
         auto systemAbilityMgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
         if (systemAbilityMgr == nullptr) {
             DLP_LOG_ERROR(LABEL, "Failed to get SystemAbilityManager.");
-            return;
+            return DLP_SERVICE_ERROR_UNLOAD_ERROR;
         }
         int32_t ret = systemAbilityMgr->UnloadSystemAbility(SA_ID_DLP_PERMISSION_SERVICE);
         if (ret != DLP_OK) {
             DLP_LOG_ERROR(LABEL, "Failed to UnloadSystemAbility service! errcode=%{public}d", ret);
-            return;
+            return DLP_SERVICE_ERROR_UNLOAD_ERROR;
         }
         DLP_LOG_INFO(LABEL, "UnloadSystemAbility successfully!");
     }
+    return DLP_OK;
 }
 
 void AppStateObserver::EraseUserId(int32_t userId)
@@ -337,7 +368,8 @@ void AppStateObserver::OnDlpmanagerDied(const AppExecFwk::ProcessData& processDa
     DLP_LOG_INFO(LABEL, "%{public}s in userId %{public}d is died", processData.bundleName.c_str(), userId);
     UninstallAllDlpSandboxForUser(userId);
     EraseUserId(userId);
-    ExitSaAfterAllDlpManagerDie();
+    DLP_LOG_INFO(LABEL, "PostDelayUnloadTask by OnDlpmanagerDied");
+    PostDelayUnloadTask(CurrentTaskState::SHORT_TASK);
 }
 
 
@@ -361,12 +393,14 @@ void AppStateObserver::OnProcessDied(const AppExecFwk::ProcessData& processData)
             return;
         }
         if (!HasDlpSandboxForUser(userId)) {
-            ExitSaAfterAllDlpManagerDie();
+            DLP_LOG_INFO(LABEL, "PostDelayUnloadTask by dlpcredmgr");
+            PostDelayUnloadTask(CurrentTaskState::SHORT_TASK);
         }
     }
     // if current died process is a listener
     if (RemoveCallbackListener(processData.pid)) {
-        ExitSaAfterAllDlpManagerDie();
+        DLP_LOG_INFO(LABEL, "PostDelayUnloadTask by listener");
+        PostDelayUnloadTask(CurrentTaskState::SHORT_TASK);
         return;
     }
     if (processData.renderUid != -1) {
@@ -558,6 +592,47 @@ bool AppStateObserver::GetNotOwnerAndReadOnceByUri(const std::string& uri, bool&
         return true;
     }
     return false;
+}
+
+void AppStateObserver::PostDelayUnloadTask(CurrentTaskState newTaskState)
+{
+#ifdef DLP_FUZZ_TDD_TEST
+    DLP_LOG_INFO(LABEL, "fuzz or tdd test, do not post delay unload task");
+    return;
+#endif
+    std::lock_guard<std::mutex> lock(unloadHandlerMutex_);
+    if (unloadHandler_ == nullptr) {
+        DLP_LOG_ERROR(LABEL, "unloadHandler_ is nullptr. Unable to automatically uninstall dlp_permission_sevice");
+        InitUnloadHandler();
+        return;
+    }
+    DLP_LOG_DEBUG(LABEL, "PostDelayUnloadTask start");
+    if (taskState_ == CurrentTaskState::LONG_TASK && newTaskState == CurrentTaskState::SHORT_TASK) {
+        DLP_LOG_DEBUG(LABEL, "taskState_ is LONG_TASK, do not change to SHORT_TASK");
+        return;
+    }
+    taskState_ = newTaskState;
+    auto task = [this]() {
+        if (taskState_ == CurrentTaskState::SHORT_TASK || taskState_ == CurrentTaskState::LONG_TASK) {
+            PostDelayUnloadTask(CurrentTaskState::IDLE);
+            return;
+        }
+        std::lock_guard<std::mutex> lock(terminalMutex_);
+        int32_t ret = ExitSaAfterAllDlpManagerDie();
+        if (ret != DLP_OK) {
+            DLP_LOG_ERROR(LABEL, "ExitSaAfterAllDlpManagerDie failed");
+            PostDelayUnloadTask(CurrentTaskState::IDLE);
+            return;
+        }
+    };
+    unloadHandler_->RemoveTask(TASK_ID);
+    if (taskState_ == CurrentTaskState::LONG_TASK) {
+        DLP_LOG_INFO(LABEL, "you will delay long task for 120s");
+        unloadHandler_->PostTask(task, TASK_ID, SA_LONG_LIFT_TIME);
+        return;
+    }
+    DLP_LOG_INFO(LABEL, "you will delay %{public}d task for 60s", taskState_);
+    unloadHandler_->PostTask(task, TASK_ID, SA_SHORT_LIFT_TIME);
 }
 }  // namespace DlpPermission
 }  // namespace Security

@@ -59,7 +59,8 @@
         "graphic_2d",
         "image_framework",
         "window_manager",
-        "resource_management"
+        "resource_management",
+        "eventhandler"
       ],
       "third_party": []
     },

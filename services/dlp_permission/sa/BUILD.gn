@@ -218,6 +218,7 @@ ohos_shared_library("dlp_permission_service") {
     "common_event_service:cesfwk_core",
     "common_event_service:cesfwk_innerkits",
     "config_policy:configpolicy_util",
+    "eventhandler:libeventhandler",
     "hilog:libhilog",
     "hisysevent:libhisysevent",
     "huks:libhukssdk",

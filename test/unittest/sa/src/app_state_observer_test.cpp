@@ -731,3 +731,38 @@ HWTEST_F(AppStateObserverTest, AddUriAndNotOwnerAndReadOnce001, TestSize.Level1)
     ASSERT_FALSE(observer.GetNotOwnerAndReadOnceByUri(uri1, isNotOwnerAndReadOnce));
     ASSERT_FALSE(observer.GetNotOwnerAndReadOnceByUri(uri2, isNotOwnerAndReadOnce));
 }
+
+/**
+ * @tc.name: PostDelayUnloadTask001
+ * @tc.desc: PostDelayUnloadTask test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AppStateObserverTest, PostDelayUnloadTask001, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL, "PostDelayUnloadTask001");
+    AppStateObserver observer;
+    observer.GetTerminalMutex();
+    observer.PostDelayUnloadTask(CurrentTaskState::IDLE);
+    ASSERT_EQ(observer.taskState_, CurrentTaskState::IDLE);
+    observer.PostDelayUnloadTask(CurrentTaskState::LONG_TASK);
+    observer.PostDelayUnloadTask(CurrentTaskState::SHORT_TASK);
+}
+
+/**
+ * @tc.name: InitUnloadHandler001
+ * @tc.desc: InitUnloadHandler test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AppStateObserverTest, InitUnloadHandler001, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL, "InitUnloadHandler001");
+    AppStateObserver observer;
+    ASSERT_EQ(observer.InitUnloadHandler(), true);
+    OHOS::AppExecFwk::ProcessData processData1;
+    processData1.bundleName = "com.ohos.dlpmanager";
+    processData1.processName = "com.ohos.dlpmanager";
+    processData1.uid = DEFAULT_USERID;
+    observer.OnDlpmanagerDied(processData1);
+}
