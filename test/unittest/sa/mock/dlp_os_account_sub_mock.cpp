@@ -51,6 +51,7 @@ std::pair<bool, OhosAccountInfo> OhosAccountKits::QueryOsAccountDistributedInfo(
 
 ErrCode OhosAccountKits::GetOsAccountDistributedInfo(int32_t localId, OhosAccountInfo &accountInfo)
 {
+    (void)localId;
     accountInfo.name_ = g_accountName;
     accountInfo.status_ = ACCOUNT_STATE_LOGIN;
     accountInfo.SetRawUid(g_accountId);
@@ -71,6 +72,8 @@ void OsAccountInfo::GetDomainInfo(DomainAccountInfo &domainInfo)
 
 ErrCode DomainAccountClient::GetAccountServerConfig(const DomainAccountInfo &info, DomainServerConfig &config)
 {
+    (void)info;
+    (void)config;
     config.parameters_ = g_parameters;
     return 0;
 }
@@ -90,16 +93,20 @@ int OsAccountManager::GetForegroundOsAccountLocalId(int32_t &localId)
 
 int OsAccountManager::QueryOsAccountById(const int id, OsAccountInfo &osAccountInfo)
 {
+    (void)id;
+    (void)osAccountInfo;
     return 0;
 }
 
 int OsAccountManager::QueryActiveOsAccountIds(std::vector<int32_t>& ids)
 {
+    (void)ids;
     return ERROR_FLAG;
 }
 
 int OsAccountManager::GetOsAccountLocalIdFromUid(const int uid, int &id)
 {
+    (void)uid;
     id = DEFAULT_USERID;
     return 0;
 }

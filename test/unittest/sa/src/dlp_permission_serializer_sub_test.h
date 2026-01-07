@@ -34,9 +34,9 @@ public:
 
     static void TearDownTestCase();
 
-    void SetUp();
+    void SetUp() override;
 
-    void TearDown();
+    void TearDown() override;
 };
 } // namespace DlpPermission
 } // namespace Security
