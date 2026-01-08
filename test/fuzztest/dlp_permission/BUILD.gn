@@ -129,5 +129,5 @@ config("stub_fuzz_config") {
 config("stub_fuzz_need_skip_timer_config") {
   cflags_cc = []
   configs = [ ":stub_fuzz_config" ]
-  cflags_cc += [ "-DDLP_FUZZ_TEST" ]
+  cflags_cc += [ "-DDLP_FUZZ_TDD_TEST" ]
 }

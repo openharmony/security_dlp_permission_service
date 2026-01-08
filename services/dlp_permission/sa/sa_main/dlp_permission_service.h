@@ -102,7 +102,6 @@ public:
     int32_t SetMDMPolicy(const std::vector<std::string>& appIdList) override;
     int32_t GetMDMPolicy(std::vector<std::string>& appIdList) override;
     int32_t RemoveMDMPolicy() override;
-    void StartTimer();
     int Dump(int fd, const std::vector<std::u16string>& args) override;
     int32_t SetDlpFeature(const uint32_t dlpFeatureInfo, bool& statusSetInfo) override;
     int32_t SetEnterprisePolicy(const std::string& policy) override;
@@ -117,18 +116,17 @@ private:
     int32_t SandConfigOperateCheck(SandboxConfigOperationEnum operationEnum, std::string& bundleName,
         int32_t& userId, AccessToken::AccessTokenID& originalTokenId);
     int32_t SandboxConfigOperate(std::string& configInfo, SandboxConfigOperationEnum operationEnum);
-    void TerminalService();
     void GetCfgFilesList(std::vector<std::string>& cfgFilesList);
     void GetConfigFileValue(const std::string& cfgFile, std::vector<std::string>& typeList);
     void InitConfig(std::vector<std::string>& typeList);
-    void SetTimer(bool isNeedStartTimer);
     int32_t CheckIfEnterpriseAccount();
     int32_t CheckWaterMarkInfo();
+    int32_t InstallSandboxApp(const std::string& bundleName, DLPFileAccess dlpFileAccess, int32_t userId,
+        DlpSandboxInfo& dlpSandboxInfo);
 
     std::atomic<int32_t> repeatTime_;
     std::shared_ptr<std::thread> thread_ = nullptr;
     std::mutex mutex_;
-    std::mutex terminalMutex_;
     std::shared_mutex dlpSandboxDataMutex_;
     std::shared_mutex waterMarkInfoMutex_;
     std::condition_variable_any waterMarkInfoCv_;

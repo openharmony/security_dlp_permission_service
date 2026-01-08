@@ -1486,6 +1486,23 @@ HWTEST_F(DlpPermissionServiceTest, SetRetentionState002, TestSize.Level1)
 }
 
 /**
+ * @tc.name: SetRetentionState003
+ * @tc.desc: SetRetentionState test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionServiceTest, SetRetentionState003, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL, "SetRetentionState003");
+    std::vector<std::string> docUriVec;
+    docUriVec.push_back("hh");
+    int32_t ret = dlpPermissionService_->SetRetentionState(docUriVec);
+    ASSERT_EQ(ret, DLP_SERVICE_ERROR_VALUE_INVALID);
+    ret = dlpPermissionService_->CancelRetentionState(docUriVec);
+    ASSERT_EQ(ret, DLP_SERVICE_ERROR_VALUE_INVALID);
+}
+
+/**
  * @tc.name: GetRetentionSandboxList001
  * @tc.desc: GetRetentionSandboxList test
  * @tc.type: FUNC
@@ -1522,6 +1539,23 @@ HWTEST_F(DlpPermissionServiceTest, GetDLPFileVisitRecord001, TestSize.Level1)
     ret = dlpPermissionService_->GetDLPFileVisitRecord(infoVec);
     DlpPermissionServiceTest::isCheckSandbox = true;
     ASSERT_EQ(ret, DLP_SERVICE_ERROR_VALUE_INVALID);
+}
+
+/**
+ * @tc.name: GetDLPFileVisitRecord002
+ * @tc.desc: GetDLPFileVisitRecord test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionServiceTest, GetDLPFileVisitRecord002, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL, "GetDLPFileVisitRecord002");
+    auto appStateObserver = dlpPermissionService_->appStateObserver_;
+    DlpSandboxInfo sandboxInfo;
+    dlpPermissionService_->InsertDlpSandboxInfo(sandboxInfo, false, true);
+    std::vector<VisitedDLPFileInfo> infoVec;
+    int32_t ret = dlpPermissionService_->GetDLPFileVisitRecord(infoVec);
+    ASSERT_EQ(ret, DLP_SERVICE_ERROR_API_NOT_FOR_SANDBOX_ERROR);
 }
 
 /**
@@ -1728,4 +1762,63 @@ HWTEST_F(DlpPermissionServiceTest, GetWaterMark002, TestSize.Level1)
     sptr<IDlpPermissionCallback> callback2 = iface_cast<IDlpPermissionCallback>(callback->AsObject());
     int32_t res = dlpPermissionService_->GetWaterMark(true, callback2);
     EXPECT_NE(DLP_OK, res);
+}
+
+/**
+ * @tc.name: GetSandboxAppConfig001
+ * @tc.desc: GetSandboxAppConfig test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionServiceTest, GetSandboxAppConfig001, TestSize.Level1)
+{
+    DLP_LOG_DEBUG(LABEL, "GetSandboxAppConfig001");
+    std::string configInfo = "xxx:xxx";
+    int32_t res = dlpPermissionService_->SetSandboxAppConfig(configInfo);
+    EXPECT_EQ(res, DLP_SERVICE_ERROR_VALUE_INVALID);
+    res = dlpPermissionService_->GetSandboxAppConfig(configInfo);
+    EXPECT_EQ(res, DLP_SERVICE_ERROR_VALUE_INVALID);
+}
+
+/**
+ * @tc.name: GetDlpGatheringPolicy001
+ * @tc.desc: GetDlpGatheringPolicy test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionServiceTest, GetDlpGatheringPolicy001, TestSize.Level1)
+{
+    DLP_LOG_DEBUG(LABEL, "GetDlpGatheringPolicy001");
+    bool isGathering = false;
+    int32_t res = dlpPermissionService_->GetDlpGatheringPolicy(isGathering);
+    EXPECT_EQ(res, DLP_OK);
+}
+
+/**
+ * @tc.name: IsInDlpSandbox001
+ * @tc.desc: IsInDlpSandbox test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionServiceTest, IsInDlpSandbox001, TestSize.Level1)
+{
+    DLP_LOG_DEBUG(LABEL, "IsInDlpSandbox001");
+    bool inSandbox = false;
+    int32_t res = dlpPermissionService_->IsInDlpSandbox(inSandbox);
+    EXPECT_EQ(res, DLP_OK);
+}
+
+/**
+ * @tc.name: QueryDlpFileCopyableByTokenId001
+ * @tc.desc: QueryDlpFileCopyableByTokenId test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionServiceTest, QueryDlpFileCopyableByTokenId001, TestSize.Level1)
+{
+    DLP_LOG_DEBUG(LABEL, "QueryDlpFileCopyableByTokenId001");
+    bool copyable = false;
+    uint32_t tokenId = 1001;
+    int32_t res = dlpPermissionService_->QueryDlpFileCopyableByTokenId(copyable, tokenId);
+    EXPECT_EQ(res, DLP_SERVICE_ERROR_APPOBSERVER_ERROR);
 }

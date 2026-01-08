@@ -23,11 +23,13 @@
 #include "dlp_sandbox_info.h"
 #include "iremote_object.h"
 #include "retention_file_manager.h"
+#include "event_handler.h"
 
 namespace OHOS {
 namespace Security {
 namespace DlpPermission {
 using OHOS::AppExecFwk::RunningProcessInfo;
+enum class CurrentTaskState { IDLE, SHORT_TASK, LONG_TASK };
 class AppStateObserver : public AppExecFwk::ApplicationStateObserverStub {
 public:
     explicit AppStateObserver();
@@ -41,7 +43,7 @@ public:
     uint32_t EraseDlpSandboxInfo(int uid);
     bool CheckSandboxInfo(const std::string& bundleName, int32_t appIndex, int32_t userId);
     void DumpSandbox(int fd);
-    void ExitSaAfterAllDlpManagerDie();
+    int32_t ExitSaAfterAllDlpManagerDie();
     void GetOpeningReadOnlySandbox(const std::string& bundleName, int32_t userId, int32_t& appIndex);
     void AddCallbackListener(int32_t pid);
     bool RemoveCallbackListener(int32_t pid);
@@ -54,6 +56,9 @@ public:
     bool AddUriAndNotOwnerAndReadOnce(const std::string& uri, bool isNotOwnerAndReadOnce);
     bool GetNotOwnerAndReadOnceByUri(const std::string& uri, bool& isNotOwnerAndReadOnce);
     void EraseReadOnceUriInfoByUri(const std::string& uri);
+    std::mutex& GetTerminalMutex();
+    void PostDelayUnloadTask(CurrentTaskState newTaskState);
+
 private:
     void UninstallDlpSandbox(DlpSandboxInfo& appInfo);
     void UninstallAllDlpSandboxForUser(int32_t userId);
@@ -73,6 +78,7 @@ private:
     bool GetRunningProcessesInfo(std::vector<RunningProcessInfo>& infoVec);
     bool CanUninstallByGid(DlpSandboxInfo& appInfo, const AppExecFwk::ProcessData& processData);
     void OnDlpmanagerDied(const AppExecFwk::ProcessData& processData);
+    bool InitUnloadHandler();
 
     std::unordered_map<uint32_t, int32_t> tokenIdToUidMap_;
     std::mutex tokenIdToUidMapLock_;
@@ -85,6 +91,10 @@ private:
     sptr<AppExecFwk::AppMgrProxy> appProxy_ = nullptr;
     std::unordered_map<std::string, bool> readOnceUriMap_;
     std::mutex readOnceUriMapLock_;
+    std::mutex terminalMutex_;
+    std::shared_ptr<AppExecFwk::EventHandler> unloadHandler_ = nullptr;
+    CurrentTaskState taskState_;
+    std::mutex unloadHandlerMutex_;
 };
 }  // namespace DlpPermission
 }  // namespace Security
