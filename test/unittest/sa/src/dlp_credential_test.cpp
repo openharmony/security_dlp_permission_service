@@ -484,7 +484,7 @@ HWTEST_F(DlpCredentialTest, DlpCredentialTest011, TestSize.Level1)
 {
     DLP_RestorePolicyData outParams;
     sptr<IDlpPermissionCallback> stub = new (std::nothrow) DlpPermissionAsyncStubTest();
-    outParams.dataLen = DLP_RESTORE_POLICY_LEN + 1;
+    outParams.dataLen = DLP_RESTORE_POLICY_DATA_LEN + 1;
     PermissionPolicy policyInfo;
     unordered_json jsonObj;
 
@@ -511,7 +511,7 @@ HWTEST_F(DlpCredentialTest, DlpCredentialTest012, TestSize.Level1)
 {
     uint8_t *policy = (uint8_t *)HcMalloc(MALLOC_SIZE, MALLOC_VAL);
     uint32_t policyLen = MALLOC_SIZE;
-    srd::vector<std::string> appIdList;
+    std::vector<std::string> appIdList;
     int32_t res = ParseUint8TypedArrayToStringVector(policy, &policyLen, appIdList);
     EXPECT_EQ(DLP_OK, res);
     uint32_t appIdListNum = MAX_APPID_LIST_NUM + 1;
