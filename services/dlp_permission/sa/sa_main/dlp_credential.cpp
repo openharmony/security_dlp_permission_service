@@ -20,6 +20,7 @@
 #include <unordered_map>
 #include "account_adapt.h"
 #include "bundle_manager_adapter.h"
+#include "critical_handler.h"
 #include "dlp_policy_mgr_client.h"
 #include "dlp_permission.h"
 #include "dlp_permission_log.h"
@@ -151,6 +152,7 @@ static bool GetCallbackFromRequestMap(uint64_t requestId, RequestInfo& info)
     if (iter != g_requestMap.end()) {
         info = iter->second;
         g_requestMap.erase(requestId);
+        DecreaseCriticalCnt();
         return true;
     }
     DLP_LOG_ERROR(LABEL, "Callback not found");
@@ -165,6 +167,7 @@ static int32_t InsertCallbackToRequestMap(uint64_t requestId, const RequestInfo&
         return DLP_SERVICE_ERROR_CREDENTIAL_TASK_DUPLICATE;
     }
     g_requestMap[requestId] = info;
+    IncreaseCriticalCnt();
     return DLP_OK;
 }
 

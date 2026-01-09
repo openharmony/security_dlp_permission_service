@@ -79,6 +79,7 @@ private:
     bool CanUninstallByGid(DlpSandboxInfo& appInfo, const AppExecFwk::ProcessData& processData);
     void OnDlpmanagerDied(const AppExecFwk::ProcessData& processData);
     bool InitUnloadHandler();
+    void CheckHasBackgroundTask();
 
     std::unordered_map<uint32_t, int32_t> tokenIdToUidMap_;
     std::mutex tokenIdToUidMapLock_;

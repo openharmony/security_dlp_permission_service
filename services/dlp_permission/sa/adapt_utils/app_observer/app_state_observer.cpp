@@ -17,9 +17,10 @@
 #include <unistd.h>
 #include "account_adapt.h"
 #include "bundle_manager_adapter.h"
+#include "bundle_mgr_client.h"
+#include "critical_handler.h"
 #include "dlp_permission.h"
 #include "dlp_permission_log.h"
-#include "bundle_mgr_client.h"
 #include "dlp_sandbox_change_callback_manager.h"
 #include "open_dlp_file_callback_manager.h"
 #include "iservice_registry.h"
@@ -151,6 +152,16 @@ int32_t AppStateObserver::ExitSaAfterAllDlpManagerDie()
         DLP_LOG_INFO(LABEL, "UnloadSystemAbility successfully!");
     }
     return DLP_OK;
+}
+
+void AppStateObserver::CheckHasBackgroundTask()
+{
+    std::lock_guard<std::mutex> lock(userIdListLock_);
+    DLP_LOG_INFO(LABEL, "CheckHasBackgroundTask");
+    if (userIdList_.empty() && CallbackListenerEmpty()) {
+        DLP_LOG_INFO(LABEL, "all dlp manager app die, and callbacks are empty, SetHasBackgroundTask false");
+        SetHasBackgroundTask(false);
+    }
 }
 
 void AppStateObserver::EraseUserId(int32_t userId)
@@ -368,6 +379,7 @@ void AppStateObserver::OnDlpmanagerDied(const AppExecFwk::ProcessData& processDa
     DLP_LOG_INFO(LABEL, "%{public}s in userId %{public}d is died", processData.bundleName.c_str(), userId);
     UninstallAllDlpSandboxForUser(userId);
     EraseUserId(userId);
+    CheckHasBackgroundTask();
     DLP_LOG_INFO(LABEL, "PostDelayUnloadTask by OnDlpmanagerDied");
     PostDelayUnloadTask(CurrentTaskState::SHORT_TASK);
 }
@@ -400,6 +412,7 @@ void AppStateObserver::OnProcessDied(const AppExecFwk::ProcessData& processData)
     // if current died process is a listener
     if (RemoveCallbackListener(processData.pid)) {
         DLP_LOG_INFO(LABEL, "PostDelayUnloadTask by listener");
+        CheckHasBackgroundTask();
         PostDelayUnloadTask(CurrentTaskState::SHORT_TASK);
         return;
     }

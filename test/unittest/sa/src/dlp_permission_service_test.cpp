@@ -20,6 +20,8 @@
 #include "account_adapt.h"
 #include "app_uninstall_observer.h"
 #include "cert_parcel.h"
+#include "critical_handler.h"
+#include "critical_helper.h"
 #define private public
 #include "dlp_sandbox_change_callback_manager.h"
 #include "open_dlp_file_callback_manager.h"
@@ -1806,6 +1808,32 @@ HWTEST_F(DlpPermissionServiceTest, IsInDlpSandbox001, TestSize.Level1)
     bool inSandbox = false;
     int32_t res = dlpPermissionService_->IsInDlpSandbox(inSandbox);
     EXPECT_EQ(res, DLP_OK);
+}
+
+/**
+ * @tc.name: CriticalHelper001
+ * @tc.desc: CriticalHelper test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionServiceTest, CriticalHelper001, TestSize.Level1)
+{
+    DLP_LOG_DEBUG(LABEL, "CriticalHelper001");
+    NotifyProcessIsActive();
+    CriticalHelper criticalHelper("test");
+    EXPECT_EQ(GetCriticalCnt(), 1);
+    SetHasBackgroundTask(true);
+    EXPECT_EQ(GetHasBackgroundTask(), true);
+    SetHasBackgroundTask(true);
+    DecreaseCriticalCnt();
+    EXPECT_EQ(GetCriticalCnt(), 0);
+    SetHasBackgroundTask(false);
+    SetHasBackgroundTask(false);
+    SetHasBackgroundTask(true);
+    SetHasBackgroundTask(false);
+    EXPECT_EQ(GetCriticalCnt(), 0);
+    NotifyProcessIsStop();
+    EXPECT_EQ(GetCriticalCnt(), 0);
 }
 
 /**
