@@ -35,7 +35,7 @@ using namespace testing::ext;
 using namespace std;
 using json = nlohmann::json;
 namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel UNIT_TEST_LABEL = {LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "DlpFileOperatorTest"};
+static constexpr OHOS::HiviewDFX::HiLogLabel UT_LABEL = {LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "DlpFileOperatorTest"};
 static const std::string DLP_TEST_DIR = "/data/dlpOperatorTest/";
 
 static const std::string DEFAULT_CURRENT_ACCOUNT = "ohosAnonymousName";
@@ -61,11 +61,11 @@ void DlpFileOperatorTest::SetUpTestCase()
         if (errno == ENOENT) {
             int32_t ret = mkdir(DLP_TEST_DIR.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
             if (ret < 0) {
-                DLP_LOG_ERROR(UNIT_TEST_LABEL, "mkdir mount point failed errno %{public}d", errno);
+                DLP_LOG_ERROR(UT_LABEL, "mkdir mount point failed errno %{public}d", errno);
                 return;
             }
         } else {
-            DLP_LOG_ERROR(UNIT_TEST_LABEL, "get mount point failed errno %{public}d", errno);
+            DLP_LOG_ERROR(UT_LABEL, "get mount point failed errno %{public}d", errno);
             return;
         }
     }
@@ -92,10 +92,10 @@ static void GenerateRandStr(uint32_t len, std::string& res)
 {
     for (uint32_t i = 0; i < len; i++) {
         uint32_t index = GetRandNum() % ARRAY_CHAR_SIZE;
-        DLP_LOG_INFO(UNIT_TEST_LABEL, "%{public}u", index);
+        DLP_LOG_INFO(UT_LABEL, "%{public}u", index);
         res.push_back(CHAR_ARRAY[index]);
     }
-    DLP_LOG_INFO(UNIT_TEST_LABEL, "%{public}s", res.c_str());
+    DLP_LOG_INFO(UT_LABEL, "%{public}s", res.c_str());
 }
 
 static bool DeserializeEveryoneInfo(const json& policyJson, PermissionPolicy& policy)
@@ -280,7 +280,7 @@ static bool IsSameProperty(const PermissionPolicy& property, const PermissionPol
 */
 HWTEST_F(DlpFileOperatorTest, EnterpriseSpaceEncryptDlpFile001, TestSize.Level0)
 {
-    DLP_LOG_INFO(UNIT_TEST_LABEL, "EnterpriseSpaceEncryptDlpFile001");
+    DLP_LOG_INFO(UT_LABEL, "EnterpriseSpaceEncryptDlpFile001");
 
     g_plainFileFd = open(TEST_FILE, O_CREAT | O_RDWR | O_TRUNC, S_IRWXU | S_IRWXG | S_IRWXO);
     g_dlpFileFd = open(DLP_FILE, O_CREAT | O_RDWR | O_TRUNC, S_IRWXU | S_IRWXG | S_IRWXO);
@@ -336,7 +336,7 @@ HWTEST_F(DlpFileOperatorTest, EnterpriseSpaceEncryptDlpFile001, TestSize.Level0)
 */
 HWTEST_F(DlpFileOperatorTest, EnterpriseSpaceDecryptDlpFile001, TestSize.Level0)
 {
-    DLP_LOG_INFO(UNIT_TEST_LABEL, "EnterpriseSpaceDecryptDlpFile001");
+    DLP_LOG_INFO(UT_LABEL, "EnterpriseSpaceDecryptDlpFile001");
 
     g_plainFileFd = open(TEST_FILE, O_CREAT | O_RDWR | O_TRUNC, S_IRWXU | S_IRWXG | S_IRWXO);
     g_dlpFileFd = open(DLP_FILE, O_CREAT | O_RDWR | O_TRUNC, S_IRWXU | S_IRWXG | S_IRWXO);
@@ -402,7 +402,7 @@ HWTEST_F(DlpFileOperatorTest, EnterpriseSpaceDecryptDlpFile001, TestSize.Level0)
 */
 HWTEST_F(DlpFileOperatorTest, EnterpriseSpaceQueryDlpProperty001, TestSize.Level0)
 {
-    DLP_LOG_INFO(UNIT_TEST_LABEL, "EnterpriseSpaceQueryDlpProperty001");
+    DLP_LOG_INFO(UT_LABEL, "EnterpriseSpaceQueryDlpProperty001");
 
     g_plainFileFd = open(TEST_FILE, O_CREAT | O_RDWR | O_TRUNC, S_IRWXU | S_IRWXG | S_IRWXO);
     g_dlpFileFd = open(DLP_FILE, O_CREAT | O_RDWR | O_TRUNC, S_IRWXU | S_IRWXG | S_IRWXO);
@@ -455,7 +455,7 @@ HWTEST_F(DlpFileOperatorTest, EnterpriseSpaceQueryDlpProperty001, TestSize.Level
 */
 HWTEST_F(DlpFileOperatorTest, EnterpriseSpaceQueryDlpProperty002, TestSize.Level0)
 {
-    DLP_LOG_INFO(UNIT_TEST_LABEL, "EnterpriseSpaceQueryDlpProperty002");
+    DLP_LOG_INFO(UT_LABEL, "EnterpriseSpaceQueryDlpProperty002");
 
     g_plainFileFd = open(TEST_FILE, O_CREAT | O_RDWR | O_TRUNC, S_IRWXU | S_IRWXG | S_IRWXO);
     g_dlpFileFd = open(DLP_FILE, O_CREAT | O_RDWR | O_TRUNC, S_IRWXU | S_IRWXG | S_IRWXO);
@@ -513,7 +513,7 @@ HWTEST_F(DlpFileOperatorTest, EnterpriseSpaceQueryDlpProperty002, TestSize.Level
 */
 HWTEST_F(DlpFileOperatorTest, GetFileSuffix001, TestSize.Level0)
 {
-    DLP_LOG_INFO(UNIT_TEST_LABEL, "GetFileSuffix001");
+    DLP_LOG_INFO(UT_LABEL, "GetFileSuffix001");
 
     std::string validFileName = "test.txt";
     EXPECT_EQ(GetFileSuffix(validFileName), "txt");
