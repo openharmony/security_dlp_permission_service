@@ -473,6 +473,53 @@ HWTEST_F(DlpCredentialTest, DlpCredentialTest010, TestSize.Level1)
     EXPECT_EQ(nullptr, encPolicy.options.extraInfo);
     EXPECT_EQ(nullptr, encPolicy.receiverAccountInfo.accountId);
 }
+
+/**
+ * @tc.name: DlpCredentialTest011
+ * @tc.desc: SetPermissionPolicy test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpCredentialTest, DlpCredentialTest011, TestSize.Level1)
+{
+    DLP_RestorePolicyData outParams;
+    sptr<IDlpPermissionCallback> stub = new (std::nothrow) DlpPermissionAsyncStubTest();
+    outParams.dataLen = DLP_RESTORE_POLICY_LEN + 1;
+    PermissionPolicy policyInfo;
+    unordered_json jsonObj;
+
+    bool res = SetPermissionPolicy(&outParams, stub, policyInfo, jsonObj);
+    EXPECT_EQ(false, res);
+    outParams.data = nullptr;
+    outParams.dataLen = 0;
+    res = SetPermissionPolicy(&outParams, stub, policyInfo, jsonObj);
+    EXPECT_EQ(false, res);
+    outParams.data = (uint8_t *)HcMalloc(MALLOC_SIZE, MALLOC_VAL);
+    outParams.dataLen = MALLOC_SIZE;
+    res = SetPermissionPolicy(&outParams, stub, policyInfo, jsonObj);
+    EXPECT_EQ(false, res);
+    HcFree(outParams.data);
+}
+
+/**
+ * @tc.name: DlpCredentialTest012
+ * @tc.desc: ParseUint8TypedArrayToStringVector test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpCredentialTest, DlpCredentialTest012, TestSize.Level1)
+{
+    uint8_t *policy = (uint8_t *)HcMalloc(MALLOC_SIZE, MALLOC_VAL);
+    uint32_t policyLen = MALLOC_SIZE;
+    srd::vector<std::string> appIdList;
+    int32_t res = ParseUint8TypedArrayToStringVector(policy, &policyLen, appIdList);
+    EXPECT_EQ(DLP_OK, res);
+    uint32_t appIdListNum = MAX_APPID_LIST_NUM + 1;
+    (void)memcpy_s(policy, sizeof(appIdListNum), &appIdListNum, sizeof(appIdListNum));
+    res = ParseUint8TypedArrayToStringVector(policy, &policyLen, appIdList);
+    EXPECT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, res);
+}
+
 }  // namespace DlpPermission
 }  // namespace Security
 }  // namespace OHOS

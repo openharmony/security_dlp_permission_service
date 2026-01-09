@@ -22,7 +22,7 @@
 #include "c_mock_common.h"
 #include "nlohmann/json.hpp"
 #define private public
-#include "dlp_file_operator.h"
+#include "dlp_file_operator.cpp"
 #undef private
 #include "dlp_file_manager.h"
 #include "dlp_permission.h"
@@ -35,33 +35,8 @@ using namespace testing::ext;
 using namespace std;
 using json = nlohmann::json;
 namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "DlpFileOperatorTest"};
+static constexpr OHOS::HiviewDFX::HiLogLabel UNIT_TEST_LABEL = {LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "DlpFileOperatorTest"};
 static const std::string DLP_TEST_DIR = "/data/dlpOperatorTest/";
-
-static const std::string ACCOUNT_INDEX = "account";
-static const std::string ACCOUNT_TYPE = "accountType";
-static const std::string EDIT_INDEX = "edit";
-static const std::string ENC_ACCOUNT_TYPE = "accountType";
-static const std::string EVERYONE_INDEX = "everyone";
-static const std::string FC_INDEX = "fullCtrl";
-static const std::string NEED_ONLINE = "needOnline";
-static const std::string OWNER_ACCOUNT_NAME = "ownerAccountName";
-static const std::string OWNER_ACCOUNT = "ownerAccount";
-static const std::string OWNER_ACCOUNT_ID = "ownerAccountId";
-static const std::string OWNER_ACCOUNT_TYPE = "ownerAccountType";
-static const std::string AUTHUSER_LIST = "authUserList";
-static const std::string CONTACT_ACCOUNT = "contactAccount";
-static const std::string OFFLINE_ACCESS = "offlineAccess";
-static const std::string EVERYONE_ACCESS_LIST = "everyoneAccessList";
-static const std::string PERM_EXPIRY_TIME = "expireTime";
-static const std::string ACTION_UPON_EXPIRY = "actionUponExpiry";
-static const std::string POLICY_INDEX = "policy";
-static const std::string READ_INDEX = "read";
-static const std::string RIGHT_INDEX = "right";
-static const std::string CUSTOM_PROPERTY = "customProperty";
-static const std::string ALLOWED_OPEN_COUNT = "allowedOpenCount";
-static const std::string COUNTDOWN = "countdown";
-static const std::string FILEID = "fileId";
 
 static const std::string DEFAULT_CURRENT_ACCOUNT = "ohosAnonymousName";
 static const std::string DEFAULT_CUSTOM_PROPERTY = "customProperty";
@@ -86,11 +61,11 @@ void DlpFileOperatorTest::SetUpTestCase()
         if (errno == ENOENT) {
             int32_t ret = mkdir(DLP_TEST_DIR.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
             if (ret < 0) {
-                DLP_LOG_ERROR(LABEL, "mkdir mount point failed errno %{public}d", errno);
+                DLP_LOG_ERROR(UNIT_TEST_LABEL, "mkdir mount point failed errno %{public}d", errno);
                 return;
             }
         } else {
-            DLP_LOG_ERROR(LABEL, "get mount point failed errno %{public}d", errno);
+            DLP_LOG_ERROR(UNIT_TEST_LABEL, "get mount point failed errno %{public}d", errno);
             return;
         }
     }
@@ -117,10 +92,10 @@ static void GenerateRandStr(uint32_t len, std::string& res)
 {
     for (uint32_t i = 0; i < len; i++) {
         uint32_t index = GetRandNum() % ARRAY_CHAR_SIZE;
-        DLP_LOG_INFO(LABEL, "%{public}u", index);
+        DLP_LOG_INFO(UNIT_TEST_LABEL, "%{public}u", index);
         res.push_back(CHAR_ARRAY[index]);
     }
-    DLP_LOG_INFO(LABEL, "%{public}s", res.c_str());
+    DLP_LOG_INFO(UNIT_TEST_LABEL, "%{public}s", res.c_str());
 }
 
 static bool DeserializeEveryoneInfo(const json& policyJson, PermissionPolicy& policy)
@@ -305,7 +280,7 @@ static bool IsSameProperty(const PermissionPolicy& property, const PermissionPol
 */
 HWTEST_F(DlpFileOperatorTest, EnterpriseSpaceEncryptDlpFile001, TestSize.Level0)
 {
-    DLP_LOG_INFO(LABEL, "EnterpriseSpaceEncryptDlpFile001");
+    DLP_LOG_INFO(UNIT_TEST_LABEL, "EnterpriseSpaceEncryptDlpFile001");
 
     g_plainFileFd = open(TEST_FILE, O_CREAT | O_RDWR | O_TRUNC, S_IRWXU | S_IRWXG | S_IRWXO);
     g_dlpFileFd = open(DLP_FILE, O_CREAT | O_RDWR | O_TRUNC, S_IRWXU | S_IRWXG | S_IRWXO);
@@ -361,7 +336,7 @@ HWTEST_F(DlpFileOperatorTest, EnterpriseSpaceEncryptDlpFile001, TestSize.Level0)
 */
 HWTEST_F(DlpFileOperatorTest, EnterpriseSpaceDecryptDlpFile001, TestSize.Level0)
 {
-    DLP_LOG_INFO(LABEL, "EnterpriseSpaceDecryptDlpFile001");
+    DLP_LOG_INFO(UNIT_TEST_LABEL, "EnterpriseSpaceDecryptDlpFile001");
 
     g_plainFileFd = open(TEST_FILE, O_CREAT | O_RDWR | O_TRUNC, S_IRWXU | S_IRWXG | S_IRWXO);
     g_dlpFileFd = open(DLP_FILE, O_CREAT | O_RDWR | O_TRUNC, S_IRWXU | S_IRWXG | S_IRWXO);
@@ -427,7 +402,7 @@ HWTEST_F(DlpFileOperatorTest, EnterpriseSpaceDecryptDlpFile001, TestSize.Level0)
 */
 HWTEST_F(DlpFileOperatorTest, EnterpriseSpaceQueryDlpProperty001, TestSize.Level0)
 {
-    DLP_LOG_INFO(LABEL, "EnterpriseSpaceQueryDlpProperty001");
+    DLP_LOG_INFO(UNIT_TEST_LABEL, "EnterpriseSpaceQueryDlpProperty001");
 
     g_plainFileFd = open(TEST_FILE, O_CREAT | O_RDWR | O_TRUNC, S_IRWXU | S_IRWXG | S_IRWXO);
     g_dlpFileFd = open(DLP_FILE, O_CREAT | O_RDWR | O_TRUNC, S_IRWXU | S_IRWXG | S_IRWXO);
@@ -480,7 +455,7 @@ HWTEST_F(DlpFileOperatorTest, EnterpriseSpaceQueryDlpProperty001, TestSize.Level
 */
 HWTEST_F(DlpFileOperatorTest, EnterpriseSpaceQueryDlpProperty002, TestSize.Level0)
 {
-    DLP_LOG_INFO(LABEL, "EnterpriseSpaceQueryDlpProperty002");
+    DLP_LOG_INFO(UNIT_TEST_LABEL, "EnterpriseSpaceQueryDlpProperty002");
 
     g_plainFileFd = open(TEST_FILE, O_CREAT | O_RDWR | O_TRUNC, S_IRWXU | S_IRWXG | S_IRWXO);
     g_dlpFileFd = open(DLP_FILE, O_CREAT | O_RDWR | O_TRUNC, S_IRWXU | S_IRWXG | S_IRWXO);
@@ -529,6 +504,23 @@ HWTEST_F(DlpFileOperatorTest, EnterpriseSpaceQueryDlpProperty002, TestSize.Level
     bool res = IsSameProperty(inputPolicy, resultPolicy);
     EXPECT_EQ(res, true);
     close(g_dlpFileFd);
+}
+/**
+* @tc.name: GetFileSuffix001
+* @tc.desc: test GetFileSuffix
+* @tc.type: FUNC
+* @tc.require:
+*/
+HWTEST_F(DlpFileOperatorTest, GetFileSuffix001, TestSize.Level0)
+{
+    DLP_LOG_INFO(UNIT_TEST_LABEL, "GetFileSuffix001");
+
+    std::string validFileName = "test.txt";
+    EXPECT_EQ(GetFileSuffix(validFileName), "txt");
+    std::string invalidFileName = "test";
+    EXPECT_EQ(GetFileSuffix(invalidFileName), DEFAULT_STRING);
+    std::string cert = "test";
+    EXPECT_EQ(GetAccountTypeFromCert(cert), INVALID_ACCOUNT);
 }
 
 }  // namespace DlpPermission

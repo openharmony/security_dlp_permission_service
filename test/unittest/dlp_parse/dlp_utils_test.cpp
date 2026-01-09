@@ -26,7 +26,7 @@
 #include "dlp_file_manager.h"
 #include "dlp_permission.h"
 #include "dlp_permission_log.h"
-#include "dlp_utils.h"
+#include "dlp_utils.cpp"
 #include "c_mock_common.h"
 
 using namespace testing::ext;
@@ -34,7 +34,7 @@ using namespace OHOS::Security::DlpPermission;
 using namespace std;
 
 namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "DlpUtilsTest"};
+static constexpr OHOS::HiviewDFX::HiLogLabel UNIT_TEST_LABEL = {LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "DlpUtilsTest"};
 static const std::string DEFAULT_STRINGS = "";
 static const int32_t DEFAULT_USERID = 100;
 static const std::string TXT_STRINGS = "txt";
@@ -60,7 +60,7 @@ void DlpUtilsTest::TearDown() {}
  */
 HWTEST_F(DlpUtilsTest, GetBundleMgrProxy, TestSize.Level0)
 {
-    DLP_LOG_INFO(LABEL, "GetBundleMgrProxy");
+    DLP_LOG_INFO(UNIT_TEST_LABEL, "GetBundleMgrProxy");
     auto bundleMgrProxy = DlpUtils::GetBundleMgrProxy();
     if (bundleMgrProxy == nullptr) {
         ASSERT_EQ(bundleMgrProxy, nullptr);
@@ -77,7 +77,7 @@ HWTEST_F(DlpUtilsTest, GetBundleMgrProxy, TestSize.Level0)
  */
 HWTEST_F(DlpUtilsTest, GetAuthPolicyWithType, TestSize.Level0)
 {
-    DLP_LOG_INFO(LABEL, "GetAuthPolicyWithType");
+    DLP_LOG_INFO(UNIT_TEST_LABEL, "GetAuthPolicyWithType");
     std::vector<std::string> authPolicy;
     std::string fileType = "txt";
     DlpUtils::GetAuthPolicyWithType(DLP_AUTH_POLICY, fileType, authPolicy);
@@ -102,7 +102,7 @@ HWTEST_F(DlpUtilsTest, GetAuthPolicyWithType, TestSize.Level0)
  */
 HWTEST_F(DlpUtilsTest, GetFileTypeBySuffix, TestSize.Level0)
 {
-    DLP_LOG_INFO(LABEL, "GetFileTypeBySuffix");
+    DLP_LOG_INFO(UNIT_TEST_LABEL, "GetFileTypeBySuffix");
     std::string fileType = "txt";
     DlpUtils::GetFileTypeBySuffix(fileType, true);
     fileType = "pdf";
@@ -131,7 +131,7 @@ HWTEST_F(DlpUtilsTest, GetFileTypeBySuffix, TestSize.Level0)
  */
 HWTEST_F(DlpUtilsTest, GetDlpFileRealSuffix, TestSize.Level0)
 {
-    DLP_LOG_INFO(LABEL, "GetDlpFileRealSuffix");
+    DLP_LOG_INFO(UNIT_TEST_LABEL, "GetDlpFileRealSuffix");
     bool isFromUriName = true;
     std::string fileType = "txt";
     DlpUtils::GetDlpFileRealSuffix(fileType, isFromUriName);
@@ -162,7 +162,7 @@ HWTEST_F(DlpUtilsTest, GetDlpFileRealSuffix, TestSize.Level0)
  */
 HWTEST_F(DlpUtilsTest, GetFileNameWithFd, TestSize.Level0)
 {
-    DLP_LOG_INFO(LABEL, "GetFileNameWithFd");
+    DLP_LOG_INFO(UNIT_TEST_LABEL, "GetFileNameWithFd");
     std::string fileName;
     int32_t fd = 0;
     DlpUtils::GetFileNameWithFd(fd, fileName);
@@ -186,7 +186,7 @@ HWTEST_F(DlpUtilsTest, GetFileNameWithFd, TestSize.Level0)
  */
 HWTEST_F(DlpUtilsTest, GetFileNameWithDlpFd, TestSize.Level0)
 {
-    DLP_LOG_INFO(LABEL, "GetFileNameWithDlpFd");
+    DLP_LOG_INFO(UNIT_TEST_LABEL, "GetFileNameWithDlpFd");
     std::string fileName;
     int32_t fd = 0;
     DlpUtils::GetFileNameWithDlpFd(fd, fileName);
@@ -210,7 +210,7 @@ HWTEST_F(DlpUtilsTest, GetFileNameWithDlpFd, TestSize.Level0)
  */
 HWTEST_F(DlpUtilsTest, GetRealTypeWithRawFile, TestSize.Level0)
 {
-    DLP_LOG_INFO(LABEL, "GetRealTypeWithRawFile");
+    DLP_LOG_INFO(UNIT_TEST_LABEL, "GetRealTypeWithRawFile");
     int32_t fd = 0;
     DlpUtils::GetRealTypeWithRawFile(fd);
     fd = 1;
@@ -233,7 +233,7 @@ HWTEST_F(DlpUtilsTest, GetRealTypeWithRawFile, TestSize.Level0)
  */
 HWTEST_F(DlpUtilsTest, GetFilePathWithFd, TestSize.Level0)
 {
-    DLP_LOG_INFO(LABEL, "GetFilePathWithFd");
+    DLP_LOG_INFO(UNIT_TEST_LABEL, "GetFilePathWithFd");
     std::string srcFilePath;
     int32_t fd = 0;
     DlpUtils::GetFilePathWithFd(fd, srcFilePath);
@@ -253,7 +253,7 @@ HWTEST_F(DlpUtilsTest, GetFilePathWithFd, TestSize.Level0)
  */
 HWTEST_F(DlpUtilsTest, GetRealTypeWithFd001, TestSize.Level0)
 {
-    DLP_LOG_INFO(LABEL, "GetRealTypeWithFd001");
+    DLP_LOG_INFO(UNIT_TEST_LABEL, "GetRealTypeWithFd001");
 
     int fd = open("/data/fuse_test.txt.dlp", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
     ASSERT_NE(fd, -1);
@@ -283,7 +283,7 @@ HWTEST_F(DlpUtilsTest, GetRealTypeWithFd001, TestSize.Level0)
  */
 HWTEST_F(DlpUtilsTest, GetRealTypeWithFd002, TestSize.Level0)
 {
-    DLP_LOG_INFO(LABEL, "GetRealTypeWithFd002");
+    DLP_LOG_INFO(UNIT_TEST_LABEL, "GetRealTypeWithFd002");
     int fd = open("/data/fuse_test.txt.dlp", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
     ASSERT_NE(fd, -1);
     struct DlpHeader header = {
@@ -312,7 +312,7 @@ HWTEST_F(DlpUtilsTest, GetRealTypeWithFd002, TestSize.Level0)
  */
 HWTEST_F(DlpUtilsTest, GetRealTypeWithFd003, TestSize.Level0)
 {
-    DLP_LOG_INFO(LABEL, "GetRealTypeWithFd003");
+    DLP_LOG_INFO(UNIT_TEST_LABEL, "GetRealTypeWithFd003");
     int fd = open("/data/fuse_test.txt.dlp", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
     ASSERT_NE(fd, -1);
     struct DlpHeader header = {
@@ -341,7 +341,7 @@ HWTEST_F(DlpUtilsTest, GetRealTypeWithFd003, TestSize.Level0)
  */
 HWTEST_F(DlpUtilsTest, GetRealTypeWithFd004, TestSize.Level0)
 {
-    DLP_LOG_INFO(LABEL, "GetRealTypeWithFd004");
+    DLP_LOG_INFO(UNIT_TEST_LABEL, "GetRealTypeWithFd004");
     int fd = open("/data/fuse_test.txt.dlp", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
     ASSERT_NE(fd, -1);
     struct DlpHeader header = {
@@ -370,7 +370,7 @@ HWTEST_F(DlpUtilsTest, GetRealTypeWithFd004, TestSize.Level0)
  */
 HWTEST_F(DlpUtilsTest, GetRealTypeWithFd005, TestSize.Level0)
 {
-    DLP_LOG_INFO(LABEL, "GetRealTypeWithFd004");
+    DLP_LOG_INFO(UNIT_TEST_LABEL, "GetRealTypeWithFd004");
     int fd = open("/data/fuse_test.txt.dlp", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
     ASSERT_NE(fd, -1);
     struct DlpHeader header = {
@@ -399,7 +399,7 @@ HWTEST_F(DlpUtilsTest, GetRealTypeWithFd005, TestSize.Level0)
  */
 HWTEST_F(DlpUtilsTest, GetRawFileAllowedOpenCount01, TestSize.Level0)
 {
-    DLP_LOG_INFO(LABEL, "GetRawFileAllowedOpenCount01");
+    DLP_LOG_INFO(UNIT_TEST_LABEL, "GetRawFileAllowedOpenCount01");
     int fd = open("/data/fuse_test.txt.dlp", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
     ASSERT_NE(fd, -1);
     uint8_t buffer[FILEID_SIZE] = {0};
@@ -422,7 +422,7 @@ HWTEST_F(DlpUtilsTest, GetRawFileAllowedOpenCount01, TestSize.Level0)
  */
 HWTEST_F(DlpUtilsTest, GetRawFileAllowedOpenCount02, TestSize.Level0)
 {
-    DLP_LOG_INFO(LABEL, "GetRawFileAllowedOpenCount02");
+    DLP_LOG_INFO(UNIT_TEST_LABEL, "GetRawFileAllowedOpenCount02");
     int fd = open("/data/fuse_test.txt.dlp", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
     ASSERT_NE(fd, -1);
     uint8_t buffer[FILEID_SIZE] = {0};
@@ -445,7 +445,7 @@ HWTEST_F(DlpUtilsTest, GetRawFileAllowedOpenCount02, TestSize.Level0)
  */
 HWTEST_F(DlpUtilsTest, GetRawFileAllowedOpenCount03, TestSize.Level0)
 {
-    DLP_LOG_INFO(LABEL, "GetRawFileAllowedOpenCount03");
+    DLP_LOG_INFO(UNIT_TEST_LABEL, "GetRawFileAllowedOpenCount03");
     int fd = open("/data/fuse_test.txt.dlp", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
     ASSERT_NE(fd, -1);
     uint8_t buffer[FILEID_SIZE_VALID] = {0};
@@ -552,7 +552,7 @@ HWTEST_F(DlpUtilsTest, GetAppIdentifierByAppId, TestSize.Level1)
  */
 HWTEST_F(DlpUtilsTest, GetFilePathByFd001, TestSize.Level0)
 {
-    DLP_LOG_INFO(LABEL, "GetFilePathByFd001");
+    DLP_LOG_INFO(UNIT_TEST_LABEL, "GetFilePathByFd001");
     std::string filePath;
     int32_t fd = 0;
     ASSERT_EQ(DlpUtils::GetFilePathByFd(fd, filePath), DLP_OK);
@@ -566,10 +566,39 @@ HWTEST_F(DlpUtilsTest, GetFilePathByFd001, TestSize.Level0)
  */
 HWTEST_F(DlpUtilsTest, GetExtractRealType001, TestSize.Level0)
 {
-    DLP_LOG_INFO(LABEL, "GetExtractRealType001");
+    DLP_LOG_INFO(UNIT_TEST_LABEL, "GetExtractRealType001");
     std::string typeStr1 = "_txt";
     std::string typeStr2 = "txt";
     std::string reslTypeStr = "txt";
     ASSERT_EQ(DlpUtils::GetExtractRealType(typeStr1), reslTypeStr);
     ASSERT_EQ(DlpUtils::GetExtractRealType(typeStr2), reslTypeStr);
+}
+
+/**
+ * @tc.name: GetFileContent001
+ * @tc.desc: test GetFileContent
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpUtilsTest, GetFileContent001, TestSize.Level0)
+{
+    DLP_LOG_INFO(UNIT_TEST_LABEL, "GetFileContent001");
+    std::string invalidPath = "";
+    ASSERT_EQ(GetFileContent(invalidPath), DEFAULT_STRINGS);
+    std::string validPath = "test";
+    ASSERT_EQ(GetFileContent(validPath), DEFAULT_STRINGS);
+    RemoveCachePath(validPath)
+}
+
+/**
+ * @tc.name: GetGenerateInfoStr001
+ * @tc.desc: test GetGenerateInfoStr
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpUtilsTest, GetGenerateInfoStr001, TestSize.Level0)
+{
+    DLP_LOG_INFO(UNIT_TEST_LABEL, "GetGenerateInfoStr001");
+    int32_t fd = 0;
+    ASSERT_EQ(GetGenerateInfoStr(fd), DEFAULT_STRINGS);
 }
