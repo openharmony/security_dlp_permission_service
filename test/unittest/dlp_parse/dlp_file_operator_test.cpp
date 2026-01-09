@@ -35,7 +35,8 @@ using namespace testing::ext;
 using namespace std;
 using json = nlohmann::json;
 namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel UT_LABEL = {LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "DlpFileOperatorTest"};
+static constexpr unsigned int DLP_PERMISSION_DOMAIN = 0xD005A04;
+static constexpr OHOS::HiviewDFX::HiLogLabel UT_LABEL = {LOG_CORE, DLP_PERMISSION_DOMAIN, "DlpFileOperatorTest"};
 static const std::string DLP_TEST_DIR = "/data/dlpOperatorTest/";
 
 static const std::string DEFAULT_CURRENT_ACCOUNT = "ohosAnonymousName";
