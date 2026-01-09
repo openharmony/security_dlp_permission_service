@@ -584,7 +584,7 @@ HWTEST_F(DlpUtilsTest, GetFileContent001, TestSize.Level0)
     ASSERT_EQ(GetFileContent(invalidPath), DEFAULT_STRINGS);
     std::string validPath = "test";
     ASSERT_EQ(GetFileContent(validPath), DEFAULT_STRINGS);
-    RemoveCachePath(validPath)
+    RemoveCachePath(validPath);
 }
 
 /**
