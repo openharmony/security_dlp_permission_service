@@ -23,6 +23,7 @@ sequenceable dlp_permission_info_parcel..OHOS.Security.DlpPermission.DLPPermissi
 sequenceable retention_sandbox_info..OHOS.Security.DlpPermission.RetentionSandBoxInfo;
 sequenceable visited_dlp_file_info..OHOS.Security.DlpPermission.VisitedDLPFileInfo;
 sequenceable permission_policy..OHOS.Security.DlpPermission.SandboxInfo;
+sequenceable permission_policy..OHOS.Security.DlpPermission.FileInfo;
 interface OHOS.Security.DlpPermission.IDlpPermissionCallback;
 
 interface OHOS.Security.DlpPermission.IDlpPermissionService {
@@ -73,5 +74,5 @@ interface OHOS.Security.DlpPermission.IDlpPermissionService {
     void GetMDMPolicy([out] String[] appIdList);
     void RemoveMDMPolicy();
     void SetEnterprisePolicy([in] String policy);
-    void SetNotOwnerAndReadOnce([in] String uri, [in] boolean isNotOwnerAndReadOnce);
+    void SetFileInfo([in] String uri, [in] FileInfo fileInfo);
 }

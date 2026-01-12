@@ -76,6 +76,7 @@ const std::string ENC_DATA = "encData";
 const std::string EXTRA_INFO_LEN = "extraInfoLen";
 const std::string EXTRA_INFO = "extraInfo";
 const std::string ENC_POLICY = "encPolicy";
+const std::string WATERMARK_NAME = "dlpwatermark";
 static int32_t g_userId = 100;
 static const uint8_t ARRAY_CHAR_SIZE = 62;
 static const char CHAR_ARRAY[] = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -1033,14 +1034,16 @@ HWTEST_F(DlpPermissionServiceTest, InsertDlpSandboxInfo001, TestSize.Level1)
 {
     auto appStateObserver = dlpPermissionService_->appStateObserver_;
     DlpSandboxInfo sandboxInfo;
-    dlpPermissionService_->InsertDlpSandboxInfo(sandboxInfo, false, true);
+    FileInfo fileInfo;
+    fileInfo.isNotOwnerAndReadOnce = true;
+    dlpPermissionService_->InsertDlpSandboxInfo(sandboxInfo, false, fileInfo);
     std::string bundleName;
     int32_t appIndex = 111;
     int32_t userId = 111;
     ASSERT_TRUE(0 == dlpPermissionService_->DeleteDlpSandboxInfo(bundleName, appIndex, userId));
     dlpPermissionService_->appStateObserver_ = appStateObserver;
-
-    dlpPermissionService_->InsertDlpSandboxInfo(sandboxInfo, true, false);
+    fileInfo.isNotOwnerAndReadOnce = false;
+    dlpPermissionService_->InsertDlpSandboxInfo(sandboxInfo, true, fileInfo);
 }
 
 /**
@@ -1554,7 +1557,9 @@ HWTEST_F(DlpPermissionServiceTest, GetDLPFileVisitRecord002, TestSize.Level1)
     DLP_LOG_INFO(LABEL, "GetDLPFileVisitRecord002");
     auto appStateObserver = dlpPermissionService_->appStateObserver_;
     DlpSandboxInfo sandboxInfo;
-    dlpPermissionService_->InsertDlpSandboxInfo(sandboxInfo, false, true);
+    FileInfo fileInfo;
+    fileInfo.isNotOwnerAndReadOnce = true;
+    dlpPermissionService_->InsertDlpSandboxInfo(sandboxInfo, false, fileInfo);
     std::vector<VisitedDLPFileInfo> infoVec;
     int32_t ret = dlpPermissionService_->GetDLPFileVisitRecord(infoVec);
     ASSERT_EQ(ret, DLP_SERVICE_ERROR_API_NOT_FOR_SANDBOX_ERROR);
@@ -1686,25 +1691,28 @@ HWTEST_F(DlpPermissionServiceTest, IsDLPFeatureProvided, TestSize.Level1)
 }
 
 /**
- * @tc.name: SetNotOwnerAndReadOnce
- * @tc.desc: SetNotOwnerAndReadOnce test
+ * @tc.name: SetFileInfo
+ * @tc.desc: SetFileInfo test
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpPermissionServiceTest, SetNotOwnerAndReadOnce, TestSize.Level1)
+HWTEST_F(DlpPermissionServiceTest, SetFileInfo, TestSize.Level1)
 {
-    DLP_LOG_DEBUG(LABEL, "SetNotOwnerAndReadOnce");
+    DLP_LOG_DEBUG(LABEL, "SetFileInfo");
+    FileInfo fileInfo;
+    fileInfo.isNotOwnerAndReadOnce = true;
     std::string uri = "";
-    int32_t ret = dlpPermissionService_->SetNotOwnerAndReadOnce(uri, true);
+    int32_t ret = dlpPermissionService_->SetFileInfo(uri, fileInfo);
     ASSERT_EQ(ret, DLP_SERVICE_ERROR_URI_EMPTY);
     uri = "uri";
-    ret = dlpPermissionService_->SetNotOwnerAndReadOnce(uri, false);
+    fileInfo.isNotOwnerAndReadOnce = false;
+    ret = dlpPermissionService_->SetFileInfo(uri, fileInfo);
     ASSERT_EQ(ret, DLP_OK);
 }
 
 /**
  * @tc.name: SetWaterMark001
- * @tc.desc: SetNotOwnerAndReadOnce test
+ * @tc.desc: SetWaterMark test
  * @tc.type: FUNC
  * @tc.require:
  */
@@ -1713,7 +1721,11 @@ HWTEST_F(DlpPermissionServiceTest, SetWaterMark001, TestSize.Level1)
     DLP_LOG_DEBUG(LABEL, "SetWaterMark001");
     const int32_t pid = 1234;
     int32_t ret = dlpPermissionService_->SetWaterMark(pid);
-    ASSERT_EQ(ret, DLP_OK);
+    if (ret != DLP_OK) {
+        ASSERT_EQ(ret, DLP_SERVICE_ERROR_GET_ACCOUNT_FAIL);
+    } else {
+        ASSERT_EQ(ret, DLP_OK);
+    }
 }
 
 /**
@@ -1849,4 +1861,34 @@ HWTEST_F(DlpPermissionServiceTest, QueryDlpFileCopyableByTokenId001, TestSize.Le
     uint32_t tokenId = 1001;
     int32_t res = dlpPermissionService_->QueryDlpFileCopyableByTokenId(copyable, tokenId);
     EXPECT_EQ(res, DLP_SERVICE_ERROR_APPOBSERVER_ERROR);
+}
+
+/**
+ * @tc.name: CheckWaterMarkInfo001
+ * @tc.desc: CheckWaterMarkInfo test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionServiceTest, CheckWaterMarkInfo001, TestSize.Level1)
+{
+    int32_t res = dlpPermissionService_->CheckWaterMarkInfo();
+    ASSERT_NE(DLP_OK, res);
+    dlpPermissionService_->waterMarkInfo_.accountName = WATERMARK_NAME;
+    res = dlpPermissionService_->CheckWaterMarkInfo();
+    ASSERT_NE(DLP_OK, res);
+}
+
+/**
+ * @tc.name: ChangeWaterMarkInfo001
+ * @tc.desc: ChangeWaterMarkInfo test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionServiceTest, ChangeWaterMarkInfo001, TestSize.Level1)
+{
+    int32_t res = dlpPermissionService_->ChangeWaterMarkInfo();
+    ASSERT_NE(DLP_OK, res);
+    dlpPermissionService_->waterMarkInfo_.accountName = WATERMARK_NAME;
+    res = dlpPermissionService_->ChangeWaterMarkInfo();
+    ASSERT_NE(DLP_OK, res);
 }

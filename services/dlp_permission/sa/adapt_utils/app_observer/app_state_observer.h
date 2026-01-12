@@ -53,11 +53,13 @@ public:
     bool GetOpeningSandboxInfo(const std::string& bundleName, const std::string& uri,
         int32_t userId, SandboxInfo& sandboxInfo);
     void SetAppProxy(const sptr<AppExecFwk::AppMgrProxy>& appProxy);
-    bool AddUriAndNotOwnerAndReadOnce(const std::string& uri, bool isNotOwnerAndReadOnce);
-    bool GetNotOwnerAndReadOnceByUri(const std::string& uri, bool& isNotOwnerAndReadOnce);
-    void EraseReadOnceUriInfoByUri(const std::string& uri);
+    bool AddUriAndFileInfo(const std::string& uri, const FileInfo& fileInfo);
+    bool GetFileInfoByUri(const std::string& uri, FileInfo& fileInfo);
+    void EraseFileInfoByUri(const std::string& uri);
     std::mutex& GetTerminalMutex();
     void PostDelayUnloadTask(CurrentTaskState newTaskState);
+    void DecWatermarkName(const DlpSandboxInfo& appInfo);
+    void AddWatermarkName(const DlpSandboxInfo& appInfo);
 
 private:
     void UninstallDlpSandbox(DlpSandboxInfo& appInfo);
@@ -90,12 +92,13 @@ private:
     std::map<int32_t, int32_t> callbackList_;
     std::mutex callbackListLock_;
     sptr<AppExecFwk::AppMgrProxy> appProxy_ = nullptr;
-    std::unordered_map<std::string, bool> readOnceUriMap_;
-    std::mutex readOnceUriMapLock_;
+    std::unordered_map<std::string, FileInfo> fileInfoUriMap_;
+    std::mutex fileInfoUriMapLock_;
     std::mutex terminalMutex_;
     std::shared_ptr<AppExecFwk::EventHandler> unloadHandler_ = nullptr;
     CurrentTaskState taskState_;
     std::mutex unloadHandlerMutex_;
+    std::unordered_map<std::string, int> watermarkMap_;
 };
 }  // namespace DlpPermission
 }  // namespace Security

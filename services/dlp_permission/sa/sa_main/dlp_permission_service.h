@@ -105,10 +105,10 @@ public:
     int Dump(int fd, const std::vector<std::u16string>& args) override;
     int32_t SetDlpFeature(const uint32_t dlpFeatureInfo, bool& statusSetInfo) override;
     int32_t SetEnterprisePolicy(const std::string& policy) override;
-    int32_t SetNotOwnerAndReadOnce(const std::string& uri, bool isNotOwnerAndReadOnce) override;
+    int32_t SetFileInfo(const std::string& uri, const FileInfo& fileInfo) override;
 
 private:
-    bool InsertDlpSandboxInfo(DlpSandboxInfo& sandboxInfo, bool hasRetention, bool isNotOwnerAndReadOnce);
+    bool InsertDlpSandboxInfo(DlpSandboxInfo& sandboxInfo, bool hasRetention, const FileInfo& fileInfo);
     uint32_t DeleteDlpSandboxInfo(const std::string& bundleName, int32_t appIndex, int32_t userId);
     bool GetCallerBundleName(const uint32_t tokenId, std::string& bundleName);
     bool RemoveRetentionInfo(std::vector<RetentionSandBoxInfo>& retentionSandBoxInfoVec, RetentionInfo& info);
@@ -123,6 +123,7 @@ private:
     int32_t CheckWaterMarkInfo();
     int32_t InstallSandboxApp(const std::string& bundleName, DLPFileAccess dlpFileAccess, int32_t userId,
         DlpSandboxInfo& dlpSandboxInfo);
+    int32_t ChangeWaterMarkInfo();
 
     std::atomic<int32_t> repeatTime_;
     std::shared_ptr<std::thread> thread_ = nullptr;

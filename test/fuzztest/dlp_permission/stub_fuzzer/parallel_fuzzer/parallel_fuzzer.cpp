@@ -383,9 +383,10 @@ static void CallInterfaceByIndexEighth(FuzzedDataProvider& fdp, int index)
             break;
         }
         case DlpPermissionServiceMethod::SET_NOT_OWNER_AND_READ_ONCE: {
+            FileInfo fileInfo;
             std::string uri = ConsumeString(fdp);
-            bool isNotOwnerAndReadOnce = fdp.ConsumeBool();
-            service->SetNotOwnerAndReadOnce(uri, isNotOwnerAndReadOnce);
+            fileInfo.isNotOwnerAndReadOnce = fdp.ConsumeBool();
+            service->SetFileInfo(uri, fileInfo);
             break;
         }
         default:

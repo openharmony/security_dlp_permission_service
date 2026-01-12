@@ -176,10 +176,13 @@ static void ClientFuzzTest(const uint8_t* data, size_t size)
         std::make_shared<ClientGenerateDlpCertificateCallback>();
     DlpPermissionClient::GetInstance().GenerateDlpCertificate(policy, callback1);
 
+    FileInfo fileInfo;
+    fileInfo.isNotOwnerAndReadOnce = true;
     std::string uri = "";
-    (void)DlpPermissionClient::GetInstance().SetNotOwnerAndReadOnce(uri, true);
+    (void)DlpPermissionClient::GetInstance().SetFileInfo(uri, fileInfo);
     uri = "uri";
-    (void)DlpPermissionClient::GetInstance().SetNotOwnerAndReadOnce(uri, false);
+    fileInfo.isNotOwnerAndReadOnce = false;
+    (void)DlpPermissionClient::GetInstance().SetFileInfo(uri, fileInfo);
 
     sptr<IRemoteObject> remoteObject;
     DlpPermissionClient::GetInstance().GetProxyFromRemoteObject(nullptr);

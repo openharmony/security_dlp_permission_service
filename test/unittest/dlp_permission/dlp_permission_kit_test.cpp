@@ -1534,6 +1534,23 @@ HWTEST_F(DlpPermissionKitTest, SandboxInfo004, TestSize.Level0)
 }
 
 /* *
+ * @tc.name: FileInfo002
+ * @tc.desc: FileInfo.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionKitTest, FileInfo002, TestSize.Level0)
+{
+    DLP_LOG_DEBUG(LABEL, "FileInfo002.");
+    Parcel parcel;
+    FileInfo info;
+    bool ret = info.Marshalling(parcel);
+    ASSERT_EQ(true, ret);
+    auto out = info.Unmarshalling(parcel);
+    ASSERT_NE(nullptr, out);
+}
+
+/* *
  * @tc.name: SetRetentionState004
  * @tc.desc: SetRetentionState.
  * @tc.type: FUNC
@@ -1635,23 +1652,26 @@ HWTEST_F(DlpPermissionKitTest, SetEnterprisePolicy001, TestSize.Level0)
 }
 
 /* *
- * @tc.name: SetNotOwnerAndReadOnce001
- * @tc.desc: SetNotOwnerAndReadOnce.
+ * @tc.name: SetFileInfo001
+ * @tc.desc: SetFileInfo.
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpPermissionKitTest, SetNotOwnerAndReadOnce001, TestSize.Level0)
+HWTEST_F(DlpPermissionKitTest, SetFileInfo001, TestSize.Level0)
 {
-    DLP_LOG_DEBUG(LABEL, "SetNotOwnerAndReadOnce001");
+    DLP_LOG_DEBUG(LABEL, "SetFileInfo001");
 
     SetSelfTokenID(DlpPermissionTestCommon::GetNativeTokenIdFromProcess(DLP_PERMISSION_SERVICE));
     ASSERT_TRUE(TestSetSelfTokenId(g_dlpManagerTokenId));
 
+    FileInfo fileInfo;
+    fileInfo.isNotOwnerAndReadOnce = true;
     std::string uri = "";
-    int32_t ret = DlpPermissionKit::SetNotOwnerAndReadOnce(uri, true);
+    int32_t ret = DlpPermissionKit::SetFileInfo(uri, fileInfo);
     ASSERT_NE(ret, DLP_OK);
     uri = "uri";
-    (void)DlpPermissionKit::SetNotOwnerAndReadOnce(uri, false);
+    fileInfo.isNotOwnerAndReadOnce = false;
+    (void)DlpPermissionKit::SetFileInfo(uri, fileInfo);
 }
 
 /* *

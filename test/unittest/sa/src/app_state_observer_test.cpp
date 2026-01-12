@@ -710,26 +710,29 @@ HWTEST_F(AppStateObserverTest, IsInDlpSandbox, TestSize.Level1)
 }
 
 /**
- * @tc.name: AddUriAndNotOwnerAndReadOnce001
- * @tc.desc: AddUriAndNotOwnerAndReadOnce test
+ * @tc.name: AddUriAndFileInfo001
+ * @tc.desc: AddUriAndFileInfo test
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AppStateObserverTest, AddUriAndNotOwnerAndReadOnce001, TestSize.Level1)
+HWTEST_F(AppStateObserverTest, AddUriAndFileInfo001, TestSize.Level1)
 {
-    DLP_LOG_INFO(LABEL, "AddUriAndNotOwnerAndReadOnce001");
+    DLP_LOG_INFO(LABEL, "AddUriAndFileInfo001");
     AppStateObserver observer;
+    FileInfo fileInfo;
     std::string uri1 = "uri";
     std::string uri2 = "";
-    ASSERT_TRUE(observer.AddUriAndNotOwnerAndReadOnce(uri1, true));
-    ASSERT_FALSE(observer.AddUriAndNotOwnerAndReadOnce(uri2, false));
-    bool isNotOwnerAndReadOnce;
-    ASSERT_TRUE(observer.GetNotOwnerAndReadOnceByUri(uri1, isNotOwnerAndReadOnce));
-    ASSERT_FALSE(observer.GetNotOwnerAndReadOnceByUri(uri2, isNotOwnerAndReadOnce));
-    observer.EraseReadOnceUriInfoByUri(uri1);
-    observer.EraseReadOnceUriInfoByUri(uri2);
-    ASSERT_FALSE(observer.GetNotOwnerAndReadOnceByUri(uri1, isNotOwnerAndReadOnce));
-    ASSERT_FALSE(observer.GetNotOwnerAndReadOnceByUri(uri2, isNotOwnerAndReadOnce));
+    fileInfo.isNotOwnerAndReadOnce = true;
+    ASSERT_TRUE(observer.AddUriAndFileInfo(uri1, fileInfo));
+    fileInfo.isNotOwnerAndReadOnce = false;
+    ASSERT_FALSE(observer.AddUriAndFileInfo(uri2, fileInfo));
+    FileInfo fileInfo2;
+    ASSERT_TRUE(observer.GetFileInfoByUri(uri1, fileInfo2));
+    ASSERT_FALSE(observer.GetFileInfoByUri(uri2, fileInfo2));
+    observer.EraseFileInfoByUri(uri1);
+    observer.EraseFileInfoByUri(uri2);
+    ASSERT_FALSE(observer.GetFileInfoByUri(uri1, fileInfo2));
+    ASSERT_FALSE(observer.GetFileInfoByUri(uri2, fileInfo2));
 }
 
 /**
@@ -779,4 +782,61 @@ HWTEST_F(AppStateObserverTest, InitUnloadHandler001, TestSize.Level1)
     processData1.processName = "com.ohos.dlpmanager";
     processData1.uid = DEFAULT_USERID;
     observer.OnDlpmanagerDied(processData1);
+}
+
+/**
+ * @tc.name: AddWatermarkName001
+ * @tc.desc: AddWatermarkName test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AppStateObserverTest, AddWatermarkName001, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL, "AddWatermarkName001");
+
+    AppStateObserver observer;
+    DlpSandboxInfo appInfo;
+    observer.AddWatermarkName(appInfo);
+    appInfo.bundleName = "DlpTest";
+    appInfo.tokenId = 100;
+    appInfo.appIndex = 100;
+    appInfo.watermarkName = "name1";
+    observer.AddWatermarkName(appInfo);
+    observer.AddWatermarkName(appInfo);
+    ASSERT_EQ(1, observer.watermarkMap_.size());
+    ASSERT_EQ(2, observer.watermarkMap_[appInfo.watermarkName]);
+    appInfo.watermarkName = "name2";
+    observer.AddWatermarkName(appInfo);
+    ASSERT_EQ(2, observer.watermarkMap_.size());
+}
+
+/**
+ * @tc.name: DecWatermarkName001
+ * @tc.desc: DecWatermarkName test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AppStateObserverTest, DecWatermarkName001, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL, "DecWatermarkName001");
+
+    AppStateObserver observer;
+    DlpSandboxInfo appInfo;
+    appInfo.isWatermark = false;
+    observer.DecWatermarkName(appInfo);
+
+    appInfo.isWatermark = true;
+    observer.DecWatermarkName(appInfo);
+
+    appInfo.watermarkName = "";
+    appInfo.userId = 0;
+    observer.DecWatermarkName(appInfo);
+    ASSERT_EQ(0, observer.watermarkMap_.size());
+    appInfo.bundleName = "DlpTest";
+    appInfo.tokenId = 100;
+    appInfo.appIndex = 100;
+    appInfo.watermarkName = "name1";
+    observer.AddWatermarkName(appInfo);
+    ASSERT_EQ(1, observer.watermarkMap_.size());
+    observer.DecWatermarkName(appInfo);
 }

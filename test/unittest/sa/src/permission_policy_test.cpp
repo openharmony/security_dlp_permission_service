@@ -14,7 +14,9 @@
  */
 #include "permission_policy_test.h"
 
+#include <list>
 #include <string>
+#include "dlp_parcel.h"
 #include "dlp_permission.h"
 #include "dlp_permission_log.h"
 
@@ -423,6 +425,24 @@ HWTEST_F(PermissionPolicyTest, CopyPermissionPolicy001, TestSize.Level1)
     delete[] policyDest->aeskey_;
     policyDest->aeskey_ = nullptr;
     policyDest->aeskeyLen_ = 0;
+}
+
+/**
+ * @tc.name: FileInfo001
+ * @tc.desc: FileInfo test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionPolicyTest, FileInfo001, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL, "FileInfo001");
+    FIleInfo info;
+    Parcel parcel;
+    std::list<bool> writeBoolList;
+    writeBoolList.push_back(false);
+    MockWriteBool(true, &writeBoolList);
+    ASSERT_FALSE(info.Marshalling(parcel));
+    ResetParcelState();
 }
 }  // namespace DlpPermission
 }  // namespace Security

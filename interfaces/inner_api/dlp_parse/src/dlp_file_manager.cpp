@@ -588,30 +588,31 @@ static int32_t SetNotOwnerAndReadOnce(const PermissionPolicy& policy, int32_t dl
         DLP_LOG_ERROR(LABEL, "GetFilePathByFd fail, err = %{public}d.", res);
         return res;
     }
-
-    bool isNotOwnerAndReadOnce = false;
+    std::string account;
+    res = filePtr->GetLocalAccountName(account);
+    if (res != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "GetLocalAccountName fail, err = %{public}d.", res);
+        return res;
+    }
+    FileInfo fileInfo;
+    fileInfo.accountName = account;
     if (policy.ownerAccountType_ == CLOUD_ACCOUNT && policy.GetAllowedOpenCount() >= 1) {
         DLP_LOG_DEBUG(LABEL, "cloud account and set allowedopencount, judge if owner.");
-        std::string account;
-        res = filePtr->GetLocalAccountName(account);
-        if (res != DLP_OK) {
-            DLP_LOG_ERROR(LABEL, "GetLocalAccountName fail, err = %{public}d.", res);
-            return res;
-        }
         if (policy.ownerAccount_.compare("") != 0 && policy.ownerAccount_.compare(account) == 0) {
-            isNotOwnerAndReadOnce = false;
+            fileInfo.isNotOwnerAndReadOnce = false;
         } else {
             DLP_LOG_DEBUG(LABEL, "isNotOwnerAndReadOnce true.");
-            isNotOwnerAndReadOnce = true;
+            fileInfo.isNotOwnerAndReadOnce = true;
         }
     }
     if (policy.GetwaterMarkConfig()) {
         DLP_LOG_DEBUG(LABEL, "watermarkConfig is true.");
-        isNotOwnerAndReadOnce = true;
+        fileInfo.isNotOwnerAndReadOnce = true;
+        fileInfo.isWatermark = true;
     }
-    res = DlpPermissionKit::SetNotOwnerAndReadOnce(filePath, isNotOwnerAndReadOnce);
+    res = DlpPermissionKit::SetFileInfo(filePath, fileInfo);
     if (res != DLP_OK) {
-        DLP_LOG_ERROR(LABEL, "SetNotOwnerAndReadOnce fail, err = %{public}d.", res);
+        DLP_LOG_ERROR(LABEL, "SetFileInfo fail, err = %{public}d.", res);
         return res;
     }
     return DLP_OK;

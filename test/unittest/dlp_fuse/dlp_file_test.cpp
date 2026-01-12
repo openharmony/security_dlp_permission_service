@@ -15,6 +15,7 @@
 
 #include "dlp_file_test.h"
 
+#include <iostream>
 #include <cstring>
 #include <dirent.h>
 #include <fcntl.h>
@@ -30,6 +31,9 @@
 #include "dlp_file_manager.h"
 #include "dlp_permission.h"
 #include "dlp_permission_log.h"
+#include "accesstoken_kit.h"
+#include "nativetoken_kit.h"
+#include "token_setproc.h"
 
 namespace OHOS {
 namespace Security {
@@ -54,7 +58,31 @@ static int g_plainFileFd = -1;
 static int g_dlpFileFd = -1;
 static int g_recoveryFileFd = -1;
 static std::shared_ptr<DlpFile> g_Dlpfile = nullptr;
+static constexpr uint32_t WAIT_FOR_ACCESS_TOKEN_START = 500;
+#define AC_TKN_SVC "accesstoken_service"
+#define SVC_CTRL "service_control"
+static constexpr char PID_OF_ACCESS_TOKEN_SERVICE[] = "pidof " AC_TKN_SVC;
+uint64_t g_selfTokenId = 0;
 }
+
+static void RestartAccessTokenService()
+{
+    std::cout << PID_OF_ACCESS_TOKEN_SERVICE << std::endl;
+    std::system(PID_OF_ACCESS_TOKEN_SERVICE);
+
+    std::system(SVC_CTRL " stop " AC_TKN_SVC);
+
+    std::cout << PID_OF_ACCESS_TOKEN_SERVICE << std::endl;
+    std::system(PID_OF_ACCESS_TOKEN_SERVICE);
+
+    std::system(SVC_CTRL " start " AC_TKN_SVC);
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(WAIT_FOR_ACCESS_TOKEN_START));
+
+    std::cout << PID_OF_ACCESS_TOKEN_SERVICE << std::endl;
+    std::system(PID_OF_ACCESS_TOKEN_SERVICE);
+}
+
 
 void DlpFileTest::SetUpTestCase()
 {
@@ -71,6 +99,27 @@ void DlpFileTest::SetUpTestCase()
             return;
         }
     }
+    g_selfTokenId = GetSelfTokenID();
+    uint64_t tokenId;
+    const char *acls[] = {
+        "ohos.permission.GET_LOCAL_ACCOUNTS",
+    };
+    const char *perms[] = {
+        "ohos.permission.GET_LOCAL_ACCOUNTS",
+    };
+    NativeTokenInfoParams infoInstance = {
+        .dcapsNum = 0,
+        .permsNum = 1,
+        .dcaps = nullptr,
+        .perms = perms,
+        .aplStr = "system_basic",
+    };
+    infoInstance.acls = acls;
+    infoInstance.aclsNum = 1;
+    infoInstance.processName = "test_get_local_account";
+    tokenId = GetAccessTokenId(&infoInstance);
+    ASSERT_EQ(0, SetSelfTokenID(tokenId));
+    RestartAccessTokenService();
 }
 
 void DlpFileTest::TearDownTestCase()
@@ -79,6 +128,8 @@ void DlpFileTest::TearDownTestCase()
     DLP_LOG_INFO(LABEL, "umount ret=%{public}d error=%{public}s", ret, strerror(errno));
     rmdir(MOUNT_POINT_DIR.c_str());
     rmdir(DLP_TEST_DIR.c_str());
+    ASSERT_EQ(0, SetSelfTokenID(g_selfTokenId));
+    RestartAccessTokenService();
 }
 
 void DlpFileTest::SetUp()
