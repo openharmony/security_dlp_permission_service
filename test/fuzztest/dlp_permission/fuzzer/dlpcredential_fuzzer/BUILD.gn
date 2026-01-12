@@ -32,6 +32,7 @@ ohos_fuzztest("DlpCredentialFuzzTest") {
     "${dlp_root_dir}/services/dlp_permission/sa/storage/include",
     "${dlp_root_dir}/services/dlp_permission/sa/callback/dlp_sandbox_change_callback/",
     "${dlp_root_dir}/services/dlp_permission/sa/callback/open_dlp_file_callback/",
+    "${dlp_root_dir}/services/dlp_permission/sa/adapt_utils/critical_handler/",
     "${dlp_root_dir}/services/dlp_permission/sa/adapt_utils/file_manager/",
   ]
 
@@ -63,6 +64,7 @@ ohos_fuzztest("DlpCredentialFuzzTest") {
     "ipc:ipc_core",
     "json:nlohmann_json_static",
     "kv_store:distributeddata_inner",
+    "memmgr:memmgrclient",
     "os_account:domain_account_innerkits",
     "os_account:libaccountkits",
     "os_account:os_account_innerkits",

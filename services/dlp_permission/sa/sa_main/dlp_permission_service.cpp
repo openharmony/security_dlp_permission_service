@@ -58,6 +58,8 @@
 #include "ohos_account_kits.h"
 #include "dlp_ability_stub.h"
 #include "dlp_ability_adapter.h"
+#include "critical_handler.h"
+#include "critical_helper.h"
 
 namespace OHOS {
 namespace Security {
@@ -136,6 +138,7 @@ void DlpPermissionService::OnStart()
         return;
     }
     state_ = ServiceRunningState::STATE_RUNNING;
+    (void)NotifyProcessIsActive();
     DLP_LOG_INFO(LABEL, "Congratulations, DlpPermissionService start successfully!");
     appStateObserver_->PostDelayUnloadTask(CurrentTaskState::IDLE);
     DLP_LOG_INFO(LABEL, "DlpPermissionService set timer to destroy itself!");
@@ -145,6 +148,7 @@ void DlpPermissionService::OnStop()
 {
     DLP_LOG_INFO(LABEL, "Stop service");
     dlpEventSubSubscriber_ = nullptr;
+    (void)NotifyProcessIsStop();
 }
 
 bool DlpPermissionService::RegisterAppStateObserver()
@@ -196,7 +200,7 @@ void DlpPermissionService::UnregisterAppStateObserver()
 int32_t DlpPermissionService::GenerateDlpCertificate(
     const sptr<DlpPolicyParcel>& policyParcel, const sptr<IDlpPermissionCallback>& callback)
 {
-    DLP_LOG_INFO(LABEL, "GenerateDlpCertificate begin");
+    CriticalHelper criticalHelper("GenerateDlpCertificate");
     appStateObserver_->PostDelayUnloadTask(CurrentTaskState::LONG_TASK);
     std::string appIdentifier;
     if (!PermissionManagerAdapter::GetAppIdentifierForCalling(appIdentifier)) {
@@ -227,7 +231,6 @@ int32_t DlpPermissionService::GenerateDlpCertificate(
     res = DlpCredential::GetInstance().GenerateDlpCertificate(
         jsonObj.dump(), policyParcel->policyParams_.ownerAccountId_,
         policyParcel->policyParams_.ownerAccountType_, callback);
-    DLP_LOG_INFO(LABEL, "GenerateDlpCertificate end");
     return res;
 }
 
@@ -256,7 +259,7 @@ static bool GetApplicationInfo(std::string appId, AppExecFwk::ApplicationInfo& a
 int32_t DlpPermissionService::ParseDlpCertificate(const sptr<CertParcel>& certParcel,
     const sptr<IDlpPermissionCallback>& callback, const std::string& appId, bool offlineAccess)
 {
-    DLP_LOG_INFO(LABEL, "ParseDlpCertificate begin");
+    CriticalHelper criticalHelper("ParseDlpCertificate");
     appStateObserver_->PostDelayUnloadTask(CurrentTaskState::LONG_TASK);
     std::string appIdentifier;
     if (!PermissionManagerAdapter::GetAppIdentifierForCalling(appIdentifier)) {
@@ -290,7 +293,6 @@ int32_t DlpPermissionService::ParseDlpCertificate(const sptr<CertParcel>& certPa
     }
     ret = DlpCredential::GetInstance().ParseDlpCertificate(
         certParcel, callback, appId, offlineAccess, applicationInfo);
-    DLP_LOG_INFO(LABEL, "ParseDlpCertificate end");
     return ret;
 }
 
@@ -403,7 +405,7 @@ static int32_t SetWatermarkToRS(const std::string &name, std::shared_ptr<Media::
 int32_t DlpPermissionService::GetWaterMark(const bool waterMarkConfig,
     const sptr<IDlpPermissionCallback>& callback)
 {
-    DLP_LOG_INFO(LABEL, "GetWaterMark begin");
+    CriticalHelper criticalHelper("GetWaterMark");
     appStateObserver_->PostDelayUnloadTask(CurrentTaskState::SHORT_TASK);
     (void)waterMarkConfig;
     if (callback == nullptr) {
@@ -451,13 +453,12 @@ int32_t DlpPermissionService::GetWaterMark(const bool waterMarkConfig,
         waterMarkInfo_.waterMarkImg = nullptr;
         waterMarkInfo_.waterMarkStatus = 0;
     }
-    DLP_LOG_INFO(LABEL, "GetWaterMark end");
     return DLP_OK;
 }
 
 int32_t DlpPermissionService::SetWaterMark(const int32_t pid)
 {
-    DLP_LOG_INFO(LABEL, "SetWaterMark begin");
+    CriticalHelper criticalHelper("SetWaterMark");
     appStateObserver_->PostDelayUnloadTask(CurrentTaskState::SHORT_TASK);
     int32_t ret = static_cast<int32_t>(Rosen::WindowManager::
         GetInstance().SetProcessWatermark(pid, WATERMARK_NAME, true));
@@ -465,7 +466,6 @@ int32_t DlpPermissionService::SetWaterMark(const int32_t pid)
         DLP_LOG_ERROR(LABEL, "SetProcessWatermark failed! errcode: %{public}d", ret);
         return DLP_SET_WATERMARK_ERROR;
     }
-    DLP_LOG_INFO(LABEL, "SetWaterMark end");
     return DLP_OK;
 }
 
@@ -493,6 +493,7 @@ bool DlpPermissionService::InsertDlpSandboxInfo(DlpSandboxInfo& sandboxInfo, boo
         sandboxInfo.appIndex);
     sandboxInfo.isReadOnce = isNotOwnerAndReadOnce;
     appStateObserver_->AddDlpSandboxInfo(sandboxInfo);
+    SetHasBackgroundTask(true);
     DLP_LOG_INFO(LABEL, "isNotOwnerAndReadOnce=%{public}d", isNotOwnerAndReadOnce);
     VisitRecordFileManager::GetInstance().AddVisitRecord(sandboxInfo.bundleName, sandboxInfo.userId, sandboxInfo.uri);
     return true;
@@ -586,7 +587,7 @@ int32_t DlpPermissionService::InstallSandboxApp(const std::string& bundleName, D
 int32_t DlpPermissionService::InstallDlpSandbox(const std::string& bundleName, DLPFileAccess dlpFileAccess,
     int32_t userId, SandboxInfo& sandboxInfo, const std::string& uri)
 {
-    DLP_LOG_INFO(LABEL, "InstallDlpSandbox begin");
+    CriticalHelper criticalHelper("InstallDlpSandbox");
     appStateObserver_->PostDelayUnloadTask(CurrentTaskState::SHORT_TASK);
     if (!AccessTokenAdapter::IsSystemApp()) {
         return DLP_SERVICE_ERROR_NOT_SYSTEM_APP;
@@ -631,7 +632,6 @@ int32_t DlpPermissionService::InstallDlpSandbox(const std::string& bundleName, D
     if (dlpSandboxData_.find(dlpSandboxInfo.uid) == dlpSandboxData_.end()) {
         dlpSandboxData_.insert(std::make_pair(dlpSandboxInfo.uid, dlpSandboxInfo.dlpFileAccess));
     }
-    DLP_LOG_INFO(LABEL, "InstallDlpSandbox end");
     return DLP_OK;
 }
 
@@ -668,7 +668,7 @@ int32_t DlpPermissionService::UninstallDlpSandboxApp(const std::string& bundleNa
 
 int32_t DlpPermissionService::UninstallDlpSandbox(const std::string& bundleName, int32_t appIndex, int32_t userId)
 {
-    DLP_LOG_INFO(LABEL, "UninstallDlpSandbox begin");
+    CriticalHelper criticalHelper("UninstallDlpSandbox");
     appStateObserver_->PostDelayUnloadTask(CurrentTaskState::SHORT_TASK);
     if (!AccessTokenAdapter::IsSystemApp()) {
         return DLP_SERVICE_ERROR_NOT_SYSTEM_APP;
@@ -692,7 +692,6 @@ int32_t DlpPermissionService::UninstallDlpSandbox(const std::string& bundleName,
     if (RetentionFileManager::GetInstance().CanUninstall(tokenId)) {
         return UninstallDlpSandboxApp(bundleName, appIndex, userId);
     }
-    DLP_LOG_INFO(LABEL, "UninstallDlpSandbox end");
     return DLP_OK;
 }
 
@@ -711,7 +710,7 @@ static bool CheckAllowAbilityList(const AAFwk::Want& want)
 int32_t DlpPermissionService::GetSandboxExternalAuthorization(
     int sandboxUid, const AAFwk::Want& want, SandBoxExternalAuthorType& authType)
 {
-    DLP_LOG_INFO(LABEL, "GetSandboxExternalAuthorization begin");
+    CriticalHelper criticalHelper("GetSandboxExternalAuthorization");
     appStateObserver_->PostDelayUnloadTask(CurrentTaskState::SHORT_TASK);
     if (!IsSaCall() && !PermissionManagerAdapter::CheckPermission(PERMISSION_ACCESS_DLP_FILE)) {
         DLP_LOG_ERROR(LABEL, "Caller is not SA or has no ACCESS_DLP_FILE permission");
@@ -737,19 +736,17 @@ int32_t DlpPermissionService::GetSandboxExternalAuthorization(
     } else {
         authType = SandBoxExternalAuthorType::ALLOW_START_ABILITY;
     }
-    DLP_LOG_INFO(LABEL, "GetSandboxExternalAuthorization end");
     return DLP_OK;
 }
 
 int32_t DlpPermissionService::QueryDlpFileCopyableByTokenId(bool& copyable, uint32_t tokenId)
 {
-    DLP_LOG_INFO(LABEL, "QueryDlpFileCopyableByTokenId begin");
+    CriticalHelper criticalHelper("QueryDlpFileCopyableByTokenId");
     appStateObserver_->PostDelayUnloadTask(CurrentTaskState::SHORT_TASK);
     if (tokenId == 0) {
         return DLP_SERVICE_ERROR_VALUE_INVALID;
     }
     int32_t res = appStateObserver_->QueryDlpFileCopyableByTokenId(copyable, tokenId);
-    DLP_LOG_INFO(LABEL, "QueryDlpFileCopyableByTokenId end");
     return res;
 }
 
@@ -775,7 +772,7 @@ static ActionFlags GetDlpActionFlag(DLPFileAccess dlpFileAccess)
 
 int32_t DlpPermissionService::QueryDlpFileAccess(DLPPermissionInfoParcel& permInfoParcel)
 {
-    DLP_LOG_INFO(LABEL, "QueryDlpFileAccess begin");
+    CriticalHelper criticalHelper("QueryDlpFileAccess");
     appStateObserver_->PostDelayUnloadTask(CurrentTaskState::SHORT_TASK);
     bool sandboxFlag;
     if (PermissionManagerAdapter::CheckSandboxFlagWithService(GetCallingTokenID(), sandboxFlag) != DLP_OK) {
@@ -790,17 +787,15 @@ int32_t DlpPermissionService::QueryDlpFileAccess(DLPPermissionInfoParcel& permIn
     int32_t res = appStateObserver_->QueryDlpFileAccessByUid(dlpFileAccess, uid);
     permInfoParcel.permInfo_.dlpFileAccess = dlpFileAccess;
     permInfoParcel.permInfo_.flags = GetDlpActionFlag(dlpFileAccess);
-    DLP_LOG_INFO(LABEL, "QueryDlpFileAccess end");
     return res;
 }
 
 int32_t DlpPermissionService::IsInDlpSandbox(bool& inSandbox)
 {
-    DLP_LOG_INFO(LABEL, "IsInDlpSandbox begin");
+    CriticalHelper criticalHelper("IsInDlpSandbox");
     appStateObserver_->PostDelayUnloadTask(CurrentTaskState::SHORT_TASK);
     int32_t uid = IPCSkeleton::GetCallingUid();
     int32_t res = appStateObserver_->IsInDlpSandbox(inSandbox, uid);
-    DLP_LOG_INFO(LABEL, "IsInDlpSandbox end");
     return res;
 }
 
@@ -863,20 +858,19 @@ void DlpPermissionService::InitConfig(std::vector<std::string>& typeList)
 
 int32_t DlpPermissionService::GetDlpSupportFileType(std::vector<std::string>& supportFileType)
 {
-    DLP_LOG_INFO(LABEL, "GetDlpSupportFileType begin");
+    CriticalHelper criticalHelper("GetDlpSupportFileType");
     appStateObserver_->PostDelayUnloadTask(CurrentTaskState::SHORT_TASK);
     InitConfig(supportFileType);
     if (supportFileType.size() > MAX_SUPPORT_FILE_TYPE_NUM) {
         DLP_LOG_ERROR(LABEL, "listNum larger than 1024");
         return DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL;
     }
-    DLP_LOG_INFO(LABEL, "GetDlpSupportFileType end");
     return DLP_OK;
 }
 
 int32_t DlpPermissionService::RegisterDlpSandboxChangeCallback(const sptr<IRemoteObject>& callback)
 {
-    DLP_LOG_INFO(LABEL, "RegisterDlpSandboxChangeCallback begin");
+    CriticalHelper criticalHelper("RegisterDlpSandboxChangeCallback");
     appStateObserver_->PostDelayUnloadTask(CurrentTaskState::SHORT_TASK);
     if (!PermissionManagerAdapter::CheckPermission(PERMISSION_ACCESS_DLP_FILE)) {
         return DLP_SERVICE_ERROR_PERMISSION_DENY;
@@ -884,13 +878,12 @@ int32_t DlpPermissionService::RegisterDlpSandboxChangeCallback(const sptr<IRemot
     int32_t pid = IPCSkeleton::GetCallingRealPid();
     DLP_LOG_INFO(LABEL, "GetCallingRealPid,%{public}d", pid);
     int32_t res = DlpSandboxChangeCallbackManager::GetInstance().AddCallback(pid, callback);
-    DLP_LOG_INFO(LABEL, "RegisterDlpSandboxChangeCallback end");
     return res;
 }
 
 int32_t DlpPermissionService::UnRegisterDlpSandboxChangeCallback(bool& result)
 {
-    DLP_LOG_INFO(LABEL, "UnRegisterDlpSandboxChangeCallback begin");
+    CriticalHelper criticalHelper("UnRegisterDlpSandboxChangeCallback");
     appStateObserver_->PostDelayUnloadTask(CurrentTaskState::SHORT_TASK);
     if (!PermissionManagerAdapter::CheckPermission(PERMISSION_ACCESS_DLP_FILE)) {
         return DLP_SERVICE_ERROR_PERMISSION_DENY;
@@ -898,13 +891,12 @@ int32_t DlpPermissionService::UnRegisterDlpSandboxChangeCallback(bool& result)
     int32_t pid = IPCSkeleton::GetCallingRealPid();
     DLP_LOG_INFO(LABEL, "GetCallingRealPid,%{public}d", pid);
     int32_t res = DlpSandboxChangeCallbackManager::GetInstance().RemoveCallback(pid, result);
-    DLP_LOG_INFO(LABEL, "UnRegisterDlpSandboxChangeCallback end");
     return res;
 }
 
 int32_t DlpPermissionService::RegisterOpenDlpFileCallback(const sptr<IRemoteObject>& callback)
 {
-    DLP_LOG_INFO(LABEL, "RegisterOpenDlpFileCallback begin");
+    CriticalHelper criticalHelper("RegisterOpenDlpFileCallback");
     appStateObserver_->PostDelayUnloadTask(CurrentTaskState::SHORT_TASK);
     bool sandboxFlag;
     if (PermissionManagerAdapter::CheckSandboxFlagWithService(GetCallingTokenID(), sandboxFlag) != DLP_OK) {
@@ -935,13 +927,13 @@ int32_t DlpPermissionService::RegisterOpenDlpFileCallback(const sptr<IRemoteObje
         return res;
     }
     appStateObserver_->AddCallbackListener(pid);
-    DLP_LOG_INFO(LABEL, "RegisterOpenDlpFileCallback end");
+    SetHasBackgroundTask(true);
     return DLP_OK;
 }
 
 int32_t DlpPermissionService::UnRegisterOpenDlpFileCallback(const sptr<IRemoteObject>& callback)
 {
-    DLP_LOG_INFO(LABEL, "UnRegisterOpenDlpFileCallback begin");
+    CriticalHelper criticalHelper("UnRegisterOpenDlpFileCallback");
     appStateObserver_->PostDelayUnloadTask(CurrentTaskState::SHORT_TASK);
     bool sandboxFlag;
     if (PermissionManagerAdapter::CheckSandboxFlagWithService(GetCallingTokenID(), sandboxFlag) != DLP_OK) {
@@ -954,13 +946,12 @@ int32_t DlpPermissionService::UnRegisterOpenDlpFileCallback(const sptr<IRemoteOb
     int32_t pid = IPCSkeleton::GetCallingRealPid();
     int32_t res = OpenDlpFileCallbackManager::GetInstance().RemoveCallback(pid, callback);
     appStateObserver_->RemoveCallbackListener(pid);
-    DLP_LOG_INFO(LABEL, "UnRegisterOpenDlpFileCallback end");
     return res;
 }
 
 int32_t DlpPermissionService::GetDlpGatheringPolicy(bool& isGathering)
 {
-    DLP_LOG_INFO(LABEL, "GetDlpGatheringPolicy begin");
+    CriticalHelper criticalHelper("GetDlpGatheringPolicy");
     appStateObserver_->PostDelayUnloadTask(CurrentTaskState::SHORT_TASK);
     if (!PermissionManagerAdapter::CheckPermission(PERMISSION_ACCESS_DLP_FILE)) {
         return DLP_SERVICE_ERROR_PERMISSION_DENY;
@@ -986,13 +977,12 @@ int32_t DlpPermissionService::GetDlpGatheringPolicy(bool& isGathering)
         isGathering = false;
     }
 #endif
-    DLP_LOG_INFO(LABEL, "GetDlpGatheringPolicy end");
     return DLP_OK;
 }
 
 int32_t DlpPermissionService::SetRetentionState(const std::vector<std::string>& docUriVec)
 {
-    DLP_LOG_INFO(LABEL, "SetRetentionState begin");
+    CriticalHelper criticalHelper("SetRetentionState");
     appStateObserver_->PostDelayUnloadTask(CurrentTaskState::SHORT_TASK);
     bool sandboxFlag;
     if (PermissionManagerAdapter::CheckSandboxFlagWithService(GetCallingTokenID(), sandboxFlag) != DLP_OK) {
@@ -1018,13 +1008,12 @@ int32_t DlpPermissionService::SetRetentionState(const std::vector<std::string>& 
     }
     info.hasRead = sandboxInfo.hasRead;
     int32_t res = RetentionFileManager::GetInstance().UpdateSandboxInfo(docUriSet, info, true);
-    DLP_LOG_INFO(LABEL, "SetRetentionState end");
     return res;
 }
 
 int32_t DlpPermissionService::CancelRetentionState(const std::vector<std::string>& docUriVec)
 {
-    DLP_LOG_INFO(LABEL, "CancelRetentionState begin");
+    CriticalHelper criticalHelper("CancelRetentionState");
     appStateObserver_->PostDelayUnloadTask(CurrentTaskState::SHORT_TASK);
     if (docUriVec.empty()) {
         DLP_LOG_ERROR(LABEL, "get docUriVec empty");
@@ -1062,7 +1051,6 @@ int32_t DlpPermissionService::CancelRetentionState(const std::vector<std::string
             }
         }
     }
-    DLP_LOG_INFO(LABEL, "CancelRetentionState end");
     return res;
 }
 
@@ -1089,7 +1077,7 @@ bool DlpPermissionService::RemoveRetentionInfo(std::vector<RetentionSandBoxInfo>
 int32_t DlpPermissionService::GetRetentionSandboxList(const std::string& bundleName,
     std::vector<RetentionSandBoxInfo>& retentionSandBoxInfoVec)
 {
-    DLP_LOG_INFO(LABEL, "GetRetentionSandboxList begin");
+    CriticalHelper criticalHelper("GetRetentionSandboxList");
     appStateObserver_->PostDelayUnloadTask(CurrentTaskState::SHORT_TASK);
     bool sandboxFlag;
     if (PermissionManagerAdapter::CheckSandboxFlagWithService(GetCallingTokenID(), sandboxFlag) != DLP_OK) {
@@ -1116,7 +1104,6 @@ int32_t DlpPermissionService::GetRetentionSandboxList(const std::string& bundleN
         DLP_LOG_ERROR(LABEL, "size larger than 1024");
         return DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL;
     }
-    DLP_LOG_INFO(LABEL, "GetRetentionSandboxList end");
     return res;
 }
 
@@ -1140,7 +1127,7 @@ static void ClearKvStorage()
 
 int32_t DlpPermissionService::ClearUnreservedSandbox()
 {
-    DLP_LOG_INFO(LABEL, "ClearUnreservedSandbox begin");
+    CriticalHelper criticalHelper("ClearUnreservedSandbox");
     appStateObserver_->PostDelayUnloadTask(CurrentTaskState::SHORT_TASK);
     Security::AccessToken::AccessTokenID callingToken = IPCSkeleton::GetCallingTokenID();
     Security::AccessToken::AccessTokenID bmsToken =
@@ -1152,7 +1139,6 @@ int32_t DlpPermissionService::ClearUnreservedSandbox()
     std::lock_guard<std::mutex> lock(appStateObserver_->GetTerminalMutex());
     ClearKvStorage();
     RetentionFileManager::GetInstance().ClearUnreservedSandbox();
-    DLP_LOG_INFO(LABEL, "ClearUnreservedSandbox end");
     return DLP_OK;
 }
 
@@ -1174,7 +1160,7 @@ bool DlpPermissionService::GetCallerBundleName(const uint32_t tokenId, std::stri
 
 int32_t DlpPermissionService::GetDLPFileVisitRecord(std::vector<VisitedDLPFileInfo>& infoVec)
 {
-    DLP_LOG_INFO(LABEL, "GetDLPFileVisitRecord begin");
+    CriticalHelper criticalHelper("GetDLPFileVisitRecord");
     appStateObserver_->PostDelayUnloadTask(CurrentTaskState::SHORT_TASK);
     bool sandboxFlag;
     if (PermissionManagerAdapter::CheckSandboxFlagWithService(GetCallingTokenID(), sandboxFlag) != DLP_OK) {
@@ -1204,13 +1190,12 @@ int32_t DlpPermissionService::GetDLPFileVisitRecord(std::vector<VisitedDLPFileIn
         DLP_LOG_ERROR(LABEL, "listNum larger than 1024");
         return DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL;
     }
-    DLP_LOG_INFO(LABEL, "GetDLPFileVisitRecord end");
     return result;
 }
 
 int32_t DlpPermissionService::SetMDMPolicy(const std::vector<std::string>& appIdList)
 {
-    DLP_LOG_INFO(LABEL, "SetMDMPolicy begin");
+    CriticalHelper criticalHelper("SetMDMPolicy");
     appStateObserver_->PostDelayUnloadTask(CurrentTaskState::SHORT_TASK);
     if (appIdList.empty()) {
         DLP_LOG_ERROR(LABEL, "get appIdList empty");
@@ -1222,13 +1207,12 @@ int32_t DlpPermissionService::SetMDMPolicy(const std::vector<std::string>& appId
         return DLP_SERVICE_ERROR_PERMISSION_DENY;
     }
     int32_t res = DlpCredential::GetInstance().SetMDMPolicy(appIdList);
-    DLP_LOG_INFO(LABEL, "SetMDMPolicy end");
     return res;
 }
 
 int32_t DlpPermissionService::GetMDMPolicy(std::vector<std::string>& appIdList)
 {
-    DLP_LOG_INFO(LABEL, "GetMDMPolicy begin");
+    CriticalHelper criticalHelper("GetMDMPolicy");
     appStateObserver_->PostDelayUnloadTask(CurrentTaskState::SHORT_TASK);
     int32_t uid = IPCSkeleton::GetCallingUid();
     if (uid != EDM_UID) {
@@ -1240,13 +1224,12 @@ int32_t DlpPermissionService::GetMDMPolicy(std::vector<std::string>& appIdList)
         DLP_LOG_ERROR(LABEL, "appIdList larger than limit");
         return DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL;
     }
-    DLP_LOG_INFO(LABEL, "GetMDMPolicy end");
     return res;
 }
 
 int32_t DlpPermissionService::RemoveMDMPolicy()
 {
-    DLP_LOG_INFO(LABEL, "RemoveMDMPolicy begin");
+    CriticalHelper criticalHelper("RemoveMDMPolicy");
     appStateObserver_->PostDelayUnloadTask(CurrentTaskState::SHORT_TASK);
     int32_t uid = IPCSkeleton::GetCallingUid();
     if (uid != EDM_UID) {
@@ -1254,13 +1237,12 @@ int32_t DlpPermissionService::RemoveMDMPolicy()
         return DLP_SERVICE_ERROR_PERMISSION_DENY;
     }
     int32_t res = DlpCredential::GetInstance().RemoveMDMPolicy();
-    DLP_LOG_INFO(LABEL, "RemoveMDMPolicy end");
     return res;
 }
 
 int32_t DlpPermissionService::SetSandboxAppConfig(const std::string& configInfo)
 {
-    DLP_LOG_INFO(LABEL, "SetSandboxAppConfig begin");
+    CriticalHelper criticalHelper("SetSandboxAppConfig");
     appStateObserver_->PostDelayUnloadTask(CurrentTaskState::SHORT_TASK);
     if (configInfo.size() >= OHOS::DistributedKv::Entry::MAX_VALUE_LENGTH) {
         DLP_LOG_ERROR(LABEL, "configInfo is too long");
@@ -1268,13 +1250,12 @@ int32_t DlpPermissionService::SetSandboxAppConfig(const std::string& configInfo)
     }
     std::string temp = configInfo;
     int32_t res = SandboxConfigOperate(temp, SandboxConfigOperationEnum::ADD);
-    DLP_LOG_INFO(LABEL, "SetSandboxAppConfig end");
     return res;
 }
 
 int32_t DlpPermissionService::CleanSandboxAppConfig()
 {
-    DLP_LOG_INFO(LABEL, "CleanSandboxAppConfig begin");
+    CriticalHelper criticalHelper("CleanSandboxAppConfig");
     appStateObserver_->PostDelayUnloadTask(CurrentTaskState::SHORT_TASK);
     bool sandboxFlag;
     if (PermissionManagerAdapter::CheckSandboxFlagWithService(GetCallingTokenID(), sandboxFlag) != DLP_OK) {
@@ -1286,22 +1267,20 @@ int32_t DlpPermissionService::CleanSandboxAppConfig()
     }
     std::string emptyStr = "";
     int32_t res = SandboxConfigOperate(emptyStr, SandboxConfigOperationEnum::CLEAN);
-    DLP_LOG_INFO(LABEL, "CleanSandboxAppConfig end");
     return res;
 }
 
 int32_t DlpPermissionService::GetSandboxAppConfig(std::string& configInfo)
 {
-    DLP_LOG_INFO(LABEL, "GetSandboxAppConfig begin");
+    CriticalHelper criticalHelper("GetSandboxAppConfig");
     appStateObserver_->PostDelayUnloadTask(CurrentTaskState::SHORT_TASK);
     int32_t res = SandboxConfigOperate(configInfo, SandboxConfigOperationEnum::GET);
-    DLP_LOG_INFO(LABEL, "GetSandboxAppConfig end");
     return res;
 }
 
 int32_t DlpPermissionService::SetDlpFeature(const uint32_t dlpFeatureInfo, bool& statusSetInfo)
 {
-    DLP_LOG_INFO(LABEL, "SetDlpFeature begin");
+    CriticalHelper criticalHelper("SetDlpFeature");
     appStateObserver_->PostDelayUnloadTask(CurrentTaskState::SHORT_TASK);
     statusSetInfo = false;
     std::string appId;
@@ -1318,7 +1297,6 @@ int32_t DlpPermissionService::SetDlpFeature(const uint32_t dlpFeatureInfo, bool&
     if (res == DLP_OK) {
         statusSetInfo = true;
     }
-    DLP_LOG_INFO(LABEL, "SetDlpFeature end");
     return DLP_OK;
 }
 
@@ -1347,7 +1325,7 @@ int32_t DlpPermissionService::CheckIfEnterpriseAccount()
 
 int32_t DlpPermissionService::IsDLPFeatureProvided(bool& isProvideDLPFeature)
 {
-    DLP_LOG_INFO(LABEL, "IsDLPFeatureProvided begin");
+    CriticalHelper criticalHelper("IsDLPFeatureProvided");
     appStateObserver_->PostDelayUnloadTask(CurrentTaskState::SHORT_TASK);
     if (CheckIfEnterpriseAccount() != DLP_OK) {
         isProvideDLPFeature = false;
@@ -1372,7 +1350,6 @@ int32_t DlpPermissionService::IsDLPFeatureProvided(bool& isProvideDLPFeature)
     }
     DLP_LOG_DEBUG(LABEL, "feature info file not exist!");
     isProvideDLPFeature = (value == TRUE_VALUE);
-    DLP_LOG_INFO(LABEL, "IsDLPFeatureProvided end");
     return DLP_OK;
 }
 
@@ -1445,7 +1422,7 @@ int32_t DlpPermissionService::SandboxConfigOperate(std::string& configInfo, Sand
 
 int32_t DlpPermissionService::SetReadFlag(uint32_t uid)
 {
-    DLP_LOG_INFO(LABEL, "SetReadFlag begin");
+    CriticalHelper criticalHelper("SetReadFlag");
     appStateObserver_->PostDelayUnloadTask(CurrentTaskState::SHORT_TASK);
     if (!PermissionManagerAdapter::CheckPermission(PERMISSION_ACCESS_DLP_FILE)) {
         return DLP_SERVICE_ERROR_PERMISSION_DENY;
@@ -1457,7 +1434,6 @@ int32_t DlpPermissionService::SetReadFlag(uint32_t uid)
         return res;
     }
     appStateObserver_->UpdatReadFlag(uid);
-    DLP_LOG_INFO(LABEL, "SetReadFlag end");
     return DLP_OK;
 }
 
@@ -1486,7 +1462,7 @@ int DlpPermissionService::Dump(int fd, const std::vector<std::u16string>& args)
 
 int DlpPermissionService::SetEnterprisePolicy(const std::string& policy)
 {
-    DLP_LOG_INFO(LABEL, "SetEnterprisePolicy begin");
+    CriticalHelper criticalHelper("SetEnterprisePolicy");
     appStateObserver_->PostDelayUnloadTask(CurrentTaskState::SHORT_TASK);
     std::string appIdentifier;
     if (!PermissionManagerAdapter::GetAppIdentifierForCalling(appIdentifier)) {
@@ -1498,7 +1474,6 @@ int DlpPermissionService::SetEnterprisePolicy(const std::string& policy)
         return DLP_SERVICE_ERROR_PERMISSION_DENY;
     }
     int32_t res = DlpCredential::GetInstance().SetEnterprisePolicy(policy);
-    DLP_LOG_INFO(LABEL, "SetEnterprisePolicy end");
     return res;
 }
 

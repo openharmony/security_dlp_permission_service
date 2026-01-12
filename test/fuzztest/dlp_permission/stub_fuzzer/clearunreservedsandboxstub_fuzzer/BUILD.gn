@@ -59,6 +59,7 @@ ohos_fuzztest("ClearUnreservedSandboxStubFuzzTest") {
     "init:libbegetutil",
     "ipc:ipc_core",
     "kv_store:distributeddata_inner",
+    "memmgr:memmgrclient",
     "os_account:libaccountkits",
     "os_account:os_account_innerkits",
     "safwk:system_ability_fwk",

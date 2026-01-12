@@ -750,6 +750,20 @@ HWTEST_F(AppStateObserverTest, PostDelayUnloadTask001, TestSize.Level1)
 }
 
 /**
+ * @tc.name: CheckHasBackgroundTask001
+ * @tc.desc: CheckHasBackgroundTask test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AppStateObserverTest, CheckHasBackgroundTask001, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL, "CheckHasBackgroundTask001");
+    AppStateObserver observer;
+    observer.CheckHasBackgroundTask();
+    ASSERT_EQ(observer.InitUnloadHandler(), true);
+}
+
+/**
  * @tc.name: InitUnloadHandler001
  * @tc.desc: InitUnloadHandler test
  * @tc.type: FUNC

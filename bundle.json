@@ -60,7 +60,8 @@
         "image_framework",
         "window_manager",
         "resource_management",
-        "eventhandler"
+        "eventhandler",
+        "memmgr"
       ],
       "third_party": []
     },
