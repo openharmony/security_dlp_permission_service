@@ -440,7 +440,6 @@ FileInfo* FileInfo::Unmarshalling(Parcel &in)
         delete parcel;
     }
     return nullptr;
-    
 }
 }  // namespace DlpPermission
 }  // namespace Security
