@@ -296,14 +296,9 @@ int32_t DlpPermissionService::ParseDlpCertificate(const sptr<CertParcel>& certPa
     return ret;
 }
 
-int32_t DlpPermissionService::CheckWaterMarkInfo()
+static int32_t GetWatermarkName(std::string& watermarkName)
 {
-    int32_t uid = IPCSkeleton::GetCallingRealPid();
-    int32_t userId;
-    if (GetUserIdFromUid(uid, &userId) != 0) {
-        DLP_LOG_ERROR(LABEL, "Get userId from uid error.");
-        return DLP_SERVICE_ERROR_VALUE_INVALID;
-    }
+    int32_t userId = GetCallingUserId();
     if (userId < 0) {
         DLP_LOG_ERROR(LABEL, "Get userId error.");
         return DLP_SERVICE_ERROR_GET_ACCOUNT_FAIL;
@@ -314,10 +309,20 @@ int32_t DlpPermissionService::CheckWaterMarkInfo()
         DLP_LOG_ERROR(LABEL, "Get accountInfo error.");
         return DLP_SERVICE_ERROR_GET_ACCOUNT_FAIL;
     }
-    std::string accountName = accountInfo.second.name_;
+    watermarkName = WATERMARK_NAME + accountInfo.second.name_ + std::to_string(userId);
+    return DLP_OK;
+}
+
+int32_t DlpPermissionService::CheckWaterMarkInfo()
+{
+    std::string watermarkName;
+    int32_t ret = GetWatermarkName(watermarkName);
+    if (ret != DLP_OK) {
+        return DLP_SERVICE_ERROR_GET_ACCOUNT_FAIL;
+    }
     {
         std::shared_lock<std::shared_mutex> lock(waterMarkInfoMutex_);
-        if (waterMarkInfo_.userId == userId && waterMarkInfo_.accountName == accountName) {
+        if (waterMarkInfo_.accountName == watermarkName) {
             return DLP_OK;
         }
     }
@@ -366,6 +371,7 @@ static int32_t GetPixelmapFromFd(WaterMarkInfo& waterMarkInfo, std::shared_mutex
         {
             std::unique_lock<std::shared_mutex> lock(waterMarkInfoMutex);
             waterMarkInfo.waterMarkImg = resPixelmap->GetInnerPixelmap();
+            DLP_LOG_INFO(LABEL, "watermark pixelmap size: %{public}d", waterMarkInfo.waterMarkImg->GetCapacity());
         }
     } while (0);
     if (resPixelmap) {
@@ -402,6 +408,30 @@ static int32_t SetWatermarkToRS(const std::string &name, std::shared_ptr<Media::
     return DLP_OK;
 }
 
+int32_t DlpPermissionService::ChangeWaterMarkInfo()
+{
+    std::string watermarkName;
+    int32_t res = GetWatermarkName(watermarkName);
+    if (res != DLP_OK) {
+        return DLP_SERVICE_ERROR_GET_ACCOUNT_FAIL;
+    }
+
+    std::shared_lock<std::shared_mutex> lock(waterMarkInfoMutex_);
+    if (!waterMarkInfo_.waterMarkImg) {
+        DLP_LOG_ERROR(LABEL, "SetWaterMark waterMarkImg is null");
+        return DLP_SET_WATERMARK_ERROR;
+    }
+    res = SetWatermarkToRS(watermarkName, waterMarkInfo_.waterMarkImg);
+    if (res != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "SetWatermarkToRS failed");
+        return DLP_SET_WATERMARK_TO_RS_ERROR;
+    }
+    waterMarkInfo_.waterMarkImg = nullptr;
+    waterMarkInfo_.waterMarkStatus = 0;
+    waterMarkInfo_.accountName = watermarkName;
+    return DLP_OK;
+}
+
 int32_t DlpPermissionService::GetWaterMark(const bool waterMarkConfig,
     const sptr<IDlpPermissionCallback>& callback)
 {
@@ -434,24 +464,10 @@ int32_t DlpPermissionService::GetWaterMark(const bool waterMarkConfig,
         return DLP_CREATE_PIXELMAP_ERROR;
     }
 
-    std::shared_ptr<Media::PixelMap> watermarkImg = nullptr;
-    {
-        std::shared_lock<std::shared_mutex> lock(waterMarkInfoMutex_);
-        watermarkImg = waterMarkInfo_.waterMarkImg;
-    }
-    if (!watermarkImg) {
-        DLP_LOG_ERROR(LABEL, "SetWaterMark waterMarkImg is null");
-        return DLP_SET_WATERMARK_ERROR;
-    }
-    res = SetWatermarkToRS(WATERMARK_NAME, watermarkImg);
+    res = ChangeWaterMarkInfo();
     if (res != DLP_OK) {
-        DLP_LOG_ERROR(LABEL, "SetWatermarkToRS failed");
-        return DLP_SET_WATERMARK_TO_RS_ERROR;
-    }
-    {
-        std::unique_lock<std::shared_mutex> lock(waterMarkInfoMutex_);
-        waterMarkInfo_.waterMarkImg = nullptr;
-        waterMarkInfo_.waterMarkStatus = 0;
+        DLP_LOG_ERROR(LABEL, "Change watermark info failed.");
+        return res;
     }
     return DLP_OK;
 }
@@ -460,8 +476,15 @@ int32_t DlpPermissionService::SetWaterMark(const int32_t pid)
 {
     CriticalHelper criticalHelper("SetWaterMark");
     appStateObserver_->PostDelayUnloadTask(CurrentTaskState::SHORT_TASK);
-    int32_t ret = static_cast<int32_t>(Rosen::WindowManager::
-        GetInstance().SetProcessWatermark(pid, WATERMARK_NAME, true));
+
+    std::string watermarkName;
+    int32_t ret = GetWatermarkName(watermarkName);
+    if (ret != DLP_OK) {
+        return DLP_SERVICE_ERROR_GET_ACCOUNT_FAIL;
+    }
+    
+    ret = static_cast<int32_t>(Rosen::WindowManager::
+        GetInstance().SetProcessWatermark(pid, watermarkName, true));
     if (ret != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "SetProcessWatermark failed! errcode: %{public}d", ret);
         return DLP_SET_WATERMARK_ERROR;
@@ -470,7 +493,7 @@ int32_t DlpPermissionService::SetWaterMark(const int32_t pid)
 }
 
 bool DlpPermissionService::InsertDlpSandboxInfo(DlpSandboxInfo& sandboxInfo, bool hasRetention,
-    bool isNotOwnerAndReadOnce)
+    const FileInfo& fileInfo)
 {
     AppExecFwk::BundleInfo info;
     AppExecFwk::BundleMgrClient bundleMgrClient;
@@ -491,10 +514,13 @@ bool DlpPermissionService::InsertDlpSandboxInfo(DlpSandboxInfo& sandboxInfo, boo
     sandboxInfo.uid = info.uid;
     sandboxInfo.tokenId = AccessToken::AccessTokenKit::GetHapTokenID(sandboxInfo.userId, sandboxInfo.bundleName,
         sandboxInfo.appIndex);
-    sandboxInfo.isReadOnce = isNotOwnerAndReadOnce;
+    sandboxInfo.isReadOnce = fileInfo.isNotOwnerAndReadOnce;
+    sandboxInfo.isWatermark = fileInfo.isWatermark;
+    sandboxInfo.watermarkName = WATERMARK_NAME + fileInfo.accountName + std::to_string(sandboxInfo.userId);
     appStateObserver_->AddDlpSandboxInfo(sandboxInfo);
     SetHasBackgroundTask(true);
-    DLP_LOG_INFO(LABEL, "isNotOwnerAndReadOnce=%{public}d", isNotOwnerAndReadOnce);
+    DLP_LOG_INFO(LABEL, "isNotOwnerAndReadOnce=%{public}d, isWatermark=%{public}d",
+        fileInfo.isNotOwnerAndReadOnce, fileInfo.isWatermark);
     VisitRecordFileManager::GetInstance().AddVisitRecord(sandboxInfo.bundleName, sandboxInfo.userId, sandboxInfo.uri);
     return true;
 }
@@ -602,18 +628,18 @@ int32_t DlpPermissionService::InstallDlpSandbox(const std::string& bundleName, D
     }
     bool isReadOnly = dlpFileAccess == DLPFileAccess::READ_ONLY;
     bool isNeedInstall = true;
-    bool isNotOwnerAndReadOnce = false;
+    FileInfo fileInfo;
     AppFileService::ModuleFileUri::FileUri fileUri(uri);
     std::string path = fileUri.GetRealPath();
-    appStateObserver_->GetNotOwnerAndReadOnceByUri(path, isNotOwnerAndReadOnce);
+    appStateObserver_->GetFileInfoByUri(path, fileInfo);
     DlpSandboxInfo dlpSandboxInfo;
-    GetAppIndexParams params = {bundleName, isReadOnly, uri, isNotOwnerAndReadOnce};
+    GetAppIndexParams params = {bundleName, isReadOnly, uri, fileInfo.isNotOwnerAndReadOnce};
     res = GetAppIndexFromRetentionInfo(params, dlpSandboxInfo, isNeedInstall);
     if (res != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "GetAppIndexFromRetentionInfo fail, %{public}d", res);
         return res;
     }
-    if (isNeedInstall && isReadOnly && !isNotOwnerAndReadOnce) {
+    if (isNeedInstall && isReadOnly && !fileInfo.isNotOwnerAndReadOnce) {
         appStateObserver_->GetOpeningReadOnlySandbox(bundleName, userId, dlpSandboxInfo.appIndex);
         isNeedInstall = (dlpSandboxInfo.appIndex != -1) ? false : true;
     }
@@ -623,7 +649,7 @@ int32_t DlpPermissionService::InstallDlpSandbox(const std::string& bundleName, D
         }
     }
     FillDlpSandboxInfo(dlpSandboxInfo, bundleName, dlpFileAccess, userId, uri);
-    if (!InsertDlpSandboxInfo(dlpSandboxInfo, !isNeedInstall, isNotOwnerAndReadOnce)) {
+    if (!InsertDlpSandboxInfo(dlpSandboxInfo, !isNeedInstall, fileInfo)) {
         return DLP_SERVICE_ERROR_INSTALL_SANDBOX_FAIL;
     }
     sandboxInfo.appIndex = dlpSandboxInfo.appIndex;
@@ -1477,7 +1503,7 @@ int DlpPermissionService::SetEnterprisePolicy(const std::string& policy)
     return res;
 }
 
-int DlpPermissionService::SetNotOwnerAndReadOnce(const std::string& uri, bool isNotOwnerAndReadOnce)
+int DlpPermissionService::SetFileInfo(const std::string& uri, const FileInfo& fileInfo)
 {
     appStateObserver_->PostDelayUnloadTask(CurrentTaskState::SHORT_TASK);
     std::string appIdentifier;
@@ -1496,9 +1522,9 @@ int DlpPermissionService::SetNotOwnerAndReadOnce(const std::string& uri, bool is
         return DLP_SERVICE_ERROR_URI_EMPTY;
     }
 
-    bool res = appStateObserver_->AddUriAndNotOwnerAndReadOnce(uri, isNotOwnerAndReadOnce);
+    bool res = appStateObserver_->AddUriAndFileInfo(uri, fileInfo);
     if (!res) {
-        DLP_LOG_ERROR(LABEL, "AddUriAndNotOwnerAndReadOnce error");
+        DLP_LOG_ERROR(LABEL, "AddUriAndFileInfo error");
         return DLP_SERVICE_ERROR_VALUE_INVALID;
     }
     return DLP_OK;

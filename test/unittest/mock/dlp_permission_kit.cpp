@@ -63,10 +63,10 @@ int32_t DlpPermissionKit::SetReadFlag(uint32_t uid)
     return DLP_OK;
 }
 
-int32_t DlpPermissionKit::SetNotOwnerAndReadOnce(const std::string& uri, bool isNotOwnerAndReadOnce)
+int32_t DlpPermissionKit::SetFileInfo(const std::string& uri, const FileInfo& fileInfo)
 {
     (void)uri;
-    (void)isNotOwnerAndReadOnce;
+    (void)fileInfo;
     return DLP_OK;
 }
 

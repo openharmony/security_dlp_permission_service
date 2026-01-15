@@ -30,7 +30,7 @@ public:
     static int32_t ParseDlpCertificate(sptr<CertParcel>& certParcel, PermissionPolicy& policy,
         const std::string& appId, bool offlineAccess);
     static int32_t SetReadFlag(uint32_t uid);
-    static int32_t SetNotOwnerAndReadOnce(const std::string& uri, bool isNotOwnerAndReadOnce);
+    static int32_t SetFileInfo(const std::string& uri, const FileInfo& fileInfo);
     static int32_t GetWaterMark(const bool waterMarkConfig);
 };
 }  // namespace DlpPermission

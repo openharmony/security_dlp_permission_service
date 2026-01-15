@@ -768,14 +768,14 @@ sptr<IDlpPermissionService> DlpPermissionClient::GetProxy(bool doLoadSa)
     return proxy_;
 }
 
-int32_t DlpPermissionClient::SetNotOwnerAndReadOnce(const std::string& uri, bool isNotOwnerAndReadOnce)
+int32_t DlpPermissionClient::SetFileInfo(const std::string& uri, const FileInfo& fileInfo)
 {
     auto proxy = GetProxy(true);
     if (proxy == nullptr) {
         DLP_LOG_ERROR(LABEL, "Proxy is null");
         return DLP_SERVICE_ERROR_SERVICE_NOT_EXIST;
     }
-    return proxy->SetNotOwnerAndReadOnce(uri, isNotOwnerAndReadOnce);
+    return proxy->SetFileInfo(uri, fileInfo);
 }
 }  // namespace DlpPermission
 }  // namespace Security

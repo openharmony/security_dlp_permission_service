@@ -25,6 +25,7 @@ namespace {
 constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "AccountAdapt"};
 constexpr static int UID_TRANSFORM_DIVISOR = 200000;
 }
+using OHOS::Security::DlpPermission::DLP_SERVICE_ERROR_GET_ACCOUNT_FAIL;
 using OHOS::Security::DlpPermission::DLP_PARSE_ERROR_ACCOUNT_INVALID;
 using OHOS::Security::DlpPermission::DLP_OK;
 using OHOS::AccountSA::OhosAccountInfo;

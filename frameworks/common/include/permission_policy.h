@@ -82,6 +82,14 @@ typedef struct SandboxInfo : public Parcelable {
     static SandboxInfo* Unmarshalling(Parcel &data);
 } SandboxInfo;
 
+typedef struct FileInfo : public Parcelable {
+    bool isNotOwnerAndReadOnce = false;
+    bool isWatermark = false;
+    std::string accountName = "";
+    bool Marshalling(Parcel &parcel) const;
+    static FileInfo* Unmarshalling(Parcel &data);
+} FileInfo;
+
 enum ActionType : uint32_t {
     NOTOPEN = 0,
     OPEN = 1

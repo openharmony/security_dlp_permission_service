@@ -25,6 +25,8 @@
 #include "open_dlp_file_callback_manager.h"
 #include "iservice_registry.h"
 #include "idlp_permission_service.h"
+#include "ohos_account_kits.h"
+#include "transaction/rs_interfaces.h"
 
 namespace OHOS {
 namespace Security {
@@ -36,6 +38,7 @@ const std::string PERMISSION_ACCESS_DLP_FILE = "ohos.permission.ACCESS_DLP_FILE"
 const std::string DLP_MANAGER_BUNDLE_NAME = "com.ohos.dlpmanager";
 const std::string DLP_CREDMGR_BUNDLE_NAME = "com.huawei.hmos.dlpcredmgr";
 const std::string DLP_CREDMGR_PROCESS_NAME = "com.huawei.hmos.dlpcredmgr:DlpCredActionExtAbility";
+const std::string WATERMARK_NAME = "dlpWaterMark";
 constexpr int32_t SA_ID_DLP_PERMISSION_SERVICE = 3521;
 const std::string FLAG_OF_MINI = "svr";
 static const std::string TASK_ID = "dlpPermissionServiceUnloadTask";
@@ -220,6 +223,7 @@ void AppStateObserver::EraseSandboxInfo(int32_t uid)
     std::lock_guard<std::mutex> lock(sandboxInfoLock_);
     auto iter = sandboxInfo_.find(uid);
     if (iter != sandboxInfo_.end()) {
+        DecWatermarkName(iter->second);
         DLP_LOG_INFO(LABEL, "sandbox app %{public}s%{public}d info delete success, uid: %{public}d",
             iter->second.bundleName.c_str(), iter->second.appIndex, iter->second.uid);
         sandboxInfo_.erase(iter);
@@ -229,6 +233,7 @@ void AppStateObserver::EraseSandboxInfo(int32_t uid)
 void AppStateObserver::AddSandboxInfo(const DlpSandboxInfo& appInfo)
 {
     std::lock_guard<std::mutex> lock(sandboxInfoLock_);
+    AddWatermarkName(appInfo);
     if (sandboxInfo_.count(appInfo.uid) > 0) {
         DLP_LOG_ERROR(LABEL, "sandbox app %{public}s%{public}d is already insert, ignore it",
             appInfo.bundleName.c_str(), appInfo.appIndex);
@@ -266,6 +271,53 @@ void AppStateObserver::AddDlpSandboxInfo(const DlpSandboxInfo& appInfo)
     RetentionFileManager::GetInstance().AddSandboxInfo(retentionInfo);
     OpenDlpFileCallbackManager::GetInstance().ExecuteCallbackAsync(appInfo);
     return;
+}
+
+void AppStateObserver::AddWatermarkName(const DlpSandboxInfo& appInfo)
+{
+    if (appInfo.bundleName.empty() || appInfo.tokenId <= 0 || appInfo.appIndex <= 0) {
+        DLP_LOG_ERROR(LABEL, "Param is error");
+        return;
+    }
+    auto it = watermarkMap_.find(appInfo.watermarkName);
+    if (it == watermarkMap_.end()) {
+        watermarkMap_.emplace(appInfo.watermarkName, 1);
+    } else {
+        it->second++;
+    }
+    DLP_LOG_INFO(LABEL, "Cur watermark with cnt %{public}d", watermarkMap_[appInfo.watermarkName]);
+}
+
+void AppStateObserver::DecWatermarkName(const DlpSandboxInfo& appInfo)
+{
+    int32_t userId;
+    if (!GetUserIdByForegroundAccount(&userId)) {
+        DLP_LOG_ERROR(LABEL, "GetUserIdByForegroundAccount error");
+        return;
+    }
+    std::pair<bool, OHOS::AccountSA::OhosAccountInfo> accountInfo =
+        OHOS::AccountSA::OhosAccountKits::GetInstance().QueryOhosAccountInfo();
+    if (!accountInfo.first) {
+        DLP_LOG_ERROR(LABEL, "Get accountInfo error.");
+        return;
+    }
+    std::string watermarkName = WATERMARK_NAME + accountInfo.second.name_ + std::to_string(userId);
+
+    if (appInfo.isWatermark) {
+        DLP_LOG_INFO(LABEL, "Erase watermark sandbox.");
+        auto it = watermarkMap_.find(appInfo.watermarkName);
+        if (it == watermarkMap_.end()) {
+            DLP_LOG_INFO(LABEL, "Watermark sandbox no exist");
+            return;
+        }
+        it->second--;
+        if (it->second == 0 && appInfo.watermarkName != watermarkName) {
+            int32_t pid = getprocpid();
+            DLP_LOG_INFO(LABEL, "Clear watermark");
+            OHOS::Rosen::RSInterfaces::GetInstance().ClearSurfaceWatermark(pid, appInfo.watermarkName);
+            watermarkMap_.erase(it);
+        }
+    }
 }
 
 void AppStateObserver::SetAppProxy(const sptr<AppExecFwk::AppMgrProxy>& appProxy)
@@ -573,35 +625,38 @@ void AppStateObserver::DumpSandbox(int fd)
     }
 }
 
-void AppStateObserver::EraseReadOnceUriInfoByUri(const std::string& uri)
+void AppStateObserver::EraseFileInfoByUri(const std::string& uri)
 {
-    std::lock_guard<std::mutex> lock(readOnceUriMapLock_);
-    auto iter = readOnceUriMap_.find(uri);
-    if (iter != readOnceUriMap_.end()) {
+    std::lock_guard<std::mutex> lock(fileInfoUriMapLock_);
+    auto iter = fileInfoUriMap_.find(uri);
+    if (iter != fileInfoUriMap_.end()) {
         DLP_LOG_INFO(LABEL, "erase ReadOnce");
-        readOnceUriMap_.erase(iter);
+        fileInfoUriMap_.erase(iter);
     }
 }
 
-bool AppStateObserver::AddUriAndNotOwnerAndReadOnce(const std::string& uri, bool isNotOwnerAndReadOnce)
+bool AppStateObserver::AddUriAndFileInfo(const std::string& uri, const FileInfo& fileInfo)
 {
     if (uri.empty()) {
         DLP_LOG_ERROR(LABEL, "uri is invalid");
         return false;
     }
-    std::lock_guard<std::mutex> lock(readOnceUriMapLock_);
-    DLP_LOG_INFO(LABEL, "add readOnceUriMap, isNotOwnerAndReadOnce: %{public}d", isNotOwnerAndReadOnce);
-    readOnceUriMap_[uri] = isNotOwnerAndReadOnce;
+    std::lock_guard<std::mutex> lock(fileInfoUriMapLock_);
+    DLP_LOG_INFO(LABEL, "add readOnceUriMap, isNotOwnerAndReadOnce: %{public}d",
+        fileInfo.isNotOwnerAndReadOnce);
+    fileInfoUriMap_[uri] = fileInfo;
     return true;
 }
 
-bool AppStateObserver::GetNotOwnerAndReadOnceByUri(const std::string& uri, bool& isNotOwnerAndReadOnce)
+bool AppStateObserver::GetFileInfoByUri(const std::string& uri, FileInfo& fileInfo)
 {
-    std::lock_guard<std::mutex> lock(readOnceUriMapLock_);
-    auto iter = readOnceUriMap_.find(uri);
-    if (iter != readOnceUriMap_.end()) {
-        isNotOwnerAndReadOnce = iter->second;
-        DLP_LOG_INFO(LABEL, "isNotOwnerAndReadOnce: %{public}d", isNotOwnerAndReadOnce);
+    std::lock_guard<std::mutex> lock(fileInfoUriMapLock_);
+    auto iter = fileInfoUriMap_.find(uri);
+    if (iter != fileInfoUriMap_.end()) {
+        fileInfo = iter->second;
+        DLP_LOG_INFO(LABEL, "fileInfo with isNotOwnerAndReadOnce: %{public}d, isWatermark: %{public}d",
+            fileInfo.isNotOwnerAndReadOnce, fileInfo.isWatermark);
+        fileInfoUriMap_.erase(iter);
         return true;
     }
     return false;

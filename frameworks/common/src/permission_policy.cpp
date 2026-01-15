@@ -396,6 +396,51 @@ SandboxInfo* SandboxInfo::Unmarshalling(Parcel &in)
     }
     return parcel;
 }
+
+bool FileInfo::Marshalling(Parcel &out) const
+{
+    if (!(out.WriteBool(isNotOwnerAndReadOnce))) {
+        DLP_LOG_ERROR(LABEL, "Write isNotOwnerAndReadOnce fail");
+        return false;
+    }
+    if (!(out.WriteBool(isWatermark))) {
+        DLP_LOG_ERROR(LABEL, "Write isWatermark fail");
+        return false;
+    }
+    if (!(out.WriteString(accountName))) {
+        DLP_LOG_ERROR(LABEL, "Write accountName fail");
+        return false;
+    }
+    return true;
+}
+
+FileInfo* FileInfo::Unmarshalling(Parcel &in)
+{
+    auto *parcel = new (std::nothrow) FileInfo();
+    do {
+        if (parcel == nullptr) {
+            DLP_LOG_ERROR(LABEL, "Alloc buff for parcel fail");
+            break;
+        }
+        if (!(in.ReadBool(parcel->isNotOwnerAndReadOnce))) {
+            DLP_LOG_ERROR(LABEL, "Read isNotOwnerAndReadOnce fail");
+            break;
+        }
+        if (!(in.ReadBool(parcel->isWatermark))) {
+            DLP_LOG_ERROR(LABEL, "Read isWatermark fail");
+            break;
+        }
+        if (!(in.ReadString(parcel->accountName))) {
+            DLP_LOG_ERROR(LABEL, "Read accountName fail");
+            break;
+        }
+        return parcel;
+    } while (0);
+    if (parcel) {
+        delete parcel;
+    }
+    return nullptr;
+}
 }  // namespace DlpPermission
 }  // namespace Security
 }  // namespace OHOS

@@ -35,6 +35,8 @@ public:
     uint64_t timeStamp = 0;
     bool hasRead = false;
     bool isReadOnce = false;
+    bool isWatermark = false;
+    std::string watermarkName = "";
 };
 }  // namespace DlpPermission
 }  // namespace Security

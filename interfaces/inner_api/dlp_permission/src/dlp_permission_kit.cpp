@@ -291,9 +291,9 @@ int32_t DlpPermissionKit::SetEnterprisePolicy(EnterprisePolicy policy)
     return DlpPermissionClient::GetInstance().SetEnterprisePolicy(policy.policyString);
 }
 
-int32_t DlpPermissionKit::SetNotOwnerAndReadOnce(const std::string& uri, bool isNotOwnerAndReadOnce)
+int32_t DlpPermissionKit::SetFileInfo(const std::string& uri, const FileInfo& fileInfo)
 {
-    return DlpPermissionClient::GetInstance().SetNotOwnerAndReadOnce(uri, isNotOwnerAndReadOnce);
+    return DlpPermissionClient::GetInstance().SetFileInfo(uri, fileInfo);
 }
 
 }  // namespace DlpPermission
