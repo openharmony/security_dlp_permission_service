@@ -50,7 +50,6 @@ public:
     std::string accountName = "";
     std::shared_ptr<Media::PixelMap> waterMarkImg = nullptr;
     int32_t waterMarkFd = -1;
-    int32_t waterMarkStatus = 0;
 };
 
 class DlpPermissionService final : public SystemAbility, public DlpPermissionServiceStub {
@@ -129,8 +128,8 @@ private:
     std::shared_ptr<std::thread> thread_ = nullptr;
     std::mutex mutex_;
     std::shared_mutex dlpSandboxDataMutex_;
-    std::shared_mutex waterMarkInfoMutex_;
-    std::condition_variable_any waterMarkInfoCv_;
+    std::mutex waterMarkInfoMutex_;
+    std::condition_variable waterMarkInfoCv_;
     ServiceRunningState state_;
     sptr<AppExecFwk::IAppMgr> iAppMgr_;
     sptr<AppStateObserver> appStateObserver_;

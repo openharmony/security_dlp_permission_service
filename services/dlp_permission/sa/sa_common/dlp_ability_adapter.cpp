@@ -74,53 +74,44 @@ void DlpAbilityAdapter::DisconnectPermServiceAbility()
     if (disconnect != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "Disconnect Ability failed, errCode: %{public}d", disconnect);
     }
+    if (abilityConnection_ != nullptr) {
+        abilityConnection_.clear();
+    }
     return;
 }
 
-static void handleErrCondition(WaterMarkInfo &waterMarkInfo, std::shared_mutex &waterMarkInfoMutex,
-    std::condition_variable_any &waterMarkInfoCv)
-{
-    std::unique_lock<std::shared_mutex> lock(waterMarkInfoMutex);
-    waterMarkInfo.waterMarkStatus = -1;
-    waterMarkInfoCv.notify_all();
-}
-
 int32_t DlpAbilityAdapter::HandleGetWaterMark(int32_t userId,
-    WaterMarkInfo &waterMarkInfo, std::shared_mutex &waterMarkInfoMutex, std::condition_variable_any &waterMarkInfoCv)
+    WaterMarkInfo &waterMarkInfo, std::condition_variable &waterMarkInfoCv)
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
     int32_t res = ConnectPermServiceAbility(userId,
-        [this, &waterMarkInfo, &waterMarkInfoMutex, &waterMarkInfoCv](sptr<IRemoteObject> remoteObj) -> void {
-        if (remoteObj == nullptr) {
-            DLP_LOG_ERROR(LABEL, "ConnectCallback is nullptr.");
-            handleErrCondition(waterMarkInfo, waterMarkInfoMutex, waterMarkInfoCv);
-            return;
-        }
-
-        DlpAbilityProxy proxy(remoteObj);
-        sptr<DlpAbilityStub> stub = DlpAbilityStub::GetInstance(callback_);
-        if (stub == nullptr) {
-            DLP_LOG_ERROR(LABEL, "DlpAbilityStub is nullptr.");
-            handleErrCondition(waterMarkInfo, waterMarkInfoMutex, waterMarkInfoCv);
-            return;
-        }
-        int32_t waterMarkFd = proxy.HandleGetWaterMark(stub);
-        if (waterMarkFd < 0) {
-            DLP_LOG_ERROR(LABEL, "HandleGetWaterMark failed, fd: %{public}d", waterMarkFd);
-            handleErrCondition(waterMarkInfo, waterMarkInfoMutex, waterMarkInfoCv);
-        }
-        {
-            std::unique_lock<std::shared_mutex> lock(waterMarkInfoMutex);
-            waterMarkInfo.waterMarkStatus = 1;
+        [this, &waterMarkInfo, &waterMarkInfoCv](sptr<IRemoteObject> remoteObj) -> void {
+        do {
+            if (remoteObj == nullptr) {
+                DLP_LOG_ERROR(LABEL, "ConnectCallback is nullptr.");
+                break;
+            }
+            DlpAbilityProxy proxy(remoteObj);
+            sptr<DlpAbilityStub> stub = DlpAbilityStub::GetInstance(callback_);
+            if (stub == nullptr) {
+                DLP_LOG_ERROR(LABEL, "DlpAbilityStub is nullptr.");
+                break;
+            }
+            int32_t waterMarkFd = proxy.HandleGetWaterMark(stub);
+            if (waterMarkFd < 0) {
+                DLP_LOG_ERROR(LABEL, "HandleGetWaterMark failed, fd: %{public}d", waterMarkFd);
+            }
             waterMarkInfo.waterMarkFd = waterMarkFd;
-            waterMarkInfoCv.notify_all();
-        }
+            DLP_LOG_DEBUG(LABEL, "Get watermark success.");
+        } while (0);
+        waterMarkInfoCv.notify_all();
+        DisconnectPermServiceAbility();
         return;
     });
     if (res != DLP_OK) {
         DLP_LOG_ERROR(LABEL,
             "ConnectPermServiceAbility failed, errCode: %{public}d", res);
-        handleErrCondition(waterMarkInfo, waterMarkInfoMutex, waterMarkInfoCv);
+        waterMarkInfoCv.notify_all();
     }
     return res;
 }

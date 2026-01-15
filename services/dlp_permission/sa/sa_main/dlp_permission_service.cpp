@@ -93,7 +93,7 @@ static const std::string MDM_BUNDLE_NAME = "appId";
 static const uint32_t ENABLE_VALUE_TRUE = 1;
 static const char *FEATURE_INFO_DATA_FILE_PATH = "/data/service/el1/public/dlp_permission_service/dlp_feature_info.txt";
 static const std::string WATERMARK_NAME = "dlpWaterMark";
-constexpr int32_t PARSE_WAIT_TIME_OUT = 20;
+constexpr int32_t PARSE_WAIT_TIME_OUT = 5;
 }
 REGISTER_SYSTEM_ABILITY_BY_ID(DlpPermissionService, SA_ID_DLP_PERMISSION_SERVICE, true);
 
@@ -320,11 +320,8 @@ int32_t DlpPermissionService::CheckWaterMarkInfo()
     if (ret != DLP_OK) {
         return DLP_SERVICE_ERROR_GET_ACCOUNT_FAIL;
     }
-    {
-        std::shared_lock<std::shared_mutex> lock(waterMarkInfoMutex_);
-        if (waterMarkInfo_.accountName == watermarkName) {
-            return DLP_OK;
-        }
+    if (waterMarkInfo_.accountName == watermarkName) {
+        return DLP_OK;
     }
     DLP_LOG_INFO(LABEL, "Change account or has not watermark");
     return DLP_SERVICE_ERROR_VALUE_INVALID;
@@ -337,13 +334,9 @@ static int32_t ReceiveCallback(int32_t errCode, uint64_t reqId, uint8_t *outData
     return DLP_OK;
 }
 
-static int32_t GetPixelmapFromFd(WaterMarkInfo& waterMarkInfo, std::shared_mutex &waterMarkInfoMutex)
+static int32_t GetPixelmapFromFd(WaterMarkInfo& waterMarkInfo)
 {
-    int32_t fd;
-    {
-        std::shared_lock<std::shared_mutex> lock(waterMarkInfoMutex);
-        fd = waterMarkInfo.waterMarkFd;
-    }
+    int32_t fd = waterMarkInfo.waterMarkFd;
     if (fd < 0) {
         DLP_LOG_ERROR(LABEL, "unexpect watermark fd: %{public}d", fd);
         return DLP_IPC_CALLBACK_ERROR;
@@ -368,11 +361,8 @@ static int32_t GetPixelmapFromFd(WaterMarkInfo& waterMarkInfo, std::shared_mutex
         if (err != IMAGE_SUCCESS) {
             break;
         }
-        {
-            std::unique_lock<std::shared_mutex> lock(waterMarkInfoMutex);
-            waterMarkInfo.waterMarkImg = resPixelmap->GetInnerPixelmap();
-            DLP_LOG_INFO(LABEL, "watermark pixelmap size: %{public}d", waterMarkInfo.waterMarkImg->GetCapacity());
-        }
+        waterMarkInfo.waterMarkImg = resPixelmap->GetInnerPixelmap();
+        DLP_LOG_INFO(LABEL, "watermark pixelmap size: %{public}d", waterMarkInfo.waterMarkImg->GetCapacity());
     } while (0);
     if (resPixelmap) {
         delete resPixelmap;
@@ -416,7 +406,6 @@ int32_t DlpPermissionService::ChangeWaterMarkInfo()
         return DLP_SERVICE_ERROR_GET_ACCOUNT_FAIL;
     }
 
-    std::shared_lock<std::shared_mutex> lock(waterMarkInfoMutex_);
     if (!waterMarkInfo_.waterMarkImg) {
         DLP_LOG_ERROR(LABEL, "SetWaterMark waterMarkImg is null");
         return DLP_SET_WATERMARK_ERROR;
@@ -427,7 +416,6 @@ int32_t DlpPermissionService::ChangeWaterMarkInfo()
         return DLP_SET_WATERMARK_TO_RS_ERROR;
     }
     waterMarkInfo_.waterMarkImg = nullptr;
-    waterMarkInfo_.waterMarkStatus = 0;
     waterMarkInfo_.accountName = watermarkName;
     return DLP_OK;
 }
@@ -435,6 +423,7 @@ int32_t DlpPermissionService::ChangeWaterMarkInfo()
 int32_t DlpPermissionService::GetWaterMark(const bool waterMarkConfig,
     const sptr<IDlpPermissionCallback>& callback)
 {
+    std::unique_lock<std::mutex> lock(waterMarkInfoMutex_);
     CriticalHelper criticalHelper("GetWaterMark");
     appStateObserver_->PostDelayUnloadTask(CurrentTaskState::SHORT_TASK);
     (void)waterMarkConfig;
@@ -450,15 +439,11 @@ int32_t DlpPermissionService::GetWaterMark(const bool waterMarkConfig,
     int32_t userId = GetCallingUserId();
     ReceiveDataCallback recvCallback = ReceiveCallback;
     DlpAbilityAdapter dlpAbilityAdapter(recvCallback);
-    dlpAbilityAdapter.HandleGetWaterMark(userId, waterMarkInfo_, waterMarkInfoMutex_, waterMarkInfoCv_);
-    {
-        std::unique_lock<std::shared_mutex> lock(waterMarkInfoMutex_);
-        if (waterMarkInfo_.waterMarkStatus == 0) {
-            waterMarkInfoCv_.wait_for(lock, std::chrono::seconds(PARSE_WAIT_TIME_OUT));
-        }
-    }
+    dlpAbilityAdapter.HandleGetWaterMark(userId, waterMarkInfo_, waterMarkInfoCv_);
+    
+    waterMarkInfoCv_.wait_for(lock, std::chrono::seconds(PARSE_WAIT_TIME_OUT));
 
-    res = GetPixelmapFromFd(waterMarkInfo_, waterMarkInfoMutex_);
+    res = GetPixelmapFromFd(waterMarkInfo_);
     if (res != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "GetPixelmapFromFd failed.");
         return DLP_CREATE_PIXELMAP_ERROR;
