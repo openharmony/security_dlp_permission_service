@@ -168,6 +168,15 @@ static const std::unordered_map<std::string, uint32_t> TYPE_TO_NUM_MAP = {
     {"ra", 132},
     {"snd", 133},
     {"mp2", 134},
+    {"csv", 135},
+    {"rtf", 136},
+    {"xml", 137},
+    {"cpp", 138},
+    {"cxx", 139},
+    {"cc", 140},
+    {"html", 141},
+    {"htm", 142},
+    {"java", 143},
 };
 
 static const std::unordered_map<uint32_t, std::string> NUM_TO_TYPE_MAP = {
@@ -305,6 +314,15 @@ static const std::unordered_map<uint32_t, std::string> NUM_TO_TYPE_MAP = {
     {132, "ra"},
     {133, "snd"},
     {134, "mp2"},
+    {135, "csv"},
+    {136, "rtf"},
+    {137, "xml"},
+    {138, "cpp"},
+    {139, "cxx"},
+    {140, "cc"},
+    {141, "html"},
+    {142, "htm"},
+    {143, "java"},
 };
 
 static const std::unordered_map<std::string, std::string> FILE_TYPE_MAP = {
@@ -442,6 +460,15 @@ static const std::unordered_map<std::string, std::string> FILE_TYPE_MAP = {
     {"ra", "support_audio_dlp"},
     {"snd", "support_audio_dlp"},
     {"mp2", "support_audio_dlp"},
+    {"csv", "support_document_dlp"},
+    {"rtf", "support_document_dlp"},
+    {"xml", "support_document_dlp"},
+    {"cpp", "support_document_dlp"},
+    {"cxx", "support_document_dlp"},
+    {"cc", "support_document_dlp"},
+    {"html", "support_document_dlp"},
+    {"htm", "support_document_dlp"},
+    {"java", "support_document_dlp"},
 };
 
 class DlpUtils {

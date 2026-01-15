@@ -182,6 +182,15 @@ static const std::unordered_map<std::string, std::string> SUFFIX_MIMETYPE_MAP = 
     {"ra", "audio/mp3"},
     {"snd", "audio/mp3"},
     {"mp2", "audio/mp3"},
+    {"csv", "text/csv"},
+    {"rtf", "text/csv"},
+    {"xml", "text/csv"},
+    {"cpp", "text/csv"},
+    {"cxx", "text/csv"},
+    {"cc", "text/csv"},
+    {"html", "text/csv"},
+    {"htm", "text/csv"},
+    {"java", "text/csv"},
 };
 
 static bool IsDlpFileName(const std::string& dlpFileName)
