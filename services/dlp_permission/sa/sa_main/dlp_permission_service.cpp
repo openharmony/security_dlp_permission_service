@@ -483,7 +483,7 @@ int32_t DlpPermissionService::SetWaterMark(const int32_t pid)
         return DLP_SERVICE_ERROR_GET_ACCOUNT_FAIL;
     }
     
-    ret = static_cast<int32_t>(Rosen::WindowManager::
+    ret = static_cast<int32_t>(Rosen::WindowManagerLite::
         GetInstance().SetProcessWatermark(pid, watermarkName, true));
     if (ret != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "SetProcessWatermark failed! errcode: %{public}d", ret);

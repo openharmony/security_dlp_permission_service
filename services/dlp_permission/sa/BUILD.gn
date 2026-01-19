@@ -236,7 +236,7 @@ ohos_shared_library("dlp_permission_service") {
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
     "zlib:shared_libz",
-    "window_manager:libwm",
+    "window_manager:libwm_lite",
     "image_framework:image_native",
     "image_framework:image_source",
     "image_framework:image_source_ndk",
