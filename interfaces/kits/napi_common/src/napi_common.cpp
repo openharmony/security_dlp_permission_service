@@ -1663,12 +1663,12 @@ napi_value SandboxInfoToJs(napi_env env, const SandboxInfo& sandboxInfo)
     napi_value tokenIdJs;
     NAPI_CALL(env, napi_create_int64(env, sandboxInfo.tokenId, &tokenIdJs));
     NAPI_CALL(env, napi_set_named_property(env, sandboxInfoJs, "tokenID", tokenIdJs));
-
+    
     if (sandboxInfo.bindAppIndex > HIPREVIEW_SANDBOX_LOW_BOUND) {
         napi_value bindAppIndexJs;
         NAPI_CALL(env, napi_create_int64(env, sandboxInfo.bindAppIndex, &bindAppIndexJs));
         NAPI_CALL(env, napi_set_named_property(env, sandboxInfoJs, "bindAppIndex", bindAppIndexJs));
- 	}
+    }
 
     return sandboxInfoJs;
 }

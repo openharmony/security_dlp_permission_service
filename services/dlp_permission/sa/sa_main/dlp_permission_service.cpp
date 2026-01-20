@@ -628,7 +628,7 @@ static void previewBindInstall(DlpSandboxInfo& sandboxInfo, int32_t userId, DLPF
             DLP_LOG_ERROR(LABEL, "install sandbox %{public}s fail, %{public}d", HIPREVIEW_LOW.c_str(), bundleClientRes);
         } else {
             DLP_LOG_INFO(LABEL, "install sandbox %s success, appIndex: %d",
-            HIPREVIEW_LOW.c_str(), sandboxInfo.bindAppIndex);
+                HIPREVIEW_LOW.c_str(), sandboxInfo.bindAppIndex);
         }
     } else {
         DLP_LOG_ERROR(LABEL, "previewBindInstall failed, bindAppIndex higher or appindex lower than low bound");
