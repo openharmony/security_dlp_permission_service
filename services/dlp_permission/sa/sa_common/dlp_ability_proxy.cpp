@@ -69,7 +69,7 @@ int32_t DlpAbilityProxy::HandleGetWaterMark(sptr<IRemoteObject> stubInstance)
         return DLP_ABILITY_CONNECT_ERROR;
     }
     int32_t watermarkFd = -1;
-    int32_t watermarkStatus = reply.ReadInt32();  //todo 判断异常情况
+    int32_t watermarkStatus = reply.ReadInt32();
     if (watermarkStatus != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "recv watermark error with %{public}d", watermarkStatus);
         return watermarkFd;

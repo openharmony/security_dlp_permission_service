@@ -798,6 +798,7 @@ HWTEST_F(AppStateObserverTest, AddWatermarkName001, TestSize.Level1)
     DlpSandboxInfo appInfo;
     observer.AddWatermarkName(appInfo);
     appInfo.bundleName = "DlpTest";
+    appInfo.isWatermark = true;
     appInfo.tokenId = 100;
     appInfo.appIndex = 100;
     appInfo.watermarkName = "name1";

@@ -275,8 +275,9 @@ void AppStateObserver::AddDlpSandboxInfo(const DlpSandboxInfo& appInfo)
 
 void AppStateObserver::AddWatermarkName(const DlpSandboxInfo& appInfo)
 {
-    if (appInfo.bundleName.empty() || appInfo.tokenId <= 0 || appInfo.appIndex <= 0) {
-        DLP_LOG_ERROR(LABEL, "Param is error");
+    if (!appInfo.isWatermark || appInfo.bundleName.empty() ||
+        appInfo.tokenId <= 0 || appInfo.appIndex <= 0) {
+        DLP_LOG_ERROR(LABEL, "Not watermark sandbox or param is error");
         return;
     }
     auto it = watermarkMap_.find(appInfo.watermarkName);
@@ -290,6 +291,10 @@ void AppStateObserver::AddWatermarkName(const DlpSandboxInfo& appInfo)
 
 void AppStateObserver::DecWatermarkName(const DlpSandboxInfo& appInfo)
 {
+    if (!appInfo.isWatermark) {
+        DLP_LOG_DEBUG(LABEL, "Not watermark sandbox");
+        return;
+    }
     int32_t userId;
     if (!GetUserIdByForegroundAccount(&userId)) {
         DLP_LOG_ERROR(LABEL, "GetUserIdByForegroundAccount error");
@@ -303,20 +308,18 @@ void AppStateObserver::DecWatermarkName(const DlpSandboxInfo& appInfo)
     }
     std::string watermarkName = WATERMARK_NAME + accountInfo.second.name_ + std::to_string(userId);
 
-    if (appInfo.isWatermark) {
-        DLP_LOG_INFO(LABEL, "Erase watermark sandbox.");
-        auto it = watermarkMap_.find(appInfo.watermarkName);
-        if (it == watermarkMap_.end()) {
-            DLP_LOG_INFO(LABEL, "Watermark sandbox no exist");
-            return;
-        }
-        it->second--;
-        if (it->second == 0 && appInfo.watermarkName != watermarkName) {
-            int32_t pid = getprocpid();
-            DLP_LOG_INFO(LABEL, "Clear watermark");
-            OHOS::Rosen::RSInterfaces::GetInstance().ClearSurfaceWatermark(pid, appInfo.watermarkName);
-            watermarkMap_.erase(it);
-        }
+    DLP_LOG_INFO(LABEL, "Erase watermark sandbox.");
+    auto it = watermarkMap_.find(appInfo.watermarkName);
+    if (it == watermarkMap_.end()) {
+        DLP_LOG_INFO(LABEL, "Watermark sandbox no exist");
+        return;
+    }
+    it->second--;
+    if (it->second == 0 && appInfo.watermarkName != watermarkName) {
+        int32_t pid = getprocpid();
+        DLP_LOG_INFO(LABEL, "Clear watermark");
+        OHOS::Rosen::RSInterfaces::GetInstance().ClearSurfaceWatermark(pid, appInfo.watermarkName);
+        watermarkMap_.erase(it);
     }
 }
 
