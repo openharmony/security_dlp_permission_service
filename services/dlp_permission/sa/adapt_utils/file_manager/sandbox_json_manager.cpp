@@ -32,7 +32,10 @@ using namespace Security::AccessToken;
 using Json = nlohmann::json;
 using namespace OHOS;
 namespace {
+const std::string HIPREVIEW_HIGH = "com.huawei.hmos.hipreview";
+const std::string HIPREVIEW_LOW = "com.huawei.hmos.hipreviewext";
 const std::string APPINDEX = "appIndex";
+const std::string BINDAPPINDEX = "bindAppIndex";
 const std::string BUNDLENAME = "bundleName";
 const std::string DOCURISET = "docUriSet";
 const std::string USERID = "userId";
@@ -274,7 +277,7 @@ int32_t SandboxJsonManager::GetRetentionSandboxList(const std::string& bundleNam
         if (iter->bundleName != bundleName || iter->userId != userId) {
             continue;
         }
-        if (isRetention && iter->docUriSet.empty()) {
+        if (isRetention && iter->docUriSet.empty() && bundleName != HIPREVIEW_HIGH) {
             continue;
         }
         if (!isRetention && !iter->docUriSet.empty()) {
@@ -283,6 +286,7 @@ int32_t SandboxJsonManager::GetRetentionSandboxList(const std::string& bundleNam
         RetentionSandBoxInfo info;
         info.bundleName_ = bundleName;
         info.appIndex_ = iter->appIndex;
+        info.bindAppIndex_ = iter->bindAppIndex;
         info.docUriSet_ = iter->docUriSet;
         info.dlpFileAccess_ = iter->dlpFileAccess;
         info.hasRead_ = iter->hasRead;
@@ -409,7 +413,8 @@ void SandboxJsonManager::RetentionInfoToJson(Json& json, const RetentionInfo& in
         { USERID, info.userId },
         { DLPFILEACCESS, info.dlpFileAccess },
         { DOCURISET, info.docUriSet },
-        { HAS_READ, info.hasRead } };
+        { HAS_READ, info.hasRead },
+        { BINDAPPINDEX, info.bindAppIndex } };
 }
 
 Json SandboxJsonManager::ToJson() const
@@ -466,6 +471,12 @@ void SandboxJsonManager::FromJson(const Json& jsonObject)
         retentionJson.at(DLPFILEACCESS).get_to(info.dlpFileAccess);
         retentionJson.at(USERID).get_to(info.userId);
         retentionJson.at(HAS_READ).get_to(info.hasRead);
+        if (retentionJson.find(BINDAPPINDEX) != retentionJson.end() &&
+            CheckJsonElement(BINDAPPINDEX, retentionJson, KeyType::NUMBER)) {
+            retentionJson.at(BINDAPPINDEX).get_to(info.bindAppIndex);
+        } else {
+            info.bindAppIndex = -1;
+        }
         if (info.bundleName.empty() || info.appIndex < 0 || info.userId < 0 || info.tokenId == 0) {
             DLP_LOG_ERROR(LABEL, "param is invalid");
             return;

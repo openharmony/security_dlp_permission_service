@@ -39,6 +39,9 @@ const std::string DLP_MANAGER_BUNDLE_NAME = "com.ohos.dlpmanager";
 const std::string DLP_CREDMGR_BUNDLE_NAME = "com.huawei.hmos.dlpcredmgr";
 const std::string DLP_CREDMGR_PROCESS_NAME = "com.huawei.hmos.dlpcredmgr:DlpCredActionExtAbility";
 const std::string WATERMARK_NAME = "dlpWaterMark";
+const std::string HIPREVIEW_HIGH = "com.huawei.hmos.hipreview";
+const std::string HIPREVIEW_LOW_BUNDLE_NAME = "com.huawei.hmos.hipreviewext";
+const int32_t HIPREVIEW_SANDBOX_LOW_BOUND = 1000;
 constexpr int32_t SA_ID_DLP_PERMISSION_SERVICE = 3521;
 const std::string FLAG_OF_MINI = "svr";
 static const std::string TASK_ID = "dlpPermissionServiceUnloadTask";
@@ -89,6 +92,9 @@ void AppStateObserver::UninstallDlpSandbox(DlpSandboxInfo& appInfo)
         appInfo.appIndex, appInfo.uid);
     AppExecFwk::BundleMgrClient bundleMgrClient;
     bundleMgrClient.UninstallSandboxApp(appInfo.bundleName, appInfo.appIndex, appInfo.userId);
+    if (appInfo.bindAppIndex > HIPREVIEW_SANDBOX_LOW_BOUND && appInfo.bundleName == HIPREVIEW_HIGH) {
+        bundleMgrClient.UninstallSandboxApp(HIPREVIEW_LOW_BUNDLE_NAME, appInfo.bindAppIndex, appInfo.userId);
+    }
     RetentionFileManager::GetInstance().DelSandboxInfo(appInfo.tokenId);
 }
 
@@ -261,6 +267,7 @@ void AppStateObserver::AddDlpSandboxInfo(const DlpSandboxInfo& appInfo)
     AddUidWithTokenId(appInfo.tokenId, appInfo.uid);
     RetentionInfo retentionInfo = {
         .appIndex = appInfo.appIndex,
+        .bindAppIndex = appInfo.bindAppIndex,
         .tokenId = appInfo.tokenId,
         .bundleName = appInfo.bundleName,
         .dlpFileAccess = appInfo.dlpFileAccess,
@@ -362,6 +369,7 @@ bool AppStateObserver::GetOpeningSandboxInfo(const std::string& bundleName, cons
             DLP_LOG_INFO(LABEL, "APP is running, appName:%{public}s, state=%{public}d", it->processName_.c_str(),
                 it->state_);
             sandboxInfo.appIndex = appInfo.appIndex;
+            sandboxInfo.bindAppIndex = appInfo.bindAppIndex;
             sandboxInfo.tokenId = appInfo.tokenId;
             return true;
         }
@@ -409,6 +417,26 @@ void AppStateObserver::GetOpeningReadOnlySandbox(const std::string& bundleName, 
     appIndex = -1;
     return;
 }
+
+void AppStateObserver::GetOpeningReadOnlyBindSandbox(const std::string& bundleName,
+    int32_t userId, int32_t& bindAppIndex)
+{
+    std::lock_guard<std::mutex> lock(sandboxInfoLock_);
+    for (auto iter = sandboxInfo_.begin(); iter != sandboxInfo_.end(); iter++) {
+        DlpSandboxInfo appInfo = iter->second;
+        if (appInfo.userId == userId && appInfo.bundleName == bundleName &&
+            appInfo.dlpFileAccess == DLPFileAccess::READ_ONLY && !appInfo.isReadOnce) {
+            bindAppIndex = appInfo.bindAppIndex;
+            DLP_LOG_INFO(LABEL,
+                "GetOpeningReadOnlySandbox, bindAppIndex:%{public}d, bundleName=%{public}s",
+                bindAppIndex, bundleName.c_str());
+            return;
+        }
+    }
+    bindAppIndex = -1;
+    return;
+}
+ 
 
 uint32_t AppStateObserver::EraseDlpSandboxInfo(int uid)
 {
@@ -701,6 +729,25 @@ void AppStateObserver::PostDelayUnloadTask(CurrentTaskState newTaskState)
     }
     DLP_LOG_INFO(LABEL, "you will delay %{public}d task for 60s", taskState_);
     unloadHandler_->PostTask(task, TASK_ID, SA_SHORT_LIFT_TIME);
+}
+bool AppStateObserver::GetSandboxInfoByAppIndex(int32_t appIndex, DlpSandboxInfo& appInfo)
+{
+    std::lock_guard<std::mutex> lock(sandboxInfoLock_);
+    auto iter = sandboxInfo_.begin();
+    while (iter != sandboxInfo_.end()) {
+        auto& iterAppInfo = iter->second;
+        if (iterAppInfo.appIndex != appIndex) {
+            ++iter;
+            continue;
+        } else {
+            break;
+        }
+    }
+    if (iter != sandboxInfo_.end()) {
+        appInfo = iter->second;
+        return true;
+    }
+    return false;
 }
 }  // namespace DlpPermission
 }  // namespace Security

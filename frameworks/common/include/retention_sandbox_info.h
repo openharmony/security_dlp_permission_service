@@ -33,6 +33,7 @@ public:
     static RetentionSandBoxInfo* Unmarshalling(Parcel& parcel);
 
     int32_t appIndex_;
+    int32_t bindAppIndex_;
     std::string bundleName_;
     DLPFileAccess dlpFileAccess_;
     bool hasRead_;

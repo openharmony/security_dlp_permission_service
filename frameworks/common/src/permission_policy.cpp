@@ -374,6 +374,10 @@ bool SandboxInfo::Marshalling(Parcel &out) const
         DLP_LOG_ERROR(LABEL, "Write tokenId fail");
         return false;
     }
+    if (!(out.WriteInt32(bindAppIndex))) {
+        DLP_LOG_ERROR(LABEL, "Write bindAppIndex fail");
+        return false;
+    }
     return true;
 }
 
@@ -391,6 +395,11 @@ SandboxInfo* SandboxInfo::Unmarshalling(Parcel &in)
     }
     if (!(in.ReadUint32(parcel->tokenId))) {
         DLP_LOG_ERROR(LABEL, "Read tokenId fail");
+        delete parcel;
+        return nullptr;
+    }
+    if (!(in.ReadInt32(parcel->bindAppIndex))) {
+        DLP_LOG_ERROR(LABEL, "Read bindAppIndex fail");
         delete parcel;
         return nullptr;
     }

@@ -51,6 +51,7 @@ static constexpr size_t MAX_ERRCONTACTER_LEN = 255;
 static constexpr size_t MAX_FILE_NAME_LEN = 255;
 static constexpr size_t MAX_TYPE_LEN = 64;
 static constexpr size_t MAX_URI_LEN = 4095;
+static constexpr size_t HIPREVIEW_SANDBOX_LOW_BOUND = 1000;
 
 static bool ConvertDlpSandboxChangeInfo(napi_env env, napi_value value, const DlpSandboxCallbackInfo &result)
 {
@@ -1662,6 +1663,12 @@ napi_value SandboxInfoToJs(napi_env env, const SandboxInfo& sandboxInfo)
     napi_value tokenIdJs;
     NAPI_CALL(env, napi_create_int64(env, sandboxInfo.tokenId, &tokenIdJs));
     NAPI_CALL(env, napi_set_named_property(env, sandboxInfoJs, "tokenID", tokenIdJs));
+
+    if (sandboxInfo.bindAppIndex > HIPREVIEW_SANDBOX_LOW_BOUND) {
+        napi_value bindAppIndexJs;
+        NAPI_CALL(env, napi_create_int64(env, sandboxInfo.bindAppIndex, &bindAppIndexJs));
+        NAPI_CALL(env, napi_set_named_property(env, sandboxInfoJs, "bindAppIndex", bindAppIndexJs));
+ 	}
 
     return sandboxInfoJs;
 }

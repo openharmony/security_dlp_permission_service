@@ -35,6 +35,7 @@ namespace Security {
 namespace DlpPermission {
 struct RetentionInfo {
     int32_t appIndex = -1;
+    int32_t bindAppIndex = -1;
     uint32_t tokenId = 0;
     std::string bundleName = "";
     DLPFileAccess dlpFileAccess = DLPFileAccess::NO_PERMISSION;
