@@ -98,6 +98,10 @@ bool DlpPolicyParcel::MarshallingDlpPolicy(Parcel& out) const
         DLP_LOG_ERROR(LABEL, "Write canFindWaterMarkConfig_ fail");
         return false;
     }
+    if (!(out.WriteBool(this->policyParams_.canFindCountdown_))) {
+        DLP_LOG_ERROR(LABEL, "Write canFindCountdown_ fail");
+        return false;
+    }
     return true;
 }
 
@@ -362,6 +366,10 @@ static bool ReadPropertyParcel(Parcel& in, DlpPolicyParcel* policyParcel)
     }
     if (!(in.ReadBool(policyParcel->policyParams_.canFindWaterMarkConfig_))) {
         DLP_LOG_ERROR(LABEL, "Read canFindWaterMarkConfig_ fail");
+        return false;
+    }
+    if (!(in.ReadBool(policyParcel->policyParams_.canFindCountdown_))) {
+        DLP_LOG_ERROR(LABEL, "Read canFindCountdown_ fail");
         return false;
     }
     return true;

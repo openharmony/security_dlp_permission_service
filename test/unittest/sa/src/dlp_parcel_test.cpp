@@ -119,6 +119,25 @@ HWTEST_F(DlpParcelTest, DlpParcelTest004, TestSize.Level1)
 }
 
 /**
+ * @tc.name: DlpParcelTest005
+ * @tc.desc: DlpPolicyParcel test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpParcelTest, DlpParcelTest005, TestSize.Level1)
+{
+    DlpPolicyParcel info;
+    info.policyParams_.waterMarkConfig_ = true;
+    info.policyParams_.countdown_ = 100;
+    Parcel out;
+
+    EXPECT_EQ(false, info.Marshalling(out));
+    auto result = DlpPolicyParcel::Unmarshalling(out);
+    EXPECT_EQ(result, nullptr);
+}
+
+
+/**
  * @tc.name: DlpPolicyParcelTest001
  * @tc.desc: DlpPolicyParcel test
  * @tc.type: FUNC

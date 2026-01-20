@@ -172,6 +172,7 @@ public:
     bool waterMarkConfig_ = false;
     int32_t countdown_ = 0;
     bool canFindWaterMarkConfig_ = false;
+    bool canFindCountdown_ = false;
 
 private:
     uint8_t* aeskey_;

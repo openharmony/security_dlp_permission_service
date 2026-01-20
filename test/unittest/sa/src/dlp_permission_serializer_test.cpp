@@ -209,6 +209,25 @@ HWTEST_F(DlpPermissionSerializerTest, SerializeDlpPermission005, TestSize.Level1
 }
 
 /**
+ * @tc.name: SerializeDlpPermission006
+ * @tc.desc: SerializeDlpPermission test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionSerializerTest, SerializeDlpPermission006, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL, "SerializeDlpPermission006");
+    PermissionPolicy policy;
+    policy.ownerAccountType_ = OHOS::Security::DlpPermission::CLOUD_ACCOUNT;
+    policy.waterMarkConfig_ = true;
+    policy.countdown_ = 100;
+    unordered_json permInfoJson;
+    DlpPermissionSerializer serialize;
+    int32_t ret = serialize.SerializeDlpPermission(policy, permInfoJson);
+    ASSERT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, ret);
+}
+
+/**
  * @tc.name: DeserializeDlpPermission001
  * @tc.desc: DeserializeDlpPermission test
  * @tc.type: FUNC
@@ -467,6 +486,26 @@ HWTEST_F(DlpPermissionSerializerTest, DeserializeProperty005, TestSize.Level1)
     policy.ownerAccountType_ = OHOS::Security::DlpPermission::INVALID_ACCOUNT;
     serialize.DeserializeProperty(permJson1, policy);
     ASSERT_EQ(policy.waterMarkConfig_, false);
+}
+
+/**
+ * @tc.name: DeserializeProperty006
+ * @tc.desc: DeserializeProperty test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionSerializerTest, DeserializeProperty006, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL, "DeserializeProperty006");
+    unordered_json permJson1;
+    unordered_json everyoneJson;
+    everyoneJson["countdown"] = false;
+    permJson1["everyone"] = everyoneJson;
+    PermissionPolicy policy;
+    DlpPermissionSerializer serialize;
+    policy.ownerAccountType_ = OHOS::Security::DlpPermission::CLOUD_ACCOUNT;
+    serialize.DeserializeProperty(permJson1, policy);
+    ASSERT_EQ(policy.countdown_, false);
 }
 
 /**

@@ -931,6 +931,26 @@ HWTEST_F(DlpFileManagerTest, ParseZipDlpFile002, TestSize.Level0)
 }
 
 /**
+ * @tc.name: ParseZipDlpFile003
+ * @tc.desc: ParseZipDlpFile
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpFileManagerTest, ParseZipDlpFile003, TestSize.Level0)
+{
+    DLP_LOG_INFO(LABEL, "ParseZipDlpFile003");
+    std::string appId = "dlp_file_manager_test";
+    std::string realType = "txt";
+    std::shared_ptr<DlpFile> filePtr = std::make_shared<DlpZipFile>(1001, DLP_TEST_DIR, 0, realType);
+    filePtr->SetCountdown(100);
+    sptr<CertParcel> certParcel = new (std::nothrow) CertParcel();
+
+    certParcel->cert = {};
+    EXPECT_EQ(0, certParcel->cert.size());
+    EXPECT_NE(DLP_OK, DlpFileManager::GetInstance().ParseZipDlpFile(filePtr, appId, 1001, certParcel));
+}
+
+/**
  * @tc.name: ParseZipDlpFileAndAddNode001
  * @tc.desc: ParseZipDlpFileAndAddNode
  * @tc.type: FUNC

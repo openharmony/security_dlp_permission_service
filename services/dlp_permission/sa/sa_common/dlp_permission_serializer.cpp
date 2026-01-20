@@ -330,8 +330,10 @@ static void SerializeEveryoneInfo(const PermissionPolicy& policy, unordered_json
         permInfoJson[EVERYONE_INDEX] = everyoneJson;
     }
     if (policy.ownerAccountType_ == CLOUD_ACCOUNT) {
-        DLP_LOG_DEBUG(LABEL, "waterMarkConfig: %{public}d.", policy.waterMarkConfig_);
+        DLP_LOG_DEBUG(LABEL, "waterMarkConfig: %{public}d, countdown: %{public}d.",
+            policy.waterMarkConfig_, policy.countdown_);
         permInfoJson[EVERYONE_INDEX][WATERMARK_CONFIG] = policy.waterMarkConfig_;
+        permInfoJson[EVERYONE_INDEX][COUNTDOWN] = policy.countdown_;
     }
 }
 
@@ -444,6 +446,7 @@ static int32_t GetPolicyJson(const unordered_json& permJson, unordered_json& pla
 void DlpPermissionSerializer::DeserializeProperty(const unordered_json& policyJson, PermissionPolicy& policy)
 {
     policy.canFindWaterMarkConfig_ = false;
+    policy.canFindCountdown_ = false;
     if (policyJson.find(EVERYONE_INDEX) == policyJson.end() || !policyJson.at(EVERYONE_INDEX).is_object()) {
         DLP_LOG_DEBUG(LABEL, "no everyone");
         return;
@@ -456,6 +459,12 @@ void DlpPermissionSerializer::DeserializeProperty(const unordered_json& policyJs
         everyoneInfoJson.at(WATERMARK_CONFIG).get_to(policy.waterMarkConfig_);
         policy.canFindWaterMarkConfig_ = true;
         DLP_LOG_INFO(LABEL, "get waterMarkConfig from everyone, %{public}d.", policy.waterMarkConfig_);
+    }
+    if (everyoneInfoJson.find(COUNTDOWN) != everyoneInfoJson.end() &&
+        everyoneInfoJson.at(COUNTDOWN).is_number()) {
+        everyoneInfoJson.at(COUNTDOWN).get_to(policy.countdown_);
+        policy.canFindCountdown_ = true;
+        DLP_LOG_INFO(LABEL, "get countdown from everyone, %{public}d.", policy.countdown_);
     }
     return;
 }
@@ -529,6 +538,8 @@ static void InitPermissionExtendPolicy(PermissionPolicy& policy, unordered_json 
     }
     if (policyJson.find(COUNTDOWN) != policyJson.end() && policyJson.at(COUNTDOWN).is_number()) {
         policyJson.at(COUNTDOWN).get_to(policy.countdown_);
+        policy.canFindCountdown_ = true;
+        DLP_LOG_DEBUG(LABEL, "find countdown from policy, %{public}d", policy.countdown_);
     }
 }
 
