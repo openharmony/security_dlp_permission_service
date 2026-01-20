@@ -24,6 +24,7 @@ namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = { LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION,
                                                        "RetentionSandBoxInfo" };
 constexpr uint32_t APP_INDEX = 0;
+constexpr int32_t BIND_APP_INDEX = -1;
 }
 
 RetentionSandBoxInfo::RetentionSandBoxInfo()
@@ -33,7 +34,7 @@ RetentionSandBoxInfo::RetentionSandBoxInfo()
     dlpFileAccess_ = DLPFileAccess::NO_PERMISSION;
     hasRead_ = false;
     docUriSet_.clear();
-    bindAppIndex_ = APP_INDEX;
+    bindAppIndex_ = BIND_APP_INDEX;
     isReadOnce_ = false;
 }
 

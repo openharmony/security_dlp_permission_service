@@ -730,13 +730,15 @@ void AppStateObserver::PostDelayUnloadTask(CurrentTaskState newTaskState)
     DLP_LOG_INFO(LABEL, "you will delay %{public}d task for 60s", taskState_);
     unloadHandler_->PostTask(task, TASK_ID, SA_SHORT_LIFT_TIME);
 }
-bool AppStateObserver::GetSandboxInfoByAppIndex(int32_t appIndex, DlpSandboxInfo& appInfo)
+bool AppStateObserver::GetSandboxInfoByAppIndex(const std::string& bundleName,
+    int32_t appIndex, DlpSandboxInfo& appInfo)
 {
     std::lock_guard<std::mutex> lock(sandboxInfoLock_);
     auto iter = sandboxInfo_.begin();
     while (iter != sandboxInfo_.end()) {
         auto& iterAppInfo = iter->second;
-        if (iterAppInfo.appIndex != appIndex) {
+        if (iterAppInfo.appIndex != appIndex
+            || iterAppInfo.bundleName != bundleName) {
             ++iter;
             continue;
         } else {

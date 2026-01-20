@@ -768,7 +768,7 @@ int32_t DlpPermissionService::UninstallDlpSandbox(const std::string& bundleName,
     if (RetentionFileManager::GetInstance().CanUninstall(tokenId)) {
         if (bundleName == HIPREVIEW_HIGH) {
             DlpSandboxInfo sandboxInfo;
-            appStateObserver_->GetSandboxInfoByAppIndex(appIndex, sandboxInfo);
+            appStateObserver_->GetSandboxInfoByAppIndex(HIPREVIEW_HIGH, appIndex, sandboxInfo);
             int32_t bindAppIndex = sandboxInfo.bindAppIndex;
             (void)UninstallDlpSandboxApp(HIPREVIEW_LOW, bindAppIndex, userId);
         }
@@ -802,18 +802,19 @@ int32_t DlpPermissionService::GetSandboxExternalAuthorization(
         DLP_LOG_ERROR(LABEL, "param is invalid");
         return DLP_SERVICE_ERROR_VALUE_INVALID;
     }
-    std::string bundleName = want.GetBundle();
-    DLP_LOG_INFO(LABEL, "GetSandboxExternalAuthorization bundleName=%s", bundleName.c_str());
-    if (bundleName == HIPREVIEW_LOW) {
-        authType = SandBoxExternalAuthorType::ALLOW_START_ABILITY;
-        return DLP_OK;
-    }
     bool isSandbox = false;
 
     appStateObserver_->IsInDlpSandbox(isSandbox, sandboxUid);
 
     std::unique_lock<std::shared_mutex> lock(dlpSandboxDataMutex_);
     auto it = dlpSandboxData_.find(sandboxUid);
+    std::string bundleName = want.GetBundle();
+    DLP_LOG_INFO(LABEL, "GetSandboxExternalAuthorization bundleName=%s", bundleName.c_str());
+    if (isSandbox && it != dlpSandboxData_.end() && bundleName == HIPREVIEW_LOW) {
+        authType = SandBoxExternalAuthorType::ALLOW_START_ABILITY;
+        return DLP_OK;
+    }
+
     if (isSandbox && it != dlpSandboxData_.end() && dlpSandboxData_[sandboxUid] != DLPFileAccess::READ_ONLY) {
         authType = SandBoxExternalAuthorType::ALLOW_START_ABILITY;
         return DLP_OK;
