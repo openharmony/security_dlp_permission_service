@@ -572,6 +572,7 @@ ohos_unittest("dlp_parse_test") {
     cfi = true
     cfi_cross_dso = true
     debug = false
+    blocklist = "./unittest/cfi_blocklist.txt"
   }
 
   subsystem_name = "security"
