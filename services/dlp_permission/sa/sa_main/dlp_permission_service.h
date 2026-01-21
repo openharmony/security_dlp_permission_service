@@ -30,7 +30,7 @@
 #include "singleton.h"
 #include "system_ability.h"
 #include "transaction/rs_interfaces.h"
-#include "window_manager.h"
+#include "window_manager_lite.h"
 #include "wm_common.h"
 
 namespace OHOS {

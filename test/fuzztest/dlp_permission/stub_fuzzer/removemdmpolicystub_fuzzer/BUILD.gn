@@ -66,7 +66,7 @@ ohos_fuzztest("RemoveMDMPolicyStubFuzzTest") {
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
     "ability_runtime:extension_manager",
-    "window_manager:libwm",
+    "window_manager:libwm_lite",
     "image_framework:image_native",
     "image_framework:image_source",
     "image_framework:image_source_ndk",
