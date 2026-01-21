@@ -621,7 +621,10 @@ static int32_t SetNotOwnerAndReadOnce(const PermissionPolicy& policy, int32_t dl
 
 static int32_t VerifyAndGetWaterMark(PermissionPolicy& policy, std::shared_ptr<DlpFile>& filePtr)
 {
-    policy.countdown_ = filePtr->GetCountdown();
+    if (!policy.canFindCountdown_) {
+        DLP_LOG_DEBUG(LABEL, "can not find countdown.");
+        policy.countdown_ = filePtr->GetCountdown();
+    }
     if (!policy.canFindWaterMarkConfig_) {
         DLP_LOG_DEBUG(LABEL, "can not find waterMarkConfig.");
         policy.waterMarkConfig_ = filePtr->GetWaterMarkConfig();

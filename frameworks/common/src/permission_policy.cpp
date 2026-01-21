@@ -145,6 +145,7 @@ PermissionPolicy::PermissionPolicy()
     allowedOpenCount_ = 0;
     waterMarkConfig_ = false;
     canFindWaterMarkConfig_ = false;
+    canFindCountdown_ = false;
 }
 
 PermissionPolicy::PermissionPolicy(const DlpProperty& property)
@@ -172,6 +173,7 @@ PermissionPolicy::PermissionPolicy(const DlpProperty& property)
     waterMarkConfig_ = property.waterMarkConfig;
     countdown_ = property.countdown;
     canFindWaterMarkConfig_ = false;
+    canFindCountdown_ = false;
 }
 
 PermissionPolicy::~PermissionPolicy()
@@ -326,6 +328,7 @@ void PermissionPolicy::CopyPermissionPolicy(const PermissionPolicy& srcPolicy)
     waterMarkConfig_ = srcPolicy.waterMarkConfig_;
     countdown_ = srcPolicy.countdown_;
     canFindWaterMarkConfig_ = srcPolicy.canFindWaterMarkConfig_;
+    canFindCountdown_ = srcPolicy.canFindCountdown_;
 }
 
 int32_t PermissionPolicy::CheckActionUponExpiry()
