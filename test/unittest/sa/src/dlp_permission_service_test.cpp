@@ -60,6 +60,7 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
 const std::string TEST_URI = "/data/service/el1/public/dlp_permission_service1/retention_sandbox_info_test.json";
 static const int32_t DEFAULT_USERID = 100;
 static const int32_t INCORRECT_UID = 777;
+static constexpr int32_t NO_RIGHT_SA_ID = 4650;
 static constexpr int32_t SA_ID_DLP_PERMISSION_SERVICE = 3521;
 static const std::string DLP_MANAGER_APP = "com.ohos.dlpmanager";
 static const std::string PERMISSION_APP = "com.ohos.permissionmanager";
@@ -1776,6 +1777,24 @@ HWTEST_F(DlpPermissionServiceTest, GetWaterMark002, TestSize.Level1)
     sptr<IDlpPermissionCallback> callback2 = iface_cast<IDlpPermissionCallback>(callback->AsObject());
     int32_t res = dlpPermissionService_->GetWaterMark(true, callback2);
     EXPECT_NE(DLP_OK, res);
+}
+
+/**
+ * @tc.name: GetWaterMark004
+ * @tc.desc: GetWaterMark test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionServiceTest, GetWaterMark004, TestSize.Level1)
+{
+    DLP_LOG_DEBUG(LABEL, "GetWaterMark004");
+    sptr<IDlpPermissionCallback> callback2 = nullptr;
+    std::shared_ptr<DlpPermissionService> dlpPermissionService = nullptr;
+    dlpPermissionService = std::make_shared<DlpPermissionService>(NO_RIGHT_SA_ID, true);
+    ASSERT_NE(nullptr, dlpPermissionService);
+    int32_t res = dlpPermissionService->GetWaterMark(true, callback2);
+    EXPECT_NE(DLP_OK, res);
+    dlpPermissionService = nullptr;
 }
 
 /**

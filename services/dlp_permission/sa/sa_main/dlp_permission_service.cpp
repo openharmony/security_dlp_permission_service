@@ -426,6 +426,9 @@ int32_t DlpPermissionService::GetWaterMark(const bool waterMarkConfig,
     std::unique_lock<std::mutex> lock(waterMarkInfoMutex_);
     CriticalHelper criticalHelper("GetWaterMark");
     appStateObserver_->PostDelayUnloadTask(CurrentTaskState::SHORT_TASK);
+    if (!PermissionManagerAdapter::CheckPermission(PERMISSION_ACCESS_DLP_FILE)) {
+        return DLP_SERVICE_ERROR_PERMISSION_DENY;
+    }
     (void)waterMarkConfig;
     if (callback == nullptr) {
         DLP_LOG_ERROR(LABEL, "GetWaterMark callback is null");
@@ -462,6 +465,10 @@ int32_t DlpPermissionService::SetWaterMark(const int32_t pid)
     CriticalHelper criticalHelper("SetWaterMark");
     appStateObserver_->PostDelayUnloadTask(CurrentTaskState::SHORT_TASK);
 
+    bool sandboxFlag;
+    if (PermissionManagerAdapter::CheckSandboxFlagWithService(GetCallingTokenID(), sandboxFlag) != DLP_OK) {
+        return DLP_SERVICE_ERROR_VALUE_INVALID;
+    }
     std::string watermarkName;
     int32_t ret = GetWatermarkName(watermarkName);
     if (ret != DLP_OK) {
