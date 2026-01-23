@@ -25,10 +25,8 @@ config("coverage_flags") {
 config("common_build_options_flags") {
   cflags = [
     "-D_FORTIFY_SOURCE=2",
-    "-fstack-protector-strong",
   ]
   cflags_cc = [
     "-D_FORTIFY_SOURCE=2",
-    "-fstack-protector-strong",
   ]
 }
