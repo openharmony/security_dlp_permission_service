@@ -336,9 +336,8 @@ static int32_t ReceiveCallback(int32_t errCode, uint64_t reqId, uint8_t *outData
 
 static int32_t GetPixelmapFromFd(WaterMarkInfo& waterMarkInfo)
 {
-    int32_t fd = waterMarkInfo.waterMarkFd;
-    if (fd < 0) {
-        DLP_LOG_ERROR(LABEL, "unexpect watermark fd: %{public}d", fd);
+    if (waterMarkInfo.waterMarkFd < 0) {
+        DLP_LOG_ERROR(LABEL, "unexpect watermark.");
         return DLP_IPC_CALLBACK_ERROR;
     }
 
@@ -348,7 +347,7 @@ static int32_t GetPixelmapFromFd(WaterMarkInfo& waterMarkInfo)
     Image_ErrorCode err = IMAGE_BAD_PARAMETER;
 
     do {
-        err = OH_ImageSourceNative_CreateFromFd(fd, &source);
+        err = OH_ImageSourceNative_CreateFromFd(waterMarkInfo.waterMarkFd, &source);
         if (err != IMAGE_SUCCESS) {
             break;
         }
@@ -406,11 +405,11 @@ int32_t DlpPermissionService::ChangeWaterMarkInfo()
         return DLP_SERVICE_ERROR_GET_ACCOUNT_FAIL;
     }
 
-    if (!waterMarkInfo_.waterMarkImg) {
-        DLP_LOG_ERROR(LABEL, "SetWaterMark waterMarkImg is null");
+    if (!waterMarkInfo_.waterMarkImg || waterMarkInfo_.maskInfo.empty()) {
+        DLP_LOG_ERROR(LABEL, "SetWaterMark params are invalid");
         return DLP_SET_WATERMARK_ERROR;
     }
-    res = SetWatermarkToRS(watermarkName, waterMarkInfo_.waterMarkImg);
+    res = SetWatermarkToRS(waterMarkInfo_.maskInfo, waterMarkInfo_.waterMarkImg);
     if (res != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "SetWatermarkToRS failed");
         return DLP_SET_WATERMARK_TO_RS_ERROR;
@@ -426,9 +425,8 @@ int32_t DlpPermissionService::GetWaterMark(const bool waterMarkConfig,
     std::unique_lock<std::mutex> lock(waterMarkInfoMutex_);
     CriticalHelper criticalHelper("GetWaterMark");
     appStateObserver_->PostDelayUnloadTask(CurrentTaskState::SHORT_TASK);
-    (void)waterMarkConfig;
-    if (callback == nullptr) {
-        DLP_LOG_ERROR(LABEL, "GetWaterMark callback is null");
+    if (callback == nullptr || !waterMarkConfig) {
+        DLP_LOG_ERROR(LABEL, "GetWaterMark callback is null or no watermarkConfig");
         return DLP_SERVICE_ERROR_VALUE_INVALID;
     }
     int32_t res = CheckWaterMarkInfo();
@@ -437,12 +435,18 @@ int32_t DlpPermissionService::GetWaterMark(const bool waterMarkConfig,
     }
 
     int32_t userId = GetCallingUserId();
+    WaterMarkInfo wmInfo;
     ReceiveDataCallback recvCallback = ReceiveCallback;
     DlpAbilityAdapter dlpAbilityAdapter(recvCallback);
-    dlpAbilityAdapter.HandleGetWaterMark(userId, waterMarkInfo_, waterMarkInfoCv_);
+    dlpAbilityAdapter.HandleGetWaterMark(userId, wmInfo, waterMarkInfoCv_);
     
     waterMarkInfoCv_.wait_for(lock, std::chrono::seconds(PARSE_WAIT_TIME_OUT));
-
+    if (wmInfo.waterMarkFd < 0) {
+        DLP_LOG_ERROR(LABEL, "Get watermark fd failed.");
+        return DLP_IPC_CALLBACK_ERROR;
+    }
+    waterMarkInfo_.waterMarkFd = wmInfo.waterMarkFd;
+    waterMarkInfo_.maskInfo = wmInfo.maskInfo;
     res = GetPixelmapFromFd(waterMarkInfo_);
     if (res != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "GetPixelmapFromFd failed.");
@@ -459,17 +463,16 @@ int32_t DlpPermissionService::GetWaterMark(const bool waterMarkConfig,
 
 int32_t DlpPermissionService::SetWaterMark(const int32_t pid)
 {
+    std::unique_lock<std::mutex> lock(waterMarkInfoMutex_);
     CriticalHelper criticalHelper("SetWaterMark");
     appStateObserver_->PostDelayUnloadTask(CurrentTaskState::SHORT_TASK);
 
-    std::string watermarkName;
-    int32_t ret = GetWatermarkName(watermarkName);
-    if (ret != DLP_OK) {
-        return DLP_SERVICE_ERROR_GET_ACCOUNT_FAIL;
+    if (waterMarkInfo_.maskInfo.empty()) {
+        DLP_LOG_ERROR(LABEL, "No watermark.");
+        return DLP_SET_WATERMARK_ERROR;
     }
-    
-    ret = static_cast<int32_t>(Rosen::WindowManagerLite::
-        GetInstance().SetProcessWatermark(pid, watermarkName, true));
+    int32_t ret = static_cast<int32_t>(Rosen::WindowManagerLite::
+        GetInstance().SetProcessWatermark(pid, waterMarkInfo_.maskInfo, true));
     if (ret != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "SetProcessWatermark failed! errcode: %{public}d", ret);
         return DLP_SET_WATERMARK_ERROR;
@@ -502,6 +505,7 @@ bool DlpPermissionService::InsertDlpSandboxInfo(DlpSandboxInfo& sandboxInfo, boo
     sandboxInfo.isReadOnce = fileInfo.isNotOwnerAndReadOnce;
     sandboxInfo.isWatermark = fileInfo.isWatermark;
     sandboxInfo.watermarkName = WATERMARK_NAME + fileInfo.accountName + std::to_string(sandboxInfo.userId);
+    sandboxInfo.maskInfo = fileInfo.maskInfo;
     appStateObserver_->AddDlpSandboxInfo(sandboxInfo);
     SetHasBackgroundTask(true);
     DLP_LOG_INFO(LABEL, "isNotOwnerAndReadOnce=%{public}d, isWatermark=%{public}d",
@@ -1507,7 +1511,16 @@ int DlpPermissionService::SetFileInfo(const std::string& uri, const FileInfo& fi
         return DLP_SERVICE_ERROR_URI_EMPTY;
     }
 
-    bool res = appStateObserver_->AddUriAndFileInfo(uri, fileInfo);
+    FileInfo maskFileInfo;
+    maskFileInfo.isNotOwnerAndReadOnce = fileInfo.isNotOwnerAndReadOnce;
+    maskFileInfo.isWatermark = fileInfo.isWatermark;
+    maskFileInfo.accountName = fileInfo.accountName;
+    if (maskFileInfo.isWatermark) {
+        std::unique_lock<std::mutex> lock(waterMarkInfoMutex_);
+        maskFileInfo.maskInfo = waterMarkInfo_.maskInfo;
+    }
+    
+    bool res = appStateObserver_->AddUriAndFileInfo(uri, maskFileInfo);
     if (!res) {
         DLP_LOG_ERROR(LABEL, "AddUriAndFileInfo error");
         return DLP_SERVICE_ERROR_VALUE_INVALID;

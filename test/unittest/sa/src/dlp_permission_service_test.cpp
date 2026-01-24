@@ -1721,13 +1721,11 @@ HWTEST_F(DlpPermissionServiceTest, SetWaterMark001, TestSize.Level1)
     DLP_LOG_DEBUG(LABEL, "SetWaterMark001");
     const int32_t pid = 1234;
     int32_t ret = dlpPermissionService_->SetWaterMark(pid);
-    if (ret != DLP_OK) {
-        ASSERT_EQ(ret, DLP_SERVICE_ERROR_GET_ACCOUNT_FAIL);
-    } else {
-        ASSERT_EQ(ret, DLP_OK);
-    }
+    ASSERT_NE(ret, DLP_OK);
+    dlpPermissionService_->waterMarkInfo_.maskInfo = "test";
+    ret = dlpPermissionService_->SetWaterMark(pid);
+    ASSERT_NE(ret, DLP_OK);
 }
-
 /**
  * @tc.name: GetWaterMark001
  * @tc.desc: GetWaterMark test

@@ -14,6 +14,7 @@
  */
 
 #include "dlp_ability_proxy.h"
+#include <string>
 #include "dlp_ability_stub.h"
 #include "dlp_permission.h"
 #include "dlp_permission_log.h"
@@ -44,7 +45,7 @@ bool DlpAbilityProxy::PackMsg(sptr<IRemoteObject> stubInstance, MessageParcel &d
     return res;
 }
 
-int32_t DlpAbilityProxy::HandleGetWaterMark(sptr<IRemoteObject> stubInstance)
+int32_t DlpAbilityProxy::HandleGetWaterMark(sptr<IRemoteObject> stubInstance, WaterMarkInfo &waterMarkInfo)
 {
     MessageParcel data;
     if (!PackMsg(stubInstance, data)) {
@@ -74,8 +75,13 @@ int32_t DlpAbilityProxy::HandleGetWaterMark(sptr<IRemoteObject> stubInstance)
         DLP_LOG_ERROR(LABEL, "recv watermark error with %{public}d", watermarkStatus);
         return watermarkFd;
     }
+    waterMarkInfo.maskInfo = OHOS::Str16ToStr8(reply.ReadString16());
+    if (waterMarkInfo.maskInfo.empty()) {
+        DLP_LOG_ERROR(LABEL, "Get maskInfo failed.");
+        return watermarkFd;
+    }
     watermarkFd = reply.ReadFileDescriptor();
-    DLP_LOG_INFO(LABEL, "recv watermarkFd %{public}d", watermarkFd);
+    DLP_LOG_INFO(LABEL, "recv maskInfo success and watermarkFd %{public}d", watermarkFd);
     return watermarkFd;
 }
 } // namespace DlpPermission

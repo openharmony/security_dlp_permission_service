@@ -50,6 +50,7 @@ public:
     std::string accountName = "";
     std::shared_ptr<Media::PixelMap> waterMarkImg = nullptr;
     int32_t waterMarkFd = -1;
+    std::string maskInfo = "";
 };
 
 class DlpPermissionService final : public SystemAbility, public DlpPermissionServiceStub {

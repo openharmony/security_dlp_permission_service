@@ -97,7 +97,7 @@ int32_t DlpAbilityAdapter::HandleGetWaterMark(int32_t userId,
                 DLP_LOG_ERROR(LABEL, "DlpAbilityStub is nullptr.");
                 break;
             }
-            int32_t waterMarkFd = proxy.HandleGetWaterMark(stub);
+            int32_t waterMarkFd = proxy.HandleGetWaterMark(stub, waterMarkInfo);
             if (waterMarkFd < 0) {
                 DLP_LOG_ERROR(LABEL, "HandleGetWaterMark failed, fd: %{public}d", waterMarkFd);
             }
