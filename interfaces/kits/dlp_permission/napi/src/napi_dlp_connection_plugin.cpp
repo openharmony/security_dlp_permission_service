@@ -321,6 +321,14 @@ static bool ParseContextForRegisterPlugin(napi_env env, napi_callback_info cbInf
     NAPI_CALL_BASE(env, napi_create_reference(env, argv[PARAM0], PARAM1, &jsPlugin.context), false);
     if (!GetNamedJsFunction(env, argv[PARAM0], "connectServer", jsPlugin.funcRef)) {
         DLP_LOG_ERROR(LABEL, "get connectServer is error.");
+        if (jsPlugin.context != nullptr) {
+            ReleaseNapiRefAsync(env, jsPlugin.context);
+            jsPlugin.context = nullptr;
+        }
+        if (jsPlugin.funcRef != nullptr) {
+            ReleaseNapiRefAsync(env, jsPlugin.funcRef);
+            jsPlugin.funcRef = nullptr;
+        }
         return false;
     }
     return true;
