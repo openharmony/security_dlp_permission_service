@@ -17,6 +17,7 @@ import DlpPermissionTypes;
 
 sequenceable OHOS.IRemoteObject;
 sequenceable OHOS.AAFwk.Want;
+sequenceable OHOS.AppExecFwk.AbilityInfo;
 sequenceable dlp_policy_parcel..OHOS.Security.DlpPermission.DlpPolicyParcel;
 sequenceable cert_parcel..OHOS.Security.DlpPermission.CertParcel;
 sequenceable dlp_permission_info_parcel..OHOS.Security.DlpPermission.DLPPermissionInfoParcel;
@@ -38,6 +39,13 @@ interface OHOS.Security.DlpPermission.IDlpPermissionService {
     void GetWaterMark(
         [in] boolean waterMarkConfig,
         [in] IDlpPermissionCallback dlpPermissionCallback);
+    void GetDomainAccountNameInfo(
+        [out] String accountNameInfo);
+    void GetAbilityInfos(
+        [in] Want want,
+        [in] int flags,
+        [in] int userId,
+        [out] AbilityInfo[] abilityInfos);
     void InstallDlpSandbox(
         [in] String bundleName,
         [in] DLPFileAccess dlpFileAccess,

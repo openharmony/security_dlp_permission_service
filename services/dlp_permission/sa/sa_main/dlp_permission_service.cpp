@@ -461,6 +461,64 @@ int32_t DlpPermissionService::GetWaterMark(const bool waterMarkConfig,
     return DLP_OK;
 }
 
+int32_t DlpPermissionService::GetDomainAccountNameInfo(std::string& accountNameInfo)
+{
+    CriticalHelper criticalHelper("GetDomainAccountNameInfo");
+    appStateObserver_->PostDelayUnloadTask(CurrentTaskState::SHORT_TASK);
+    std::string appIdentifier;
+    if (!PermissionManagerAdapter::GetAppIdentifierForCalling(appIdentifier)) {
+        DLP_LOG_ERROR(LABEL, "GetAppIdentifierForCalling error");
+        return DLP_SERVICE_ERROR_PERMISSION_DENY;
+    }
+
+    if (!PermissionManagerAdapter::CheckPermission(PERMISSION_ACCESS_DLP_FILE) &&
+        !PermissionManagerAdapter::CheckPermission(PERMISSION_ENTERPRISE_ACCESS_DLP_FILE) &&
+        !(appIdentifier == MDM_APPIDENTIFIER)) {
+        return DLP_SERVICE_ERROR_PERMISSION_DENY;
+    }
+
+    int32_t userId;
+    int32_t res = OHOS::AccountSA::OsAccountManager::GetForegroundOsAccountLocalId(userId);
+    if (res != 0) {
+        DLP_LOG_ERROR(LABEL, "GetForegroundOsAccountLocalId failed %{public}d", res);
+        return DLP_PARSE_ERROR_ACCOUNT_INVALID;
+    }
+    AccountSA::OsAccountInfo osAccountInfo;
+    res = OHOS::AccountSA::OsAccountManager::QueryOsAccountById(userId, osAccountInfo);
+    if (res != 0) {
+        DLP_LOG_ERROR(LABEL, "QueryOsAccountById failed %{public}d", res);
+        return DLP_PARSE_ERROR_ACCOUNT_INVALID;
+    }
+    AccountSA::DomainAccountInfo domainInfo;
+    osAccountInfo.GetDomainInfo(domainInfo);
+    if (domainInfo.accountName_.empty()) {
+        DLP_LOG_INFO(LABEL, "AccountName empty, ForegroundOsAccoun is personal account");
+        return DLP_PARSE_ERROR_ACCOUNT_PERSONAL;
+    }
+    accountNameInfo = domainInfo.accountName_;
+    return DLP_OK;
+}
+
+int32_t DlpPermissionService::GetAbilityInfos(const AAFwk::Want& want, int32_t flags, int32_t userId,
+    std::vector<AppExecFwk::AbilityInfo> &abilityInfos)
+{
+    CriticalHelper criticalHelper("GetAbilityInfos");
+    appStateObserver_->PostDelayUnloadTask(CurrentTaskState::SHORT_TASK);
+
+    if (!PermissionManagerAdapter::CheckPermission(PERMISSION_ACCESS_DLP_FILE) &&
+        !PermissionManagerAdapter::CheckPermission(PERMISSION_ENTERPRISE_ACCESS_DLP_FILE) &&
+        !IsSaCall()) {
+        return DLP_SERVICE_ERROR_PERMISSION_DENY;
+    }
+
+    int32_t ret = BundleManagerAdapter::GetInstance().GetAbilityInfosV9(want, flags, userId, abilityInfos);
+    if (ret != 0) {
+        DLP_LOG_ERROR(LABEL, "GetAbilityInfosV9 failed %{public}d", ret);
+        return DLP_FUSE_ERROR_VALUE_INVALID;
+    }
+    return DLP_OK;
+}
+
 int32_t DlpPermissionService::SetWaterMark(const int32_t pid)
 {
     std::unique_lock<std::mutex> lock(waterMarkInfoMutex_);

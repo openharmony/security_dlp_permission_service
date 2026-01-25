@@ -59,6 +59,7 @@ ohos_shared_library("libdlp_setconfig_sdk") {
 
   external_deps = [
     "ability_base:want",
+    "bundle_framework:appexecfwk_base",
     "hilog:libhilog",
   ]
 

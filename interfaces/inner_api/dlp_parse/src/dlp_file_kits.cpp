@@ -23,6 +23,7 @@
 #include <unordered_map>
 #include "dlp_file.h"
 #include "dlp_permission_log.h"
+#include "dlp_permission_kit.h"
 #include "dlp_zip.h"
 #include "file_uri.h"
 #include "securec.h"
@@ -416,17 +417,7 @@ static int32_t ConvertAbilityInfoWithBundleName(const std::string &abilityName, 
         DLP_LOG_ERROR(LABEL, "Get os account localId error, %{public}d", ret);
         return DLP_PARSE_ERROR_GET_ACCOUNT_FAIL;
     }
-
-    auto bundleMgrProxy = DlpUtils::GetBundleMgrProxy();
-    if (bundleMgrProxy == nullptr) {
-        return DLP_SERVICE_ERROR_IPC_REQUEST_FAIL;
-    }
-    ret = bundleMgrProxy->QueryAbilityInfosV9(want, flags, userId, abilityInfos);
-    if (ret != ERR_OK) {
-        DLP_LOG_ERROR(LABEL, "Get ability info error, %{public}d", ret);
-        return DLP_PARSE_ERROR_BMS_ERROR;
-    }
-    return DLP_OK;
+    return DlpPermissionKit::GetAbilityInfos(want, flags, userId, abilityInfos);
 }
 
 static bool IsSupportDlp(const std::vector<std::string> &authPolicy, const std::string &bundleName)

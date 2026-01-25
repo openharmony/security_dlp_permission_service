@@ -169,6 +169,27 @@ int32_t DlpPermissionClient::GetWaterMark(const bool waterMarkConfig,
     return proxy->GetWaterMark(waterMarkConfig, asyncStub);
 }
 
+int32_t DlpPermissionClient::GetDomainAccountNameInfo(std::string& accountNameInfo)
+{
+    auto proxy = GetProxy(false);
+    if (proxy == nullptr) {
+        DLP_LOG_ERROR(LABEL, "Proxy is null, dlpmgr service no start.");
+        return DLP_SERVICE_ERROR_SERVICE_NOT_EXIST;
+    }
+    return proxy->GetDomainAccountNameInfo(accountNameInfo);
+}
+
+int32_t DlpPermissionClient::GetAbilityInfos(const AAFwk::Want& want, int32_t flags, int32_t userId,
+    std::vector<AppExecFwk::AbilityInfo> &abilityInfos)
+{
+    auto proxy = GetProxy(false);
+    if (proxy == nullptr) {
+        DLP_LOG_ERROR(LABEL, "Proxy is null, dlpmgr service no start.");
+        return DLP_SERVICE_ERROR_SERVICE_NOT_EXIST;
+    }
+    return proxy->GetAbilityInfos(want, flags, userId, abilityInfos);
+}
+
 int32_t DlpPermissionClient::SetWaterMark(const int32_t pid)
 {
     auto proxy = GetProxy(false);
