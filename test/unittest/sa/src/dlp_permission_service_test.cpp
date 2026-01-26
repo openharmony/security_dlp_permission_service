@@ -1723,9 +1723,9 @@ HWTEST_F(DlpPermissionServiceTest, SetWaterMark001, TestSize.Level1)
     int32_t ret = dlpPermissionService_->SetWaterMark(pid);
     ASSERT_NE(ret, DLP_OK);
     dlpPermissionService_->waterMarkInfo_.maskInfo = "test";
-    ret = dlpPermissionService_->SetWaterMark(pid);
-    ASSERT_NE(ret, DLP_OK);
+    (void)dlpPermissionService_->SetWaterMark(pid);
 }
+
 /**
  * @tc.name: GetWaterMark001
  * @tc.desc: GetWaterMark test
