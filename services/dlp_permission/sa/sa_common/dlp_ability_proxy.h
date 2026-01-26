@@ -20,6 +20,7 @@
 #include <iremote_proxy.h>
 #include <iremote_broker.h>
 #include <iremote_object.h>
+#include "dlp_permission_service.h"
 
 namespace OHOS {
 namespace Security {
@@ -33,14 +34,14 @@ enum class DlpPermAbilityInterfaceCode {
 class IDlpAbility : public IRemoteBroker {
 public:
     DECLARE_INTERFACE_DESCRIPTOR(u"OHOS.DlpPermStub");
-    virtual int32_t HandleGetWaterMark(sptr<IRemoteObject> remoteObj) = 0;
+    virtual int32_t HandleGetWaterMark(sptr<IRemoteObject> remoteObj, WaterMarkInfo &waterMarkInfo) = 0;
 };
 
 class DlpAbilityProxy : public IRemoteProxy<IDlpAbility> {
 public:
     explicit DlpAbilityProxy(const sptr<IRemoteObject> &remoteObj) : IRemoteProxy<IDlpAbility>(remoteObj) {}
     virtual ~DlpAbilityProxy() {}
-    int32_t HandleGetWaterMark(sptr<IRemoteObject> stubInstance) override;
+    int32_t HandleGetWaterMark(sptr<IRemoteObject> stubInstance, WaterMarkInfo &waterMarkInfo) override;
 
 private:
     bool PackMsg(sptr<IRemoteObject> stubInstance, MessageParcel &msg);

@@ -414,6 +414,10 @@ bool FileInfo::Marshalling(Parcel &out) const
         DLP_LOG_ERROR(LABEL, "Write accountName fail");
         return false;
     }
+    if (!(out.WriteString(maskInfo))) {
+        DLP_LOG_ERROR(LABEL, "Write maskInfo fail");
+        return false;
+    }
     return true;
 }
 
@@ -435,6 +439,10 @@ FileInfo* FileInfo::Unmarshalling(Parcel &in)
         }
         if (!(in.ReadString(parcel->accountName))) {
             DLP_LOG_ERROR(LABEL, "Read accountName fail");
+            break;
+        }
+        if (!(in.ReadString(parcel->maskInfo))) {
+            DLP_LOG_ERROR(LABEL, "Read maskInfo fail");
             break;
         }
         return parcel;

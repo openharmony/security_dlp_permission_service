@@ -307,7 +307,6 @@ void AppStateObserver::DecWatermarkName(const DlpSandboxInfo& appInfo)
         return;
     }
     std::string watermarkName = WATERMARK_NAME + accountInfo.second.name_ + std::to_string(userId);
-
     DLP_LOG_INFO(LABEL, "Erase watermark sandbox.");
     auto it = watermarkMap_.find(appInfo.watermarkName);
     if (it == watermarkMap_.end()) {
@@ -318,7 +317,7 @@ void AppStateObserver::DecWatermarkName(const DlpSandboxInfo& appInfo)
     if (it->second == 0 && appInfo.watermarkName != watermarkName) {
         int32_t pid = getprocpid();
         DLP_LOG_INFO(LABEL, "Clear watermark");
-        OHOS::Rosen::RSInterfaces::GetInstance().ClearSurfaceWatermark(pid, appInfo.watermarkName);
+        OHOS::Rosen::RSInterfaces::GetInstance().ClearSurfaceWatermark(pid, appInfo.maskInfo);
         watermarkMap_.erase(it);
     }
 }

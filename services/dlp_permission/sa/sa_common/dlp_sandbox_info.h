@@ -37,6 +37,7 @@ public:
     bool isReadOnce = false;
     bool isWatermark = false;
     std::string watermarkName = "";
+    std::string maskInfo = "";
 };
 }  // namespace DlpPermission
 }  // namespace Security
