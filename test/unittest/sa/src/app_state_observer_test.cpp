@@ -424,35 +424,40 @@ HWTEST_F(AppStateObserverTest, GetOpeningReadOnlyBindSandbox001, TestSize.Level1
 {
     DLP_LOG_INFO(LABEL, "GetOpeningReadOnlySandbox001");
     AppStateObserver observer;
-    int32_t appIndex = -1;
-    observer.GetOpeningReadOnlyBindSandbox(DLP_BUNDLENAME, DEFAULT_USERID, appIndex);
-    ASSERT_EQ(appIndex, -1);
+    int32_t bindAppIndex = -1;
+    observer.GetOpeningReadOnlyBindSandbox(DLP_BUNDLENAME, DEFAULT_USERID, bindAppIndex);
+    ASSERT_EQ(bindAppIndex, -1);
  
     DlpSandboxInfo appInfo;
     appInfo.bundleName = DLP_BUNDLENAME;
     appInfo.dlpFileAccess = DLPFileAccess::READ_ONLY;
     appInfo.uid = DEFAULT_NUM;
     appInfo.appIndex = DEFAULT_NUM;
+    appInfo.bindAppIndex = DEFAULT_NUM;
     appInfo.tokenId = DEFAULT_NUM;
     appInfo.userId = DEFAULT_USERID;
-    observer.sandboxInfo_[DEFAULT_NUM] = appInfo;
-    observer.tokenIdToUidMap_[DEFAULT_NUM] = DEFAULT_NUM;
-    observer.GetOpeningReadOnlyBindSandbox(DLP_BUNDLENAME, DEFAULT_USERID, appIndex);
-    ASSERT_EQ(appIndex, appInfo.appIndex);
+    appInfo.isReadOnce = false;
+    observer.AddSandboxInfo(appInfo);
+    observer.GetOpeningReadOnlyBindSandbox(DLP_BUNDLENAME, DEFAULT_USERID, bindAppIndex);
+    observer.EraseSandboxInfo(appInfo.uid);
+    ASSERT_EQ(bindAppIndex, appInfo.bindAppIndex);
     appInfo.dlpFileAccess = DLPFileAccess::CONTENT_EDIT;
-    observer.sandboxInfo_[DEFAULT_NUM] = appInfo;
-    observer.GetOpeningReadOnlyBindSandbox(DLP_BUNDLENAME, DEFAULT_USERID, appIndex);
-    ASSERT_EQ(appIndex, -1);
+    observer.AddSandboxInfo(appInfo);
+    observer.GetOpeningReadOnlyBindSandbox(DLP_BUNDLENAME, DEFAULT_USERID, bindAppIndex);
+    observer.EraseSandboxInfo(appInfo.uid);
+    ASSERT_EQ(bindAppIndex, -1);
     appInfo.dlpFileAccess = DLPFileAccess::READ_ONLY;
     appInfo.bundleName = "";
-    observer.sandboxInfo_[DEFAULT_NUM] = appInfo;
-    observer.GetOpeningReadOnlyBindSandbox(DLP_BUNDLENAME, DEFAULT_USERID, appIndex);
-    ASSERT_EQ(appIndex, -1);
+    observer.AddSandboxInfo(appInfo);
+    observer.GetOpeningReadOnlyBindSandbox(DLP_BUNDLENAME, DEFAULT_USERID, bindAppIndex);
+    observer.EraseSandboxInfo(appInfo.uid);
+    ASSERT_EQ(bindAppIndex, -1);
     appInfo.userId = 0;
     appInfo.bundleName = DLP_BUNDLENAME;
-    observer.sandboxInfo_[DEFAULT_NUM] = appInfo;
-    observer.GetOpeningReadOnlyBindSandbox(DLP_BUNDLENAME, DEFAULT_USERID, appIndex);
-    ASSERT_EQ(appIndex, -1);
+    observer.AddSandboxInfo(appInfo);
+    observer.GetOpeningReadOnlyBindSandbox(DLP_BUNDLENAME, DEFAULT_USERID, bindAppIndex);
+    observer.EraseSandboxInfo(appInfo.uid);
+    ASSERT_EQ(bindAppIndex, -1);
     observer.sandboxInfo_.clear();
 }
 /**
@@ -987,7 +992,7 @@ HWTEST_F(AppStateObserverTest, GetSandboxInfoByAppIndex001, TestSize.Level1)
     appIndex = 2;
     bundleName = "testbundle2";
     ASSERT_EQ(false, observer.GetSandboxInfoByAppIndex(bundleName, appIndex, appInfo));
-    appIndex = 2;
+    appIndex = -1;
     bundleName = "testbundle1";
     ASSERT_EQ(false, observer.GetSandboxInfoByAppIndex(bundleName, appIndex, appInfo));
 }
