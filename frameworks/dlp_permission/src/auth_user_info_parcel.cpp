@@ -37,7 +37,7 @@ bool AuthUserInfoParcel::Marshalling(Parcel& out) const
         DLP_LOG_ERROR(LABEL, "Write auth user expiry time fail");
         return false;
     }
-    if (!(out.WriteUint8(this->authUserInfo_.authAccountType))) {
+    if (!(out.WriteUint32(this->authUserInfo_.authAccountType))) {
         DLP_LOG_ERROR(LABEL, "Write auth user account type fail");
         return false;
     }
@@ -58,8 +58,8 @@ AuthUserInfoParcel* AuthUserInfoParcel::Unmarshalling(Parcel& in)
         authUserInfoParcel = nullptr;
         return nullptr;
     }
-    uint8_t res;
-    if (!(in.ReadUint8(res))) {
+    uint32_t res;
+    if (!(in.ReadUint32(res))) {
         DLP_LOG_ERROR(LABEL, "Read auth user perm fail");
         delete authUserInfoParcel;
         authUserInfoParcel = nullptr;
@@ -73,7 +73,7 @@ AuthUserInfoParcel* AuthUserInfoParcel::Unmarshalling(Parcel& in)
         return nullptr;
     }
 
-    if (!(in.ReadUint8(res))) {
+    if (!(in.ReadUint32(res))) {
         DLP_LOG_ERROR(LABEL, "Read auth user account type fail");
         delete authUserInfoParcel;
         authUserInfoParcel = nullptr;

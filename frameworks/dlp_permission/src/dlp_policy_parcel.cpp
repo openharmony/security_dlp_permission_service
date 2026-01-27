@@ -384,8 +384,8 @@ static bool ReadParcel(Parcel& in, DlpPolicyParcel* policyParcel)
         DLP_LOG_ERROR(LABEL, "Read supportEveryone_ fail");
         return false;
     }
-    uint8_t everyonePerm;
-    if (!(in.ReadUint8(everyonePerm))) {
+    uint32_t everyonePerm;
+    if (!(in.ReadUint32(everyonePerm))) {
         DLP_LOG_ERROR(LABEL, "Read everyonePerm_ fail");
         return false;
     }
@@ -394,8 +394,8 @@ static bool ReadParcel(Parcel& in, DlpPolicyParcel* policyParcel)
         DLP_LOG_ERROR(LABEL, "Read owner account info fail");
         return false;
     }
-    uint8_t perm = 0;
-    if (!(in.ReadUint8(perm))) {
+    uint32_t perm = 0;
+    if (!(in.ReadUint32(perm))) {
         DLP_LOG_ERROR(LABEL, "Read owner account type fail");
         return false;
     }
