@@ -47,7 +47,7 @@ static const int32_t DEFAULT_USER_ID = 100;
 const uint32_t STRING_LENGTH = 10;
 const uint32_t BUFFER_LENGTH = 30;
 const uint32_t METHOD_NUMBER = 32;
-const uint32_t METHOD_NUMBER_GROUP = 8;
+const uint32_t METHOD_NUMBER_GROUP = 4;
 enum class DlpPermissionServiceMethod {
     GENERATE_DLP_CERTIFICATE = 0,
     PARSE_DLP_CERTIFICATE,
