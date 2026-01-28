@@ -265,7 +265,23 @@ HWTEST_F(DlpCredentialStaticTest, GetEnterpriseAccountNameTest001, TestSize.Leve
     bool isOwner = false;
     ASSERT_EQ(GetEnterpriseAccountName(accountCfg, appId, &isOwner), DLP_OK);
 }
- 
+
+/**
+ * @tc.name: SetMDMPolicy001
+ * @tc.desc: 测试 SetMDMPolicy 函数在最大输入情况下的行为，包括 appId 列表长度和每个 appId 的长度
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpCredentialStaticTest, SetMDMPolicy001, TestSize.Level1) {
+    const size_t maxAppIdLength = MAX_APPID_LENGTH;
+    std::vector<std::string> appIdList;
+    for (size_t i = 0; i < maxAppIdLength; ++i) {
+        std::string appId(maxAppIdLength, 'a');
+        appIdList.push_back(appId);
+    }
+    int32_t result = DlpCredential::GetInstance().SetMDMPolicy(appIdList);
+    ASSERT_NE(result, DLP_CREDENTIAL_ERROR_MEMORY_OPERATE_FAIL);
+}
  
 /**
  * @tc.name: AdapterDataTest001
