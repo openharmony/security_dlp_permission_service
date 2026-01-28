@@ -656,6 +656,25 @@ HWTEST_F(DlpPermissionServiceTest, InstallDlpSandbox002, TestSize.Level1)
 }
 
 /**
+ * @tc.name:InstallSandboxApp001
+ * @tc.desc:InstallSandboxApp test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionServiceTest, InstallSandboxApp001, TestSize.Level1)
+{
+    DLP_LOG_DEBUG(LABEL, "InstallSandboxApp001");
+    DlpSandboxInfo dlpSandboxInfo;
+    dlpSandboxInfo.appIndex = 123;
+    int32_t ret = dlpPermissionService_->InstallSandboxApp(
+        DLP_MANAGER_APP, DLPFileAccess::READ_ONLY, DEFAULT_USERID, dlpSandboxInfo);
+    ASSERT_NE(DLP_OK, ret);
+    ret = dlpPermissionService_->InstallSandboxApp(
+        DLP_MANAGER_APP, DLPFileAccess::CONTENT_EDIT, DEFAULT_USERID, dlpSandboxInfo);
+    ASSERT_NE(DLP_OK, ret);
+}
+
+/**
  * @tc.name:UninstallDlpSandbox001
  * @tc.desc:UninstallDlpSandbox test
  * @tc.type: FUNC

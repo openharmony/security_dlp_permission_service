@@ -51,7 +51,7 @@ public:
     bool GetSandboxInfo(int32_t uid, DlpSandboxInfo& appInfo);
     void UpdatReadFlag(int32_t uid);
     bool GetOpeningSandboxInfo(const std::string& bundleName, const std::string& uri,
-        int32_t userId, SandboxInfo& sandboxInfo);
+        int32_t userId, SandboxInfo& sandboxInfo, const std::string& fileId);
     void SetAppProxy(const sptr<AppExecFwk::AppMgrProxy>& appProxy);
     bool AddUriAndFileInfo(const std::string& uri, const FileInfo& fileInfo);
     bool GetFileInfoByUri(const std::string& uri, FileInfo& fileInfo);

@@ -295,12 +295,14 @@ HWTEST_F(AppStateObserverTest, AddDlpSandboxInfo001, TestSize.Level1)
     SandboxInfo sandboxInfo;
 
     observer.AddDlpSandboxInfo(appInfo);
-    bool res = observer.GetOpeningSandboxInfo(appInfo.bundleName, appInfo.uri, appInfo.userId, sandboxInfo);
+    bool res = observer.GetOpeningSandboxInfo(appInfo.bundleName,
+        appInfo.uri, appInfo.userId, sandboxInfo, appInfo.fileId);
     ASSERT_EQ(res, false);
     appInfo.uid = INCORRECT_UID;
 
     observer.AddDlpSandboxInfo(appInfo);
-    res = observer.GetOpeningSandboxInfo(appInfo.bundleName, appInfo.uri, appInfo.userId, sandboxInfo);
+    res = observer.GetOpeningSandboxInfo(appInfo.bundleName,
+        appInfo.uri, appInfo.userId, sandboxInfo, appInfo.fileId);
     ASSERT_EQ(res, false);
 }
 
@@ -644,13 +646,15 @@ HWTEST_F(AppStateObserverTest, GetOpeningSandboxInfo001, TestSize.Level1)
     string bundleName = "testbundle1";
     int32_t userId = 123;
     string uri = "123";
+    string fileId = "123";
     DlpSandboxInfo appInfo1 = {
         .uid = 1,
         .userId = 1231,
         .appIndex = 2,
         .bundleName = "testbundle1",
         .hasRead = false,
-        .uri = "123"
+        .uri = "123",
+        .fileId = "123"
     };
     observer.AddSandboxInfo(appInfo1);
     DlpSandboxInfo appInfo2 = {
@@ -659,11 +663,53 @@ HWTEST_F(AppStateObserverTest, GetOpeningSandboxInfo001, TestSize.Level1)
         .appIndex = 2,
         .bundleName = "testbundle1",
         .hasRead = false,
-        .uri = "123"
+        .uri = "123",
+        .fileId = "123"
     };
     observer.AddSandboxInfo(appInfo2);
-    ASSERT_FALSE(observer.GetOpeningSandboxInfo(bundleName, uri, userId, SandboxInfo));
+    ASSERT_FALSE(observer.GetOpeningSandboxInfo(bundleName, uri, userId, SandboxInfo, fileId));
 }
+
+/**
+ * @tc.name: GetOpeningSandboxInfo002
+ * @tc.desc: GetOpeningSandboxInfo test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AppStateObserverTest, GetOpeningSandboxInfo002, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL, "GetOpeningSandboxInfo002");
+    AppStateObserver observer;
+    SandboxInfo SandboxInfo;
+    int32_t userId = 100;
+    string bundleName = "testbundle1";
+    string uri = "123";
+    string fileId = "123";
+    DlpSandboxInfo appInfo1 = {
+        .userId = 100
+    };
+    observer.AddSandboxInfo(appInfo1);
+    DlpSandboxInfo appInfo2 = {
+        .userId = 100,
+        .bundleName = "testbundle1"
+    };
+    observer.AddSandboxInfo(appInfo2);
+    DlpSandboxInfo appInfo3 = {
+        .userId = 100,
+        .bundleName = "testbundle1",
+        .uri = "123"
+    };
+    observer.AddSandboxInfo(appInfo3);
+    DlpSandboxInfo appInfo4 = {
+        .userId = 100,
+        .bundleName = "testbundle1",
+        .uri = "123",
+        .fileId = "123"
+    };
+    observer.AddSandboxInfo(appInfo4);
+    ASSERT_FALSE(observer.GetOpeningSandboxInfo(bundleName, uri, userId, SandboxInfo, fileId));
+}
+
 
 /**
  * @tc.name: RemoveCallbackListener001

@@ -87,6 +87,7 @@ typedef struct FileInfo : public Parcelable {
     bool isWatermark = false;
     std::string accountName = "";
     std::string maskInfo = "";
+    std::string fileId = "";
     bool Marshalling(Parcel &parcel) const;
     static FileInfo* Unmarshalling(Parcel &data);
 } FileInfo;
