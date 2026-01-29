@@ -685,7 +685,7 @@ HWTEST_F(DlpPermissionServiceTest, InstallDlpSandbox003, TestSize.Level1)
         HIPREVIEW_HIGH, DLPFileAccess::READ_ONLY, DEFAULT_USERID, sandboxInfo, "testUri");
     ASSERT_NE(DLP_SERVICE_ERROR_VALUE_INVALID, ret);
     editAppIndex = sandboxInfo.appIndex;
-    dlpPermissionService_->InstallDlpSandbox(
+    ret = dlpPermissionService_->InstallDlpSandbox(
         HIPREVIEW_HIGH, DLPFileAccess::READ_ONLY, DEFAULT_USERID, sandboxInfo, "testUri1");
     ASSERT_NE(DLP_SERVICE_ERROR_VALUE_INVALID, ret);
     editAppIndex = sandboxInfo.appIndex;
