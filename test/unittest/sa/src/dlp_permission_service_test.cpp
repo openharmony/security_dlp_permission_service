@@ -63,7 +63,6 @@ static const int32_t INCORRECT_UID = 777;
 static constexpr int32_t SA_ID_DLP_PERMISSION_SERVICE = 3521;
 static const std::string DLP_MANAGER_APP = "com.ohos.dlpmanager";
 static const std::string PERMISSION_APP = "com.ohos.permissionmanager";
-static const std::string HIPREVIEW_HIGH = "com.huawei.hmos.hipreview";
 const uint32_t ACCOUNT_LENGTH = 20;
 const uint32_t USER_NUM = 1;
 const int AUTH_PERM = 1;
@@ -655,7 +654,6 @@ HWTEST_F(DlpPermissionServiceTest, InstallDlpSandbox002, TestSize.Level1)
     DlpPermissionServiceTest::permType = 0;
     ASSERT_EQ(DLP_SERVICE_ERROR_PERMISSION_DENY, ret);
 }
-
 
 /**
  * @tc.name:UninstallDlpSandbox001
