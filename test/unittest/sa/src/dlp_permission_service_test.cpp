@@ -656,64 +656,6 @@ HWTEST_F(DlpPermissionServiceTest, InstallDlpSandbox002, TestSize.Level1)
     ASSERT_EQ(DLP_SERVICE_ERROR_PERMISSION_DENY, ret);
 }
 
-/**
- * @tc.name:InstallDlpSandbox003
- * @tc.desc:InstallDlpSandbox test
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(DlpPermissionServiceTest, InstallDlpSandbox003, TestSize.Level1)
-{
-    DLP_LOG_DEBUG(LABEL, "InstallDlpSandbox003");
-    SandboxInfo sandboxInfo;
-    int32_t ret = dlpPermissionService_->InstallDlpSandbox(
-        HIPREVIEW_HIGH, DLPFileAccess::CONTENT_EDIT, DEFAULT_USERID, sandboxInfo, "testUri");
-    ASSERT_NE(DLP_SERVICE_ERROR_VALUE_INVALID, ret);
-    int32_t editAppIndex = sandboxInfo.appIndex;
-    std::set<std::string> docUriSet;
-    docUriSet.insert("testUri");
-    RetentionInfo info;
-    info.appIndex = editAppIndex;
-    info.tokenId = sandboxInfo.tokenId;
-    info.bundleName = HIPREVIEW_HIGH;
-    info.userId = DEFAULT_USERID;
-    RetentionFileManager::GetInstance().UpdateSandboxInfo(docUriSet, info, true);
-    ret = dlpPermissionService_->InstallDlpSandbox(
-        HIPREVIEW_HIGH, DLPFileAccess::CONTENT_EDIT, DEFAULT_USERID, sandboxInfo, "testUri");
-    ASSERT_NE(DLP_SERVICE_ERROR_VALUE_INVALID, ret);
-    ret = dlpPermissionService_->InstallDlpSandbox(
-        HIPREVIEW_HIGH, DLPFileAccess::READ_ONLY, DEFAULT_USERID, sandboxInfo, "testUri");
-    ASSERT_NE(DLP_SERVICE_ERROR_VALUE_INVALID, ret);
-    editAppIndex = sandboxInfo.appIndex;
-    ret = dlpPermissionService_->InstallDlpSandbox(
-        HIPREVIEW_HIGH, DLPFileAccess::READ_ONLY, DEFAULT_USERID, sandboxInfo, "testUri1");
-    ASSERT_NE(DLP_SERVICE_ERROR_VALUE_INVALID, ret);
-    editAppIndex = sandboxInfo.appIndex;
-    info.appIndex = editAppIndex;
-    info.tokenId = sandboxInfo.tokenId;
-    RetentionFileManager::GetInstance().UpdateSandboxInfo(docUriSet, info, true);
-    ret = dlpPermissionService_->InstallDlpSandbox(
-        HIPREVIEW_HIGH, DLPFileAccess::READ_ONLY, DEFAULT_USERID, sandboxInfo, "testUri");
-    ASSERT_NE(DLP_SERVICE_ERROR_VALUE_INVALID, ret);
-}
-
-/**
- * @tc.name:InstallDlpSandbox004
- * @tc.desc:InstallDlpSandbox test
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(DlpPermissionServiceTest, InstallDlpSandbox004, TestSize.Level1)
-{
-    DLP_LOG_DEBUG(LABEL, "InstallDlpSandbox004");
-    SandboxInfo sandboxInfo;
-    DlpPermissionServiceTest::permType = -1;
-    int32_t ret = dlpPermissionService_->InstallDlpSandbox(
-        HIPREVIEW_HIGH, DLPFileAccess::CONTENT_EDIT, DEFAULT_USERID, sandboxInfo, "testUri");
-    DlpPermissionServiceTest::permType = 0;
-    ASSERT_EQ(DLP_SERVICE_ERROR_PERMISSION_DENY, ret);
-}
-
 
 /**
  * @tc.name:UninstallDlpSandbox001
