@@ -213,7 +213,8 @@ HWTEST_F(DlpPermissionStaticTest, DlpPermissionStaticTest003, TestSize.Level1)
     dlpPermissionService_->appStateObserver_->EraseDlpSandboxInfo(appInfo.uid);
     ASSERT_EQ(DLP_OK, ret);
     ASSERT_EQ(authType, SandBoxExternalAuthorType::ALLOW_START_ABILITY);
-    sandboxUid = -1;
+    sandboxUid = 1;
+    appInfo.uid = 1;
     dlpPermissionService_->appStateObserver_->AddDlpSandboxInfo(appInfo);
     ret = dlpPermissionService_->GetSandboxExternalAuthorization(sandboxUid, want, authType);
     dlpPermissionService_->appStateObserver_->EraseDlpSandboxInfo(appInfo.uid);
