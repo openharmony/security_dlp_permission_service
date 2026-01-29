@@ -734,17 +734,10 @@ bool AppStateObserver::GetSandboxInfoByAppIndex(const std::string& bundleName,
     int32_t appIndex, DlpSandboxInfo& appInfo)
 {
     std::lock_guard<std::mutex> lock(sandboxInfoLock_);
-    auto iter = sandboxInfo_.begin();
-    while (iter != sandboxInfo_.end()) {
-        auto& iterAppInfo = iter->second;
-        if (iterAppInfo.appIndex != appIndex
-            || iterAppInfo.bundleName != bundleName) {
-            ++iter;
-            continue;
-        } else {
-            break;
-        }
-    }
+    auto iter = std::find_if(sandboxInfo_.begin(), sandboxInfo_.end(),
+        [bundleName, appIndex](const auto& pair) {
+            return pair.second.appIndex == appIndex && pair.second.bundleName == bundleName;
+        });
     if (iter != sandboxInfo_.end()) {
         appInfo = iter->second;
         return true;
