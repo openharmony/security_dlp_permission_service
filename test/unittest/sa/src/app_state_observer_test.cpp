@@ -35,6 +35,7 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_
 static const int32_t DEFAULT_USERID = 100;
 static const int32_t INCORRECT_UID = 777;
 static const std::string DLP_BUNDLENAME = "com.ohos.dlpmanager";
+static const std::string HIPREVIEW_HIGH = "com.huawei.hmos.hipreview";
 static const int32_t DEFAULT_NUM = 1;
 }
 
@@ -161,6 +162,37 @@ HWTEST_F(AppStateObserverTest, UninstallDlpSandboxTest001, TestSize.Level1)
         .bindAppIndex = 1001,
         .tokenId = INCORRECT_UID
     };
+    observer.UninstallDlpSandbox(appInfo);
+    ASSERT_EQ(appInfo.tokenId, INCORRECT_UID);
+}
+
+/**
+ * @tc.name: UninstallDlpSandboxTest002
+ * @tc.desc: UninstallDlpSandboxTest002 test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AppStateObserverTest, UninstallDlpSandboxTest002, TestSize.Level1)
+{
+    AppStateObserver observer;
+    DlpSandboxInfo appInfo = {
+        .uid = 1,
+        .userId = 123,
+        .bundleName = HIPREVIEW_HIGH,
+        .hasRead = false,
+        .appIndex = -1,
+        .bindAppIndex = 1001,
+        .tokenId = INCORRECT_UID
+    };
+    observer.UninstallDlpSandbox(appInfo);
+    ASSERT_EQ(appInfo.tokenId, INCORRECT_UID);
+    appInfo.bindAppIndex = -1;
+    observer.UninstallDlpSandbox(appInfo);
+    ASSERT_EQ(appInfo.tokenId, INCORRECT_UID);
+    appInfo.bundleName = DLP_BUNDLENAME;
+    observer.UninstallDlpSandbox(appInfo);
+    ASSERT_EQ(appInfo.tokenId, INCORRECT_UID);
+    appInfo.bindAppIndex = 1001;
     observer.UninstallDlpSandbox(appInfo);
     ASSERT_EQ(appInfo.tokenId, INCORRECT_UID);
 }
