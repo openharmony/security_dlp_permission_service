@@ -113,7 +113,13 @@ void DlpPermissionStaticTest::SetUp()
     ASSERT_TRUE(dlpPermissionService_->appStateObserver_ != nullptr);
 }
  
-void DlpPermissionStaticTest::TearDown() {}
+void DlpPermissionStaticTest::TearDown()
+{
+    if (dlpPermissionService_ != nullptr) {
+        dlpPermissionService_->appStateObserver_ = nullptr;
+    }
+    dlpPermissionService_ = nullptr;
+}
  
 /**
  * @tc.name: DlpPermissionStaticTest001
