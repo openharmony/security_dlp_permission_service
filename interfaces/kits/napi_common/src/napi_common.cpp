@@ -51,6 +51,7 @@ static constexpr size_t MAX_ERRCONTACTER_LEN = 255;
 static constexpr size_t MAX_FILE_NAME_LEN = 255;
 static constexpr size_t MAX_TYPE_LEN = 64;
 static constexpr size_t MAX_URI_LEN = 4095;
+static constexpr int32_t HIPREVIEW_SANDBOX_LOW_BOUND = 1000;
 
 static bool ConvertDlpSandboxChangeInfo(napi_env env, napi_value value, const DlpSandboxCallbackInfo &result)
 {
@@ -1655,8 +1656,17 @@ napi_value SandboxInfoToJs(napi_env env, const SandboxInfo& sandboxInfo)
     napi_value sandboxInfoJs = nullptr;
     NAPI_CALL(env, napi_create_object(env, &sandboxInfoJs));
 
+    // pack bindAppIndex Info to appIndex, to replace after API 24.
+    int32_t appIndexEnd = -1;
+    if (sandboxInfo.bindAppIndex > HIPREVIEW_SANDBOX_LOW_BOUND) {
+        appIndexEnd = sandboxInfo.appIndex * HIPREVIEW_SANDBOX_LOW_BOUND
+            + sandboxInfo.bindAppIndex - HIPREVIEW_SANDBOX_LOW_BOUND;
+    } else {
+        appIndexEnd = sandboxInfo.appIndex;
+    }
+
     napi_value appIndexJs;
-    NAPI_CALL(env, napi_create_int64(env, sandboxInfo.appIndex, &appIndexJs));
+    NAPI_CALL(env, napi_create_int64(env, appIndexEnd, &appIndexJs));
     NAPI_CALL(env, napi_set_named_property(env, sandboxInfoJs, "appIndex", appIndexJs));
 
     napi_value tokenIdJs;

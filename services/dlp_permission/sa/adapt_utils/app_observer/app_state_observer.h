@@ -60,6 +60,8 @@ public:
     void PostDelayUnloadTask(CurrentTaskState newTaskState);
     void DecWatermarkName(const DlpSandboxInfo& appInfo);
     void AddWatermarkName(const DlpSandboxInfo& appInfo);
+    bool GetSandboxInfoByAppIndex(const std::string& bundleName, int32_t appIndex, DlpSandboxInfo& appInfo);
+    void GetOpeningReadOnlyBindSandbox(const std::string& bundleName, int32_t userId, int32_t& bindAppIndex);
 
 private:
     void UninstallDlpSandbox(DlpSandboxInfo& appInfo);

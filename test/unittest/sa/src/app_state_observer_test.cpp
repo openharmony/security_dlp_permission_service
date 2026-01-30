@@ -35,6 +35,7 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_
 static const int32_t DEFAULT_USERID = 100;
 static const int32_t INCORRECT_UID = 777;
 static const std::string DLP_BUNDLENAME = "com.ohos.dlpmanager";
+static const std::string HIPREVIEW_HIGH = "com.huawei.hmos.hipreview";
 static const int32_t DEFAULT_NUM = 1;
 }
 
@@ -141,6 +142,59 @@ HWTEST_F(AppStateObserverTest, OnProcessDied001, TestSize.Level1)
 
     observer.OnProcessDied(processData);
     ASSERT_EQ(0, processData.uid);
+}
+
+/**
+ * @tc.name: UninstallDlpSandboxTest001
+ * @tc.desc: UninstallDlpSandboxTest001 test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AppStateObserverTest, UninstallDlpSandboxTest001, TestSize.Level1)
+{
+    AppStateObserver observer;
+    DlpSandboxInfo appInfo = {
+        .uid = 1,
+        .userId = 123,
+        .bundleName = "testbundle1",
+        .hasRead = false,
+        .appIndex = -1,
+        .bindAppIndex = 1001,
+        .tokenId = INCORRECT_UID
+    };
+    observer.UninstallDlpSandbox(appInfo);
+    ASSERT_EQ(appInfo.tokenId, INCORRECT_UID);
+}
+
+/**
+ * @tc.name: UninstallDlpSandboxTest002
+ * @tc.desc: UninstallDlpSandboxTest002 test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AppStateObserverTest, UninstallDlpSandboxTest002, TestSize.Level1)
+{
+    AppStateObserver observer;
+    DlpSandboxInfo appInfo = {
+        .uid = 1,
+        .userId = 123,
+        .bundleName = HIPREVIEW_HIGH,
+        .hasRead = false,
+        .appIndex = -1,
+        .bindAppIndex = 1001,
+        .tokenId = INCORRECT_UID
+    };
+    observer.UninstallDlpSandbox(appInfo);
+    ASSERT_EQ(appInfo.tokenId, INCORRECT_UID);
+    appInfo.bindAppIndex = -1;
+    observer.UninstallDlpSandbox(appInfo);
+    ASSERT_EQ(appInfo.tokenId, INCORRECT_UID);
+    appInfo.bundleName = DLP_BUNDLENAME;
+    observer.UninstallDlpSandbox(appInfo);
+    ASSERT_EQ(appInfo.tokenId, INCORRECT_UID);
+    appInfo.bindAppIndex = 1001;
+    observer.UninstallDlpSandbox(appInfo);
+    ASSERT_EQ(appInfo.tokenId, INCORRECT_UID);
 }
 
 /**
@@ -393,6 +447,52 @@ HWTEST_F(AppStateObserverTest, GetOpeningReadOnlySandbox001, TestSize.Level1)
 }
 
 /**
+ * @tc.name: GetOpeningReadOnlyBindSandbox001
+ * @tc.desc: GetOpeningReadOnlyBindSandbox test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AppStateObserverTest, GetOpeningReadOnlyBindSandbox001, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL, "GetOpeningReadOnlySandbox001");
+    AppStateObserver observer;
+    int32_t bindAppIndex = -1;
+    observer.GetOpeningReadOnlyBindSandbox(DLP_BUNDLENAME, DEFAULT_USERID, bindAppIndex);
+    ASSERT_EQ(bindAppIndex, -1);
+ 
+    DlpSandboxInfo appInfo;
+    appInfo.bundleName = DLP_BUNDLENAME;
+    appInfo.dlpFileAccess = DLPFileAccess::READ_ONLY;
+    appInfo.uid = DEFAULT_NUM;
+    appInfo.appIndex = DEFAULT_NUM;
+    appInfo.bindAppIndex = DEFAULT_NUM;
+    appInfo.tokenId = DEFAULT_NUM;
+    appInfo.userId = DEFAULT_USERID;
+    appInfo.isReadOnce = false;
+    observer.AddSandboxInfo(appInfo);
+    observer.GetOpeningReadOnlyBindSandbox(DLP_BUNDLENAME, DEFAULT_USERID, bindAppIndex);
+    observer.EraseSandboxInfo(appInfo.uid);
+    ASSERT_EQ(bindAppIndex, appInfo.bindAppIndex);
+    appInfo.dlpFileAccess = DLPFileAccess::CONTENT_EDIT;
+    observer.AddSandboxInfo(appInfo);
+    observer.GetOpeningReadOnlyBindSandbox(DLP_BUNDLENAME, DEFAULT_USERID, bindAppIndex);
+    observer.EraseSandboxInfo(appInfo.uid);
+    ASSERT_EQ(bindAppIndex, -1);
+    appInfo.dlpFileAccess = DLPFileAccess::READ_ONLY;
+    appInfo.bundleName = "";
+    observer.AddSandboxInfo(appInfo);
+    observer.GetOpeningReadOnlyBindSandbox(DLP_BUNDLENAME, DEFAULT_USERID, bindAppIndex);
+    observer.EraseSandboxInfo(appInfo.uid);
+    ASSERT_EQ(bindAppIndex, -1);
+    appInfo.userId = 0;
+    appInfo.bundleName = DLP_BUNDLENAME;
+    observer.AddSandboxInfo(appInfo);
+    observer.GetOpeningReadOnlyBindSandbox(DLP_BUNDLENAME, DEFAULT_USERID, bindAppIndex);
+    observer.EraseSandboxInfo(appInfo.uid);
+    ASSERT_EQ(bindAppIndex, -1);
+    observer.sandboxInfo_.clear();
+}
+/**
  * @tc.name: AddSandboxInfo001
  * @tc.desc: AddSandboxInfo test
  * @tc.type: FUNC
@@ -612,6 +712,61 @@ HWTEST_F(AppStateObserverTest, GetOpeningReadOnlySandbox002, TestSize.Level1)
     bundleName = "testbundle1";
     userId = 124;
     observer.GetOpeningReadOnlySandbox(bundleName, userId, appIndex);
+    ASSERT_TRUE(observer.CallbackListenerEmpty());
+}
+
+/**
+ * @tc.name: GetOpeningReadOnlyBindSandbox002
+ * @tc.desc: GetOpeningReadOnlyBindSandbox test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AppStateObserverTest, GetOpeningReadOnlyBindSandbox002, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL, "GetOpeningReadOnlyBindSandbox002");
+    AppStateObserver observer;
+    DlpSandboxInfo appInfo;
+    appInfo = {
+        .uid = 1,
+        .userId = 123,
+        .appIndex = 0,
+        .bindAppIndex = 0,
+        .dlpFileAccess = DLPFileAccess::READ_ONLY,
+        .bundleName = "testbundle1",
+        .hasRead = false
+    };
+    observer.AddSandboxInfo(appInfo);
+ 
+    std::string bundleName = "testbundle1";
+    int32_t userId = 123;
+    int32_t appIndex = 0;
+    observer.GetOpeningReadOnlyBindSandbox(bundleName, userId, appIndex);
+    bundleName = "testbundle2";
+    observer.GetOpeningReadOnlyBindSandbox(bundleName, userId, appIndex);
+    bundleName = "testbundle1";
+    userId = 124;
+    observer.GetOpeningReadOnlyBindSandbox(bundleName, userId, appIndex);
+    userId = 123;
+ 
+    observer.EraseSandboxInfo(1);
+ 
+    appInfo = {
+        .uid = 1,
+        .userId = 123,
+        .appIndex = 0,
+        .bindAppIndex = 0,
+        .dlpFileAccess = DLPFileAccess::NO_PERMISSION,
+        .bundleName = "testbundle1",
+        .hasRead = false
+    };
+    observer.AddSandboxInfo(appInfo);
+ 
+    observer.GetOpeningReadOnlyBindSandbox(bundleName, userId, appIndex);
+    bundleName = "testbundle2";
+    observer.GetOpeningReadOnlyBindSandbox(bundleName, userId, appIndex);
+    bundleName = "testbundle1";
+    userId = 124;
+    observer.GetOpeningReadOnlyBindSandbox(bundleName, userId, appIndex);
     ASSERT_TRUE(observer.CallbackListenerEmpty());
 }
 
@@ -840,4 +995,37 @@ HWTEST_F(AppStateObserverTest, DecWatermarkName001, TestSize.Level1)
     observer.AddWatermarkName(appInfo);
     ASSERT_EQ(1, observer.watermarkMap_.size());
     observer.DecWatermarkName(appInfo);
+}
+
+/**
+ * @tc.name: GetSandboxInfoByAppIndex001
+ * @tc.desc: GetSandboxInfoByAppIndex test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AppStateObserverTest, GetSandboxInfoByAppIndex001, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL, "GetSandboxInfoByAppIndex001");
+    AppStateObserver observer;
+    DlpSandboxInfo appInfo = {
+        .uid = 1,
+        .userId = 123,
+        .appIndex = 2,
+        .bindAppIndex = 1001,
+        .bundleName = "testbundle1",
+        .hasRead = false
+    };
+    std::string bundleName = "testbundle1";
+    int32_t appIndex = 2;
+    observer.AddSandboxInfo(appInfo);
+    ASSERT_EQ(true, observer.GetSandboxInfoByAppIndex(bundleName, appIndex, appInfo));
+    appIndex = -1;
+    bundleName = "testbundle2";
+    ASSERT_EQ(false, observer.GetSandboxInfoByAppIndex(bundleName, appIndex, appInfo));
+    appIndex = 2;
+    bundleName = "testbundle2";
+    ASSERT_EQ(false, observer.GetSandboxInfoByAppIndex(bundleName, appIndex, appInfo));
+    appIndex = -1;
+    bundleName = "testbundle1";
+    ASSERT_EQ(false, observer.GetSandboxInfoByAppIndex(bundleName, appIndex, appInfo));
 }

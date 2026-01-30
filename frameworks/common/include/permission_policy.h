@@ -77,6 +77,7 @@ typedef struct AuthUserInfo {
 
 typedef struct SandboxInfo : public Parcelable {
     int32_t appIndex = -1;
+    int32_t bindAppIndex = -1;
     uint32_t tokenId = 0;
     bool Marshalling(Parcel &parcel) const;
     static SandboxInfo* Unmarshalling(Parcel &data);

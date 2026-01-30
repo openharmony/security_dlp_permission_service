@@ -74,6 +74,8 @@ const std::string PERMISSION_ACCESS_DLP_FILE = "ohos.permission.ACCESS_DLP_FILE"
 const std::string PERMISSION_ENTERPRISE_ACCESS_DLP_FILE = "ohos.permission.ENTERPRISE_ACCESS_DLP_FILE";
 static const std::string ALLOW_ACTION[] = {"ohos.want.action.CREATE_FILE"};
 static const std::string DLP_MANAGER = "com.ohos.dlpmanager";
+static const std::string HIPREVIEW_HIGH = "com.huawei.hmos.hipreview";
+static const std::string HIPREVIEW_LOW = "com.huawei.hmos.hipreviewext";
 static const std::string DLP_CONFIG = "etc/dlp_permission/dlp_config.json";
 static const std::string SUPPORT_FILE_TYPE = "support_file_type";
 static const std::string DEAULT_DLP_CONFIG = "/system/etc/dlp_config.json";
@@ -91,6 +93,7 @@ static const uint32_t MAX_APPID_LIST_SIZE = 250;
 static const std::string MDM_ENABLE_VALUE = "status";
 static const std::string MDM_BUNDLE_NAME = "appId";
 static const uint32_t ENABLE_VALUE_TRUE = 1;
+static const int32_t HIPREVIEW_SANDBOX_LOW_BOUND = 1000;
 static const char *FEATURE_INFO_DATA_FILE_PATH = "/data/service/el1/public/dlp_permission_service/dlp_feature_info.txt";
 static const std::string WATERMARK_NAME = "dlpWaterMark";
 constexpr int32_t PARSE_WAIT_TIME_OUT = 5;
@@ -548,15 +551,18 @@ static int32_t GetAppIndexFromRetentionInfo(const GetAppIndexParams& params,
     DLP_LOG_INFO(LABEL, "GetAppIndexFromRetentionInfo");
     std::vector<RetentionSandBoxInfo> infoVec;
     auto res = RetentionFileManager::GetInstance().GetRetentionSandboxList(params.bundleName, infoVec, true);
+    DLP_LOG_INFO(LABEL, "GetRetentionSandboxList success, size=%zu", infoVec.size());
     if (res != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "GetRetentionSandboxList fail bundleName:%{public}s, error=%{public}d",
             params.bundleName.c_str(), res);
         return res;
     }
     for (const auto& info: infoVec) {
+        DLP_LOG_INFO(LABEL, "FindMatchingSandbox enter");
         if (FindMatchingSandbox(info, params)) {
             DLP_LOG_INFO(LABEL, "FindMatchingSandbox is success");
             dlpSandBoxInfo.appIndex = info.appIndex_;
+            dlpSandBoxInfo.bindAppIndex = info.bindAppIndex_;
             dlpSandBoxInfo.hasRead = info.hasRead_;
             isNeedInstall = false;
             break;
@@ -609,6 +615,49 @@ int32_t DlpPermissionService::InstallSandboxApp(const std::string& bundleName, D
     return DLP_OK;
 }
 
+static void previewBindInstall(DlpSandboxInfo& sandboxInfo, int32_t userId, DLPFileAccess dlpFileAccess)
+{
+    if (sandboxInfo.bindAppIndex <= HIPREVIEW_SANDBOX_LOW_BOUND && sandboxInfo.appIndex > HIPREVIEW_SANDBOX_LOW_BOUND) {
+        AppExecFwk::BundleMgrClient bundleMgrClient;
+        DLPFileAccess permForBMS =
+            (dlpFileAccess == DLPFileAccess::READ_ONLY) ? DLPFileAccess::READ_ONLY : DLPFileAccess::CONTENT_EDIT;
+        int32_t bundleClientRes = bundleMgrClient.InstallSandboxApp(
+            HIPREVIEW_LOW, static_cast<int32_t>(permForBMS), userId, sandboxInfo.bindAppIndex);
+        if (bundleClientRes != DLP_OK) {
+            DLP_LOG_ERROR(LABEL, "install sandbox %{public}s fail, %{public}d", HIPREVIEW_LOW.c_str(), bundleClientRes);
+        } else {
+            DLP_LOG_INFO(LABEL, "install sandbox %s success, appIndex: %d",
+                HIPREVIEW_LOW.c_str(), sandboxInfo.bindAppIndex);
+        }
+    } else {
+        DLP_LOG_ERROR(LABEL, "previewBindInstall failed, bindAppIndex higher or appindex lower than low bound");
+    }
+}
+ 
+static int32_t InstallDlpSandboxExecute(bool& isNeedInstall, DLPFileAccess& dlpFileAccess,
+    const std::string& bundleName, int32_t& userId, DlpSandboxInfo& dlpSandboxInfo)
+{
+    DLP_LOG_INFO(LABEL, "InstallDlpSandbox %s, isNeedInstall=%d", bundleName.c_str(), isNeedInstall);
+    if (isNeedInstall) {
+        AppExecFwk::BundleMgrClient bundleMgrClient;
+        DLPFileAccess permForBMS =
+            (dlpFileAccess == DLPFileAccess::READ_ONLY) ? DLPFileAccess::READ_ONLY : DLPFileAccess::CONTENT_EDIT;
+        int32_t bundleClientRes = bundleMgrClient.InstallSandboxApp(bundleName,
+            static_cast<int32_t>(permForBMS), userId, dlpSandboxInfo.appIndex);
+        if (bundleClientRes != DLP_OK) {
+            DLP_LOG_ERROR(LABEL, "install sandbox %{public}s fail, %{public}d", bundleName.c_str(), bundleClientRes);
+            return DLP_SERVICE_ERROR_INSTALL_SANDBOX_FAIL;
+        }
+    }
+    if (bundleName == HIPREVIEW_HIGH) {
+        previewBindInstall(dlpSandboxInfo, userId, dlpFileAccess);
+        DLP_LOG_INFO(LABEL,
+            "InstallDlpSandbox %s, index %d, bindindex %d",
+            bundleName.c_str(), dlpSandboxInfo.appIndex, dlpSandboxInfo.bindAppIndex);
+    }
+    return DLP_OK;
+}
+
 int32_t DlpPermissionService::InstallDlpSandbox(const std::string& bundleName, DLPFileAccess dlpFileAccess,
     int32_t userId, SandboxInfo& sandboxInfo, const std::string& uri)
 {
@@ -640,18 +689,19 @@ int32_t DlpPermissionService::InstallDlpSandbox(const std::string& bundleName, D
     }
     if (isNeedInstall && isReadOnly && !fileInfo.isNotOwnerAndReadOnce) {
         appStateObserver_->GetOpeningReadOnlySandbox(bundleName, userId, dlpSandboxInfo.appIndex);
+        appStateObserver_->GetOpeningReadOnlyBindSandbox(bundleName, userId, dlpSandboxInfo.bindAppIndex);
         isNeedInstall = (dlpSandboxInfo.appIndex != -1) ? false : true;
     }
-    if (isNeedInstall) {
-        if (InstallSandboxApp(bundleName, dlpFileAccess, userId, dlpSandboxInfo) != DLP_OK) {
-            return DLP_SERVICE_ERROR_INSTALL_SANDBOX_FAIL;
-        }
+    res = InstallDlpSandboxExecute(isNeedInstall, dlpFileAccess, bundleName, userId, dlpSandboxInfo);
+    if (res != DLP_OK) {
+        return res;
     }
     FillDlpSandboxInfo(dlpSandboxInfo, bundleName, dlpFileAccess, userId, uri);
     if (!InsertDlpSandboxInfo(dlpSandboxInfo, !isNeedInstall, fileInfo)) {
         return DLP_SERVICE_ERROR_INSTALL_SANDBOX_FAIL;
     }
     sandboxInfo.appIndex = dlpSandboxInfo.appIndex;
+    sandboxInfo.bindAppIndex = dlpSandboxInfo.bindAppIndex;
     sandboxInfo.tokenId = dlpSandboxInfo.tokenId;
     std::unique_lock<std::shared_mutex> lock(dlpSandboxDataMutex_);
     if (dlpSandboxData_.find(dlpSandboxInfo.uid) == dlpSandboxData_.end()) {
@@ -715,6 +765,12 @@ int32_t DlpPermissionService::UninstallDlpSandbox(const std::string& bundleName,
     }
     RetentionFileManager::GetInstance().SetInitStatus(tokenId);
     if (RetentionFileManager::GetInstance().CanUninstall(tokenId)) {
+        if (bundleName == HIPREVIEW_HIGH) {
+            DlpSandboxInfo sandboxInfo;
+            appStateObserver_->GetSandboxInfoByAppIndex(HIPREVIEW_HIGH, appIndex, sandboxInfo);
+            int32_t bindAppIndex = sandboxInfo.bindAppIndex;
+            (void)UninstallDlpSandboxApp(HIPREVIEW_LOW, bindAppIndex, userId);
+        }
         return UninstallDlpSandboxApp(bundleName, appIndex, userId);
     }
     return DLP_OK;
@@ -751,6 +807,13 @@ int32_t DlpPermissionService::GetSandboxExternalAuthorization(
 
     std::unique_lock<std::shared_mutex> lock(dlpSandboxDataMutex_);
     auto it = dlpSandboxData_.find(sandboxUid);
+    std::string bundleName = want.GetBundle();
+    DLP_LOG_INFO(LABEL, "GetSandboxExternalAuthorization bundleName=%s", bundleName.c_str());
+    if (isSandbox && it != dlpSandboxData_.end() && bundleName == HIPREVIEW_LOW) {
+        authType = SandBoxExternalAuthorType::ALLOW_START_ABILITY;
+        return DLP_OK;
+    }
+
     if (isSandbox && it != dlpSandboxData_.end() && dlpSandboxData_[sandboxUid] != DLPFileAccess::READ_ONLY) {
         authType = SandBoxExternalAuthorType::ALLOW_START_ABILITY;
         return DLP_OK;
@@ -1091,6 +1154,13 @@ bool DlpPermissionService::RemoveRetentionInfo(std::vector<RetentionSandBoxInfo>
     for (auto iter = retentionSandBoxInfoVec.begin(); iter != retentionSandBoxInfoVec.end(); ++iter) {
         if (appStateObserver_->CheckSandboxInfo(info.bundleName, iter->appIndex_, userId)) {
             continue;
+        }
+        if (info.bundleName == HIPREVIEW_HIGH) {
+            if (UninstallDlpSandboxApp(HIPREVIEW_LOW, iter->bindAppIndex_, userId) != DLP_OK) {
+                DLP_LOG_ERROR(LABEL, "UninstallDlpSandboxApp failed, bindAppIndex=%d", iter->bindAppIndex_);
+            } else {
+                DLP_LOG_INFO(LABEL, "UninstallDlpSandboxApp success, bindAppIndex=%d", iter->bindAppIndex_);
+            }
         }
         DeleteDlpSandboxInfo(info.bundleName, iter->appIndex_, userId);
         UninstallDlpSandboxApp(info.bundleName, iter->appIndex_, userId);

@@ -24,6 +24,7 @@ namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = { LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION,
                                                        "RetentionSandBoxInfo" };
 constexpr uint32_t APP_INDEX = 0;
+constexpr int32_t BIND_APP_INDEX = -1;
 }
 
 RetentionSandBoxInfo::RetentionSandBoxInfo()
@@ -33,6 +34,7 @@ RetentionSandBoxInfo::RetentionSandBoxInfo()
     dlpFileAccess_ = DLPFileAccess::NO_PERMISSION;
     hasRead_ = false;
     docUriSet_.clear();
+    bindAppIndex_ = BIND_APP_INDEX;
     isReadOnce_ = false;
 }
 
@@ -49,6 +51,10 @@ bool RetentionSandBoxInfo::Marshalling(Parcel& out) const
     std::vector<std::string> docUriVec(this->docUriSet_.begin(), this->docUriSet_.end());
     if (!(out.WriteStringVector(docUriVec))) {
         DLP_LOG_ERROR(LABEL, "Write docUriVec fail");
+        return false;
+    }
+    if (!(out.WriteInt32(this->bindAppIndex_))) {
+        DLP_LOG_ERROR(LABEL, "Write bindAppIndex fail");
         return false;
     }
     return true;
@@ -74,6 +80,11 @@ RetentionSandBoxInfo* RetentionSandBoxInfo::Unmarshalling(Parcel& in)
     std::vector<std::string> docUriVec;
     if (!(in.ReadStringVector(&docUriVec))) {
         DLP_LOG_ERROR(LABEL, "Read docUriVec fail");
+        delete parcel;
+        return nullptr;
+    }
+    if (!(in.ReadInt32(parcel->bindAppIndex_))) {
+        DLP_LOG_ERROR(LABEL, "Read bindAppIndex fail");
         delete parcel;
         return nullptr;
     }
