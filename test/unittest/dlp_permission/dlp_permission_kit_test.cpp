@@ -727,7 +727,8 @@ HWTEST_F(DlpPermissionKitTest, QueryDlpFileCopyableByTokenId001, TestSize.Level1
     AccessTokenID sandboxTokenId;
     ASSERT_TRUE(TestGetTokenId(DEFAULT_USERID, DLP_MANAGER_APP, sandboxInfo.appIndex, sandboxTokenId));
     bool copyable = false;
-    ASSERT_EQ(DLP_OK, DlpPermissionKit::QueryDlpFileCopyableByTokenId(copyable, sandboxTokenId));
+    ASSERT_EQ(DLP_SERVICE_ERROR_PERMISSION_DENY,
+        DlpPermissionKit::QueryDlpFileCopyableByTokenId(copyable, sandboxTokenId));
     ASSERT_EQ(copyable, false);
     ASSERT_EQ(DLP_OK, DlpPermissionKit::UninstallDlpSandbox(DLP_MANAGER_APP, sandboxInfo.appIndex, DEFAULT_USERID));
 }
@@ -749,8 +750,9 @@ HWTEST_F(DlpPermissionKitTest, QueryDlpFileCopyableByTokenId002, TestSize.Level1
     AccessTokenID sandboxTokenId;
     ASSERT_TRUE(TestGetTokenId(DEFAULT_USERID, DLP_MANAGER_APP, sandboxInfo.appIndex, sandboxTokenId));
     bool copyable = false;
-    ASSERT_EQ(DLP_OK, DlpPermissionKit::QueryDlpFileCopyableByTokenId(copyable, sandboxTokenId));
-    ASSERT_EQ(copyable, true);
+    ASSERT_EQ(DLP_SERVICE_ERROR_PERMISSION_DENY,
+        DlpPermissionKit::QueryDlpFileCopyableByTokenId(copyable, sandboxTokenId));
+    ASSERT_EQ(copyable, false);
     ASSERT_EQ(DLP_OK, DlpPermissionKit::UninstallDlpSandbox(DLP_MANAGER_APP, sandboxInfo.appIndex, DEFAULT_USERID));
 }
 

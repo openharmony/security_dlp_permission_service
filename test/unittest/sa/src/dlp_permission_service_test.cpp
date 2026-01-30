@@ -42,6 +42,7 @@
 #include "permission_policy.h"
 #include "retention_file_manager.h"
 #include "sandbox_json_manager.h"
+#include "token_setproc.h"
 #include "visited_dlp_file_info.h"
 #define private public
 #include "visit_record_file_manager.h"
@@ -64,6 +65,7 @@ static constexpr int32_t NO_RIGHT_SA_ID = 4650;
 static constexpr int32_t SA_ID_DLP_PERMISSION_SERVICE = 3521;
 static const std::string DLP_MANAGER_APP = "com.ohos.dlpmanager";
 static const std::string PERMISSION_APP = "com.ohos.permissionmanager";
+static const std::string PASTEBOARD_SERVICE_NAME = "pasteboard_service";
 const uint32_t ACCOUNT_LENGTH = 20;
 const uint32_t USER_NUM = 1;
 const int AUTH_PERM = 1;
@@ -1877,7 +1879,25 @@ HWTEST_F(DlpPermissionServiceTest, QueryDlpFileCopyableByTokenId001, TestSize.Le
     bool copyable = false;
     uint32_t tokenId = 1001;
     int32_t res = dlpPermissionService_->QueryDlpFileCopyableByTokenId(copyable, tokenId);
+    EXPECT_EQ(res, DLP_SERVICE_ERROR_PERMISSION_DENY);
+}
+
+/**
+ * @tc.name: QueryDlpFileCopyableByTokenId002
+ * @tc.desc: QueryDlpFileCopyableByTokenId test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionServiceTest, QueryDlpFileCopyableByTokenId002, TestSize.Level1)
+{
+    DLP_LOG_DEBUG(LABEL, "QueryDlpFileCopyableByTokenId002");
+    uint64_t selfTokenId = GetSelfTokenID();
+    uint64_t pasteboardToken = AccessTokenKit::GetNativeTokenId(PASTEBOARD_SERVICE_NAME);
+    EXPECT_EQ(0, SetSelfTokenID(pasteboardToken));
+    bool copyable = false;
+    int32_t res = dlpPermissionService_->QueryDlpFileCopyableByTokenId(copyable, pasteboardToken);
     EXPECT_EQ(res, DLP_SERVICE_ERROR_APPOBSERVER_ERROR);
+    EXPECT_EQ(0, SetSelfTokenID(selfTokenId));
 }
 
 /**

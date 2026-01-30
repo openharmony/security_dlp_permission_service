@@ -351,6 +351,84 @@ HWTEST_F(AppStateObserverTest, QueryDlpFileCopyableByTokenId001, TestSize.Level1
 }
 
 /**
+ * @tc.name: QueryDlpFileCopyableByTokenId002
+ * @tc.desc: QueryDlpFileCopyableByTokenId test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AppStateObserverTest, QueryDlpFileCopyableByTokenId002, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL, "QueryDlpFileCopyableByTokenId002");
+
+    AppStateObserver observer;
+    bool copyable = false;
+    uint32_t tokenId = 100;
+    int32_t uid = 100;
+    int32_t storeUid;
+
+    observer.AddUidWithTokenId(tokenId, uid);
+    observer.GetUidByTokenId(tokenId, storeUid);
+    ASSERT_TRUE(uid == storeUid);
+
+    std::string bundleName = "test";
+    int32_t appIndex = 100;
+    int32_t userId = 100;
+    DlpSandboxInfo appInfo = {
+        .uid = uid,
+        .bundleName = bundleName,
+        .appIndex = appIndex,
+        .userId = userId,
+        .dlpFileAccess = DLPFileAccess::FULL_CONTROL
+    };
+
+    observer.AddSandboxInfo(appInfo);
+    ASSERT_TRUE(observer.CheckSandboxInfo(bundleName, appIndex, userId));
+
+    int32_t ret = observer.QueryDlpFileCopyableByTokenId(copyable, tokenId);
+    ASSERT_EQ(DLP_OK, ret);
+    ASSERT_TRUE(copyable);
+}
+
+/**
+ * @tc.name: QueryDlpFileCopyableByTokenId003
+ * @tc.desc: QueryDlpFileCopyableByTokenId test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AppStateObserverTest, QueryDlpFileCopyableByTokenId003, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL, "QueryDlpFileCopyableByTokenId003");
+
+    AppStateObserver observer;
+    bool copyable = false;
+    uint32_t tokenId = 100;
+    int32_t uid = 100;
+    int32_t storeUid;
+
+    observer.AddUidWithTokenId(tokenId, uid);
+    observer.GetUidByTokenId(tokenId, storeUid);
+    ASSERT_TRUE(uid == storeUid);
+
+    std::string bundleName = "test";
+    int32_t appIndex = 100;
+    int32_t userId = 100;
+    DlpSandboxInfo appInfo = {
+        .uid = uid,
+        .bundleName = bundleName,
+        .appIndex = appIndex,
+        .userId = userId,
+        .dlpFileAccess = DLPFileAccess::READ_ONLY
+    };
+
+    observer.AddSandboxInfo(appInfo);
+    ASSERT_TRUE(observer.CheckSandboxInfo(bundleName, appIndex, userId));
+
+    int32_t ret = observer.QueryDlpFileCopyableByTokenId(copyable, tokenId);
+    ASSERT_EQ(DLP_OK, ret);
+    ASSERT_FALSE(copyable);
+}
+
+/**
  * @tc.name: GetOpeningReadOnlySandbox001
  * @tc.desc: GetOpeningReadOnlySandbox test
  * @tc.type: FUNC
