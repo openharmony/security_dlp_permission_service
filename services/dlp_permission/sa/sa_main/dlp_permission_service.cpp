@@ -95,7 +95,6 @@ static const std::string MDM_BUNDLE_NAME = "appId";
 static const uint32_t ENABLE_VALUE_TRUE = 1;
 static const int32_t HIPREVIEW_SANDBOX_LOW_BOUND = 1000;
 static const char *FEATURE_INFO_DATA_FILE_PATH = "/data/service/el1/public/dlp_permission_service/dlp_feature_info.txt";
-static const std::string WATERMARK_NAME = "dlpWaterMark";
 constexpr int32_t PARSE_WAIT_TIME_OUT = 5;
 }
 REGISTER_SYSTEM_ABILITY_BY_ID(DlpPermissionService, SA_ID_DLP_PERMISSION_SERVICE, true);
@@ -299,7 +298,7 @@ int32_t DlpPermissionService::ParseDlpCertificate(const sptr<CertParcel>& certPa
     return ret;
 }
 
-static int32_t GetWatermarkName(std::string& watermarkName)
+static int32_t ConcatAccountAndUserId(std::string& accountAndUserId)
 {
     int32_t userId = GetCallingUserId();
     if (userId < 0) {
@@ -312,18 +311,18 @@ static int32_t GetWatermarkName(std::string& watermarkName)
         DLP_LOG_ERROR(LABEL, "Get accountInfo error.");
         return DLP_SERVICE_ERROR_GET_ACCOUNT_FAIL;
     }
-    watermarkName = WATERMARK_NAME + accountInfo.second.name_ + std::to_string(userId);
+    accountAndUserId = accountInfo.second.name_ + std::to_string(userId);
     return DLP_OK;
 }
 
 int32_t DlpPermissionService::CheckWaterMarkInfo()
 {
-    std::string watermarkName;
-    int32_t ret = GetWatermarkName(watermarkName);
+    std::string accountAndUserId;
+    int32_t ret = ConcatAccountAndUserId(accountAndUserId);
     if (ret != DLP_OK) {
         return DLP_SERVICE_ERROR_GET_ACCOUNT_FAIL;
     }
-    if (waterMarkInfo_.accountName == watermarkName) {
+    if (waterMarkInfo_.accountAndUserId == accountAndUserId) {
         return DLP_OK;
     }
     DLP_LOG_INFO(LABEL, "Change account or has not watermark");
@@ -402,8 +401,8 @@ static int32_t SetWatermarkToRS(const std::string &name, std::shared_ptr<Media::
 
 int32_t DlpPermissionService::ChangeWaterMarkInfo()
 {
-    std::string watermarkName;
-    int32_t res = GetWatermarkName(watermarkName);
+    std::string accountAndUserId;
+    int32_t res = ConcatAccountAndUserId(accountAndUserId);
     if (res != DLP_OK) {
         return DLP_SERVICE_ERROR_GET_ACCOUNT_FAIL;
     }
@@ -418,7 +417,7 @@ int32_t DlpPermissionService::ChangeWaterMarkInfo()
         return DLP_SET_WATERMARK_TO_RS_ERROR;
     }
     waterMarkInfo_.waterMarkImg = nullptr;
-    waterMarkInfo_.accountName = watermarkName;
+    waterMarkInfo_.accountAndUserId = accountAndUserId;
     return DLP_OK;
 }
 
@@ -575,7 +574,7 @@ bool DlpPermissionService::InsertDlpSandboxInfo(DlpSandboxInfo& sandboxInfo, boo
         sandboxInfo.appIndex);
     sandboxInfo.isReadOnce = fileInfo.isNotOwnerAndReadOnce;
     sandboxInfo.isWatermark = fileInfo.isWatermark;
-    sandboxInfo.watermarkName = WATERMARK_NAME + fileInfo.accountName + std::to_string(sandboxInfo.userId);
+    sandboxInfo.accountAndUserId = fileInfo.accountName + std::to_string(sandboxInfo.userId);
     sandboxInfo.maskInfo = fileInfo.maskInfo;
     sandboxInfo.fileId = fileInfo.fileId;
     appStateObserver_->AddDlpSandboxInfo(sandboxInfo);
