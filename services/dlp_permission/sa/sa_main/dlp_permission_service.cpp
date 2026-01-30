@@ -577,6 +577,7 @@ bool DlpPermissionService::InsertDlpSandboxInfo(DlpSandboxInfo& sandboxInfo, boo
     sandboxInfo.isWatermark = fileInfo.isWatermark;
     sandboxInfo.watermarkName = WATERMARK_NAME + fileInfo.accountName + std::to_string(sandboxInfo.userId);
     sandboxInfo.maskInfo = fileInfo.maskInfo;
+    sandboxInfo.fileId = fileInfo.fileId;
     appStateObserver_->AddDlpSandboxInfo(sandboxInfo);
     SetHasBackgroundTask(true);
     DLP_LOG_INFO(LABEL, "isNotOwnerAndReadOnce=%{public}d, isWatermark=%{public}d",
@@ -728,16 +729,16 @@ int32_t DlpPermissionService::InstallDlpSandbox(const std::string& bundleName, D
     if (res != DLP_OK) {
         return res;
     }
-    if (appStateObserver_->GetOpeningSandboxInfo(bundleName, uri, userId, sandboxInfo)) {
+    FileInfo fileInfo;
+    AppFileService::ModuleFileUri::FileUri fileUri(uri);
+    std::string path = fileUri.GetRealPath();
+    appStateObserver_->GetFileInfoByUri(path, fileInfo);
+    if (appStateObserver_->GetOpeningSandboxInfo(bundleName, uri, userId, sandboxInfo, fileInfo.fileId)) {
         DLP_LOG_INFO(LABEL, "GetOpeningSandboxInfo success");
         return DLP_OK;
     }
     bool isReadOnly = dlpFileAccess == DLPFileAccess::READ_ONLY;
     bool isNeedInstall = true;
-    FileInfo fileInfo;
-    AppFileService::ModuleFileUri::FileUri fileUri(uri);
-    std::string path = fileUri.GetRealPath();
-    appStateObserver_->GetFileInfoByUri(path, fileInfo);
     DlpSandboxInfo dlpSandboxInfo;
     GetAppIndexParams params = {bundleName, isReadOnly, uri, fileInfo.isNotOwnerAndReadOnce};
     res = GetAppIndexFromRetentionInfo(params, dlpSandboxInfo, isNeedInstall);
@@ -1653,11 +1654,11 @@ int DlpPermissionService::SetFileInfo(const std::string& uri, const FileInfo& fi
     maskFileInfo.isNotOwnerAndReadOnce = fileInfo.isNotOwnerAndReadOnce;
     maskFileInfo.isWatermark = fileInfo.isWatermark;
     maskFileInfo.accountName = fileInfo.accountName;
+    maskFileInfo.fileId = fileInfo.fileId;
     if (maskFileInfo.isWatermark) {
         std::unique_lock<std::mutex> lock(waterMarkInfoMutex_);
         maskFileInfo.maskInfo = waterMarkInfo_.maskInfo;
     }
-    
     bool res = appStateObserver_->AddUriAndFileInfo(uri, maskFileInfo);
     if (!res) {
         DLP_LOG_ERROR(LABEL, "AddUriAndFileInfo error");

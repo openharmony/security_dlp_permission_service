@@ -39,6 +39,7 @@ public:
     bool isWatermark = false;
     std::string watermarkName = "";
     std::string maskInfo = "";
+    std::string fileId = "";
 };
 }  // namespace DlpPermission
 }  // namespace Security

@@ -22,6 +22,7 @@
 #include "dlp_permission.h"
 #include "dlp_permission_log.h"
 #include "dlp_sandbox_change_callback_manager.h"
+#include "file_uri.h"
 #include "open_dlp_file_callback_manager.h"
 #include "iservice_registry.h"
 #include "idlp_permission_service.h"
@@ -229,6 +230,9 @@ void AppStateObserver::EraseSandboxInfo(int32_t uid)
     std::lock_guard<std::mutex> lock(sandboxInfoLock_);
     auto iter = sandboxInfo_.find(uid);
     if (iter != sandboxInfo_.end()) {
+        AppFileService::ModuleFileUri::FileUri fileUri(iter->second.uri);
+        std::string path = fileUri.GetRealPath();
+        EraseFileInfoByUri(path);
         DecWatermarkName(iter->second);
         DLP_LOG_INFO(LABEL, "sandbox app %{public}s%{public}d info delete success, uid: %{public}d",
             iter->second.bundleName.c_str(), iter->second.appIndex, iter->second.uid);
@@ -349,12 +353,13 @@ bool AppStateObserver::GetRunningProcessesInfo(std::vector<RunningProcessInfo>& 
 }
 
 bool AppStateObserver::GetOpeningSandboxInfo(const std::string& bundleName, const std::string& uri,
-    int32_t userId, SandboxInfo& sandboxInfo)
+    int32_t userId, SandboxInfo& sandboxInfo, const std::string& fileId)
 {
     std::lock_guard<std::mutex> lock(sandboxInfoLock_);
     for (auto iter = sandboxInfo_.begin(); iter != sandboxInfo_.end(); iter++) {
         DlpSandboxInfo appInfo = iter->second;
-        if (appInfo.userId != userId || appInfo.bundleName != bundleName || appInfo.uri != uri) {
+        if (appInfo.userId != userId || appInfo.bundleName != bundleName ||
+            appInfo.uri != uri || appInfo.fileId != fileId) {
             continue;
         }
         std::vector<RunningProcessInfo> infoVec;
@@ -686,7 +691,6 @@ bool AppStateObserver::GetFileInfoByUri(const std::string& uri, FileInfo& fileIn
         fileInfo = iter->second;
         DLP_LOG_INFO(LABEL, "fileInfo with isNotOwnerAndReadOnce: %{public}d, isWatermark: %{public}d",
             fileInfo.isNotOwnerAndReadOnce, fileInfo.isWatermark);
-        fileInfoUriMap_.erase(iter);
         return true;
     }
     return false;

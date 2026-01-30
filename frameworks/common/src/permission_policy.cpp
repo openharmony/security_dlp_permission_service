@@ -427,6 +427,10 @@ bool FileInfo::Marshalling(Parcel &out) const
         DLP_LOG_ERROR(LABEL, "Write maskInfo fail");
         return false;
     }
+    if (!(out.WriteString(fileId))) {
+        DLP_LOG_ERROR(LABEL, "Write fileId fail");
+        return false;
+    }
     return true;
 }
 
@@ -452,6 +456,10 @@ FileInfo* FileInfo::Unmarshalling(Parcel &in)
         }
         if (!(in.ReadString(parcel->maskInfo))) {
             DLP_LOG_ERROR(LABEL, "Read maskInfo fail");
+            break;
+        }
+        if (!(in.ReadString(parcel->fileId))) {
+            DLP_LOG_ERROR(LABEL, "Read fileId fail");
             break;
         }
         return parcel;

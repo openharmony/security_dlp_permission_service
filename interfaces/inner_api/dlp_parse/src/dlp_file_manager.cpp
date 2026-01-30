@@ -611,6 +611,7 @@ static int32_t SetNotOwnerAndReadOnce(const PermissionPolicy& policy, int32_t dl
         fileInfo.isNotOwnerAndReadOnce = true;
         fileInfo.isWatermark = true;
     }
+    fileInfo.fileId = policy.fileId;
     res = DlpPermissionKit::SetFileInfo(filePath, fileInfo);
     if (res != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "SetFileInfo fail, err = %{public}d.", res);
