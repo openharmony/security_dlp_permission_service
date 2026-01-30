@@ -134,6 +134,7 @@ ohos_shared_library("libdlpsetdlpfeature_napi") {
     "access_token:libaccesstoken_sdk",
     "access_token:libtokensetproc_shared",
     "ace_engine:ace_uicontent",
+    "bundle_framework:appexecfwk_base",
     "napi:ace_napi",
     "ipc:ipc_single",
   ]

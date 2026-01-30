@@ -144,6 +144,17 @@ int32_t DlpPermissionKit::GetWaterMark(const bool waterMarkConfig)
     return DLP_OK;
 }
 
+int32_t DlpPermissionKit::GetDomainAccountNameInfo(std::string& accountNameInfo)
+{
+    return DlpPermissionClient::GetInstance().GetDomainAccountNameInfo(accountNameInfo);
+}
+
+int32_t DlpPermissionKit::GetAbilityInfos(const AAFwk::Want& want, int32_t flags, int32_t userId,
+    std::vector<AppExecFwk::AbilityInfo> &abilityInfos)
+{
+    return DlpPermissionClient::GetInstance().GetAbilityInfos(want, flags, userId, abilityInfos);
+}
+
 int32_t DlpPermissionKit::InstallDlpSandbox(const std::string& bundleName, DLPFileAccess dlpFileAccess, int32_t userId,
     SandboxInfo& sandboxInfo, const std::string& uri)
 {

@@ -71,6 +71,9 @@ public:
         const std::string& appId, bool offlineAccess) override;
     int32_t GetWaterMark(const bool waterMarkConfig,
         const sptr<IDlpPermissionCallback>& callback) override;
+    int32_t GetDomainAccountNameInfo(std::string& accountNameInfo) override;
+    int32_t GetAbilityInfos(const AAFwk::Want& want, int32_t flags, int32_t userId,
+        std::vector<AppExecFwk::AbilityInfo> &abilityInfos) override;
     int32_t SetWaterMark(const int32_t pid) override;
     int32_t InstallDlpSandbox(const std::string& bundleName, DLPFileAccess dlpFileAccess, int32_t userId,
         SandboxInfo& sandboxInfo, const std::string& uri) override;

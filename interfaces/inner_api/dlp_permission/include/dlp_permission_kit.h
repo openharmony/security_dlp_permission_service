@@ -29,6 +29,7 @@
 #include "retention_sandbox_info.h"
 #include "visited_dlp_file_info.h"
 #include "want.h"
+#include "ability_info.h"
 
 namespace OHOS {
 namespace Security {
@@ -114,6 +115,9 @@ public:
     static int32_t SetEnterprisePolicy(EnterprisePolicy policy);
     static int32_t SetFileInfo(const std::string& uri, const FileInfo& fileInfo);
     static int32_t GetWaterMark(const bool waterMarkConfig);
+    static int32_t GetDomainAccountNameInfo(std::string& accountNameInfo);
+    static int32_t GetAbilityInfos(const AAFwk::Want& want, int32_t flags, int32_t userId,
+        std::vector<AppExecFwk::AbilityInfo> &abilityInfos);
 };
 }  // namespace DlpPermission
 }  // namespace Security
