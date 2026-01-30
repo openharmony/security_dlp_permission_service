@@ -145,7 +145,7 @@ static void TransHexStringToByte(std::string& outer, const std::string& input)
         return;
     }
     buff[len] = '\0';
-    outer = reinterpret_cast<char *>(buff);
+    outer.assign(reinterpret_cast<char *>(buff), len);
     (void)memset_s(buff, len, 0, len);
     delete[] buff;
 }

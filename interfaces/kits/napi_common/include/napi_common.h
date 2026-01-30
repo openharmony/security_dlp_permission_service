@@ -391,7 +391,7 @@ bool ParseUIAbilityContextReq(
 bool ParseWantReq(napi_env env, const napi_value& obj, OHOS::AAFwk::Want& requestWant);
 void StartUIExtensionAbility(std::shared_ptr<UIExtensionRequestContext> asyncContext);
 
-bool IsStringLengthValid(std::string str, size_t maxLen, size_t minLen = 0);
+bool IsStringLengthValid(std::string& str, size_t maxLen, size_t minLen = 0);
 }  // namespace DlpPermission
 }  // namespace Security
 }  // namespace OHOS

@@ -2153,7 +2153,7 @@ void StartUIExtensionAbility(std::shared_ptr<UIExtensionRequestContext> asyncCon
     return;
 }
 
-bool IsStringLengthValid(std::string str, size_t maxLen, size_t minLen)
+bool IsStringLengthValid(std::string& str, size_t maxLen, size_t minLen)
 {
     size_t len = str.length();
     if (len > maxLen || len < minLen) {

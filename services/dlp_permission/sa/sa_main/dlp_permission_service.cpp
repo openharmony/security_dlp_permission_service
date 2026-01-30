@@ -1509,6 +1509,7 @@ int32_t DlpPermissionService::SandboxConfigOperate(std::string& configInfo, Sand
                 callerBundleName, std::to_string(originalTokenId));
             break;
         default:
+            res = DLP_SERVICE_ERROR_VALUE_INVALID;
             DLP_LOG_ERROR(LABEL, "enter default case");
             break;
     }

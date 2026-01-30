@@ -875,7 +875,7 @@ int32_t DlpZipFile::DoDlpFileWrite(uint64_t offset, void* buf, uint32_t size)
 
     ret = write(opFd, writeBuff, restBlocksSize);
     delete[] writeBuff;
-    if (ret <= 0) {
+    if (ret != static_cast<int32_t>(restBlocksSize)) {
         DLP_LOG_ERROR(LABEL, "write buff failed, %{public}s", strerror(errno));
         return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
     }
