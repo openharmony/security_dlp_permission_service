@@ -85,6 +85,7 @@ static const std::string TRUE_VALUE = "true";
 static const std::string FALSE_VALUE = "false";
 static const std::string SEPARATOR = "_";
 static const std::string FOUNDATION_SERVICE_NAME = "foundation";
+static const std::string PASTEBOARD_SERVICE_NAME = "pasteboard_service";
 static const std::string MDM_APPIDENTIFIER = "6917562860841254665";
 static const uint32_t MAX_SUPPORT_FILE_TYPE_NUM = 1024;
 static const uint32_t MAX_RETENTION_SIZE = 1024;
@@ -890,6 +891,13 @@ int32_t DlpPermissionService::QueryDlpFileCopyableByTokenId(bool& copyable, uint
 {
     CriticalHelper criticalHelper("QueryDlpFileCopyableByTokenId");
     appStateObserver_->PostDelayUnloadTask(CurrentTaskState::SHORT_TASK);
+    Security::AccessToken::AccessTokenID callingToken = IPCSkeleton::GetCallingTokenID();
+    Security::AccessToken::AccessTokenID pasteboardToken =
+        Security::AccessToken::AccessTokenKit::GetNativeTokenId(PASTEBOARD_SERVICE_NAME);
+    if (callingToken != pasteboardToken) {
+        DLP_LOG_ERROR(LABEL, "Caller is not pasteboard");
+        return DLP_SERVICE_ERROR_PERMISSION_DENY;
+    }
     if (tokenId == 0) {
         return DLP_SERVICE_ERROR_VALUE_INVALID;
     }
