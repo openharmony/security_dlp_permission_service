@@ -36,13 +36,13 @@ AccountEventSubscriber::~AccountEventSubscriber()
 
 void AccountEventSubscriber::HandleRegisterCloudAccount(const EventFwk::CommonEventData &data)
 {
-    DLP_LOG_ERROR(LABEL, "HandleRegisterCloudAccount Start.");
+    DLP_LOG_INFO(LABEL, "HandleRegisterCloudAccount Start.");
     callback_.registerAccount();
 }
 
 void AccountEventSubscriber::HandleUnregisterCloudAccount(const EventFwk::CommonEventData &data)
 {
-    DLP_LOG_ERROR(LABEL, "HandleUnregisterCloudAccount Start.");
+    DLP_LOG_INFO(LABEL, "HandleUnregisterCloudAccount Start.");
     callback_.unregisterAccount();
 }
 

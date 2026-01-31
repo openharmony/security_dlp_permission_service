@@ -37,6 +37,11 @@ int32_t RegisterAccountEventMonitor(AccountListenerCallback *callback)
         return DLP_SUCCESS;
     }
 
+    if (callback == nullptr) {
+        DLP_LOG_ERROR(LABEL, "Invalid callback");
+        return DLP_ERROR;
+    }
+
     using OHOS::EventFwk::CommonEventSubscribeInfo;
     using OHOS::EventFwk::CommonEventSupport;
     using OHOS::EventFwk::MatchingSkills;
@@ -50,6 +55,7 @@ int32_t RegisterAccountEventMonitor(AccountListenerCallback *callback)
     g_eventSubscriber = std::make_shared<AccountEventSubscriber>(subscribeInfo, *callback);
     if (!CommonEventManager::SubscribeCommonEvent(g_eventSubscriber)) {
         DLP_LOG_ERROR(LABEL, "SubscribeCommonEvent failed.");
+        g_eventSubscriber = nullptr;
         return DLP_ERROR;
     }
     return DLP_SUCCESS;

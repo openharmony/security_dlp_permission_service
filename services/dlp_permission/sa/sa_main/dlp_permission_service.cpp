@@ -230,9 +230,11 @@ void DlpPermissionService::OnAddSystemAbility(int32_t systemAbilityId, const std
     if (systemAbilityId == LIBCESFWK_SERVICES_ID) {
         if (InitAccountListenerCallback() != DLP_SUCCESS) {
             DLP_LOG_ERROR(LABEL, "Init the account listener callback failed!");
+            return;
         }
         if (RegisterAccountEventMonitor(g_accountListenerCallback) != DLP_SUCCESS) {
             DLP_LOG_ERROR(LABEL, "Register the monitor of account status commom event failed!");
+            return;
         }
     }
 }

@@ -375,8 +375,8 @@ HWTEST_F(AppStateObserverTest, GetSandboxInfo001, TestSize.Level1)
     DlpSandboxInfo sandboxInfo;
     std::unordered_map<int32_t, DlpSandboxInfo> delSandboxInfo;
     bool res = observer.GetSandboxInfo(0, sandboxInfo);
-    ASSERT_EQ(res, false);
     observer.GetDelSandboxInfo(delSandboxInfo);
+    ASSERT_EQ(res, false);
 }
 
 /**
