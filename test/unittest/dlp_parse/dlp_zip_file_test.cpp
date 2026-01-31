@@ -546,3 +546,33 @@ HWTEST_F(DlpZipFileTest, Truncate001, TestSize.Level0)
     unlink("/data/fuse_test_plain.txt");
     unlink("/data/fuse_test_dlp.txt");
 }
+
+/**
+ * @tc.name: Truncate002
+ * @tc.desc: test size overflow
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpZipFileTest, Truncate002, TestSize.Level0)
+{
+    DLP_LOG_INFO(LABEL, "Truncate002");
+    int fdPlain = open("/data/fuse_test_plain.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
+    ASSERT_NE(fdPlain, -1);
+    int fdDlp = open("/data/fuse_test_dlp.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
+    ASSERT_NE(fdDlp, -1);
+
+    DlpZipFile testFile(fdDlp, DLP_TEST_DIR, 0, "txt");
+    initDlpFileCiper(testFile);
+
+    
+    testFile.authPerm_ = DLPFileAccess::FULL_CONTROL;
+    testFile.dlpFd_ = fdDlp;
+    EXPECT_EQ(DLP_PARSE_ERROR_VALUE_INVALID,
+        testFile.Truncate(std::numeric_limits<uint64_t>::max()));
+
+    close(fdPlain);
+    close(fdDlp);
+
+    unlink("/data/fuse_test_plain.txt");
+    unlink("/data/fuse_test_dlp.txt");
+}

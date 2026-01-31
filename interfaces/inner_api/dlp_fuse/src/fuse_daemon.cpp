@@ -519,7 +519,7 @@ void FuseDaemon::FuseFsDaemonThread(int fuseFd)
     }
 
     char mountPoint[MAX_FILE_NAME_LEN] = {0};
-    int ret = snprintf_s(mountPoint, sizeof(mountPoint), MAX_FILE_NAME_LEN, "/dev/fd/%d", fuseFd);
+    int ret = snprintf_s(mountPoint, sizeof(mountPoint), sizeof(mountPoint) - 1, "/dev/fd/%d", fuseFd);
     if (ret <= 0) {
         DLP_LOG_ERROR(LABEL, "Fuse fs daemon exit, snprintf_s fail");
         NotifyDaemonDisable();

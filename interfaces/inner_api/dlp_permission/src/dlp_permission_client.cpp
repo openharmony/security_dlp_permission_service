@@ -45,6 +45,7 @@ static int32_t CheckSandboxFlag(AccessToken::AccessTokenID tokenId, bool& sandbo
     int32_t res = AccessToken::AccessTokenKit::GetHapDlpFlag(tokenId);
     if (res < 0) {
         DLP_LOG_ERROR(LABEL, "Invalid tokenId");
+        sandboxFlag = false;
         return res;
     }
     sandboxFlag = (res == 1);

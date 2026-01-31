@@ -482,6 +482,10 @@ int32_t DlpZipFile::GenerateHmacVal(int32_t encFile, struct DlpBlob& out)
 {
     lseek(encFile, 0, SEEK_SET);
     int32_t fd = dup(encFile);
+    if (fd < 0) {
+        DLP_LOG_ERROR(LABEL, "dup file failed");
+        return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
+    }
     uint64_t fileLen = 0;
 
     int32_t ret = GetFileSize(fd, fileLen);
@@ -729,7 +733,7 @@ int32_t DlpZipFile::UpdateDlpFileContentSize()
 int32_t DlpZipFile::DlpFileRead(uint64_t offset, void* buf, uint32_t size, bool& hasRead, int32_t uid)
 {
     int32_t opFd = encDataFd_;
-    if (buf == nullptr || size == 0 || size > DLP_FUSE_MAX_BUFFLEN ||
+    if (buf == nullptr || size == 0 || size > DLP_FUSE_MAX_BUFFLEN || size >= DLP_MAX_CONTENT_SIZE ||
         (offset >= DLP_MAX_CONTENT_SIZE - size) ||
         opFd < 0 || !IsValidCipher(cipher_.encKey, cipher_.usageSpec, cipher_.hmacKey)) {
         DLP_LOG_ERROR(LABEL, "params is error");
@@ -890,7 +894,7 @@ int32_t DlpZipFile::DlpFileWrite(uint64_t offset, void* buf, uint32_t size)
         return DLP_PARSE_ERROR_FILE_READ_ONLY;
     }
     int32_t opFd = encDataFd_;
-    if (buf == nullptr || size == 0 || size > DLP_FUSE_MAX_BUFFLEN ||
+    if (buf == nullptr || size == 0 || size > DLP_FUSE_MAX_BUFFLEN || size >= DLP_MAX_CONTENT_SIZE ||
         (offset >= DLP_MAX_CONTENT_SIZE - size) ||
         opFd < 0 || !IsValidCipher(cipher_.encKey, cipher_.usageSpec, cipher_.hmacKey)) {
         DLP_LOG_ERROR(LABEL, "Dlp file param invalid");
@@ -925,6 +929,10 @@ int32_t DlpZipFile::Truncate(uint64_t size)
     int32_t opFd = encDataFd_;
     if (opFd < 0 || size >= DLP_MAX_CONTENT_SIZE) {
         DLP_LOG_ERROR(LABEL, "Param invalid");
+        return DLP_PARSE_ERROR_VALUE_INVALID;
+    }
+    if (size > static_cast<uint64_t>(std::numeric_limits<off_t>::max())) {
+        DLP_LOG_ERROR(LABEL, "ftruncate size overflow.");
         return DLP_PARSE_ERROR_VALUE_INVALID;
     }
 
