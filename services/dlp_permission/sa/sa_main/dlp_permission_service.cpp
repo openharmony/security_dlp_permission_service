@@ -97,9 +97,9 @@ static const uint32_t ENABLE_VALUE_TRUE = 1;
 static const int32_t HIPREVIEW_SANDBOX_LOW_BOUND = 1000;
 static const char *FEATURE_INFO_DATA_FILE_PATH = "/data/service/el1/public/dlp_permission_service/dlp_feature_info.txt";
 static const std::string WATERMARK_NAME = "dlpWaterMark";
+static const int32_t LIBCESFWK_SERVICES_ID = 3299;
 constexpr int32_t PARSE_WAIT_TIME_OUT = 5;
 static AccountListenerCallback *g_accountListenerCallback = nullptr;
-constexpr int32_t PARSE_WAIT_TIME_OUT = 5;
 }
 REGISTER_SYSTEM_ABILITY_BY_ID(DlpPermissionService, SA_ID_DLP_PERMISSION_SERVICE, true);
 
