@@ -85,6 +85,8 @@ ohos_fuzztest("CredentialCoverageFuzzTest") {
     "${dlp_root_dir}/services/dlp_permission/sa/sa_common/dlp_ability_conn.cpp",
     "${dlp_root_dir}/services/dlp_permission/sa/sa_common/dlp_ability_proxy.cpp",
     "${dlp_root_dir}/services/dlp_permission/sa/sa_common/dlp_ability_stub.cpp",
+    "${dlp_root_dir}/services/dlp_permission/sa/sa_common/account_event_subscriber.cpp",
+    "${dlp_root_dir}/services/dlp_permission/sa/sa_common/account_status_listener.cpp",
     "${dlp_root_dir}/services/dlp_permission/sa/storage/src/dlp_kv_data_storage.cpp",
     "${dlp_root_dir}/services/dlp_permission/sa/storage/src/sandbox_config_kv_data_storage.cpp",
     "credentialcoverage_fuzzer.cpp"

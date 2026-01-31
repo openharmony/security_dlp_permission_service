@@ -1859,6 +1859,24 @@ HWTEST_F(DlpPermissionServiceTest, IsInDlpSandbox001, TestSize.Level1)
 }
 
 /**
+ * @tc.name: AccountListner001
+ * @tc.desc: AccountListner test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionServiceTest, AccountListner001, TestSize.Level1)
+{
+    dlpPermissionService_->UnregisterAccount();
+    dlpPermissionService_->RegisterAccount();
+    dlpPermissionService_->DelSandboxInfoByAccount(true);
+    dlpPermissionService_->DelSandboxInfoByAccount(false);
+    dlpPermissionService_->OnAddSystemAbility(0, "a");
+    dlpPermissionService_->OnAddSystemAbility(3299, "a");
+    int32_t res = dlpPermissionService_->InitAccountListenerCallback();
+    EXPECT_EQ(res, DLP_SUCCESS);
+}
+
+/**
  * @tc.name: CriticalHelper001
  * @tc.desc: CriticalHelper test
  * @tc.type: FUNC

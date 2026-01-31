@@ -49,6 +49,7 @@ public:
     bool RemoveCallbackListener(int32_t pid);
     bool CallbackListenerEmpty();
     bool GetSandboxInfo(int32_t uid, DlpSandboxInfo& appInfo);
+    void GetDelSandboxInfo(std::unordered_map<int32_t, DlpSandboxInfo>& sandboxInfo);
     void UpdatReadFlag(int32_t uid);
     bool GetOpeningSandboxInfo(const std::string& bundleName, const std::string& uri,
         int32_t userId, SandboxInfo& sandboxInfo, const std::string& fileId);

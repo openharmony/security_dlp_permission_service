@@ -60,6 +60,7 @@
 #include "dlp_ability_adapter.h"
 #include "critical_handler.h"
 #include "critical_helper.h"
+#include "account_status_listener.h"
 
 namespace OHOS {
 namespace Security {
@@ -96,6 +97,8 @@ static const uint32_t ENABLE_VALUE_TRUE = 1;
 static const int32_t HIPREVIEW_SANDBOX_LOW_BOUND = 1000;
 static const char *FEATURE_INFO_DATA_FILE_PATH = "/data/service/el1/public/dlp_permission_service/dlp_feature_info.txt";
 static const std::string WATERMARK_NAME = "dlpWaterMark";
+constexpr int32_t PARSE_WAIT_TIME_OUT = 5;
+static AccountListenerCallback *g_accountListenerCallback = nullptr;
 constexpr int32_t PARSE_WAIT_TIME_OUT = 5;
 }
 REGISTER_SYSTEM_ABILITY_BY_ID(DlpPermissionService, SA_ID_DLP_PERMISSION_SERVICE, true);
@@ -140,6 +143,10 @@ void DlpPermissionService::OnStart()
         DLP_LOG_ERROR(LABEL, "Failed to publish service!");
         return;
     }
+    if (!AddSystemAbilityListener(LIBCESFWK_SERVICES_ID)) {
+        DLP_LOG_ERROR(LABEL, "add common event system ability listener failed");
+        return;
+    }
     state_ = ServiceRunningState::STATE_RUNNING;
     (void)NotifyProcessIsActive();
     DLP_LOG_INFO(LABEL, "Congratulations, DlpPermissionService start successfully!");
@@ -152,6 +159,82 @@ void DlpPermissionService::OnStop()
     DLP_LOG_INFO(LABEL, "Stop service");
     dlpEventSubSubscriber_ = nullptr;
     (void)NotifyProcessIsStop();
+    UnRegisterAccountMonitor();
+    HcFree(g_accountListenerCallback);
+}
+
+void DlpPermissionService::UnregisterAccount()
+{
+    DLP_LOG_INFO(LABEL, "UnregisterAccount Start.");
+    DelSandboxInfoByAccount(false);
+}
+
+void DlpPermissionService::RegisterAccount()
+{
+    DLP_LOG_INFO(LABEL, "RegisterAccount Start.");
+    DelSandboxInfoByAccount(true);
+}
+
+void DlpPermissionService::DelSandboxInfoByAccount(bool isRegister)
+{
+    DLP_LOG_INFO(LABEL, "DelSandboxInfoByAccount");
+    int32_t foregroundUserId = 0;
+    AccountSA::OsAccountManager::GetForegroundOsAccountLocalId(foregroundUserId);
+    std::string localAccount = "";
+    std::pair<bool, AccountSA::OhosAccountInfo> accountInfo =
+        AccountSA::OhosAccountKits::GetInstance().QueryOhosAccountInfo();
+    if (accountInfo.first) {
+        localAccount = accountInfo.second.name_;
+    }
+    std::unordered_map<int32_t, DlpSandboxInfo> sandboxInfo;
+    appStateObserver_->GetDelSandboxInfo(sandboxInfo);
+    for (const auto& entry : sandboxInfo) {
+        const DlpSandboxInfo& sandboxInfoEntry = entry.second;
+        std::string bundleName = sandboxInfoEntry.bundleName;
+        int32_t appIndex = sandboxInfoEntry.appIndex;
+        int32_t userId = sandboxInfoEntry.userId;
+        std::string accountName = sandboxInfoEntry.accountName;
+        if (!isRegister && (userId != foregroundUserId || accountName == "")) {
+            continue;
+        }
+        if (isRegister &&
+            (userId != foregroundUserId || accountName == "" || accountName == localAccount)) {
+            continue;
+        }
+        DeleteDlpSandboxInfo(bundleName, appIndex, userId);
+        UninstallDlpSandboxApp(bundleName, appIndex, userId);
+        RetentionFileManager::GetInstance().RemoveRetentionState(bundleName, appIndex);
+        DlpSandboxChangeCallbackManager::GetInstance().ExecuteCallbackAsync(sandboxInfoEntry);
+    }
+}
+
+int32_t DlpPermissionService::InitAccountListenerCallback()
+{
+    DLP_LOG_INFO(LABEL, "Init AccountListenerCallback Start.");
+    if (g_accountListenerCallback != nullptr) {
+        return DLP_SUCCESS;
+    }
+    g_accountListenerCallback = (AccountListenerCallback *)HcMalloc(sizeof(AccountListenerCallback), 0);
+    if (g_accountListenerCallback == nullptr) {
+        DLP_LOG_ERROR(LABEL, "Allocate AccountListenerCallback memory failed!");
+        return DLP_ERROR;
+    }
+    g_accountListenerCallback->registerAccount = std::bind(&DlpPermissionService::RegisterAccount, this);
+    g_accountListenerCallback->unregisterAccount = std::bind(&DlpPermissionService::UnregisterAccount, this);
+    return DLP_SUCCESS;
+}
+
+void DlpPermissionService::OnAddSystemAbility(int32_t systemAbilityId, const std::string &deviceId)
+{
+    DLP_LOG_INFO(LABEL, "OnAddSystemAbility systemAbilityId %{public}d", systemAbilityId);
+    if (systemAbilityId == LIBCESFWK_SERVICES_ID) {
+        if (InitAccountListenerCallback() != DLP_SUCCESS) {
+            DLP_LOG_ERROR(LABEL, "Init the account listener callback failed!");
+        }
+        if (RegisterAccountEventMonitor(g_accountListenerCallback) != DLP_SUCCESS) {
+            DLP_LOG_ERROR(LABEL, "Register the monitor of account status commom event failed!");
+        }
+    }
 }
 
 bool DlpPermissionService::RegisterAppStateObserver()
@@ -569,6 +652,9 @@ bool DlpPermissionService::InsertDlpSandboxInfo(DlpSandboxInfo& sandboxInfo, boo
             RetentionFileManager::GetInstance().ClearUnreservedSandbox(isNotMatch);
         }
         return false;
+    }
+    if (fileInfo.accountName != "") {
+        sandboxInfo.accountName = fileInfo.accountName;
     }
     sandboxInfo.uid = info.uid;
     sandboxInfo.tokenId = AccessToken::AccessTokenKit::GetHapTokenID(sandboxInfo.userId, sandboxInfo.bundleName,
