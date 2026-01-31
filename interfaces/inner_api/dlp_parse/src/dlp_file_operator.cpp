@@ -349,7 +349,7 @@ int32_t EnterpriseSpaceDlpPermissionKit::EncryptEnterpriseDlpFile(DlpProperty pr
     filePtr = std::make_shared<DlpRawFile>(dlpFileFd, realFileType);
     std::string appId;
     if (!DlpUtils::GetAppIdFromToken(appId)) {
-        DLP_LOG_ERROR(LABEL, "cat get the apid");
+        DLP_LOG_ERROR(LABEL, "cat get the appId");
         return DLP_PARSE_ERROR_VALUE_INVALID;
     }
     filePtr->SetAppId(appId);

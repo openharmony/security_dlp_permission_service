@@ -731,7 +731,7 @@ int32_t DlpPermissionSerializer::DeserializeEncPolicyDataByFirstVersion(const un
     unordered_json data = { { POLICY_CERT_VERSION, 1 },
                             { OWNER_ACCOUNT_ID, ownerAccountId },
                             { ONLINE_CERT, serverJson } };
-    if (offlineEncDataJson != nullptr && !offlineEncDataJson.is_null()) {
+    if (!offlineEncDataJson.is_null()) {
         unordered_json offlineServerJson;
         if (offlineEncDataJson.find(ACCOUNT_TYPE) != offlineEncDataJson.end() &&
             offlineEncDataJson.at(ACCOUNT_TYPE).is_number()) {
