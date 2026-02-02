@@ -361,6 +361,25 @@ HWTEST_F(AppStateObserverTest, AddDlpSandboxInfo001, TestSize.Level1)
 }
 
 /**
+ * @tc.name: GetSandboxInfo001
+ * @tc.desc: GetSandboxInfo test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AppStateObserverTest, GetSandboxInfo001, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL, "GetSandboxInfo001");
+
+    AppStateObserver observer;
+    DlpSandboxInfo appInfo;
+    DlpSandboxInfo sandboxInfo;
+    std::unordered_map<int32_t, DlpSandboxInfo> delSandboxInfo;
+    bool res = observer.GetSandboxInfo(0, sandboxInfo);
+    observer.GetDelSandboxInfo(delSandboxInfo);
+    ASSERT_EQ(res, false);
+}
+
+/**
  * @tc.name: QueryDlpFileAccessByUid001
  * @tc.desc: QueryDlpFileAccessByUid test
  * @tc.type: FUNC

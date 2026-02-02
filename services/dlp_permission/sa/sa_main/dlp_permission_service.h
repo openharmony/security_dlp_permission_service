@@ -109,6 +109,7 @@ public:
     int32_t SetDlpFeature(const uint32_t dlpFeatureInfo, bool& statusSetInfo) override;
     int32_t SetEnterprisePolicy(const std::string& policy) override;
     int32_t SetFileInfo(const std::string& uri, const FileInfo& fileInfo) override;
+    void OnAddSystemAbility(int32_t systemAbilityId, const std::string &deviceId) override;
 
 private:
     bool InsertDlpSandboxInfo(DlpSandboxInfo& sandboxInfo, bool hasRetention, const FileInfo& fileInfo);
@@ -127,6 +128,10 @@ private:
     int32_t InstallSandboxApp(const std::string& bundleName, DLPFileAccess dlpFileAccess, int32_t userId,
         DlpSandboxInfo& dlpSandboxInfo);
     int32_t ChangeWaterMarkInfo();
+    void UnregisterAccount();
+    void RegisterAccount();
+    int32_t InitAccountListenerCallback();
+    void DelSandboxInfoByAccount(bool isRegister);
 
     std::atomic<int32_t> repeatTime_;
     std::shared_ptr<std::thread> thread_ = nullptr;

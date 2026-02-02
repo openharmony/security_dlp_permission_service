@@ -696,6 +696,14 @@ bool AppStateObserver::GetFileInfoByUri(const std::string& uri, FileInfo& fileIn
     return false;
 }
 
+void AppStateObserver::GetDelSandboxInfo(std::unordered_map<int32_t, DlpSandboxInfo>& sandboxInfo)
+{
+    std::lock_guard<std::mutex> lock(sandboxInfoLock_);
+    for (const auto& entry : sandboxInfo_) {
+        sandboxInfo[entry.first] = entry.second;
+    }
+}
+
 void AppStateObserver::PostDelayUnloadTask(CurrentTaskState newTaskState)
 {
 #ifdef DLP_FUZZ_TDD_TEST

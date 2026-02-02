@@ -596,7 +596,9 @@ static int32_t SetNotOwnerAndReadOnce(const PermissionPolicy& policy, int32_t dl
         return res;
     }
     FileInfo fileInfo;
-    fileInfo.accountName = account;
+    if (policy.ownerAccountType_ == CLOUD_ACCOUNT) {
+        fileInfo.accountName = account;
+    }
     if (policy.ownerAccountType_ == CLOUD_ACCOUNT && policy.GetAllowedOpenCount() >= 1) {
         DLP_LOG_DEBUG(LABEL, "cloud account and set allowedopencount, judge if owner.");
         if (policy.ownerAccount_.compare("") != 0 && policy.ownerAccount_.compare(account) == 0) {

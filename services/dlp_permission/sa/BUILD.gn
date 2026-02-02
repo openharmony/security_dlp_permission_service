@@ -165,6 +165,8 @@ ohos_shared_library("dlp_permission_service") {
     "sa_common/dlp_ability_conn.cpp",
     "sa_common/dlp_ability_proxy.cpp",
     "sa_common/dlp_ability_stub.cpp",
+    "sa_common/account_event_subscriber.cpp",
+    "sa_common/account_status_listener.cpp",
     "sa_main/dlp_credential.cpp",
     "sa_main/dlp_permission_async_proxy.cpp",
     "sa_main/dlp_permission_service.cpp",
