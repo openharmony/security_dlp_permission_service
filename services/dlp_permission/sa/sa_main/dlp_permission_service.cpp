@@ -178,7 +178,11 @@ void DlpPermissionService::DelSandboxInfoByAccount(bool isRegister)
 {
     DLP_LOG_INFO(LABEL, "DelSandboxInfoByAccount");
     int32_t foregroundUserId = 0;
-    AccountSA::OsAccountManager::GetForegroundOsAccountLocalId(foregroundUserId);
+    int32_t res = OHOS::AccountSA::OsAccountManager::GetForegroundOsAccountLocalId(foregroundUserId);
+    if (res != 0) {
+        DLP_LOG_ERROR(LABEL, "GetForegroundOsAccountLocalId failed");
+        return;
+    }
     std::string localAccount = "";
     std::pair<bool, AccountSA::OhosAccountInfo> accountInfo =
         AccountSA::OhosAccountKits::GetInstance().QueryOhosAccountInfo();
