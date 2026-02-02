@@ -160,6 +160,7 @@ void DlpPermissionService::OnStop()
     (void)NotifyProcessIsStop();
     UnRegisterAccountMonitor();
     HcFree(g_accountListenerCallback);
+    g_accountListenerCallback = nullptr;
 }
 
 void DlpPermissionService::UnregisterAccount()
