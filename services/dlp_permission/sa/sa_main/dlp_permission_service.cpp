@@ -145,7 +145,6 @@ void DlpPermissionService::OnStart()
     }
     if (!AddSystemAbilityListener(LIBCESFWK_SERVICES_ID)) {
         DLP_LOG_ERROR(LABEL, "add common event system ability listener failed");
-        return;
     }
     state_ = ServiceRunningState::STATE_RUNNING;
     (void)NotifyProcessIsActive();

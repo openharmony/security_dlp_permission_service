@@ -34,13 +34,13 @@ AccountEventSubscriber::~AccountEventSubscriber()
     callback_.unregisterAccount = nullptr;
 }
 
-void AccountEventSubscriber::HandleRegisterCloudAccount(const EventFwk::CommonEventData &data)
+void AccountEventSubscriber::HandleRegisterCloudAccount()
 {
     DLP_LOG_INFO(LABEL, "HandleRegisterCloudAccount Start.");
     callback_.registerAccount();
 }
 
-void AccountEventSubscriber::HandleUnregisterCloudAccount(const EventFwk::CommonEventData &data)
+void AccountEventSubscriber::HandleUnregisterCloudAccount()
 {
     DLP_LOG_INFO(LABEL, "HandleUnregisterCloudAccount Start.");
     callback_.unregisterAccount();

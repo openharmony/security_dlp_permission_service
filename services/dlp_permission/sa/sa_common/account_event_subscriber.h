@@ -30,8 +30,8 @@ public:
     void OnReceiveEvent(const EventFwk::CommonEventData &data) override;
 
 private:
-    void HandleRegisterCloudAccount(const EventFwk::CommonEventData &data);
-    void HandleUnregisterCloudAccount(const EventFwk::CommonEventData &data);
+    void HandleRegisterCloudAccount();
+    void HandleUnregisterCloudAccount();
     AccountListenerCallback callback_;
 };
 }  // namespace DlpPermission
