@@ -50,10 +50,10 @@ void AccountEventSubscriber::OnReceiveEvent(const EventFwk::CommonEventData &dat
 {
     std::string action = data.GetWant().GetAction();
     if (action == EventFwk::CommonEventSupport::COMMON_EVENT_DISTRIBUTED_ACCOUNT_LOGIN) {
-        HandleRegisterCloudAccount(data);
+        HandleRegisterCloudAccount();
     } else if (action == EventFwk::CommonEventSupport::COMMON_EVENT_DISTRIBUTED_ACCOUNT_LOGOUT ||
                action == EventFwk::CommonEventSupport::COMMON_EVENT_DISTRIBUTED_ACCOUNT_LOGOFF) {
-        HandleUnregisterCloudAccount(data);
+        HandleUnregisterCloudAccount();
     }
 }
 }  // namespace DlpPermission
