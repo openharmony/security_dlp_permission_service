@@ -20,6 +20,7 @@
 #include <string>
 #include <vector>
 #include <thread>
+#include "ability_info.h"
 #include "accesstoken_kit.h"
 
 #include "token_setproc.h"
@@ -145,6 +146,13 @@ static void CallInterfaceByIndexFirst(FuzzedDataProvider& fdp, int index)
         default:
             break;
     }
+    std::string accountNameInfo;
+    service->GetDomainAccountNameInfo(accountNameInfo);
+    OHOS::AAFwk::Want want;
+    int32_t flags = 0;
+    int32_t userId = 0;
+    std::vector<AppExecFwk::AbilityInfo> abilityInfos;
+    service->GetAbilityInfos(want, flags, userId, abilityInfos);
 }
 
 static void CallInterfaceByIndexSecond(FuzzedDataProvider& fdp, int index)

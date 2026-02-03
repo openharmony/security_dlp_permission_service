@@ -20,6 +20,7 @@
 #include <unistd.h>
 #include <vector>
 #include "gtest/gtest.h"
+#include "ability_info.h"
 #include "accesstoken_kit.h"
 #include "cert_parcel.h"
 #include "dlp_permission.h"
@@ -1692,6 +1693,29 @@ HWTEST_F(DlpPermissionKitTest, GetWaterMark001, TestSize.Level0)
     waterMark = true;
     (void)DlpPermissionKit::GetWaterMark(waterMark);
 }
+
+/* *
+ * @tc.name: GetDomainAccountNameInfo001
+ * @tc.desc: GetDomainAccountNameInfo001.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionKitTest, GetDomainAccountNameInfo001, TestSize.Level0)
+{
+    DLP_LOG_DEBUG(LABEL, "GetDomainAccountNameInfo001");
+
+    std::string accountNameInfo;
+    ASSERT_NE(DlpPermissionKit::GetDomainAccountNameInfo(accountNameInfo),
+        DLP_NAPI_ERROR_NATIVE_BINDING_FAIL);
+
+    OHOS::AAFwk::Want want;
+    int32_t flags = 0;
+    int32_t userId = 0;
+    std::vector<AppExecFwk::AbilityInfo> abilityInfos;
+    ASSERT_NE(DlpPermissionKit::GetAbilityInfos(want, flags, userId, abilityInfos),
+        DLP_NAPI_ERROR_NATIVE_BINDING_FAIL);
+}
+
 }  // namespace DlpPermission
 }  // namespace Security
 }  // namespace OHOS

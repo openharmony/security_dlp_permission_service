@@ -21,11 +21,13 @@
 #include <cstddef>
 #include <cstdio>
 #include <fcntl.h>
+#include "ability_info.h"
 #include "accesstoken_kit.h"
 #include "dlp_permission.h"
 #include "dlp_permission_log.h"
 #include "securec.h"
 #include "token_setproc.h"
+#include "want.h"
 #include "dlp_permission_service_proxy.h"
 #include "iservice_registry.h"
 #include "system_ability_definition.h"
@@ -92,6 +94,13 @@ static void WaterMarkFuzzTest(const uint8_t* data, size_t size)
     proxy->GetWaterMark(true, dlpPermissionCallback);
     proxy->SetWaterMark(pid);
     proxy->UnRegisterOpenDlpFileCallback(callbackRemote);
+    std::string accountNameInfo;
+    proxy->GetDomainAccountNameInfo(accountNameInfo);
+    OHOS::AAFwk::Want want;
+    int32_t flags = 0;
+    int32_t userId = 0;
+    std::vector<AppExecFwk::AbilityInfo> abilityInfos;
+    proxy->GetAbilityInfos(want, flags, userId, abilityInfos);
 }
 
 bool PermissionProxyFuzzer(const uint8_t* data, size_t size)

@@ -16,6 +16,7 @@
 #include "dlp_permission_service_test.h"
 #include <openssl/rand.h>
 #include <string>
+#include "ability_info.h"
 #include "accesstoken_kit.h"
 #include "account_adapt.h"
 #include "app_uninstall_observer.h"
@@ -44,6 +45,7 @@
 #include "sandbox_json_manager.h"
 #include "token_setproc.h"
 #include "visited_dlp_file_info.h"
+#include "want.h"
 #define private public
 #include "visit_record_file_manager.h"
 #include "visit_record_json_manager.h"
@@ -1813,6 +1815,30 @@ HWTEST_F(DlpPermissionServiceTest, GetWaterMark004, TestSize.Level1)
     ASSERT_NE(nullptr, dlpPermissionService);
     int32_t res = dlpPermissionService->GetWaterMark(true, callback2);
     EXPECT_NE(DLP_OK, res);
+    dlpPermissionService = nullptr;
+}
+
+/**
+ * @tc.name: GetDomainAccountNameInfo01
+ * @tc.desc: GetDomainAccountNameInfo01 test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionServiceTest, GetDomainAccountNameInfo01, TestSize.Level1)
+{
+    DLP_LOG_DEBUG(LABEL, "GetDomainAccountNameInfo01");
+    std::shared_ptr<DlpPermissionService> dlpPermissionService = nullptr;
+    dlpPermissionService = std::make_shared<DlpPermissionService>(NO_RIGHT_SA_ID, true);
+    ASSERT_NE(nullptr, dlpPermissionService);
+    std::string accountNameInfo;
+    int32_t res = dlpPermissionService->GetDomainAccountNameInfo(accountNameInfo);
+    EXPECT_NE(DLP_NAPI_ERROR_NATIVE_BINDING_FAIL, res);
+
+    OHOS::AAFwk::Want want;
+    int32_t flags = 0;
+    int32_t userId = 0;
+    std::vector<AppExecFwk::AbilityInfo> abilityInfos;
+    dlpPermissionService->GetAbilityInfos(want, flags, userId, abilityInfos);
     dlpPermissionService = nullptr;
 }
 
