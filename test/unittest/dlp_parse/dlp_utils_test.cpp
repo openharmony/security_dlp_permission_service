@@ -572,6 +572,20 @@ HWTEST_F(DlpUtilsTest, GetExtractRealType001, TestSize.Level0)
 }
 
 /**
+ * @tc.name: GetExtractRealType002
+ * @tc.desc: test GetExtractRealType
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpUtilsTest, GetExtractRealType002, TestSize.Level0)
+{
+    DLP_LOG_INFO(UT_LABEL, "GetExtractRealType002");
+    std::string typeStr = "txt_";
+    std::string reslTypeStr = "";
+    ASSERT_EQ(DlpUtils::GetExtractRealType(typeStr), reslTypeStr);
+}
+
+/**
  * @tc.name: GetFileContent001
  * @tc.desc: test GetFileContent
  * @tc.type: FUNC

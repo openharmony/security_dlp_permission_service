@@ -390,7 +390,7 @@ bool AppStateObserver::CanUninstallByGid(DlpSandboxInfo& appInfo, const AppExecF
     std::vector<RunningProcessInfo> infoVec;
     (void)GetRunningProcessesInfo(infoVec);
     for (auto it = infoVec.begin(); it != infoVec.end(); it++) {
-        if (it->uid_ != appInfo.uid || it->bundleNames[0] != appInfo.bundleName) {
+        if (it->uid_ != appInfo.uid || it->bundleNames.size() < 1 || it->bundleNames[0] != appInfo.bundleName) {
             continue;
         }
         if (it->state_ == AppProcessState::APP_STATE_END || it->state_ == AppProcessState::APP_STATE_TERMINATED) {
