@@ -38,7 +38,7 @@ public:
     bool isReadOnce = false;
     bool isWatermark = false;
     std::string accountName = "";
-    std::string watermarkName = "";
+    std::string accountAndUserId = "";
     std::string maskInfo = "";
     std::string fileId = "";
 };

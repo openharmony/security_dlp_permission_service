@@ -1947,7 +1947,7 @@ HWTEST_F(DlpPermissionServiceTest, CheckWaterMarkInfo001, TestSize.Level1)
 {
     int32_t res = dlpPermissionService_->CheckWaterMarkInfo();
     ASSERT_NE(DLP_OK, res);
-    dlpPermissionService_->waterMarkInfo_.accountName = WATERMARK_NAME;
+    dlpPermissionService_->waterMarkInfo_.accountAndUserId = WATERMARK_NAME;
     res = dlpPermissionService_->CheckWaterMarkInfo();
     ASSERT_NE(DLP_OK, res);
 }
@@ -1962,7 +1962,7 @@ HWTEST_F(DlpPermissionServiceTest, ChangeWaterMarkInfo001, TestSize.Level1)
 {
     int32_t res = dlpPermissionService_->ChangeWaterMarkInfo();
     ASSERT_NE(DLP_OK, res);
-    dlpPermissionService_->waterMarkInfo_.accountName = WATERMARK_NAME;
+    dlpPermissionService_->waterMarkInfo_.accountAndUserId = WATERMARK_NAME;
     res = dlpPermissionService_->ChangeWaterMarkInfo();
     ASSERT_NE(DLP_OK, res);
 }
