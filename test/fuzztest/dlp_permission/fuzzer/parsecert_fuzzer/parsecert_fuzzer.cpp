@@ -129,7 +129,7 @@ static void CallPermissionPolicy(FuzzedDataProvider& fdp)
     (void)CheckAesParam(&buff, 0);
 
     std::vector<AuthUserInfo> authUsers;
-    for (uint32_t i = 0; i < MAX_ACCOUNT_NUM; ++i) {
+    for (uint32_t i = 0; i < MAX_ACCOUNT_NUM; i++) {
         AuthUserInfo authUser;
         authUsers.push_back(authUser);
     }
@@ -143,11 +143,11 @@ static void CallPermissionPolicy(FuzzedDataProvider& fdp)
 
     uint32_t keyLen;
     SetKey(nullptr, 0, nullptr, keyLen);
-    uint8_t orignalKey;
+    uint8_t originalKey;
     uint8_t* key;
     SetKey(nullptr, 0, nullptr, keyLen);
     SetKey(nullptr, 0, &key, keyLen);
-    SetKey(&orignalKey, 0, &key, keyLen);
+    SetKey(&originalKey, 0, &key, keyLen);
 
     PermissionPolicy srcPolicy;
     permissionPolicy.CopyPolicyHmac(srcPolicy);
@@ -179,18 +179,18 @@ static void CallPermissionPolicy(FuzzedDataProvider& fdp)
     fileInfo.Unmarshalling(in);
     in.WriteBool(fdp.ConsumeBool());
     in.WriteBool(fdp.ConsumeBool());
-    in.WriteBool(fdp.ConsumeBytesAsString(STRING_LENGTH));
+    in.WriteString(fdp.ConsumeBytesAsString(STRING_LENGTH));
+    fileInfo.Unmarshalling(in);
+    in.WriteBool(fdp.ConsumeBool());
+    in.WriteBool(fdp.ConsumeBool());
+    in.WriteString(fdp.ConsumeBytesAsString(STRING_LENGTH));
+    in.WriteString(fdp.ConsumeBytesAsString(STRING_LENGTH));
     fileInfo.Unmarshalling(in);
     in.WriteBool(fdp.ConsumeBool());
     in.WriteBool(fdp.ConsumeBool());
     in.WriteBool(fdp.ConsumeBytesAsString(STRING_LENGTH));
-    in.WriteBool(fdp.ConsumeBytesAsString(STRING_LENGTH));
-    fileInfo.Unmarshalling(in);
-    in.WriteBool(fdp.ConsumeBool());
-    in.WriteBool(fdp.ConsumeBool());
-    in.WriteBool(fdp.ConsumeBytesAsString(STRING_LENGTH));
-    in.WriteBool(fdp.ConsumeBytesAsString(STRING_LENGTH));
-    in.WriteBool(fdp.ConsumeBytesAsString(STRING_LENGTH));
+    in.WriteString(fdp.ConsumeBytesAsString(STRING_LENGTH));
+    in.WriteString(fdp.ConsumeBytesAsString(STRING_LENGTH));
     fileInfo.Unmarshalling(in);
 }
 
