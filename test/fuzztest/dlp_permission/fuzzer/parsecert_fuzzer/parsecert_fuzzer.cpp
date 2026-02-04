@@ -45,7 +45,7 @@ const int32_t APPID_LENGTH = 30;
 const int32_t TWO = 2;
 const uint32_t STRING_LENGTH = 10;
 
-static void CallCertParcel(FuzzedDataProvider& fdp)
+static void CallCertParcel1(FuzzedDataProvider& fdp)
 {
     CertParcel* parcel = new (std::nothrow) CertParcel();
     Parcel data;
@@ -90,10 +90,14 @@ static void CallCertParcel(FuzzedDataProvider& fdp)
     data.WriteString(fdp.ConsumeBytesAsString(STRING_LENGTH));
     data.WriteInt32(fdp.ConsumeIntegral<int>());
     parcel = UnmarshallingProperty(data, parcel);
-    if (parcel == nullptr) {
-        parcel = new (std::nothrow) CertParcel();
+    if (parcel != nullptr) {
+        delete parcel;
     }
+}
 
+static void CallCertParcel2(FuzzedDataProvider& fdp)
+{
+    CertParcel* parcel = new (std::nothrow) CertParcel();
     Parcel data1;
     (void)parcel->Unmarshalling(data1);
 
@@ -121,9 +125,12 @@ static void CallCertParcel(FuzzedDataProvider& fdp)
     data1.WriteUInt8Vector(std::vector<uint8_t>{0, 1, 2});
     data1.WriteBool(fdp.ConsumeBool());
     (void)parcel->Unmarshalling(data1);
+    if (parcel != nullptr) {
+        delete parcel;
+    }
 }
 
-static void CallPermissionPolicy(FuzzedDataProvider& fdp)
+static void CallPermissionPolicy1(FuzzedDataProvider& fdp)
 {
     uint8_t buff = 0;
     (void)CheckAesParam(&buff, 0);
@@ -158,7 +165,10 @@ static void CallPermissionPolicy(FuzzedDataProvider& fdp)
 
     DlpAccountType accountType = static_cast<DlpAccountType>(fdp.ConsumeIntegral<uint32_t>() + STRING_LENGTH);
     CheckAccountType(accountType);
+}
 
+static void CallPermissionPolicy2(FuzzedDataProvider& fdp)
+{
     SandboxInfo sandboxInfo;
     Parcel out;
     sandboxInfo.Marshalling(out);
@@ -200,8 +210,10 @@ static void FuzzTest(const uint8_t* data, size_t size)
         return;
     }
     FuzzedDataProvider fdp(data, size);
-    CallCertParcel(fdp);
-    CallPermissionPolicy(fdp);
+    CallCertParcel1(fdp);
+    CallPermissionPolicy1(fdp);
+    CallCertParcel2(fdp);
+    CallPermissionPolicy2(fdp);
     uint32_t offsize = 0;
     bool flag = *(reinterpret_cast<const int32_t *>(data + offsize)) % TWO == 0;
     offsize += sizeof(int32_t);
