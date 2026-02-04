@@ -40,6 +40,7 @@
 #include "dlp_permission_client.h"
 #undef private
 #include "dlp_utils.h"
+#include "dlp_utils.cpp"
 #include "dlp_policy_mgr_client.h"
 #include "dlp_zip.h"
 
@@ -66,7 +67,9 @@ static const uint8_t ARRAY_CHAR_SIZE = 62;
 static const uint8_t KEY_LEN = 16;
 static const char CHAR_ARRAY[] = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 static const std::string DLP_AUTH_POLICY = "/system/etc/dlp_auth_policy.json";
+static const std::string DLP_FILE = "dlp_auth_policy.txt.dlp";
 static const std::string DLP_HIAE_TYPE = "mkv";
+static const uint32_t STRING_LENGTH = 10;
 
 class UnregisterOpenDlpFileCallbackFuzzer : public OpenDlpFileCallbackCustomize {
 public:
@@ -264,12 +267,45 @@ static void CredentialClientFuzzTest(const uint8_t* data, size_t size)
     DLP_CheckPermission(randType, handle);
 }
 
+static void DLPUtilTest(const uint8_t* data, size_t size)
+{
+    if ((data == nullptr) || (size < BUFFER_LENGTH)) {
+        return;
+    }
+    FuzzedDataProvider fdp(data, size);
+    bool isFromUriName;
+    std::string dlpFileName = fdp.ConsumeBytesAsString(STRING_LENGTH) + DLP_FILE;
+    (void)DlpUtils::GetDlpFileRealSuffix(dlpFileName, isFromUriName);
+    std::string dlpFileName = fdp.ConsumeBytesAsString(STRING_LENGTH);
+    (void)DlpUtils::GetDlpFileRealSuffix(dlpFileName, isFromUriName);
+
+    (void)IsExistFile(fdp.ConsumeBytesAsString(STRING_LENGTH));
+    (void)GetFileContent(fdp.ConsumeBytesAsString(STRING_LENGTH));
+    dlpFileName = DLP_AUTH_POLICY;
+    (void)GetFileContent(dlpFileName);
+    dlpFileName = "";
+    (void)RemoveCachePath(dlpFileName);
+    int32_t fd = -1;
+    (void)GetGenerateInfoStr(fd);
+
+    int32_t allowedOpenCount = 0;
+    bool waterMarkConfig = fdp.ConsumeBool(fd, allowedOpenCount, waterMarkConfig);
+    (void)DlpUtils::GetRawFileAllowedOpenCount(fd, allowedOpenCount, waterMarkConfig);
+    dlpFileName = fdp.ConsumeBytesAsString(STRING_LENGTH);
+    (void)DlpUtils::GetExtractRealType(dlpFileName);
+    dlpFileName = fdp.ConsumeBytesAsString(STRING_LENGTH);
+    int32_t userId = fdp.ConsumeIntegral<int32_t>();
+    (void)DlpUtils::GetAppIdentifierByAppId(dlpFileName, userId);
+
+}
+
 bool DlpCredentialFuzzTest(const uint8_t* data, size_t size)
 {
     FuzzTest(data, size);
     ClientFuzzTest(data, size);
     UtilTest(data, size);
     CredentialClientFuzzTest(data, size);
+    DLPUtilTest(data, size);
     return true;
 }
 } // namespace OHOS
