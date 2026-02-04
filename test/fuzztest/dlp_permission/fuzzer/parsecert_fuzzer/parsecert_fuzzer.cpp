@@ -188,7 +188,7 @@ static void CallPermissionPolicy(FuzzedDataProvider& fdp)
     fileInfo.Unmarshalling(in);
     in.WriteBool(fdp.ConsumeBool());
     in.WriteBool(fdp.ConsumeBool());
-    in.WriteBool(fdp.ConsumeBytesAsString(STRING_LENGTH));
+    in.WriteString(fdp.ConsumeBytesAsString(STRING_LENGTH));
     in.WriteString(fdp.ConsumeBytesAsString(STRING_LENGTH));
     in.WriteString(fdp.ConsumeBytesAsString(STRING_LENGTH));
     fileInfo.Unmarshalling(in);
