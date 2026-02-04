@@ -276,7 +276,7 @@ static void DLPUtilTest(const uint8_t* data, size_t size)
     bool isFromUriName;
     std::string dlpFileName = fdp.ConsumeBytesAsString(STRING_LENGTH) + DLP_FILE;
     (void)DlpUtils::GetDlpFileRealSuffix(dlpFileName, isFromUriName);
-    std::string dlpFileName = fdp.ConsumeBytesAsString(STRING_LENGTH);
+    dlpFileName = fdp.ConsumeBytesAsString(STRING_LENGTH);
     (void)DlpUtils::GetDlpFileRealSuffix(dlpFileName, isFromUriName);
 
     (void)IsExistFile(fdp.ConsumeBytesAsString(STRING_LENGTH));
@@ -289,14 +289,13 @@ static void DLPUtilTest(const uint8_t* data, size_t size)
     (void)GetGenerateInfoStr(fd);
 
     int32_t allowedOpenCount = 0;
-    bool waterMarkConfig = fdp.ConsumeBool(fd, allowedOpenCount, waterMarkConfig);
+    bool waterMarkConfig = fdp.ConsumeBool();
     (void)DlpUtils::GetRawFileAllowedOpenCount(fd, allowedOpenCount, waterMarkConfig);
     dlpFileName = fdp.ConsumeBytesAsString(STRING_LENGTH);
     (void)DlpUtils::GetExtractRealType(dlpFileName);
     dlpFileName = fdp.ConsumeBytesAsString(STRING_LENGTH);
     int32_t userId = fdp.ConsumeIntegral<int32_t>();
     (void)DlpUtils::GetAppIdentifierByAppId(dlpFileName, userId);
-
 }
 
 bool DlpCredentialFuzzTest(const uint8_t* data, size_t size)
