@@ -97,29 +97,29 @@ static void CallCertParcel(FuzzedDataProvider& fdp)
     Parcel data1;
     (void)parcel->Unmarshalling(data1);
 
-    data1.WriteBool(fdp.WriteBool());
+    data1.WriteBool(fdp.ConsumeBool());
     (void)parcel->Unmarshalling(data1);
 
-    data1.WriteBool(fdp.WriteBool());
+    data1.WriteBool(fdp.ConsumeBool());
     data1.WriteString(fdp.ConsumeBytesAsString(STRING_LENGTH));
     (void)parcel->Unmarshalling(data1);
 
-    data1.WriteBool(fdp.WriteBool());
+    data1.WriteBool(fdp.ConsumeBool());
     data1.WriteString(fdp.ConsumeBytesAsString(STRING_LENGTH));
     data1.WriteUInt8Vector(std::vector<uint8_t>{0, 1, 2});
     (void)parcel->Unmarshalling(data1);
 
-    data1.WriteBool(fdp.WriteBool());
+    data1.WriteBool(fdp.ConsumeBool());
     data1.WriteString(fdp.ConsumeBytesAsString(STRING_LENGTH));
     data1.WriteUInt8Vector(std::vector<uint8_t>{0, 1, 2});
     data1.WriteUInt8Vector(std::vector<uint8_t>{0, 1, 2});
     (void)parcel->Unmarshalling(data1);
 
-    data1.WriteBool(fdp.WriteBool());
+    data1.WriteBool(fdp.ConsumeBool());
     data1.WriteString(fdp.ConsumeBytesAsString(STRING_LENGTH));
     data1.WriteUInt8Vector(std::vector<uint8_t>{0, 1, 2});
     data1.WriteUInt8Vector(std::vector<uint8_t>{0, 1, 2});
-    data1.WriteBool(fdp.WriteBool());
+    data1.WriteBool(fdp.ConsumeBool());
     (void)parcel->Unmarshalling(data1);
 }
 
@@ -172,22 +172,22 @@ static void CallPermissionPolicy(FuzzedDataProvider& fdp)
     FileInfo fileInfo;
     Parcel in;
     fileInfo.Unmarshalling(in);
-    in.WriteBool(fdp.ConsumeBool);
+    in.WriteBool(fdp.ConsumeBool());
     fileInfo.Unmarshalling(in);
-    in.WriteBool(fdp.ConsumeBool);
-    in.WriteBool(fdp.ConsumeBool);
+    in.WriteBool(fdp.ConsumeBool());
+    in.WriteBool(fdp.ConsumeBool());
     fileInfo.Unmarshalling(in);
-    in.WriteBool(fdp.ConsumeBool);
-    in.WriteBool(fdp.ConsumeBool);
+    in.WriteBool(fdp.ConsumeBool());
+    in.WriteBool(fdp.ConsumeBool());
     in.WriteBool(fdp.ConsumeBytesAsString(STRING_LENGTH));
     fileInfo.Unmarshalling(in);
-    in.WriteBool(fdp.ConsumeBool);
-    in.WriteBool(fdp.ConsumeBool);
+    in.WriteBool(fdp.ConsumeBool());
+    in.WriteBool(fdp.ConsumeBool());
     in.WriteBool(fdp.ConsumeBytesAsString(STRING_LENGTH));
     in.WriteBool(fdp.ConsumeBytesAsString(STRING_LENGTH));
     fileInfo.Unmarshalling(in);
-    in.WriteBool(fdp.ConsumeBool);
-    in.WriteBool(fdp.ConsumeBool);
+    in.WriteBool(fdp.ConsumeBool());
+    in.WriteBool(fdp.ConsumeBool());
     in.WriteBool(fdp.ConsumeBytesAsString(STRING_LENGTH));
     in.WriteBool(fdp.ConsumeBytesAsString(STRING_LENGTH));
     in.WriteBool(fdp.ConsumeBytesAsString(STRING_LENGTH));
