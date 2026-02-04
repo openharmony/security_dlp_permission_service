@@ -24,7 +24,7 @@ ohos_fuzztest("ParseCertFuzzTest") {
 
   configs = [ "${dlp_root_dir}/test/fuzztest/dlp_permission:napi_fuzz_config" ]
 
-    include_dirs = [
+  include_dirs = [
     "${dlp_root_dir}/frameworks/common/src/",
   ]
 
