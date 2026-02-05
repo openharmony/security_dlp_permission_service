@@ -46,8 +46,7 @@ typedef struct GetAppIndexParams {
 
 struct WaterMarkInfo {
 public:
-    int32_t userId = -1;
-    std::string accountName = "";
+    std::string accountAndUserId = "";
     std::shared_ptr<Media::PixelMap> waterMarkImg = nullptr;
     int32_t waterMarkFd = -1;
     std::string maskInfo = "";
