@@ -288,7 +288,7 @@ static void TestRegister(const uint8_t* data, size_t size)
     int32_t systemAbilityId = fdp.ConsumeIntegral<int32_t>();
     std::string deviceId = fdp.ConsumeBytesAsString(FOUR);
     service->OnAddSystemAbility(systemAbilityId, deviceId);
-    std::vector<RetentionSandBoxInfo> retentionSandBoxInfoVec,
+    std::vector<RetentionSandBoxInfo> retentionSandBoxInfoVec;
     RetentionInfo info;
     service->RemoveRetentionInfo(retentionSandBoxInfoVec, info);
 }
@@ -326,7 +326,7 @@ static void TestDomainAccount(const uint8_t* data, size_t size)
     std::string bundleName = fdp.ConsumeBytesAsString(FOUR);
     int32_t appIndex = fdp.ConsumeIntegral<int32_t>();
     int32_t userId = fdp.ConsumeIntegral<int32_t>();
-    service->UninstallDlpSandboxApp(bundleName, appIndex, userId); 
+    service->UninstallDlpSandboxApp(bundleName, appIndex, userId);
 }
 
 bool DlpPermissionServicesNormalFuzzTest(const uint8_t* data, size_t size)
