@@ -65,7 +65,8 @@ static sptr<IDlpPermissionService> GetProxy()
     return iface_cast<IDlpPermissionService>(remoteObj);
 }
 
-static std::string ConsumeString(FuzzedDataProvider& fdp) {
+static std::string ConsumeString(FuzzedDataProvider& fdp)
+{
     return fdp.ConsumeBytesAsString(BUFFER_LENGTH);
 }
 

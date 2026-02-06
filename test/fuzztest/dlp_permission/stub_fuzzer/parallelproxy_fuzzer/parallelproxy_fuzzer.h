@@ -18,8 +18,6 @@
 
 #define FUZZ_PROJECT_NAME "parallelproxy_fuzzer"
 
-#define private public
 #include "dlp_permission_kit.h"
-#undef private
 
 #endif // TEST_FUZZTEST_PARALLEL_PROXY_FUZZER_H
