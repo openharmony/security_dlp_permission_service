@@ -37,6 +37,10 @@ using namespace OHOS::Security::AccessToken;
 namespace {
 static const uint64_t SYSTEM_APP_MASK = 0x100000000;
 static const int32_t DEFAULT_USER_ID = 100;
+static const uint32_t BUFFER_LEN = 30;
+static const uint32_t TWO = 2;
+static const uint8_t FOUR = 4;
+static const uint8_t BUFF_SIZE = 10;
 } // namespace
 
 namespace OHOS {
@@ -270,6 +274,61 @@ static void TestClearUnreservedSandbox(const uint8_t* data, size_t size)
     service->ClearUnreservedSandbox();
 }
 
+static void TestRegister(const uint8_t* data, size_t size)
+{
+    if ((data == nullptr) || (size < BUFF_SIZE)) {
+        return;
+    }
+    auto service = std::make_shared<DlpPermissionService>(SA_ID_DLP_PERMISSION_SERVICE, data[0] % STATUS_NUM);
+    service->UnregisterAccount();
+    service->RegisterAccount();
+    FuzzedDataProvider fdp(data, size);
+    service->DelSandboxInfoByAccount(fdp.ConsumeBool());
+    service->InitAccountListenerCallback();
+    int32_t systemAbilityId = fdp.ConsumeIntegral<int32_t>();
+    std::string deviceId = fdp.ConsumeBytesAsString(FOUR);
+    service->OnAddSystemAbility(systemAbilityId, deviceId);
+    std::vector<RetentionSandBoxInfo> retentionSandBoxInfoVec,
+    RetentionInfo info;
+    service->RemoveRetentionInfo(retentionSandBoxInfoVec, info);
+}
+
+static void TestWaterMark(const uint8_t* data, size_t size)
+{
+    if ((data == nullptr) || (size < TWO)) {
+        return;
+    }
+    FuzzedDataProvider fdp(data, size);
+    auto service = std::make_shared<DlpPermissionService>(SA_ID_DLP_PERMISSION_SERVICE, data[0] % STATUS_NUM);
+    service->CheckWaterMarkInfo();
+    service->ChangeWaterMarkInfo();
+    sptr<IDlpPermissionCallback> callback;
+    service->GetWaterMark(fdp.ConsumeBool(), callback);
+}
+
+static void TestDomainAccount(const uint8_t* data, size_t size)
+{
+    if ((data == nullptr) || (size < BUFFER_LEN)) {
+        return;
+    }
+    auto service = std::make_shared<DlpPermissionService>(SA_ID_DLP_PERMISSION_SERVICE, data[0] % STATUS_NUM);
+    FuzzedDataProvider fdp(data, size);
+    std::string accountNameInfo = fdp.ConsumeBytesAsString(FOUR);
+    service->GetDomainAccountNameInfo(accountNameInfo);
+    AAFwk::Want want;
+    int32_t flags = fdp.ConsumeIntegral<int32_t>();
+    int32_t userId = fdp.ConsumeIntegral<int32_t>();
+    std::vector<AppExecFwk::AbilityInfo> abilityInfos;
+    service->GetAbilityInfos(want, flags, userId, abilityInfos);
+    DlpSandboxInfo sandboxInfo;
+    FileInfo fileInfo;
+    service->InsertDlpSandboxInfo(sandboxInfo, fdp.ConsumeBool(), fileInfo);
+    std::string bundleName = fdp.ConsumeBytesAsString(FOUR);
+    int32_t appIndex = fdp.ConsumeIntegral<int32_t>();
+    int32_t userId = fdp.ConsumeIntegral<int32_t>();
+    service->UninstallDlpSandboxApp(bundleName, appIndex, userId); 
+}
+
 bool DlpPermissionServicesNormalFuzzTest(const uint8_t* data, size_t size)
 {
     TestSetSandboxConfig(data, size);
@@ -285,6 +344,9 @@ bool DlpPermissionServicesNormalFuzzTest(const uint8_t* data, size_t size)
     TestDump(data, size);
     TestRemoveMDMPolicy(data, size);
     TestClearUnreservedSandbox(data, size);
+    TestRegister(data, size);
+    TestWaterMark(data, size);
+    TestDomainAccount(data, size);
     return true;
 }
 } // namespace OHOS
