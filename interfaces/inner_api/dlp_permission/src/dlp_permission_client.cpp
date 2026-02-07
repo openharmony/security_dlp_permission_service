@@ -183,7 +183,7 @@ int32_t DlpPermissionClient::GetDomainAccountNameInfo(std::string& accountNameIn
 int32_t DlpPermissionClient::GetAbilityInfos(const AAFwk::Want& want, int32_t flags, int32_t userId,
     std::vector<AppExecFwk::AbilityInfo> &abilityInfos)
 {
-    auto proxy = GetProxy(false);
+    auto proxy = GetProxy(true);
     if (proxy == nullptr) {
         DLP_LOG_ERROR(LABEL, "Proxy is null, dlpmgr service no start.");
         return DLP_SERVICE_ERROR_SERVICE_NOT_EXIST;
