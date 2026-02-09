@@ -424,7 +424,7 @@ uint32_t EnterpriseSpaceDlpPermissionKit::DecryptRawDlpFileAndGetAccountType(int
         return INVALID_ACCOUNT;
     }
     fileLen = static_cast<uint64_t>(readLen);
-    (void)lseek(dlpFileFd, 0, SEEK_SET);
+    LSEEK_AND_CHECK(dlpFileFd, 0, SEEK_SET, INVALID_ACCOUNT, LABEL);
     if (fileLen <= FILE_HEAD) {
         DLP_LOG_ERROR(LABEL, "file size is error");
         return INVALID_ACCOUNT;
@@ -453,7 +453,7 @@ uint32_t EnterpriseSpaceDlpPermissionKit::DecryptRawDlpFileAndGetAccountType(int
         return INVALID_ACCOUNT;
     }
     memset_s(buff, head.certSize + 1, 0, head.certSize + 1);
-    (void)lseek(dlpFileFd, head.certOffset, SEEK_SET);
+    LSEEK_AND_CHECK(dlpFileFd, head.certOffset, SEEK_SET, INVALID_ACCOUNT, LABEL);
     if (read(dlpFileFd, buff, head.certSize) != head.certSize) {
         delete []buff;
         DLP_LOG_ERROR(LABEL, "can not read dlp file cert, %{public}s", strerror(errno));
