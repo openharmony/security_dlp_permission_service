@@ -136,18 +136,21 @@ static void DlpCredentialParsTest(const uint8_t *data, size_t size)
         return;
     }
     sptr<CertParcel> certParcel = new (std::nothrow) CertParcel();
+    FuzzedDataProvider fdp(data, size);
     sptr<IDlpPermissionCallback> callback;
     AppExecFwk::ApplicationInfo applicationInfo;
     std::string appId = fdp.ConsumeBytesAsString(size - TWO);
     DlpCredential::GetInstance().ParseDlpCertificate(certParcel, callback, "", fdp.ConsumeBool(), applicationInfo);
-    certParcel.isNeedAdapter = true;
+    certParcel->isNeedAdapter = true;
     DlpCredential::GetInstance().ParseDlpCertificate(certParcel, callback, appId, fdp.ConsumeBool(), applicationInfo);
     DLP_EncPolicyData encPolicy;
-    certParcel.realFileType = "";
-    DlpCredential::GetInstance().ParseDlpInfo(certParcel, callback, encPolicy, applicationInfo, 0);
-    certParcel.fileId = "";
-    certParcel.realFileType = "a";
-    DlpCredential::GetInstance().ParseDlpInfo(certParcel, callback, encPolicy, applicationInfo, 0);
+    certParcel->realFileType = "";
+    DlpCredential::GetInstance().ParseDlpInfo(
+        certParcel, callback, encPolicy, applicationInfo, OHOS::Security::DlpPermission::CLOUD_ACCOUNT);
+    certParcel->fileId = "";
+    certParcel->realFileType = "a";
+    DlpCredential::GetInstance().ParseDlpInfo(
+        certParcel, callback, encPolicy, applicationInfo, OHOS::Security::DlpPermission::CLOUD_ACCOUNT);
 }
 
 static void DlpCredentialTest(const uint8_t *data, size_t size)

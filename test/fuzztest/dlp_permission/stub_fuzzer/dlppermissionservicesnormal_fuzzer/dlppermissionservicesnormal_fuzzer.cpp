@@ -280,6 +280,7 @@ static void TestRegister(const uint8_t* data, size_t size)
         return;
     }
     auto service = std::make_shared<DlpPermissionService>(SA_ID_DLP_PERMISSION_SERVICE, data[0] % STATUS_NUM);
+    service->appStateObserver_ = new (std::nothrow) AppStateObserver();
     service->UnregisterAccount();
     service->RegisterAccount();
     FuzzedDataProvider fdp(data, size);
@@ -300,6 +301,7 @@ static void TestWaterMark(const uint8_t* data, size_t size)
     }
     FuzzedDataProvider fdp(data, size);
     auto service = std::make_shared<DlpPermissionService>(SA_ID_DLP_PERMISSION_SERVICE, data[0] % STATUS_NUM);
+    service->appStateObserver_ = new (std::nothrow) AppStateObserver();
     service->CheckWaterMarkInfo();
     service->ChangeWaterMarkInfo();
     sptr<IDlpPermissionCallback> callback;
@@ -312,6 +314,7 @@ static void TestDomainAccount(const uint8_t* data, size_t size)
         return;
     }
     auto service = std::make_shared<DlpPermissionService>(SA_ID_DLP_PERMISSION_SERVICE, data[0] % STATUS_NUM);
+    service->appStateObserver_ = new (std::nothrow) AppStateObserver();
     FuzzedDataProvider fdp(data, size);
     std::string accountNameInfo = fdp.ConsumeBytesAsString(FOUR);
     service->GetDomainAccountNameInfo(accountNameInfo);
@@ -325,7 +328,6 @@ static void TestDomainAccount(const uint8_t* data, size_t size)
     service->InsertDlpSandboxInfo(sandboxInfo, fdp.ConsumeBool(), fileInfo);
     std::string bundleName = fdp.ConsumeBytesAsString(FOUR);
     int32_t appIndex = fdp.ConsumeIntegral<int32_t>();
-    int32_t userId = fdp.ConsumeIntegral<int32_t>();
     service->UninstallDlpSandboxApp(bundleName, appIndex, userId);
 }
 
