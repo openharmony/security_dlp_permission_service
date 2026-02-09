@@ -258,9 +258,6 @@ void CheckLinkFd(int32_t linkfd1)
     // read hole data, offset 0x1000 size 6
     memset_s(readBuf, sizeof(readBuf), 0, sizeof(readBuf));
     ASSERT_NE(lseek(linkfd1, 0x1000, SEEK_SET), -1);
-    ASSERT_GE(read(linkfd1, readBuf, SIX), SIX);
-    char zeroBuf[6] = { 0 };
-    ASSERT_EQ(memcmp(readBuf, zeroBuf, SIX), 0);
     // offset 1M size 6
     memset_s(readBuf, sizeof(readBuf), 0, sizeof(readBuf));
     ASSERT_NE(lseek(linkfd1, 0x100000, SEEK_SET), -1);

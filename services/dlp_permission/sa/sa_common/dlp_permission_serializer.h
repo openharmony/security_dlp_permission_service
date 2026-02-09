@@ -45,7 +45,8 @@ private:
     bool DeserializeEveryoneInfo(const unordered_json& policyJson, PermissionPolicy& policy);
     int32_t DeserializeAuthUserInfo(const unordered_json& accountInfoJson, AuthUserInfo& userInfo);
     int32_t DeserializeAuthUserList(const unordered_json& authUsersJson, std::vector<AuthUserInfo>& userList);
-    void DeserializeProperty(const unordered_json& policyJson, PermissionPolicy& policy);
+    int32_t DeserializeDomainAccountPolicy(const unordered_json& permJson, PermissionPolicy& policy);
+    int32_t DeserializeCloudAccountPolicy(const unordered_json& permJson, PermissionPolicy& policy);
 };
 }  // namespace DlpPermission
 }  // namespace Security

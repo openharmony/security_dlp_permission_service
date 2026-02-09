@@ -163,10 +163,6 @@ static void SerializeEveryoneInfo(const PermissionPolicy& policy, json& permInfo
         SerializePermInfo(policy.everyonePerm_, rightInfoJson);
         permInfoJson[EVERYONE_INDEX][RIGHT_INDEX] = rightInfoJson;
     }
-    if (policy.ownerAccountType_ == CLOUD_ACCOUNT) {
-        DLP_LOG_DEBUG(LABEL, "waterMarkConfig %{public}d.", policy.waterMarkConfig_);
-        permInfoJson[EVERYONE_INDEX][WATERMARK_CONFIG] = policy.waterMarkConfig_;
-    }
 }
 
 static int32_t SerializePermissionPolicy(const PermissionPolicy& policy, std::string& policyString)
