@@ -361,6 +361,25 @@ HWTEST_F(AppStateObserverTest, AddDlpSandboxInfo001, TestSize.Level1)
 }
 
 /**
+ * @tc.name: GetSandboxInfo001
+ * @tc.desc: GetSandboxInfo test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AppStateObserverTest, GetSandboxInfo001, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL, "GetSandboxInfo001");
+
+    AppStateObserver observer;
+    DlpSandboxInfo appInfo;
+    DlpSandboxInfo sandboxInfo;
+    std::unordered_map<int32_t, DlpSandboxInfo> delSandboxInfo;
+    bool res = observer.GetSandboxInfo(0, sandboxInfo);
+    observer.GetDelSandboxInfo(delSandboxInfo);
+    ASSERT_EQ(res, false);
+}
+
+/**
  * @tc.name: QueryDlpFileAccessByUid001
  * @tc.desc: QueryDlpFileAccessByUid test
  * @tc.type: FUNC
@@ -1064,61 +1083,61 @@ HWTEST_F(AppStateObserverTest, InitUnloadHandler001, TestSize.Level1)
 }
 
 /**
- * @tc.name: AddWatermarkName001
- * @tc.desc: AddWatermarkName test
+ * @tc.name: AddMaskInfoCnt001
+ * @tc.desc: AddMaskInfoCnt test
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AppStateObserverTest, AddWatermarkName001, TestSize.Level1)
+HWTEST_F(AppStateObserverTest, AddMaskInfoCnt001, TestSize.Level1)
 {
-    DLP_LOG_INFO(LABEL, "AddWatermarkName001");
+    DLP_LOG_INFO(LABEL, "AddMaskInfoCnt001");
 
     AppStateObserver observer;
     DlpSandboxInfo appInfo;
-    observer.AddWatermarkName(appInfo);
+    observer.AddMaskInfoCnt(appInfo);
     appInfo.bundleName = "DlpTest";
     appInfo.isWatermark = true;
     appInfo.tokenId = 100;
     appInfo.appIndex = 100;
-    appInfo.watermarkName = "name1";
-    observer.AddWatermarkName(appInfo);
-    observer.AddWatermarkName(appInfo);
-    ASSERT_EQ(1, observer.watermarkMap_.size());
-    ASSERT_EQ(2, observer.watermarkMap_[appInfo.watermarkName]);
-    appInfo.watermarkName = "name2";
-    observer.AddWatermarkName(appInfo);
-    ASSERT_EQ(2, observer.watermarkMap_.size());
+    appInfo.maskInfo = "name1";
+    observer.AddMaskInfoCnt(appInfo);
+    observer.AddMaskInfoCnt(appInfo);
+    ASSERT_EQ(1, observer.maskInfoMap_.size());
+    ASSERT_EQ(2, observer.maskInfoMap_[appInfo.maskInfo]);
+    appInfo.maskInfo = "name2";
+    observer.AddMaskInfoCnt(appInfo);
+    ASSERT_EQ(2, observer.maskInfoMap_.size());
 }
 
 /**
- * @tc.name: DecWatermarkName001
- * @tc.desc: DecWatermarkName test
+ * @tc.name: DecMaskInfoCnt001
+ * @tc.desc: DecMaskInfoCnt test
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AppStateObserverTest, DecWatermarkName001, TestSize.Level1)
+HWTEST_F(AppStateObserverTest, DecMaskInfoCnt001, TestSize.Level1)
 {
-    DLP_LOG_INFO(LABEL, "DecWatermarkName001");
+    DLP_LOG_INFO(LABEL, "DecMaskInfoCnt001");
 
     AppStateObserver observer;
     DlpSandboxInfo appInfo;
     appInfo.isWatermark = false;
-    observer.DecWatermarkName(appInfo);
+    observer.DecMaskInfoCnt(appInfo);
 
     appInfo.isWatermark = true;
-    observer.DecWatermarkName(appInfo);
+    observer.DecMaskInfoCnt(appInfo);
 
-    appInfo.watermarkName = "";
+    appInfo.accountAndUserId = "";
     appInfo.userId = 0;
-    observer.DecWatermarkName(appInfo);
-    ASSERT_EQ(0, observer.watermarkMap_.size());
+    observer.DecMaskInfoCnt(appInfo);
+    ASSERT_EQ(0, observer.maskInfoMap_.size());
     appInfo.bundleName = "DlpTest";
     appInfo.tokenId = 100;
     appInfo.appIndex = 100;
-    appInfo.watermarkName = "name1";
-    observer.AddWatermarkName(appInfo);
-    ASSERT_EQ(1, observer.watermarkMap_.size());
-    observer.DecWatermarkName(appInfo);
+    appInfo.accountAndUserId = "name1";
+    observer.AddMaskInfoCnt(appInfo);
+    ASSERT_EQ(1, observer.maskInfoMap_.size());
+    observer.DecMaskInfoCnt(appInfo);
 }
 
 /**

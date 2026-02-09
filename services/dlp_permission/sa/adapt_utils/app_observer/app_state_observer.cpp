@@ -39,7 +39,6 @@ const std::string PERMISSION_ACCESS_DLP_FILE = "ohos.permission.ACCESS_DLP_FILE"
 const std::string DLP_MANAGER_BUNDLE_NAME = "com.ohos.dlpmanager";
 const std::string DLP_CREDMGR_BUNDLE_NAME = "com.huawei.hmos.dlpcredmgr";
 const std::string DLP_CREDMGR_PROCESS_NAME = "com.huawei.hmos.dlpcredmgr:DlpCredActionExtAbility";
-const std::string WATERMARK_NAME = "dlpWaterMark";
 const std::string HIPREVIEW_HIGH = "com.huawei.hmos.hipreview";
 const std::string HIPREVIEW_LOW_BUNDLE_NAME = "com.huawei.hmos.hipreviewext";
 const int32_t HIPREVIEW_SANDBOX_LOW_BOUND = 1000;
@@ -233,7 +232,7 @@ void AppStateObserver::EraseSandboxInfo(int32_t uid)
         AppFileService::ModuleFileUri::FileUri fileUri(iter->second.uri);
         std::string path = fileUri.GetRealPath();
         EraseFileInfoByUri(path);
-        DecWatermarkName(iter->second);
+        DecMaskInfoCnt(iter->second);
         DLP_LOG_INFO(LABEL, "sandbox app %{public}s%{public}d info delete success, uid: %{public}d",
             iter->second.bundleName.c_str(), iter->second.appIndex, iter->second.uid);
         sandboxInfo_.erase(iter);
@@ -243,7 +242,7 @@ void AppStateObserver::EraseSandboxInfo(int32_t uid)
 void AppStateObserver::AddSandboxInfo(const DlpSandboxInfo& appInfo)
 {
     std::lock_guard<std::mutex> lock(sandboxInfoLock_);
-    AddWatermarkName(appInfo);
+    AddMaskInfoCnt(appInfo);
     if (sandboxInfo_.count(appInfo.uid) > 0) {
         DLP_LOG_ERROR(LABEL, "sandbox app %{public}s%{public}d is already insert, ignore it",
             appInfo.bundleName.c_str(), appInfo.appIndex);
@@ -284,23 +283,23 @@ void AppStateObserver::AddDlpSandboxInfo(const DlpSandboxInfo& appInfo)
     return;
 }
 
-void AppStateObserver::AddWatermarkName(const DlpSandboxInfo& appInfo)
+void AppStateObserver::AddMaskInfoCnt(const DlpSandboxInfo& appInfo)
 {
     if (!appInfo.isWatermark || appInfo.bundleName.empty() ||
         appInfo.tokenId <= 0 || appInfo.appIndex <= 0) {
         DLP_LOG_ERROR(LABEL, "Not watermark sandbox or param is error");
         return;
     }
-    auto it = watermarkMap_.find(appInfo.watermarkName);
-    if (it == watermarkMap_.end()) {
-        watermarkMap_.emplace(appInfo.watermarkName, 1);
+    auto it = maskInfoMap_.find(appInfo.maskInfo);
+    if (it == maskInfoMap_.end()) {
+        maskInfoMap_.emplace(appInfo.maskInfo, 1);
     } else {
         it->second++;
     }
-    DLP_LOG_INFO(LABEL, "Cur watermark with cnt %{public}d", watermarkMap_[appInfo.watermarkName]);
+    DLP_LOG_INFO(LABEL, "Cur watermark with cnt %{public}d", maskInfoMap_[appInfo.maskInfo]);
 }
 
-void AppStateObserver::DecWatermarkName(const DlpSandboxInfo& appInfo)
+void AppStateObserver::DecMaskInfoCnt(const DlpSandboxInfo& appInfo)
 {
     if (!appInfo.isWatermark) {
         DLP_LOG_DEBUG(LABEL, "Not watermark sandbox");
@@ -317,19 +316,19 @@ void AppStateObserver::DecWatermarkName(const DlpSandboxInfo& appInfo)
         DLP_LOG_ERROR(LABEL, "Get accountInfo error.");
         return;
     }
-    std::string watermarkName = WATERMARK_NAME + accountInfo.second.name_ + std::to_string(userId);
-    DLP_LOG_INFO(LABEL, "Erase watermark sandbox.");
-    auto it = watermarkMap_.find(appInfo.watermarkName);
-    if (it == watermarkMap_.end()) {
+    std::string accountAndUserId = accountInfo.second.name_ + std::to_string(userId);
+    DLP_LOG_DEBUG(LABEL, "Erase watermark sandbox.");
+    auto it = maskInfoMap_.find(appInfo.maskInfo);
+    if (it == maskInfoMap_.end()) {
         DLP_LOG_INFO(LABEL, "Watermark sandbox no exist");
         return;
     }
     it->second--;
-    if (it->second == 0 && appInfo.watermarkName != watermarkName) {
+    if (it->second == 0 && appInfo.accountAndUserId != accountAndUserId) {
         int32_t pid = getprocpid();
         DLP_LOG_INFO(LABEL, "Clear watermark");
         OHOS::Rosen::RSInterfaces::GetInstance().ClearSurfaceWatermark(pid, appInfo.maskInfo);
-        watermarkMap_.erase(it);
+        maskInfoMap_.erase(it);
     }
 }
 
@@ -390,7 +389,7 @@ bool AppStateObserver::CanUninstallByGid(DlpSandboxInfo& appInfo, const AppExecF
     std::vector<RunningProcessInfo> infoVec;
     (void)GetRunningProcessesInfo(infoVec);
     for (auto it = infoVec.begin(); it != infoVec.end(); it++) {
-        if (it->uid_ != appInfo.uid || it->bundleNames[0] != appInfo.bundleName) {
+        if (it->uid_ != appInfo.uid || it->bundleNames.size() < 1 || it->bundleNames[0] != appInfo.bundleName) {
             continue;
         }
         if (it->state_ == AppProcessState::APP_STATE_END || it->state_ == AppProcessState::APP_STATE_TERMINATED) {
@@ -694,6 +693,14 @@ bool AppStateObserver::GetFileInfoByUri(const std::string& uri, FileInfo& fileIn
         return true;
     }
     return false;
+}
+
+void AppStateObserver::GetDelSandboxInfo(std::unordered_map<int32_t, DlpSandboxInfo>& sandboxInfo)
+{
+    std::lock_guard<std::mutex> lock(sandboxInfoLock_);
+    for (const auto& entry : sandboxInfo_) {
+        sandboxInfo[entry.first] = entry.second;
+    }
 }
 
 void AppStateObserver::PostDelayUnloadTask(CurrentTaskState newTaskState)

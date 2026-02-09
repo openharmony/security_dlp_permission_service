@@ -47,7 +47,6 @@ const std::string DEFAULT_STRINGS = "";
 const int32_t FILEID_SIZE = 46;
 const int32_t FILEID_SIZE_OPPOSITE = -46;
 const int32_t COUNTDOWN_OPPOSITE = -62;
-const int32_t COUNTDOWN_FILETYPE = 10000;
 } // namespace
 
 static int32_t GetFileSize(int32_t fd, uint64_t& fileLen);
@@ -730,10 +729,6 @@ int32_t DlpRawFile::GenFileInRaw(int32_t inPlainFileFd)
         return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
     }
     head_.fileType = iter->second;
-    if (countdown_ > 0) {
-        DLP_LOG_DEBUG(LABEL, "raw set countdown");
-        head_.fileType = head_.fileType + COUNTDOWN_FILETYPE;
-    }
     // clean dlpFile
     if (ftruncate(dlpFd_, 0) == -1) {
         DLP_LOG_ERROR(LABEL, "truncate dlp file to zero failed, %{public}s", strerror(errno));
@@ -1027,11 +1022,10 @@ int32_t DlpRawFile::DoDlpFileWrite(uint64_t offset, void* buf, uint32_t size)
 
     ret = write(opFd, writeBuff, restBlocksSize);
     delete[] writeBuff;
-    if (ret <= 0) {
+    if (ret != static_cast<int32_t>(restBlocksSize)) {
         DLP_LOG_ERROR(LABEL, "write buff failed, %{public}s", strerror(errno));
         return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
     }
-
     return ret + static_cast<int32_t>(writenSize);
 }
 

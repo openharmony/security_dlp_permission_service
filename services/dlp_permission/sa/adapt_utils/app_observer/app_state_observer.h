@@ -49,6 +49,7 @@ public:
     bool RemoveCallbackListener(int32_t pid);
     bool CallbackListenerEmpty();
     bool GetSandboxInfo(int32_t uid, DlpSandboxInfo& appInfo);
+    void GetDelSandboxInfo(std::unordered_map<int32_t, DlpSandboxInfo>& sandboxInfo);
     void UpdatReadFlag(int32_t uid);
     bool GetOpeningSandboxInfo(const std::string& bundleName, const std::string& uri,
         int32_t userId, SandboxInfo& sandboxInfo, const std::string& fileId);
@@ -58,8 +59,8 @@ public:
     void EraseFileInfoByUri(const std::string& uri);
     std::mutex& GetTerminalMutex();
     void PostDelayUnloadTask(CurrentTaskState newTaskState);
-    void DecWatermarkName(const DlpSandboxInfo& appInfo);
-    void AddWatermarkName(const DlpSandboxInfo& appInfo);
+    void DecMaskInfoCnt(const DlpSandboxInfo& appInfo);
+    void AddMaskInfoCnt(const DlpSandboxInfo& appInfo);
     bool GetSandboxInfoByAppIndex(const std::string& bundleName, int32_t appIndex, DlpSandboxInfo& appInfo);
     void GetOpeningReadOnlyBindSandbox(const std::string& bundleName, int32_t userId, int32_t& bindAppIndex);
 
@@ -100,7 +101,7 @@ private:
     std::shared_ptr<AppExecFwk::EventHandler> unloadHandler_ = nullptr;
     CurrentTaskState taskState_;
     std::mutex unloadHandlerMutex_;
-    std::unordered_map<std::string, int> watermarkMap_;
+    std::unordered_map<std::string, int> maskInfoMap_;
 };
 }  // namespace DlpPermission
 }  // namespace Security

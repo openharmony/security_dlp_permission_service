@@ -49,7 +49,6 @@ const std::string DLP_ENC_DATA = "encrypted_data";
 const std::string DLP_OPENING_ENC_DATA = "opened_encrypted_data";
 const std::string DLP_GEN_FILE = "gen_dlp_file";
 const std::string DEFAULT_STRINGS = "";
-const std::string COUNTDOWN_STRING = "_";
 
 struct GenerInfoParams {
     bool accessFlag;
@@ -556,10 +555,6 @@ int32_t DlpZipFile::AddGeneralInfoToBuff(int32_t encFile)
         DLP_LOG_ERROR(LABEL, "GetHmacVal fail");
         return ret;
     }
-    if (countdown_ > 0) {
-        DLP_LOG_DEBUG(LABEL, "zip set countdown");
-        realType_ = COUNTDOWN_STRING + realType_;
-    }
     GenerInfoParams genInfo = {
         .accessFlag = static_cast<bool>(offlineAccess_),
         .contactAccount = contactAccount_,
@@ -879,7 +874,7 @@ int32_t DlpZipFile::DoDlpFileWrite(uint64_t offset, void* buf, uint32_t size)
 
     ret = write(opFd, writeBuff, restBlocksSize);
     delete[] writeBuff;
-    if (ret <= 0) {
+    if (ret != static_cast<int32_t>(restBlocksSize)) {
         DLP_LOG_ERROR(LABEL, "write buff failed, %{public}s", strerror(errno));
         return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
     }

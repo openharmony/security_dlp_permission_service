@@ -86,6 +86,7 @@ group("fuzztest") {
     "stub_fuzzer/unregisteropendlpfilecallbackstub_fuzzer:UnRegisterOpenDlpFileCallbackStubFuzzTest",
     "stub_fuzzer/algmanager_fuzzer:AlgManagerFuzzTest",
     "stub_fuzzer/parallel_fuzzer:ParallelFuzzTest",
+    "stub_fuzzer/parallelproxy_fuzzer:ParallelProxyFuzzTest",
   ]
 }
 

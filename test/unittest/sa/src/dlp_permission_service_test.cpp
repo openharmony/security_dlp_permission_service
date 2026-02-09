@@ -16,6 +16,7 @@
 #include "dlp_permission_service_test.h"
 #include <openssl/rand.h>
 #include <string>
+#include "ability_info.h"
 #include "accesstoken_kit.h"
 #include "account_adapt.h"
 #include "app_uninstall_observer.h"
@@ -44,6 +45,7 @@
 #include "sandbox_json_manager.h"
 #include "token_setproc.h"
 #include "visited_dlp_file_info.h"
+#include "want.h"
 #define private public
 #include "visit_record_file_manager.h"
 #include "visit_record_json_manager.h"
@@ -1817,6 +1819,30 @@ HWTEST_F(DlpPermissionServiceTest, GetWaterMark004, TestSize.Level1)
 }
 
 /**
+ * @tc.name: GetDomainAccountNameInfo01
+ * @tc.desc: GetDomainAccountNameInfo01 test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionServiceTest, GetDomainAccountNameInfo01, TestSize.Level1)
+{
+    DLP_LOG_DEBUG(LABEL, "GetDomainAccountNameInfo01");
+    std::shared_ptr<DlpPermissionService> dlpPermissionService = nullptr;
+    dlpPermissionService = std::make_shared<DlpPermissionService>(NO_RIGHT_SA_ID, true);
+    ASSERT_NE(nullptr, dlpPermissionService);
+    std::string accountNameInfo;
+    int32_t res = dlpPermissionService->GetDomainAccountNameInfo(accountNameInfo);
+    EXPECT_NE(DLP_NAPI_ERROR_NATIVE_BINDING_FAIL, res);
+
+    OHOS::AAFwk::Want want;
+    int32_t flags = 0;
+    int32_t userId = 0;
+    std::vector<AppExecFwk::AbilityInfo> abilityInfos;
+    dlpPermissionService->GetAbilityInfos(want, flags, userId, abilityInfos);
+    dlpPermissionService = nullptr;
+}
+
+/**
  * @tc.name: GetSandboxAppConfig001
  * @tc.desc: GetSandboxAppConfig test
  * @tc.type: FUNC
@@ -1858,6 +1884,24 @@ HWTEST_F(DlpPermissionServiceTest, IsInDlpSandbox001, TestSize.Level1)
     bool inSandbox = false;
     int32_t res = dlpPermissionService_->IsInDlpSandbox(inSandbox);
     EXPECT_EQ(res, DLP_OK);
+}
+
+/**
+ * @tc.name: AccountListner001
+ * @tc.desc: AccountListner test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionServiceTest, AccountListner001, TestSize.Level1)
+{
+    dlpPermissionService_->UnregisterAccount();
+    dlpPermissionService_->RegisterAccount();
+    dlpPermissionService_->DelSandboxInfoByAccount(true);
+    dlpPermissionService_->DelSandboxInfoByAccount(false);
+    dlpPermissionService_->OnAddSystemAbility(0, "a");
+    dlpPermissionService_->OnAddSystemAbility(3299, "a");
+    int32_t res = dlpPermissionService_->InitAccountListenerCallback();
+    EXPECT_EQ(res, DLP_SUCCESS);
 }
 
 /**
@@ -1929,7 +1973,7 @@ HWTEST_F(DlpPermissionServiceTest, CheckWaterMarkInfo001, TestSize.Level1)
 {
     int32_t res = dlpPermissionService_->CheckWaterMarkInfo();
     ASSERT_NE(DLP_OK, res);
-    dlpPermissionService_->waterMarkInfo_.accountName = WATERMARK_NAME;
+    dlpPermissionService_->waterMarkInfo_.accountAndUserId = WATERMARK_NAME;
     res = dlpPermissionService_->CheckWaterMarkInfo();
     ASSERT_NE(DLP_OK, res);
 }
@@ -1944,7 +1988,7 @@ HWTEST_F(DlpPermissionServiceTest, ChangeWaterMarkInfo001, TestSize.Level1)
 {
     int32_t res = dlpPermissionService_->ChangeWaterMarkInfo();
     ASSERT_NE(DLP_OK, res);
-    dlpPermissionService_->waterMarkInfo_.accountName = WATERMARK_NAME;
+    dlpPermissionService_->waterMarkInfo_.accountAndUserId = WATERMARK_NAME;
     res = dlpPermissionService_->ChangeWaterMarkInfo();
     ASSERT_NE(DLP_OK, res);
 }
