@@ -65,6 +65,7 @@ static const uint8_t TWO = 2;
 static const uint8_t FOUR = 4;
 static const uint8_t ARRAY_CHAR_SIZE = 62;
 static const uint8_t KEY_LEN = 16;
+static const uint32_t MAX_APPID_LENGTH = 200;
 static const char CHAR_ARRAY[] = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 static const std::string DLP_AUTH_POLICY = "/system/etc/dlp_auth_policy.json";
 static const std::string DLP_FILE = "dlp_auth_policy.txt.dlp";
@@ -127,6 +128,41 @@ static void FuzzTest(const uint8_t* data, size_t size)
     DlpCredential::GetInstance().RemoveMDMPolicy();
     std::string bundleName = fdp.ConsumeBytesAsString(size / FOUR - ONE);
     DlpCredential::GetInstance().CheckMdmPermission(bundleName, fdp.ConsumeIntegral<int32_t>());
+}
+
+static void DlpCredentialParsTest(const uint8_t *data, size_t size)
+{
+    if ((data == nullptr) || (size < FOUR)) {
+        return;
+    }
+    sptr<CertParcel> certParcel = new (std::nothrow) CertParcel();
+    FuzzedDataProvider fdp(data, size);
+    sptr<IDlpPermissionCallback> callback;
+    AppExecFwk::ApplicationInfo applicationInfo;
+    std::string appId = fdp.ConsumeBytesAsString(size - TWO);
+    DlpCredential::GetInstance().ParseDlpCertificate(certParcel, callback, "", fdp.ConsumeBool(), applicationInfo);
+    certParcel->isNeedAdapter = true;
+    DlpCredential::GetInstance().ParseDlpCertificate(certParcel, callback, appId, fdp.ConsumeBool(), applicationInfo);
+    DLP_EncPolicyData encPolicy;
+    certParcel->realFileType = "";
+    DlpCredential::GetInstance().ParseDlpInfo(
+        certParcel, callback, encPolicy, applicationInfo, OHOS::Security::DlpPermission::CLOUD_ACCOUNT);
+    certParcel->fileId = "";
+    certParcel->realFileType = "a";
+    DlpCredential::GetInstance().ParseDlpInfo(
+        certParcel, callback, encPolicy, applicationInfo, OHOS::Security::DlpPermission::CLOUD_ACCOUNT);
+}
+
+static void DlpCredentialTest(const uint8_t *data, size_t size)
+{
+    if ((data == nullptr) || (size == 0)) {
+        return;
+    }
+    std::vector<std::string> appIdList(MAX_APPID_LENGTH + 1);
+    DlpCredential::GetInstance().SetMDMPolicy(appIdList);
+    FuzzedDataProvider fdp(data, size);
+    std::string policy = fdp.ConsumeBytesAsString(size);
+    DlpCredential::GetInstance().SetEnterprisePolicy(policy);
 }
 
 static DlpAccountType GenerateDlpAccountType(const uint8_t* data)
@@ -301,6 +337,8 @@ static void DLPUtilTest(const uint8_t* data, size_t size)
 bool DlpCredentialFuzzTest(const uint8_t* data, size_t size)
 {
     FuzzTest(data, size);
+    DlpCredentialTest(data, size);
+    DlpCredentialParsTest(data, size);
     ClientFuzzTest(data, size);
     UtilTest(data, size);
     CredentialClientFuzzTest(data, size);
