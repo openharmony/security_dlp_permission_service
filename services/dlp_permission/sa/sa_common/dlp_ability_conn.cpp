@@ -59,7 +59,6 @@ void DlpAbilityConnection::ClearProxy()
 void DlpAbilityConnection::OnAbilityConnectDone(const AppExecFwk::ElementName &element,
     const sptr<IRemoteObject> &remoteObj, int res)
 {
-    (void)res;
     if (remoteObj == nullptr) {
         DLP_LOG_ERROR(LABEL, "Invaild Ability Connection.");
         return;
@@ -76,7 +75,6 @@ void DlpAbilityConnection::OnAbilityConnectDone(const AppExecFwk::ElementName &e
 
 void DlpAbilityConnection::OnAbilityDisconnectDone(const AppExecFwk::ElementName &element, int res)
 {
-    (void)res;
     if (disconnectCallback_ != nullptr && isDestroyFlag_ == false) {
         disconnectCallback_(DDLP_HAP_DISCONN_ERROR, 0, nullptr, 0);
     } else {

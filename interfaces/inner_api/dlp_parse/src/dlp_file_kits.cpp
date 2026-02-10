@@ -309,7 +309,7 @@ bool DlpFileKits::IsDlpFile(int32_t dlpFd)
         IsValidEnterpriseDlpHeader(head, dlpHeaderSize);
 }
 
-static bool GetIsReadOnceOrWaterMark(const int32_t& fd, const std::string& generateInfoStr)
+static bool GetIsReadOnceOrWaterMark(const int32_t& fd, std::string& generateInfoStr)
 {
     int32_t allowedOpenCount = 0;
     bool waterMarkConfig = false;

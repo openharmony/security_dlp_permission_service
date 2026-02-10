@@ -68,7 +68,7 @@ bool GetDlpFeatureParams(
     }
 
     int64_t res;
-    if (!GetInt64Value(env, argv[THE_PARAM_ZERO], res)) {
+    if (!GetInt64Value(env, argv[THE_PARAM_ZERO], res) || (res != NOT_ENABLED_FEATURE && res != ENABLED_FEATURE)) {
         DLP_LOG_ERROR(LABEL, "js get dlpFeatureInfo fail");
         ThrowParamError(env, "dlpFeatureInfo", "number");
         return false;

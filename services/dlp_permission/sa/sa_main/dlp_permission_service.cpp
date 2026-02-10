@@ -315,8 +315,7 @@ int32_t DlpPermissionService::GenerateDlpCertificate(
     }
     policyParcel->policyParams_.SetDebug(OHOS::system::GetBoolParameter(DEVELOPER_MODE, false));
     unordered_json jsonObj;
-    int32_t res = DlpPermissionSerializer::GetInstance().SerializeDlpPermission(
-        policyParcel->policyParams_, jsonObj);
+    int32_t res = DlpPermissionSerializer::GetInstance().SerializeDlpPermission(policyParcel->policyParams_, jsonObj);
     if (res != DLP_OK) {
         return res;
     }
@@ -421,7 +420,6 @@ int32_t DlpPermissionService::CheckWaterMarkInfo()
 
 static int32_t ReceiveCallback(int32_t errCode, uint64_t reqId, uint8_t *outData, uint32_t outDataLen)
 {
-    (void)errCode;
     DLP_LOG_INFO(LABEL, "Enter receive data callback.");
     return DLP_OK;
 }
