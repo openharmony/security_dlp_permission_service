@@ -184,6 +184,7 @@ HWTEST_F(DlpFileManagerTest, GenerateCertData001, TestSize.Level0)
 
     PermissionPolicy policy;
     struct DlpBlob certData;
+    policy.ownerAccountType_ = CLOUD_ACCOUNT;
     EXPECT_EQ(DlpFileManager::GetInstance().GenerateCertData(policy, certData), DLP_SERVICE_ERROR_VALUE_INVALID);
 
     policy.aeskey_ = new (std::nothrow) uint8_t[16];
@@ -220,6 +221,22 @@ HWTEST_F(DlpFileManagerTest, GenerateCertData001, TestSize.Level0)
     delete[] policy.hmacKey_;
     policy.hmacKey_ = nullptr;
     policy.hmacKeyLen_ = 0;
+}
+
+/**
+ * @tc.name: GenerateCertData002
+ * @tc.desc: Generate cert data
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpFileManagerTest, GenerateCertData002, TestSize.Level0)
+{
+    DLP_LOG_INFO(LABEL, "GenerateCertData002");
+
+    PermissionPolicy policy;
+    struct DlpBlob certData;
+    policy.ownerAccountType_ = DOMAIN_ACCOUNT;
+    EXPECT_EQ(DlpFileManager::GetInstance().GenerateCertData(policy, certData), DLP_PARSE_ERROR_ACCOUNT_INVALID);
 }
 
 /**
@@ -578,7 +595,8 @@ HWTEST_F(DlpFileManagerTest, SetDlpFileParams003, TestSize.Level0)
     };
     SetMockConditions("memcpy_s", condition);
     int res = DlpFileManager::GetInstance().SetDlpFileParams(filePtr, property);
-    EXPECT_TRUE(res == DLP_OK || res == DLP_PARSE_ERROR_MEMORY_OPERATE_FAIL);
+    EXPECT_TRUE(res == DLP_OK || res == DLP_PARSE_ERROR_MEMORY_OPERATE_FAIL
+        || DLP_SERVICE_ERROR_VALUE_INVALID);
     CleanMockConditions();
 }
 

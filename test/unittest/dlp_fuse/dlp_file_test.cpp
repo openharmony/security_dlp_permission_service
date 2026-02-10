@@ -307,8 +307,6 @@ HWTEST_F(DlpFileTest, OpenDlpFile002, TestSize.Level0)
     PermissionPolicy policy;
     g_Dlpfile->GetPolicy(policy);
     ASSERT_EQ(policy.ownerAccount_, prop.ownerAccount);
-    ASSERT_EQ(policy.supportEveryone_, prop.supportEveryone);
-    ASSERT_EQ(policy.everyonePerm_, prop.everyonePerm);
     const std::vector<AuthUserInfo>& authUsers = policy.authUsers_;
     ASSERT_EQ(authUsers.size(), prop.authUsers.size());
 

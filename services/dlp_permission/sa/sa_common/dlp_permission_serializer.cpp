@@ -63,7 +63,7 @@ const std::string ENC_POLICY_INDEX = "encPolicy";
 const std::string POLICY_CERT_VERSION = "policyCertVersion";
 const std::string ONLINE_CERT = "onlineCert";
 const std::string ENC_POLICY = "encPolicy";
-const std::string OFFLINE_CERT = "offlineCert";
+const std::string OFFLINE_CERT = "offlineCertNew";
 const std::string ACCOUNT_TYPE = "accountType";
 const std::string RECEIVER_ACCOUNT_INFO = "receiverAccountInfo";
 const std::string OPEN_MODE = "openMode";
@@ -77,6 +77,8 @@ const std::string FILEID = "fileId";
 const std::string ALLOWED_OPEN_COUNT = "allowedOpenCount";
 const std::string WATERMARK_CONFIG = "waterMarkConfig";
 const std::string COUNTDOWN = "countdown";
+const std::string CLIENT_POLICY = "clientPolicy";
+const std::string COLLABORATIVE_POLICY = "collaborativePolicy";
 constexpr uint64_t  VALID_TIME_STAMP = 2147483647;
 static const uint32_t DOMAIN_VERSION = 2;
 static const uint32_t CLOUD_VERSION = 1;
@@ -249,11 +251,6 @@ int32_t DlpPermissionSerializer::DeserializeAuthUserList(
 
 static int32_t SerializeDomainInfo(const PermissionPolicy& policy, unordered_json& permInfoJson)
 {
-    if (policy.ownerAccountType_ != DOMAIN_ACCOUNT) {
-        permInfoJson[VERSION_INDEX] = CLOUD_VERSION;
-        return DLP_OK;
-    }
-
     int32_t userId;
     int32_t res = OHOS::AccountSA::OsAccountManager::GetForegroundOsAccountLocalId(userId);
     if (res != DLP_OK) {
@@ -329,12 +326,6 @@ static void SerializeEveryoneInfo(const PermissionPolicy& policy, unordered_json
         everyoneJson[RIGHT_INDEX] = rightInfoJson;
         permInfoJson[EVERYONE_INDEX] = everyoneJson;
     }
-    if (policy.ownerAccountType_ == CLOUD_ACCOUNT) {
-        DLP_LOG_DEBUG(LABEL, "waterMarkConfig: %{public}d, countdown: %{public}d.",
-            policy.waterMarkConfig_, policy.countdown_);
-        permInfoJson[EVERYONE_INDEX][WATERMARK_CONFIG] = policy.waterMarkConfig_;
-        permInfoJson[EVERYONE_INDEX][COUNTDOWN] = policy.countdown_;
-    }
 }
 
 static void SerializeCustomProperty(const PermissionPolicy& policy, unordered_json& policyJson)
@@ -382,7 +373,44 @@ static int32_t SerializeFileEncInfo(const PermissionPolicy& policy, unordered_js
     return DLP_OK;
 }
 
-int32_t DlpPermissionSerializer::SerializeDlpPermission(const PermissionPolicy& policy, unordered_json& permInfoJson)
+static int32_t SerializeCloudAccountPolicy(const PermissionPolicy& policy, unordered_json& permInfoJson)
+{
+    permInfoJson[VERSION_INDEX] = CLOUD_VERSION;
+
+    unordered_json collaborativePolicyJson;
+    collaborativePolicyJson[OWNER_ACCOUNT_NAME] = policy.ownerAccount_;
+    collaborativePolicyJson[OWNER_ACCOUNT_ID] = policy.ownerAccountId_;
+    collaborativePolicyJson[ALLOWED_OPEN_COUNT] = policy.allowedOpenCount_;
+    collaborativePolicyJson[PERM_EXPIRY_TIME] = policy.expireTime_;
+    unordered_json authUsersJson = SerializeAuthUserList(policy.authUsers_);
+    collaborativePolicyJson[ACCOUNT_INDEX] = authUsersJson;
+    collaborativePolicyJson[FILEID] = policy.fileId;
+    permInfoJson[COLLABORATIVE_POLICY] = collaborativePolicyJson;
+
+    unordered_json clientPolicyJson;
+    clientPolicyJson[KIA_INDEX] = "";
+    clientPolicyJson[ACTION_UPON_EXPIRY] = policy.actionUponExpiry_;
+    clientPolicyJson[NEED_ONLINE] = policy.needOnline_;
+    clientPolicyJson[DLP_FILE_DEBUG_FLAG] = policy.debug_;
+    SerializeCustomProperty(policy, clientPolicyJson);
+    if (policy.ownerAccountType_ == ENTERPRISE_ACCOUNT) {
+        clientPolicyJson[APPID] = policy.appId;
+    }
+    clientPolicyJson[WATERMARK_CONFIG] = policy.waterMarkConfig_;
+    clientPolicyJson[COUNTDOWN] = policy.countdown_;
+    unordered_json fileEnc;
+    int32_t res = SerializeFileEncInfo(policy, clientPolicyJson);
+    if (res != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "Serialize file enc info failed, res = %{public}d", res);
+        return res;
+    }
+    permInfoJson[CLIENT_POLICY] = clientPolicyJson;
+
+    DLP_LOG_INFO(LABEL, "Serialize cloud account policy successfully!");
+    return DLP_OK;
+}
+
+static int32_t SerializeDomainAccountPolicy(const PermissionPolicy& policy, unordered_json& permInfoJson)
 {
     unordered_json authUsersJson = SerializeAuthUserList(policy.authUsers_);
     unordered_json policyJson;
@@ -405,9 +433,6 @@ int32_t DlpPermissionSerializer::SerializeDlpPermission(const PermissionPolicy& 
         policyJson[APPID] = policy.appId;
     }
     policyJson[FILEID] = policy.fileId;
-    policyJson[ALLOWED_OPEN_COUNT] = policy.allowedOpenCount_;
-    policyJson[WATERMARK_CONFIG] = policy.waterMarkConfig_;
-    policyJson[COUNTDOWN] = policy.countdown_;
     permInfoJson[POLICY_INDEX] = policyJson;
 
     unordered_json fileEnc;
@@ -418,8 +443,17 @@ int32_t DlpPermissionSerializer::SerializeDlpPermission(const PermissionPolicy& 
     }
     permInfoJson[FILE_INDEX] = fileEnc;
 
-    DLP_LOG_INFO(LABEL, "Serialize successfully!");
+    DLP_LOG_INFO(LABEL, "Serialize domain account policy successfully!");
     return DLP_OK;
+}
+
+int32_t DlpPermissionSerializer::SerializeDlpPermission(const PermissionPolicy& policy, unordered_json& permInfoJson)
+{
+    if (policy.ownerAccountType_ == CLOUD_ACCOUNT) {
+        return SerializeCloudAccountPolicy(policy, permInfoJson);
+    } else {
+        return SerializeDomainAccountPolicy(policy, permInfoJson);
+    }
 }
 
 static int32_t GetPolicyJson(const unordered_json& permJson, unordered_json& plainPolicyJson)
@@ -441,32 +475,6 @@ static int32_t GetPolicyJson(const unordered_json& permJson, unordered_json& pla
         plainPolicyJson = permJson;
     }
     return DLP_OK;
-}
-
-void DlpPermissionSerializer::DeserializeProperty(const unordered_json& policyJson, PermissionPolicy& policy)
-{
-    policy.canFindWaterMarkConfig_ = false;
-    policy.canFindCountdown_ = false;
-    if (policyJson.find(EVERYONE_INDEX) == policyJson.end() || !policyJson.at(EVERYONE_INDEX).is_object()) {
-        DLP_LOG_DEBUG(LABEL, "no everyone");
-        return;
-    }
-
-    unordered_json everyoneInfoJson;
-    policyJson.at(EVERYONE_INDEX).get_to(everyoneInfoJson);
-    if (everyoneInfoJson.find(WATERMARK_CONFIG) != everyoneInfoJson.end() &&
-        everyoneInfoJson.at(WATERMARK_CONFIG).is_boolean()) {
-        everyoneInfoJson.at(WATERMARK_CONFIG).get_to(policy.waterMarkConfig_);
-        policy.canFindWaterMarkConfig_ = true;
-        DLP_LOG_INFO(LABEL, "get waterMarkConfig from everyone, %{public}d.", policy.waterMarkConfig_);
-    }
-    if (everyoneInfoJson.find(COUNTDOWN) != everyoneInfoJson.end() &&
-        everyoneInfoJson.at(COUNTDOWN).is_number()) {
-        everyoneInfoJson.at(COUNTDOWN).get_to(policy.countdown_);
-        policy.canFindCountdown_ = true;
-        DLP_LOG_INFO(LABEL, "get countdown from everyone, %{public}d.", policy.countdown_);
-    }
-    return;
 }
 
 bool DlpPermissionSerializer::DeserializeEveryoneInfo(const unordered_json& policyJson, PermissionPolicy& policy)
@@ -526,24 +534,7 @@ static void InitPermissionAccountInfo(PermissionPolicy& policy, unordered_json p
     }
 }
 
-static void InitPermissionExtendPolicy(PermissionPolicy& policy, unordered_json policyJson)
-{
-    if (policyJson.find(ALLOWED_OPEN_COUNT) != policyJson.end() && policyJson.at(ALLOWED_OPEN_COUNT).is_number()) {
-        policyJson.at(ALLOWED_OPEN_COUNT).get_to(policy.allowedOpenCount_);
-    }
-    if (policyJson.find(WATERMARK_CONFIG) != policyJson.end() && policyJson.at(WATERMARK_CONFIG).is_boolean()) {
-        policyJson.at(WATERMARK_CONFIG).get_to(policy.waterMarkConfig_);
-        policy.canFindWaterMarkConfig_ = true;
-        DLP_LOG_DEBUG(LABEL, "find waterMarkConfig from policy, %{public}d", policy.waterMarkConfig_);
-    }
-    if (policyJson.find(COUNTDOWN) != policyJson.end() && policyJson.at(COUNTDOWN).is_number()) {
-        policyJson.at(COUNTDOWN).get_to(policy.countdown_);
-        policy.canFindCountdown_ = true;
-        DLP_LOG_DEBUG(LABEL, "find countdown from policy, %{public}d", policy.countdown_);
-    }
-}
-
-static void InitPermissionPolicy(PermissionPolicy& policy, const std::vector<AuthUserInfo>& userList,
+static void InitDomainAccountPolicy(PermissionPolicy& policy, const std::vector<AuthUserInfo>& userList,
     unordered_json policyJson)
 {
     policy.authUsers_ = userList;
@@ -569,16 +560,57 @@ static void InitPermissionPolicy(PermissionPolicy& policy, const std::vector<Aut
     if (policyJson.find(CUSTOM_PROPERTY) != policyJson.end() && policyJson.at(CUSTOM_PROPERTY).is_string()) {
         policyJson.at(CUSTOM_PROPERTY).get_to(policy.customProperty_);
     }
-    policy.ownerAccountType_ = CLOUD_ACCOUNT;
-    InitPermissionExtendPolicy(policy, policyJson);
+    policy.ownerAccountType_ = DOMAIN_ACCOUNT;
 }
 
-static int32_t DeserializeFileEncJson(PermissionPolicy& policy, unordered_json& plainPolicyJson)
+static void ParseClientJson(PermissionPolicy& policy, unordered_json clientJson)
 {
-    unordered_json fileEncJson;
-    if (plainPolicyJson.find(FILE_INDEX) != plainPolicyJson.end() && plainPolicyJson.at(FILE_INDEX).is_object()) {
-        plainPolicyJson.at(FILE_INDEX).get_to(fileEncJson);
+    if (clientJson.find(ACTION_UPON_EXPIRY) != clientJson.end() && clientJson.at(ACTION_UPON_EXPIRY).is_number()) {
+        clientJson.at(ACTION_UPON_EXPIRY).get_to(policy.actionUponExpiry_);
     }
+    if (clientJson.find(NEED_ONLINE) != clientJson.end() && clientJson.at(NEED_ONLINE).is_number()) {
+        clientJson.at(NEED_ONLINE).get_to(policy.needOnline_);
+    }
+    if (clientJson.find(DLP_FILE_DEBUG_FLAG) != clientJson.end() && clientJson.at(DLP_FILE_DEBUG_FLAG).is_boolean()) {
+        clientJson.at(DLP_FILE_DEBUG_FLAG).get_to(policy.debug_);
+    }
+    if (clientJson.find(OPEN_MODE) != clientJson.end() && clientJson.at(OPEN_MODE).is_number()) {
+        policy.perm_ = DLPFileAccess::READ_ONLY;
+    }
+    if (clientJson.find(CUSTOM_PROPERTY) != clientJson.end() && clientJson.at(CUSTOM_PROPERTY).is_string()) {
+        clientJson.at(CUSTOM_PROPERTY).get_to(policy.customProperty_);
+    }
+    if (clientJson.find(WATERMARK_CONFIG) != clientJson.end() && clientJson.at(WATERMARK_CONFIG).is_boolean()) {
+        clientJson.at(WATERMARK_CONFIG).get_to(policy.waterMarkConfig_);
+        policy.canFindWaterMarkConfig_ = true;
+        DLP_LOG_DEBUG(LABEL, "find waterMarkConfig from policy, %{public}d", policy.waterMarkConfig_);
+    }
+    if (clientJson.find(COUNTDOWN) != clientJson.end() && clientJson.at(COUNTDOWN).is_number()) {
+        clientJson.at(COUNTDOWN).get_to(policy.countdown_);
+    }
+}
+
+static void InitCloudAccountPolicy(PermissionPolicy& policy, const std::vector<AuthUserInfo>& userList,
+    unordered_json colJson, unordered_json clientJson)
+{
+    policy.authUsers_ = userList;
+    InitPermissionAccountInfo(policy, colJson);
+    if (colJson.find(FILEID) != colJson.end() && colJson.at(FILEID).is_string()) {
+        colJson.at(FILEID).get_to(policy.fileId);
+    }
+    if (colJson.find(PERM_EXPIRY_TIME) != colJson.end() && colJson.at(PERM_EXPIRY_TIME).is_number()) {
+        colJson.at(PERM_EXPIRY_TIME).get_to(policy.expireTime_);
+    }
+    if (colJson.find(ALLOWED_OPEN_COUNT) != colJson.end() && colJson.at(ALLOWED_OPEN_COUNT).is_number()) {
+        colJson.at(ALLOWED_OPEN_COUNT).get_to(policy.allowedOpenCount_);
+    }
+
+    policy.ownerAccountType_ = CLOUD_ACCOUNT;
+    ParseClientJson(policy, clientJson);
+}
+
+static int32_t DeserializeFileEncJson(PermissionPolicy& policy, unordered_json& fileEncJson)
+{
     uint8_t* key = nullptr;
     uint32_t keyLen = 0;
     int32_t res = ReadUint8ArrayFromJson(fileEncJson, &key, keyLen, AESKEY, AESKEY_LEN);
@@ -621,7 +653,8 @@ static int32_t DeserializeFileEncJson(PermissionPolicy& policy, unordered_json& 
     return DLP_OK;
 }
 
-int32_t DlpPermissionSerializer::DeserializeDlpPermission(const unordered_json& permJson, PermissionPolicy& policy)
+int32_t DlpPermissionSerializer::DeserializeDomainAccountPolicy(const unordered_json& permJson,
+    PermissionPolicy& policy)
 {
     unordered_json plainPolicyJson;
     int32_t res = GetPolicyJson(permJson, plainPolicyJson);
@@ -638,20 +671,76 @@ int32_t DlpPermissionSerializer::DeserializeDlpPermission(const unordered_json& 
         policyJson.at(ACCOUNT_INDEX).get_to(accountListJson);
     }
     DeserializeEveryoneInfo(policyJson, policy);
-    DeserializeProperty(policyJson, policy);
 
     std::vector<AuthUserInfo> userList;
     res = DeserializeAuthUserList(accountListJson, userList);
     if (res != DLP_OK) {
         return res;
     }
-    InitPermissionPolicy(policy, userList, policyJson);
+    InitDomainAccountPolicy(policy, userList, policyJson);
 
-    res = DeserializeFileEncJson(policy, plainPolicyJson);
+    unordered_json fileEncJson;
+    if (plainPolicyJson.find(FILE_INDEX) != plainPolicyJson.end() && plainPolicyJson.at(FILE_INDEX).is_object()) {
+        plainPolicyJson.at(FILE_INDEX).get_to(fileEncJson);
+    }
+    res = DeserializeFileEncJson(policy, fileEncJson);
     if (res != DLP_OK) {
         return res;
     }
     return DLP_OK;
+}
+
+int32_t DlpPermissionSerializer::DeserializeCloudAccountPolicy(const unordered_json& permJson, PermissionPolicy& policy)
+{
+    unordered_json plainPolicyJson;
+    int32_t res = GetPolicyJson(permJson, plainPolicyJson);
+    if (res != DLP_OK) {
+        return res;
+    }
+    unordered_json collaborativePolicyJson;
+    if (plainPolicyJson.find(COLLABORATIVE_POLICY) != plainPolicyJson.end()
+        && plainPolicyJson.at(COLLABORATIVE_POLICY).is_object()) {
+        plainPolicyJson.at(COLLABORATIVE_POLICY).get_to(collaborativePolicyJson);
+    }
+
+    unordered_json accountListJson;
+    if (collaborativePolicyJson.find(ACCOUNT_INDEX) != collaborativePolicyJson.end()
+        && collaborativePolicyJson.at(ACCOUNT_INDEX).is_object()) {
+        collaborativePolicyJson.at(ACCOUNT_INDEX).get_to(accountListJson);
+    }
+
+    unordered_json clientPolicyJson;
+    if (plainPolicyJson.find(CLIENT_POLICY) != plainPolicyJson.end() && plainPolicyJson.at(CLIENT_POLICY).is_object()) {
+        plainPolicyJson.at(CLIENT_POLICY).get_to(clientPolicyJson);
+    }
+
+    std::vector<AuthUserInfo> userList;
+    res = DeserializeAuthUserList(accountListJson, userList);
+    if (res != DLP_OK) {
+        return res;
+    }
+    InitCloudAccountPolicy(policy, userList, collaborativePolicyJson, clientPolicyJson);
+
+    res = DeserializeFileEncJson(policy, clientPolicyJson);
+    if (res != DLP_OK) {
+        return res;
+    }
+    return DLP_OK;
+}
+
+int32_t DlpPermissionSerializer::DeserializeDlpPermission(const unordered_json& permJson, PermissionPolicy& policy)
+{
+    unordered_json plainPolicyJson;
+    int32_t res = GetPolicyJson(permJson, plainPolicyJson);
+    if (res != DLP_OK) {
+        return res;
+    }
+    unordered_json policyJson;
+    if (plainPolicyJson.find(POLICY_INDEX) != plainPolicyJson.end() && plainPolicyJson.at(POLICY_INDEX).is_object()) {
+        return DeserializeDomainAccountPolicy(permJson, policy);
+    } else {
+        return DeserializeCloudAccountPolicy(permJson, policy);
+    }
 }
 
 int32_t DlpPermissionSerializer::SerializeEncPolicyData(const DLP_EncPolicyData& encData, unordered_json& encDataJson)
