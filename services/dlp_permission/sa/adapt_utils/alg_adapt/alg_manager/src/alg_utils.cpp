@@ -391,6 +391,7 @@ int HcFileWrite(FileHandle file, const void *src, int srcSize)
         int writeCount = (int)fwrite(srcBuffer + total, 1, srcSize - total, fp);
         if (ferror(fp) != 0) {
             DLP_LOG_ERROR(LABEL, "write file error!");
+            return -1;
         }
         total += writeCount;
     }
