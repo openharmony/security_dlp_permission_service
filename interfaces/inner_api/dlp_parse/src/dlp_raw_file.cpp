@@ -67,6 +67,7 @@ DlpRawFile::DlpRawFile(int32_t dlpFd, const std::string &realType) : DlpFile(dlp
     head_.contactAccountSize = 0;
     head_.offlineCertOffset = INVALID_FILE_SIZE;
     head_.offlineCertSize = 0;
+    hiaeInit_ = false;
 }
 
 DlpRawFile::~DlpRawFile()
@@ -113,7 +114,7 @@ DlpRawFile::~DlpRawFile()
     }
 
 #ifdef SUPPORT_DLP_CREDENTIAL
-    if (head_.algType == DLP_MODE_HIAE) {
+    if (head_.algType == DLP_MODE_HIAE && hiaeInit_) {
         ClearDlpHIAEMgr();
     }
 #endif
@@ -213,7 +214,11 @@ int32_t DlpRawFile::ParseRawDlpHeader(uint64_t fileLen, uint32_t dlpHeaderSize)
         DLP_LOG_INFO(LABEL, "support openssl");
         return DLP_OK;
     }
-    return InitDlpHIAEMgr();
+    int32_t res = InitDlpHIAEMgr();
+    if (res == DLP_OK) {
+        hiaeInit_ = true;
+    }
+    return res;
 #endif
     return DLP_OK;
 }
@@ -259,7 +264,11 @@ int32_t DlpRawFile::ParseEnterpriseFileId(uint64_t fileLen, uint32_t fileIdSize)
         DLP_LOG_INFO(LABEL, "support openssl");
         return DLP_OK;
     }
-    return InitDlpHIAEMgr();
+    int32_t res = InitDlpHIAEMgr();
+    if (res == DLP_OK) {
+        hiaeInit_ = true;
+    }
+    return res;
 #endif
     return DLP_OK;
 }
@@ -1222,6 +1231,9 @@ int32_t DlpRawFile::DoDlpContentCryptyOperation(int32_t inFd, int32_t outFd, uin
 {
     if (!IsInitDlpContentCryptyOperation(head_.algType)) {
         return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
+    }
+    if (head_.algType == DLP_MODE_HIAE) {
+        hiaeInit_ = true;
     }
     struct DlpBlob message;
     struct DlpBlob outMessage;

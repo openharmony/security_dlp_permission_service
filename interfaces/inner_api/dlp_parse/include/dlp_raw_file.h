@@ -67,6 +67,7 @@ private:
     int32_t WriteRawFileProperty();
 
     struct DlpHeader head_;
+    bool hiaeInit_;
 };
 }  // namespace DlpPermission
 }  // namespace Security
