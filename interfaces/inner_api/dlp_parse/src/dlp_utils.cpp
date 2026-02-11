@@ -228,6 +228,7 @@ int32_t DlpUtils::GetFilePathWithFd(const int32_t &fd, std::string &srcFilePath)
         DLP_LOG_ERROR(LABEL, "GetFilePathByFd fail, err = %{public}d.", res);
         return res;
     }
+    
     std::size_t pos = filePath.find_last_of(PATH_SEPARATOR);
     if (std::string::npos == pos) {
         return DLP_PARSE_ERROR_FD_ERROR;
