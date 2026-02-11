@@ -511,7 +511,7 @@ int32_t DlpFileManager::GenerateDlpFile(
         DLP_LOG_ERROR(LABEL, "GetFileNameWithFd fail, errno=%{public}d", result);
         return result;
     }
-    DLP_LOG_DEBUG(LABEL, "the filename is %{public}s", fileName.c_str());
+    DLP_LOG_DEBUG(LABEL, "the filename is %{private}s", fileName.c_str());
 
     std::string realFileType = GetFileSuffix(fileName);
     if (realFileType == DEFAULT_STRING) {

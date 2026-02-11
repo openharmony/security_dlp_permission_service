@@ -330,7 +330,7 @@ static bool GetApplicationInfo(std::string appId, AppExecFwk::ApplicationInfo& a
 {
     size_t pos = appId.find_last_of(SEPARATOR);
     if (pos > appId.length()) {
-        DLP_LOG_ERROR(LABEL, "AppId=%{public}s pos=%{public}zu can not find bundleName", appId.c_str(), pos);
+        DLP_LOG_ERROR(LABEL, "AppId=%{private}s pos=%{public}zu can not find bundleName", appId.c_str(), pos);
         return false;
     }
     std::string bundleName = appId.substr(0, pos);

@@ -182,7 +182,7 @@ bool DlpZipFile::ParseDlpInfo()
     GenerateInfoParams params;
     int32_t res = ParseDlpGeneralInfo(content, params);
     if (res != DLP_OK) {
-        DLP_LOG_ERROR(LABEL, "ParseDlpGeneralInfo %{public}s", content.c_str());
+        DLP_LOG_ERROR(LABEL, "ParseDlpGeneralInfo %{private}s", content.c_str());
         return false;
     }
     version_ = params.version;
@@ -280,15 +280,15 @@ bool DlpZipFile::CleanTmpFile()
     }
 
     if (unlink(DLP_GENERAL_INFO.c_str()) != 0) {
-        DLP_LOG_ERROR(LABEL, "unlink failed, %{public}s errno %{public}s", DLP_GENERAL_INFO.c_str(), strerror(errno));
+        DLP_LOG_ERROR(LABEL, "unlink failed, %{private}s errno %{public}s", DLP_GENERAL_INFO.c_str(), strerror(errno));
     }
 
     if (unlink(DLP_CERT.c_str()) != 0) {
-        DLP_LOG_ERROR(LABEL, "unlink failed, %{public}s errno %{public}s", DLP_CERT.c_str(), strerror(errno));
+        DLP_LOG_ERROR(LABEL, "unlink failed, %{private}s errno %{public}s", DLP_CERT.c_str(), strerror(errno));
     }
 
     if (unlink(DLP_OPENING_ENC_DATA.c_str()) != 0) {
-        DLP_LOG_ERROR(LABEL, "unlink failed, %{public}s errno %{public}s",
+        DLP_LOG_ERROR(LABEL, "unlink failed, %{private}s errno %{public}s",
             DLP_OPENING_ENC_DATA.c_str(), strerror(errno));
     }
 
@@ -297,11 +297,11 @@ bool DlpZipFile::CleanTmpFile()
     }
 
     if (rmdir(dirIndex_.c_str()) != 0) {
-        DLP_LOG_ERROR(LABEL, "rmdir failed, %{public}s errno %{public}s", dirIndex_.c_str(), strerror(errno));
+        DLP_LOG_ERROR(LABEL, "rmdir failed, %{private}s errno %{public}s", dirIndex_.c_str(), strerror(errno));
     }
 
     if (rmdir(workDir_.c_str()) != 0) {
-        DLP_LOG_ERROR(LABEL, "rmdir failed, %{public}s errno %{public}s", workDir_.c_str(), strerror(errno));
+        DLP_LOG_ERROR(LABEL, "rmdir failed, %{private}s errno %{public}s", workDir_.c_str(), strerror(errno));
     }
 
     return true;
