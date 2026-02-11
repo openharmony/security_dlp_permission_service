@@ -88,7 +88,7 @@ void AppStateObserver::UninstallDlpSandbox(DlpSandboxInfo& appInfo)
     if (appInfo.appIndex <= 0) {  // never uninstall original hap
         return;
     }
-    DLP_LOG_INFO(LABEL, "uninstall dlp sandbox %{public}s%{public}d, uid: %{public}d", appInfo.bundleName.c_str(),
+    DLP_LOG_INFO(LABEL, "uninstall dlp sandbox %{public}s%{public}d, uid: %{private}d", appInfo.bundleName.c_str(),
         appInfo.appIndex, appInfo.uid);
     AppExecFwk::BundleMgrClient bundleMgrClient;
     bundleMgrClient.UninstallSandboxApp(appInfo.bundleName, appInfo.appIndex, appInfo.userId);
