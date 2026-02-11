@@ -146,6 +146,7 @@ PermissionPolicy::PermissionPolicy()
     waterMarkConfig_ = false;
     canFindWaterMarkConfig_ = false;
     canFindCountdown_ = false;
+    nickNameMask_ = "";
 }
 
 PermissionPolicy::PermissionPolicy(const DlpProperty& property)
@@ -174,6 +175,7 @@ PermissionPolicy::PermissionPolicy(const DlpProperty& property)
     countdown_ = property.countdown;
     canFindWaterMarkConfig_ = false;
     canFindCountdown_ = false;
+    nickNameMask_ = property.nickNameMask;
 }
 
 PermissionPolicy::~PermissionPolicy()
@@ -291,6 +293,11 @@ int32_t PermissionPolicy::GetCountdown() const
     return countdown_;
 }
 
+std::string PermissionPolicy::GetNickNameMask() const
+{
+    return nickNameMask_;
+}
+
 void PermissionPolicy::CopyPolicyHmac(const PermissionPolicy& srcPolicy)
 {
     if (srcPolicy.hmacKeyLen_ == 0 || srcPolicy.hmacKey_ == nullptr) {
@@ -329,6 +336,7 @@ void PermissionPolicy::CopyPermissionPolicy(const PermissionPolicy& srcPolicy)
     countdown_ = srcPolicy.countdown_;
     canFindWaterMarkConfig_ = srcPolicy.canFindWaterMarkConfig_;
     canFindCountdown_ = srcPolicy.canFindCountdown_;
+    nickNameMask_ = srcPolicy.nickNameMask_;
 }
 
 int32_t PermissionPolicy::CheckActionUponExpiry()

@@ -297,6 +297,7 @@ static int32_t SetDlpParams(const std::shared_ptr<DlpFile>& filePtr, const DlpPr
     filePtr->SetOfflineAccess(property.offlineAccess, property.allowedOpenCount);
     filePtr->SetWaterMarkConfig(property.waterMarkConfig);
     filePtr->SetCountdown(property.countdown);
+    filePtr->SetNickNameMask(property.nickNameMask);
     return DLP_OK;
 }
 
@@ -552,6 +553,12 @@ int32_t DlpFileManager::DlpRawHmacCheckAndUpdate(std::shared_ptr<DlpFile>& fileP
 
 static bool VerifyConsistent(const PermissionPolicy& policy, std::shared_ptr<DlpFile>& filePtr)
 {
+    DLP_LOG_ERROR(LABEL, 
+        "bsx policy.GetNickNameMask():%{public}s filePtr->GetNickNameMask():%{public}s", policy.GetNickNameMask().c_str(), filePtr->GetNickNameMask().c_str());
+    if (policy.GetNickNameMask() != filePtr->GetNickNameMask()) {
+        DLP_LOG_ERROR(LABEL, "nickNameMask not consistent");
+        return false;
+    }
     if (policy.GetAllowedOpenCount() != filePtr->GetAllowedOpenCount()) {
         DLP_LOG_ERROR(LABEL, "allowedOpenCount not consistent");
         return false;

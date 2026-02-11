@@ -268,6 +268,16 @@ public:
         return countdown_;
     };
 
+    void SetNickNameMask(std::string nickNameMask)
+    {
+        nickNameMask_ = nickNameMask;
+    };
+
+    std::string GetNickNameMask()
+    {
+        return nickNameMask_;
+    };
+
     int32_t dlpFd_;
     friend class DlpRawFile;
     friend class DlpZipFile;
@@ -306,6 +316,7 @@ private:
     int32_t allowedOpenCount_;
     bool waterMarkConfig_;
     int32_t countdown_;
+    std::string nickNameMask_;
 };
 }  // namespace DlpPermission
 }  // namespace Security

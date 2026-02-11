@@ -44,9 +44,12 @@ const uint32_t FILE_HEAD = 8;
 const uint32_t HMAC_SIZE = 32;
 const uint32_t MAX_CERT_SIZE = 30 * 1024;
 const std::string DEFAULT_STRINGS = "";
+// nickNameMask(40) waterMark(4) flag(4) allowedOpenCount(4) fileid(46)
 const int32_t FILEID_SIZE = 46;
 const int32_t FILEID_SIZE_OPPOSITE = -46;
 const int32_t COUNTDOWN_OPPOSITE = -62;
+const int32_t NICK_NAME_MASK_OPPOSITE = -102;
+const int32_t NICK_NAME_MASK_SIZE = 40;
 } // namespace
 
 static int32_t GetFileSize(int32_t fd, uint64_t& fileLen);
@@ -387,23 +390,29 @@ int32_t DlpRawFile::WriteHmacProcess(void)
     return DLP_OK;
 }
 
-int32_t DlpRawFile::WriteFileIdPlaintextProcess(void)
+int32_t DlpRawFile::ReadNickNameMask(void)
 {
-    if (lseek(dlpFd_, COUNTDOWN_OPPOSITE, SEEK_END) == static_cast<off_t>(-1)) {
-        DLP_LOG_ERROR(LABEL, "get to waterConfig invalid");
+    uint8_t *tmpBuf = new (std::nothrow)uint8_t[NICK_NAME_MASK_SIZE];
+    if (tmpBuf == nullptr) {
+        return DLP_PARSE_ERROR_MEMORY_OPERATE_FAIL;
+    }
+    if (lseek(dlpFd_, NICK_NAME_MASK_OPPOSITE, SEEK_END) == static_cast<off_t>(-1)) {
+        delete[] tmpBuf;
+        DLP_LOG_ERROR(LABEL, "lseek nickNameMask invalid");
         return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
     }
-    countdown_ = 0;
-    if (read(dlpFd_, &countdown_, sizeof(int32_t)) != sizeof(int32_t)) {
-        DLP_LOG_ERROR(LABEL, "can not read countdown, %{public}s", strerror(errno));
+    if (read(dlpFd_, tmpBuf, NICK_NAME_MASK_SIZE) != NICK_NAME_MASK_SIZE) {
+        delete[] tmpBuf;
+        DLP_LOG_ERROR(LABEL, "can not read nickNameMask, %{public}s", strerror(errno));
         return DLP_PARSE_ERROR_FILE_FORMAT_ERROR;
     }
-    int32_t waterMarkTmp = 0;
-    if (read(dlpFd_, &waterMarkTmp, sizeof(int32_t)) != sizeof(int32_t)) {
-        DLP_LOG_ERROR(LABEL, "can not read waterMarkConfig, %{public}s", strerror(errno));
-        return DLP_PARSE_ERROR_FILE_FORMAT_ERROR;
-    }
-    waterMarkConfig_ = (waterMarkTmp == 1);
+    nickNameMask_ = std::string(tmpBuf, tmpBuf + NICK_NAME_MASK_SIZE);
+    delete[] tmpBuf;
+    return DLP_OK;
+}
+
+int32_t DlpRawFile::ReadFileId(void)
+{
     int32_t flag = 0;
     if (read(dlpFd_, &flag, sizeof(int32_t)) != sizeof(int32_t)) {
         DLP_LOG_ERROR(LABEL, "can not read flag, %{public}s", strerror(errno));
@@ -416,13 +425,11 @@ int32_t DlpRawFile::WriteFileIdPlaintextProcess(void)
             return DLP_PARSE_ERROR_FILE_FORMAT_ERROR;
         }
     }
-
     uint8_t *tmpBuf = new (std::nothrow)uint8_t[FILEID_SIZE];
     if (tmpBuf == nullptr) {
         return DLP_PARSE_ERROR_MEMORY_OPERATE_FAIL;
     }
-    off_t fileLen = lseek(dlpFd_, FILEID_SIZE_OPPOSITE, SEEK_END);
-    if (fileLen == static_cast<off_t>(-1)) {
+    if (lseek(dlpFd_, FILEID_SIZE_OPPOSITE, SEEK_END) == static_cast<off_t>(-1)) {
         delete[] tmpBuf;
         DLP_LOG_ERROR(LABEL, "get fileid fileLen invalid");
         return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
@@ -439,6 +446,31 @@ int32_t DlpRawFile::WriteFileIdPlaintextProcess(void)
 
     delete[] tmpBuf;
     return DLP_OK;
+}
+
+int32_t DlpRawFile::WriteFileIdPlaintextProcess(void)
+{
+    int32_t res = ReadNickNameMask();
+    if (res != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "ReadNickNameMask failed");
+        return res;
+    }
+    if (lseek(dlpFd_, COUNTDOWN_OPPOSITE, SEEK_END) == static_cast<off_t>(-1)) {
+        DLP_LOG_ERROR(LABEL, "get to waterConfig invalid");
+        return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
+    }
+    countdown_ = 0;
+    if (read(dlpFd_, &countdown_, sizeof(int32_t)) != sizeof(int32_t)) {
+        DLP_LOG_ERROR(LABEL, "can not read countdown, %{public}s", strerror(errno));
+        return DLP_PARSE_ERROR_FILE_FORMAT_ERROR;
+    }
+    int32_t waterMarkTmp = 0;
+    if (read(dlpFd_, &waterMarkTmp, sizeof(int32_t)) != sizeof(int32_t)) {
+        DLP_LOG_ERROR(LABEL, "can not read waterMarkConfig, %{public}s", strerror(errno));
+        return DLP_PARSE_ERROR_FILE_FORMAT_ERROR;
+    }
+    waterMarkConfig_ = (waterMarkTmp == 1);
+    return ReadFileId();
 }
 
 int32_t DlpRawFile::GetRawDlpHmac(void)
@@ -570,6 +602,14 @@ static int32_t GetFileSize(int32_t fd, uint64_t& fileLen)
 
 int32_t DlpRawFile::WriteRawFileProperty()
 {
+    if (lseek(dlpFd_, NICK_NAME_MASK_OPPOSITE, SEEK_END) == static_cast<off_t>(-1)) {
+        DLP_LOG_ERROR(LABEL, "get nickNameMask offsize invalid");
+        return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
+    }
+    if (write(dlpFd_, nickNameMask_.c_str(), nickNameMask_.size()) != static_cast<int32_t>(nickNameMask_.size())) {
+        DLP_LOG_ERROR(LABEL, "write nickNameMask error");
+        return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
+    }
     if (lseek(dlpFd_, COUNTDOWN_OPPOSITE, SEEK_END) == static_cast<off_t>(-1)) {
         DLP_LOG_ERROR(LABEL, "get offsize invalid");
         return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
