@@ -433,7 +433,7 @@ static int32_t GetFileSize(int32_t fd, uint64_t& fileLen)
         fileLen = static_cast<uint64_t>(readLen);
         ret = DLP_OK;
     }
-    LSEEK_AND_CHECK(fd, 0, SEEK_SET, DLP_PARSE_ERROR_FILE_OPERATE_FAIL, LABEL);
+    (void)lseek(fd, 0, SEEK_SET);
     return ret;
 }
 
@@ -479,7 +479,7 @@ int32_t DlpZipFile::GenEncData(int32_t inPlainFileFd)
 
 int32_t DlpZipFile::GenerateHmacVal(int32_t encFile, struct DlpBlob& out)
 {
-    LSEEK_AND_CHECK(encFile, 0, SEEK_SET, DLP_PARSE_ERROR_FILE_OPERATE_FAIL, LABEL);
+    lseek(encFile, 0, SEEK_SET);
     int32_t fd = dup(encFile);
     if (fd < 0) {
         DLP_LOG_ERROR(LABEL, "dup file failed");
