@@ -32,6 +32,7 @@ using namespace OHOS::Security::DlpPermission;
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "NapiConnectionPlugin"};
 const std::string DLP_PERMISSION_SERVICE_NAME = "dlpPermissionService";
+const std::string PERMISSION_ENTERPRISE_ACCESS_DLP_FILE = "ohos.permission.ENTERPRISE_ACCESS_DLP_FILE";
 #ifdef SUPPORT_DLP_CREDENTIAL
 static const size_t SIZE_64_BIT = 8;
 static const std::string DLP_CREDENTIAL_STATIC_PLP_32_PATH = "/system/lib/libdlp_connection_static.z.so";
@@ -402,6 +403,9 @@ static napi_value RegisterPlugin(napi_env env, napi_callback_info cbInfo)
 static napi_value UnregisterPlugin(napi_env env, napi_callback_info cbInfo)
 {
     if (CheckEmulator(env)) {
+        return nullptr;
+    }
+    if (!CheckPermission(env, PERMISSION_ENTERPRISE_ACCESS_DLP_FILE)) {
         return nullptr;
     }
     DLP_LOG_INFO(LABEL, "Enter UnregisterPlugin.");

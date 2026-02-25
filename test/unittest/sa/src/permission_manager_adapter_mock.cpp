@@ -62,6 +62,29 @@ bool PermissionManagerAdapter::CheckPermission(const std::string& permission)
     return true;
 }
 
+bool PermissionManagerAdapter::CheckSystemAppAndPermission(const std::string& permission)
+{
+    switch (DlpPermissionServiceTest::permType) {
+        case -1:
+            return false;
+        case 0:
+            return true;
+        case 1:
+            if (permission == PERMISSION_ACCESS_DLP_FILE) {
+                return true;
+            }
+            return false;
+        case TWO:
+            if (permission == PERMISSION_ENTERPRISE_ACCESS_DLP_FILE) {
+                return true;
+            }
+            return false;
+        default:
+            break;
+    }
+    return true;
+}
+
 bool PermissionManagerAdapter::CheckPermissionAndGetAppId(std::string& appId)
 {
     appId = "6917562860841254665";
