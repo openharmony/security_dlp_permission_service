@@ -27,6 +27,7 @@ public:
     int uid = -1;
     int32_t userId = -1;
     int32_t appIndex = -1;
+    int32_t bindAppIndex = -1;
     AccessToken::AccessTokenID tokenId = 0;
     DLPFileAccess dlpFileAccess = DLPFileAccess::NO_PERMISSION;
     std::string bundleName;
@@ -35,6 +36,11 @@ public:
     uint64_t timeStamp = 0;
     bool hasRead = false;
     bool isReadOnce = false;
+    bool isWatermark = false;
+    std::string accountName = "";
+    std::string accountAndUserId = "";
+    std::string maskInfo = "";
+    std::string fileId = "";
 };
 }  // namespace DlpPermission
 }  // namespace Security

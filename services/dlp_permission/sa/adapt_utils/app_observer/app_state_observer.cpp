@@ -17,13 +17,17 @@
 #include <unistd.h>
 #include "account_adapt.h"
 #include "bundle_manager_adapter.h"
+#include "bundle_mgr_client.h"
+#include "critical_handler.h"
 #include "dlp_permission.h"
 #include "dlp_permission_log.h"
-#include "bundle_mgr_client.h"
 #include "dlp_sandbox_change_callback_manager.h"
+#include "file_uri.h"
 #include "open_dlp_file_callback_manager.h"
 #include "iservice_registry.h"
 #include "idlp_permission_service.h"
+#include "ohos_account_kits.h"
+#include "transaction/rs_interfaces.h"
 
 namespace OHOS {
 namespace Security {
@@ -35,15 +39,48 @@ const std::string PERMISSION_ACCESS_DLP_FILE = "ohos.permission.ACCESS_DLP_FILE"
 const std::string DLP_MANAGER_BUNDLE_NAME = "com.ohos.dlpmanager";
 const std::string DLP_CREDMGR_BUNDLE_NAME = "com.huawei.hmos.dlpcredmgr";
 const std::string DLP_CREDMGR_PROCESS_NAME = "com.huawei.hmos.dlpcredmgr:DlpCredActionExtAbility";
+const std::string HIPREVIEW_HIGH = "com.huawei.hmos.hipreview";
+const std::string HIPREVIEW_LOW_BUNDLE_NAME = "com.huawei.hmos.hipreviewext";
+const int32_t HIPREVIEW_SANDBOX_LOW_BOUND = 1000;
 constexpr int32_t SA_ID_DLP_PERMISSION_SERVICE = 3521;
 const std::string FLAG_OF_MINI = "svr";
+static const std::string TASK_ID = "dlpPermissionServiceUnloadTask";
+constexpr int32_t SA_SHORT_LIFT_TIME = 60 * 1000; // SA life time for short task, in 60 seconds
+constexpr int32_t SA_LONG_LIFT_TIME = 120 * 1000; // SA life time for long task, in 120 seconds
 }
+
 AppStateObserver::AppStateObserver()
-{}
+{
+    DLP_LOG_INFO(LABEL, "AppStateObserver instatance create");
+    taskState_ = CurrentTaskState::IDLE;
+    if (!InitUnloadHandler()) {
+        DLP_LOG_ERROR(LABEL, "InitUnloadHandler failed");
+        InitUnloadHandler();
+    }
+}
 
 AppStateObserver::~AppStateObserver()
 {
     UninstallAllDlpSandbox();
+}
+
+bool AppStateObserver::InitUnloadHandler()
+{
+    if (unloadHandler_ == nullptr) {
+        std::shared_ptr<AppExecFwk::EventRunner> runner =
+            AppExecFwk::EventRunner::Create(SA_ID_DLP_PERMISSION_SERVICE);
+        unloadHandler_ = std::make_shared<AppExecFwk::EventHandler>(runner);
+    }
+    if (unloadHandler_ == nullptr) {
+        DLP_LOG_ERROR(LABEL, "init unloadHandler_ failed");
+        return false;
+    }
+    return true;
+}
+
+std::mutex& AppStateObserver::GetTerminalMutex()
+{
+    return terminalMutex_;
 }
 
 void AppStateObserver::UninstallDlpSandbox(DlpSandboxInfo& appInfo)
@@ -51,10 +88,13 @@ void AppStateObserver::UninstallDlpSandbox(DlpSandboxInfo& appInfo)
     if (appInfo.appIndex <= 0) {  // never uninstall original hap
         return;
     }
-    DLP_LOG_INFO(LABEL, "uninstall dlp sandbox %{public}s%{public}d, uid: %{public}d", appInfo.bundleName.c_str(),
+    DLP_LOG_INFO(LABEL, "uninstall dlp sandbox %{public}s%{public}d, uid: %{private}d", appInfo.bundleName.c_str(),
         appInfo.appIndex, appInfo.uid);
     AppExecFwk::BundleMgrClient bundleMgrClient;
     bundleMgrClient.UninstallSandboxApp(appInfo.bundleName, appInfo.appIndex, appInfo.userId);
+    if (appInfo.bindAppIndex > HIPREVIEW_SANDBOX_LOW_BOUND && appInfo.bundleName == HIPREVIEW_HIGH) {
+        bundleMgrClient.UninstallSandboxApp(HIPREVIEW_LOW_BUNDLE_NAME, appInfo.bindAppIndex, appInfo.userId);
+    }
     RetentionFileManager::GetInstance().DelSandboxInfo(appInfo.tokenId);
 }
 
@@ -102,23 +142,34 @@ bool AppStateObserver::HasDlpSandboxForUser(int32_t userId)
     return false;
 }
 
-void AppStateObserver::ExitSaAfterAllDlpManagerDie()
+int32_t AppStateObserver::ExitSaAfterAllDlpManagerDie()
 {
     std::lock_guard<std::mutex> lock(userIdListLock_);
-    DLP_LOG_DEBUG(LABEL, "userIdList_ size:%{public}zu", userIdList_.size());
+    DLP_LOG_DEBUG(LABEL, "ExitSaAfterAllDlpManagerDie userIdList_ size:%{public}zu", userIdList_.size());
     if (userIdList_.empty() && CallbackListenerEmpty()) {
         DLP_LOG_INFO(LABEL, "all dlp manager app die, and callbacks are empty, start service exit");
         auto systemAbilityMgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
         if (systemAbilityMgr == nullptr) {
             DLP_LOG_ERROR(LABEL, "Failed to get SystemAbilityManager.");
-            return;
+            return DLP_SERVICE_ERROR_UNLOAD_ERROR;
         }
         int32_t ret = systemAbilityMgr->UnloadSystemAbility(SA_ID_DLP_PERMISSION_SERVICE);
         if (ret != DLP_OK) {
             DLP_LOG_ERROR(LABEL, "Failed to UnloadSystemAbility service! errcode=%{public}d", ret);
-            return;
+            return DLP_SERVICE_ERROR_UNLOAD_ERROR;
         }
         DLP_LOG_INFO(LABEL, "UnloadSystemAbility successfully!");
+    }
+    return DLP_OK;
+}
+
+void AppStateObserver::CheckHasBackgroundTask()
+{
+    std::lock_guard<std::mutex> lock(userIdListLock_);
+    DLP_LOG_INFO(LABEL, "CheckHasBackgroundTask");
+    if (userIdList_.empty() && CallbackListenerEmpty()) {
+        DLP_LOG_INFO(LABEL, "all dlp manager app die, and callbacks are empty, SetHasBackgroundTask false");
+        SetHasBackgroundTask(false);
     }
 }
 
@@ -178,6 +229,10 @@ void AppStateObserver::EraseSandboxInfo(int32_t uid)
     std::lock_guard<std::mutex> lock(sandboxInfoLock_);
     auto iter = sandboxInfo_.find(uid);
     if (iter != sandboxInfo_.end()) {
+        AppFileService::ModuleFileUri::FileUri fileUri(iter->second.uri);
+        std::string path = fileUri.GetRealPath();
+        EraseFileInfoByUri(path);
+        DecMaskInfoCnt(iter->second);
         DLP_LOG_INFO(LABEL, "sandbox app %{public}s%{public}d info delete success, uid: %{public}d",
             iter->second.bundleName.c_str(), iter->second.appIndex, iter->second.uid);
         sandboxInfo_.erase(iter);
@@ -187,6 +242,7 @@ void AppStateObserver::EraseSandboxInfo(int32_t uid)
 void AppStateObserver::AddSandboxInfo(const DlpSandboxInfo& appInfo)
 {
     std::lock_guard<std::mutex> lock(sandboxInfoLock_);
+    AddMaskInfoCnt(appInfo);
     if (sandboxInfo_.count(appInfo.uid) > 0) {
         DLP_LOG_ERROR(LABEL, "sandbox app %{public}s%{public}d is already insert, ignore it",
             appInfo.bundleName.c_str(), appInfo.appIndex);
@@ -214,6 +270,7 @@ void AppStateObserver::AddDlpSandboxInfo(const DlpSandboxInfo& appInfo)
     AddUidWithTokenId(appInfo.tokenId, appInfo.uid);
     RetentionInfo retentionInfo = {
         .appIndex = appInfo.appIndex,
+        .bindAppIndex = appInfo.bindAppIndex,
         .tokenId = appInfo.tokenId,
         .bundleName = appInfo.bundleName,
         .dlpFileAccess = appInfo.dlpFileAccess,
@@ -224,6 +281,55 @@ void AppStateObserver::AddDlpSandboxInfo(const DlpSandboxInfo& appInfo)
     RetentionFileManager::GetInstance().AddSandboxInfo(retentionInfo);
     OpenDlpFileCallbackManager::GetInstance().ExecuteCallbackAsync(appInfo);
     return;
+}
+
+void AppStateObserver::AddMaskInfoCnt(const DlpSandboxInfo& appInfo)
+{
+    if (!appInfo.isWatermark || appInfo.bundleName.empty() ||
+        appInfo.tokenId <= 0 || appInfo.appIndex <= 0) {
+        DLP_LOG_ERROR(LABEL, "Not watermark sandbox or param is error");
+        return;
+    }
+    auto it = maskInfoMap_.find(appInfo.maskInfo);
+    if (it == maskInfoMap_.end()) {
+        maskInfoMap_.emplace(appInfo.maskInfo, 1);
+    } else {
+        it->second++;
+    }
+    DLP_LOG_INFO(LABEL, "Cur watermark with cnt %{public}d", maskInfoMap_[appInfo.maskInfo]);
+}
+
+void AppStateObserver::DecMaskInfoCnt(const DlpSandboxInfo& appInfo)
+{
+    if (!appInfo.isWatermark) {
+        DLP_LOG_DEBUG(LABEL, "Not watermark sandbox");
+        return;
+    }
+    int32_t userId;
+    if (!GetUserIdByForegroundAccount(&userId)) {
+        DLP_LOG_ERROR(LABEL, "GetUserIdByForegroundAccount error");
+        return;
+    }
+    std::pair<bool, OHOS::AccountSA::OhosAccountInfo> accountInfo =
+        OHOS::AccountSA::OhosAccountKits::GetInstance().QueryOhosAccountInfo();
+    if (!accountInfo.first) {
+        DLP_LOG_ERROR(LABEL, "Get accountInfo error.");
+        return;
+    }
+    std::string accountAndUserId = accountInfo.second.name_ + std::to_string(userId);
+    DLP_LOG_DEBUG(LABEL, "Erase watermark sandbox.");
+    auto it = maskInfoMap_.find(appInfo.maskInfo);
+    if (it == maskInfoMap_.end()) {
+        DLP_LOG_INFO(LABEL, "Watermark sandbox no exist");
+        return;
+    }
+    it->second--;
+    if (it->second == 0 && appInfo.accountAndUserId != accountAndUserId) {
+        int32_t pid = getprocpid();
+        DLP_LOG_INFO(LABEL, "Clear watermark");
+        OHOS::Rosen::RSInterfaces::GetInstance().ClearSurfaceWatermark(pid, appInfo.maskInfo);
+        maskInfoMap_.erase(it);
+    }
 }
 
 void AppStateObserver::SetAppProxy(const sptr<AppExecFwk::AppMgrProxy>& appProxy)
@@ -246,12 +352,13 @@ bool AppStateObserver::GetRunningProcessesInfo(std::vector<RunningProcessInfo>& 
 }
 
 bool AppStateObserver::GetOpeningSandboxInfo(const std::string& bundleName, const std::string& uri,
-    int32_t userId, SandboxInfo& sandboxInfo)
+    int32_t userId, SandboxInfo& sandboxInfo, const std::string& fileId)
 {
     std::lock_guard<std::mutex> lock(sandboxInfoLock_);
     for (auto iter = sandboxInfo_.begin(); iter != sandboxInfo_.end(); iter++) {
         DlpSandboxInfo appInfo = iter->second;
-        if (appInfo.userId != userId || appInfo.bundleName != bundleName || appInfo.uri != uri) {
+        if (appInfo.userId != userId || appInfo.bundleName != bundleName ||
+            appInfo.uri != uri || appInfo.fileId != fileId) {
             continue;
         }
         std::vector<RunningProcessInfo> infoVec;
@@ -268,6 +375,7 @@ bool AppStateObserver::GetOpeningSandboxInfo(const std::string& bundleName, cons
             DLP_LOG_INFO(LABEL, "APP is running, appName:%{public}s, state=%{public}d", it->processName_.c_str(),
                 it->state_);
             sandboxInfo.appIndex = appInfo.appIndex;
+            sandboxInfo.bindAppIndex = appInfo.bindAppIndex;
             sandboxInfo.tokenId = appInfo.tokenId;
             return true;
         }
@@ -281,7 +389,7 @@ bool AppStateObserver::CanUninstallByGid(DlpSandboxInfo& appInfo, const AppExecF
     std::vector<RunningProcessInfo> infoVec;
     (void)GetRunningProcessesInfo(infoVec);
     for (auto it = infoVec.begin(); it != infoVec.end(); it++) {
-        if (it->uid_ != appInfo.uid || it->bundleNames[0] != appInfo.bundleName) {
+        if (it->uid_ != appInfo.uid || it->bundleNames.size() < 1 || it->bundleNames[0] != appInfo.bundleName) {
             continue;
         }
         if (it->state_ == AppProcessState::APP_STATE_END || it->state_ == AppProcessState::APP_STATE_TERMINATED) {
@@ -306,12 +414,35 @@ void AppStateObserver::GetOpeningReadOnlySandbox(const std::string& bundleName, 
         if (appInfo.userId == userId && appInfo.bundleName == bundleName &&
             appInfo.dlpFileAccess == DLPFileAccess::READ_ONLY && !appInfo.isReadOnce) {
             appIndex = appInfo.appIndex;
+            DLP_LOG_INFO(LABEL,
+                "GetOpeningReadOnlySandbox, appIndex:%{public}d, bundleName=%{public}s",
+                appIndex, bundleName.c_str());
             return;
         }
     }
     appIndex = -1;
     return;
 }
+
+void AppStateObserver::GetOpeningReadOnlyBindSandbox(const std::string& bundleName,
+    int32_t userId, int32_t& bindAppIndex)
+{
+    std::lock_guard<std::mutex> lock(sandboxInfoLock_);
+    for (auto iter = sandboxInfo_.begin(); iter != sandboxInfo_.end(); iter++) {
+        DlpSandboxInfo appInfo = iter->second;
+        if (appInfo.userId == userId && appInfo.bundleName == bundleName &&
+            appInfo.dlpFileAccess == DLPFileAccess::READ_ONLY && !appInfo.isReadOnce) {
+            bindAppIndex = appInfo.bindAppIndex;
+            DLP_LOG_INFO(LABEL,
+                "GetOpeningReadOnlySandbox, bindAppIndex:%{public}d, bundleName=%{public}s",
+                bindAppIndex, bundleName.c_str());
+            return;
+        }
+    }
+    bindAppIndex = -1;
+    return;
+}
+ 
 
 uint32_t AppStateObserver::EraseDlpSandboxInfo(int uid)
 {
@@ -334,7 +465,9 @@ void AppStateObserver::OnDlpmanagerDied(const AppExecFwk::ProcessData& processDa
     DLP_LOG_INFO(LABEL, "%{public}s in userId %{public}d is died", processData.bundleName.c_str(), userId);
     UninstallAllDlpSandboxForUser(userId);
     EraseUserId(userId);
-    ExitSaAfterAllDlpManagerDie();
+    CheckHasBackgroundTask();
+    DLP_LOG_INFO(LABEL, "PostDelayUnloadTask by OnDlpmanagerDied");
+    PostDelayUnloadTask(CurrentTaskState::SHORT_TASK);
 }
 
 
@@ -358,12 +491,15 @@ void AppStateObserver::OnProcessDied(const AppExecFwk::ProcessData& processData)
             return;
         }
         if (!HasDlpSandboxForUser(userId)) {
-            ExitSaAfterAllDlpManagerDie();
+            DLP_LOG_INFO(LABEL, "PostDelayUnloadTask by dlpcredmgr");
+            PostDelayUnloadTask(CurrentTaskState::SHORT_TASK);
         }
     }
     // if current died process is a listener
     if (RemoveCallbackListener(processData.pid)) {
-        ExitSaAfterAllDlpManagerDie();
+        DLP_LOG_INFO(LABEL, "PostDelayUnloadTask by listener");
+        CheckHasBackgroundTask();
+        PostDelayUnloadTask(CurrentTaskState::SHORT_TASK);
         return;
     }
     if (processData.renderUid != -1) {
@@ -523,35 +659,100 @@ void AppStateObserver::DumpSandbox(int fd)
     }
 }
 
-void AppStateObserver::EraseReadOnceUriInfoByUri(const std::string& uri)
+void AppStateObserver::EraseFileInfoByUri(const std::string& uri)
 {
-    std::lock_guard<std::mutex> lock(readOnceUriMapLock_);
-    auto iter = readOnceUriMap_.find(uri);
-    if (iter != readOnceUriMap_.end()) {
+    std::lock_guard<std::mutex> lock(fileInfoUriMapLock_);
+    auto iter = fileInfoUriMap_.find(uri);
+    if (iter != fileInfoUriMap_.end()) {
         DLP_LOG_INFO(LABEL, "erase ReadOnce");
-        readOnceUriMap_.erase(iter);
+        fileInfoUriMap_.erase(iter);
     }
 }
 
-bool AppStateObserver::AddUriAndNotOwnerAndReadOnce(const std::string& uri, bool isNotOwnerAndReadOnce)
+bool AppStateObserver::AddUriAndFileInfo(const std::string& uri, const FileInfo& fileInfo)
 {
     if (uri.empty()) {
         DLP_LOG_ERROR(LABEL, "uri is invalid");
         return false;
     }
-    std::lock_guard<std::mutex> lock(readOnceUriMapLock_);
-    DLP_LOG_INFO(LABEL, "add readOnceUriMap, isNotOwnerAndReadOnce: %{public}d", isNotOwnerAndReadOnce);
-    readOnceUriMap_[uri] = isNotOwnerAndReadOnce;
+    std::lock_guard<std::mutex> lock(fileInfoUriMapLock_);
+    DLP_LOG_INFO(LABEL, "add readOnceUriMap, isNotOwnerAndReadOnce: %{public}d",
+        fileInfo.isNotOwnerAndReadOnce);
+    fileInfoUriMap_[uri] = fileInfo;
     return true;
 }
 
-bool AppStateObserver::GetNotOwnerAndReadOnceByUri(const std::string& uri, bool& isNotOwnerAndReadOnce)
+bool AppStateObserver::GetFileInfoByUri(const std::string& uri, FileInfo& fileInfo)
 {
-    std::lock_guard<std::mutex> lock(readOnceUriMapLock_);
-    auto iter = readOnceUriMap_.find(uri);
-    if (iter != readOnceUriMap_.end()) {
-        isNotOwnerAndReadOnce = iter->second;
-        DLP_LOG_INFO(LABEL, "isNotOwnerAndReadOnce: %{public}d", isNotOwnerAndReadOnce);
+    std::lock_guard<std::mutex> lock(fileInfoUriMapLock_);
+    auto iter = fileInfoUriMap_.find(uri);
+    if (iter != fileInfoUriMap_.end()) {
+        fileInfo = iter->second;
+        DLP_LOG_INFO(LABEL, "fileInfo with isNotOwnerAndReadOnce: %{public}d, isWatermark: %{public}d",
+            fileInfo.isNotOwnerAndReadOnce, fileInfo.isWatermark);
+        return true;
+    }
+    return false;
+}
+
+void AppStateObserver::GetDelSandboxInfo(std::unordered_map<int32_t, DlpSandboxInfo>& sandboxInfo)
+{
+    std::lock_guard<std::mutex> lock(sandboxInfoLock_);
+    for (const auto& entry : sandboxInfo_) {
+        sandboxInfo[entry.first] = entry.second;
+    }
+}
+
+void AppStateObserver::PostDelayUnloadTask(CurrentTaskState newTaskState)
+{
+#ifdef DLP_FUZZ_TDD_TEST
+    DLP_LOG_INFO(LABEL, "fuzz or tdd test, do not post delay unload task");
+    return;
+#endif
+    std::lock_guard<std::mutex> lock(unloadHandlerMutex_);
+    if (unloadHandler_ == nullptr) {
+        DLP_LOG_ERROR(LABEL, "unloadHandler_ is nullptr. Unable to automatically uninstall dlp_permission_sevice");
+        InitUnloadHandler();
+        return;
+    }
+    DLP_LOG_DEBUG(LABEL, "PostDelayUnloadTask start");
+    if (taskState_ == CurrentTaskState::LONG_TASK && newTaskState == CurrentTaskState::SHORT_TASK) {
+        DLP_LOG_DEBUG(LABEL, "taskState_ is LONG_TASK, do not change to SHORT_TASK");
+        return;
+    }
+    taskState_ = newTaskState;
+    auto task = [this]() {
+        if (taskState_ == CurrentTaskState::SHORT_TASK || taskState_ == CurrentTaskState::LONG_TASK) {
+            PostDelayUnloadTask(CurrentTaskState::IDLE);
+            return;
+        }
+        std::lock_guard<std::mutex> lock(terminalMutex_);
+        int32_t ret = ExitSaAfterAllDlpManagerDie();
+        if (ret != DLP_OK) {
+            DLP_LOG_ERROR(LABEL, "ExitSaAfterAllDlpManagerDie failed");
+            PostDelayUnloadTask(CurrentTaskState::IDLE);
+            return;
+        }
+    };
+    unloadHandler_->RemoveTask(TASK_ID);
+    if (taskState_ == CurrentTaskState::LONG_TASK) {
+        DLP_LOG_INFO(LABEL, "you will delay long task for 120s");
+        unloadHandler_->PostTask(task, TASK_ID, SA_LONG_LIFT_TIME);
+        return;
+    }
+    DLP_LOG_INFO(LABEL, "you will delay %{public}d task for 60s", taskState_);
+    unloadHandler_->PostTask(task, TASK_ID, SA_SHORT_LIFT_TIME);
+}
+bool AppStateObserver::GetSandboxInfoByAppIndex(const std::string& bundleName,
+    int32_t appIndex, DlpSandboxInfo& appInfo)
+{
+    std::lock_guard<std::mutex> lock(sandboxInfoLock_);
+    auto iter = std::find_if(sandboxInfo_.begin(), sandboxInfo_.end(),
+        [bundleName, appIndex](const auto& pair) {
+            return pair.second.appIndex == appIndex && pair.second.bundleName == bundleName;
+        });
+    if (iter != sandboxInfo_.end()) {
+        appInfo = iter->second;
         return true;
     }
     return false;

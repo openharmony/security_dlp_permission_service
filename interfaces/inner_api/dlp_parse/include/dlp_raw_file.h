@@ -64,8 +64,10 @@ private:
     int32_t WriteFirstBlockData(uint64_t offset, void* buf, uint32_t size);
     int32_t WriteHmacProcess(void);
     int32_t WriteFileIdPlaintextProcess(void);
+    int32_t WriteRawFileProperty();
 
     struct DlpHeader head_;
+    bool hiaeInit_;
 };
 }  // namespace DlpPermission
 }  // namespace Security

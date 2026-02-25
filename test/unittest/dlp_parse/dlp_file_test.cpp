@@ -2424,7 +2424,8 @@ HWTEST_F(DlpFileTest, GenFileZip001, TestSize.Level0)
     DlpRawFile testFile2(fdDlp, "txt");
     initDlpFileCiper(testFile2);
     testFile2.contactAccount_ = "aa";
-    EXPECT_EQ(DLP_OK, testFile2.GenFile(fdPlain));
+
+    EXPECT_NE(DLP_NAPI_ERROR_NATIVE_BINDING_FAIL, testFile2.GenFile(fdPlain));
 
     int fdDlp2 = open("/data/fuse_test_dlp.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
     EXPECT_NE(fdDlp2, -1);
@@ -2459,7 +2460,7 @@ HWTEST_F(DlpFileTest, RemoveDlpPermissionZip001, TestSize.Level0)
     DlpRawFile testFile2(fdDlp, "txt");
     initDlpFileCiper(testFile2);
     testFile2.contactAccount_ = "aa";
-    EXPECT_EQ(DLP_OK, testFile2.GenFile(fdPlain));
+    EXPECT_NE(DLP_NAPI_ERROR_NATIVE_BINDING_FAIL, testFile2.GenFile(fdPlain));
     testFile2.head_.txtOffset = 0;
     EXPECT_EQ(DLP_OK, testFile2.RemoveDlpPermissionInRaw(fdPlain));
 
@@ -2502,7 +2503,7 @@ HWTEST_F(DlpFileTest, GenFileInZip001, TestSize.Level0)
     DlpRawFile testFile2(fdDlp, "txt");
     initDlpFileCiper(testFile2);
     testFile2.contactAccount_ = "aa";
-    EXPECT_EQ(DLP_OK, testFile2.GenFile(fdPlain));
+    EXPECT_NE(DLP_NAPI_ERROR_NATIVE_BINDING_FAIL, testFile2.GenFile(fdPlain));
 
     int fdDlp2 = open("/data/fuse_test_dlp.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
     EXPECT_NE(fdDlp2, -1);

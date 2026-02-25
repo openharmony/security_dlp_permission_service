@@ -57,6 +57,16 @@ void ClientParseDlpCertificateCallback::OnParseDlpCertificate(int32_t result, co
     parseCv_.notify_all();
 }
 
+void GetWaterMarkCallback::OnCall(int32_t result, const GeneralInfo& info)
+{
+    this->result_ = result;
+    if (result == DLP_OK) {
+        this->info_.SetWaterMark = true;
+    }
+    this->isCallBack_ = true;
+    getWaterMarkCv_.notify_all();
+}
+
 int32_t DlpPermissionKit::GenerateDlpCertificate(const PermissionPolicy& policy, std::vector<uint8_t>& cert)
 {
     std::shared_ptr<ClientGenerateDlpCertificateCallback> callback =
@@ -117,6 +127,32 @@ int32_t DlpPermissionKit::ParseDlpCertificate(sptr<CertParcel>& certParcel, Perm
     }
 
     return callback->result_;
+}
+
+int32_t DlpPermissionKit::GetWaterMark(const bool waterMarkConfig)
+{
+    if (!waterMarkConfig) {
+        DLP_LOG_INFO(LABEL, "waterMarkConfig is %{public}d", waterMarkConfig);
+        return DLP_OK;
+    }
+    std::shared_ptr<GetWaterMarkCallback> callback = std::make_shared<GetWaterMarkCallback>();
+    int32_t res = DlpPermissionClient::GetInstance().GetWaterMark(waterMarkConfig, callback);
+    if (res != DLP_OK) {
+        DLP_LOG_INFO(LABEL, "GetWaterMark returns %{public}d", res);
+        return res;
+    }
+    return DLP_OK;
+}
+
+int32_t DlpPermissionKit::GetDomainAccountNameInfo(std::string& accountNameInfo)
+{
+    return DlpPermissionClient::GetInstance().GetDomainAccountNameInfo(accountNameInfo);
+}
+
+int32_t DlpPermissionKit::GetAbilityInfos(const AAFwk::Want& want, int32_t flags, int32_t userId,
+    std::vector<AppExecFwk::AbilityInfo> &abilityInfos)
+{
+    return DlpPermissionClient::GetInstance().GetAbilityInfos(want, flags, userId, abilityInfos);
 }
 
 int32_t DlpPermissionKit::InstallDlpSandbox(const std::string& bundleName, DLPFileAccess dlpFileAccess, int32_t userId,
@@ -261,14 +297,14 @@ int32_t DlpPermissionKit::SetDlpFeature(uint32_t dlpFeatureInfo, bool& statusSet
     return res;
 }
 
-int32_t DlpPermissionKit::SetEnterprisePolicy(const std::string& policy)
+int32_t DlpPermissionKit::SetEnterprisePolicy(EnterprisePolicy policy)
 {
-    return DlpPermissionClient::GetInstance().SetEnterprisePolicy(policy);
+    return DlpPermissionClient::GetInstance().SetEnterprisePolicy(policy.policyString);
 }
 
-int32_t DlpPermissionKit::SetNotOwnerAndReadOnce(const std::string& uri, bool isNotOwnerAndReadOnce)
+int32_t DlpPermissionKit::SetFileInfo(const std::string& uri, const FileInfo& fileInfo)
 {
-    return DlpPermissionClient::GetInstance().SetNotOwnerAndReadOnce(uri, isNotOwnerAndReadOnce);
+    return DlpPermissionClient::GetInstance().SetFileInfo(uri, fileInfo);
 }
 
 }  // namespace DlpPermission

@@ -143,6 +143,9 @@ PermissionPolicy::PermissionPolicy()
     customProperty_ = "";
     fileId = "";
     allowedOpenCount_ = 0;
+    waterMarkConfig_ = false;
+    canFindWaterMarkConfig_ = false;
+    canFindCountdown_ = false;
 }
 
 PermissionPolicy::PermissionPolicy(const DlpProperty& property)
@@ -167,6 +170,10 @@ PermissionPolicy::PermissionPolicy(const DlpProperty& property)
     customProperty_ = property.customProperty.enterprise;
     fileId = property.fileId;
     allowedOpenCount_ = property.allowedOpenCount;
+    waterMarkConfig_ = property.waterMarkConfig;
+    countdown_ = property.countdown;
+    canFindWaterMarkConfig_ = false;
+    canFindCountdown_ = false;
 }
 
 PermissionPolicy::~PermissionPolicy()
@@ -274,6 +281,16 @@ int32_t PermissionPolicy::GetAllowedOpenCount() const
     return allowedOpenCount_;
 }
 
+bool PermissionPolicy::GetwaterMarkConfig() const
+{
+    return waterMarkConfig_;
+}
+
+int32_t PermissionPolicy::GetCountdown() const
+{
+    return countdown_;
+}
+
 void PermissionPolicy::CopyPolicyHmac(const PermissionPolicy& srcPolicy)
 {
     if (srcPolicy.hmacKeyLen_ == 0 || srcPolicy.hmacKey_ == nullptr) {
@@ -308,6 +325,10 @@ void PermissionPolicy::CopyPermissionPolicy(const PermissionPolicy& srcPolicy)
     }
     fileId = srcPolicy.fileId;
     allowedOpenCount_ = srcPolicy.allowedOpenCount_;
+    waterMarkConfig_ = srcPolicy.waterMarkConfig_;
+    countdown_ = srcPolicy.countdown_;
+    canFindWaterMarkConfig_ = srcPolicy.canFindWaterMarkConfig_;
+    canFindCountdown_ = srcPolicy.canFindCountdown_;
 }
 
 int32_t PermissionPolicy::CheckActionUponExpiry()
@@ -356,6 +377,10 @@ bool SandboxInfo::Marshalling(Parcel &out) const
         DLP_LOG_ERROR(LABEL, "Write tokenId fail");
         return false;
     }
+    if (!(out.WriteInt32(bindAppIndex))) {
+        DLP_LOG_ERROR(LABEL, "Write bindAppIndex fail");
+        return false;
+    }
     return true;
 }
 
@@ -376,7 +401,73 @@ SandboxInfo* SandboxInfo::Unmarshalling(Parcel &in)
         delete parcel;
         return nullptr;
     }
+    if (!(in.ReadInt32(parcel->bindAppIndex))) {
+        DLP_LOG_ERROR(LABEL, "Read bindAppIndex fail");
+        delete parcel;
+        return nullptr;
+    }
     return parcel;
+}
+
+bool FileInfo::Marshalling(Parcel &out) const
+{
+    if (!(out.WriteBool(isNotOwnerAndReadOnce))) {
+        DLP_LOG_ERROR(LABEL, "Write isNotOwnerAndReadOnce fail");
+        return false;
+    }
+    if (!(out.WriteBool(isWatermark))) {
+        DLP_LOG_ERROR(LABEL, "Write isWatermark fail");
+        return false;
+    }
+    if (!(out.WriteString(accountName))) {
+        DLP_LOG_ERROR(LABEL, "Write accountName fail");
+        return false;
+    }
+    if (!(out.WriteString(maskInfo))) {
+        DLP_LOG_ERROR(LABEL, "Write maskInfo fail");
+        return false;
+    }
+    if (!(out.WriteString(fileId))) {
+        DLP_LOG_ERROR(LABEL, "Write fileId fail");
+        return false;
+    }
+    return true;
+}
+
+FileInfo* FileInfo::Unmarshalling(Parcel &in)
+{
+    auto *parcel = new (std::nothrow) FileInfo();
+    do {
+        if (parcel == nullptr) {
+            DLP_LOG_ERROR(LABEL, "Alloc buff for parcel fail");
+            break;
+        }
+        if (!(in.ReadBool(parcel->isNotOwnerAndReadOnce))) {
+            DLP_LOG_ERROR(LABEL, "Read isNotOwnerAndReadOnce fail");
+            break;
+        }
+        if (!(in.ReadBool(parcel->isWatermark))) {
+            DLP_LOG_ERROR(LABEL, "Read isWatermark fail");
+            break;
+        }
+        if (!(in.ReadString(parcel->accountName))) {
+            DLP_LOG_ERROR(LABEL, "Read accountName fail");
+            break;
+        }
+        if (!(in.ReadString(parcel->maskInfo))) {
+            DLP_LOG_ERROR(LABEL, "Read maskInfo fail");
+            break;
+        }
+        if (!(in.ReadString(parcel->fileId))) {
+            DLP_LOG_ERROR(LABEL, "Read fileId fail");
+            break;
+        }
+        return parcel;
+    } while (0);
+    if (parcel) {
+        delete parcel;
+    }
+    return nullptr;
 }
 }  // namespace DlpPermission
 }  // namespace Security

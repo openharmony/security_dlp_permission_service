@@ -20,6 +20,7 @@
 #include <unordered_map>
 #include "account_adapt.h"
 #include "bundle_manager_adapter.h"
+#include "critical_handler.h"
 #include "dlp_policy_mgr_client.h"
 #include "dlp_permission.h"
 #include "dlp_permission_log.h"
@@ -151,6 +152,7 @@ static bool GetCallbackFromRequestMap(uint64_t requestId, RequestInfo& info)
     if (iter != g_requestMap.end()) {
         info = iter->second;
         g_requestMap.erase(requestId);
+        DecreaseCriticalCnt();
         return true;
     }
     DLP_LOG_ERROR(LABEL, "Callback not found");
@@ -165,6 +167,7 @@ static int32_t InsertCallbackToRequestMap(uint64_t requestId, const RequestInfo&
         return DLP_SERVICE_ERROR_CREDENTIAL_TASK_DUPLICATE;
     }
     g_requestMap[requestId] = info;
+    IncreaseCriticalCnt();
     return DLP_OK;
 }
 
@@ -577,6 +580,7 @@ static int32_t GetDomainAccountName(std::string& account, const std::string& con
 
 static int32_t GetEnterpriseAccountName(AccountInfo& accountCfg, const std::string& appId, bool* isOwner)
 {
+    (void)isOwner;
     std::string account = appId;
     accountCfg.accountId = reinterpret_cast<uint8_t *>(strdup(account.c_str()));
     accountCfg.accountIdLen = strlen(account.c_str());
@@ -848,7 +852,7 @@ int32_t DlpCredential::SetMDMPolicy(const std::vector<std::string>& appIdList)
         DLP_LOG_ERROR(LABEL, "appId List too large");
         return DLP_SERVICE_ERROR_VALUE_INVALID;
     }
-    uint32_t policySize = (size(appIdList) + 1) * MAX_APPID_LENGTH;
+    uint32_t policySize = (size(appIdList) + 1) * (MAX_APPID_LENGTH + sizeof(uint32_t));
     uint8_t *policy = new (std::nothrow)uint8_t[policySize];
     if (policy == nullptr) {
         DLP_LOG_WARN(LABEL, "alloc policy failed.");

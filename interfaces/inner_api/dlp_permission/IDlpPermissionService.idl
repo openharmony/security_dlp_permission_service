@@ -17,12 +17,14 @@ import DlpPermissionTypes;
 
 sequenceable OHOS.IRemoteObject;
 sequenceable OHOS.AAFwk.Want;
+sequenceable OHOS.AppExecFwk.AbilityInfo;
 sequenceable dlp_policy_parcel..OHOS.Security.DlpPermission.DlpPolicyParcel;
 sequenceable cert_parcel..OHOS.Security.DlpPermission.CertParcel;
 sequenceable dlp_permission_info_parcel..OHOS.Security.DlpPermission.DLPPermissionInfoParcel;
 sequenceable retention_sandbox_info..OHOS.Security.DlpPermission.RetentionSandBoxInfo;
 sequenceable visited_dlp_file_info..OHOS.Security.DlpPermission.VisitedDLPFileInfo;
 sequenceable permission_policy..OHOS.Security.DlpPermission.SandboxInfo;
+sequenceable permission_policy..OHOS.Security.DlpPermission.FileInfo;
 interface OHOS.Security.DlpPermission.IDlpPermissionCallback;
 
 interface OHOS.Security.DlpPermission.IDlpPermissionService {
@@ -34,6 +36,16 @@ interface OHOS.Security.DlpPermission.IDlpPermissionService {
         [in] IDlpPermissionCallback dlpPermissionCallback,
         [in] String appId,
         [in] boolean offlineAccess);
+    void GetWaterMark(
+        [in] boolean waterMarkConfig,
+        [in] IDlpPermissionCallback dlpPermissionCallback);
+    void GetDomainAccountNameInfo(
+        [out] String accountNameInfo);
+    void GetAbilityInfos(
+        [in] Want want,
+        [in] int flags,
+        [in] int userId,
+        [out] AbilityInfo[] abilityInfos);
     void InstallDlpSandbox(
         [in] String bundleName,
         [in] DLPFileAccess dlpFileAccess,
@@ -45,6 +57,7 @@ interface OHOS.Security.DlpPermission.IDlpPermissionService {
         [in] int sandboxUid,
         [in] Want want,
         [out] enum SandBoxExternalAuthorType authType);
+    void SetWaterMark([in] int pid);
     void QueryDlpFileCopyableByTokenId([out] boolean copyable, [in] unsigned int tokenId);
     void QueryDlpFileAccess([out] DLPPermissionInfoParcel permInfoParcel);
     void IsInDlpSandbox([out] boolean inSandbox);
@@ -69,5 +82,5 @@ interface OHOS.Security.DlpPermission.IDlpPermissionService {
     void GetMDMPolicy([out] String[] appIdList);
     void RemoveMDMPolicy();
     void SetEnterprisePolicy([in] String policy);
-    void SetNotOwnerAndReadOnce([in] String uri, [in] boolean isNotOwnerAndReadOnce);
+    void SetFileInfo([in] String uri, [in] FileInfo fileInfo);
 }

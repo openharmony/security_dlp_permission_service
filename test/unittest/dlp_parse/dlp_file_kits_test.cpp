@@ -87,11 +87,13 @@ static constexpr int THIRD_COUNT = 3;
 
 static off_t LseekReplyMock(int fd, off_t offset, int whence)
 {
+    (void)fd;
     return 0;
 }
 
 static ssize_t ReadReplyMock(int fd, void *dest, size_t maxCount)
 {
+    (void)fd;
     static int callCount = 0;
     callCount++;
     if (callCount == FIRST_COUNT) {

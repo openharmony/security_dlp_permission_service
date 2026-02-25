@@ -31,6 +31,7 @@ namespace DlpConnection {
 using namespace OHOS::Security::DlpPermission;
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "NapiConnectionPlugin"};
+const std::string DLP_PERMISSION_SERVICE_NAME = "dlpPermissionService";
 #ifdef SUPPORT_DLP_CREDENTIAL
 static const size_t SIZE_64_BIT = 8;
 static const std::string DLP_CREDENTIAL_STATIC_PLP_32_PATH = "/system/lib/libdlp_connection_static.z.so";
@@ -46,6 +47,15 @@ NapiDlpConnectionPlugin::NapiDlpConnectionPlugin(napi_env env, const JsDlpConnPl
     : env_(env), jsPlugin_(jsPlugin)
 {}
 
+static bool CheckEmulator(napi_env env)
+{
+#ifdef IS_EMULATOR
+    DlpNapiThrow(env, DLP_DEVICE_ERROR_CAPABILITY_NOT_SUPPORTED_EMULATOR);
+    return true;
+#endif
+    return false;
+}
+
 static void ReleaseNapiRefArray(napi_env env, const std::vector<napi_ref> &napiRefVec)
 {
     if (env == nullptr) {
@@ -58,7 +68,7 @@ static void ReleaseNapiRefArray(napi_env env, const std::vector<napi_ref> &napiR
             }
         }
     };
-    if (napi_ok != napi_send_event(env, task, napi_eprio_high)) {
+    if (napi_ok != napi_send_event(env, task, napi_eprio_high, DLP_PERMISSION_SERVICE_NAME.c_str())) {
         DLP_LOG_ERROR(LABEL, "napi_send_event is error.");
     }
 }
@@ -213,9 +223,10 @@ static void ConnectServerWork(JsDlpConnectionParam *param)
         napi_value argv[] = {napiRequestId, napiRequestData, napiCallback};
         NapiCallVoidFunction(param->env, argv, PARAM3, param->func, param->context);
     } while (0);
-    std::unique_lock<std::mutex> lock(param->lockInfo->mutex);
+    param->lockInfo->mutex.lock();
     param->lockInfo->count--;
     param->lockInfo->condition.notify_all();
+    param->lockInfo->mutex.unlock();
     napi_close_handle_scope(param->env, scope);
     if (res != 0) {
         delete param;
@@ -248,7 +259,7 @@ void NapiDlpConnectionPlugin::ConnectServer(const std::string requestId, const s
     auto task = [param]() {
         ConnectServerWork(param);
     };
-    if (napi_ok != napi_send_event(env_, task, napi_eprio_high)) {
+    if (napi_ok != napi_send_event(env_, task, napi_eprio_high, DLP_PERMISSION_SERVICE_NAME.c_str())) {
         DLP_LOG_ERROR(LABEL, "napi_send_event error");
         delete param;
         return;
@@ -278,6 +289,9 @@ static bool GetCallbackProperty(napi_env env, napi_value obj, napi_ref &property
 
 static bool GetNamedJsFunction(napi_env env, napi_value object, const std::string &name, napi_ref &callback)
 {
+    if (CheckEmulator(env)) {
+        return false;
+    }
     napi_valuetype valueType = napi_undefined;
     NAPI_CALL_BASE(env, napi_typeof(env, object, &valueType), false);
     if (valueType != napi_object) {
@@ -307,13 +321,38 @@ static bool ParseContextForRegisterPlugin(napi_env env, napi_callback_info cbInf
     NAPI_CALL_BASE(env, napi_create_reference(env, argv[PARAM0], PARAM1, &jsPlugin.context), false);
     if (!GetNamedJsFunction(env, argv[PARAM0], "connectServer", jsPlugin.funcRef)) {
         DLP_LOG_ERROR(LABEL, "get connectServer is error.");
+        if (jsPlugin.context != nullptr) {
+            ReleaseNapiRefAsync(env, jsPlugin.context);
+            jsPlugin.context = nullptr;
+        }
+        if (jsPlugin.funcRef != nullptr) {
+            ReleaseNapiRefAsync(env, jsPlugin.funcRef);
+            jsPlugin.funcRef = nullptr;
+        }
         return false;
     }
     return true;
 }
 
+#ifdef SUPPORT_DLP_CREDENTIAL
+static void* DlpStaticHandle(napi_env env)
+{
+    if (g_dlpStaticHandle == nullptr) {
+        if (sizeof(void *) == SIZE_64_BIT) {
+            g_dlpStaticHandle = dlopen(DLP_CREDENTIAL_STATIC_PLP_64_PATH.c_str(), RTLD_LAZY);
+        } else {
+            g_dlpStaticHandle = dlopen(DLP_CREDENTIAL_STATIC_PLP_32_PATH.c_str(), RTLD_LAZY);
+        }
+    }
+    return g_dlpStaticHandle;
+}
+#endif
+
 static napi_value RegisterPlugin(napi_env env, napi_callback_info cbInfo)
 {
+    if (CheckEmulator(env)) {
+        return nullptr;
+    }
     JsDlpConnPlugin jsPlugin;
     if (!ParseContextForRegisterPlugin(env, cbInfo, jsPlugin)) {
         DlpNapiThrow(env, ERR_JS_PARAMETER_ERROR);
@@ -322,33 +361,29 @@ static napi_value RegisterPlugin(napi_env env, napi_callback_info cbInfo)
     uint64_t pluginId = 0;
     auto plugin = new (std::nothrow) NapiDlpConnectionPlugin(env, jsPlugin);
     if (plugin == nullptr) {
-        DLP_LOG_ERROR(LABEL, "malloc is error.");
+        DlpNapiThrow(env, DLP_SERVICE_ERROR_VALUE_INVALID);
         return nullptr;
     }
     int32_t res = 0;
 #ifdef SUPPORT_DLP_CREDENTIAL
     std::lock_guard<std::mutex> lock(g_lockDlpStatic);
-    if (g_dlpStaticHandle == nullptr) {
-        if (sizeof(void *) == SIZE_64_BIT) {
-            g_dlpStaticHandle = dlopen(DLP_CREDENTIAL_STATIC_PLP_64_PATH.c_str(), RTLD_LAZY);
-        } else {
-            g_dlpStaticHandle = dlopen(DLP_CREDENTIAL_STATIC_PLP_32_PATH.c_str(), RTLD_LAZY);
-        }
-        if (g_dlpStaticHandle == nullptr) {
-            delete plugin;
-            return nullptr;
-        }
+    if (DlpStaticHandle(env) == nullptr) {
+        delete plugin;
+        DlpNapiThrow(env, DLP_SERVICE_ERROR_VALUE_INVALID);
+        return nullptr;
     }
     void *func = dlsym(g_dlpStaticHandle, "Connection_Set");
     if (func == nullptr) {
         DLP_LOG_ERROR(LABEL, "get func is error.");
         delete plugin;
+        DlpNapiThrow(env, DLP_SERVICE_ERROR_VALUE_INVALID);
         return nullptr;
     }
     Connection_Set dlpFunc = reinterpret_cast<Connection_Set>(func);
     if (dlpFunc == nullptr) {
         DLP_LOG_ERROR(LABEL, "get dlpFunc is error.");
         delete plugin;
+        DlpNapiThrow(env, DLP_SERVICE_ERROR_VALUE_INVALID);
         return nullptr;
     }
     res = (*dlpFunc)(reinterpret_cast<void *>(plugin), &pluginId);
@@ -366,6 +401,9 @@ static napi_value RegisterPlugin(napi_env env, napi_callback_info cbInfo)
 
 static napi_value UnregisterPlugin(napi_env env, napi_callback_info cbInfo)
 {
+    if (CheckEmulator(env)) {
+        return nullptr;
+    }
     DLP_LOG_INFO(LABEL, "Enter UnregisterPlugin.");
     (void)cbInfo;
 #ifdef SUPPORT_DLP_CREDENTIAL
@@ -380,6 +418,9 @@ static napi_value UnregisterPlugin(napi_env env, napi_callback_info cbInfo)
 
 static napi_value JsConstructor(napi_env env, napi_callback_info cbinfo)
 {
+    if (CheckEmulator(env)) {
+        return nullptr;
+    }
     napi_value thisVar = nullptr;
     NAPI_CALL(env, napi_get_cb_info(env, cbinfo, nullptr, nullptr, &thisVar, nullptr));
     return thisVar;

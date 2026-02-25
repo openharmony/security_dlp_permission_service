@@ -76,6 +76,14 @@ static const std::unordered_map<int32_t, DLP_ErrCode> NATIVE_CODE_TO_C_CODE_MAP 
 };
 } // namespace
 
+static bool CheckEmulator()
+{
+#ifdef IS_EMULATOR
+    return true;
+#endif
+    return false;
+}
+
 static DLP_ErrCode ConvertApiResult(int32_t result)
 {
     auto iter = NATIVE_CODE_TO_C_CODE_MAP.find(result);
@@ -87,6 +95,9 @@ static DLP_ErrCode ConvertApiResult(int32_t result)
 
 DLP_ErrCode OH_DLP_GetDlpPermissionInfo(DLP_FileAccess *dlpFileAccess, uint32_t *flag)
 {
+    if (CheckEmulator()) {
+        return ERR_OH_CAPABILITY_NOT_SUPPORTED_EMULATOR;
+    }
     if (dlpFileAccess == nullptr || flag == nullptr) {
         DLP_LOG_ERROR(LABEL, "Invalid parameter.");
         return ERR_OH_INVALID_PARAMETER;
@@ -106,6 +117,9 @@ DLP_ErrCode OH_DLP_GetDlpPermissionInfo(DLP_FileAccess *dlpFileAccess, uint32_t 
 
 DLP_ErrCode OH_DLP_GetOriginalFileName(const char *fileName, char **originalFileName)
 {
+    if (CheckEmulator()) {
+        return ERR_OH_CAPABILITY_NOT_SUPPORTED_EMULATOR;
+    }
     *originalFileName = nullptr;
     if (fileName == nullptr) {
         DLP_LOG_ERROR(LABEL, "Invalid parameter.");
@@ -137,6 +151,9 @@ DLP_ErrCode OH_DLP_GetOriginalFileName(const char *fileName, char **originalFile
 
 DLP_ErrCode OH_DLP_IsInSandbox(bool *isInSandbox)
 {
+    if (CheckEmulator()) {
+        return ERR_OH_CAPABILITY_NOT_SUPPORTED_EMULATOR;
+    }
     if (isInSandbox == nullptr) {
         DLP_LOG_ERROR(LABEL, "Invalid parameter.");
         return ERR_OH_INVALID_PARAMETER;
@@ -150,6 +167,9 @@ DLP_ErrCode OH_DLP_IsInSandbox(bool *isInSandbox)
 
 DLP_ErrCode OH_DLP_SetSandboxAppConfig(const char *configInfo)
 {
+    if (CheckEmulator()) {
+        return ERR_OH_CAPABILITY_NOT_SUPPORTED_EMULATOR;
+    }
     if (configInfo == nullptr) {
         DLP_LOG_ERROR(LABEL, "Invalid parameter.");
         return ERR_OH_INVALID_PARAMETER;
@@ -164,6 +184,9 @@ DLP_ErrCode OH_DLP_SetSandboxAppConfig(const char *configInfo)
 
 DLP_ErrCode OH_DLP_GetSandboxAppConfig(char **configInfo)
 {
+    if (CheckEmulator()) {
+        return ERR_OH_CAPABILITY_NOT_SUPPORTED_EMULATOR;
+    }
     *configInfo = nullptr;
     std::string strConfigInfo = "";
     int32_t result = DlpPermissionKit::GetSandboxAppConfig(strConfigInfo);
@@ -183,6 +206,9 @@ DLP_ErrCode OH_DLP_GetSandboxAppConfig(char **configInfo)
 
 DLP_ErrCode OH_DLP_CleanSandboxAppConfig()
 {
+    if (CheckEmulator()) {
+        return ERR_OH_CAPABILITY_NOT_SUPPORTED_EMULATOR;
+    }
     int32_t result = DlpPermissionKit::CleanSandboxAppConfig();
     if (result != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "clean sandboxAppConfig error.");

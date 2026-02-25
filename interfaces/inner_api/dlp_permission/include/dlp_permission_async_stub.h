@@ -18,6 +18,7 @@
 
 #include <iremote_stub.h>
 #include <nocopyable.h>
+#include "dlp_permission_kit.h"
 #include "idlp_permission_callback.h"
 #include "dlp_permission_callback.h"
 
@@ -29,6 +30,7 @@ public:
     DISALLOW_COPY_AND_MOVE(DlpPermissionAsyncStub);
     explicit DlpPermissionAsyncStub(const std::shared_ptr<GenerateDlpCertificateCallback>& impl);
     explicit DlpPermissionAsyncStub(const std::shared_ptr<ParseDlpCertificateCallback>& impl);
+    explicit DlpPermissionAsyncStub(const std::shared_ptr<GetWaterMarkCallback>& impl);
     ~DlpPermissionAsyncStub() override = default;
 
     int32_t OnRemoteRequest(uint32_t code, MessageParcel& data, MessageParcel& reply, MessageOption& option) override;
@@ -36,13 +38,16 @@ public:
     void OnGenerateDlpCertificate(int32_t result, const std::vector<uint8_t>& cert) override;
     void OnParseDlpCertificate(int32_t result, const PermissionPolicy& policy,
         const std::vector<uint8_t>& cert) override;
+    void OnGetDlpWaterMark(int32_t result, const GeneralInfo& info) override;
 
 private:
     int32_t OnGenerateDlpCertificateStub(MessageParcel& data, MessageParcel& reply);
     int32_t OnParseDlpCertificateStub(MessageParcel& data, MessageParcel& reply);
+    int32_t OnGetDlpWaterMarkStub(MessageParcel& data, MessageParcel& reply);
 
     std::shared_ptr<GenerateDlpCertificateCallback> generateDlpCertificateCallback_ {nullptr};
     std::shared_ptr<ParseDlpCertificateCallback> parseDlpCertificateCallback_ {nullptr};
+    std::shared_ptr<GetWaterMarkCallback> getWaterMarkCallback_ {nullptr};
 };
 }  // namespace DlpPermission
 }  // namespace Security

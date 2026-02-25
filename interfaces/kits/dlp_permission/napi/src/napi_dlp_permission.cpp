@@ -43,6 +43,15 @@ namespace DlpPermission {
 
 using namespace OHOS::Security::DlpConnection;
 namespace {
+#ifdef IS_EMULATOR
+#define CheckEmulator(env)                                              \
+    do {                                                                \
+        DlpNapiThrow(env, DLP_DEVICE_ERROR_CAPABILITY_NOT_SUPPORTED_EMULATOR);   \
+        return nullptr;                                                 \
+    } while (0)
+#else
+#define CheckEmulator(env)
+#endif
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "DlpPermissionNapi"};
 std::mutex g_lockForOpenDlpFileSubscriber;
 std::set<OpenDlpFileSubscriberContext*> g_openDlpFileSubscribers;
@@ -54,43 +63,16 @@ const std::string DLP_FILE_CLASS_NAME = "dlpFile";
 static constexpr size_t MAX_TYPE_LEN = 64;
 }  // namespace
 
-static bool CheckPermission(napi_env env, const std::string& permission)
-{
-    Security::AccessToken::AccessTokenID selfToken = GetSelfTokenID();
-    int res = Security::AccessToken::AccessTokenKit::VerifyAccessToken(selfToken, permission);
-    if (res == Security::AccessToken::PermissionState::PERMISSION_GRANTED) {
-        DLP_LOG_INFO(LABEL, "Check permission %{public}s pass", permission.c_str());
-        return true;
-    }
-    DLP_LOG_ERROR(LABEL, "Check permission %{public}s fail", permission.c_str());
-    int32_t jsErrCode = ERR_JS_PERMISSION_DENIED;
-    NAPI_CALL_BASE(env, napi_throw(env, GenerateBusinessError(env, jsErrCode, GetJsErrMsg(jsErrCode))), false);
-    return false;
-}
-
-static napi_value BindingJsWithNative(napi_env env, napi_value* argv, size_t argc)
-{
-    napi_value instance = nullptr;
-    napi_value constructor = nullptr;
-    if (napi_get_reference_value(env, dlpFileRef_, &constructor) != napi_ok) {
-        return nullptr;
-    }
-    DLP_LOG_DEBUG(LABEL, "Get a reference to the global variable dlpFileRef_ complete");
-    if (napi_new_instance(env, constructor, argc, argv, &instance) != napi_ok) {
-        return nullptr;
-    }
-    DLP_LOG_DEBUG(LABEL, "New the js instance complete");
-    return instance;
-}
-
 napi_value NapiDlpPermission::GenerateDlpFile(napi_env env, napi_callback_info cbInfo)
 {
+    CheckEmulator(env);
     if (!IsSystemApp(env)) {
         return nullptr;
     }
     auto* asyncContext = new (std::nothrow) GenerateDlpFileAsyncContext(env);
     if (asyncContext == nullptr) {
         DLP_LOG_ERROR(LABEL, "insufficient memory for asyncContext!");
+        DlpNapiThrow(env, DLP_SERVICE_ERROR_VALUE_INVALID);
         return nullptr;
     }
     std::unique_ptr<GenerateDlpFileAsyncContext> asyncContextPtr { asyncContext };
@@ -167,7 +149,7 @@ void NapiDlpPermission::GenerateDlpFileComplete(napi_env env, napi_status status
 
         napi_value dlpPropertyJs = DlpPropertyToJs(env, asyncContext->property);
         napi_value argv[PARAM_SIZE_TWO] = {nativeObjJs, dlpPropertyJs};
-        napi_value instance = BindingJsWithNative(env, argv, PARAM_SIZE_TWO);
+        napi_value instance = BindingJsWithNative(env, argv, PARAM_SIZE_TWO, dlpFileRef_);
         if (instance == nullptr) {
             DLP_LOG_ERROR(LABEL, "native instance binding fail");
             asyncContext->errCode = DLP_NAPI_ERROR_NATIVE_BINDING_FAIL;
@@ -181,12 +163,14 @@ void NapiDlpPermission::GenerateDlpFileComplete(napi_env env, napi_status status
 
 napi_value NapiDlpPermission::OpenDlpFile(napi_env env, napi_callback_info cbInfo)
 {
+    CheckEmulator(env);
     if (!IsSystemApp(env)) {
         return nullptr;
     }
     auto* asyncContext = new (std::nothrow) DlpFileAsyncContext(env);
     if (asyncContext == nullptr) {
         DLP_LOG_ERROR(LABEL, "insufficient memory for asyncContext!");
+        DlpNapiThrow(env, DLP_SERVICE_ERROR_VALUE_INVALID);
         return nullptr;
     }
     std::unique_ptr<DlpFileAsyncContext> asyncContextPtr { asyncContext };
@@ -245,28 +229,6 @@ void NapiDlpPermission::OpenDlpFileExcute(napi_env env, void* data)
             asyncContext->appId);
 }
 
-static void GetDlpProperty(std::shared_ptr<DlpFile>& dlpFileNative, DlpProperty& property)
-{
-    PermissionPolicy policy;
-    dlpFileNative->GetPolicy(policy);
-    std::string contactAccount;
-    dlpFileNative->GetContactAccount(contactAccount);
-    std::string fileId;
-    dlpFileNative->GetFileId(fileId);
-    property = {
-        .ownerAccount = policy.ownerAccount_,
-        .ownerAccountId = policy.ownerAccountId_,
-        .authUsers = policy.authUsers_,
-        .contactAccount = contactAccount,
-        .ownerAccountType = policy.ownerAccountType_,
-        .offlineAccess = dlpFileNative->GetOfflineAccess(),
-        .supportEveryone = policy.supportEveryone_,
-        .everyonePerm = policy.everyonePerm_,
-        .expireTime = policy.expireTime_,
-        .allowedOpenCount = policy.allowedOpenCount_,
-    };
-}
-
 void NapiDlpPermission::OpenDlpFileComplete(napi_env env, napi_status status, void* data)
 {
     auto asyncContext = reinterpret_cast<DlpFileAsyncContext*>(data);
@@ -288,7 +250,7 @@ void NapiDlpPermission::OpenDlpFileComplete(napi_env env, napi_status status, vo
         GetDlpProperty(asyncContext->dlpFileNative, property);
         napi_value dlpPropertyJs = DlpPropertyToJs(env, property);
         napi_value argv[PARAM_SIZE_TWO] = {nativeObjJs, dlpPropertyJs};
-        napi_value instance = BindingJsWithNative(env, argv, PARAM_SIZE_TWO);
+        napi_value instance = BindingJsWithNative(env, argv, PARAM_SIZE_TWO, dlpFileRef_);
         if (instance == nullptr) {
             asyncContext->errCode = DLP_NAPI_ERROR_NATIVE_BINDING_FAIL;
         } else {
@@ -311,9 +273,11 @@ void NapiDlpPermission::OpenDlpFileComplete(napi_env env, napi_status status, vo
 
 napi_value NapiDlpPermission::IsDlpFile(napi_env env, napi_callback_info cbInfo)
 {
+    CheckEmulator(env);
     auto* asyncContext = new (std::nothrow) DlpFileAsyncContext(env);
     if (asyncContext == nullptr) {
         DLP_LOG_ERROR(LABEL, "insufficient memory for asyncContext!");
+        DlpNapiThrow(env, DLP_SERVICE_ERROR_VALUE_INVALID);
         return nullptr;
     }
     std::unique_ptr<DlpFileAsyncContext> asyncContextPtr { asyncContext };
@@ -372,6 +336,7 @@ void NapiDlpPermission::IsDlpFileComplete(napi_env env, napi_status status, void
 
 napi_value NapiDlpPermission::AddDlpLinkFile(napi_env env, napi_callback_info cbInfo)
 {
+    CheckEmulator(env);
     if (!IsSystemApp(env)) {
         return nullptr;
     }
@@ -439,6 +404,7 @@ void NapiDlpPermission::AddDlpLinkFileComplete(napi_env env, napi_status status,
 
 napi_value NapiDlpPermission::StopDlpLinkFile(napi_env env, napi_callback_info cbInfo)
 {
+    CheckEmulator(env);
     if (!IsSystemApp(env)) {
         return nullptr;
     }
@@ -506,6 +472,7 @@ void NapiDlpPermission::StopDlpLinkFileComplete(napi_env env, napi_status status
 
 napi_value NapiDlpPermission::RestartDlpLinkFile(napi_env env, napi_callback_info cbInfo)
 {
+    CheckEmulator(env);
     if (!IsSystemApp(env)) {
         return nullptr;
     }
@@ -573,6 +540,7 @@ void NapiDlpPermission::RestartDlpLinkFileComplete(napi_env env, napi_status sta
 
 napi_value NapiDlpPermission::ReplaceDlpLinkFile(napi_env env, napi_callback_info cbInfo)
 {
+    CheckEmulator(env);
     if (!IsSystemApp(env)) {
         return nullptr;
     }
@@ -640,6 +608,7 @@ void NapiDlpPermission::ReplaceDlpLinkFileComplete(napi_env env, napi_status sta
 
 napi_value NapiDlpPermission::DeleteDlpLinkFile(napi_env env, napi_callback_info cbInfo)
 {
+    CheckEmulator(env);
     if (!IsSystemApp(env)) {
         return nullptr;
     }
@@ -707,6 +676,7 @@ void NapiDlpPermission::DeleteDlpLinkFileComplete(napi_env env, napi_status stat
 
 napi_value NapiDlpPermission::RecoverDlpFile(napi_env env, napi_callback_info cbInfo)
 {
+    CheckEmulator(env);
     if (!IsSystemApp(env)) {
         return nullptr;
     }
@@ -771,6 +741,7 @@ void NapiDlpPermission::RecoverDlpFileComplete(napi_env env, napi_status status,
 
 napi_value NapiDlpPermission::CloseDlpFile(napi_env env, napi_callback_info cbInfo)
 {
+    CheckEmulator(env);
     if (!IsSystemApp(env)) {
         return nullptr;
     }
@@ -831,6 +802,7 @@ void NapiDlpPermission::CloseDlpFileComplete(napi_env env, napi_status status, v
 
 napi_value NapiDlpPermission::InstallDlpSandbox(napi_env env, napi_callback_info cbInfo)
 {
+    CheckEmulator(env);
     if (!IsSystemApp(env)) {
         return nullptr;
     }
@@ -838,6 +810,7 @@ napi_value NapiDlpPermission::InstallDlpSandbox(napi_env env, napi_callback_info
     auto* asyncContext = new (std::nothrow) DlpSandboxAsyncContext(env);
     if (asyncContext == nullptr) {
         DLP_LOG_ERROR(LABEL, "insufficient memory for asyncContext!");
+        DlpNapiThrow(env, DLP_SERVICE_ERROR_VALUE_INVALID);
         return nullptr;
     }
     std::unique_ptr<DlpSandboxAsyncContext> asyncContextPtr { asyncContext };
@@ -895,6 +868,7 @@ void NapiDlpPermission::InstallDlpSandboxComplete(napi_env env, napi_status stat
 
 napi_value NapiDlpPermission::UninstallDlpSandbox(napi_env env, napi_callback_info cbInfo)
 {
+    CheckEmulator(env);
     if (!IsSystemApp(env)) {
         return nullptr;
     }
@@ -957,9 +931,11 @@ void NapiDlpPermission::UninstallDlpSandboxComplete(napi_env env, napi_status st
 
 napi_value NapiDlpPermission::GetDLPPermissionInfo(napi_env env, napi_callback_info cbInfo)
 {
+    CheckEmulator(env);
     auto* asyncContext = new (std::nothrow) GetPermInfoAsyncContext(env);
     if (asyncContext == nullptr) {
         DLP_LOG_ERROR(LABEL, "insufficient memory for asyncContext!");
+        DlpNapiThrow(env, DLP_SERVICE_ERROR_VALUE_INVALID);
         return nullptr;
     }
     std::unique_ptr<GetPermInfoAsyncContext> asyncContextPtr { asyncContext };
@@ -1016,9 +992,11 @@ void NapiDlpPermission::GetDLPPermissionInfoComplete(napi_env env, napi_status s
 
 napi_value NapiDlpPermission::IsInSandbox(napi_env env, napi_callback_info cbInfo)
 {
+    CheckEmulator(env);
     auto* asyncContext = new (std::nothrow) IsInSandboxAsyncContext(env);
     if (asyncContext == nullptr) {
         DLP_LOG_ERROR(LABEL, "insufficient memory for asyncContext!");
+        DlpNapiThrow(env, DLP_SERVICE_ERROR_VALUE_INVALID);
         return nullptr;
     }
     std::unique_ptr<IsInSandboxAsyncContext> asyncContextPtr { asyncContext };
@@ -1075,9 +1053,11 @@ void NapiDlpPermission::IsInSandboxComplete(napi_env env, napi_status status, vo
 
 napi_value NapiDlpPermission::GetDlpSupportFileType(napi_env env, napi_callback_info cbInfo)
 {
+    CheckEmulator(env);
     auto* asyncContext = new (std::nothrow) GetDlpSupportFileTypeAsyncContext(env);
     if (asyncContext == nullptr) {
         DLP_LOG_ERROR(LABEL, "insufficient memory for asyncContext!");
+        DlpNapiThrow(env, DLP_SERVICE_ERROR_VALUE_INVALID);
         return nullptr;
     }
     std::unique_ptr<GetDlpSupportFileTypeAsyncContext> asyncContextPtr { asyncContext };
@@ -1250,6 +1230,7 @@ napi_value NapiDlpPermission::SubscribeOpenDlpFile(const napi_env env, const nap
 
 napi_value NapiDlpPermission::Subscribe(napi_env env, napi_callback_info cbInfo)
 {
+    CheckEmulator(env);
     size_t argc = PARAM_SIZE_TWO;
     napi_value argv[PARAM_SIZE_TWO] = {nullptr};
     napi_value thisVar = nullptr;
@@ -1318,6 +1299,7 @@ napi_value NapiDlpPermission::UnSubscribeOpenDlpFile(const napi_env env, napi_re
 
 napi_value NapiDlpPermission::UnSubscribe(napi_env env, napi_callback_info cbInfo)
 {
+    CheckEmulator(env);
     size_t argc = PARAM_SIZE_TWO;
     napi_value argv[PARAM_SIZE_TWO] = {nullptr};
     napi_value thisVar = nullptr;
@@ -1352,9 +1334,11 @@ napi_value NapiDlpPermission::UnSubscribe(napi_env env, napi_callback_info cbInf
 
 napi_value NapiDlpPermission::GetDlpGatheringPolicy(napi_env env, napi_callback_info cbInfo)
 {
+    CheckEmulator(env);
     auto* asyncContext = new (std::nothrow) GetGatheringPolicyContext(env);
     if (asyncContext == nullptr) {
         DLP_LOG_ERROR(LABEL, "insufficient memory for asyncContext!");
+        DlpNapiThrow(env, DLP_SERVICE_ERROR_VALUE_INVALID);
         return nullptr;
     }
     std::unique_ptr<GetGatheringPolicyContext> asyncContextPtr { asyncContext };
@@ -1432,6 +1416,7 @@ napi_value NapiDlpPermission::DlpFile(napi_env env, napi_callback_info cbInfo)
 
 napi_value NapiDlpPermission::SetRetentionState(napi_env env, napi_callback_info cbInfo)
 {
+    CheckEmulator(env);
     auto* asyncContext = new (std::nothrow) RetentionStateAsyncContext(env);
     if (asyncContext == nullptr) {
         DLP_LOG_ERROR(LABEL, "insufficient memory for asyncContext!");
@@ -1482,6 +1467,7 @@ void NapiDlpPermission::SetRetentionStateComplete(napi_env env, napi_status stat
 
 napi_value NapiDlpPermission::CancelRetentionState(napi_env env, napi_callback_info cbInfo)
 {
+    CheckEmulator(env);
     auto* asyncContext = new (std::nothrow) RetentionStateAsyncContext(env);
     if (asyncContext == nullptr) {
         DLP_LOG_ERROR(LABEL, "insufficient memory for asyncContext!");
@@ -1532,10 +1518,12 @@ void NapiDlpPermission::CancelRetentionStateComplete(napi_env env, napi_status s
 
 napi_value NapiDlpPermission::GetRetentionSandboxList(napi_env env, napi_callback_info cbInfo)
 {
+    CheckEmulator(env);
     DLP_LOG_DEBUG(LABEL, "napi_create_async_work running");
     auto* asyncContext = new (std::nothrow) GetRetentionSandboxListAsyncContext(env);
     if (asyncContext == nullptr) {
         DLP_LOG_ERROR(LABEL, "insufficient memory for asyncContext!");
+        DlpNapiThrow(env, DLP_SERVICE_ERROR_VALUE_INVALID);
         return nullptr;
     }
     std::unique_ptr<GetRetentionSandboxListAsyncContext> asyncContextPtr { asyncContext };
@@ -1584,10 +1572,12 @@ void NapiDlpPermission::GetRetentionSandboxListComplete(napi_env env, napi_statu
 
 napi_value NapiDlpPermission::GetDLPFileVisitRecord(napi_env env, napi_callback_info cbInfo)
 {
+    CheckEmulator(env);
     DLP_LOG_DEBUG(LABEL, "napi_create_async_work running");
     auto* asyncContext = new (std::nothrow) GetDLPFileVisitRecordAsyncContext(env);
     if (asyncContext == nullptr) {
         DLP_LOG_ERROR(LABEL, "insufficient memory for asyncContext!");
+        DlpNapiThrow(env, DLP_SERVICE_ERROR_VALUE_INVALID);
         return nullptr;
     }
     std::unique_ptr<GetDLPFileVisitRecordAsyncContext> asyncContextPtr { asyncContext };
@@ -1635,6 +1625,7 @@ void NapiDlpPermission::GetDLPFileVisitRecordComplete(napi_env env, napi_status 
 
 napi_value NapiDlpPermission::SetSandboxAppConfig(napi_env env, napi_callback_info cbInfo)
 {
+    CheckEmulator(env);
     DLP_LOG_DEBUG(LABEL, "napi_create_async_work SetSandboxAppConfig running");
     auto asyncContextPtr = std::make_unique<SandboxAppConfigAsyncContext>(env);
     if (!GetSandboxAppConfigParams(env, cbInfo, asyncContextPtr.get())) {
@@ -1681,6 +1672,7 @@ void NapiDlpPermission::SetSandboxAppConfigComplete(napi_env env, napi_status st
 
 napi_value NapiDlpPermission::CleanSandboxAppConfig(napi_env env, napi_callback_info cbInfo)
 {
+    CheckEmulator(env);
     auto asyncContextPtr = std::make_unique<SandboxAppConfigAsyncContext>(env);
     napi_value result = nullptr;
     DLP_LOG_DEBUG(LABEL, "Create promise");
@@ -1723,6 +1715,7 @@ void NapiDlpPermission::CleanSandboxAppConfigComplete(napi_env env, napi_status 
 
 napi_value NapiDlpPermission::GetSandboxAppConfig(napi_env env, napi_callback_info cbInfo)
 {
+    CheckEmulator(env);
     auto asyncContextPtr = std::make_unique<SandboxAppConfigAsyncContext>(env);
     if (!GetThirdInterfaceParams(env, cbInfo, *asyncContextPtr.get())) {
         return nullptr;
@@ -1770,6 +1763,7 @@ void NapiDlpPermission::GetSandboxAppConfigComplete(napi_env env, napi_status st
 
 napi_value NapiDlpPermission::IsDLPFeatureProvided(napi_env env, napi_callback_info cbInfo)
 {
+    CheckEmulator(env);
     auto asyncContextPtr = std::make_unique<IsDLPFeatureProvidedAsyncContext>(env);
     if (!GetThirdInterfaceParams(env, cbInfo, *asyncContextPtr.get())) {
         return nullptr;
@@ -1814,9 +1808,11 @@ void NapiDlpPermission::IsDLPFeatureProvidedComplete(napi_env env, napi_status s
 
 napi_value NapiDlpPermission::GetDLPSuffix(napi_env env, napi_callback_info cbInfo)
 {
+    CheckEmulator(env);
     GetSuffixAsyncContext *asyncContext = new (std::nothrow) GetSuffixAsyncContext(env);
     if (asyncContext == nullptr) {
         DLP_LOG_ERROR(LABEL, "insufficient memory for GetSuffixAsyncContext!");
+        DlpNapiThrow(env, DLP_PARSE_ERROR_OPERATION_UNSUPPORTED);
         return nullptr;
     }
     std::unique_ptr<GetSuffixAsyncContext> callbackPtr { asyncContext };
@@ -1828,9 +1824,11 @@ napi_value NapiDlpPermission::GetDLPSuffix(napi_env env, napi_callback_info cbIn
 
 napi_value NapiDlpPermission::GetOriginalFileName(napi_env env, napi_callback_info cbInfo)
 {
+    CheckEmulator(env);
     GetOriginalFileAsyncContext *asyncContext = new (std::nothrow) GetOriginalFileAsyncContext(env);
     if (asyncContext == nullptr) {
         DLP_LOG_ERROR(LABEL, "insufficient memory for GetFileNameAsyncContext!");
+        DlpNapiThrow(env, DLP_PARSE_ERROR_OPERATION_UNSUPPORTED);
         return nullptr;
     }
     std::unique_ptr<GetOriginalFileAsyncContext> callbackPtr { asyncContext };
@@ -1859,6 +1857,7 @@ bool NapiDlpPermission::IsSystemApp(napi_env env)
 
 napi_value NapiDlpPermission::StartDLPManagerForResult(napi_env env, napi_callback_info cbInfo)
 {
+    CheckEmulator(env);
     DLP_LOG_INFO(LABEL, "begin StartDLPManagerForResult");
     size_t argc = PARAM_SIZE_TWO;
     size_t maxArgcNum = PARAM_SIZE_TWO;
@@ -1897,10 +1896,6 @@ napi_value NapiDlpPermission::StartDLPManagerForResult(napi_env env, napi_callba
 
 napi_value NapiDlpPermission::ProcessDomainAccount(napi_env env, napi_callback_info cbInfo)
 {
-    if (!IsSystemApp(env)) {
-        return nullptr;
-    }
-
     auto asyncContextPtr = std::make_unique<GenerateDlpFileForEnterpriseAsyncContext>(env);
     if (!GetGenerateDlpFileForDomainParam(env, cbInfo, *asyncContextPtr)) {
         return nullptr;
@@ -1924,6 +1919,7 @@ napi_value NapiDlpPermission::ProcessDomainAccount(napi_env env, napi_callback_i
 
 napi_value NapiDlpPermission::GenerateDlpFileForEnterprise(napi_env env, napi_callback_info cbInfo)
 {
+    CheckEmulator(env);
     auto asyncContextPtr = std::make_unique<GenerateDlpFileForEnterpriseAsyncContext>(env);
     if (!GetAccountTypeInEnterpriseParam(env, cbInfo, *asyncContextPtr)) {
         return nullptr;
@@ -1966,6 +1962,7 @@ void NapiDlpPermission::GenerateDlpFileForEnterpriseComplete(napi_env env, napi_
 
 napi_value NapiDlpPermission::DecryptDlpFile(napi_env env, napi_callback_info cbInfo)
 {
+    CheckEmulator(env);
     auto asyncContextPtr = std::make_unique<DecryptDlpFileAsyncContext>(env);
 
     if (!GetDecryptDlpFileParam(env, cbInfo, *asyncContextPtr)) {
@@ -2020,6 +2017,7 @@ void NapiDlpPermission::DecryptDlpFileComplete(napi_env env, napi_status status,
 
 napi_value NapiDlpPermission::QueryDlpPolicy(napi_env env, napi_callback_info cbInfo)
 {
+    CheckEmulator(env);
     auto asyncContextPtr = std::make_unique<QueryDlpPolicyAsyncContext>(env);
 
     if (!GetQueryDlpPolicyParam(env, cbInfo, *asyncContextPtr)) {
@@ -2075,6 +2073,7 @@ void NapiDlpPermission::QueryDlpPolicyComplete(napi_env env, napi_status status,
 
 napi_value NapiDlpPermission::SetEnterprisePolicy(napi_env env, napi_callback_info cbInfo)
 {
+    CheckEmulator(env);
     DLP_LOG_INFO(LABEL, "Enter SetEnterprisePolicy.");
     auto* asyncContext = new (std::nothrow) SetEnterprisePolicyContext(env);
     if (asyncContext == nullptr) {
@@ -2086,7 +2085,7 @@ napi_value NapiDlpPermission::SetEnterprisePolicy(napi_env env, napi_callback_in
     if (!GetSetEnterprisePolicyParams(env, cbInfo, *asyncContext)) {
         return nullptr;
     }
-    asyncContext->errCode = DlpPermissionKit::SetEnterprisePolicy(asyncContext->policy.policyString);
+    asyncContext->errCode = DlpPermissionKit::SetEnterprisePolicy(asyncContext->policy);
     if (asyncContext->errCode != DLP_OK) {
         DlpNapiThrow(env, asyncContext->errCode, GetJsErrMsg(asyncContext->errCode));
     }

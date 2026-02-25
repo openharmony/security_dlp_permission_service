@@ -29,6 +29,7 @@
 #include "retention_sandbox_info.h"
 #include "visited_dlp_file_info.h"
 #include "want.h"
+#include "ability_info.h"
 
 namespace OHOS {
 namespace Security {
@@ -61,6 +62,20 @@ public:
     bool isCallBack_ = false;
     std::mutex parseMtx_;
     std::condition_variable parseCv_;
+};
+
+class GetWaterMarkCallback : public GeneralCallback {
+public:
+    GetWaterMarkCallback() = default;
+    virtual ~GetWaterMarkCallback() = default;
+
+    void OnCall(int32_t result, const GeneralInfo& info) override;
+
+    int32_t result_ = -1;
+    GeneralInfo info_;
+    bool isCallBack_ = false;
+    std::mutex getWaterMarkMtx_;
+    std::condition_variable getWaterMarkCv_;
 };
 
 class DlpPermissionKit {
@@ -97,8 +112,12 @@ public:
     static int32_t IsDLPFeatureProvided(bool& isProvideDLPFeature);
     static int32_t SetReadFlag(uint32_t uid);
     static int32_t SetDlpFeature(uint32_t dlpFeatureInfo, bool& statusSetInfo);
-    static int32_t SetEnterprisePolicy(const std::string& policy);
-    static int32_t SetNotOwnerAndReadOnce(const std::string& uri, bool isNotOwnerAndReadOnce);
+    static int32_t SetEnterprisePolicy(EnterprisePolicy policy);
+    static int32_t SetFileInfo(const std::string& uri, const FileInfo& fileInfo);
+    static int32_t GetWaterMark(const bool waterMarkConfig);
+    static int32_t GetDomainAccountNameInfo(std::string& accountNameInfo);
+    static int32_t GetAbilityInfos(const AAFwk::Want& want, int32_t flags, int32_t userId,
+        std::vector<AppExecFwk::AbilityInfo> &abilityInfos);
 };
 }  // namespace DlpPermission
 }  // namespace Security

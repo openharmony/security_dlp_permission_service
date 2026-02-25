@@ -64,6 +64,8 @@ static const std::string CUSTOM_PROPERTY = "customProperty";
 const std::string PATH_CACHE = "cache";
 const std::string FILEID = "fileId";
 const std::string ALLOWED_OPEN_COUNT = "allowedOpenCount";
+const std::string WATERMARK_CONFIG = "waterMarkConfig";
+const std::string COUNTDOWN = "countdown";
 
 static const uint32_t FILE_HEAD = 8;
 static const uint32_t MAX_DLP_HEAD_SIZE = 1024;
@@ -160,7 +162,6 @@ static void SerializeEveryoneInfo(const PermissionPolicy& policy, json& permInfo
         json rightInfoJson;
         SerializePermInfo(policy.everyonePerm_, rightInfoJson);
         permInfoJson[EVERYONE_INDEX][RIGHT_INDEX] = rightInfoJson;
-        return;
     }
 }
 
@@ -177,6 +178,8 @@ static int32_t SerializePermissionPolicy(const PermissionPolicy& policy, std::st
     policyJson[CUSTOM_PROPERTY] = policy.customProperty_;
     policyJson[FILEID] = policy.fileId;
     policyJson[ALLOWED_OPEN_COUNT] = policy.allowedOpenCount_;
+    policyJson[WATERMARK_CONFIG] = policy.waterMarkConfig_;
+    policyJson[COUNTDOWN] = policy.countdown_;
     SerializeEveryoneInfo(policy, policyJson);
     policyString = policyJson.dump();
     return DLP_OK;
@@ -342,7 +345,7 @@ int32_t EnterpriseSpaceDlpPermissionKit::EncryptEnterpriseDlpFile(DlpProperty pr
     filePtr = std::make_shared<DlpRawFile>(dlpFileFd, realFileType);
     std::string appId;
     if (!DlpUtils::GetAppIdFromToken(appId)) {
-        DLP_LOG_ERROR(LABEL, "cat get the apid");
+        DLP_LOG_ERROR(LABEL, "cat get the appId");
         return DLP_PARSE_ERROR_VALUE_INVALID;
     }
     filePtr->SetAppId(appId);
@@ -417,7 +420,7 @@ uint32_t EnterpriseSpaceDlpPermissionKit::DecryptRawDlpFileAndGetAccountType(int
         return INVALID_ACCOUNT;
     }
     fileLen = static_cast<uint64_t>(readLen);
-    (void)lseek(dlpFileFd, 0, SEEK_SET);
+    LSEEK_AND_CHECK(dlpFileFd, 0, SEEK_SET, INVALID_ACCOUNT, LABEL);
     if (fileLen <= FILE_HEAD) {
         DLP_LOG_ERROR(LABEL, "file size is error");
         return INVALID_ACCOUNT;
@@ -446,7 +449,7 @@ uint32_t EnterpriseSpaceDlpPermissionKit::DecryptRawDlpFileAndGetAccountType(int
         return INVALID_ACCOUNT;
     }
     memset_s(buff, head.certSize + 1, 0, head.certSize + 1);
-    (void)lseek(dlpFileFd, head.certOffset, SEEK_SET);
+    LSEEK_AND_CHECK(dlpFileFd, head.certOffset, SEEK_SET, INVALID_ACCOUNT, LABEL);
     if (read(dlpFileFd, buff, head.certSize) != head.certSize) {
         delete []buff;
         DLP_LOG_ERROR(LABEL, "can not read dlp file cert, %{public}s", strerror(errno));

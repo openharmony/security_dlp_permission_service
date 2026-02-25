@@ -77,10 +77,21 @@ typedef struct AuthUserInfo {
 
 typedef struct SandboxInfo : public Parcelable {
     int32_t appIndex = -1;
+    int32_t bindAppIndex = -1;
     uint32_t tokenId = 0;
     bool Marshalling(Parcel &parcel) const;
     static SandboxInfo* Unmarshalling(Parcel &data);
 } SandboxInfo;
+
+typedef struct FileInfo : public Parcelable {
+    bool isNotOwnerAndReadOnce = false;
+    bool isWatermark = false;
+    std::string accountName = "";
+    std::string maskInfo = "";
+    std::string fileId = "";
+    bool Marshalling(Parcel &parcel) const;
+    static FileInfo* Unmarshalling(Parcel &data);
+} FileInfo;
 
 enum ActionType : uint32_t {
     NOTOPEN = 0,
@@ -93,6 +104,10 @@ struct CustomProperty {
 
 struct EnterprisePolicy {
     std::string policyString = "";
+};
+
+struct GeneralInfo {
+    bool SetWaterMark = false;
 };
 
 struct DlpProperty {
@@ -110,6 +125,7 @@ struct DlpProperty {
     std::string fileId;
     int32_t allowedOpenCount = 0;
     bool waterMarkConfig = false;
+    int32_t countdown = 0;
 };
 
 class PermissionPolicy final {
@@ -134,6 +150,8 @@ public:
     uint32_t GetHmacKeyLen() const;
     int32_t CheckActionUponExpiry();
     int32_t GetAllowedOpenCount() const;
+    bool GetwaterMarkConfig() const;
+    int32_t GetCountdown() const;
 
     std::string ownerAccount_;
     std::string ownerAccountId_;
@@ -154,6 +172,10 @@ public:
     std::string fileId = "";
     std::string appId = "";
     int32_t allowedOpenCount_ = 0;
+    bool waterMarkConfig_ = false;
+    int32_t countdown_ = 0;
+    bool canFindWaterMarkConfig_ = false;
+    bool canFindCountdown_ = false;
 
 private:
     uint8_t* aeskey_;

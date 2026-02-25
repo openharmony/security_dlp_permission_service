@@ -23,6 +23,7 @@
 #include <unordered_map>
 #include "dlp_file.h"
 #include "dlp_permission_log.h"
+#include "dlp_permission_kit.h"
 #include "dlp_zip.h"
 #include "file_uri.h"
 #include "securec.h"
@@ -121,6 +122,76 @@ static const std::unordered_map<std::string, std::string> SUFFIX_MIMETYPE_MAP = 
     {"ogg", "audio/mp3"},
     {"amr", "audio/mp3"},
     {"m4b", "audio/mp3"},
+    {"pot", "application/vnd.ms-powerpoint"},
+    {"avif", "image/jpeg"},
+    {"svgz", "image/jpeg"},
+    {"raw", "image/jpeg"},
+    {"ief", "image/jpeg"},
+    {"jp2", "image/jpeg"},
+    {"jpg2", "image/jpeg"},
+    {"jpx", "image/jpeg"},
+    {"jpf", "image/jpeg"},
+    {"pcx", "image/jpeg"},
+    {"djvu", "image/jpeg"},
+    {"djv", "image/jpeg"},
+    {"crw", "image/jpeg"},
+    {"ras", "image/jpeg"},
+    {"cdr", "image/jpeg"},
+    {"pat", "image/jpeg"},
+    {"cdt", "image/jpeg"},
+    {"cpt", "image/jpeg"},
+    {"erf", "image/jpeg"},
+    {"art", "image/jpeg"},
+    {"jng", "image/jpeg"},
+    {"orf", "image/jpeg"},
+    {"pnm", "image/jpeg"},
+    {"pbm", "image/jpeg"},
+    {"pgm", "image/jpeg"},
+    {"ppm", "image/jpeg"},
+    {"rgb", "image/jpeg"},
+    {"xbm", "image/jpeg"},
+    {"xwd", "image/jpeg"},
+    {"yt", "video/mp4"},
+    {"mpe", "video/mp4"},
+    {"qt", "video/mp4"},
+    {"mpv", "video/mp4"},
+    {"flv", "video/mp4"},
+    {"rmvb", "video/mp4"},
+    {"axv", "video/mp4"},
+    {"dv", "video/mp4"},
+    {"fli", "video/mp4"},
+    {"ogv", "video/mp4"},
+    {"mxu", "video/mp4"},
+    {"lsf", "video/mp4"},
+    {"lsx", "video/mp4"},
+    {"mng", "video/mp4"},
+    {"asx", "video/mp4"},
+    {"wm", "video/mp4"},
+    {"wmv", "video/mp4"},
+    {"wmx", "video/mp4"},
+    {"wvx", "video/mp4"},
+    {"movie", "video/mp4"},
+    {"ac3", "audio/mp3"},
+    {"imy", "audio/mp3"},
+    {"rtttl", "audio/mp3"},
+    {"xmf", "audio/mp3"},
+    {"mxmf", "audio/mp3"},
+    {"m4p", "audio/mp3"},
+    {"m3u", "audio/mp3"},
+    {"smf", "audio/mp3"},
+    {"mka", "audio/mp3"},
+    {"ra", "audio/mp3"},
+    {"snd", "audio/mp3"},
+    {"mp2", "audio/mp3"},
+    {"csv", "text/csv"},
+    {"rtf", "text/csv"},
+    {"xml", "text/csv"},
+    {"cpp", "text/csv"},
+    {"cxx", "text/csv"},
+    {"cc", "text/csv"},
+    {"html", "text/csv"},
+    {"htm", "text/csv"},
+    {"java", "text/csv"},
 };
 
 static bool IsDlpFileName(const std::string& dlpFileName)
@@ -238,9 +309,10 @@ bool DlpFileKits::IsDlpFile(int32_t dlpFd)
         IsValidEnterpriseDlpHeader(head, dlpHeaderSize);
 }
 
-static bool GetIsReadOnce(const int32_t& fd, std::string& generateInfoStr)
+static bool GetIsReadOnceOrWaterMark(const int32_t& fd, const std::string& generateInfoStr)
 {
     int32_t allowedOpenCount = 0;
+    bool waterMarkConfig = false;
     if (IsZipFile(fd)) {
         GenerateInfoParams params;
         if (ParseDlpGeneralInfo(generateInfoStr, params) != DLP_OK) {
@@ -248,8 +320,9 @@ static bool GetIsReadOnce(const int32_t& fd, std::string& generateInfoStr)
             return false;
         }
         allowedOpenCount = params.allowedOpenCount;
+        waterMarkConfig = params.waterMarkConfig;
     } else {
-        int32_t res = DlpUtils::GetRawFileAllowedOpenCount(fd, allowedOpenCount);
+        int32_t res = DlpUtils::GetRawFileAllowedOpenCount(fd, allowedOpenCount, waterMarkConfig);
         if (res != DLP_OK) {
             DLP_LOG_ERROR(LABEL, "GetRawFileAllowedOpenCount error");
             return false;
@@ -258,6 +331,10 @@ static bool GetIsReadOnce(const int32_t& fd, std::string& generateInfoStr)
 
     if (allowedOpenCount > 0) {
         DLP_LOG_INFO(LABEL, "allowedOpenCount is bigger than 0");
+        return true;
+    }
+    if (waterMarkConfig) {
+        DLP_LOG_INFO(LABEL, "waterMarkConfig is true");
         return true;
     }
     return false;
@@ -282,9 +359,9 @@ static void SetWantType(Want& want, const int32_t& fd)
         DLP_LOG_INFO(LABEL, "GetRealTypeWithFd empty");
         want.SetType("image/jpeg");
     }
-    bool isReadOnce = GetIsReadOnce(fd, generateInfoStr);
-    DLP_LOG_DEBUG(LABEL, "isReadOnce %{public}d", isReadOnce);
-    if (isReadOnce) {
+    bool isReadOnceOrWaterMark = GetIsReadOnceOrWaterMark(fd, generateInfoStr);
+    DLP_LOG_DEBUG(LABEL, "isReadOnceOrWaterMark %{public}d", isReadOnceOrWaterMark);
+    if (isReadOnceOrWaterMark) {
         want.SetType("image/jpeg");
     }
 }
@@ -340,17 +417,7 @@ static int32_t ConvertAbilityInfoWithBundleName(const std::string &abilityName, 
         DLP_LOG_ERROR(LABEL, "Get os account localId error, %{public}d", ret);
         return DLP_PARSE_ERROR_GET_ACCOUNT_FAIL;
     }
-
-    auto bundleMgrProxy = DlpUtils::GetBundleMgrProxy();
-    if (bundleMgrProxy == nullptr) {
-        return DLP_SERVICE_ERROR_IPC_REQUEST_FAIL;
-    }
-    ret = bundleMgrProxy->QueryAbilityInfosV9(want, flags, userId, abilityInfos);
-    if (ret != ERR_OK) {
-        DLP_LOG_ERROR(LABEL, "Get ability info error, %{public}d", ret);
-        return DLP_PARSE_ERROR_BMS_ERROR;
-    }
-    return DLP_OK;
+    return DlpPermissionKit::GetAbilityInfos(want, flags, userId, abilityInfos);
 }
 
 static bool IsSupportDlp(const std::vector<std::string> &authPolicy, const std::string &bundleName)

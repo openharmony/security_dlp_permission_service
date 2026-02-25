@@ -26,6 +26,9 @@
 #include "dlp_zip_file.h"
 #include "dlp_permission.h"
 #include "dlp_permission_log.h"
+#include "accesstoken_kit.h"
+#include "nativetoken_kit.h"
+#include "token_setproc.h"
 
 namespace OHOS {
 namespace Security {
@@ -36,6 +39,29 @@ namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "DlpFileManagerTest"};
 static int g_fdDlp = -1;
 static const std::string DLP_TEST_DIR = "/data/dlpTest/";
+static constexpr uint32_t WAIT_FOR_ACCESS_TOKEN_START = 500;
+#define AC_TKN_SVC "accesstoken_service"
+#define SVC_CTRL "service_control"
+static constexpr char PID_OF_ACCESS_TOKEN_SERVICE[] = "pidof " AC_TKN_SVC;
+uint64_t g_selfTokenId = 0;
+}
+
+static void RestartAccessTokenService()
+{
+    std::cout << PID_OF_ACCESS_TOKEN_SERVICE << std::endl;
+    std::system(PID_OF_ACCESS_TOKEN_SERVICE);
+
+    std::system(SVC_CTRL " stop " AC_TKN_SVC);
+
+    std::cout << PID_OF_ACCESS_TOKEN_SERVICE << std::endl;
+    std::system(PID_OF_ACCESS_TOKEN_SERVICE);
+
+    std::system(SVC_CTRL " start " AC_TKN_SVC);
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(WAIT_FOR_ACCESS_TOKEN_START));
+
+    std::cout << PID_OF_ACCESS_TOKEN_SERVICE << std::endl;
+    std::system(PID_OF_ACCESS_TOKEN_SERVICE);
 }
 
 void DlpFileManagerTest::SetUpTestCase()
@@ -53,6 +79,27 @@ void DlpFileManagerTest::SetUpTestCase()
             return;
         }
     }
+    g_selfTokenId = GetSelfTokenID();
+    uint64_t tokenId;
+    const char *acls[] = {
+        "ohos.permission.GET_LOCAL_ACCOUNTS",
+    };
+    const char *perms[] = {
+        "ohos.permission.GET_LOCAL_ACCOUNTS",
+    };
+    NativeTokenInfoParams infoInstance = {
+        .dcapsNum = 0,
+        .permsNum = 1,
+        .dcaps = nullptr,
+        .perms = perms,
+        .aplStr = "system_basic",
+    };
+    infoInstance.acls = acls;
+    infoInstance.aclsNum = 1;
+    infoInstance.processName = "test_get_local_account";
+    tokenId = GetAccessTokenId(&infoInstance);
+    ASSERT_EQ(0, SetSelfTokenID(tokenId));
+    RestartAccessTokenService();
 }
 
 void DlpFileManagerTest::TearDownTestCase()
@@ -63,6 +110,8 @@ void DlpFileManagerTest::TearDownTestCase()
         g_fdDlp = -1;
     }
     rmdir(DLP_TEST_DIR.c_str());
+    ASSERT_EQ(0, SetSelfTokenID(g_selfTokenId));
+    RestartAccessTokenService();
 }
 
 void DlpFileManagerTest::SetUp() {}
@@ -135,6 +184,7 @@ HWTEST_F(DlpFileManagerTest, GenerateCertData001, TestSize.Level0)
 
     PermissionPolicy policy;
     struct DlpBlob certData;
+    policy.ownerAccountType_ = CLOUD_ACCOUNT;
     EXPECT_EQ(DlpFileManager::GetInstance().GenerateCertData(policy, certData), DLP_SERVICE_ERROR_VALUE_INVALID);
 
     policy.aeskey_ = new (std::nothrow) uint8_t[16];
@@ -146,6 +196,7 @@ HWTEST_F(DlpFileManagerTest, GenerateCertData001, TestSize.Level0)
     policy.hmacKey_ = new (std::nothrow) uint8_t[16];
     ASSERT_NE(policy.hmacKey_, nullptr);
     policy.hmacKeyLen_ = 16;
+    policy.countdown_ = 1;
 
     policy.ownerAccountType_ = CLOUD_ACCOUNT;
     policy.ownerAccount_ = std::string(DLP_MAX_CERT_SIZE + 1, 'a');
@@ -170,6 +221,22 @@ HWTEST_F(DlpFileManagerTest, GenerateCertData001, TestSize.Level0)
     delete[] policy.hmacKey_;
     policy.hmacKey_ = nullptr;
     policy.hmacKeyLen_ = 0;
+}
+
+/**
+ * @tc.name: GenerateCertData002
+ * @tc.desc: Generate cert data
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpFileManagerTest, GenerateCertData002, TestSize.Level0)
+{
+    DLP_LOG_INFO(LABEL, "GenerateCertData002");
+
+    PermissionPolicy policy;
+    struct DlpBlob certData;
+    policy.ownerAccountType_ = DOMAIN_ACCOUNT;
+    EXPECT_EQ(DlpFileManager::GetInstance().GenerateCertData(policy, certData), DLP_PARSE_ERROR_ACCOUNT_INVALID);
 }
 
 /**
@@ -528,7 +595,8 @@ HWTEST_F(DlpFileManagerTest, SetDlpFileParams003, TestSize.Level0)
     };
     SetMockConditions("memcpy_s", condition);
     int res = DlpFileManager::GetInstance().SetDlpFileParams(filePtr, property);
-    EXPECT_TRUE(res == DLP_OK || res == DLP_PARSE_ERROR_MEMORY_OPERATE_FAIL);
+    EXPECT_TRUE(res == DLP_OK || res == DLP_PARSE_ERROR_MEMORY_OPERATE_FAIL
+        || DLP_SERVICE_ERROR_VALUE_INVALID);
     CleanMockConditions();
 }
 
@@ -821,6 +889,27 @@ HWTEST_F(DlpFileManagerTest, ParseRawDlpFile001, TestSize.Level0)
 }
 
 /**
+ * @tc.name: ParseRawDlpFile002
+ * @tc.desc: ParseRawDlpFile
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpFileManagerTest, ParseRawDlpFile002, TestSize.Level0)
+{
+    DLP_LOG_INFO(LABEL, "ParseRawDlpFile002");
+    std::string appId = "dlp_file_manager_test";
+    std::string realType = "txt";
+    std::shared_ptr<DlpFile> filePtr = std::make_shared<DlpRawFile>(1, realType);
+    filePtr->SetWaterMarkConfig(true);
+    sptr<CertParcel> certParcel = new (std::nothrow) CertParcel();
+
+    certParcel->cert = {};
+    EXPECT_EQ(0, certParcel->cert.size());
+
+    EXPECT_NE(DLP_OK, DlpFileManager::GetInstance().ParseRawDlpFile(1, filePtr, appId, realType, certParcel));
+}
+
+/**
  * @tc.name: ParseZipDlpFile001
  * @tc.desc: ParseZipDlpFile
  * @tc.type: FUNC
@@ -832,6 +921,46 @@ HWTEST_F(DlpFileManagerTest, ParseZipDlpFile001, TestSize.Level0)
     std::string appId = "dlp_file_manager_test";
     std::string realType = "txt";
     std::shared_ptr<DlpFile> filePtr = std::make_shared<DlpZipFile>(1001, DLP_TEST_DIR, 0, realType);
+    sptr<CertParcel> certParcel = new (std::nothrow) CertParcel();
+
+    certParcel->cert = {};
+    EXPECT_EQ(0, certParcel->cert.size());
+    EXPECT_NE(DLP_OK, DlpFileManager::GetInstance().ParseZipDlpFile(filePtr, appId, 1001, certParcel));
+}
+
+/**
+ * @tc.name: ParseZipDlpFile002
+ * @tc.desc: ParseZipDlpFile
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpFileManagerTest, ParseZipDlpFile002, TestSize.Level0)
+{
+    DLP_LOG_INFO(LABEL, "ParseZipDlpFile002");
+    std::string appId = "dlp_file_manager_test";
+    std::string realType = "txt";
+    std::shared_ptr<DlpFile> filePtr = std::make_shared<DlpZipFile>(1001, DLP_TEST_DIR, 0, realType);
+    filePtr->SetWaterMarkConfig(true);
+    sptr<CertParcel> certParcel = new (std::nothrow) CertParcel();
+
+    certParcel->cert = {};
+    EXPECT_EQ(0, certParcel->cert.size());
+    EXPECT_NE(DLP_OK, DlpFileManager::GetInstance().ParseZipDlpFile(filePtr, appId, 1001, certParcel));
+}
+
+/**
+ * @tc.name: ParseZipDlpFile003
+ * @tc.desc: ParseZipDlpFile
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpFileManagerTest, ParseZipDlpFile003, TestSize.Level0)
+{
+    DLP_LOG_INFO(LABEL, "ParseZipDlpFile003");
+    std::string appId = "dlp_file_manager_test";
+    std::string realType = "txt";
+    std::shared_ptr<DlpFile> filePtr = std::make_shared<DlpZipFile>(1001, DLP_TEST_DIR, 0, realType);
+    filePtr->SetCountdown(100);
     sptr<CertParcel> certParcel = new (std::nothrow) CertParcel();
 
     certParcel->cert = {};

@@ -53,6 +53,7 @@ group("fuzztest") {
     "fuzzer/uninstalldlpsandbox_fuzzer:UninstallDlpSandboxFuzzTest",
     "fuzzer/unregisterdlpsandboxchangecallback_fuzzer:UnRegisterDlpSandboxChangeCallbackFuzzTest",
     "fuzzer/unregisteropendlpfilecallback_fuzzer:UnRegisterOpenDlpFileCallbackFuzzTest",
+    "fuzzer/watermarkproxy_fuzzer:WaterMarkProxyFuzzTest",
     "stub_fuzzer/bundlemanageradapter_fuzzer:BundleManagerAdapterFuzzTest",
     "stub_fuzzer/cancelretentionstatestub_fuzzer:CancelRetentionStateStubFuzzTest",
     "stub_fuzzer/cleansandboxconfigstub_fuzzer:CleanSandboxConfigStubFuzzTest",
@@ -84,6 +85,8 @@ group("fuzztest") {
     "stub_fuzzer/unregisterdlpsandboxchangecallbackstub_fuzzer:UnRegisterDlpSandboxChangeCallbackStubFuzzTest",
     "stub_fuzzer/unregisteropendlpfilecallbackstub_fuzzer:UnRegisterOpenDlpFileCallbackStubFuzzTest",
     "stub_fuzzer/algmanager_fuzzer:AlgManagerFuzzTest",
+    "stub_fuzzer/parallel_fuzzer:ParallelFuzzTest",
+    "stub_fuzzer/parallelproxy_fuzzer:ParallelProxyFuzzTest",
   ]
 }
 
@@ -113,6 +116,7 @@ config("stub_fuzz_config") {
     "${dlp_root_dir}/services/dlp_permission/sa/adapt_utils/alg_adapt/alg_manager/include",
     "${dlp_root_dir}/services/dlp_permission/sa/adapt_utils/alg_adapt/huks_adapt_manager/include",
     "${dlp_root_dir}/services/dlp_permission/sa/adapt_utils/app_observer",
+    "${dlp_root_dir}/services/dlp_permission/sa/adapt_utils/critical_handler",
     "${dlp_root_dir}/services/dlp_permission/sa/adapt_utils/file_manager",
     "${dlp_root_dir}/services/dlp_permission/sa/callback/dlp_sandbox_change_callback/",
     "${dlp_root_dir}/services/dlp_permission/sa/callback/open_dlp_file_callback/",
@@ -127,5 +131,5 @@ config("stub_fuzz_config") {
 config("stub_fuzz_need_skip_timer_config") {
   cflags_cc = []
   configs = [ ":stub_fuzz_config" ]
-  cflags_cc += [ "-DDLP_FUZZ_TEST" ]
+  cflags_cc += [ "-DDLP_FUZZ_TDD_TEST" ]
 }

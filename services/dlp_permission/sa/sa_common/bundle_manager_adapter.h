@@ -36,6 +36,8 @@ public:
         AppExecFwk::ApplicationInfo &applicationInfo);
     int32_t GetBundleInfoV9(const std::string &bundleName, AppExecFwk::BundleFlag flag,
         AppExecFwk::BundleInfo &bundleInfo, int32_t userId);
+    int32_t GetAbilityInfosV9(const AAFwk::Want& want, int32_t flags, int32_t userId,
+        std::vector<AppExecFwk::AbilityInfo> &abilityInfos);
     bool CheckHapPermission(const std::string& bundleName, const std::string& permission);
 
 private:

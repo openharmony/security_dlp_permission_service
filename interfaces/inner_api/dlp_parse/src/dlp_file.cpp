@@ -71,6 +71,8 @@ DlpFile::DlpFile(int32_t dlpFd, const std::string &realType)
     accountType_ = 0;
     fileIdPlaintext_ = "";
     allowedOpenCount_ = 0;
+    waterMarkConfig_ = false;
+    countdown_ = false;
 }
 
 DlpFile::~DlpFile() = default;
@@ -164,18 +166,10 @@ int32_t DlpFile::GetLocalAccountName(std::string& account) const
 int32_t DlpFile::GetDomainAccountName(std::string& account) const
 {
 #ifdef DLP_PARSE_INNER
-    AccountSA::OsAccountInfo osAccountInfo;
-    if (OHOS::AccountSA::OsAccountManager::QueryCurrentOsAccount(osAccountInfo) != 0) {
-        DLP_LOG_ERROR(LABEL, "QueryCurrentOsAccount return not 0");
-        return DLP_PARSE_ERROR_ACCOUNT_INVALID;
+    if (DLP_OK != DlpPermissionKit::GetDomainAccountNameInfo(account)) {
+        DLP_LOG_ERROR(LABEL, "GetDomainAccountName error");
+        return DLP_PARSE_ERROR_GET_ACCOUNT_FAIL;
     }
-    AccountSA::DomainAccountInfo domainInfo;
-    osAccountInfo.GetDomainInfo(domainInfo);
-    if (domainInfo.accountName_.empty()) {
-        DLP_LOG_ERROR(LABEL, "accountName_ empty");
-        return DLP_PARSE_ERROR_ACCOUNT_INVALID;
-    }
-    account = domainInfo.accountName_;
 #endif
     return DLP_OK;
 }

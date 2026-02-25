@@ -20,6 +20,7 @@
 #include "iremote_broker.h"
 #include "iremote_object.h"
 #include "permission_policy.h"
+#include "dlp_permission_kit.h"
 
 namespace OHOS {
 namespace Security {
@@ -31,11 +32,14 @@ public:
     virtual void OnParseDlpCertificate(int32_t result, const PermissionPolicy& policy,
         const std::vector<uint8_t>& cert) = 0;
 
+    virtual void OnGetDlpWaterMark(int32_t result, const GeneralInfo& info) = 0;
+
     DECLARE_INTERFACE_DESCRIPTOR(u"ohos.security.IDlpPermissionCallback");
 
     enum class InterfaceCode {
         ON_GENERATE_DLP_CERTIFICATE = 0xff03,
         ON_PARSE_DLP_CERTIFICATE = 0xff04,
+        ON_GET_DLP_WATERMARK = 0xff05,
     };
 };
 }  // namespace DlpPermission

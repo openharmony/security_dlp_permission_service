@@ -36,8 +36,11 @@
 #include "token_setproc.h"
 #include "hex_string.h"
 #include "dlp_credential.h"
+#define private public
 #include "dlp_permission_client.h"
+#undef private
 #include "dlp_utils.h"
+#include "dlp_utils.cpp"
 #include "dlp_policy_mgr_client.h"
 #include "dlp_zip.h"
 
@@ -57,12 +60,17 @@ const std::string ENC_DATA = "encData";
 const std::string ENC_ACCOUNT_TYPE = "accountType";
 const uint32_t BUFFER_LENGTH = 64;
 const uint32_t HEX_BUFFER_LENGTH = 64;
+static const uint8_t ONE = 1;
 static const uint8_t TWO = 2;
+static const uint8_t FOUR = 4;
 static const uint8_t ARRAY_CHAR_SIZE = 62;
 static const uint8_t KEY_LEN = 16;
+static const uint32_t MAX_APPID_LENGTH = 200;
 static const char CHAR_ARRAY[] = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 static const std::string DLP_AUTH_POLICY = "/system/etc/dlp_auth_policy.json";
+static const std::string DLP_FILE = "dlp_auth_policy.txt.dlp";
 static const std::string DLP_HIAE_TYPE = "mkv";
+static const uint32_t STRING_LENGTH = 10;
 
 class UnregisterOpenDlpFileCallbackFuzzer : public OpenDlpFileCallbackCustomize {
 public:
@@ -98,8 +106,8 @@ static void FuzzTest(const uint8_t* data, size_t size)
         std::make_shared<ClientGenerateDlpCertificateCallback>();
     sptr<IDlpPermissionCallback> callback1 = new (std::nothrow) DlpPermissionAsyncStub(callback);
     FuzzedDataProvider fdp(data, size);
-    std::string policy = fdp.ConsumeBytesAsString(size);
-    std::string account = fdp.ConsumeBytesAsString(size);
+    std::string policy = fdp.ConsumeBytesAsString(size / FOUR - ONE);
+    std::string account = fdp.ConsumeBytesAsString(size / FOUR - ONE);
     DlpAccountType accountType = DlpAccountType::CLOUD_ACCOUNT;
     DlpCredential::GetInstance().GenerateDlpCertificate(policy, account, accountType, callback1);
 
@@ -111,15 +119,50 @@ static void FuzzTest(const uint8_t* data, size_t size)
     cert.assign(certStr.begin(), certStr.end());
     certParcel->cert = cert;
     sptr<IDlpPermissionCallback> callback2;
-    std::string appId = fdp.ConsumeBytesAsString(size);
+    std::string appId = fdp.ConsumeBytesAsString(size / FOUR - ONE);
     AppExecFwk::ApplicationInfo applicationInfo;
     DlpCredential::GetInstance().ParseDlpCertificate(certParcel, callback2, appId, true, applicationInfo);
     std::vector<std::string> appIdList;
     DlpCredential::GetInstance().SetMDMPolicy(appIdList);
     DlpCredential::GetInstance().GetMDMPolicy(appIdList);
     DlpCredential::GetInstance().RemoveMDMPolicy();
-    std::string bundleName = fdp.ConsumeBytesAsString(size);
+    std::string bundleName = fdp.ConsumeBytesAsString(size / FOUR - ONE);
     DlpCredential::GetInstance().CheckMdmPermission(bundleName, fdp.ConsumeIntegral<int32_t>());
+}
+
+static void DlpCredentialParsTest(const uint8_t *data, size_t size)
+{
+    if ((data == nullptr) || (size < FOUR)) {
+        return;
+    }
+    sptr<CertParcel> certParcel = new (std::nothrow) CertParcel();
+    FuzzedDataProvider fdp(data, size);
+    sptr<IDlpPermissionCallback> callback;
+    AppExecFwk::ApplicationInfo applicationInfo;
+    std::string appId = fdp.ConsumeBytesAsString(size - TWO);
+    DlpCredential::GetInstance().ParseDlpCertificate(certParcel, callback, "", fdp.ConsumeBool(), applicationInfo);
+    certParcel->isNeedAdapter = true;
+    DlpCredential::GetInstance().ParseDlpCertificate(certParcel, callback, appId, fdp.ConsumeBool(), applicationInfo);
+    DLP_EncPolicyData encPolicy;
+    certParcel->realFileType = "";
+    DlpCredential::GetInstance().ParseDlpInfo(
+        certParcel, callback, encPolicy, applicationInfo, OHOS::Security::DlpPermission::CLOUD_ACCOUNT);
+    certParcel->fileId = "";
+    certParcel->realFileType = "a";
+    DlpCredential::GetInstance().ParseDlpInfo(
+        certParcel, callback, encPolicy, applicationInfo, OHOS::Security::DlpPermission::CLOUD_ACCOUNT);
+}
+
+static void DlpCredentialTest(const uint8_t *data, size_t size)
+{
+    if ((data == nullptr) || (size == 0)) {
+        return;
+    }
+    std::vector<std::string> appIdList(MAX_APPID_LENGTH + 1);
+    DlpCredential::GetInstance().SetMDMPolicy(appIdList);
+    FuzzedDataProvider fdp(data, size);
+    std::string policy = fdp.ConsumeBytesAsString(size);
+    DlpCredential::GetInstance().SetEnterprisePolicy(policy);
 }
 
 static DlpAccountType GenerateDlpAccountType(const uint8_t* data)
@@ -149,12 +192,14 @@ static void ClientFuzzTest(const uint8_t* data, size_t size)
     }
     FuzzedDataProvider fdp(data, size);
     DlpPermissionClient::GetInstance().OnRemoteDiedHandle();
-    std::shared_ptr<UnregisterOpenDlpFileCallbackFuzzer> callback =
-        std::make_shared<UnregisterOpenDlpFileCallbackFuzzer>();
+    std::shared_ptr<UnregisterOpenDlpFileCallbackFuzzer> callback = nullptr;
+    (void)DlpPermissionClient::GetInstance().UnRegisterOpenDlpFileCallback(callback);
+    (void)DlpPermissionClient::GetInstance().RegisterOpenDlpFileCallback(callback);
+    callback = std::make_shared<UnregisterOpenDlpFileCallbackFuzzer>();
     DlpPermissionClient::GetInstance().UnRegisterOpenDlpFileCallback(callback);
     PermissionPolicy policy;
-    policy.ownerAccount_ = fdp.ConsumeBytesAsString(size);
-    policy.ownerAccountId_ = fdp.ConsumeBytesAsString(size);
+    policy.ownerAccount_ = fdp.ConsumeBytesAsString(size / TWO);
+    policy.ownerAccountId_ = fdp.ConsumeBytesAsString(size / TWO);
     policy.ownerAccountType_ = GenerateDlpAccountType(data);
     uint32_t offset = 0;
     std::string iv;
@@ -169,6 +214,27 @@ static void ClientFuzzTest(const uint8_t* data, size_t size)
     std::shared_ptr<ClientGenerateDlpCertificateCallback> callback1 =
         std::make_shared<ClientGenerateDlpCertificateCallback>();
     DlpPermissionClient::GetInstance().GenerateDlpCertificate(policy, callback1);
+
+    FileInfo fileInfo;
+    fileInfo.isNotOwnerAndReadOnce = true;
+    std::string uri = "";
+    (void)DlpPermissionClient::GetInstance().SetFileInfo(uri, fileInfo);
+    uri = "uri";
+    fileInfo.isNotOwnerAndReadOnce = false;
+    (void)DlpPermissionClient::GetInstance().SetFileInfo(uri, fileInfo);
+
+    sptr<IRemoteObject> remoteObject;
+    DlpPermissionClient::GetInstance().GetProxyFromRemoteObject(nullptr);
+    DlpPermissionClient::GetInstance().GetProxyFromRemoteObject(remoteObject);
+
+    std::string policyStr = "policy";
+    (void)DlpPermissionClient::GetInstance().SetEnterprisePolicy(policyStr);
+
+    uint32_t dlpFeatureInfo = 0;
+    bool statusSetInfo;
+    (void)DlpPermissionClient::GetInstance().SetDlpFeature(dlpFeatureInfo, statusSetInfo);
+    dlpFeatureInfo = 1;
+    (void)DlpPermissionClient::GetInstance().SetDlpFeature(dlpFeatureInfo, statusSetInfo);
 }
 
 static void GenerateDlpFileType(uint32_t data, std::string& filePath)
@@ -187,8 +253,8 @@ static void UtilTest(const uint8_t* data, size_t size)
     }
     FuzzedDataProvider fdp(data, size);
     DlpUtils::GetBundleMgrProxy();
-    std::string cfgFile = fdp.ConsumeBytesAsString(size);
-    std::string type = fdp.ConsumeBytesAsString(size);
+    std::string cfgFile = fdp.ConsumeBytesAsString(size / FOUR - TWO);
+    std::string type = fdp.ConsumeBytesAsString(size / FOUR - TWO);
     std::vector<std::string> authPolicy;
     DlpUtils::GetAuthPolicyWithType(cfgFile, type, authPolicy);
     DlpUtils::GetAuthPolicyWithType(DLP_AUTH_POLICY, type, authPolicy);
@@ -203,9 +269,9 @@ static void UtilTest(const uint8_t* data, size_t size)
     std::string dlpFile;
     DlpUtils::GetFileNameWithDlpFd(fd, dlpFile);
     DlpUtils::GetFileType(DLP_HIAE_TYPE);
-    std::string str = fdp.ConsumeBytesAsString(size);
+    std::string str = fdp.ConsumeBytesAsString(size / FOUR - TWO);
     DlpUtils::ToLowerString(str);
-    std::string suffix = fdp.ConsumeBytesAsString(size);
+    std::string suffix = fdp.ConsumeBytesAsString(size / FOUR - TWO);
     DlpUtils::GetFileTypeBySuffix(str, true);
     DlpUtils::GetFileTypeBySuffix(str, false);
     std::string path;
@@ -237,12 +303,46 @@ static void CredentialClientFuzzTest(const uint8_t* data, size_t size)
     DLP_CheckPermission(randType, handle);
 }
 
+static void DLPUtilTest(const uint8_t* data, size_t size)
+{
+    if ((data == nullptr) || (size < BUFFER_LENGTH)) {
+        return;
+    }
+    FuzzedDataProvider fdp(data, size);
+    bool isFromUriName;
+    std::string dlpFileName = fdp.ConsumeBytesAsString(STRING_LENGTH) + DLP_FILE;
+    (void)DlpUtils::GetDlpFileRealSuffix(dlpFileName, isFromUriName);
+    dlpFileName = fdp.ConsumeBytesAsString(STRING_LENGTH);
+    (void)DlpUtils::GetDlpFileRealSuffix(dlpFileName, isFromUriName);
+
+    (void)IsExistFile(fdp.ConsumeBytesAsString(STRING_LENGTH));
+    (void)GetFileContent(fdp.ConsumeBytesAsString(STRING_LENGTH));
+    dlpFileName = DLP_AUTH_POLICY;
+    (void)GetFileContent(dlpFileName);
+    dlpFileName = "";
+    (void)RemoveCachePath(dlpFileName);
+    int32_t fd = -1;
+    (void)GetGenerateInfoStr(fd);
+
+    int32_t allowedOpenCount = 0;
+    bool waterMarkConfig = fdp.ConsumeBool();
+    (void)DlpUtils::GetRawFileAllowedOpenCount(fd, allowedOpenCount, waterMarkConfig);
+    dlpFileName = fdp.ConsumeBytesAsString(STRING_LENGTH);
+    (void)DlpUtils::GetExtractRealType(dlpFileName);
+    dlpFileName = fdp.ConsumeBytesAsString(STRING_LENGTH);
+    int32_t userId = fdp.ConsumeIntegral<int32_t>();
+    (void)DlpUtils::GetAppIdentifierByAppId(dlpFileName, userId);
+}
+
 bool DlpCredentialFuzzTest(const uint8_t* data, size_t size)
 {
     FuzzTest(data, size);
+    DlpCredentialTest(data, size);
+    DlpCredentialParsTest(data, size);
     ClientFuzzTest(data, size);
     UtilTest(data, size);
     CredentialClientFuzzTest(data, size);
+    DLPUtilTest(data, size);
     return true;
 }
 } // namespace OHOS

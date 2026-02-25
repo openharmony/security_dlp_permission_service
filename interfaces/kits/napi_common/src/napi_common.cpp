@@ -23,6 +23,11 @@
 #include "securec.h"
 #include "string_wrapper.h"
 #include "want_params_wrapper.h"
+#include "permission_policy.h"
+#include "js_native_api_types.h"
+#include "tokenid_kit.h"
+#include "token_setproc.h"
+#include "accesstoken_kit.h"
 
 namespace OHOS {
 namespace Security {
@@ -34,6 +39,7 @@ const std::string SYS_COMMON_UI = "sys/commonUI";
 const std::string DLP_MANAGER_BUNDLENAME = "com.ohos.dlpmanager";
 const std::string DLP_MANAGER_ABILITYNAME = "MainAbilityEx";
 const std::string ON_OFF_SANDBOX = "uninstallDLPSandbox";
+const std::string DLP_PERMISSION_SERVICE_NAME = "dlpPermissionService";
 
 static constexpr size_t MAX_ACCOUNT_LEN = 255;
 static constexpr size_t MIN_APPID_LEN = 8;
@@ -45,6 +51,7 @@ static constexpr size_t MAX_ERRCONTACTER_LEN = 255;
 static constexpr size_t MAX_FILE_NAME_LEN = 255;
 static constexpr size_t MAX_TYPE_LEN = 64;
 static constexpr size_t MAX_URI_LEN = 4095;
+static constexpr int32_t HIPREVIEW_SANDBOX_LOW_BOUND = 1000;
 
 static bool ConvertDlpSandboxChangeInfo(napi_env env, napi_value value, const DlpSandboxCallbackInfo &result)
 {
@@ -190,7 +197,8 @@ void RegisterDlpSandboxChangeScopePtr::DlpSandboxChangeCallback(DlpSandboxCallba
     auto task = [registerSandboxChangeWorker]() {
         UvQueueWorkDlpSandboxChanged(registerSandboxChangeWorker);
     };
-    if (napi_send_event(env_, task, napi_eprio_immediate) != napi_status::napi_ok) {
+    if (napi_send_event(env_, task, napi_eprio_immediate,
+        DLP_PERMISSION_SERVICE_NAME.c_str()) != napi_status::napi_ok) {
         DLP_LOG_ERROR(LABEL, "Failed to SendEvent");
         delete registerSandboxChangeWorker;
     }
@@ -227,7 +235,7 @@ void DlpSandboxChangeContext::DeleteNapiRef(napi_env env, napi_ref callbackRef)
     auto task = [env, callbackRef]() {
         napi_delete_reference(env, callbackRef);
     };
-    if (napi_send_event(env, task, napi_eprio_immediate) != napi_status::napi_ok) {
+    if (napi_send_event(env, task, napi_eprio_immediate, DLP_PERMISSION_SERVICE_NAME.c_str()) != napi_status::napi_ok) {
         DLP_LOG_ERROR(LABEL, "Failed to SendEvent");
     }
 }
@@ -259,7 +267,8 @@ void OpenDlpFileSubscriberPtr::OnOpenDlpFile(OpenDlpFileCallbackInfo &result)
     auto task = [openDlpFileWorker]() {
         UvQueueWorkOpenDlpFile(openDlpFileWorker);
     };
-    if (napi_send_event(env_, task, napi_eprio_immediate) != napi_status::napi_ok) {
+    if (napi_send_event(env_, task, napi_eprio_immediate,
+        DLP_PERMISSION_SERVICE_NAME.c_str()) != napi_status::napi_ok) {
         DLP_LOG_ERROR(LABEL, "Failed to SendEvent");
         delete openDlpFileWorker;
     }
@@ -296,7 +305,7 @@ void OpenDlpFileSubscriberContext::DeleteNapiRef(napi_env env, napi_ref callback
     auto task = [env, callbackRef]() {
         napi_delete_reference(env, callbackRef);
     };
-    if (napi_send_event(env, task, napi_eprio_immediate) != napi_status::napi_ok) {
+    if (napi_send_event(env, task, napi_eprio_immediate, DLP_PERMISSION_SERVICE_NAME.c_str()) != napi_status::napi_ok) {
         DLP_LOG_ERROR(LABEL, "Failed to SendEvent");
     }
 }
@@ -325,6 +334,59 @@ void DlpNapiThrow(napi_env env, int32_t nativeErrCode)
 void DlpNapiThrow(napi_env env, int32_t jsErrCode, const std::string &jsErrMsg)
 {
     NAPI_CALL_RETURN_VOID(env, napi_throw(env, GenerateBusinessError(env, jsErrCode, jsErrMsg)));
+}
+
+bool CheckPermission(napi_env env, const std::string& permission)
+{
+    Security::AccessToken::AccessTokenID selfToken = GetSelfTokenID();
+    int res = Security::AccessToken::AccessTokenKit::VerifyAccessToken(selfToken, permission);
+    if (res == Security::AccessToken::PermissionState::PERMISSION_GRANTED) {
+        DLP_LOG_INFO(LABEL, "Check permission %{public}s pass", permission.c_str());
+        return true;
+    }
+    DLP_LOG_ERROR(LABEL, "Check permission %{public}s fail", permission.c_str());
+    int32_t jsErrCode = ERR_JS_PERMISSION_DENIED;
+    NAPI_CALL_BASE(env, napi_throw(env, GenerateBusinessError(env, jsErrCode, GetJsErrMsg(jsErrCode))), false);
+    return false;
+}
+
+napi_value BindingJsWithNative(napi_env env, napi_value* argv, size_t argc, napi_ref& dlpFileRef_)
+{
+    napi_value instance = nullptr;
+    napi_value constructor = nullptr;
+    if (napi_get_reference_value(env, dlpFileRef_, &constructor) != napi_ok) {
+        return nullptr;
+    }
+    DLP_LOG_DEBUG(LABEL, "Get a reference to the global variable dlpFileRef_ complete");
+    if (napi_new_instance(env, constructor, argc, argv, &instance) != napi_ok) {
+        return nullptr;
+    }
+    DLP_LOG_DEBUG(LABEL, "New the js instance complete");
+    return instance;
+}
+
+void GetDlpProperty(std::shared_ptr<DlpFile>& dlpFileNative, DlpProperty& property)
+{
+    PermissionPolicy policy;
+    dlpFileNative->GetPolicy(policy);
+    std::string contactAccount;
+    dlpFileNative->GetContactAccount(contactAccount);
+    std::string fileId;
+    dlpFileNative->GetFileId(fileId);
+    property = {
+        .ownerAccount = policy.ownerAccount_,
+        .ownerAccountId = policy.ownerAccountId_,
+        .authUsers = policy.authUsers_,
+        .contactAccount = contactAccount,
+        .ownerAccountType = policy.ownerAccountType_,
+        .offlineAccess = dlpFileNative->GetOfflineAccess(),
+        .supportEveryone = policy.supportEveryone_,
+        .everyonePerm = policy.everyonePerm_,
+        .expireTime = policy.expireTime_,
+        .allowedOpenCount = policy.allowedOpenCount_,
+        .waterMarkConfig = policy.waterMarkConfig_,
+        .countdown = policy.countdown_,
+    };
 }
 
 void ThrowParamError(const napi_env env, const std::string& param, const std::string& type)
@@ -583,13 +645,6 @@ bool GetGenerateDlpFileParams(
         }
     }
 
-    DLP_LOG_DEBUG(LABEL,
-        "Fd: %{private}" PRId64 ",ownerAccount:%{private}s,ownerAccountId: %{private}s, ownerAccountType: %{private}d,"
-        "contactAccount: %{private}s, size: %{private}zu, expireTime: %{public}" PRId64,
-        asyncContext.plaintextFd, asyncContext.property.ownerAccount.c_str(),
-        asyncContext.property.ownerAccountId.c_str(), asyncContext.property.ownerAccountType,
-        asyncContext.property.contactAccount.c_str(), asyncContext.property.authUsers.size(),
-        asyncContext.property.expireTime);
     return true;
 }
 
@@ -1284,28 +1339,33 @@ void GetDlpPropertyExpireTime(napi_env env, napi_value jsObject, DlpProperty& pr
 
 bool GetAllowedOpenCount(napi_env env, napi_value jsObject, DlpProperty& property)
 {
-    int32_t jsAllowedOpenCount = 0;
     if (!GetInt32ValueByKey(env, jsObject, "allowedOpenCount", property.allowedOpenCount)) {
         DLP_LOG_DEBUG(LABEL, "js get allowed open count fail, will set zero");
-        property.allowedOpenCount = jsAllowedOpenCount;
-        return true;
+        property.allowedOpenCount = 0;
     }
     if (!GetStringValueByKey(env, jsObject, "fileId", property.fileId) ||
         !IsStringLengthValid(property.fileId, MAX_ACCOUNT_LEN)) {
-        DLP_LOG_ERROR(LABEL, "js get fileId fail");
-        return false;
+        DLP_LOG_DEBUG(LABEL, "js get fileId fail, will set empty");
+        property.fileId = "";
+    }
+    if (!GetInt32ValueByKey(env, jsObject, "countdown", property.countdown)) {
+        DLP_LOG_DEBUG(LABEL, "js get countdown fail, will set zero");
+        property.countdown = 0;
+    }
+    if (!GetInt32ValueByKey(env, jsObject, "countdown", property.countdown)) {
+        DLP_LOG_DEBUG(LABEL, "js get countdown fail, will set zero");
+        property.countdown = 0;
     }
     return true;
 }
 
-bool GetWaterMarkConfig(napi_env env, napi_value jsObject, DlpProperty& property)
+void GetWaterMarkConfig(napi_env env, napi_value jsObject, DlpProperty& property)
 {
     bool jsWaterMarkConfig = false;
     if (!GetBoolValueByKey(env, jsObject, "waterMarkConfig", property.waterMarkConfig)) {
         DLP_LOG_ERROR(LABEL, "js get waterMarkConfig fail, will set false");
         property.waterMarkConfig = jsWaterMarkConfig;
     }
-    return true;
 }
 
 static bool GetEnterpriseDlpPropertyAccount(napi_env env, napi_value jsObject, DlpProperty& property)
@@ -1350,7 +1410,6 @@ bool GetEnterpriseDlpProperty(napi_env env, napi_value jsObject, DlpProperty& pr
         DLP_LOG_ERROR(LABEL, "js get offline access flag fail");
         return false;
     }
-    GetWaterMarkConfig(env, jsObject, property);
     GetDlpPropertyExpireTime(env, jsObject, property);
 
     napi_value everyoneAccessListObj = GetNapiValue(env, jsObject, "everyoneAccessList");
@@ -1566,6 +1625,13 @@ napi_value DlpPropertyToJs(napi_env env, const DlpProperty& property)
     NAPI_CALL(env, napi_create_int32(env, property.allowedOpenCount, &allowedOpenCountJs));
     NAPI_CALL(env, napi_set_named_property(env, dlpPropertyJs, "allowedOpenCount", allowedOpenCountJs));
 
+    napi_value waterMarkConfigJs;
+    napi_get_boolean(env, property.waterMarkConfig, &waterMarkConfigJs);
+    NAPI_CALL(env, napi_set_named_property(env, dlpPropertyJs, "waterMarkConfig", waterMarkConfigJs));
+
+    napi_value countdownJs;
+    NAPI_CALL(env, napi_create_int32(env, property.countdown, &countdownJs));
+    NAPI_CALL(env, napi_set_named_property(env, dlpPropertyJs, "countdown", countdownJs));
     return dlpPropertyJs;
 }
 
@@ -1590,8 +1656,17 @@ napi_value SandboxInfoToJs(napi_env env, const SandboxInfo& sandboxInfo)
     napi_value sandboxInfoJs = nullptr;
     NAPI_CALL(env, napi_create_object(env, &sandboxInfoJs));
 
+    // pack bindAppIndex Info to appIndex, to replace after API 24.
+    int32_t appIndexEnd = -1;
+    if (sandboxInfo.bindAppIndex > HIPREVIEW_SANDBOX_LOW_BOUND) {
+        appIndexEnd = sandboxInfo.appIndex * HIPREVIEW_SANDBOX_LOW_BOUND
+            + sandboxInfo.bindAppIndex - HIPREVIEW_SANDBOX_LOW_BOUND;
+    } else {
+        appIndexEnd = sandboxInfo.appIndex;
+    }
+
     napi_value appIndexJs;
-    NAPI_CALL(env, napi_create_int64(env, sandboxInfo.appIndex, &appIndexJs));
+    NAPI_CALL(env, napi_create_int64(env, appIndexEnd, &appIndexJs));
     NAPI_CALL(env, napi_set_named_property(env, sandboxInfoJs, "appIndex", appIndexJs));
 
     napi_value tokenIdJs;
@@ -2078,7 +2153,7 @@ void StartUIExtensionAbility(std::shared_ptr<UIExtensionRequestContext> asyncCon
     return;
 }
 
-bool IsStringLengthValid(std::string str, size_t maxLen, size_t minLen)
+bool IsStringLengthValid(std::string& str, size_t maxLen, size_t minLen)
 {
     size_t len = str.length();
     if (len > maxLen || len < minLen) {

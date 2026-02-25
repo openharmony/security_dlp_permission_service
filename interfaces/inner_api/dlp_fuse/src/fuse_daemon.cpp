@@ -304,8 +304,8 @@ static int AddLinkFilesDirentry(DirAddParams& params)
         return DLP_FUSE_ERROR_VALUE_INVALID;
     }
     manager->DumpDlpLinkFile(linkList);
-    int listSize = static_cast<int>(linkList.size());
-    for (int i = 0; i < listSize; i++) {
+    size_t listSize = static_cast<size_t>(linkList.size());
+    for (size_t i = 0; i < listSize; i++) {
         params.entryName = linkList[i].dlpLinkName;
         params.entryStat = &linkList[i].fileStat;
         if (AddDirentry(params) != DLP_OK) {
@@ -519,7 +519,7 @@ void FuseDaemon::FuseFsDaemonThread(int fuseFd)
     }
 
     char mountPoint[MAX_FILE_NAME_LEN] = {0};
-    int ret = snprintf_s(mountPoint, sizeof(mountPoint), MAX_FILE_NAME_LEN, "/dev/fd/%d", fuseFd);
+    int ret = snprintf_s(mountPoint, sizeof(mountPoint), sizeof(mountPoint) - 1, "/dev/fd/%d", fuseFd);
     if (ret <= 0) {
         DLP_LOG_ERROR(LABEL, "Fuse fs daemon exit, snprintf_s fail");
         NotifyDaemonDisable();

@@ -59,6 +59,8 @@ struct GenerInfoParams {
     uint32_t certSize;
     std::string fileId;
     int32_t allowedOpenCount;
+    bool waterMarkConfig;
+    int32_t countdown;
 };
 } // namespace
 
@@ -180,7 +182,7 @@ bool DlpZipFile::ParseDlpInfo()
     GenerateInfoParams params;
     int32_t res = ParseDlpGeneralInfo(content, params);
     if (res != DLP_OK) {
-        DLP_LOG_ERROR(LABEL, "ParseDlpGeneralInfo %{public}s", content.c_str());
+        DLP_LOG_ERROR(LABEL, "ParseDlpGeneralInfo %{private}s", content.c_str());
         return false;
     }
     version_ = params.version;
@@ -190,6 +192,8 @@ bool DlpZipFile::ParseDlpInfo()
     certSize_ = params.certSize;
     fileIdPlaintext_ = params.fileId;
     allowedOpenCount_ = params.allowedOpenCount;
+    waterMarkConfig_ = params.waterMarkConfig;
+    countdown_ = params.countdown;
     if (!params.hmacVal.empty()) {
         CleanBlobParam(hmac_);
         hmac_.size = params.hmacVal.size() / BYTE_TO_HEX_OPER_LENGTH;
@@ -276,15 +280,15 @@ bool DlpZipFile::CleanTmpFile()
     }
 
     if (unlink(DLP_GENERAL_INFO.c_str()) != 0) {
-        DLP_LOG_ERROR(LABEL, "unlink failed, %{public}s errno %{public}s", DLP_GENERAL_INFO.c_str(), strerror(errno));
+        DLP_LOG_ERROR(LABEL, "unlink failed, %{private}s errno %{public}s", DLP_GENERAL_INFO.c_str(), strerror(errno));
     }
 
     if (unlink(DLP_CERT.c_str()) != 0) {
-        DLP_LOG_ERROR(LABEL, "unlink failed, %{public}s errno %{public}s", DLP_CERT.c_str(), strerror(errno));
+        DLP_LOG_ERROR(LABEL, "unlink failed, %{private}s errno %{public}s", DLP_CERT.c_str(), strerror(errno));
     }
 
     if (unlink(DLP_OPENING_ENC_DATA.c_str()) != 0) {
-        DLP_LOG_ERROR(LABEL, "unlink failed, %{public}s errno %{public}s",
+        DLP_LOG_ERROR(LABEL, "unlink failed, %{private}s errno %{public}s",
             DLP_OPENING_ENC_DATA.c_str(), strerror(errno));
     }
 
@@ -293,11 +297,11 @@ bool DlpZipFile::CleanTmpFile()
     }
 
     if (rmdir(dirIndex_.c_str()) != 0) {
-        DLP_LOG_ERROR(LABEL, "rmdir failed, %{public}s errno %{public}s", dirIndex_.c_str(), strerror(errno));
+        DLP_LOG_ERROR(LABEL, "rmdir failed, %{private}s errno %{public}s", dirIndex_.c_str(), strerror(errno));
     }
 
     if (rmdir(workDir_.c_str()) != 0) {
-        DLP_LOG_ERROR(LABEL, "rmdir failed, %{public}s errno %{public}s", workDir_.c_str(), strerror(errno));
+        DLP_LOG_ERROR(LABEL, "rmdir failed, %{private}s errno %{public}s", workDir_.c_str(), strerror(errno));
     }
 
     return true;
@@ -429,7 +433,7 @@ static int32_t GetFileSize(int32_t fd, uint64_t& fileLen)
         fileLen = static_cast<uint64_t>(readLen);
         ret = DLP_OK;
     }
-    (void)lseek(fd, 0, SEEK_SET);
+    LSEEK_AND_CHECK(fd, 0, SEEK_SET, DLP_PARSE_ERROR_FILE_OPERATE_FAIL, LABEL);
     return ret;
 }
 
@@ -445,6 +449,8 @@ static std::string SetDlpGeneralInfo(GenerInfoParams &genInfo)
         .certSize = genInfo.certSize,
         .fileId = genInfo.fileId,
         .allowedOpenCount = genInfo.allowedOpenCount,
+        .waterMarkConfig = genInfo.waterMarkConfig,
+        .countdown = genInfo.countdown,
     };
     std::string out;
     GenerateDlpGeneralInfo(params, out);
@@ -473,8 +479,12 @@ int32_t DlpZipFile::GenEncData(int32_t inPlainFileFd)
 
 int32_t DlpZipFile::GenerateHmacVal(int32_t encFile, struct DlpBlob& out)
 {
-    lseek(encFile, 0, SEEK_SET);
+    LSEEK_AND_CHECK(encFile, 0, SEEK_SET, DLP_PARSE_ERROR_FILE_OPERATE_FAIL, LABEL);
     int32_t fd = dup(encFile);
+    if (fd < 0) {
+        DLP_LOG_ERROR(LABEL, "dup file failed");
+        return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
+    }
     uint64_t fileLen = 0;
 
     int32_t ret = GetFileSize(fd, fileLen);
@@ -554,6 +564,8 @@ int32_t DlpZipFile::AddGeneralInfoToBuff(int32_t encFile)
         .certSize = cert_.size,
         .fileId = fileId_,
         .allowedOpenCount = allowedOpenCount_,
+        .waterMarkConfig = waterMarkConfig_,
+        .countdown = countdown_,
     };
 
     std::string ja = SetDlpGeneralInfo(genInfo);
@@ -716,7 +728,7 @@ int32_t DlpZipFile::UpdateDlpFileContentSize()
 int32_t DlpZipFile::DlpFileRead(uint64_t offset, void* buf, uint32_t size, bool& hasRead, int32_t uid)
 {
     int32_t opFd = encDataFd_;
-    if (buf == nullptr || size == 0 || size > DLP_FUSE_MAX_BUFFLEN ||
+    if (buf == nullptr || size == 0 || size > DLP_FUSE_MAX_BUFFLEN || size >= DLP_MAX_CONTENT_SIZE ||
         (offset >= DLP_MAX_CONTENT_SIZE - size) ||
         opFd < 0 || !IsValidCipher(cipher_.encKey, cipher_.usageSpec, cipher_.hmacKey)) {
         DLP_LOG_ERROR(LABEL, "params is error");
@@ -862,7 +874,7 @@ int32_t DlpZipFile::DoDlpFileWrite(uint64_t offset, void* buf, uint32_t size)
 
     ret = write(opFd, writeBuff, restBlocksSize);
     delete[] writeBuff;
-    if (ret <= 0) {
+    if (ret != static_cast<int32_t>(restBlocksSize)) {
         DLP_LOG_ERROR(LABEL, "write buff failed, %{public}s", strerror(errno));
         return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
     }
@@ -877,7 +889,7 @@ int32_t DlpZipFile::DlpFileWrite(uint64_t offset, void* buf, uint32_t size)
         return DLP_PARSE_ERROR_FILE_READ_ONLY;
     }
     int32_t opFd = encDataFd_;
-    if (buf == nullptr || size == 0 || size > DLP_FUSE_MAX_BUFFLEN ||
+    if (buf == nullptr || size == 0 || size > DLP_FUSE_MAX_BUFFLEN || size >= DLP_MAX_CONTENT_SIZE ||
         (offset >= DLP_MAX_CONTENT_SIZE - size) ||
         opFd < 0 || !IsValidCipher(cipher_.encKey, cipher_.usageSpec, cipher_.hmacKey)) {
         DLP_LOG_ERROR(LABEL, "Dlp file param invalid");
@@ -912,6 +924,10 @@ int32_t DlpZipFile::Truncate(uint64_t size)
     int32_t opFd = encDataFd_;
     if (opFd < 0 || size >= DLP_MAX_CONTENT_SIZE) {
         DLP_LOG_ERROR(LABEL, "Param invalid");
+        return DLP_PARSE_ERROR_VALUE_INVALID;
+    }
+    if (size > static_cast<uint64_t>(std::numeric_limits<off_t>::max())) {
+        DLP_LOG_ERROR(LABEL, "ftruncate size overflow.");
         return DLP_PARSE_ERROR_VALUE_INVALID;
     }
 

@@ -248,6 +248,26 @@ public:
         return allowedOpenCount_;
     };
 
+    void SetWaterMarkConfig(bool waterMarkConfig)
+    {
+        waterMarkConfig_ = waterMarkConfig;
+    };
+
+    bool GetWaterMarkConfig()
+    {
+        return waterMarkConfig_;
+    };
+
+    void SetCountdown(int32_t countdown)
+    {
+        countdown_ = countdown;
+    };
+
+    int32_t GetCountdown()
+    {
+        return countdown_;
+    };
+
     int32_t dlpFd_;
     friend class DlpRawFile;
     friend class DlpZipFile;
@@ -284,6 +304,8 @@ private:
     std::string fileId_;
     int32_t accountType_;
     int32_t allowedOpenCount_;
+    bool waterMarkConfig_;
+    int32_t countdown_;
 };
 }  // namespace DlpPermission
 }  // namespace Security

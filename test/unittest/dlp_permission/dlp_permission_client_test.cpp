@@ -196,18 +196,21 @@ HWTEST_F(DlpPermissionClientTest, SetEnterprisePolicy001, TestSize.Level0)
 }
 
 /* *
- * @tc.name: SetNotOwnerAndReadOnce001
- * @tc.desc: SetNotOwnerAndReadOnce.
+ * @tc.name: SetFileInfo001
+ * @tc.desc: SetFileInfo.
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(DlpPermissionClientTest, SetNotOwnerAndReadOnce001, TestSize.Level0)
+HWTEST_F(DlpPermissionClientTest, SetFileInfo001, TestSize.Level0)
 {
-    DLP_LOG_DEBUG(LABEL, "SetNotOwnerAndReadOnce001");
+    DLP_LOG_DEBUG(LABEL, "SetFileInfo001");
+    FileInfo fileInfo;
+    fileInfo.isNotOwnerAndReadOnce = true;
     std::string uri = "";
-    int32_t ret = DlpPermissionClient::GetInstance().SetNotOwnerAndReadOnce(uri, true);
+    int32_t ret = DlpPermissionClient::GetInstance().SetFileInfo(uri, fileInfo);
     ASSERT_EQ(ret, DLP_SERVICE_ERROR_PERMISSION_DENY);
     uri = "uri";
-    ret = DlpPermissionClient::GetInstance().SetNotOwnerAndReadOnce(uri, false);
+    fileInfo.isNotOwnerAndReadOnce = false;
+    ret = DlpPermissionClient::GetInstance().SetFileInfo(uri, fileInfo);
     ASSERT_EQ(ret, DLP_SERVICE_ERROR_PERMISSION_DENY);
 }

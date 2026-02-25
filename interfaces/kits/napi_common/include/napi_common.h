@@ -291,6 +291,9 @@ private:
 void ThrowParamError(const napi_env env, const std::string& param, const std::string& type);
 void DlpNapiThrow(napi_env env, int32_t nativeErrCode);
 void DlpNapiThrow(napi_env env, int32_t jsErrCode, const std::string &jsErrMsg);
+bool CheckPermission(napi_env env, const std::string& permission);
+napi_value BindingJsWithNative(napi_env env, napi_value* argv, size_t argc, napi_ref& dlpFileRef_);
+void GetDlpProperty(std::shared_ptr<DlpFile>& dlpFileNative, DlpProperty& property);
 napi_value GenerateBusinessError(napi_env env, int32_t jsErrCode, const std::string &jsErrMsg);
 bool NapiCheckArgc(const napi_env env, int32_t argc, int32_t reqSize);
 
@@ -388,7 +391,7 @@ bool ParseUIAbilityContextReq(
 bool ParseWantReq(napi_env env, const napi_value& obj, OHOS::AAFwk::Want& requestWant);
 void StartUIExtensionAbility(std::shared_ptr<UIExtensionRequestContext> asyncContext);
 
-bool IsStringLengthValid(std::string str, size_t maxLen, size_t minLen = 0);
+bool IsStringLengthValid(std::string& str, size_t maxLen, size_t minLen = 0);
 }  // namespace DlpPermission
 }  // namespace Security
 }  // namespace OHOS

@@ -23,6 +23,7 @@
 
 #include "dlp_permission_death_recipient.h"
 #include "dlp_permission.h"
+#include "dlp_permission_kit.h"
 #include "idlp_permission_service.h"
 #include "dlp_permission_callback.h"
 #include "dlp_sandbox_change_callback_customize.h"
@@ -30,6 +31,7 @@
 #include "open_dlp_file_callback_customize.h"
 #include "open_dlp_file_callback.h"
 #include "nocopyable.h"
+#include "ability_info.h"
 
 namespace OHOS {
 namespace Security {
@@ -42,6 +44,11 @@ public:
         const PermissionPolicy& policy, std::shared_ptr<GenerateDlpCertificateCallback> callback);
     int32_t ParseDlpCertificate(sptr<CertParcel>& certParcel, std::shared_ptr<ParseDlpCertificateCallback> callback,
         const std::string& appId, bool offlineAccess);
+    int32_t GetWaterMark(const bool waterMarkConfig, std::shared_ptr<GetWaterMarkCallback> callback);
+    int32_t GetDomainAccountNameInfo(std::string& accountNameInfo);
+    int32_t GetAbilityInfos(const AAFwk::Want& want, int32_t flags, int32_t userId,
+        std::vector<AppExecFwk::AbilityInfo> &abilityInfos);
+    int32_t SetWaterMark(const int32_t pid);
     int32_t InstallDlpSandbox(const std::string& bundleName, DLPFileAccess dlpFileAccess, int32_t userId,
         SandboxInfo& sandboxInfo, const std::string& uri);
     int32_t UninstallDlpSandbox(const std::string& bundleName, int32_t appIndex, int32_t userId);
@@ -74,7 +81,7 @@ public:
     void CleanUpResource();
     int32_t SetDlpFeature(uint32_t dlpFeatureInfo, bool& statusSetInfo);
     int32_t SetEnterprisePolicy(const std::string& policy);
-    int32_t SetNotOwnerAndReadOnce(const std::string& uri, bool isNotOwnerAndReadOnce);
+    int32_t SetFileInfo(const std::string& uri, const FileInfo& fileInfo);
 
 private:
     DlpPermissionClient();

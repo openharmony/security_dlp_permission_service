@@ -44,6 +44,7 @@ const std::string PATH_CACHE = "/cache";
 const std::string SUPPORT_PHOTO_DLP = "support_photo_dlp";
 const std::string SUPPORT_VIDEO_DLP = "support_video_dlp";
 const std::string SUPPORT_AUDIO_DLP = "support_audio_dlp";
+const std::string SUPPORT_DOCUMENT_DLP = "support_document_dlp";
 
 static const std::string DEFAULT_STRING = "";
 }
@@ -275,14 +276,9 @@ void DlpFileManager::FreeChiperBlob(struct DlpBlob& key, struct DlpBlob& certDat
     }
 }
 
-int32_t DlpFileManager::PrepareParms(const std::shared_ptr<DlpFile>& filePtr, const DlpProperty& property,
-    PermissionPolicy& policy) const
+static int32_t SetDlpParams(const std::shared_ptr<DlpFile>& filePtr, const DlpProperty& property,
+    PermissionPolicy& policy)
 {
-    struct DlpBlob key;
-    struct DlpBlob certData;
-    struct DlpUsageSpec usage;
-    struct DlpBlob hmacKey;
-
     int result = policy.CheckActionUponExpiry();
     if (result != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "Check action upon expiry fail, errno=%{public}d", result);
@@ -294,15 +290,34 @@ int32_t DlpFileManager::PrepareParms(const std::shared_ptr<DlpFile>& filePtr, co
     }
     policy.fileId = property.fileId;
     policy.allowedOpenCount_ = property.allowedOpenCount;
+    policy.waterMarkConfig_ = property.waterMarkConfig;
+    policy.countdown_ = property.countdown;
     filePtr->SetFileId(property.fileId);
     filePtr->SetAllowedOpenCount(property.allowedOpenCount);
     filePtr->SetOfflineAccess(property.offlineAccess, property.allowedOpenCount);
+    filePtr->SetWaterMarkConfig(property.waterMarkConfig);
+    filePtr->SetCountdown(property.countdown);
+    return DLP_OK;
+}
 
+int32_t DlpFileManager::PrepareParms(const std::shared_ptr<DlpFile>& filePtr, const DlpProperty& property,
+    PermissionPolicy& policy) const
+{
+    struct DlpBlob key;
+    struct DlpBlob certData;
+    struct DlpUsageSpec usage;
+    struct DlpBlob hmacKey;
+    int32_t result = SetDlpParams(filePtr, property, policy);
+    if (result != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "Set params fail, errno=%{public}d", result);
+        return result;
+    }
     result = PrepareDlpEncryptParms(policy, key, usage, certData, hmacKey);
     if (result != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "Set dlp obj params fail, prepare encrypt params error, errno=%{public}d", result);
         return result;
     }
+
     do {
         result = filePtr->SetCipher(key, usage, hmacKey);
         if (result != DLP_OK) {
@@ -496,7 +511,7 @@ int32_t DlpFileManager::GenerateDlpFile(
         DLP_LOG_ERROR(LABEL, "GetFileNameWithFd fail, errno=%{public}d", result);
         return result;
     }
-    DLP_LOG_DEBUG(LABEL, "the filename is %{public}s", fileName.c_str());
+    DLP_LOG_DEBUG(LABEL, "the filename is %{private}s", fileName.c_str());
 
     std::string realFileType = GetFileSuffix(fileName);
     if (realFileType == DEFAULT_STRING) {
@@ -509,7 +524,8 @@ int32_t DlpFileManager::GenerateDlpFile(
         return DLP_PARSE_ERROR_VALUE_INVALID;
     }
     DlpFileMes dlpFileMes = {plainFileFd, dlpFileFd, realFileType};
-    if (property.ownerAccountType == CLOUD_ACCOUNT && fileLen > 0) {
+    if ((fileType == SUPPORT_PHOTO_DLP || fileType == SUPPORT_VIDEO_DLP || fileType == SUPPORT_AUDIO_DLP ||
+        fileType == SUPPORT_DOCUMENT_DLP) && property.ownerAccountType == CLOUD_ACCOUNT) {
         return GenRawDlpFile(dlpFileMes, property, filePtr);
     }
     return GenZipDlpFile(dlpFileMes, property, filePtr, workDir);
@@ -534,15 +550,23 @@ int32_t DlpFileManager::DlpRawHmacCheckAndUpdate(std::shared_ptr<DlpFile>& fileP
     return AddDlpFileNode(filePtr);
 }
 
-// 校验明文中存储的信息是否与policy中的一致
 static bool VerifyConsistent(const PermissionPolicy& policy, std::shared_ptr<DlpFile>& filePtr)
 {
     if (policy.GetAllowedOpenCount() != filePtr->GetAllowedOpenCount()) {
         DLP_LOG_ERROR(LABEL, "allowedOpenCount not consistent");
         return false;
     }
+    if (policy.waterMarkConfig_ != filePtr->GetWaterMarkConfig()) {
+        DLP_LOG_ERROR(LABEL, "waterMarkConfig not consistent");
+        return false;
+    }
+    if (policy.GetCountdown() != filePtr->GetCountdown()) {
+        DLP_LOG_ERROR(LABEL, "countdown not consistent");
+        return false;
+    }
     std::string filePtrFileId;
     filePtr->GetFileIdPlaintext(filePtrFileId);
+    filePtr->SetFileId(policy.fileId);
     if (policy.fileId.empty() !=
         (filePtrFileId.empty() || filePtrFileId.find_first_not_of('\0') == std::string::npos)) {
         DLP_LOG_ERROR(LABEL, "fileId not consistent with fileId empty");
@@ -565,27 +589,64 @@ static int32_t SetNotOwnerAndReadOnce(const PermissionPolicy& policy, int32_t dl
         DLP_LOG_ERROR(LABEL, "GetFilePathByFd fail, err = %{public}d.", res);
         return res;
     }
-
-    bool isNotOwnerAndReadOnce = false;
+    std::string account;
+    res = filePtr->GetLocalAccountName(account);
+    if (res != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "GetLocalAccountName fail, err = %{public}d.", res);
+        return res;
+    }
+    FileInfo fileInfo;
+    if (policy.ownerAccountType_ == CLOUD_ACCOUNT) {
+        fileInfo.accountName = account;
+    }
     if (policy.ownerAccountType_ == CLOUD_ACCOUNT && policy.GetAllowedOpenCount() >= 1) {
         DLP_LOG_DEBUG(LABEL, "cloud account and set allowedopencount, judge if owner.");
-        std::string account;
-        res = filePtr->GetLocalAccountName(account);
-        if (res != DLP_OK) {
-            DLP_LOG_ERROR(LABEL, "GetLocalAccountName fail, err = %{public}d.", res);
-            return res;
-        }
         if (policy.ownerAccount_.compare("") != 0 && policy.ownerAccount_.compare(account) == 0) {
-            isNotOwnerAndReadOnce = false;
+            fileInfo.isNotOwnerAndReadOnce = false;
         } else {
             DLP_LOG_DEBUG(LABEL, "isNotOwnerAndReadOnce true.");
-            isNotOwnerAndReadOnce = true;
+            fileInfo.isNotOwnerAndReadOnce = true;
         }
     }
-    res = DlpPermissionKit::SetNotOwnerAndReadOnce(filePath, isNotOwnerAndReadOnce);
+    if (policy.GetwaterMarkConfig()) {
+        DLP_LOG_DEBUG(LABEL, "watermarkConfig is true.");
+        fileInfo.isNotOwnerAndReadOnce = true;
+        fileInfo.isWatermark = true;
+    }
+    fileInfo.fileId = policy.fileId;
+    res = DlpPermissionKit::SetFileInfo(filePath, fileInfo);
     if (res != DLP_OK) {
-        DLP_LOG_ERROR(LABEL, "SetNotOwnerAndReadOnce fail, err = %{public}d.", res);
+        DLP_LOG_ERROR(LABEL, "SetFileInfo fail, err = %{public}d.", res);
         return res;
+    }
+    return DLP_OK;
+}
+
+static int32_t VerifyAndGetWaterMark(PermissionPolicy& policy, std::shared_ptr<DlpFile>& filePtr)
+{
+    if (!policy.canFindCountdown_) {
+        DLP_LOG_DEBUG(LABEL, "can not find countdown.");
+        policy.countdown_ = filePtr->GetCountdown();
+    }
+    if (!policy.canFindWaterMarkConfig_) {
+        DLP_LOG_DEBUG(LABEL, "can not find waterMarkConfig.");
+        policy.waterMarkConfig_ = filePtr->GetWaterMarkConfig();
+    }
+    int32_t result = filePtr->SetPolicy(policy);
+    if (result != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "SetPolicy fail, errno=%{public}d", result);
+        return result;
+    }
+    filePtr->SetFileId(policy.fileId);
+    if (!VerifyConsistent(policy, filePtr)) {
+        DLP_LOG_ERROR(LABEL, "VerifyConsistent fail");
+        return DLP_PARSE_ERROR_FILE_VERIFICATION_FAIL;
+    }
+    if (policy.GetwaterMarkConfig()) {
+        result = DlpPermissionKit::GetWaterMark(policy.GetwaterMarkConfig());
+        if (result != DLP_OK) {
+            DLP_LOG_ERROR(LABEL, "GetWaterMark fail, errno=%{public}d", result);
+        }
     }
     return DLP_OK;
 }
@@ -611,14 +672,10 @@ int32_t DlpFileManager::ParseRawDlpFile(int32_t dlpFileFd, std::shared_ptr<DlpFi
         DLP_LOG_ERROR(LABEL, "Parse cert fail, errno=%{public}d", result);
         return result;
     }
-    result = filePtr->SetPolicy(policy);
+    result = filePtr->GetAccountType() == ENTERPRISE_ACCOUNT ? DLP_OK : VerifyAndGetWaterMark(policy, filePtr);
     if (result != DLP_OK) {
-        DLP_LOG_ERROR(LABEL, "SetPolicy fail, errno=%{public}d", result);
+        DLP_LOG_ERROR(LABEL, "get watermark failed, errno=%{public}d", result);
         return result;
-    }
-    if (!VerifyConsistent(policy, filePtr)) {
-        DLP_LOG_ERROR(LABEL, "VerifyConsistent fail");
-        return DLP_PARSE_ERROR_FILE_VERIFICATION_FAIL;
     }
     struct DlpBlob key = {.size = policy.GetAeskeyLen(), .data = policy.GetAeskey()};
     struct DlpCipherParam param = {.iv = {.size = policy.GetIvLen(), .data = policy.GetIv()}};
@@ -630,7 +687,8 @@ int32_t DlpFileManager::ParseRawDlpFile(int32_t dlpFileFd, std::shared_ptr<DlpFi
         return result;
     }
     filePtr->SetAllowedOpenCount(policy.GetAllowedOpenCount());
-    result = SetNotOwnerAndReadOnce(policy, dlpFileFd, filePtr);
+    result = filePtr->GetAccountType() == ENTERPRISE_ACCOUNT ? DLP_OK :
+        SetNotOwnerAndReadOnce(policy, dlpFileFd, filePtr);
     if (result != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "SetNotOwnerAndReadOnce fail, errno=%{public}d", result);
         return result;
@@ -684,14 +742,10 @@ int32_t DlpFileManager::ParseZipDlpFile(std::shared_ptr<DlpFile>& filePtr, const
         DLP_LOG_ERROR(LABEL, "Parse cert fail, errno=%{public}d", result);
         return result;
     }
-    result = filePtr->SetPolicy(policy);
+    result = VerifyAndGetWaterMark(policy, filePtr);
     if (result != DLP_OK) {
-        DLP_LOG_ERROR(LABEL, "SetPolicy fail, errno=%{public}d", result);
+        DLP_LOG_ERROR(LABEL, "Get watermark failed, errno=%{public}d", result);
         return result;
-    }
-    if (!VerifyConsistent(policy, filePtr)) {
-        DLP_LOG_ERROR(LABEL, "VerifyConsistent fail");
-        return DLP_PARSE_ERROR_FILE_VERIFICATION_FAIL;
     }
     struct DlpBlob key = {.size = policy.GetAeskeyLen(), .data = policy.GetAeskey()};
     struct DlpCipherParam param = {.iv = {.size = policy.GetIvLen(), .data = policy.GetIv()}};

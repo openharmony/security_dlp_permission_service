@@ -83,6 +83,7 @@ static void GenerateProp(DlpProperty& prop, const std::string& account)
     prop.actionUponExpiry = ActionType::OPEN;
     prop.fileId = "111";
     prop.allowedOpenCount = 1;
+    prop.countdown = 1;
 }
 
 static void RawFileFuzzTest(const uint8_t* data, size_t size)

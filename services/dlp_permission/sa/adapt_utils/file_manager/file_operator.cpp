@@ -118,7 +118,7 @@ bool FileOperator::IsExistFile(const std::string& path)
 
     struct stat buf = {};
     if (stat(path.c_str(), &buf) != 0) {
-        DLP_LOG_ERROR(LABEL, "stat path: %{public}s, errno %{public}d.", path.c_str(), errno);
+        DLP_LOG_ERROR(LABEL, "stat path: %{private}s, errno %{public}d.", path.c_str(), errno);
         return false;
     }
 
@@ -134,7 +134,7 @@ bool FileOperator::IsExistDir(const std::string& path)
 
     struct stat buf = {};
     if (stat(path.c_str(), &buf) != 0) {
-        DLP_LOG_ERROR(LABEL, "stat path: %{public}s, errno %{public}d.", path.c_str(), errno);
+        DLP_LOG_ERROR(LABEL, "stat path: %{private}s, errno %{public}d.", path.c_str(), errno);
         return false;
     }
 

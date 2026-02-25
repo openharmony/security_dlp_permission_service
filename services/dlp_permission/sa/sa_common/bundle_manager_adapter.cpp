@@ -98,6 +98,18 @@ int32_t BundleManagerAdapter::GetBundleInfoV9(const std::string &bundleName, App
     return proxy_->GetBundleInfoV9(bundleName, flag, bundleInfo, userId);
 }
 
+int32_t BundleManagerAdapter::GetAbilityInfosV9(const AAFwk::Want& want, int32_t flags, int32_t userId,
+    std::vector<AppExecFwk::AbilityInfo> &abilityInfos)
+{
+    std::lock_guard<std::mutex> lock(proxyMutex_);
+    int32_t result = Connect();
+    if (result != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "failed to connect bundle manager service.");
+        return DLP_SERVICE_ERROR_IPC_REQUEST_FAIL;
+    }
+    return proxy_->QueryAbilityInfosV9(want, flags, userId, abilityInfos);
+}
+
 int32_t BundleManagerAdapter::Connect()
 {
     if (proxy_ != nullptr) {
