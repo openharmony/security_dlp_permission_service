@@ -221,6 +221,86 @@ HWTEST_F(DlpPermissionStaticTest, DlpPermissionStaticTest003, TestSize.Level1)
     ASSERT_EQ(DLP_OK, ret);
     ASSERT_EQ(authType, SandBoxExternalAuthorType::ALLOW_START_ABILITY);
 }
+/**
+ * @tc.name: DlpPermissionStaticTest004
+ * @tc.desc: GetPixelmapFromFd test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionStaticTest, DlpPermissionStaticTest004, TestSize.Level1)
+{
+    WaterMarkInfo waterMarkInfo;
+    int32_t ret = GetPixelmapFromFd(waterMarkInfo);
+    ASSERT_EQ(ret, DLP_IPC_CALLBACK_ERROR);
+    waterMarkInfo.waterMarkFd = 0;
+    ret = GetPixelmapFromFd(waterMarkInfo);
+    ASSERT_NE(ret, DLP_OK);
+}
+
+/**
+ * @tc.name: DlpPermissionStaticTest005
+ * @tc.desc: SetWatermarkToRS test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionStaticTest, DlpPermissionStaticTest005, TestSize.Level1)
+{
+    std::string name = "";
+    WaterMarkInfo waterMarkInfo;
+    int32_t ret = SetWatermarkToRS(waterMarkInfo.maskInfo, waterMarkInfo.waterMarkImg);
+    ASSERT_NE(ret, DLP_OK);
+}
+
+/**
+ * @tc.name: DlpPermissionStaticTest006
+ * @tc.desc: FillDlpSandboxInfo test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionStaticTest, DlpPermissionStaticTest006, TestSize.Level1)
+{
+    DlpSandboxInfo appInfo = {
+        .uid = 1,
+        .userId = 123,
+        .bundleName = "testbundle1",
+        .hasRead = false,
+        .appIndex = -1,
+        .bindAppIndex = 1001,
+    };
+    FillDlpSandboxInfo(appInfo, appInfo.bundleName,
+        appInfo.dlpFileAccess, appInfo.userId, "");
+    ASSERT_EQ(appInfo.uri, "");
+}
+
+/**
+ * @tc.name: DlpPermissionStaticTest007
+ * @tc.desc: ClearKvStorage test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionStaticTest, DlpPermissionStaticTest007, TestSize.Level1)
+{
+    bool ret = true;
+    ClearKvStorage();
+    ASSERT_NE(ret, false);
+}
+
+/**
+ * @tc.name: DlpPermissionStaticTest008
+ * @tc.desc: GetApplicationInfo test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionStaticTest, DlpPermissionStaticTest008, TestSize.Level1)
+{
+    AppExecFwk::ApplicationInfo applicationInfo;
+    std::string appId = "";
+    bool ret = GetApplicationInfo(appId, applicationInfo);
+    ASSERT_EQ(ret, false);
+    appId = "dlp_dlp";
+    ret = GetApplicationInfo(appId, applicationInfo);
+    ASSERT_EQ(ret, false);
+}
 }  // namespace DlpPermission
 }  // namespace Security
 }  // namespace OHOS
