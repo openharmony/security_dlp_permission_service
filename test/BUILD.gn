@@ -50,12 +50,12 @@ ohos_unittest("dlp_permission_static_test") {
     cfi_cross_dso = true
     debug = false
   }
-
-
+ 
+ 
   subsystem_name = "security"
   part_name = "dlp_permission_service"
   module_out_path = part_name + "/" + part_name
-
+ 
   include_dirs = [
     "${dlp_root_dir}/services/dlp_permission/sa/adapt_utils/account_adapt",
     "${dlp_root_dir}/services/dlp_permission/sa/adapt_utils/alg_adapt/alg_manager/include",
@@ -75,7 +75,7 @@ ohos_unittest("dlp_permission_static_test") {
     "${dlp_root_dir}/interfaces/inner_api/dlp_parse/include",
     "${dlp_root_dir}/test/sa/static",
   ]
-
+ 
   sources = [
     "unittest/sa/static/dlp_permission_static_test.cpp",
     "${dlp_root_dir}/services/dlp_permission/sa/sa_main/dlp_permission_async_proxy.cpp",
@@ -127,18 +127,18 @@ ohos_unittest("dlp_permission_static_test") {
     "${dlp_root_dir}/services/dlp_permission/sa/storage/src/dlp_kv_data_storage.cpp",
     "${dlp_root_dir}/services/dlp_permission/sa/storage/src/sandbox_config_kv_data_storage.cpp",
   ]
-
-  configs = [
+ 
+  configs = [ 
     "${dlp_root_dir}/config:coverage_flags",
     ":stub_tdd_need_skip_timer_config",
   ]
-
+ 
   cflags_cc = [
     "-DHILOG_ENABLE",
     "-DDLP_UNIT_TEST",
   ]
   cflags = [ "-DHILOG_ENABLE" ]
-
+ 
   deps = [
     "${dlp_permission_public_config_path}/:dlp_permission_stub",
     "${dlp_root_dir}/services/dlp_permission/sa:dlp_hex_string_static",
@@ -146,7 +146,7 @@ ohos_unittest("dlp_permission_static_test") {
     "${dlp_root_dir}/services/dlp_permission/sa:dlp_permission_service.rc",
     "${dlp_root_dir}/services/dlp_permission/sa/etc:param_files",
   ]
-
+ 
   external_deps = [
     "ability_base:want",
     "ability_base:zuri",
@@ -200,12 +200,12 @@ ohos_unittest("dlp_credential_static_test") {
     cfi_cross_dso = true
     debug = false
   }
-
-
+ 
+ 
   subsystem_name = "security"
   part_name = "dlp_permission_service"
   module_out_path = part_name + "/" + part_name
-
+ 
   include_dirs = [
     "${dlp_root_dir}/services/dlp_permission/sa/adapt_utils/account_adapt",
     "${dlp_root_dir}/services/dlp_permission/sa/adapt_utils/alg_adapt/alg_manager/include",
@@ -225,7 +225,7 @@ ohos_unittest("dlp_credential_static_test") {
     "${dlp_root_dir}/interfaces/inner_api/dlp_parse/include",
     "${dlp_root_dir}/test/sa/static",
   ]
-
+ 
   sources = [
     "unittest/sa/static/dlp_credential_static_test.cpp",
     "${dlp_root_dir}/services/dlp_permission/sa/sa_main/dlp_permission_async_proxy.cpp",
@@ -277,18 +277,18 @@ ohos_unittest("dlp_credential_static_test") {
     "${dlp_root_dir}/services/dlp_permission/sa/storage/src/dlp_kv_data_storage.cpp",
     "${dlp_root_dir}/services/dlp_permission/sa/storage/src/sandbox_config_kv_data_storage.cpp",
   ]
-
-  configs = [
+ 
+  configs = [ 
     "${dlp_root_dir}/config:coverage_flags",
     ":stub_tdd_need_skip_timer_config",
   ]
-
+ 
   cflags_cc = [
     "-DHILOG_ENABLE",
     "-DDLP_UNIT_TEST",
   ]
   cflags = [ "-DHILOG_ENABLE" ]
-
+ 
   deps = [
     "${dlp_permission_public_config_path}/:dlp_permission_stub",
     "${dlp_root_dir}/services/dlp_permission/sa:dlp_hex_string_static",
@@ -296,7 +296,7 @@ ohos_unittest("dlp_credential_static_test") {
     "${dlp_root_dir}/services/dlp_permission/sa:dlp_permission_service.rc",
     "${dlp_root_dir}/services/dlp_permission/sa/etc:param_files",
   ]
-
+ 
   external_deps = [
     "ability_base:want",
     "ability_base:zuri",
@@ -422,6 +422,7 @@ ohos_unittest("dlp_permission_service_test") {
     "${dlp_root_dir}/services/dlp_permission/sa/storage/src/dlp_kv_data_storage.cpp",
     "${dlp_root_dir}/services/dlp_permission/sa/storage/src/sandbox_config_kv_data_storage.cpp",
     "unittest/sa/src/account_adapt_test.cpp",
+    "unittest/sa/src/account_event_subscriber_test.cpp",
     "unittest/sa/src/alg_utils_test.cpp",
     "unittest/sa/src/app_state_observer_test.cpp",
     "unittest/sa/src/dlp_bundle_adapter_test.cpp",
@@ -443,7 +444,7 @@ ohos_unittest("dlp_permission_service_test") {
     "unittest/sa/src/sandbox_json_manager_test.cpp",
   ]
 
-  configs = [
+  configs = [ 
     "${dlp_root_dir}/config:coverage_flags",
     ":stub_tdd_need_skip_timer_config",
   ]
