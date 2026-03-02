@@ -70,6 +70,7 @@ ohos_fuzztest("DlpParseFuzzTest") {
     "hilog:libhilog",
     "hitrace:hitrace_meter",
     "ipc:ipc_core",
+    "json:nlohmann_json_static",
     "openssl:libcrypto_shared",
     "os_account:libaccountkits",
     "os_account:os_account_innerkits",

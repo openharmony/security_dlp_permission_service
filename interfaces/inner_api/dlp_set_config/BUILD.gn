@@ -61,10 +61,11 @@ ohos_shared_library("libdlp_setconfig_sdk") {
     "ability_base:want",
     "bundle_framework:appexecfwk_base",
     "hilog:libhilog",
+    "json:nlohmann_json_static",
   ]
 
   cflags_cc = [ "-DHILOG_ENABLE" ]
-  
+
   configs = [
     "${dlp_root_dir}/config:coverage_flags",
     "${dlp_root_dir}/config:common_build_options_flags",

@@ -72,6 +72,7 @@ ohos_shared_library("libdlpparse") {
     "hilog:libhilog",
     "hitrace:hitrace_meter",
     "ipc:ipc_core",
+    "json:nlohmann_json_static",
     "openssl:libcrypto_shared",
     "os_account:os_account_innerkits",
     "samgr:samgr_proxy",
