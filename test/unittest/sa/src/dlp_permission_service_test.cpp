@@ -1979,6 +1979,30 @@ HWTEST_F(DlpPermissionServiceTest, CheckWaterMarkInfo001, TestSize.Level1)
 }
 
 /**
+ * @tc.name: ExecuteCallbackAsync001
+ * @tc.desc: ExecuteCallbackAsync test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionServiceTest, ExecuteCallbackAsync001, TestSize.Level1)
+{
+    DlpSandboxChangeCallbackManager::GetInstance().callbackInfoMap_.clear();
+    sptr<IRemoteObject> callback;
+    wptr<IRemoteObject> remote = new (std::nothrow) DlpSandboxChangeCallbackTest();
+    callback = remote.promote();
+    int32_t res = DlpSandboxChangeCallbackManager::GetInstance().AddCallback(getpid(), callback);
+    EXPECT_EQ(DLP_OK, res);
+    DlpSandboxInfo dlpSandboxInfo;
+    dlpSandboxInfo.uri = "uri";
+    dlpSandboxInfo.userId = DEFAULT_USERID + 1;
+    dlpSandboxInfo.bundleName = DLP_MANAGER_APP;
+    dlpSandboxInfo.timeStamp = 100;
+    DlpSandboxChangeCallbackManager::GetInstance().ExecuteCallbackAsync(dlpSandboxInfo);
+    res = DlpSandboxChangeCallbackManager::GetInstance().RemoveCallback(callback);
+    EXPECT_EQ(DLP_OK, res);
+}
+
+/**
  * @tc.name: ChangeWaterMarkInfo001
  * @tc.desc: ChangeWaterMarkInfo test
  * @tc.type: FUNC
