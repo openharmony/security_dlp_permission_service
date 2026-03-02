@@ -35,6 +35,8 @@
 #include "securec.h"
 
 #include "dlp_credential.cpp"
+#include "dlp_permission_callback.h"
+#include "dlp_permission_async_stub.h"
 
 namespace OHOS {
 namespace Security {
@@ -518,6 +520,51 @@ HWTEST_F(DlpCredentialTest, DlpCredentialTest012, TestSize.Level1)
     (void)memcpy_s(policy, sizeof(appIdListNum), &appIdListNum, sizeof(appIdListNum));
     res = ParseUint8TypedArrayToStringVector(policy, &policyLen, appIdList);
     EXPECT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, res);
+}
+
+/**
+ * @tc.name: DlpRestorePolicyCallbackCheck01
+ * @tc.desc: DlpRestorePolicyCallbackCheck test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpCredentialTest, DlpRestorePolicyCallbackCheck01, TestSize.Level1)
+{
+    std::shared_ptr<GenerateDlpCertificateCallback> callback1 =
+        std::make_shared<ClientGenerateDlpCertificateCallback>();
+    sptr<IDlpPermissionCallback> callback = new (std::nothrow) DlpPermissionAsyncStub(callback1);
+    DlpAccountType accountType = CLOUD_ACCOUNT;
+    int errorCode = 0;
+    PermissionPolicy policyInfo;
+    int32_t res = DlpRestorePolicyCallbackCheck(callback, accountType, errorCode, nullptr, policyInfo);
+    EXPECT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, res);
+    DLP_RestorePolicyData outParams;
+    uint8_t data;
+    outParams.data = &data;
+    res = DlpRestorePolicyCallbackCheck(callback, accountType, errorCode, &outParams, policyInfo);
+    EXPECT_EQ(DLP_OK, res);
+    delete callback;
+}
+
+/**
+ * @tc.name: AdapterData01
+ * @tc.desc: AdapterData test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpCredentialTest, AdapterData01, TestSize.Level1)
+{
+    std::vector<uint8_t> offlineCert;
+    offlineCert.push_back(0);
+    bool isOwner = true;
+    unordered_json jsonObj;
+    DLP_EncPolicyData encPolicy;
+
+    int32_t res = AdapterData(offlineCert, isOwner, jsonObj, encPolicy);
+    EXPECT_NE(res, DLP_OK);
+    isOwner = false;
+    res = AdapterData(offlineCert, isOwner, jsonObj, encPolicy);
+    EXPECT_NE(res, DLP_OK);
 }
 
 }  // namespace DlpPermission
