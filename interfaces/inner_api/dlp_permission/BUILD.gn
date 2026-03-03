@@ -172,6 +172,7 @@ ohos_source_set("dlp_permission_stub") {
     "c_utils:utils",
     "hilog:libhilog",
     "ipc:ipc_single",
+    "json:nlohmann_json_static",
     "samgr:samgr_proxy",
   ]
   subsystem_name = "security"

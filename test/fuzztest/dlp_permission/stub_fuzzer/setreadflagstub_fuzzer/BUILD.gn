@@ -59,6 +59,7 @@ ohos_fuzztest("SetReadFlagStubFuzzTest") {
     "hisysevent:libhisysevent",
     "init:libbegetutil",
     "ipc:ipc_core",
+    "json:nlohmann_json_static",
     "kv_store:distributeddata_inner",
     "memmgr:memmgrclient",
     "os_account:libaccountkits",

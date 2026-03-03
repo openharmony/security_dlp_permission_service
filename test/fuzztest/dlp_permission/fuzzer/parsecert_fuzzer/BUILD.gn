@@ -41,5 +41,6 @@ ohos_fuzztest("ParseCertFuzzTest") {
     "bundle_framework:appexecfwk_base",
     "c_utils:utils",
     "hilog:libhilog",
+    "json:nlohmann_json_static",
   ]
 }
