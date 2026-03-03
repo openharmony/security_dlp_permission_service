@@ -175,6 +175,13 @@ void DlpPermissionService::RegisterAccount()
     DelSandboxInfoByAccount(true);
 }
 
+void DlpPermissionService::DelWaterMarkInfo()
+{
+    std::unique_lock<std::mutex> lock(waterMarkInfoMutex_);
+    waterMarkInfo_.accountAndUserId = "";
+    DLP_LOG_DEBUG(LABEL, "Clear watermark info.");
+}
+
 void DlpPermissionService::DelSandboxInfoByAccount(bool isRegister)
 {
     DLP_LOG_INFO(LABEL, "DelSandboxInfoByAccount");
@@ -210,6 +217,7 @@ void DlpPermissionService::DelSandboxInfoByAccount(bool isRegister)
         RetentionFileManager::GetInstance().RemoveRetentionState(bundleName, appIndex);
         DlpSandboxChangeCallbackManager::GetInstance().ExecuteCallbackAsync(sandboxInfoEntry);
     }
+    DelWaterMarkInfo();
 }
 
 int32_t DlpPermissionService::InitAccountListenerCallback()

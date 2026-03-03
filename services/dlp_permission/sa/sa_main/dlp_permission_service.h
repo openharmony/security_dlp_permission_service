@@ -131,6 +131,7 @@ private:
     void RegisterAccount();
     int32_t InitAccountListenerCallback();
     void DelSandboxInfoByAccount(bool isRegister);
+    void DelWaterMarkInfo();
 
     std::atomic<int32_t> repeatTime_;
     std::shared_ptr<std::thread> thread_ = nullptr;

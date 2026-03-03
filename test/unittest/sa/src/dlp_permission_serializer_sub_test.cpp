@@ -169,3 +169,35 @@ HWTEST_F(DlpPermissionSerializerSubTest, CheckSandboxFlagWithService001, TestSiz
     (void)PermissionManagerAdapter::CheckSandboxFlagWithService(0, sandboxFlag);
     ASSERT_NE(sandboxFlag, true);
 }
+
+/**
+ * @tc.name: CheckHapPermission001
+ * @tc.desc: CheckHapPermission test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionSerializerSubTest, CheckHapPermission001, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL_TEST, "CheckHapPermission001");
+    std::string bundleName;
+    std::string permission;
+    bool ret = BundleManagerAdapter::GetInstance().CheckHapPermission(bundleName, permission);
+    ASSERT_EQ(ret, false);
+}
+
+/**
+ * @tc.name: GetApplicationInfo001
+ * @tc.desc: GetApplicationInfo test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionSerializerSubTest, GetApplicationInfo001, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL_TEST, "GetApplicationInfo001");
+    std::string appName;
+    int32_t flag = 0;
+    int32_t userId = 0;
+    AppExecFwk::ApplicationInfo applicationInfo;
+    bool ret = BundleManagerAdapter::GetInstance().GetApplicationInfo(appName, flag, userId, applicationInfo);
+    ASSERT_EQ(ret, false);
+}

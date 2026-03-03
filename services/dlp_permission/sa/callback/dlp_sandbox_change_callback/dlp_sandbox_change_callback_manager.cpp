@@ -128,19 +128,15 @@ int32_t DlpSandboxChangeCallbackManager::RemoveCallback(int32_t pid, bool &resul
 
 void DlpSandboxChangeCallbackManager::ExecuteCallbackAsync(const DlpSandboxInfo &dlpSandboxInfo)
 {
-    std::map<int32_t, DlpSandboxChangeCallbackRecord>::iterator goalCallback;
-    {
+    auto callbackStart = [&dlpSandboxInfo, this]() {
         std::lock_guard<std::mutex> lock(mutex_);
-        goalCallback = callbackInfoMap_.find(dlpSandboxInfo.pid);
+        std::string name = "DlpCallback";
+        pthread_setname_np(pthread_self(), name.substr(0, MAX_PTHREAD_NAME_LEN).c_str());
+        auto goalCallback = callbackInfoMap_.find(dlpSandboxInfo.pid);
         if (goalCallback == callbackInfoMap_.end()) {
             DLP_LOG_ERROR(LABEL, "can not find pid:%{public}d callback", dlpSandboxInfo.pid);
             return;
         }
-    }
-    auto callbackStart = [&goalCallback, &dlpSandboxInfo]() {
-        std::string name = "DlpCallback";
-        pthread_setname_np(pthread_self(), name.substr(0, MAX_PTHREAD_NAME_LEN).c_str());
-        std::vector<sptr<IRemoteObject>> list;
         auto callback = iface_cast<IDlpSandboxStateChangeCallback>(goalCallback->second.callbackObject_);
         if (callback != nullptr) {
             DLP_LOG_INFO(LABEL, "callback excute");

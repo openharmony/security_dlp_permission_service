@@ -443,13 +443,13 @@ uint32_t EnterpriseSpaceDlpPermissionKit::DecryptRawDlpFileAndGetAccountType(int
         DLP_LOG_ERROR(LABEL, "can not read dlp file head, %{public}s", strerror(errno));
         return INVALID_ACCOUNT;
     }
+    LSEEK_AND_CHECK(dlpFileFd, head.certOffset, SEEK_SET, INVALID_ACCOUNT, LABEL);
     uint8_t *buff = new (std::nothrow)uint8_t[head.certSize + 1];
     if (buff == nullptr) {
         DLP_LOG_ERROR(LABEL, "buff is null");
         return INVALID_ACCOUNT;
     }
     memset_s(buff, head.certSize + 1, 0, head.certSize + 1);
-    LSEEK_AND_CHECK(dlpFileFd, head.certOffset, SEEK_SET, INVALID_ACCOUNT, LABEL);
     if (read(dlpFileFd, buff, head.certSize) != head.certSize) {
         delete []buff;
         DLP_LOG_ERROR(LABEL, "can not read dlp file cert, %{public}s", strerror(errno));
