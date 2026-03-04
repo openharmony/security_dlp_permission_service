@@ -121,3 +121,20 @@ HWTEST_F(DlpPermissionServiceTest, InstallDlpSandbox004, TestSize.Level1)
     DlpPermissionServiceTest::permType = 0;
     ASSERT_EQ(DLP_SERVICE_ERROR_PERMISSION_DENY, ret);
 }
+
+/**
+ * @tc.name:DelWaterMarkInfo001
+ * @tc.desc:DelWaterMarkInfo test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionServiceTest, DelWaterMarkInfo001, TestSize.Level1)
+{
+    DLP_LOG_DEBUG(LABEL, "DelWaterMarkInfo001");
+    WaterMarkInfo wmInfo;
+    wmInfo.accountAndUserId = "test";
+    dlpPermissionService_->waterMarkInfo_ = wmInfo;
+    ASSERT_EQ(dlpPermissionService_->waterMarkInfo_.accountAndUserId, "test");
+    dlpPermissionService_->DelWaterMarkInfo();
+    ASSERT_EQ(dlpPermissionService_->waterMarkInfo_.accountAndUserId, "");
+}
