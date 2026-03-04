@@ -141,6 +141,21 @@ HWTEST_F(DlpPermissionSerializerSubTest, CheckPermissionAndGetAppId001, TestSize
 }
 
 /**
+ * @tc.name: CheckSystemAppAndPermission001
+ * @tc.desc: CheckSystemAppAndPermission test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionSerializerSubTest, CheckSystemAppAndPermission001, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL_TEST, "CheckSystemAppAndPermission001");
+
+    std::string permission = "";
+    auto ret = PermissionManagerAdapter::CheckSystemAppAndPermission(permission);
+    ASSERT_NE(ret, true);
+}
+
+/**
  * @tc.name: CheckSandboxFlagWithService001
  * @tc.desc: CheckSandboxFlagWithService test
  * @tc.type: FUNC

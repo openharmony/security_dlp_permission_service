@@ -307,7 +307,7 @@ int32_t DlpPermissionService::GenerateDlpCertificate(
         return DLP_SERVICE_ERROR_PERMISSION_DENY;
     }
 
-    if (!PermissionManagerAdapter::CheckPermission(PERMISSION_ACCESS_DLP_FILE) &&
+    if (!PermissionManagerAdapter::CheckSystemAppAndPermission(PERMISSION_ACCESS_DLP_FILE) &&
         !PermissionManagerAdapter::CheckPermission(PERMISSION_ENTERPRISE_ACCESS_DLP_FILE) &&
         !(appIdentifier == MDM_APPIDENTIFIER)) {
         return DLP_SERVICE_ERROR_PERMISSION_DENY;
@@ -367,7 +367,7 @@ int32_t DlpPermissionService::ParseDlpCertificate(const sptr<CertParcel>& certPa
         return DLP_SERVICE_ERROR_PERMISSION_DENY;
     }
 
-    if (!PermissionManagerAdapter::CheckPermission(PERMISSION_ACCESS_DLP_FILE) &&
+    if (!PermissionManagerAdapter::CheckSystemAppAndPermission(PERMISSION_ACCESS_DLP_FILE) &&
         !PermissionManagerAdapter::CheckPermission(PERMISSION_ENTERPRISE_ACCESS_DLP_FILE) &&
         !(appIdentifier == MDM_APPIDENTIFIER)) {
         return DLP_SERVICE_ERROR_PERMISSION_DENY;
@@ -634,7 +634,10 @@ int32_t DlpPermissionService::SetWaterMark(const int32_t pid)
     if (PermissionManagerAdapter::CheckSandboxFlagWithService(GetCallingTokenID(), sandboxFlag) != DLP_OK) {
         return DLP_SERVICE_ERROR_VALUE_INVALID;
     }
-
+    if (!sandboxFlag) {
+        DLP_LOG_ERROR(LABEL, "Forbid called by a non-sandbox app");
+        return DLP_SERVICE_ERROR_API_ONLY_FOR_SANDBOX_ERROR;
+    }
     if (waterMarkInfo_.maskInfo.empty()) {
         DLP_LOG_ERROR(LABEL, "No watermark.");
         return DLP_SET_WATERMARK_ERROR;
@@ -1126,7 +1129,7 @@ int32_t DlpPermissionService::RegisterDlpSandboxChangeCallback(const sptr<IRemot
 {
     CriticalHelper criticalHelper("RegisterDlpSandboxChangeCallback");
     appStateObserver_->PostDelayUnloadTask(CurrentTaskState::SHORT_TASK);
-    if (!PermissionManagerAdapter::CheckPermission(PERMISSION_ACCESS_DLP_FILE)) {
+    if (!PermissionManagerAdapter::CheckSystemAppAndPermission(PERMISSION_ACCESS_DLP_FILE)) {
         return DLP_SERVICE_ERROR_PERMISSION_DENY;
     }
     int32_t pid = IPCSkeleton::GetCallingRealPid();
@@ -1139,7 +1142,7 @@ int32_t DlpPermissionService::UnRegisterDlpSandboxChangeCallback(bool& result)
 {
     CriticalHelper criticalHelper("UnRegisterDlpSandboxChangeCallback");
     appStateObserver_->PostDelayUnloadTask(CurrentTaskState::SHORT_TASK);
-    if (!PermissionManagerAdapter::CheckPermission(PERMISSION_ACCESS_DLP_FILE)) {
+    if (!PermissionManagerAdapter::CheckSystemAppAndPermission(PERMISSION_ACCESS_DLP_FILE)) {
         return DLP_SERVICE_ERROR_PERMISSION_DENY;
     }
     int32_t pid = IPCSkeleton::GetCallingRealPid();
@@ -1207,7 +1210,7 @@ int32_t DlpPermissionService::GetDlpGatheringPolicy(bool& isGathering)
 {
     CriticalHelper criticalHelper("GetDlpGatheringPolicy");
     appStateObserver_->PostDelayUnloadTask(CurrentTaskState::SHORT_TASK);
-    if (!PermissionManagerAdapter::CheckPermission(PERMISSION_ACCESS_DLP_FILE)) {
+    if (!PermissionManagerAdapter::CheckSystemAppAndPermission(PERMISSION_ACCESS_DLP_FILE)) {
         return DLP_SERVICE_ERROR_PERMISSION_DENY;
     }
 

@@ -31,6 +31,7 @@ public:
     static bool GetAppIdentifierForCalling(std::string &appIdentifier);
     static int32_t CheckAuthPolicy(const std::string& appId, const std::string& realFileType,
         const int32_t allowedOpenCount);
+    static bool CheckSystemAppAndPermission(const std::string& permission);
 };
 }  // namespace DlpPermission
 }  // namespace Security
