@@ -34,6 +34,9 @@ const uint32_t MAX_ACCOUNT_NUM = 100;
 const uint32_t AES_KEY_LEN = 16;
 const uint32_t IV_LEN = 16;
 const uint64_t EXPIRY_TEN_MINUTE = 60 * 10;
+const uint32_t MAX_CUSTOMPROPERTY_SIZE = 1024 * 1024 * 4;
+const uint32_t MAX_FILEID_SIZE = 1024;
+const uint32_t MAX_APPID_SIZE = 1024;
 
 uint64_t GetCurrentTimeSec(void)
 {
@@ -307,6 +310,54 @@ HWTEST_F(PermissionPolicyTest, IsValid007, TestSize.Level1)
     std::string invalidPerm(MAX_ACCOUNT_SIZE + 1, 'a');
     policy->ownerAccountId_ = invalidPerm;
     ASSERT_FALSE(policy->IsValid());
+    delete[] policy->iv_;
+    policy->iv_ = nullptr;
+    policy->ivLen_ = 0;
+    delete[] policy->aeskey_;
+    policy->aeskey_ = nullptr;
+    policy->aeskeyLen_ = 0;
+}
+
+/**
+ * @tc.name: IsValid008
+ * @tc.desc: IsValid abnormal test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionPolicyTest, IsValid008, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL, "IsValid008");
+    std::shared_ptr<PermissionPolicy> policy = std::make_shared<PermissionPolicy>();
+    ASSERT_NE(policy, nullptr);
+
+    InitNormalPolicy(policy);
+    ASSERT_TRUE(policy->IsValid());
+    std::string validString = "validString";
+
+    // check accountName_ length
+    policy->accountName_ = std::string(MAX_ACCOUNT_SIZE + 1, 'a');
+    ASSERT_FALSE(policy->IsValid());
+    policy->accountName_ = validString;
+
+    // check acountId_ length
+    policy->acountId_ = std::string(MAX_ACCOUNT_SIZE + 1, 'a');
+    ASSERT_FALSE(policy->IsValid());
+    policy->acountId_ = validString;
+
+    // check customProperty_ length
+    policy->customProperty_ = std::string(MAX_CUSTOMPROPERTY_SIZE + 1, 'a');
+    ASSERT_FALSE(policy->IsValid());
+    policy->customProperty_ = validString;
+
+    // check fileId_ length
+    policy->fileId = std::string(MAX_FILEID_SIZE + 1, 'a');
+    ASSERT_FALSE(policy->IsValid());
+    policy->fileId = validString;
+
+    // check appId_ length
+    policy->appId = std::string(MAX_APPID_SIZE + 1, 'a');
+    ASSERT_FALSE(policy->IsValid());
+
     delete[] policy->iv_;
     policy->iv_ = nullptr;
     policy->ivLen_ = 0;
