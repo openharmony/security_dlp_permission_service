@@ -28,6 +28,9 @@ namespace DlpPermission {
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "DlpPolicyCheck"};
 const uint32_t MAX_ACCOUNT_SIZE = 1024;
+const uint32_t MAX_CUSTOMPROPERTY_SIZE = 1024 * 1024 * 4;
+const uint32_t MAX_FILEID_SIZE = 1024;
+const uint32_t MAX_APPID_SIZE = 1024;
 const uint32_t MAX_ACCOUNT_NUM = 100;
 const uint32_t NO_EXPIRATION_DATA = 0;
 const std::set<uint32_t> VALID_AESPARAM_LEN = {16, 24, 32};
@@ -95,6 +98,15 @@ static bool CheckAuthUserInfoList(const std::vector<AuthUserInfo>& authUsers)
     }
     return (std::none_of(authUsers.begin(), authUsers.end(),
         [](const auto& iter) { return !CheckAuthUserInfo(iter); }));
+}
+
+static bool CheckStringParamLen(const PermissionPolicy& policy)
+{
+    return (policy.accountName_.size() <= MAX_ACCOUNT_SIZE &&
+            policy.acountId_.size() <= MAX_ACCOUNT_SIZE &&
+            policy.customProperty_.size() <= MAX_CUSTOMPROPERTY_SIZE &&
+            policy.fileId.size() <= MAX_FILEID_SIZE &&
+            policy.appId.size() <= MAX_APPID_SIZE);
 }
 
 static void FreeUint8Buffer(uint8_t** buff, uint32_t& buffLen)
@@ -186,12 +198,14 @@ bool PermissionPolicy::IsValid() const
     if (this->ownerAccountType_ == ENTERPRISE_ACCOUNT) {
         return (CheckAesParam(this->aeskey_, this->aeskeyLen_) &&
             CheckAesParam(this->iv_, this->ivLen_) && CheckAuthUserInfoList(this->authUsers_) &&
-            (this->hmacKeyLen_ == 0 || CheckAesParam(this->hmacKey_, this->hmacKeyLen_)));
+            (this->hmacKeyLen_ == 0 || CheckAesParam(this->hmacKey_, this->hmacKeyLen_)) &&
+            CheckStringParamLen(*this));
     }
     return (CheckAccount(this->ownerAccount_) && CheckAccount(this->ownerAccountId_) &&
         CheckAccountType(this->ownerAccountType_) && CheckAesParam(this->aeskey_, this->aeskeyLen_) &&
         CheckAesParam(this->iv_, this->ivLen_) && CheckAuthUserInfoList(this->authUsers_) &&
-        (this->hmacKeyLen_ == 0 || CheckAesParam(this->hmacKey_, this->hmacKeyLen_)));
+        (this->hmacKeyLen_ == 0 || CheckAesParam(this->hmacKey_, this->hmacKeyLen_)) &&
+        CheckStringParamLen(*this));
 }
 
 void PermissionPolicy::SetDebug(bool debug)
