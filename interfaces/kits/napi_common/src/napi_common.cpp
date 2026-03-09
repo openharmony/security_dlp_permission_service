@@ -387,6 +387,7 @@ void GetDlpProperty(std::shared_ptr<DlpFile>& dlpFileNative, DlpProperty& proper
         .allowedOpenCount = policy.allowedOpenCount_,
         .waterMarkConfig = policy.waterMarkConfig_,
         .countdown = policy.countdown_,
+        .nickNameMask = policy.nickNameMask_,
     };
 }
 
@@ -1353,10 +1354,6 @@ bool GetAllowedOpenCount(napi_env env, napi_value jsObject, DlpProperty& propert
         DLP_LOG_DEBUG(LABEL, "js get countdown fail, will set zero");
         property.countdown = 0;
     }
-    if (!GetInt32ValueByKey(env, jsObject, "countdown", property.countdown)) {
-        DLP_LOG_DEBUG(LABEL, "js get countdown fail, will set zero");
-        property.countdown = 0;
-    }
     return true;
 }
 
@@ -1367,6 +1364,23 @@ void GetWaterMarkConfig(napi_env env, napi_value jsObject, DlpProperty& property
         DLP_LOG_ERROR(LABEL, "js get waterMarkConfig fail, will set false");
         property.waterMarkConfig = jsWaterMarkConfig;
     }
+}
+
+void GetExtensionFields(napi_env env, napi_value jsObject, DlpProperty& property)
+{
+    std::string nickNameMask = "";
+    napi_value extensionFields = GetNapiValue(env, jsObject, "extensionFields");
+    if (extensionFields == nullptr) {
+        DLP_LOG_INFO(LABEL, "get extensionFields null");
+        return;
+    }
+    bool ret = GetStringValueByKey(env, extensionFields, "nickNameMask", nickNameMask) &&
+        IsStringLengthValid(nickNameMask, MAX_FILE_NAME_LEN);
+    if (!ret || nickNameMask.empty()) {
+        DLP_LOG_INFO(LABEL, "get nickNameMask empty");
+        return;
+    }
+    property.nickNameMask = nickNameMask;
 }
 
 static bool GetEnterpriseDlpPropertyAccount(napi_env env, napi_value jsObject, DlpProperty& property)
@@ -1489,6 +1503,7 @@ bool GetDlpProperty(napi_env env, napi_value jsObject, DlpProperty& property)
     }
     GetWaterMarkConfig(env, jsObject, property);
     GetDlpPropertyExpireTime(env, jsObject, property);
+    GetExtensionFields(env, jsObject, property);
     if (!GetAllowedOpenCount(env, jsObject, property)) {
         DLP_LOG_ERROR(LABEL, "get allowed open count fail");
         return false;
@@ -1634,6 +1649,10 @@ napi_value DlpPropertyToJs(napi_env env, const DlpProperty& property)
     napi_value countdownJs;
     NAPI_CALL(env, napi_create_int32(env, property.countdown, &countdownJs));
     NAPI_CALL(env, napi_set_named_property(env, dlpPropertyJs, "countdown", countdownJs));
+
+    napi_value nickNameMaskJs;
+    NAPI_CALL(env, napi_create_string_utf8(env, property.nickNameMask.c_str(), NAPI_AUTO_LENGTH, &nickNameMaskJs));
+    NAPI_CALL(env, napi_set_named_property(env, dlpPropertyJs, "nickNameMask", nickNameMaskJs));
     return dlpPropertyJs;
 }
 

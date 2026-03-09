@@ -73,6 +73,7 @@ DlpFile::DlpFile(int32_t dlpFd, const std::string &realType)
     allowedOpenCount_ = 0;
     waterMarkConfig_ = false;
     countdown_ = false;
+    nickNameMask_ = "";
 }
 
 DlpFile::~DlpFile() = default;

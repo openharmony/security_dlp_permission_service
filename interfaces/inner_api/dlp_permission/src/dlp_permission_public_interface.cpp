@@ -36,6 +36,7 @@ static const std::string FILEID = "fileId";
 static const std::string ALLOWEDOPENCOUNT = "allowedOpenCount";
 static const std::string WATERMARK = "waterMarkConfig";
 static const std::string COUNTDOWN = "countdown";
+static const std::string NICKNAMEMASK = "nickNameMask";
 static const uint32_t MIN_FILEID_LENGTH = 0;
 static const uint32_t MAX_FILEID_LENGTH = 100;
 static const uint32_t LIMIT_CERT_SIZE = 10000;
@@ -87,6 +88,7 @@ int32_t GenerateDlpGeneralInfo(const GenerateInfoParams& params, std::string& ge
     dlp_general_info[COUNTDOWN] = params.countdown;
     dlp_general_info[WATERMARK] = params.waterMarkConfig;
     dlp_general_info[CERT_SIZE] = params.certSize;
+    dlp_general_info[NICKNAMEMASK] = params.nickNameMask;
     generalInfo = dlp_general_info.dump();
     size_t pos = generalInfo.find(CERT_SIZE);
     if (pos != std::string::npos &&
@@ -144,6 +146,10 @@ void ParseFeatures(const nlohmann::json& jsonObj, GenerateInfoParams& params)
     iter = jsonObj.find(COUNTDOWN);
     if (iter != jsonObj.end() && iter->is_number_integer()) {
         params.countdown = iter->get<int32_t>();
+    }
+    iter = jsonObj.find(NICKNAMEMASK);
+    if (iter != jsonObj.end() && iter->is_string()) {
+        params.nickNameMask = iter->get<std::string>();
     }
 }
 

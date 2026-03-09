@@ -2603,6 +2603,38 @@ HWTEST_F(DlpFileTest, GetOfflineAccess001, TestSize.Level0)
 }
 
 /**
+ * @tc.name: WriteFileIdPlaintextProcess001
+ * @tc.desc: test WriteFileIdPlaintextProcess
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpFileTest, WriteFileIdPlaintextProcess001, TestSize.Level0)
+{
+    DLP_LOG_INFO(LABEL, "WriteFileIdPlaintextProcess001");
+
+    int fd = open("/data/fuse_test.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
+    ASSERT_NE(fd, -1);
+    DlpRawFile testFile(fd, "txt");
+
+    struct DlpHeader header = {
+        .magic = DLP_FILE_MAGIC,
+        .certSize = 20,
+        .contactAccountSize = 20,
+        .txtSize = 20,
+        .hmacOffset = 0,
+        .hmacSize = 20,
+    };
+    write(fd, &header, sizeof(header));
+    uint8_t buffer[110] = {0};
+    write(fd, buffer, 110);
+    EXPECT_EQ(DLP_OK, testFile.WriteRawFileProperty());
+    EXPECT_EQ(DLP_OK, testFile.WriteFileIdPlaintextProcess());
+    EXPECT_EQ(DLP_OK, testFile.ReadNickNameMask());
+    close(fd);
+    unlink("/data/fuse_test.txt");
+}
+
+/**
  * @tc.name: GetOfflineCert
  * @tc.desc: test get offline cert
  * @tc.type: FUNC

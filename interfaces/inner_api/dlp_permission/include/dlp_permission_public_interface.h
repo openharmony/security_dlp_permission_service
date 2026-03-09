@@ -38,6 +38,7 @@ struct GenerateInfoParams {
     int32_t allowedOpenCount;
     bool waterMarkConfig;
     int32_t countdown;
+    std::string nickNameMask;
 };
 
 int32_t GenerateDlpGeneralInfo(const GenerateInfoParams& params, std::string& generalInfo);

@@ -61,6 +61,7 @@ struct GenerInfoParams {
     int32_t allowedOpenCount;
     bool waterMarkConfig;
     int32_t countdown;
+    std::string nickNameMask;
 };
 } // namespace
 
@@ -194,6 +195,7 @@ bool DlpZipFile::ParseDlpInfo()
     allowedOpenCount_ = params.allowedOpenCount;
     waterMarkConfig_ = params.waterMarkConfig;
     countdown_ = params.countdown;
+    nickNameMask_ = params.nickNameMask;
     if (!params.hmacVal.empty()) {
         CleanBlobParam(hmac_);
         hmac_.size = params.hmacVal.size() / BYTE_TO_HEX_OPER_LENGTH;
@@ -451,6 +453,7 @@ static std::string SetDlpGeneralInfo(GenerInfoParams &genInfo)
         .allowedOpenCount = genInfo.allowedOpenCount,
         .waterMarkConfig = genInfo.waterMarkConfig,
         .countdown = genInfo.countdown,
+        .nickNameMask = genInfo.nickNameMask,
     };
     std::string out;
     GenerateDlpGeneralInfo(params, out);
@@ -566,6 +569,7 @@ int32_t DlpZipFile::AddGeneralInfoToBuff(int32_t encFile)
         .allowedOpenCount = allowedOpenCount_,
         .waterMarkConfig = waterMarkConfig_,
         .countdown = countdown_,
+        .nickNameMask = nickNameMask_,
     };
 
     std::string ja = SetDlpGeneralInfo(genInfo);
