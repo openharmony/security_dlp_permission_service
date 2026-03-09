@@ -268,12 +268,12 @@ public:
         return countdown_;
     };
 
-    void SetNickNameMask(std::string nickNameMask)
+    void SetNickNameMask(const std::string& nickNameMask)
     {
         nickNameMask_ = nickNameMask;
     };
 
-    std::string GetNickNameMask()
+    const std::string& GetNickNameMask()
     {
         return nickNameMask_;
     };

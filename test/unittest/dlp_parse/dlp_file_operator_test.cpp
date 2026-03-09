@@ -396,6 +396,61 @@ HWTEST_F(DlpFileOperatorTest, EnterpriseSpaceDecryptDlpFile001, TestSize.Level0)
 }
 
 /**
+* @tc.name: EncryptEnterpriseDlpFile001
+* @tc.desc: test EncryptEnterpriseDlpFile
+* @tc.type: FUNC
+* @tc.require:
+*/
+HWTEST_F(DlpFileOperatorTest, EncryptEnterpriseDlpFile001, TestSize.Level0)
+{
+    DLP_LOG_INFO(UT_LABEL, "EncryptEnterpriseDlpFile001");
+
+    g_plainFileFd = open(TEST_FILE, O_CREAT | O_RDWR | O_TRUNC, S_IRWXU | S_IRWXG | S_IRWXO);
+    g_dlpFileFd = open(DLP_FILE, O_CREAT | O_RDWR | O_TRUNC, S_IRWXU | S_IRWXG | S_IRWXO);
+    ASSERT_GE(g_plainFileFd, 0);
+    ASSERT_GE(g_dlpFileFd, 0);
+
+    char buffer[] = "123456";
+    ASSERT_NE(write(g_plainFileFd, buffer, sizeof(buffer)), -1);
+    std::string accountName;
+    GenerateRandStr(RAND_STR_SIZE, accountName);
+
+    DlpProperty property = {
+        .ownerAccount = DEFAULT_CURRENT_ACCOUNT,
+        .ownerAccountId = DEFAULT_CURRENT_ACCOUNT,
+        .contactAccount = accountName,
+        .ownerAccountType = ENTERPRISE_ACCOUNT,
+        .offlineAccess = false,
+        .supportEveryone = false,
+        .everyonePerm = DLPFileAccess::NO_PERMISSION,
+        .expireTime = 0,
+        .actionUponExpiry = ActionType::NOTOPEN,
+        .fileId = "111",
+        .allowedOpenCount = 1,
+        .countdown = 1,
+        .waterMarkConfig = false,
+        .nickNameMask = "111",
+    };
+    CustomProperty customProperty = {
+        .enterprise = DEFAULT_CUSTOM_PROPERTY
+    };
+
+    int32_t result = EnterpriseSpaceDlpPermissionKit::GetInstance()->EncryptEnterpriseDlpFile(property,
+        customProperty, g_plainFileFd, g_dlpFileFd);
+    EXPECT_NE(DLP_OK, result);
+    close(g_plainFileFd);
+
+    g_plainFileFd = open(TEST_FILE_1, O_CREAT | O_RDWR | O_TRUNC, S_IRWXU | S_IRWXG | S_IRWXO);
+    result = EnterpriseSpaceDlpPermissionKit::GetInstance()->DecryptRawDlpFileAndGetAccountType(g_dlpFileFd);
+    EXPECT_EQ(DLP_OK, result);
+    result = EnterpriseSpaceDlpPermissionKit::GetInstance()->DecryptEnterpriseDlpFile(g_plainFileFd, g_dlpFileFd, 0);
+    EXPECT_EQ(DLP_PARSE_ERROR_FD_ERROR, result);
+
+    close(g_dlpFileFd);
+    close(g_plainFileFd);
+}
+
+/**
 * @tc.name: EnterpriseSpaceQueryDlpProperty001
 * @tc.desc: test dlp file generate in Enterprise space
 * @tc.type: FUNC

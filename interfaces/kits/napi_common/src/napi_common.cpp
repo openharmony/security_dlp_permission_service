@@ -1354,11 +1354,6 @@ bool GetAllowedOpenCount(napi_env env, napi_value jsObject, DlpProperty& propert
         DLP_LOG_DEBUG(LABEL, "js get countdown fail, will set zero");
         property.countdown = 0;
     }
-    if (!GetStringValueByKey(env, jsObject, "nickNameMask", property.nickNameMask) ||
-        !IsStringLengthValid(property.nickNameMask, MAX_FILE_NAME_LEN)) {
-        DLP_LOG_DEBUG(LABEL, "js get nickNameMask fail, will set empty");
-        property.nickNameMask = "";
-    }
     return true;
 }
 

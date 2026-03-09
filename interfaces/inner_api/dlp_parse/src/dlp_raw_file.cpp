@@ -615,7 +615,11 @@ int32_t DlpRawFile::WriteRawFileProperty()
         DLP_LOG_ERROR(LABEL, "get nickNameMask offsize invalid");
         return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
     }
-    if (write(dlpFd_, nickNameMask_.c_str(), nickNameMask_.size()) != static_cast<int32_t>(nickNameMask_.size())) {
+    std::string nickName = nickNameMask_.substr(0, NICK_NAME_MASK_SIZE);
+    if (nickName.size() < NICK_NAME_MASK_SIZE) {
+        nickName.resize(NICK_NAME_MASK_SIZE, '\0');
+    }
+    if (write(dlpFd_, nickName.c_str(), nickName.size()) != static_cast<int32_t>(nickName.size())) {
         DLP_LOG_ERROR(LABEL, "write nickNameMask error");
         return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
     }
