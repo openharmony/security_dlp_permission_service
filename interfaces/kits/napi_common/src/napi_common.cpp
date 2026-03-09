@@ -51,6 +51,7 @@ static constexpr size_t MAX_ERRCONTACTER_LEN = 255;
 static constexpr size_t MAX_FILE_NAME_LEN = 255;
 static constexpr size_t MAX_TYPE_LEN = 64;
 static constexpr size_t MAX_URI_LEN = 4095;
+static constexpr size_t MAX_ENTERPRISEPOLICY_SIZE = 1024 * 1024 * 4;
 static constexpr int32_t HIPREVIEW_SANDBOX_LOW_BOUND = 1000;
 
 static bool ConvertDlpSandboxChangeInfo(napi_env env, napi_value value, const DlpSandboxCallbackInfo &result)
@@ -1539,7 +1540,8 @@ bool GetSetEnterprisePolicyParams(
         return false;
     }
 
-    if (!GetStringValueByKey(env, argv[PARAM0], "policyString", asyncContext.policy.policyString)) {
+    if (!GetStringValueByKey(env, argv[PARAM0], "policyString", asyncContext.policy.policyString) ||
+        !IsStringLengthValid(asyncContext.policy.policyString, MAX_ENTERPRISEPOLICY_SIZE)) {
         DLP_LOG_ERROR(LABEL, "js get enterprise policy fail");
         DlpNapiThrow(env, ERR_JS_INVALID_PARAMETER, "Invalid parameter value.");
         return false;

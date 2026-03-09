@@ -70,6 +70,7 @@ DlpRawFile::DlpRawFile(int32_t dlpFd, const std::string &realType) : DlpFile(dlp
     head_.contactAccountSize = 0;
     head_.offlineCertOffset = INVALID_FILE_SIZE;
     head_.offlineCertSize = 0;
+    hiaeInit_ = false;
 }
 
 DlpRawFile::~DlpRawFile()
@@ -116,7 +117,7 @@ DlpRawFile::~DlpRawFile()
     }
 
 #ifdef SUPPORT_DLP_CREDENTIAL
-    if (head_.algType == DLP_MODE_HIAE) {
+    if (head_.algType == DLP_MODE_HIAE && hiaeInit_) {
         ClearDlpHIAEMgr();
     }
 #endif
@@ -216,7 +217,11 @@ int32_t DlpRawFile::ParseRawDlpHeader(uint64_t fileLen, uint32_t dlpHeaderSize)
         DLP_LOG_INFO(LABEL, "support openssl");
         return DLP_OK;
     }
-    return InitDlpHIAEMgr();
+    int32_t res = InitDlpHIAEMgr();
+    if (res == DLP_OK) {
+        hiaeInit_ = true;
+    }
+    return res;
 #endif
     return DLP_OK;
 }
@@ -262,7 +267,11 @@ int32_t DlpRawFile::ParseEnterpriseFileId(uint64_t fileLen, uint32_t fileIdSize)
         DLP_LOG_INFO(LABEL, "support openssl");
         return DLP_OK;
     }
-    return InitDlpHIAEMgr();
+    int32_t res = InitDlpHIAEMgr();
+    if (res == DLP_OK) {
+        hiaeInit_ = true;
+    }
+    return res;
 #endif
     return DLP_OK;
 }
@@ -489,11 +498,11 @@ int32_t DlpRawFile::ProcessDlpFile()
     if (ret != DLP_OK) {
         return ret;
     }
+    LSEEK_AND_CHECK(dlpFd_, head_.certOffset, SEEK_SET, DLP_PARSE_ERROR_FILE_FORMAT_ERROR, LABEL);
     uint8_t* buf = new (std::nothrow)uint8_t[head_.certSize];
     if (buf == nullptr) {
         return DLP_PARSE_ERROR_MEMORY_OPERATE_FAIL;
     }
-    LSEEK_AND_CHECK(dlpFd_, head_.certOffset, SEEK_SET, DLP_PARSE_ERROR_FILE_FORMAT_ERROR, LABEL);
     if (read(dlpFd_, buf, head_.certSize) != (ssize_t)head_.certSize) {
         delete[] buf;
         DLP_LOG_ERROR(LABEL, "can not read dlp file cert, %{public}s", strerror(errno));
@@ -504,11 +513,11 @@ int32_t DlpRawFile::ProcessDlpFile()
     cert_.size = head_.certSize;
     uint8_t *tmpBuf = nullptr;
     if (accountType_ != ENTERPRISE_ACCOUNT) {
+        LSEEK_AND_CHECK(dlpFd_, head_.contactAccountOffset, SEEK_SET, DLP_PARSE_ERROR_FILE_FORMAT_ERROR, LABEL);
         uint8_t *tmpBuf = new (std::nothrow)uint8_t[head_.contactAccountSize];
         if (tmpBuf == nullptr) {
             return DLP_PARSE_ERROR_MEMORY_OPERATE_FAIL;
         }
-        LSEEK_AND_CHECK(dlpFd_, head_.contactAccountOffset, SEEK_SET, DLP_PARSE_ERROR_FILE_FORMAT_ERROR, LABEL);
         if (read(dlpFd_, tmpBuf, head_.contactAccountSize) != (ssize_t)head_.contactAccountSize) {
             delete[] tmpBuf;
             DLP_LOG_ERROR(LABEL, "can not read dlp contact account, %{public}s", strerror(errno));
@@ -518,11 +527,11 @@ int32_t DlpRawFile::ProcessDlpFile()
         delete[] tmpBuf;
     }
     if (head_.offlineCertSize != 0 && head_.offlineCertSize == head_.certSize) {
+        LSEEK_AND_CHECK(dlpFd_, head_.offlineCertOffset, SEEK_SET, DLP_PARSE_ERROR_FILE_FORMAT_ERROR, LABEL);
         tmpBuf = new (std::nothrow)uint8_t[head_.offlineCertSize];
         if (tmpBuf == nullptr) {
             return DLP_PARSE_ERROR_MEMORY_OPERATE_FAIL;
         }
-        LSEEK_AND_CHECK(dlpFd_, head_.offlineCertOffset, SEEK_SET, DLP_PARSE_ERROR_FILE_FORMAT_ERROR, LABEL);
         if (read(dlpFd_, tmpBuf, head_.offlineCertSize) != (ssize_t)head_.offlineCertSize) {
             delete[] tmpBuf;
             DLP_LOG_ERROR(LABEL, "can not read dlp offlineCert, %{public}s", strerror(errno));
@@ -1144,6 +1153,7 @@ int32_t DlpRawFile::HmacCheck()
         DLP_LOG_INFO(LABEL, "no hmac check");
         return DLP_OK;
     }
+    LSEEK_AND_CHECK(dlpFd_, head_.txtOffset, SEEK_SET, DLP_PARSE_ERROR_FILE_OPERATE_FAIL, LABEL);
 
     uint8_t* outBuf = new (std::nothrow) uint8_t[HMAC_SIZE];
     if (outBuf == nullptr) {
@@ -1155,7 +1165,6 @@ int32_t DlpRawFile::HmacCheck()
         .data = outBuf,
     };
 
-    LSEEK_AND_CHECK(dlpFd_, head_.txtOffset, SEEK_SET, DLP_PARSE_ERROR_FILE_OPERATE_FAIL, LABEL);
     DLP_LOG_DEBUG(LABEL, "start DlpHmacEncodeForRaw");
     if (DlpHmacEncodeForRaw(cipher_.hmacKey, dlpFd_, head_.txtSize, out) != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "DlpHmacEncodeForRaw fail");
@@ -1262,6 +1271,9 @@ int32_t DlpRawFile::DoDlpContentCryptyOperation(int32_t inFd, int32_t outFd, uin
 {
     if (!IsInitDlpContentCryptyOperation(head_.algType)) {
         return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
+    }
+    if (head_.algType == DLP_MODE_HIAE) {
+        hiaeInit_ = true;
     }
     struct DlpBlob message;
     struct DlpBlob outMessage;

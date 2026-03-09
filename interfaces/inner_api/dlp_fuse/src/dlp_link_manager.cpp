@@ -59,7 +59,7 @@ int32_t DlpLinkManager::AddDlpLinkFile(const std::shared_ptr<DlpFile>& filePtr, 
         return DLP_FUSE_ERROR_DLP_FILE_NULL;
     }
     if (!IsLinkNameValid(dlpLinkName)) {
-        DLP_LOG_ERROR(LABEL, "Add link file fail, link file name %{public}s invalid", dlpLinkName.c_str());
+        DLP_LOG_ERROR(LABEL, "Add link file fail, link file name %{private}s invalid", dlpLinkName.c_str());
         return DLP_FUSE_ERROR_VALUE_INVALID;
     }
 
@@ -71,7 +71,7 @@ int32_t DlpLinkManager::AddDlpLinkFile(const std::shared_ptr<DlpFile>& filePtr, 
 
     auto iter = dlpLinkFileNameMap_.find(dlpLinkName);
     if (iter != dlpLinkFileNameMap_.end()) {
-        DLP_LOG_ERROR(LABEL, "Add link file fail, link file %{public}s exist", dlpLinkName.c_str());
+        DLP_LOG_ERROR(LABEL, "Add link file fail, link file %{private}s exist", dlpLinkName.c_str());
         return DLP_FUSE_ERROR_LINKFILE_EXIST;
     }
 
@@ -85,11 +85,11 @@ int32_t DlpLinkManager::AddDlpLinkFile(const std::shared_ptr<DlpFile>& filePtr, 
 
     DlpLinkFile *node = new (std::nothrow) DlpLinkFile(dlpLinkName, filePtr);
     if (node == nullptr) {
-        DLP_LOG_ERROR(LABEL, "Add link file fail, alloc link file %{public}s fail", dlpLinkName.c_str());
+        DLP_LOG_ERROR(LABEL, "Add link file fail, alloc link file %{private}s fail", dlpLinkName.c_str());
         return DLP_FUSE_ERROR_MEMORY_OPERATE_FAIL;
     }
 
-    DLP_LOG_INFO(LABEL, "Add link file succ, file name %{public}s", dlpLinkName.c_str());
+    DLP_LOG_INFO(LABEL, "Add link file succ, file name %{private}s", dlpLinkName.c_str());
     dlpLinkFileNameMap_[dlpLinkName] = node;
     filePtr->SetLinkStatus();
     return DLP_OK;
@@ -112,7 +112,7 @@ int32_t DlpLinkManager::StopDlpLinkFile(const std::shared_ptr<DlpFile>& filePtr)
         if (filePtr == node->GetDlpFilePtr()) {
             node->stopLink();
             filePtr->RemoveLinkStatus();
-            DLP_LOG_INFO(LABEL, "Stop link file success, file name %{public}s", node->GetLinkName().c_str());
+            DLP_LOG_INFO(LABEL, "Stop link file success, file name %{private}s", node->GetLinkName().c_str());
             return DLP_OK;
         }
     }
@@ -137,7 +137,7 @@ int32_t DlpLinkManager::RestartDlpLinkFile(const std::shared_ptr<DlpFile>& fileP
         if (filePtr == node->GetDlpFilePtr()) {
             node->restartLink();
             filePtr->SetLinkStatus();
-            DLP_LOG_INFO(LABEL, "Restart link file success, file name %{public}s", node->GetLinkName().c_str());
+            DLP_LOG_INFO(LABEL, "Restart link file success, file name %{private}s", node->GetLinkName().c_str());
             return DLP_OK;
         }
     }
@@ -152,7 +152,7 @@ int32_t DlpLinkManager::ReplaceDlpLinkFile(const std::shared_ptr<DlpFile>& fileP
         return DLP_FUSE_ERROR_DLP_FILE_NULL;
     }
     if (!IsLinkNameValid(dlpLinkName)) {
-        DLP_LOG_ERROR(LABEL, "Replace link file fail, link file name %{public}s invalid", dlpLinkName.c_str());
+        DLP_LOG_ERROR(LABEL, "Replace link file fail, link file name %{private}s invalid", dlpLinkName.c_str());
         return DLP_FUSE_ERROR_VALUE_INVALID;
     }
 
@@ -162,15 +162,15 @@ int32_t DlpLinkManager::ReplaceDlpLinkFile(const std::shared_ptr<DlpFile>& fileP
             DlpLinkFile *node = iter->second;
             if (node == nullptr) {
                 DLP_LOG_ERROR(
-                    LABEL, "Replace link file fail, file %{public}s found but file ptr is null", dlpLinkName.c_str());
+                    LABEL, "Replace link file fail, file %{private}s found but file ptr is null", dlpLinkName.c_str());
                 return DLP_FUSE_ERROR_DLP_FILE_NULL;
             }
             node->setDlpFilePtr(filePtr);
-            DLP_LOG_INFO(LABEL, "Replace link file success, file name %{public}s", dlpLinkName.c_str());
+            DLP_LOG_INFO(LABEL, "Replace link file success, file name %{private}s", dlpLinkName.c_str());
             return DLP_OK;
         }
     }
-    DLP_LOG_ERROR(LABEL, "Replace link file fail, file %{public}s not exist", dlpLinkName.c_str());
+    DLP_LOG_ERROR(LABEL, "Replace link file fail, file %{private}s not exist", dlpLinkName.c_str());
     return DLP_FUSE_ERROR_LINKFILE_NOT_EXIST;
 }
 
@@ -207,7 +207,7 @@ DlpLinkFile* DlpLinkManager::LookUpDlpLinkFile(const std::string& dlpLinkName)
         if (dlpLinkName == iter->first) {
             DlpLinkFile* node = iter->second;
             if (node == nullptr) {
-                DLP_LOG_ERROR(LABEL, "Look up link file fail, file %{public}s found but file ptr is null",
+                DLP_LOG_ERROR(LABEL, "Look up link file fail, file %{private}s found but file ptr is null",
                     dlpLinkName.c_str());
                 return nullptr;
             }
@@ -215,7 +215,7 @@ DlpLinkFile* DlpLinkManager::LookUpDlpLinkFile(const std::string& dlpLinkName)
             return node;
         }
     }
-    DLP_LOG_ERROR(LABEL, "Look up link file fail, file %{public}s not exist", dlpLinkName.c_str());
+    DLP_LOG_ERROR(LABEL, "Look up link file fail, file %{private}s not exist", dlpLinkName.c_str());
     return nullptr;
 }
 

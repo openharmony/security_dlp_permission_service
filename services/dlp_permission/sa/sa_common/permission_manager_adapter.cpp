@@ -15,6 +15,7 @@
 
 #include "permission_manager_adapter.h"
 #include "accesstoken_kit.h"
+#include "access_token_adapter.h"
 #include "dlp_dfx_define.h"
 #include "dlp_permission.h"
 #include "dlp_permission_log.h"
@@ -239,6 +240,14 @@ int32_t PermissionManagerAdapter::CheckAuthPolicy(const std::string& appId, cons
     }
     DLP_LOG_ERROR(LABEL, "Check DLP auth policy error.");
     return DLP_CREDENTIAL_ERROR_APPID_NOT_AUTHORIZED;
+}
+
+bool PermissionManagerAdapter::CheckSystemAppAndPermission(const std::string& permission)
+{
+    if (!AccessTokenAdapter::IsSystemApp()) {
+        return false;
+    }
+    return PermissionManagerAdapter::CheckPermission(permission);
 }
 }  // namespace DlpPermission
 }  // namespace Security

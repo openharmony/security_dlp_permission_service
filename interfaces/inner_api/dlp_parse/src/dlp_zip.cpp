@@ -354,7 +354,7 @@ bool IsZipFile(int32_t fd)
     }
 
     if (unzLocateFile(uz, DLP_GENERAL_INFO.c_str(), 0) != UNZ_OK) {
-        DLP_LOG_ERROR(LABEL, "unzLocateFile fail %{public}s errno %{public}d", DLP_GENERAL_INFO.c_str(), errno);
+        DLP_LOG_ERROR(LABEL, "unzLocateFile fail %{private}s errno %{public}d", DLP_GENERAL_INFO.c_str(), errno);
         (void)unzClose(uz);
         return false;
     }

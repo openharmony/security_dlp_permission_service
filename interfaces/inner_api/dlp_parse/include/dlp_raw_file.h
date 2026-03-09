@@ -69,6 +69,7 @@ private:
     int32_t ReadFileId(void);
 
     struct DlpHeader head_;
+    bool hiaeInit_;
 };
 }  // namespace DlpPermission
 }  // namespace Security

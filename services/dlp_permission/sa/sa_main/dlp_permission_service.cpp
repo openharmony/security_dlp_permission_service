@@ -92,6 +92,14 @@ static const uint32_t MAX_SUPPORT_FILE_TYPE_NUM = 1024;
 static const uint32_t MAX_RETENTION_SIZE = 1024;
 static const uint32_t MAX_FILE_RECORD_SIZE = 1024;
 static const uint32_t MAX_APPID_LIST_SIZE = 250;
+static const uint32_t MAX_APPID_SIZE = 1024;
+static const uint32_t MAX_BUNDLENAME_SIZE = 1024;
+static const uint32_t MAX_URI_SIZE = 4095;
+static const uint32_t MAX_MASKINFO_SIZE = 128;
+static const uint32_t MAX_ACCOUNT_SIZE = 1024;
+static const uint32_t MAX_FILEID_SIZE = 1024;
+static const uint32_t MAX_ENTERPRISEPOLICY_SIZE = 1024 * 1024 * 4;
+static const uint32_t MAX_CERT_SIZE = 1024 * 1024 * 40 * 2;
 static const std::string MDM_ENABLE_VALUE = "status";
 static const std::string MDM_BUNDLE_NAME = "appId";
 static const uint32_t ENABLE_VALUE_TRUE = 1;
@@ -175,6 +183,13 @@ void DlpPermissionService::RegisterAccount()
     DelSandboxInfoByAccount(true);
 }
 
+void DlpPermissionService::DelWaterMarkInfo()
+{
+    std::unique_lock<std::mutex> lock(waterMarkInfoMutex_);
+    waterMarkInfo_.accountAndUserId = "";
+    DLP_LOG_DEBUG(LABEL, "Clear watermark info.");
+}
+
 void DlpPermissionService::DelSandboxInfoByAccount(bool isRegister)
 {
     DLP_LOG_INFO(LABEL, "DelSandboxInfoByAccount");
@@ -210,6 +225,7 @@ void DlpPermissionService::DelSandboxInfoByAccount(bool isRegister)
         RetentionFileManager::GetInstance().RemoveRetentionState(bundleName, appIndex);
         DlpSandboxChangeCallbackManager::GetInstance().ExecuteCallbackAsync(sandboxInfoEntry);
     }
+    DelWaterMarkInfo();
 }
 
 int32_t DlpPermissionService::InitAccountListenerCallback()
@@ -299,7 +315,7 @@ int32_t DlpPermissionService::GenerateDlpCertificate(
         return DLP_SERVICE_ERROR_PERMISSION_DENY;
     }
 
-    if (!PermissionManagerAdapter::CheckPermission(PERMISSION_ACCESS_DLP_FILE) &&
+    if (!PermissionManagerAdapter::CheckSystemAppAndPermission(PERMISSION_ACCESS_DLP_FILE) &&
         !PermissionManagerAdapter::CheckPermission(PERMISSION_ENTERPRISE_ACCESS_DLP_FILE) &&
         !(appIdentifier == MDM_APPIDENTIFIER)) {
         return DLP_SERVICE_ERROR_PERMISSION_DENY;
@@ -330,7 +346,7 @@ static bool GetApplicationInfo(std::string appId, AppExecFwk::ApplicationInfo& a
 {
     size_t pos = appId.find_last_of(SEPARATOR);
     if (pos > appId.length()) {
-        DLP_LOG_ERROR(LABEL, "AppId=%{public}s pos=%{public}zu can not find bundleName", appId.c_str(), pos);
+        DLP_LOG_ERROR(LABEL, "AppId=%{private}s pos=%{public}zu can not find bundleName", appId.c_str(), pos);
         return false;
     }
     std::string bundleName = appId.substr(0, pos);
@@ -359,17 +375,17 @@ int32_t DlpPermissionService::ParseDlpCertificate(const sptr<CertParcel>& certPa
         return DLP_SERVICE_ERROR_PERMISSION_DENY;
     }
 
-    if (!PermissionManagerAdapter::CheckPermission(PERMISSION_ACCESS_DLP_FILE) &&
+    if (!PermissionManagerAdapter::CheckSystemAppAndPermission(PERMISSION_ACCESS_DLP_FILE) &&
         !PermissionManagerAdapter::CheckPermission(PERMISSION_ENTERPRISE_ACCESS_DLP_FILE) &&
         !(appIdentifier == MDM_APPIDENTIFIER)) {
         return DLP_SERVICE_ERROR_PERMISSION_DENY;
     }
-    if (callback == nullptr) {
-        DLP_LOG_ERROR(LABEL, "Callback is null");
+    if (callback == nullptr || certParcel->cert.size() > MAX_CERT_SIZE) {
+        DLP_LOG_ERROR(LABEL, "Callback is null or cert is invalid");
         return DLP_SERVICE_ERROR_VALUE_INVALID;
     }
-    if (appId.empty()) {
-        DLP_LOG_ERROR(LABEL, "AppId is empty");
+    if (appId.empty() || appId.size() > MAX_APPID_SIZE) {
+        DLP_LOG_ERROR(LABEL, "AppId is invalid");
         return DLP_CREDENTIAL_ERROR_APPID_NOT_AUTHORIZED;
     }
     int32_t ret = PermissionManagerAdapter::CheckAuthPolicy(appId, certParcel->realFileType,
@@ -626,7 +642,10 @@ int32_t DlpPermissionService::SetWaterMark(const int32_t pid)
     if (PermissionManagerAdapter::CheckSandboxFlagWithService(GetCallingTokenID(), sandboxFlag) != DLP_OK) {
         return DLP_SERVICE_ERROR_VALUE_INVALID;
     }
-
+    if (!sandboxFlag) {
+        DLP_LOG_ERROR(LABEL, "Forbid called by a non-sandbox app");
+        return DLP_SERVICE_ERROR_API_ONLY_FOR_SANDBOX_ERROR;
+    }
     if (waterMarkInfo_.maskInfo.empty()) {
         DLP_LOG_ERROR(LABEL, "No watermark.");
         return DLP_SET_WATERMARK_ERROR;
@@ -722,12 +741,13 @@ static int32_t GetAppIndexFromRetentionInfo(const GetAppIndexParams& params,
     return DLP_OK;
 }
 
-static int32_t CheckWithInstallDlpSandbox(const std::string& bundleName, DLPFileAccess dlpFileAccess)
+static int32_t CheckWithInstallDlpSandbox(const std::string& bundleName, const std::string& uri,
+    DLPFileAccess dlpFileAccess)
 {
     if (!PermissionManagerAdapter::CheckPermission(PERMISSION_ACCESS_DLP_FILE)) {
         return DLP_SERVICE_ERROR_PERMISSION_DENY;
     }
-    if (bundleName.empty() ||
+    if (bundleName.empty() || bundleName.size() > MAX_BUNDLENAME_SIZE || uri.size() > MAX_URI_SIZE ||
         dlpFileAccess > DLPFileAccess::FULL_CONTROL || dlpFileAccess <= DLPFileAccess::NO_PERMISSION) {
         DLP_LOG_ERROR(LABEL, "param is invalid");
         return DLP_SERVICE_ERROR_VALUE_INVALID;
@@ -817,7 +837,7 @@ int32_t DlpPermissionService::InstallDlpSandbox(const std::string& bundleName, D
     if (!AccessTokenAdapter::IsSystemApp()) {
         return DLP_SERVICE_ERROR_NOT_SYSTEM_APP;
     }
-    int32_t res = CheckWithInstallDlpSandbox(bundleName, dlpFileAccess);
+    int32_t res = CheckWithInstallDlpSandbox(bundleName, uri, dlpFileAccess);
     if (res != DLP_OK) {
         return res;
     }
@@ -903,7 +923,7 @@ int32_t DlpPermissionService::UninstallDlpSandbox(const std::string& bundleName,
         return DLP_SERVICE_ERROR_PERMISSION_DENY;
     }
 
-    if (bundleName.empty() || appIndex < 0 || userId < 0) {
+    if (bundleName.empty() || bundleName.size() > MAX_BUNDLENAME_SIZE || appIndex < 0 || userId < 0) {
         DLP_LOG_ERROR(LABEL, "param is invalid");
         return DLP_SERVICE_ERROR_VALUE_INVALID;
     }
@@ -948,7 +968,8 @@ int32_t DlpPermissionService::GetSandboxExternalAuthorization(
         DLP_LOG_ERROR(LABEL, "Caller is not SA or has no ACCESS_DLP_FILE permission");
         return DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL;
     }
-    if (sandboxUid < 0) {
+    const std::string& bundleName = want.GetBundle();
+    if (sandboxUid < 0 || bundleName.size() > MAX_BUNDLENAME_SIZE) {
         DLP_LOG_ERROR(LABEL, "param is invalid");
         return DLP_SERVICE_ERROR_VALUE_INVALID;
     }
@@ -958,7 +979,6 @@ int32_t DlpPermissionService::GetSandboxExternalAuthorization(
 
     std::unique_lock<std::shared_mutex> lock(dlpSandboxDataMutex_);
     auto it = dlpSandboxData_.find(sandboxUid);
-    std::string bundleName = want.GetBundle();
     DLP_LOG_INFO(LABEL, "GetSandboxExternalAuthorization bundleName=%s", bundleName.c_str());
     if (isSandbox && it != dlpSandboxData_.end() && bundleName == HIPREVIEW_LOW) {
         authType = SandBoxExternalAuthorType::ALLOW_START_ABILITY;
@@ -1118,7 +1138,7 @@ int32_t DlpPermissionService::RegisterDlpSandboxChangeCallback(const sptr<IRemot
 {
     CriticalHelper criticalHelper("RegisterDlpSandboxChangeCallback");
     appStateObserver_->PostDelayUnloadTask(CurrentTaskState::SHORT_TASK);
-    if (!PermissionManagerAdapter::CheckPermission(PERMISSION_ACCESS_DLP_FILE)) {
+    if (!PermissionManagerAdapter::CheckSystemAppAndPermission(PERMISSION_ACCESS_DLP_FILE)) {
         return DLP_SERVICE_ERROR_PERMISSION_DENY;
     }
     int32_t pid = IPCSkeleton::GetCallingRealPid();
@@ -1131,7 +1151,7 @@ int32_t DlpPermissionService::UnRegisterDlpSandboxChangeCallback(bool& result)
 {
     CriticalHelper criticalHelper("UnRegisterDlpSandboxChangeCallback");
     appStateObserver_->PostDelayUnloadTask(CurrentTaskState::SHORT_TASK);
-    if (!PermissionManagerAdapter::CheckPermission(PERMISSION_ACCESS_DLP_FILE)) {
+    if (!PermissionManagerAdapter::CheckSystemAppAndPermission(PERMISSION_ACCESS_DLP_FILE)) {
         return DLP_SERVICE_ERROR_PERMISSION_DENY;
     }
     int32_t pid = IPCSkeleton::GetCallingRealPid();
@@ -1199,7 +1219,7 @@ int32_t DlpPermissionService::GetDlpGatheringPolicy(bool& isGathering)
 {
     CriticalHelper criticalHelper("GetDlpGatheringPolicy");
     appStateObserver_->PostDelayUnloadTask(CurrentTaskState::SHORT_TASK);
-    if (!PermissionManagerAdapter::CheckPermission(PERMISSION_ACCESS_DLP_FILE)) {
+    if (!PermissionManagerAdapter::CheckSystemAppAndPermission(PERMISSION_ACCESS_DLP_FILE)) {
         return DLP_SERVICE_ERROR_PERMISSION_DENY;
     }
 
@@ -1226,6 +1246,12 @@ int32_t DlpPermissionService::GetDlpGatheringPolicy(bool& isGathering)
     return DLP_OK;
 }
 
+static bool ValidateStringList(const std::vector<std::string>& stringList, const uint32_t maxLen)
+{
+    return std::all_of(stringList.begin(), stringList.end(),
+        [maxLen](const std::string& strEle) {return strEle.size() < maxLen;});
+}
+
 int32_t DlpPermissionService::SetRetentionState(const std::vector<std::string>& docUriVec)
 {
     CriticalHelper criticalHelper("SetRetentionState");
@@ -1238,8 +1264,8 @@ int32_t DlpPermissionService::SetRetentionState(const std::vector<std::string>& 
         DLP_LOG_ERROR(LABEL, "Forbid called by a non-sandbox app");
         return DLP_SERVICE_ERROR_API_ONLY_FOR_SANDBOX_ERROR;
     }
-    if (docUriVec.empty()) {
-        DLP_LOG_ERROR(LABEL, "get docUriVec empty");
+    if (docUriVec.empty() || !ValidateStringList(docUriVec, MAX_URI_SIZE)) {
+        DLP_LOG_ERROR(LABEL, "docUriVec is invalid.");
         return DLP_SERVICE_ERROR_VALUE_INVALID;
     }
     RetentionInfo info;
@@ -1261,8 +1287,8 @@ int32_t DlpPermissionService::CancelRetentionState(const std::vector<std::string
 {
     CriticalHelper criticalHelper("CancelRetentionState");
     appStateObserver_->PostDelayUnloadTask(CurrentTaskState::SHORT_TASK);
-    if (docUriVec.empty()) {
-        DLP_LOG_ERROR(LABEL, "get docUriVec empty");
+    if (docUriVec.empty() || !ValidateStringList(docUriVec, MAX_URI_SIZE)) {
+        DLP_LOG_ERROR(LABEL, "docUriVec is invalid.");
         return DLP_SERVICE_ERROR_VALUE_INVALID;
     }
     RetentionInfo info;
@@ -1339,6 +1365,10 @@ int32_t DlpPermissionService::GetRetentionSandboxList(const std::string& bundleN
     if (sandboxFlag) {
         DLP_LOG_ERROR(LABEL, "Forbid called by a sandbox app");
         return DLP_SERVICE_ERROR_API_NOT_FOR_SANDBOX_ERROR;
+    }
+    if (bundleName.size() > MAX_BUNDLENAME_SIZE) {
+        DLP_LOG_ERROR(LABEL, "bundleName is invalid.");
+        return DLP_SERVICE_ERROR_VALUE_INVALID;
     }
     std::string callerBundleName;
     uint32_t tokenId = IPCSkeleton::GetCallingTokenID();
@@ -1450,8 +1480,8 @@ int32_t DlpPermissionService::SetMDMPolicy(const std::vector<std::string>& appId
 {
     CriticalHelper criticalHelper("SetMDMPolicy");
     appStateObserver_->PostDelayUnloadTask(CurrentTaskState::SHORT_TASK);
-    if (appIdList.empty()) {
-        DLP_LOG_ERROR(LABEL, "get appIdList empty");
+    if (appIdList.empty() || !ValidateStringList(appIdList, MAX_APPID_SIZE)) {
+        DLP_LOG_ERROR(LABEL, "appIdList is invalid.");
         return DLP_SERVICE_ERROR_VALUE_INVALID;
     }
     int32_t uid = IPCSkeleton::GetCallingUid();
@@ -1727,8 +1757,21 @@ int DlpPermissionService::SetEnterprisePolicy(const std::string& policy)
         !(appIdentifier == MDM_APPIDENTIFIER)) {
         return DLP_SERVICE_ERROR_PERMISSION_DENY;
     }
+
+    if (policy.size() > MAX_ENTERPRISEPOLICY_SIZE) {
+        DLP_LOG_ERROR(LABEL, "Enterprise policy is invalid");
+        return DLP_SERVICE_ERROR_VALUE_INVALID;
+    }
+
     int32_t res = DlpCredential::GetInstance().SetEnterprisePolicy(policy);
     return res;
+}
+
+static bool CheckFileInfo(const FileInfo& fileInfo)
+{
+    return (fileInfo.accountName.size() <= MAX_ACCOUNT_SIZE &&
+        fileInfo.fileId.size() <= MAX_FILEID_SIZE &&
+        fileInfo.maskInfo.size() <= MAX_MASKINFO_SIZE);
 }
 
 int DlpPermissionService::SetFileInfo(const std::string& uri, const FileInfo& fileInfo)
@@ -1745,9 +1788,13 @@ int DlpPermissionService::SetFileInfo(const std::string& uri, const FileInfo& fi
         return DLP_SERVICE_ERROR_PERMISSION_DENY;
     }
 
-    if (uri.empty()) {
-        DLP_LOG_ERROR(LABEL, "uri is empty");
+    if (uri.empty() || uri.size() > MAX_URI_SIZE) {
+        DLP_LOG_ERROR(LABEL, "uri is invalid");
         return DLP_SERVICE_ERROR_URI_EMPTY;
+    }
+    if (!CheckFileInfo(fileInfo)) {
+        DLP_LOG_ERROR(LABEL, "fileInfo is invalid");
+        return DLP_SERVICE_ERROR_VALUE_INVALID;
     }
 
     FileInfo maskFileInfo;
