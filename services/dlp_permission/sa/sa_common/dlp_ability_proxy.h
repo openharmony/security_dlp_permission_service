@@ -20,7 +20,7 @@
 #include <iremote_proxy.h>
 #include <iremote_broker.h>
 #include <iremote_object.h>
-#include "dlp_permission_service.h"
+#include "water_mark_info.h"
 
 namespace OHOS {
 namespace Security {
