@@ -61,6 +61,7 @@ ohos_shared_library("libdlp_setconfig_sdk") {
     "ability_base:want",
     "bundle_framework:appexecfwk_base",
     "hilog:libhilog",
+    "ipc:ipc_single",
     "json:nlohmann_json_static",
   ]
 
