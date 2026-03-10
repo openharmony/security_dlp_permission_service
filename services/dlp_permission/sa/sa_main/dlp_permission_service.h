@@ -29,7 +29,7 @@
 #include "sandbox_config_kv_data_storage.h"
 #include "singleton.h"
 #include "system_ability.h"
-#include "transaction/rs_interfaces.h"
+#include "water_mark_info.h"
 #include "window_manager_lite.h"
 #include "wm_common.h"
 
@@ -43,14 +43,6 @@ typedef struct GetAppIndexParams {
     const std::string uri;
     bool isNotOwnerAndReadOnce;
 } GetAppIndexParams;
-
-struct WaterMarkInfo {
-public:
-    std::string accountAndUserId = "";
-    std::shared_ptr<Media::PixelMap> waterMarkImg = nullptr;
-    int32_t waterMarkFd = -1;
-    std::string maskInfo = "";
-};
 
 class DlpPermissionService final : public SystemAbility, public DlpPermissionServiceStub {
     DECLARE_DELAYED_SINGLETON(DlpPermissionService);
