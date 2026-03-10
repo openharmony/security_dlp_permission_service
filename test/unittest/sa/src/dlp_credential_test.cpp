@@ -543,6 +543,8 @@ HWTEST_F(DlpCredentialTest, DlpRestorePolicyCallbackCheck01, TestSize.Level1)
     outParams.data = &data;
     res = DlpRestorePolicyCallbackCheck(callback, accountType, errorCode, &outParams, policyInfo);
     EXPECT_EQ(DLP_OK, res);
+    res = DlpRestorePolicyCallbackCheck(callback, accountType, errorCode, nullptr, policyInfo);
+    EXPECT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, res);
     delete callback;
 }
 
@@ -567,6 +569,22 @@ HWTEST_F(DlpCredentialTest, AdapterData01, TestSize.Level1)
     EXPECT_NE(res, DLP_OK);
 }
 
+/**
+ * @tc.name: onGetDlpWaterMark01
+ * @tc.desc: onGetDlpWaterMark test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpCredentialTest, onGetDlpWaterMark01, TestSize.Level1)
+{
+    int32_t result = 0;
+    GeneralInfo info;
+    info.SetWaterMark = true;
+    sptr<DlpTestRemoteObj> callback = new (std::nothrow)IRemoteStub<DlpTestRemoteObj>();
+    auto proxy = std::make_shared<DlpPermissionAsyncProxy>(callback->AsObject());
+    proxy->OnGetDlpWaterMark(result, info);
+    EXPECT_EQ(info.SetWaterMark, true);
+}
 }  // namespace DlpPermission
 }  // namespace Security
 }  // namespace OHOS

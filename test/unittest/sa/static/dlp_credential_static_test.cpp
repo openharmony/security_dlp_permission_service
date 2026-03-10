@@ -296,6 +296,22 @@ HWTEST_F(DlpCredentialStaticTest, AdapterDataTest001, TestSize.Level1) {
     DLP_EncPolicyData encPolicy;
     ASSERT_EQ(AdapterData(offlineCert, isOwner, jsonObj, encPolicy), DLP_SERVICE_ERROR_JSON_OPERATE_FAIL);
 }
+
+/**
+ * @tc.name: SetMDMPolicyTest001
+ * @tc.desc: Test SetMDMPolicy
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpCredentialStaticTest, SetMDMPolicyTest001, TestSize.Level1) {
+    std::vector<std::string> appIdList;
+    for (int i = 0; i < MAX_APPID_LENGTH; ++i) {
+        appIdList.push_back("appName");
+    }
+    int32_t ret = DlpCredential::GetInstance().SetMDMPolicy(appIdList);
+    ASSERT_EQ(ret, DLP_SERVICE_ERROR_VALUE_INVALID);
+}
+
 }  // namespace DlpPermission
 }  // namespace Security
 }  // namespace OHOS
