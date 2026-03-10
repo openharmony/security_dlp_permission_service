@@ -301,6 +301,54 @@ HWTEST_F(DlpPermissionStaticTest, DlpPermissionStaticTest008, TestSize.Level1)
     ret = GetApplicationInfo(appId, applicationInfo);
     ASSERT_EQ(ret, false);
 }
+
+/**
+ * @tc.name: FindMatchingSandboxTest001
+ * @tc.desc: FindMatchingSandbox test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionStaticTest, FindMatchingSandboxTest001, TestSize.Level1)
+{
+    RetentionSandBoxInfo info;
+    GetAppIndexParams params;
+    params.isReadOnly = false;
+    bool ret = FindMatchingSandbox(info, params);
+    ASSERT_EQ(ret, false);
+    params.isReadOnly = true;
+    params.isNotOwnerAndReadOnce = true;
+    ret = FindMatchingSandbox(info, params);
+    ASSERT_EQ(ret, false);
+    params.isNotOwnerAndReadOnce = false;
+    info.isReadOnce_ = true;
+    ret = FindMatchingSandbox(info, params);
+    ASSERT_EQ(ret, false);
+    info.isReadOnce_ = false;
+    info.dlpFileAccess_ = DLPFileAccess::NO_PERMISSION;
+    ret = FindMatchingSandbox(info, params);
+    ASSERT_EQ(ret, false);
+    info.dlpFileAccess_ = DLPFileAccess::READ_ONLY;
+    ret = FindMatchingSandbox(info, params);
+    ASSERT_EQ(ret, true);
+    
+    GetAppIndexParams params_sub = {"", params.isReadOnly, "uri", params.isNotOwnerAndReadOnce};
+    info.isReadOnce_ = false;
+    info.docUriSet_.insert(params.uri);
+    ASSERT_EQ(ret, true);
+}
+
+/**
+ * @tc.name: CheckAllowAbilityListTest001
+ * @tc.desc: CheckAllowAbilityList test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionStaticTest, CheckAllowAbilityListTest001, TestSize.Level1)
+{
+    AAFwk::Want want;
+    bool ret = CheckAllowAbilityList(want);
+    ASSERT_EQ(ret, false);
+}
 }  // namespace DlpPermission
 }  // namespace Security
 }  // namespace OHOS
