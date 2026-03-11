@@ -305,7 +305,7 @@ HWTEST_F(DlpCredentialStaticTest, AdapterDataTest001, TestSize.Level1) {
  */
 HWTEST_F(DlpCredentialStaticTest, SetMDMPolicyTest001, TestSize.Level1) {
     std::vector<std::string> appIdList;
-    for (int i = 0; i < MAX_APPID_LENGTH; ++i) {
+    for (int i = 0; i < MAX_APPID_LENGTH + 1; ++i) {
         appIdList.push_back("appName");
     }
     int32_t ret = DlpCredential::GetInstance().SetMDMPolicy(appIdList);
