@@ -209,7 +209,7 @@ static void CallInterfaceByIndexThird(FuzzedDataProvider& fdp, int index)
             break;
         }
         case DlpPermissionServiceMethod::IS_IN_DLP_SANDBOX: {
-            bool inSandbox;
+            bool inSandbox = fdp.ConsumeBool();
             service->IsInDlpSandbox(inSandbox);
             break;
         }
@@ -250,7 +250,7 @@ static void CallInterfaceByIndexFourth(FuzzedDataProvider& fdp, int index)
             break;
         }
         case DlpPermissionServiceMethod::GET_DLP_GATHERING_POLICY: {
-            bool isGathering;
+            bool isGathering = fdp.ConsumeBool();
             service->GetDlpGatheringPolicy(isGathering);
             break;
         }
@@ -312,7 +312,7 @@ static void CallInterfaceByIndexSixth(FuzzedDataProvider& fdp, int index)
             break;
         }
         case DlpPermissionServiceMethod::SET_SANDBOX_APP_CONFIG: {
-            std::string configInfo = ConsumeString(fdp);
+            std::string configInfo = fdp.ConsumeBytesAsString(STRING_LENGTH);
             service->SetSandboxAppConfig(configInfo);
             break;
         }

@@ -14,6 +14,7 @@
  */
 
 #include "dlpsetdlpfeature_fuzzer.h"
+#include <fuzzer/FuzzedDataProvider.h>
 
 constexpr uint8_t STATUS_NUM = 2;
 
@@ -24,7 +25,8 @@ bool SetDlpFeatureFuzzTest(const uint8_t* data, size_t size)
     if (data == nullptr || size < STATUS_NUM) {
         return true;
     }
-    uint32_t dlpFeatureInfo = data[0] % STATUS_NUM;
+    FuzzedDataProvider fdp(data, size);
+    uint32_t dlpFeatureInfo = fdp.ConsumeIntegral<uint8_t>() % STATUS_NUM;
     bool statusSetInfo;
     DlpPermissionKit::SetDlpFeature(dlpFeatureInfo, statusSetInfo);
     return true;

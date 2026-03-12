@@ -70,16 +70,20 @@ static void FuzzTest(const uint8_t* data, size_t size)
     }
     int fd = open("/data/fuse_test.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
     FuzzedDataProvider fdp(data, size);
+    size_t innerSize = fdp.ConsumeIntegral<size_t>();
+    if (innerSize != size) {
+        innerSize = size;
+    }
     uint32_t txtSize = fdp.ConsumeIntegral<uint32_t>();
-    std::string workDir = fdp.ConsumeBytesAsString(size - sizeof(int32_t));
+    std::string workDir = fdp.ConsumeBytesAsString(innerSize - sizeof(int32_t));
     DlpRawFile testFile(fd, "txt");
     uint32_t certSize = txtSize;
     uint32_t contactAccountSize = txtSize;
-    if (size > ONE) {
-        certSize = data[0] % HUNDRED;
+    if (innerSize > ONE) {
+        certSize = fdp.ConsumeIntegral<uint8_t>() % HUNDRED;
     }
-    if (size > TWO) {
-        contactAccountSize = data[ONE] % HUNDRED;
+    if (innerSize > TWO) {
+        contactAccountSize = fdp.ConsumeIntegral<uint8_t>() % HUNDRED;
     }
     struct DlpHeader header = {
         .magic = DLP_FILE_MAGIC,

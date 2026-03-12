@@ -39,8 +39,15 @@ namespace {
 static constexpr int32_t SA_ID_DLP_PERMISSION_SERVICE = 3521;
 static const uint64_t SYSTEM_APP_MASK = 0x100000000;
 static const int32_t DEFAULT_USER_ID = 100;
-const uint32_t STRING_LENGTH = 10;
-const uint32_t BUFFER_LENGTH = 30;
+static const uint32_t STRING_LENGTH = 10;
+static const uint32_t BUFFER_LENGTH = 30;
+static const uint32_t NUM_ZERO = 0;
+static const uint32_t NUM_ONE = 1;
+static const uint32_t NUM_TWO = 2;
+static const uint32_t NUM_THREE = 3;
+static const uint32_t NUM_FOUR = 4;
+static const uint32_t NUM_FIVE = 5;
+static const uint32_t NUM_SIX = 6;
 }
 
 
@@ -68,19 +75,6 @@ static sptr<IDlpPermissionService> GetProxy()
 static std::string ConsumeString(FuzzedDataProvider& fdp)
 {
     return fdp.ConsumeBytesAsString(BUFFER_LENGTH);
-}
-
-// Individual Interface Functions
-static void FuzzGenerateDlpCertificate(FuzzedDataProvider& fdp, sptr<IDlpPermissionService> proxy)
-{
-    (void) fdp;
-    if (proxy == nullptr) {
-        return;
-    }
-    sptr<DlpPolicyParcel> policy = new (std::nothrow) DlpPolicyParcel();
-    sptr<DlpFuzzRemoteObj> callback2 = new (std::nothrow) IRemoteStub<DlpFuzzRemoteObj>();
-    sptr<IDlpPermissionCallback> callback = iface_cast<IDlpPermissionCallback>(callback2->AsObject());
-    proxy->GenerateDlpCertificate(policy, callback);
 }
 
 static void FuzzParseDlpCertificate(FuzzedDataProvider& fdp, sptr<IDlpPermissionService> proxy)
@@ -161,86 +155,6 @@ static void FuzzQueryDlpFileCopyable(FuzzedDataProvider& fdp, sptr<IDlpPermissio
     proxy->QueryDlpFileCopyableByTokenId(copyable, tokenId);
 }
 
-static void FuzzQueryDlpFileAccess(FuzzedDataProvider& fdp, sptr<IDlpPermissionService> proxy)
-{
-    (void) fdp;
-    if (proxy == nullptr) {
-        return;
-    }
-    DLPPermissionInfoParcel permInfoParcel;
-    proxy->QueryDlpFileAccess(permInfoParcel);
-}
-
-static void FuzzIsInDlpSandbox(FuzzedDataProvider& fdp, sptr<IDlpPermissionService> proxy)
-{
-    (void) fdp;
-    if (proxy == nullptr) {
-        return;
-    }
-    bool inSandbox;
-    proxy->IsInDlpSandbox(inSandbox);
-}
-
-static void FuzzGetDlpSupportFileType(FuzzedDataProvider& fdp, sptr<IDlpPermissionService> proxy)
-{
-    (void) fdp;
-    if (proxy == nullptr) {
-        return;
-    }
-    std::vector<std::string> supportFileType;
-    proxy->GetDlpSupportFileType(supportFileType);
-}
-
-static void FuzzRegisterDlpSandboxChangeCallback(FuzzedDataProvider& fdp, sptr<IDlpPermissionService> proxy)
-{
-    (void) fdp;
-    if (proxy == nullptr) {
-        return;
-    }
-    sptr<IRemoteObject> callbackRemote;
-    proxy->RegisterDlpSandboxChangeCallback(callbackRemote);
-}
-
-static void FuzzUnRegisterDlpSandboxChangeCallback(FuzzedDataProvider& fdp, sptr<IDlpPermissionService> proxy)
-{
-    (void) fdp;
-    if (proxy == nullptr) {
-        return;
-    }
-    bool result;
-    proxy->UnRegisterDlpSandboxChangeCallback(result);
-}
-
-static void FuzzRegisterOpenDlpFileCallback(FuzzedDataProvider& fdp, sptr<IDlpPermissionService> proxy)
-{
-    (void) fdp;
-    if (proxy == nullptr) {
-        return;
-    }
-    sptr<IRemoteObject> callbackRemote;
-    proxy->RegisterOpenDlpFileCallback(callbackRemote);
-}
-
-static void FuzzUnRegisterOpenDlpFileCallback(FuzzedDataProvider& fdp, sptr<IDlpPermissionService> proxy)
-{
-    (void) fdp;
-    if (proxy == nullptr) {
-        return;
-    }
-    sptr<IRemoteObject> callbackRemote;
-    proxy->UnRegisterOpenDlpFileCallback(callbackRemote);
-}
-
-static void FuzzGetDlpGatheringPolicy(FuzzedDataProvider& fdp, sptr<IDlpPermissionService> proxy)
-{
-    (void) fdp;
-    if (proxy == nullptr) {
-        return;
-    }
-    bool isGathering;
-    proxy->GetDlpGatheringPolicy(isGathering);
-}
-
 static void FuzzSetRetentionState(FuzzedDataProvider& fdp, sptr<IDlpPermissionService> proxy)
 {
     if (proxy == nullptr) {
@@ -261,72 +175,6 @@ static void FuzzCancelRetentionState(FuzzedDataProvider& fdp, sptr<IDlpPermissio
     std::vector<std::string> docUriVec;
     for (size_t i = 0; i < n; ++i) docUriVec.push_back(ConsumeString(fdp));
     proxy->CancelRetentionState(docUriVec);
-}
-
-static void FuzzGetRetentionSandboxList(FuzzedDataProvider& fdp, sptr<IDlpPermissionService> proxy)
-{
-    if (proxy == nullptr) {
-        return;
-    }
-    std::string bundleName = ConsumeString(fdp);
-    std::vector<RetentionSandBoxInfo> retentionSandBoxInfoVec;
-    proxy->GetRetentionSandboxList(bundleName, retentionSandBoxInfoVec);
-}
-
-static void FuzzClearUnreservedSandbox(FuzzedDataProvider& fdp, sptr<IDlpPermissionService> proxy)
-{
-    if (proxy == nullptr) {
-        return;
-    }
-    proxy->ClearUnreservedSandbox();
-}
-
-static void FuzzGetDlpFileVisitRecord(FuzzedDataProvider& fdp, sptr<IDlpPermissionService> proxy)
-{
-    (void) fdp;
-    if (proxy == nullptr) {
-        return;
-    }
-    std::vector<VisitedDLPFileInfo> infoVec;
-    proxy->GetDLPFileVisitRecord(infoVec);
-}
-
-static void FuzzSetSandboxAppConfig(FuzzedDataProvider& fdp, sptr<IDlpPermissionService> proxy)
-{
-    if (proxy == nullptr) {
-        return;
-    }
-    std::string configInfo = ConsumeString(fdp);
-    proxy->SetSandboxAppConfig(configInfo);
-}
-
-static void FuzzCleanSandboxAppConfig(FuzzedDataProvider& fdp, sptr<IDlpPermissionService> proxy)
-{
-    (void) fdp;
-    if (proxy == nullptr) {
-        return;
-    }
-    proxy->CleanSandboxAppConfig();
-}
-
-static void FuzzGetSandboxAppConfig(FuzzedDataProvider& fdp, sptr<IDlpPermissionService> proxy)
-{
-    (void) fdp;
-    if (proxy == nullptr) {
-        return;
-    }
-    std::string configInfo;
-    proxy->GetSandboxAppConfig(configInfo);
-}
-
-static void FuzzIsDLPFeatureProvided(FuzzedDataProvider& fdp, sptr<IDlpPermissionService> proxy)
-{
-    (void) fdp;
-    if (proxy == nullptr) {
-        return;
-    }
-    bool isProvideDLPFeature;
-    proxy->IsDLPFeatureProvided(isProvideDLPFeature);
 }
 
 static void FuzzSetDlpFeature(FuzzedDataProvider& fdp, sptr<IDlpPermissionService> proxy)
@@ -359,33 +207,6 @@ static void FuzzSetMDMPolicy(FuzzedDataProvider& fdp, sptr<IDlpPermissionService
     proxy->SetMDMPolicy(appIdList);
 }
 
-static void FuzzGetMDMPolicy(FuzzedDataProvider& fdp, sptr<IDlpPermissionService> proxy)
-{
-    (void) fdp;
-    if (proxy == nullptr) {
-        return;
-    }
-    std::vector<std::string> appIdList;
-    proxy->GetMDMPolicy(appIdList);
-}
-
-static void FuzzRemoveMDMPolicy(FuzzedDataProvider& fdp, sptr<IDlpPermissionService> proxy)
-{
-    if (proxy == nullptr) {
-        return;
-    }
-    proxy->RemoveMDMPolicy();
-}
-
-static void FuzzSetEnterprisePolicy(FuzzedDataProvider& fdp, sptr<IDlpPermissionService> proxy)
-{
-    if (proxy == nullptr) {
-        return;
-    }
-    std::string policy = ConsumeString(fdp);
-    proxy->SetEnterprisePolicy(policy);
-}
-
 static void FuzzSetNotOwnerAndReadOnce(FuzzedDataProvider& fdp, sptr<IDlpPermissionService> proxy)
 {
     if (proxy == nullptr) {
@@ -409,14 +230,143 @@ static void FuzzGetAbilityInfos(FuzzedDataProvider& fdp, sptr<IDlpPermissionServ
     proxy->GetAbilityInfos(want, flags, userId, abilityInfos);
 }
 
-static void FuzzGetDomainAccountNameInfo(FuzzedDataProvider& fdp, sptr<IDlpPermissionService> proxy)
+static void ChoiceFuzzExample1(FuzzedDataProvider& fdp, sptr<IDlpPermissionService> proxy)
 {
-    (void)fdp;
     if (proxy == nullptr) {
         return;
     }
-    std::string accountNameInfo;
-    proxy->GetDomainAccountNameInfo(accountNameInfo);
+    static const int ipccode[] = {0, 1, 2, 3, 4, 5, 6};
+    int code = fdp.PickValueInArray(ipccode);
+    switch (code) {
+        case NUM_ZERO: {
+            sptr<IRemoteObject> callbackRemote;
+            proxy->UnRegisterOpenDlpFileCallback(callbackRemote);
+            break;
+        }
+        case NUM_ONE: {
+            sptr<DlpPolicyParcel> policy = new (std::nothrow) DlpPolicyParcel();
+            sptr<DlpFuzzRemoteObj> callback2 = new (std::nothrow) IRemoteStub<DlpFuzzRemoteObj>();
+            sptr<IDlpPermissionCallback> callback = iface_cast<IDlpPermissionCallback>(callback2->AsObject());
+            proxy->GenerateDlpCertificate(policy, callback);
+            break;
+        }
+        case NUM_TWO: {
+            std::vector<VisitedDLPFileInfo> infoVec;
+            proxy->GetDLPFileVisitRecord(infoVec);
+            break;
+        }
+        case NUM_THREE: {
+            sptr<IRemoteObject> callbackRemote;
+            proxy->RegisterDlpSandboxChangeCallback(callbackRemote);
+            break;
+        }
+        case NUM_FOUR: {
+            DLPPermissionInfoParcel permInfoParcel;
+            proxy->QueryDlpFileAccess(permInfoParcel);
+            break;
+        }
+        case NUM_FIVE: {
+            bool inSandbox;
+            proxy->IsInDlpSandbox(inSandbox);
+            break;
+        }
+        case NUM_SIX: {
+            std::string configInfo;
+            proxy->GetSandboxAppConfig(configInfo);
+            break;
+        }
+        default:
+            break;
+    }
+}
+
+static void ChoiceFuzzExample2(FuzzedDataProvider& fdp, sptr<IDlpPermissionService> proxy)
+{
+    if (proxy == nullptr) {
+        return;
+    }
+    static const int ipccode[] = {0, 1, 2, 3, 4, 5, 6};
+    int code = fdp.PickValueInArray(ipccode);
+    switch (code) {
+        case NUM_ZERO: {
+            proxy->ClearUnreservedSandbox();
+            break;
+        }
+        case NUM_ONE: {
+            std::string configInfo = ConsumeString(fdp);
+            proxy->SetSandboxAppConfig(configInfo);
+            break;
+        }
+        case NUM_TWO: {
+            bool isGathering;
+            proxy->GetDlpGatheringPolicy(isGathering);
+            break;
+        }
+        case NUM_THREE: {
+            bool result;
+            proxy->UnRegisterDlpSandboxChangeCallback(result);
+            break;
+        }
+        case NUM_FOUR: {
+            std::string policy = ConsumeString(fdp);
+            proxy->SetEnterprisePolicy(policy);
+            break;
+        }
+        case NUM_FIVE: {
+            bool isProvideDLPFeature;
+            proxy->IsDLPFeatureProvided(isProvideDLPFeature);
+            break;
+        }
+        case NUM_SIX: {
+            std::vector<std::string> supportFileType;
+            proxy->GetDlpSupportFileType(supportFileType);
+            break;
+        }
+        default:
+            break;
+    }
+}
+
+static void ChoiceFuzzExample3(FuzzedDataProvider& fdp, sptr<IDlpPermissionService> proxy)
+{
+    if (proxy == nullptr) {
+        return;
+    }
+    static const int ipccode[] = {0, 1, 2, 3, 4, 5};
+    int code = fdp.PickValueInArray(ipccode);
+    switch (code) {
+        case NUM_ZERO: {
+            proxy->CleanSandboxAppConfig();
+            break;
+        }
+        case NUM_ONE: {
+            std::string accountNameInfo;
+            proxy->GetDomainAccountNameInfo(accountNameInfo);
+            break;
+        }
+        case NUM_TWO: {
+            proxy->RemoveMDMPolicy();
+            break;
+        }
+        case NUM_THREE: {
+            std::string bundleName = ConsumeString(fdp);
+            std::vector<RetentionSandBoxInfo> retentionSandBoxInfoVec;
+            proxy->GetRetentionSandboxList(bundleName, retentionSandBoxInfoVec);
+            break;
+        }
+        case NUM_FOUR: {
+            std::vector<std::string> appIdList;
+            proxy->GetMDMPolicy(appIdList);
+            break;
+        }
+        case NUM_FIVE: {
+            sptr<IRemoteObject> callbackRemote;
+            proxy->RegisterOpenDlpFileCallback(callbackRemote);
+            break;
+        }
+        default:
+            break;
+    }
 }
 
 void ParallelFuzzTest(const uint8_t* data, size_t size)
@@ -429,9 +379,9 @@ void ParallelFuzzTest(const uint8_t* data, size_t size)
     if (proxy == nullptr) {
         return;
     }
-
-    // Sequential call of all interfaces
-    FuzzGenerateDlpCertificate(fdp, proxy);
+    ChoiceFuzzExample1(fdp, proxy);
+    ChoiceFuzzExample2(fdp, proxy);
+    ChoiceFuzzExample3(fdp, proxy);
     FuzzParseDlpCertificate(fdp, proxy);
     FuzzGetWaterMark(fdp, proxy);
     FuzzInstallDlpSandbox(fdp, proxy);
@@ -439,32 +389,13 @@ void ParallelFuzzTest(const uint8_t* data, size_t size)
     FuzzGetSandboxExternalAuth(fdp, proxy);
     FuzzSetWaterMark(fdp, proxy);
     FuzzQueryDlpFileCopyable(fdp, proxy);
-    FuzzQueryDlpFileAccess(fdp, proxy);
-    FuzzIsInDlpSandbox(fdp, proxy);
-    FuzzGetDlpSupportFileType(fdp, proxy);
-    FuzzRegisterDlpSandboxChangeCallback(fdp, proxy);
-    FuzzUnRegisterDlpSandboxChangeCallback(fdp, proxy);
-    FuzzRegisterOpenDlpFileCallback(fdp, proxy);
-    FuzzUnRegisterOpenDlpFileCallback(fdp, proxy);
-    FuzzGetDlpGatheringPolicy(fdp, proxy);
     FuzzSetRetentionState(fdp, proxy);
     FuzzCancelRetentionState(fdp, proxy);
-    FuzzGetRetentionSandboxList(fdp, proxy);
-    FuzzClearUnreservedSandbox(fdp, proxy);
-    FuzzGetDlpFileVisitRecord(fdp, proxy);
-    FuzzSetSandboxAppConfig(fdp, proxy);
-    FuzzCleanSandboxAppConfig(fdp, proxy);
-    FuzzGetSandboxAppConfig(fdp, proxy);
-    FuzzIsDLPFeatureProvided(fdp, proxy);
     FuzzSetDlpFeature(fdp, proxy);
     FuzzSetReadFlag(fdp, proxy);
     FuzzSetMDMPolicy(fdp, proxy);
-    FuzzGetMDMPolicy(fdp, proxy);
-    FuzzRemoveMDMPolicy(fdp, proxy);
-    FuzzSetEnterprisePolicy(fdp, proxy);
     FuzzSetNotOwnerAndReadOnce(fdp, proxy);
     FuzzGetAbilityInfos(fdp, proxy);
-    FuzzGetDomainAccountNameInfo(fdp, proxy);
 }
 }
 

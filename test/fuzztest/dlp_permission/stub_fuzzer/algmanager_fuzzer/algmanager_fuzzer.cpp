@@ -95,21 +95,26 @@ void MemoryFuzzTest(const uint8_t* data, size_t size)
 
 void BlobFuzzTest(const uint8_t* data, size_t size)
 {
+    FuzzedDataProvider fdp(data, size);
     BlobData *blob = nullptr;
     bool ret = IsBlobDataValid(blob);
-    BlobData blob2 = {size, nullptr};
+    size_t innerSize = fdp.ConsumeIntegral<uint32_t>();
+    if (innerSize > size) {
+        innerSize = size;
+    }
+    BlobData blob2 = {innerSize, nullptr};
     ret = IsBlobDataValid(&blob2);
     FreeBlobData(&blob2);
     BlobData blob3 = {0, nullptr};
     FreeBlobData(&blob3);
     FreeBlobData(nullptr);
-    unsigned char *newdata = static_cast<unsigned char *>(HcMalloc(size, 0));
-    int ret2 = memcpy_s(newdata, size, data, size);
+    unsigned char *newdata = static_cast<unsigned char *>(HcMalloc(innerSize, 0));
+    int ret2 = memcpy_s(newdata, innerSize, data, innerSize);
     if (ret2 == -1) {
         HcFree(newdata);
         return;
     }
-    BlobData blob4 = {size, newdata};
+    BlobData blob4 = {innerSize, newdata};
     ret = IsBlobDataValid(&blob4);
     FreeBlobData(&blob4);
     uint8_t value = 0;
