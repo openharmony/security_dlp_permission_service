@@ -78,12 +78,17 @@ HWTEST_F(AccountEventSubscriberTest, OnReceiveEvent001, TestSize.Level1)
 
     EventFwk::CommonEventData data;
     OHOS::AAFwk::Want want;
+    data.SetWant(want);
+    subscriber.OnReceiveEvent(data);
     want.SetAction(CommonEventSupport::COMMON_EVENT_DISTRIBUTED_ACCOUNT_LOGIN);
     data.SetWant(want);
     subscriber.OnReceiveEvent(data);
     want.SetAction(CommonEventSupport::COMMON_EVENT_DISTRIBUTED_ACCOUNT_LOGOUT);
     data.SetWant(want);
     subscriber.OnReceiveEvent(data);
+    want.SetAction(CommonEventSupport::COMMON_EVENT_DISTRIBUTED_ACCOUNT_LOGOFF);
+    data.SetWant(want);
+    subscriber.OnReceiveEvent(data);
     ASSERT_EQ(1, g_cntRegister);
-    ASSERT_EQ(1, g_cntUnregister);
+    ASSERT_EQ(2, g_cntUnregister);
 }
