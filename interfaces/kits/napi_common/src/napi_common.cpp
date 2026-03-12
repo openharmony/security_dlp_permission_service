@@ -1062,6 +1062,8 @@ bool GetRetentionStateParams(const napi_env env, const napi_callback_info info,
 
     if (!GetVectorDocUriByKey(env, argv[PARAM0], "docUris", asyncContext.docUris)) {
         DLP_LOG_ERROR(LABEL, "js get auth users fail");
+        std::string jsErrMsg = "The docUris is error";
+        DlpNapiThrow(env, ERR_JS_PARAMETER_ERROR, jsErrMsg);
         return false;
     }
 
@@ -2019,7 +2021,6 @@ bool GetVectorDocUriByKey(napi_env env, napi_value jsObject, const std::string& 
         std::string docUri;
         if (!GetStringValue(env, obj, docUri) || !IsStringLengthValid(docUri, MAX_URI_LEN)) {
             DLP_LOG_ERROR(LABEL, "js get docUri fail");
-            ThrowParamError(env, "docUri", "string");
             return false;
         }
         docUriVec.push_back(docUri);

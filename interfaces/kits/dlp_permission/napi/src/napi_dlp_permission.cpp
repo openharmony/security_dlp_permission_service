@@ -31,6 +31,7 @@
 #include "napi/native_api.h"
 #include "napi/native_node_api.h"
 #include "napi_common.h"
+#include "napi_dlp_permission_common.h"
 #include "permission_policy.h"
 #include "securec.h"
 #include "tokenid_kit.h"
@@ -346,6 +347,8 @@ napi_value NapiDlpPermission::AddDlpLinkFile(napi_env env, napi_callback_info cb
     auto* asyncContext = new (std::nothrow) DlpLinkFileAsyncContext(env);
     if (asyncContext == nullptr) {
         DLP_LOG_ERROR(LABEL, "insufficient memory for asyncContext!");
+        std::string jsErrMsg = "The system ability works abnormally.";
+        DlpNapiThrow(env, ERR_JS_SYSTEM_SERVICE_EXCEPTION, jsErrMsg);
         return nullptr;
     }
     std::unique_ptr<DlpLinkFileAsyncContext> asyncContextPtr { asyncContext };
@@ -414,6 +417,8 @@ napi_value NapiDlpPermission::StopDlpLinkFile(napi_env env, napi_callback_info c
     auto* asyncContext = new (std::nothrow) DlpLinkFileAsyncContext(env);
     if (asyncContext == nullptr) {
         DLP_LOG_ERROR(LABEL, "insufficient memory for asyncContext!");
+        std::string jsErrMsg = "The system ability works abnormally.";
+        DlpNapiThrow(env, ERR_JS_SYSTEM_SERVICE_EXCEPTION, jsErrMsg);
         return nullptr;
     }
     std::unique_ptr<DlpLinkFileAsyncContext> asyncContextPtr { asyncContext };
@@ -482,6 +487,8 @@ napi_value NapiDlpPermission::RestartDlpLinkFile(napi_env env, napi_callback_inf
     auto* asyncContext = new (std::nothrow) DlpLinkFileAsyncContext(env);
     if (asyncContext == nullptr) {
         DLP_LOG_ERROR(LABEL, "insufficient memory for asyncContext!");
+        std::string jsErrMsg = "The system ability works abnormally.";
+        DlpNapiThrow(env, ERR_JS_SYSTEM_SERVICE_EXCEPTION, jsErrMsg);
         return nullptr;
     }
     std::unique_ptr<DlpLinkFileAsyncContext> asyncContextPtr { asyncContext };
@@ -550,6 +557,8 @@ napi_value NapiDlpPermission::ReplaceDlpLinkFile(napi_env env, napi_callback_inf
     auto* asyncContext = new (std::nothrow) DlpLinkFileAsyncContext(env);
     if (asyncContext == nullptr) {
         DLP_LOG_ERROR(LABEL, "insufficient memory for asyncContext!");
+        std::string jsErrMsg = "The system ability works abnormally.";
+        DlpNapiThrow(env, ERR_JS_SYSTEM_SERVICE_EXCEPTION, jsErrMsg);
         return nullptr;
     }
     std::unique_ptr<DlpLinkFileAsyncContext> asyncContextPtr { asyncContext };
@@ -618,6 +627,8 @@ napi_value NapiDlpPermission::DeleteDlpLinkFile(napi_env env, napi_callback_info
     auto* asyncContext = new (std::nothrow) DlpLinkFileAsyncContext(env);
     if (asyncContext == nullptr) {
         DLP_LOG_ERROR(LABEL, "insufficient memory for asyncContext!");
+        std::string jsErrMsg = "The system ability works abnormally.";
+        DlpNapiThrow(env, ERR_JS_SYSTEM_SERVICE_EXCEPTION, jsErrMsg);
         return nullptr;
     }
     std::unique_ptr<DlpLinkFileAsyncContext> asyncContextPtr { asyncContext };
@@ -686,6 +697,8 @@ napi_value NapiDlpPermission::RecoverDlpFile(napi_env env, napi_callback_info cb
     auto* asyncContext = new (std::nothrow) RecoverDlpFileAsyncContext(env);
     if (asyncContext == nullptr) {
         DLP_LOG_ERROR(LABEL, "insufficient memory for asyncContext!");
+        std::string jsErrMsg = "The system ability works abnormally.";
+        DlpNapiThrow(env, ERR_JS_SYSTEM_SERVICE_EXCEPTION, jsErrMsg);
         return nullptr;
     }
     std::unique_ptr<RecoverDlpFileAsyncContext> asyncContextPtr { asyncContext };
@@ -748,6 +761,8 @@ napi_value NapiDlpPermission::CloseDlpFile(napi_env env, napi_callback_info cbIn
     auto* asyncContext = new (std::nothrow) CloseDlpFileAsyncContext(env);
     if (asyncContext == nullptr) {
         DLP_LOG_ERROR(LABEL, "insufficient memory for asyncContext!");
+        std::string jsErrMsg = "The system ability works abnormally.";
+        DlpNapiThrow(env, ERR_JS_SYSTEM_SERVICE_EXCEPTION, jsErrMsg);
         return nullptr;
     }
     std::unique_ptr<CloseDlpFileAsyncContext> asyncContextPtr { asyncContext };
@@ -876,6 +891,8 @@ napi_value NapiDlpPermission::UninstallDlpSandbox(napi_env env, napi_callback_in
     auto* asyncContext = new (std::nothrow) DlpSandboxAsyncContext(env);
     if (asyncContext == nullptr) {
         DLP_LOG_ERROR(LABEL, "insufficient memory for asyncContext!");
+        std::string jsErrMsg = "The system ability works abnormally.";
+        DlpNapiThrow(env, ERR_JS_SYSTEM_SERVICE_EXCEPTION, jsErrMsg);
         return nullptr;
     }
     std::unique_ptr<DlpSandboxAsyncContext> asyncContextPtr { asyncContext };
@@ -1162,17 +1179,6 @@ napi_value NapiDlpPermission::UnregisterSandboxChangeCallback(napi_env env, napi
     return nullptr;
 }
 
-bool CompareOnAndOffRef(const napi_env env, napi_ref subscriberRef, napi_ref unsubscriberRef)
-{
-    napi_value subscriberCallback;
-    napi_get_reference_value(env, subscriberRef, &subscriberCallback);
-    napi_value unsubscriberCallback;
-    napi_get_reference_value(env, unsubscriberRef, &unsubscriberCallback);
-    bool result = false;
-    napi_strict_equals(env, subscriberCallback, unsubscriberCallback, &result);
-    return result;
-}
-
 static bool IsSubscribeExist(napi_env env, OpenDlpFileSubscriberContext* subscribeCBInfo)
 {
     return std::any_of(g_openDlpFileSubscribers.begin(), g_openDlpFileSubscribers.end(),
@@ -1187,6 +1193,8 @@ napi_value NapiDlpPermission::SubscribeOpenDlpFile(const napi_env env, const nap
     OpenDlpFileSubscriberContext* syncContext = new (std::nothrow) OpenDlpFileSubscriberContext();
     if (syncContext == nullptr) {
         DLP_LOG_ERROR(LABEL, "insufficient memory for syncContext!");
+        std::string jsErrMsg = "The system ability works abnormally.";
+        DlpNapiThrow(env, ERR_JS_SYSTEM_SERVICE_EXCEPTION, jsErrMsg);
         return nullptr;
     }
     std::unique_ptr<OpenDlpFileSubscriberContext> syncContextPtr { syncContext };
@@ -1420,6 +1428,8 @@ napi_value NapiDlpPermission::SetRetentionState(napi_env env, napi_callback_info
     auto* asyncContext = new (std::nothrow) RetentionStateAsyncContext(env);
     if (asyncContext == nullptr) {
         DLP_LOG_ERROR(LABEL, "insufficient memory for asyncContext!");
+        std::string jsErrMsg = "The system ability works abnormally.";
+        DlpNapiThrow(env, ERR_JS_SYSTEM_SERVICE_EXCEPTION, jsErrMsg);
         return nullptr;
     }
     std::unique_ptr<RetentionStateAsyncContext> asyncContextPtr { asyncContext };
@@ -1471,6 +1481,8 @@ napi_value NapiDlpPermission::CancelRetentionState(napi_env env, napi_callback_i
     auto* asyncContext = new (std::nothrow) RetentionStateAsyncContext(env);
     if (asyncContext == nullptr) {
         DLP_LOG_ERROR(LABEL, "insufficient memory for asyncContext!");
+        std::string jsErrMsg = "The system ability works abnormally.";
+        DlpNapiThrow(env, ERR_JS_SYSTEM_SERVICE_EXCEPTION, jsErrMsg);
         return nullptr;
     }
     std::unique_ptr<RetentionStateAsyncContext> asyncContextPtr { asyncContext };
@@ -2078,6 +2090,8 @@ napi_value NapiDlpPermission::SetEnterprisePolicy(napi_env env, napi_callback_in
     auto* asyncContext = new (std::nothrow) SetEnterprisePolicyContext(env);
     if (asyncContext == nullptr) {
         DLP_LOG_ERROR(LABEL, "asyncContext is nullptr.");
+        std::string jsErrMsg = "The system ability works abnormally.";
+        DlpNapiThrow(env, ERR_JS_SYSTEM_SERVICE_EXCEPTION, jsErrMsg);
         return nullptr;
     }
     std::unique_ptr<SetEnterprisePolicyContext> asyncContextPtr { asyncContext };

@@ -38,6 +38,7 @@ ohos_shared_library("libdlppermission_napi") {
   }
 
   sources = [
+    "${dlp_root_dir}/interfaces/kits/dlp_permission/napi/src/napi_dlp_permission_common.cpp",
     "${dlp_root_dir}/interfaces/kits/dlp_permission/napi/src/napi_dlp_permission.cpp",
     "${dlp_root_dir}/interfaces/kits/dlp_permission/napi/src/napi_dlp_permission_manager.cpp",
     "${dlp_root_dir}/interfaces/kits/dlp_permission/napi/src/napi_dlp_connection_plugin.cpp",
