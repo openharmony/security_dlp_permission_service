@@ -1172,3 +1172,91 @@ HWTEST_F(AppStateObserverTest, GetSandboxInfoByAppIndex001, TestSize.Level1)
     bundleName = "testbundle1";
     ASSERT_EQ(false, observer.GetSandboxInfoByAppIndex(bundleName, appIndex, appInfo));
 }
+
+
+/**
+ * @tc.name: UpdatePidWhenSandboxExists001
+ * @tc.desc: Test updating PID when sandbox already exists
+ * @tc.type: FUNC
+ * @tc.require: fix PID mismatch issue when DlpManager restarts
+ */
+HWTEST_F(AppStateObserverTest, UpdatePidWhenSandboxExists001, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL, "UpdatePidWhenSandboxExists001");
+    AppStateObserver observer;
+
+    // First add sandbox with PID=1001
+    DlpSandboxInfo appInfo = {
+        .uid = 1,
+        .userId = 123,
+        .appIndex = 2,
+        .bundleName = "testbundle1",
+        .hasRead = false,
+        .pid = 1001
+    };
+    observer.AddSandboxInfo(appInfo);
+    ASSERT_EQ(observer.sandboxInfo_[appInfo.uid].pid, 1001);
+
+    // Add sandbox again with new PID=2002 (simulating DlpManager restart)
+    DlpSandboxInfo newAppInfo = {
+        .uid = 1,
+        .userId = 123,
+        .appIndex = 2,
+        .bundleName = "testbundle1",
+        .hasRead = false,
+        .pid = 2002
+    };
+    observer.AddSandboxInfo(newAppInfo);
+
+    // Verify PID is updated to new value
+    ASSERT_EQ(observer.sandboxInfo_[appInfo.uid].pid, 2002);
+    DLP_LOG_INFO(LABEL, "PID updated from 1001 to 2002 successfully");
+}
+
+/**
+ * @tc.name: UpdatePidWhenSandboxExists002
+ * @tc.desc: Test PID update does not affect other sandbox info
+ * @tc.type: FUNC
+ * @tc.require: verify other fields remain unchanged when updating PID
+ */
+HWTEST_F(AppStateObserverTest, UpdatePidWhenSandboxExists002, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL, "UpdatePidWhenSandboxExists002");
+    AppStateObserver observer;
+
+    // First add sandbox with full info
+    DlpSandboxInfo appInfo = {
+        .uid = 1,
+        .userId = 123,
+        .appIndex = 2,
+        .bundleName = "testbundle1",
+        .hasRead = true,
+        .pid = 1001,
+        .uri = "test_uri",
+        .fileId = "test_file_id",
+        .dlpFileAccess = DLPFileAccess::READ_ONLY
+    };
+    observer.AddSandboxInfo(appInfo);
+
+    // Update with new PID only
+    DlpSandboxInfo newAppInfo = {
+        .uid = 1,
+        .userId = 456,  // Different userId
+        .appIndex = 3,  // Different appIndex
+        .bundleName = "testbundle2",  // Different bundleName
+        .hasRead = false,  // Different hasRead
+        .pid = 2002  // New PID
+    };
+    observer.AddSandboxInfo(newAppInfo);
+
+    // Verify only PID is updated, other fields remain unchanged
+    ASSERT_EQ(observer.sandboxInfo_[appInfo.uid].pid, 2002);
+    ASSERT_EQ(observer.sandboxInfo_[appInfo.uid].userId, 123);
+    ASSERT_EQ(observer.sandboxInfo_[appInfo.uid].appIndex, 2);
+    ASSERT_EQ(observer.sandboxInfo_[appInfo.uid].bundleName, "testbundle1");
+    ASSERT_TRUE(observer.sandboxInfo_[appInfo.uid].hasRead);
+    ASSERT_EQ(observer.sandboxInfo_[appInfo.uid].uri, "test_uri");
+    ASSERT_EQ(observer.sandboxInfo_[appInfo.uid].fileId, "test_file_id");
+    ASSERT_EQ(observer.sandboxInfo_[appInfo.uid].dlpFileAccess, DLPFileAccess::READ_ONLY);
+    DLP_LOG_INFO(LABEL, "Other fields remain unchanged when updating PID");
+}
