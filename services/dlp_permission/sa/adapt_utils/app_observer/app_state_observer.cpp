@@ -246,6 +246,10 @@ void AppStateObserver::AddSandboxInfo(const DlpSandboxInfo& appInfo)
     if (sandboxInfo_.count(appInfo.uid) > 0) {
         DLP_LOG_ERROR(LABEL, "sandbox app %{public}s%{public}d is already insert, ignore it",
             appInfo.bundleName.c_str(), appInfo.appIndex);
+        // Update PID when sandbox already exists to fix PID mismatch issue
+        sandboxInfo_[appInfo.uid].pid = appInfo.pid;
+        DLP_LOG_INFO(LABEL, "sandbox app %{public}s%{public}d already exists, update pid to %{public}d",
+            appInfo.bundleName.c_str(), appInfo.appIndex, appInfo.pid);
     } else {
         sandboxInfo_[appInfo.uid] = appInfo;
         DLP_LOG_INFO(LABEL, "sandbox app %{public}s%{public}d info insert success, uid: %{public}d",
