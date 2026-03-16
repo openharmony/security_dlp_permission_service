@@ -98,9 +98,9 @@ void BlobFuzzTest(const uint8_t* data, size_t size)
     FuzzedDataProvider fdp(data, size);
     BlobData *blob = nullptr;
     bool ret = IsBlobDataValid(blob);
-    size_t innerSize = fdp.ConsumeIntegral<uint32_t>();
-    if (innerSize > size) {
-        innerSize = size;
+    size_t innerSize = fdp.ConsumeIntegral<uint8_t>();
+    if (innerSize == 0 || innerSize > size) {
+        return;
     }
     BlobData blob2 = {innerSize, nullptr};
     ret = IsBlobDataValid(&blob2);

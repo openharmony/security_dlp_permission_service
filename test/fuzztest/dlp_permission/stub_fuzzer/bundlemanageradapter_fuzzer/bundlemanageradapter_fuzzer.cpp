@@ -159,6 +159,8 @@ static void ParseDlpCertificateFUZZ(const uint8_t* data, size_t size)
     std::vector<uint8_t> cert2(s2.begin(), s2.end());
     certParcel->cert = cert2;
     res = DlpCredential::GetInstance().ParseDlpCertificate(certParcel, stub, appId, true, applicationInfo);
+    DlpCredential::GetInstance().CheckMdmPermission(fdp.ConsumeBytesAsString(size / TWO - TWO),
+        fdp.ConsumeIntegral<int32_t>());
 }
 
 static void CheckMdmPermissionFUZZ(const uint8_t* data, size_t size)
