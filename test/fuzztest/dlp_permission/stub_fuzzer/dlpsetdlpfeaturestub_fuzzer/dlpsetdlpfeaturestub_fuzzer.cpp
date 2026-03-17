@@ -14,6 +14,7 @@
  */
 
 #include "dlpsetdlpfeaturestub_fuzzer.h"
+#include <fuzzer/FuzzedDataProvider.h>
 #include <iostream>
 #include <string>
 #include <thread>
@@ -30,20 +31,19 @@
 
 using namespace OHOS::Security::DlpPermission;
 using namespace OHOS::Security::AccessToken;
-constexpr uint8_t STATUS_NUM = 2;
 
 namespace OHOS {
 static constexpr int32_t SA_ID_DLP_PERMISSION_SERVICE = 3521;
 
 static void FuzzTest(const uint8_t* data, size_t size)
 {
-    if ((data == nullptr) || size < STATUS_NUM) {
+    if ((data == nullptr) || size == 0) {
         return;
     }
-    auto service1 = std::make_shared<DlpPermissionService>(SA_ID_DLP_PERMISSION_SERVICE, data[0] % STATUS_NUM);
-    uint32_t dlpFeatureInfo = data[0] % STATUS_NUM;
-    bool statusSetInfo;
-    service1->SetDlpFeature(dlpFeatureInfo, statusSetInfo);
+    FuzzedDataProvider fdp(data, size);
+    auto service = std::make_shared<DlpPermissionService>(SA_ID_DLP_PERMISSION_SERVICE, false);
+    std::vector<std::string> appIdList;
+    appIdList.push_back(fdp.ConsumeBytesAsString(size));
 }
 
 bool SetDlpFeatureFuzzTest(const uint8_t* data, size_t size)

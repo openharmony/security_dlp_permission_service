@@ -60,23 +60,51 @@ static const int32_t DEFAULT_USER_ID = 100;
 
 namespace OHOS {
 static const uint32_t BUFFERSIZE = 40;
+static uint32_t g_size = 0;
 const int32_t ONE = 10;
 const int32_t TWO = 20;
 const int32_t HUNDRED = 100;
-static void FuzzTest(const uint8_t* data, size_t size)
+
+#define MAX_MALLOC_SIZE (1024 * 500) /* 500K */
+static void *HcMalloc(uint32_t size, char val)
 {
-    if ((data == nullptr) || (size < sizeof(uint32_t))) {
-        return;
+    if (size == 0 || size > MAX_MALLOC_SIZE) {
+        return nullptr;
     }
-    int fd = open("/data/fuse_test.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
-    FuzzedDataProvider fdp(data, size);
-    size_t innerSize = fdp.ConsumeIntegral<size_t>();
-    if (innerSize != size) {
-        innerSize = size;
+    void *addr = malloc(size);
+    if (addr != nullptr) {
+        (void)memset_s(addr, size, val, size);
+    }
+    return addr;
+}
+
+static void HcFree(void *addr)
+{
+    if (addr != nullptr) {
+        free(addr);
+    }
+}
+
+static void PrepareFuzzTest(FuzzedDataProvider& fdp, int& fd, DlpRawFile& testFile,
+    std::shared_ptr<DlpRawFile>& filePtr, vector<DlpBlob>& messages)
+{
+    fd = open("/data/fuse_test.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
+    size_t innerSize = fdp.ConsumeIntegral<uint8_t>();
+    if (innerSize == 0 || innerSize > g_size) {
+        return;
     }
     uint32_t txtSize = fdp.ConsumeIntegral<uint32_t>();
     std::string workDir = fdp.ConsumeBytesAsString(innerSize - sizeof(int32_t));
-    DlpRawFile testFile(fd, "txt");
+    testFile = DlpRawFile(fd, "txt");
+    filePtr = std::make_shared<DlpRawFile>(-1, "mp4");
+    messages[0] = {0, nullptr};
+    messages[1] = {0, nullptr};
+    messages[0].size = innerSize;
+    messages[0].data = static_cast<uint8_t *>(HcMalloc(innerSize, 0));
+    messages[1].size = innerSize;
+    messages[1].data = static_cast<uint8_t *>(HcMalloc(innerSize, 0));
+    filePtr->ParseEnterpriseFileId(0, 0);
+    filePtr->DoDlpHIAECryptOperation(messages[0], messages[1], 0, true);
     uint32_t certSize = txtSize;
     uint32_t contactAccountSize = txtSize;
     if (innerSize > ONE) {
@@ -100,8 +128,30 @@ static void FuzzTest(const uint8_t* data, size_t size)
     write(fd, &header, sizeof(header));
     uint8_t buffer[BUFFERSIZE] = {0};
     write(fd, buffer, BUFFERSIZE);
+}
+
+static void FuzzTest(const uint8_t* data, size_t size)
+{
+    if ((data == nullptr) || (size < sizeof(uint32_t))) {
+        return;
+    }
+    g_size = size;
+    FuzzedDataProvider fdp(data, size);
+    int fd = -1;
+    DlpRawFile testFile(-1, "");
+    std::shared_ptr<DlpRawFile> filePtr = nullptr;
+    vector<DlpBlob> messages = {{0, nullptr}, {0, nullptr}};
+    PrepareFuzzTest(fdp, fd, testFile, filePtr, messages);
     testFile.ProcessDlpFile();
     close(fd);
+#ifndef SUPPORT_DLP_CREDENTIAL
+#define SUPPORT_DLP_CREDENTIAL
+    filePtr->DoDlpHIAECryptOperation(messages[0], messages[1], 1, true);
+    filePtr->DoDlpHIAECryptOperation(messages[0], messages[1], 0, true);
+#endif
+    messages[0].size = fdp.ConsumeIntegral<uint32_t>();
+    HcFree(messages[0].data);
+    HcFree(messages[1].data);
 }
 
 bool ParseCertFuzzTest(const uint8_t* data, size_t size)
