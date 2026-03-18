@@ -252,6 +252,10 @@ int32_t DlpPermissionSerializer::DeserializeAuthUserList(
 
 static int32_t SerializeDomainInfo(const PermissionPolicy& policy, unordered_json& permInfoJson)
 {
+    if (policy.ownerAccountType_ != DOMAIN_ACCOUNT) {
+        permInfoJson[VERSION_INDEX] = CLOUD_VERSION;
+        return DLP_OK;
+    }
     int32_t userId;
     int32_t res = OHOS::AccountSA::OsAccountManager::GetForegroundOsAccountLocalId(userId);
     if (res != DLP_OK) {
