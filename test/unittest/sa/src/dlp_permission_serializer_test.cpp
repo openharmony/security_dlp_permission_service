@@ -228,6 +228,24 @@ HWTEST_F(DlpPermissionSerializerTest, SerializeDlpPermission006, TestSize.Level1
 }
 
 /**
+ * @tc.name: SerializeDlpPermission007
+ * @tc.desc: SerializeDlpPermission test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionSerializerTest, SerializeDlpPermission007, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL, "SerializeDlpPermission007");
+    PermissionPolicy policy;
+    policy.ownerAccountType_ = OHOS::Security::DlpPermission::ENTERPRISE_ACCOUNT;
+    unordered_json permInfoJson;
+
+    DlpPermissionSerializer serialize;
+    int32_t ret = serialize.SerializeDlpPermission(policy, permInfoJson);
+    ASSERT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, ret);
+}
+
+/**
  * @tc.name: DeserializeDlpPermission001
  * @tc.desc: DeserializeDlpPermission test
  * @tc.type: FUNC
