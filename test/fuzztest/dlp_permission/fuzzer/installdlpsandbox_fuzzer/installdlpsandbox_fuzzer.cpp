@@ -43,8 +43,8 @@ static void FuzzTest(const uint8_t* data, size_t size)
     FuzzedDataProvider fdp(data, size);
     int32_t userId = fdp.ConsumeIntegral<int32_t>();
     DLPFileAccess dlpFileAccess = *(reinterpret_cast<const DLPFileAccess *>(data));
-    std::string bundleName = fdp.ConsumeBytesAsString(size);
-    std::string uri = fdp.ConsumeBytesAsString(size);
+    std::string bundleName = fdp.ConsumeBytesAsString(size / TWO);
+    std::string uri = fdp.ConsumeBytesAsString(size / TWO);
     SandboxInfo sandboxInfo;
     DlpPermissionKit::InstallDlpSandbox(bundleName, dlpFileAccess, userId, sandboxInfo, uri);
 }
