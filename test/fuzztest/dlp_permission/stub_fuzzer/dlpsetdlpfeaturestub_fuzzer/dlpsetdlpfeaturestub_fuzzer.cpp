@@ -34,6 +34,7 @@ using namespace OHOS::Security::AccessToken;
 
 namespace OHOS {
 static constexpr int32_t SA_ID_DLP_PERMISSION_SERVICE = 3521;
+static const uint32_t TWO = 2;
 
 static void FuzzTest(const uint8_t* data, size_t size)
 {
@@ -43,7 +44,7 @@ static void FuzzTest(const uint8_t* data, size_t size)
     FuzzedDataProvider fdp(data, size);
     auto service = std::make_shared<DlpPermissionService>(SA_ID_DLP_PERMISSION_SERVICE, false);
     std::vector<std::string> appIdList;
-    appIdList.push_back(fdp.ConsumeBytesAsString(size));
+    appIdList.push_back(fdp.ConsumeBytesAsString(size / TWO));
 }
 
 bool SetDlpFeatureFuzzTest(const uint8_t* data, size_t size)

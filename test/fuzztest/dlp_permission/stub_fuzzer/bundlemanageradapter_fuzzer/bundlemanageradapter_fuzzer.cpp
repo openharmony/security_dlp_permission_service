@@ -189,7 +189,7 @@ static void ParseFUZZ(const uint8_t* data, size_t size)
 
     FuzzedDataProvider fdp(data, size);
     std::vector<std::string> appList;
-    appList.push_back(fdp.ConsumeBytesAsString(size));
+    appList.push_back(fdp.ConsumeBytesAsString(size / TWO));
 
     uint32_t policy  = 0;
     uint32_t policyLen = 1;

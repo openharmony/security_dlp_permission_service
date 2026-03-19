@@ -161,7 +161,7 @@ static void DlpCredentialTest(const uint8_t *data, size_t size)
     std::vector<std::string> appIdList(MAX_APPID_LENGTH + 1);
     DlpCredential::GetInstance().SetMDMPolicy(appIdList);
     FuzzedDataProvider fdp(data, size);
-    std::string policy = fdp.ConsumeBytesAsString(size);
+    std::string policy = fdp.ConsumeBytesAsString(size / TWO);
     DlpCredential::GetInstance().SetEnterprisePolicy(policy);
 }
 
