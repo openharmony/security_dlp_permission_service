@@ -126,6 +126,7 @@ struct DlpProperty {
     int32_t allowedOpenCount = 0;
     bool waterMarkConfig = false;
     int32_t countdown = 0;
+    std::string nickNameMask;
 };
 
 class PermissionPolicy final {
@@ -176,6 +177,7 @@ public:
     int32_t countdown_ = 0;
     bool canFindWaterMarkConfig_ = false;
     bool canFindCountdown_ = false;
+    std::string nickNameMask_ = "";
 
 private:
     uint8_t* aeskey_;
