@@ -76,6 +76,7 @@ const std::string PERMISSION_ENTERPRISE_ACCESS_DLP_FILE = "ohos.permission.ENTER
 static const std::string ALLOW_ACTION[] = {"ohos.want.action.CREATE_FILE"};
 static const std::string DLP_MANAGER = "com.ohos.dlpmanager";
 static const std::string HIPREVIEW_HIGH = "com.huawei.hmos.hipreview";
+static const std::string SETTINGS_BUNDLE_NAME = "com.huawei.hmos.settings";
 static const std::string HIPREVIEW_LOW = "com.huawei.hmos.hipreviewext";
 static const std::string DLP_CONFIG = "etc/dlp_permission/dlp_config.json";
 static const std::string SUPPORT_FILE_TYPE = "support_file_type";
@@ -108,6 +109,7 @@ static const char *FEATURE_INFO_DATA_FILE_PATH = "/data/service/el1/public/dlp_p
 static const int32_t LIBCESFWK_SERVICES_ID = 3299;
 constexpr int32_t PARSE_WAIT_TIME_OUT = 5;
 static AccountListenerCallback *g_accountListenerCallback = nullptr;
+static const std::vector<std::string> SANDBOX_WHITELIST = { HIPREVIEW_LOW, SETTINGS_BUNDLE_NAME };
 }
 REGISTER_SYSTEM_ABILITY_BY_ID(DlpPermissionService, SA_ID_DLP_PERMISSION_SERVICE, true);
 
@@ -980,7 +982,8 @@ int32_t DlpPermissionService::GetSandboxExternalAuthorization(
     std::unique_lock<std::shared_mutex> lock(dlpSandboxDataMutex_);
     auto it = dlpSandboxData_.find(sandboxUid);
     DLP_LOG_INFO(LABEL, "GetSandboxExternalAuthorization bundleName=%s", bundleName.c_str());
-    if (isSandbox && it != dlpSandboxData_.end() && bundleName == HIPREVIEW_LOW) {
+    if (isSandbox && it != dlpSandboxData_.end() &&
+        std::find(SANDBOX_WHITELIST.begin(), SANDBOX_WHITELIST.end(), bundleName) != SANDBOX_WHITELIST.end()) {
         authType = SandBoxExternalAuthorType::ALLOW_START_ABILITY;
         return DLP_OK;
     }
