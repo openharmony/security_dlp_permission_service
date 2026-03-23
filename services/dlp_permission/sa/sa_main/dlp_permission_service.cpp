@@ -109,7 +109,7 @@ static const char *FEATURE_INFO_DATA_FILE_PATH = "/data/service/el1/public/dlp_p
 static const int32_t LIBCESFWK_SERVICES_ID = 3299;
 constexpr int32_t PARSE_WAIT_TIME_OUT = 5;
 static AccountListenerCallback *g_accountListenerCallback = nullptr;
-static const std::vector<std::string> SANDBOX_WHITELIST = {HIPREVIEW_LOW, SETTINGS_BUNDLE_NAME};
+static const std::vector<std::string> SANDBOX_WHITELIST = { HIPREVIEW_LOW, SETTINGS_BUNDLE_NAME };
 }
 REGISTER_SYSTEM_ABILITY_BY_ID(DlpPermissionService, SA_ID_DLP_PERMISSION_SERVICE, true);
 
