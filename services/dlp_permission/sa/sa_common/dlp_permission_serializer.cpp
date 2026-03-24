@@ -387,6 +387,7 @@ static int32_t SerializeCloudAccountPolicy(const PermissionPolicy& policy, unord
     collaborativePolicyJson[OWNER_ACCOUNT_ID] = policy.ownerAccountId_;
     collaborativePolicyJson[ALLOWED_OPEN_COUNT] = policy.allowedOpenCount_;
     collaborativePolicyJson[PERM_EXPIRY_TIME] = policy.expireTime_;
+    SerializeEveryoneInfo(policy, collaborativePolicyJson);
     unordered_json authUsersJson = SerializeAuthUserList(policy.authUsers_);
     collaborativePolicyJson[ACCOUNT_INDEX] = authUsersJson;
     collaborativePolicyJson[FILEID] = policy.fileId;
