@@ -40,6 +40,7 @@
 #include "open_dlp_file_callback_stub.h"
 #include "open_dlp_file_callback_death_recipient.h"
 #include "permission_policy.h"
+#include "huks_apply_permission_test_common.h"
 #include "retention_file_manager.h"
 #include "sandbox_json_manager.h"
 #include "visited_dlp_file_info.h"
@@ -341,4 +342,35 @@ HWTEST_F(DlpPermissionServiceTest, SetFileInfo003, TestSize.Level1)
     fileInfo.maskInfo = std::string(MAX_MASKINFO_SIZE + 1, 'c');
     ret = dlpPermissionService_->SetFileInfo(uri, fileInfo);
     ASSERT_EQ(ret, DLP_SERVICE_ERROR_VALUE_INVALID);
+}
+
+/**
+ * @tc.name: SetDlpFeature002
+ * @tc.desc: SetDlpFeature test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionServiceTest, SetDlpFeature002, TestSize.Level1)
+{
+    DLP_LOG_DEBUG(LABEL, "SetDlpFeature002");
+
+    std::string backupIdentifier = DlpPermissionServiceTest::mockAppIdentifier;
+
+    DlpPermissionServiceTest::mockAppIdentifier = "1234567890";
+    uint32_t dlpFeatureInfo = 1;
+    bool statusSetInfo = true;
+    int32_t ret = dlpPermissionService_->SetDlpFeature(dlpFeatureInfo, statusSetInfo);
+    ASSERT_EQ(DLP_SERVICE_ERROR_NOT_SYSTEM_APP, ret);
+    ASSERT_FALSE(statusSetInfo);
+
+    DlpPermissionServiceTest::mockAppIdentifier = "6917562860841254665";
+    ret = SetIdsTokenForAcrossAccountsPermission();
+    ASSERT_EQ(DLP_OK, ret);
+
+    statusSetInfo = false;
+    ret = dlpPermissionService_->SetDlpFeature(dlpFeatureInfo, statusSetInfo);
+    ASSERT_EQ(DLP_OK, ret);
+    ASSERT_TRUE(statusSetInfo);
+
+    DlpPermissionServiceTest::mockAppIdentifier = backupIdentifier;
 }

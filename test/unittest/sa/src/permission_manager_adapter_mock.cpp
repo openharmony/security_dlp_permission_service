@@ -33,11 +33,13 @@ using namespace OHOS::AppExecFwk;
 
 static const std::string PERMISSION_ACCESS_DLP_FILE = "ohos.permission.ACCESS_DLP_FILE";
 static const std::string PERMISSION_ENTERPRISE_ACCESS_DLP_FILE = "ohos.permission.ENTERPRISE_ACCESS_DLP_FILE";
+static const std::string MDM_HAP_IDENTIFIER = "6917562860841254665";
 static const int32_t TWO = 2;
 
 bool DlpPermissionServiceTest::isSandbox = true;
 bool DlpPermissionServiceTest::isCheckSandbox = true;
 int32_t DlpPermissionServiceTest::permType = 0;
+std::string DlpPermissionServiceTest::mockAppIdentifier = MDM_HAP_IDENTIFIER;
 
 bool PermissionManagerAdapter::CheckPermission(const std::string& permission)
 {
@@ -87,8 +89,8 @@ bool PermissionManagerAdapter::CheckSystemAppAndPermission(const std::string& pe
 
 bool PermissionManagerAdapter::CheckPermissionAndGetAppId(std::string& appId)
 {
-    appId = "6917562860841254665";
-    return true;
+    appId = DlpPermissionServiceTest::mockAppIdentifier;
+    return (appId == MDM_HAP_IDENTIFIER);
 }
 
 int32_t PermissionManagerAdapter::CheckSandboxFlagWithService(AccessToken::AccessTokenID tokenId, bool& sandboxFlag)

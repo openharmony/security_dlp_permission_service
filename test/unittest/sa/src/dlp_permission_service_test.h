@@ -17,6 +17,7 @@
 #define DLP_PERMISSION_SERVICE_TEST_H
 
 #include <gtest/gtest.h>
+#include <string>
 #define private public
 #include "dlp_permission_service.h"
 #undef private
@@ -46,6 +47,7 @@ public:
     static bool isSandbox;
     static bool isCheckSandbox;
     static int32_t permType;
+    static std::string mockAppIdentifier;
 };
 }  // namespace DlpPermission
 }  // namespace Security
