@@ -1567,7 +1567,7 @@ int32_t DlpPermissionService::SetDlpFeature(const uint32_t dlpFeatureInfo, bool&
     statusSetInfo = false;
     std::string appId;
     if (!PermissionManagerAdapter::CheckPermissionAndGetAppId(appId)) {
-        return DLP_SERVICE_ERROR_PERMISSION_DENY;
+        return DLP_SERVICE_ERROR_NOT_SYSTEM_APP;
     }
 
     unordered_json featureJson;
