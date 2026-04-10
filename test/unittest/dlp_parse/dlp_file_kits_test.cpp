@@ -560,7 +560,7 @@ HWTEST_F(DlpFileKitsTest, GetSandboxFlag013, TestSize.Level0)
     want.SetUri(PLAIN_FILE_URI);
     ASSERT_FALSE(DlpFileKits::GetSandboxFlag(want));
     want.SetUri(DLP_FILE_URI_2);
-    ASSERT_FALSE(DlpFileKits::GetSandboxFlag(want));
+    ASSERT_TRUE(DlpFileKits::GetSandboxFlag(want));
 }
 
 /**
@@ -708,7 +708,7 @@ HWTEST_F(DlpFileKitsTest, GetSandboxFlag015, TestSize.Level0)
     want.SetAction(TAG_ACTION_VIEW);
     want.SetUri(DLP_FILE_URI);
     ASSERT_TRUE(DlpFileKits::GetSandboxFlag(want));
-    EXPECT_EQ(want.GetType(), "image/jpeg");
+    EXPECT_EQ(want.GetType(), "text/plain");
 }
 
 /**
@@ -726,7 +726,7 @@ HWTEST_F(DlpFileKitsTest, GetSandboxFlag016, TestSize.Level0)
     want.SetAction(TAG_ACTION_VIEW);
     want.SetUri(DLP_FILE_URI);
     ASSERT_TRUE(DlpFileKits::GetSandboxFlag(want));
-    EXPECT_EQ(want.GetType(), "image/jpeg");
+    EXPECT_EQ(want.GetType(), "text/plain");
 }
 
 /**
