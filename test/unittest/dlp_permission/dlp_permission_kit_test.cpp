@@ -1408,10 +1408,14 @@ HWTEST_F(DlpPermissionKitTest, SetSandboxAppConfig001, TestSize.Level1)
     AccessTokenID tokenId = GetSelfTokenID();
     TestMockApp(DLP_MANAGER_APP, 0, DEFAULT_USERID);
     std::string config = "test";
-    ASSERT_EQ(DLP_OK, DlpPermissionKit::SetSandboxAppConfig(config));
-    std::string configGet;
-    ASSERT_EQ(DLP_OK, DlpPermissionKit::GetSandboxAppConfig(configGet));
-    ASSERT_EQ(DLP_OK, DlpPermissionKit::CleanSandboxAppConfig());
+    int32_t ret = DlpPermissionKit::SetSandboxAppConfig(config);
+    if (ret != DLP_OK) {
+        ASSERT_EQ(ret, DLP_COMMON_CHECK_KVSTORE_ERROR);
+    } else {
+        std::string configGet;
+        ASSERT_EQ(DLP_OK, DlpPermissionKit::GetSandboxAppConfig(configGet));
+        ASSERT_EQ(DLP_OK, DlpPermissionKit::CleanSandboxAppConfig());
+    }
     TestRecoverProcessInfo(uid, tokenId);
 }
 

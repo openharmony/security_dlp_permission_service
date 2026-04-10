@@ -19,6 +19,7 @@ namespace OHOS {
 namespace AccountSA {
 static const int32_t MAIN_OS_ACCOUNT_ID = 100;
 static const int32_t DEFAULT_USERID = 100;
+int32_t g_foregroundOsAccountRet = 0;
 std::string g_accountId = "accountIdA";
 std::string g_accountName = "accountIdA";
 std::string g_parameters = R"({"parameters":{"adConfig":{"adDomain":"test"},"type":"AD"}})";
@@ -84,7 +85,7 @@ ErrCode DomainAccountClient::GetAccountStatus(DomainAccountInfo &info, DomainAcc
 int OsAccountManager::GetForegroundOsAccountLocalId(int32_t &localId)
 {
     localId = MAIN_OS_ACCOUNT_ID;
-    return 0;
+    return g_foregroundOsAccountRet;
 }
 
 int OsAccountManager::QueryOsAccountById(const int id, OsAccountInfo &osAccountInfo)
@@ -112,6 +113,11 @@ namespace DlpPermissionUnitTest {
 void SetAccountServerConfigParameters(std::string &parameters)
 {
     OHOS::AccountSA::g_parameters = parameters;
+}
+
+void SetForegroundOsAccountLocalIdRet(int32_t ret)
+{
+    OHOS::AccountSA::g_foregroundOsAccountRet = ret;
 }
 }  // namespace DlpPermission
 }  // namespace Security
