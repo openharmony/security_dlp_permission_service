@@ -45,6 +45,22 @@ const uint32_t DLP_CWD_MAX = 256;
 const uint32_t OS_ACCOUNT = 100;
 std::mutex g_fileOpLock;
 const uint32_t DLP_RAW_HEAD_OFFSET = 8;
+
+bool g_mockGetAuthPolicyEnabled = false;
+std::vector<bool> g_mockGetAuthPolicyRetSeq;
+std::vector<std::vector<std::string>> g_mockGetAuthPolicyValueSeq;
+size_t g_mockGetAuthPolicyIndex = 0;
+
+bool g_mockGetFileTypeBySuffixEnabled = false;
+std::string g_mockFileTypeBySuffix;
+
+bool g_mockGetRealTypeWithFdEnabled = false;
+std::string g_mockRealTypeWithFd;
+
+bool g_mockGetRawFileAllowedOpenCountEnabled = false;
+int32_t g_mockRawFileAllowedOpenCountRet = DLP_OK;
+int32_t g_mockAllowedOpenCount = 0;
+bool g_mockWaterMarkConfig = false;
 }
 
 
@@ -78,6 +94,24 @@ std::string DlpUtils::ToLowerString(const std::string& str)
 bool DlpUtils::GetAuthPolicyWithType(const std::string &cfgFile, const std::string &type,
     std::vector<std::string> &authPolicy)
 {
+    if (g_mockGetAuthPolicyEnabled) {
+        authPolicy.clear();
+        size_t maxSize = std::max(g_mockGetAuthPolicyRetSeq.size(), g_mockGetAuthPolicyValueSeq.size());
+        if (maxSize == 0) {
+            return false;
+        }
+        size_t index = std::min(g_mockGetAuthPolicyIndex, maxSize - 1);
+        if (index < g_mockGetAuthPolicyValueSeq.size()) {
+            authPolicy = g_mockGetAuthPolicyValueSeq[index];
+        }
+        bool ret = false;
+        if (index < g_mockGetAuthPolicyRetSeq.size()) {
+            ret = g_mockGetAuthPolicyRetSeq[index];
+        }
+        g_mockGetAuthPolicyIndex++;
+        return ret;
+    }
+
     std::string content;
     (void)FileOperator().GetFileContentByPath(cfgFile, content);
     if (content.empty()) {
@@ -100,6 +134,10 @@ bool DlpUtils::GetAuthPolicyWithType(const std::string &cfgFile, const std::stri
 
 std::string DlpUtils::GetFileTypeBySuffix(const std::string& suffix, const bool isFromUriName)
 {
+    if (g_mockGetFileTypeBySuffixEnabled) {
+        return g_mockFileTypeBySuffix;
+    }
+
     std::string lower = DlpUtils::ToLowerString(suffix);
     if (isFromUriName) {
         for (size_t len = MAX_REALY_TYPE_LENGTH; len >= MIN_REALY_TYPE_LENGTH; len--) {
@@ -343,6 +381,14 @@ std::string DlpUtils::GetRealTypeWithRawFile(const int32_t& fd)
 std::string DlpUtils::GetRealTypeWithFd(const int32_t& fd, bool& isFromUriName, std::string& generateInfoStr,
     bool isEnterprise)
 {
+    if (g_mockGetRealTypeWithFdEnabled) {
+        (void)fd;
+        (void)isFromUriName;
+        (void)generateInfoStr;
+        (void)isEnterprise;
+        return g_mockRealTypeWithFd;
+    }
+
     std::string realType = DEFAULT_STRINGS;
     do {
         if (IsZipFile(fd)) {
@@ -432,6 +478,12 @@ int32_t DlpUtils::GetFilePathByFd(const int32_t& fd, std::string &filePath)
 int32_t DlpUtils::GetRawFileAllowedOpenCount(const int32_t& fd,
     int32_t& allowedOpenCount, bool& waterMarkConfig)
 {
+    if (g_mockGetRawFileAllowedOpenCountEnabled) {
+        (void)fd;
+        allowedOpenCount = g_mockAllowedOpenCount;
+        waterMarkConfig = g_mockWaterMarkConfig;
+        return g_mockRawFileAllowedOpenCountRet;
+    }
     return DLP_OK;
 }
 
@@ -443,6 +495,89 @@ std::string DlpUtils::GetExtractRealType(const std::string& typeStr)
     }
     return typeStr.substr(lastUnderscore + 1);
 }
+
+namespace DlpPermissionUnitTest {
+void SetMockGetAuthPolicyWithType(const std::vector<bool>& retSeq,
+    const std::vector<std::vector<std::string>>& valueSeq)
+{
+    g_mockGetAuthPolicyEnabled = true;
+    g_mockGetAuthPolicyRetSeq = retSeq;
+    g_mockGetAuthPolicyValueSeq = valueSeq;
+    g_mockGetAuthPolicyIndex = 0;
+}
+
+void SetMockGetFileTypeBySuffix(const std::string& fileType)
+{
+    g_mockGetFileTypeBySuffixEnabled = true;
+    g_mockFileTypeBySuffix = fileType;
+}
+
+void SetMockGetRealTypeWithFd(const std::string& realType)
+{
+    g_mockGetRealTypeWithFdEnabled = true;
+    g_mockRealTypeWithFd = realType;
+}
+
+void SetMockGetRawFileAllowedOpenCount(int32_t ret, int32_t allowedOpenCount, bool waterMarkConfig)
+{
+    g_mockGetRawFileAllowedOpenCountEnabled = true;
+    g_mockRawFileAllowedOpenCountRet = ret;
+    g_mockAllowedOpenCount = allowedOpenCount;
+    g_mockWaterMarkConfig = waterMarkConfig;
+}
+
+void ResetDlpUtilsMockState()
+{
+    g_mockGetAuthPolicyEnabled = false;
+    g_mockGetAuthPolicyRetSeq.clear();
+    g_mockGetAuthPolicyValueSeq.clear();
+    g_mockGetAuthPolicyIndex = 0;
+
+    g_mockGetFileTypeBySuffixEnabled = false;
+    g_mockFileTypeBySuffix.clear();
+
+    g_mockGetRealTypeWithFdEnabled = false;
+    g_mockRealTypeWithFd.clear();
+
+    g_mockGetRawFileAllowedOpenCountEnabled = false;
+    g_mockRawFileAllowedOpenCountRet = DLP_OK;
+    g_mockAllowedOpenCount = 0;
+    g_mockWaterMarkConfig = false;
+}
+} // namespace DlpPermissionUnitTest
 }  // namespace DlpPermission
 }  // namespace Security
 }  // namespace OHOS
+
+namespace OHOS {
+namespace Security {
+namespace DlpPermissionUnitTest {
+void SetMockGetAuthPolicyWithType(const std::vector<bool>& retSeq,
+    const std::vector<std::vector<std::string>>& valueSeq)
+{
+    OHOS::Security::DlpPermission::DlpPermissionUnitTest::SetMockGetAuthPolicyWithType(retSeq, valueSeq);
+}
+
+void SetMockGetFileTypeBySuffix(const std::string& fileType)
+{
+    OHOS::Security::DlpPermission::DlpPermissionUnitTest::SetMockGetFileTypeBySuffix(fileType);
+}
+
+void SetMockGetRealTypeWithFd(const std::string& realType)
+{
+    OHOS::Security::DlpPermission::DlpPermissionUnitTest::SetMockGetRealTypeWithFd(realType);
+}
+
+void SetMockGetRawFileAllowedOpenCount(int32_t ret, int32_t allowedOpenCount, bool waterMarkConfig)
+{
+    OHOS::Security::DlpPermission::DlpPermissionUnitTest::SetMockGetRawFileAllowedOpenCount(
+        ret, allowedOpenCount, waterMarkConfig);
+}
+
+void ResetDlpUtilsMockState()
+{
+    OHOS::Security::DlpPermission::DlpPermissionUnitTest::ResetDlpUtilsMockState();
+}
+} // namespace DlpPermissionUnitTest
+} // namespace Security
+} // namespace OHOS

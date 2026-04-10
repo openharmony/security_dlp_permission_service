@@ -46,20 +46,51 @@ using WantParams = OHOS::AAFwk::WantParams;
 using WantParamWrapper = OHOS::AAFwk::WantParamWrapper;
 using String = OHOS::AAFwk::String;
 using Integer = OHOS::AAFwk::Integer;
+
+namespace OHOS {
+namespace Security {
+namespace DlpPermissionUnitTest {
+void SetMockGetAuthPolicyWithType(const std::vector<bool>& retSeq,
+    const std::vector<std::vector<std::string>>& valueSeq);
+void SetMockGetFileTypeBySuffix(const std::string& fileType);
+void SetMockGetRealTypeWithFd(const std::string& realType);
+void SetMockGetRawFileAllowedOpenCount(int32_t ret, int32_t allowedOpenCount, bool waterMarkConfig);
+void ResetDlpUtilsMockState();
+
+void SetMockGetAbilityInfos(int32_t ret, const std::vector<AppExecFwk::AbilityInfo>& abilityInfos);
+void ResetDlpPermissionKitMockState();
+void SetForegroundOsAccountLocalIdRet(int32_t ret);
+} // namespace DlpPermissionUnitTest
+} // namespace Security
+} // namespace OHOS
+
 namespace OHOS {
 namespace AppFileService {
 namespace ModuleFileUri {
 namespace {
 static const std::string DLP_FILE_NAME = "/data/test/fuse_test.txt.dlp";
+static int32_t g_fileUriReturnCount = 1;
+static std::string g_fileUriPath = DLP_FILE_NAME;
 }
 std::string FileUri::GetRealPath()
 {
-    static int32_t gCount = 1;
-    if (gCount == 1) {
-        gCount++;
-        return DLP_FILE_NAME;
+    if (g_fileUriReturnCount != 0) {
+        if (g_fileUriReturnCount > 0) {
+            g_fileUriReturnCount--;
+        }
+        return g_fileUriPath;
     }
     return "";
+}
+
+void SetMockGetRealPathCount(int32_t count)
+{
+    g_fileUriReturnCount = count;
+}
+
+void SetMockGetRealPath(const std::string& path)
+{
+    g_fileUriPath = path;
 }
 }
 }
@@ -84,6 +115,15 @@ static const uint32_t CURRENT_VERSION = 3;
 static constexpr int FIRST_COUNT = 1;
 static constexpr int SECOND_COUNT = 2;
 static constexpr int THIRD_COUNT = 3;
+
+void ResetMockState()
+{
+    OHOS::Security::DlpPermissionUnitTest::ResetDlpUtilsMockState();
+    OHOS::Security::DlpPermissionUnitTest::ResetDlpPermissionKitMockState();
+    OHOS::Security::DlpPermissionUnitTest::SetForegroundOsAccountLocalIdRet(0);
+    OHOS::AppFileService::ModuleFileUri::SetMockGetRealPath(DLP_FILE_NAME);
+    OHOS::AppFileService::ModuleFileUri::SetMockGetRealPathCount(1);
+}
 
 static off_t LseekReplyMock(int fd, off_t offset, int whence)
 {
@@ -227,9 +267,15 @@ void DlpFileKitsTest::TearDownTestCase()
     rmdir(DLP_TEST_DIR.c_str());
 }
 
-void DlpFileKitsTest::SetUp() {}
+void DlpFileKitsTest::SetUp()
+{
+    ResetMockState();
+}
 
-void DlpFileKitsTest::TearDown() {}
+void DlpFileKitsTest::TearDown()
+{
+    ResetMockState();
+}
 
 /**
  * @tc.name: GetSandboxFlag001
@@ -627,4 +673,220 @@ HWTEST_F(DlpFileKitsTest, ConvertAbilityInfoWithSupportDlp001, TestSize.Level0)
     want.SetUri(DLP_FILE_URI);
     DlpFileKits::ConvertAbilityInfoWithSupportDlp(want, abilityInfos);
     EXPECT_NE(abilityInfos.size(), -1);
+}
+
+/**
+ * @tc.name: GetSandboxFlag014
+ * @tc.desc: cover GetRawFileAllowedOpenCount error branch in SetWantType
+ * @tc.type: FUNC
+ */
+HWTEST_F(DlpFileKitsTest, GetSandboxFlag014, TestSize.Level0)
+{
+    DLP_LOG_INFO(LABEL, "GetSandboxFlag014");
+    OHOS::Security::DlpPermissionUnitTest::SetMockGetRealTypeWithFd("txt");
+    OHOS::Security::DlpPermissionUnitTest::SetMockGetRawFileAllowedOpenCount(DLP_PARSE_ERROR_FD_ERROR, 0, false);
+
+    OHOS::AAFwk::Want want;
+    want.SetAction(TAG_ACTION_VIEW);
+    want.SetUri(DLP_FILE_URI);
+    ASSERT_TRUE(DlpFileKits::GetSandboxFlag(want));
+    EXPECT_EQ(want.GetType(), "text/plain");
+}
+
+/**
+ * @tc.name: GetSandboxFlag015
+ * @tc.desc: cover allowedOpenCount > 0 branch in SetWantType
+ * @tc.type: FUNC
+ */
+HWTEST_F(DlpFileKitsTest, GetSandboxFlag015, TestSize.Level0)
+{
+    DLP_LOG_INFO(LABEL, "GetSandboxFlag015");
+    OHOS::Security::DlpPermissionUnitTest::SetMockGetRealTypeWithFd("txt");
+    OHOS::Security::DlpPermissionUnitTest::SetMockGetRawFileAllowedOpenCount(DLP_OK, 1, false);
+
+    OHOS::AAFwk::Want want;
+    want.SetAction(TAG_ACTION_VIEW);
+    want.SetUri(DLP_FILE_URI);
+    ASSERT_TRUE(DlpFileKits::GetSandboxFlag(want));
+    EXPECT_EQ(want.GetType(), "image/jpeg");
+}
+
+/**
+ * @tc.name: GetSandboxFlag016
+ * @tc.desc: cover waterMarkConfig true branch in SetWantType
+ * @tc.type: FUNC
+ */
+HWTEST_F(DlpFileKitsTest, GetSandboxFlag016, TestSize.Level0)
+{
+    DLP_LOG_INFO(LABEL, "GetSandboxFlag016");
+    OHOS::Security::DlpPermissionUnitTest::SetMockGetRealTypeWithFd("txt");
+    OHOS::Security::DlpPermissionUnitTest::SetMockGetRawFileAllowedOpenCount(DLP_OK, 0, true);
+
+    OHOS::AAFwk::Want want;
+    want.SetAction(TAG_ACTION_VIEW);
+    want.SetUri(DLP_FILE_URI);
+    ASSERT_TRUE(DlpFileKits::GetSandboxFlag(want));
+    EXPECT_EQ(want.GetType(), "image/jpeg");
+}
+
+/**
+ * @tc.name: ConvertAbilityInfoWithSupportDlp002
+ * @tc.desc: cover fileType empty and auth policy query fail branches
+ * @tc.type: FUNC
+ */
+HWTEST_F(DlpFileKitsTest, ConvertAbilityInfoWithSupportDlp002, TestSize.Level0)
+{
+    DLP_LOG_INFO(LABEL, "ConvertAbilityInfoWithSupportDlp002");
+    OHOS::AAFwk::Want want;
+    std::vector<OHOS::AppExecFwk::AbilityInfo> abilityInfos;
+    OHOS::AppExecFwk::AbilityInfo abilityInfo;
+    abilityInfo.bundleName = "bundle.keep";
+    abilityInfos.push_back(abilityInfo);
+
+    want.SetUri(PLAIN_FILE_URI);
+    want.SetType("text/plain");
+    DlpFileKits::ConvertAbilityInfoWithSupportDlp(want, abilityInfos);
+    EXPECT_EQ(abilityInfos.size(), 1);
+
+    want.SetUri(DLP_FILE_URI);
+    OHOS::Security::DlpPermissionUnitTest::SetMockGetFileTypeBySuffix("text");
+    OHOS::Security::DlpPermissionUnitTest::SetMockGetAuthPolicyWithType({false}, {{}});
+    DlpFileKits::ConvertAbilityInfoWithSupportDlp(want, abilityInfos);
+    EXPECT_EQ(abilityInfos.size(), 1);
+    EXPECT_EQ(want.GetType(), "text/plain");
+}
+
+/**
+ * @tc.name: ConvertAbilityInfoWithSupportDlp003
+ * @tc.desc: cover IsSupportDlp true/false and abilityInfos not empty return branch
+ * @tc.type: FUNC
+ */
+HWTEST_F(DlpFileKitsTest, ConvertAbilityInfoWithSupportDlp003, TestSize.Level0)
+{
+    DLP_LOG_INFO(LABEL, "ConvertAbilityInfoWithSupportDlp003");
+    OHOS::AAFwk::Want want;
+    want.SetUri(DLP_FILE_URI);
+    want.SetType("text/plain");
+
+    std::vector<OHOS::AppExecFwk::AbilityInfo> abilityInfos;
+    OHOS::AppExecFwk::AbilityInfo keepInfo;
+    keepInfo.bundleName = "bundle.keep";
+    abilityInfos.push_back(keepInfo);
+    OHOS::AppExecFwk::AbilityInfo dropInfo;
+    dropInfo.bundleName = "bundle.drop";
+    abilityInfos.push_back(dropInfo);
+
+    OHOS::Security::DlpPermissionUnitTest::SetMockGetFileTypeBySuffix("text");
+    OHOS::Security::DlpPermissionUnitTest::SetMockGetAuthPolicyWithType({true}, {{"bundle.keep"}});
+    DlpFileKits::ConvertAbilityInfoWithSupportDlp(want, abilityInfos);
+
+    ASSERT_EQ(abilityInfos.size(), 1);
+    EXPECT_EQ(abilityInfos[0].bundleName, "bundle.keep");
+    EXPECT_EQ(want.GetType(), "dlp");
+}
+
+/**
+ * @tc.name: ConvertAbilityInfoWithSupportDlp004
+ * @tc.desc: cover default policy size <= 1 return branch
+ * @tc.type: FUNC
+ */
+HWTEST_F(DlpFileKitsTest, ConvertAbilityInfoWithSupportDlp004, TestSize.Level0)
+{
+    DLP_LOG_INFO(LABEL, "ConvertAbilityInfoWithSupportDlp004");
+    OHOS::AAFwk::Want want;
+    want.SetUri(DLP_FILE_URI);
+    want.SetType("text/plain");
+
+    std::vector<OHOS::AppExecFwk::AbilityInfo> abilityInfos;
+    OHOS::AppExecFwk::AbilityInfo dropInfo;
+    dropInfo.bundleName = "bundle.drop";
+    abilityInfos.push_back(dropInfo);
+
+    OHOS::Security::DlpPermissionUnitTest::SetMockGetFileTypeBySuffix("text");
+    OHOS::Security::DlpPermissionUnitTest::SetMockGetAuthPolicyWithType({true, true}, {{"bundle.keep"}, {"only.one"}});
+    DlpFileKits::ConvertAbilityInfoWithSupportDlp(want, abilityInfos);
+
+    EXPECT_EQ(abilityInfos.size(), 0);
+    EXPECT_EQ(want.GetType(), "dlp");
+}
+
+/**
+ * @tc.name: ConvertAbilityInfoWithSupportDlp005
+ * @tc.desc: cover ConvertAbilityInfoWithBundleName success branch
+ * @tc.type: FUNC
+ */
+HWTEST_F(DlpFileKitsTest, ConvertAbilityInfoWithSupportDlp005, TestSize.Level0)
+{
+    DLP_LOG_INFO(LABEL, "ConvertAbilityInfoWithSupportDlp005");
+    OHOS::AAFwk::Want want;
+    want.SetUri(DLP_FILE_URI);
+    want.SetType("text/plain");
+
+    std::vector<OHOS::AppExecFwk::AbilityInfo> abilityInfos;
+    OHOS::AppExecFwk::AbilityInfo dropInfo;
+    dropInfo.bundleName = "bundle.drop";
+    abilityInfos.push_back(dropInfo);
+
+    OHOS::AppExecFwk::AbilityInfo fillInfo;
+    fillInfo.bundleName = "bundle.default";
+    OHOS::Security::DlpPermissionUnitTest::SetMockGetAbilityInfos(DLP_OK, {fillInfo});
+    OHOS::Security::DlpPermissionUnitTest::SetMockGetFileTypeBySuffix("text");
+    OHOS::Security::DlpPermissionUnitTest::SetMockGetAuthPolicyWithType(
+        {true, true}, {{"bundle.keep"}, {"defaultAbility", "defaultBundle"}});
+
+    DlpFileKits::ConvertAbilityInfoWithSupportDlp(want, abilityInfos);
+    ASSERT_EQ(abilityInfos.size(), 1);
+    EXPECT_EQ(abilityInfos[0].bundleName, "bundle.default");
+}
+
+/**
+ * @tc.name: ConvertAbilityInfoWithSupportDlp006
+ * @tc.desc: cover ConvertAbilityInfoWithBundleName GetAbilityInfos fail branch
+ * @tc.type: FUNC
+ */
+HWTEST_F(DlpFileKitsTest, ConvertAbilityInfoWithSupportDlp006, TestSize.Level0)
+{
+    DLP_LOG_INFO(LABEL, "ConvertAbilityInfoWithSupportDlp006");
+    OHOS::AAFwk::Want want;
+    want.SetUri(DLP_FILE_URI);
+    want.SetType("text/plain");
+
+    std::vector<OHOS::AppExecFwk::AbilityInfo> abilityInfos;
+    OHOS::AppExecFwk::AbilityInfo dropInfo;
+    dropInfo.bundleName = "bundle.drop";
+    abilityInfos.push_back(dropInfo);
+
+    OHOS::Security::DlpPermissionUnitTest::SetMockGetAbilityInfos(DLP_PARSE_ERROR_GET_ACCOUNT_FAIL, {});
+    OHOS::Security::DlpPermissionUnitTest::SetMockGetFileTypeBySuffix("text");
+    OHOS::Security::DlpPermissionUnitTest::SetMockGetAuthPolicyWithType(
+        {true, true}, {{"bundle.keep"}, {"defaultAbility", "defaultBundle"}});
+
+    DlpFileKits::ConvertAbilityInfoWithSupportDlp(want, abilityInfos);
+    EXPECT_EQ(abilityInfos.size(), 0);
+}
+
+/**
+ * @tc.name: ConvertAbilityInfoWithSupportDlp007
+ * @tc.desc: cover ConvertAbilityInfoWithBundleName GetForegroundOsAccountLocalId fail branch
+ * @tc.type: FUNC
+ */
+HWTEST_F(DlpFileKitsTest, ConvertAbilityInfoWithSupportDlp007, TestSize.Level0)
+{
+    DLP_LOG_INFO(LABEL, "ConvertAbilityInfoWithSupportDlp007");
+    OHOS::AAFwk::Want want;
+    want.SetUri(DLP_FILE_URI);
+    want.SetType("text/plain");
+
+    std::vector<OHOS::AppExecFwk::AbilityInfo> abilityInfos;
+    OHOS::AppExecFwk::AbilityInfo dropInfo;
+    dropInfo.bundleName = "bundle.drop";
+    abilityInfos.push_back(dropInfo);
+
+    OHOS::Security::DlpPermissionUnitTest::SetForegroundOsAccountLocalIdRet(-1);
+    OHOS::Security::DlpPermissionUnitTest::SetMockGetFileTypeBySuffix("text");
+    OHOS::Security::DlpPermissionUnitTest::SetMockGetAuthPolicyWithType(
+        {true, true}, {{"bundle.keep"}, {"defaultAbility", "defaultBundle"}});
+
+    DlpFileKits::ConvertAbilityInfoWithSupportDlp(want, abilityInfos);
+    EXPECT_EQ(abilityInfos.size(), 0);
 }

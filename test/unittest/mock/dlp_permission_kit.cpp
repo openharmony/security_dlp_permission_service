@@ -28,6 +28,8 @@ namespace DlpPermission {
 namespace {
 using unordered_json = nlohmann::ordered_json;
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "DlpPermissionKit"};
+int32_t g_mockGetAbilityInfosRet = DLP_OK;
+std::vector<AppExecFwk::AbilityInfo> g_mockAbilityInfos;
 static const std::string ACCOUNT_INDEX = "account";
 static const std::string ACCOUNT_TYPE = "accountType";
 static const std::string READ_INDEX = "read";
@@ -455,6 +457,34 @@ int32_t DlpPermissionKit::GetWaterMark(const bool waterMarkConfig)
     return DLP_OK;
 }
 
+int32_t DlpPermissionKit::GetAbilityInfos(const AAFwk::Want& want, int32_t flags, int32_t userId,
+    std::vector<AppExecFwk::AbilityInfo> &abilityInfos)
+{
+    (void)want;
+    (void)flags;
+    (void)userId;
+    abilityInfos = g_mockAbilityInfos;
+    return g_mockGetAbilityInfosRet;
+}
+
 }  // namespace DlpPermission
+}  // namespace Security
+}  // namespace OHOS
+
+namespace OHOS {
+namespace Security {
+namespace DlpPermissionUnitTest {
+void SetMockGetAbilityInfos(int32_t ret, const std::vector<AppExecFwk::AbilityInfo>& abilityInfos)
+{
+    OHOS::Security::DlpPermission::g_mockGetAbilityInfosRet = ret;
+    OHOS::Security::DlpPermission::g_mockAbilityInfos = abilityInfos;
+}
+
+void ResetDlpPermissionKitMockState()
+{
+    OHOS::Security::DlpPermission::g_mockGetAbilityInfosRet = DlpPermission::DLP_OK;
+    OHOS::Security::DlpPermission::g_mockAbilityInfos.clear();
+}
+}  // namespace DlpPermissionUnitTest
 }  // namespace Security
 }  // namespace OHOS

@@ -20,6 +20,8 @@
 #include <vector>
 #include "cert_parcel.h"
 #include "permission_policy.h"
+#include "want.h"
+#include "ability_info.h"
 
 namespace OHOS {
 namespace Security {
@@ -32,6 +34,8 @@ public:
     static int32_t SetReadFlag(uint32_t uid);
     static int32_t SetFileInfo(const std::string& uri, const FileInfo& fileInfo);
     static int32_t GetWaterMark(const bool waterMarkConfig);
+    static int32_t GetAbilityInfos(const AAFwk::Want& want, int32_t flags, int32_t userId,
+        std::vector<AppExecFwk::AbilityInfo> &abilityInfos);
 };
 }  // namespace DlpPermission
 }  // namespace Security
