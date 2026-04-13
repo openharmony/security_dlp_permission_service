@@ -68,10 +68,21 @@ static const uint32_t MAX_URI_SIZE = 4095;
 static const uint32_t MAX_MASKINFO_SIZE = 128;
 static const uint32_t MAX_ACCOUNT_SIZE = 1024;
 static const uint32_t MAX_FILEID_SIZE = 1024;
+static const uint32_t MAX_CLASSIFICATION_LABEL_SIZE = 255;
 static const uint32_t MAX_ENTERPRISEPOLICY_SIZE = 1024 * 1024 * 4;
 static const uint32_t MAX_CERT_SIZE = 1024 * 1024 * 40 * 2;
+static const std::string CALLER_APP_IDENTIFIER = "1234567890";
 }
 
+static bool ContainsUri(const std::vector<std::string>& uris, const std::string& uri)
+{
+    for (const auto& item : uris) {
+        if (item == uri) {
+            return true;
+        }
+    }
+    return false;
+}
 
 /**
  * @tc.name:InstallDlpSandbox003
@@ -373,4 +384,107 @@ HWTEST_F(DlpPermissionServiceTest, SetDlpFeature002, TestSize.Level1)
     ASSERT_TRUE(statusSetInfo);
 
     DlpPermissionServiceTest::mockAppIdentifier = backupIdentifier;
+}
+
+/**
+ * @tc.name: SetEnterpriseInfos001
+ * @tc.desc: SetEnterpriseInfos success and input check test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionServiceTest, SetEnterpriseInfos001, TestSize.Level1)
+{
+    DLP_LOG_DEBUG(LABEL, "SetEnterpriseInfos001");
+    std::string uri = "enterprise_uri_001";
+    std::string fileId = "file_id_001";
+    std::string label = "label_001";
+    std::string appIdentifier = CALLER_APP_IDENTIFIER;
+
+    int32_t ret = dlpPermissionService_->SetEnterpriseInfos(
+        uri, fileId, DLPFileAccess::READ_ONLY, label, appIdentifier);
+    ASSERT_EQ(DLP_OK, ret);
+
+    EnterpriseInfo enterpriseInfo;
+    ASSERT_TRUE(dlpPermissionService_->appStateObserver_->GetEnterpriseInfoByUri(uri, enterpriseInfo));
+    ASSERT_EQ(enterpriseInfo.fileId, fileId);
+    ASSERT_EQ(enterpriseInfo.classificationLabel, label);
+    ASSERT_EQ(enterpriseInfo.appId, appIdentifier);
+
+    std::string longLabel(MAX_CLASSIFICATION_LABEL_SIZE + 1, 'a');
+    ret = dlpPermissionService_->SetEnterpriseInfos(
+        "enterprise_uri_002", "file_id_002", DLPFileAccess::READ_ONLY, longLabel, appIdentifier);
+    ASSERT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, ret);
+
+    DlpPermissionServiceTest::permType = -1;
+    ret = dlpPermissionService_->SetEnterpriseInfos(
+        "enterprise_uri_003", "file_id_003", DLPFileAccess::READ_ONLY, "label", appIdentifier);
+    ASSERT_EQ(DLP_SERVICE_ERROR_PERMISSION_DENY, ret);
+    DlpPermissionServiceTest::permType = 0;
+}
+
+/**
+ * @tc.name: QueryOpenedEnterpriseDlpFiles001
+ * @tc.desc: QueryOpenedEnterpriseDlpFiles filters by label and appId
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionServiceTest, QueryOpenedEnterpriseDlpFiles001, TestSize.Level1)
+{
+    DLP_LOG_DEBUG(LABEL, "QueryOpenedEnterpriseDlpFiles001");
+
+    ASSERT_EQ(DLP_OK, dlpPermissionService_->SetEnterpriseInfos(
+        "enterprise_uri_q1", "file_q1", DLPFileAccess::READ_ONLY, "L1", CALLER_APP_IDENTIFIER));
+    ASSERT_EQ(DLP_OK, dlpPermissionService_->SetEnterpriseInfos(
+        "enterprise_uri_q2", "file_q2", DLPFileAccess::READ_ONLY, "L2", CALLER_APP_IDENTIFIER));
+    ASSERT_EQ(DLP_OK, dlpPermissionService_->SetEnterpriseInfos(
+        "enterprise_uri_q3", "file_q3", DLPFileAccess::READ_ONLY, "L1", "another_app"));
+
+    dlpPermissionService_->appStateObserver_->UpdateEnterpriseUidByUri("enterprise_uri_q1", "file_q1", 301);
+    dlpPermissionService_->appStateObserver_->UpdateEnterpriseUidByUri("enterprise_uri_q2", "file_q2", 302);
+    dlpPermissionService_->appStateObserver_->UpdateEnterpriseUidByUri("enterprise_uri_q3", "file_q3", 303);
+
+    std::vector<std::string> uris;
+    int32_t ret = dlpPermissionService_->QueryOpenedEnterpriseDlpFiles("L1", uris);
+    ASSERT_EQ(DLP_OK, ret);
+    ASSERT_EQ(uris.size(), 1);
+    ASSERT_TRUE(ContainsUri(uris, "enterprise_uri_q1"));
+
+    uris.clear();
+    ret = dlpPermissionService_->QueryOpenedEnterpriseDlpFiles("", uris);
+    ASSERT_EQ(DLP_OK, ret);
+    ASSERT_EQ(uris.size(), 2);
+    ASSERT_TRUE(ContainsUri(uris, "enterprise_uri_q1"));
+    ASSERT_TRUE(ContainsUri(uris, "enterprise_uri_q2"));
+
+    std::string longLabel(MAX_CLASSIFICATION_LABEL_SIZE + 1, 'a');
+    ret = dlpPermissionService_->QueryOpenedEnterpriseDlpFiles(longLabel, uris);
+    ASSERT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, ret);
+
+    DlpPermissionServiceTest::permType = -1;
+    ret = dlpPermissionService_->QueryOpenedEnterpriseDlpFiles("L1", uris);
+    ASSERT_EQ(DLP_SERVICE_ERROR_PERMISSION_DENY, ret);
+    DlpPermissionServiceTest::permType = 0;
+}
+
+/**
+ * @tc.name: CloseOpenedEnterpriseDlpFiles001
+ * @tc.desc: CloseOpenedEnterpriseDlpFiles parameter and permission check
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionServiceTest, CloseOpenedEnterpriseDlpFiles001, TestSize.Level1)
+{
+    DLP_LOG_DEBUG(LABEL, "CloseOpenedEnterpriseDlpFiles001");
+
+    int32_t ret = dlpPermissionService_->CloseOpenedEnterpriseDlpFiles("L1");
+    ASSERT_EQ(DLP_OK, ret);
+
+    std::string longLabel(MAX_CLASSIFICATION_LABEL_SIZE + 1, 'a');
+    ret = dlpPermissionService_->CloseOpenedEnterpriseDlpFiles(longLabel);
+    ASSERT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, ret);
+
+    DlpPermissionServiceTest::permType = -1;
+    ret = dlpPermissionService_->CloseOpenedEnterpriseDlpFiles("L1");
+    ASSERT_EQ(DLP_SERVICE_ERROR_PERMISSION_DENY, ret);
+    DlpPermissionServiceTest::permType = 0;
 }

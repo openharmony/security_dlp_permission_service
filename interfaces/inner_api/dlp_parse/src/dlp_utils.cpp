@@ -470,6 +470,23 @@ bool DlpUtils::GetAppIdFromToken(std::string &appId)
     return true;
 }
 
+bool DlpUtils::GetAppIdentifierFromToken(std::string &appIdentifier)
+{
+    auto bundleMgrProxy = DlpUtils::GetBundleMgrProxy();
+    if (bundleMgrProxy == nullptr) {
+        return false;
+    }
+    AppExecFwk::BundleInfo bundleInfo;
+    int32_t ret = bundleMgrProxy->GetBundleInfoForSelf(static_cast<int32_t>(
+        AppExecFwk::GetBundleInfoFlag::GET_BUNDLE_INFO_WITH_SIGNATURE_INFO), bundleInfo);
+    if (ret != DLP_OK || bundleInfo.signatureInfo.appIdentifier.size() == 0) {
+        DLP_LOG_ERROR(LABEL, "GetBundleInfoForSelf failed %{public}d", ret);
+        return false;
+    }
+    appIdentifier = bundleInfo.signatureInfo.appIdentifier;
+    return true;
+}
+
 bool DlpUtils::GetUserIdByForegroundAccount(int32_t &userId)
 {
     int32_t ret = AccountSA::OsAccountManager::GetForegroundOsAccountLocalId(userId);

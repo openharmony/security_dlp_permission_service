@@ -41,6 +41,8 @@ public:
     std::string accountAndUserId = "";
     std::string maskInfo = "";
     std::string fileId = "";
+    std::string appId = ""; // appId or appIdentifier
+    std::string classificationLabel = "";
 };
 }  // namespace DlpPermission
 }  // namespace Security

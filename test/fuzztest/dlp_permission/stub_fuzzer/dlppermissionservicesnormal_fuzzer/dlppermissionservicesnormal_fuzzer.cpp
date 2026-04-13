@@ -324,8 +324,7 @@ static void TestDomainAccount(const uint8_t* data, size_t size)
     std::vector<AppExecFwk::AbilityInfo> abilityInfos;
     service->GetAbilityInfos(want, flags, userId, abilityInfos);
     DlpSandboxInfo sandboxInfo;
-    FileInfo fileInfo;
-    service->InsertDlpSandboxInfo(sandboxInfo, fdp.ConsumeBool(), fileInfo);
+    service->InsertDlpSandboxInfo(sandboxInfo, fdp.ConsumeBool());
     std::string bundleName = fdp.ConsumeBytesAsString(FOUR);
     int32_t appIndex = fdp.ConsumeIntegral<int32_t>();
     service->UninstallDlpSandboxApp(bundleName, appIndex, userId);

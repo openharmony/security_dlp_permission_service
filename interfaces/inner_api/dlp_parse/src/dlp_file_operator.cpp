@@ -61,6 +61,7 @@ static const std::string POLICY_INDEX = "policy";
 static const std::string READ_INDEX = "read";
 static const std::string RIGHT_INDEX = "right";
 static const std::string CUSTOM_PROPERTY = "customProperty";
+static const std::string CLASSIFICATIONLABEL = "classificationLabel";
 const std::string PATH_CACHE = "cache";
 const std::string FILEID = "fileId";
 const std::string ALLOWED_OPEN_COUNT = "allowedOpenCount";
@@ -177,6 +178,7 @@ static int32_t SerializePermissionPolicy(const PermissionPolicy& policy, std::st
     policyJson[PERM_EXPIRY_TIME] = policy.expireTime_;
     policyJson[NEED_ONLINE] = policy.needOnline_;
     policyJson[CUSTOM_PROPERTY] = policy.customProperty_;
+    policyJson[CLASSIFICATIONLABEL] = policy.classificationLabel_;
     policyJson[FILEID] = policy.fileId;
     policyJson[ALLOWED_OPEN_COUNT] = policy.allowedOpenCount_;
     policyJson[WATERMARK_CONFIG] = policy.waterMarkConfig_;
@@ -190,6 +192,7 @@ static int32_t SerializePermissionPolicy(const PermissionPolicy& policy, std::st
 static void SetCustomProperty(DlpProperty& property, const CustomProperty& customProperty)
 {
     property.customProperty.enterprise = customProperty.enterprise;
+    property.customProperty.options = customProperty.options;
 }
 
 int32_t EnterpriseSpaceDlpPermissionKit::EnterpriseSpaceParseDlpFileProperty(std::shared_ptr<DlpFile>& filePtr,

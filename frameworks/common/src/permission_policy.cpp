@@ -20,6 +20,7 @@
 #include "dlp_permission.h"
 #include "dlp_permission_log.h"
 #include "dlp_permission_public_interface.h"
+#include "i_json_operator.h"
 #include "securec.h"
 
 namespace OHOS {
@@ -132,6 +133,7 @@ void PermissionPolicy::FreePermissionPolicyMem()
     ownerAccountId_ = "";
     ownerAccountType_ = INVALID_ACCOUNT;
     customProperty_ = "";
+    classificationLabel_ = "";
     authUsers_.clear();
 }
 
@@ -153,12 +155,14 @@ PermissionPolicy::PermissionPolicy()
     dlpVersion_ = CURRENT_VERSION;
     debug_ = false;
     customProperty_ = "";
+    classificationLabel_ = "";
     fileId = "";
     allowedOpenCount_ = 0;
     waterMarkConfig_ = false;
     canFindWaterMarkConfig_ = false;
     canFindCountdown_ = false;
     nickNameMask_ = "";
+    appIdentifier = "";
 }
 
 PermissionPolicy::PermissionPolicy(const DlpProperty& property)
@@ -181,6 +185,7 @@ PermissionPolicy::PermissionPolicy(const DlpProperty& property)
     dlpVersion_ = CURRENT_VERSION;
     debug_ = false;
     customProperty_ = property.customProperty.enterprise;
+    classificationLabel_ = property.customProperty.options.classificationLabel;
     fileId = property.fileId;
     allowedOpenCount_ = property.allowedOpenCount;
     waterMarkConfig_ = property.waterMarkConfig;
@@ -337,6 +342,7 @@ void PermissionPolicy::CopyPermissionPolicy(const PermissionPolicy& srcPolicy)
     actionUponExpiry_ = srcPolicy.actionUponExpiry_;
     needOnline_ = srcPolicy.needOnline_;
     customProperty_ = srcPolicy.customProperty_;
+    classificationLabel_ = srcPolicy.classificationLabel_;
     SetAeskey(srcPolicy.aeskey_, srcPolicy.aeskeyLen_);
     SetIv(srcPolicy.iv_, srcPolicy.ivLen_);
     CopyPolicyHmac(srcPolicy);
@@ -351,6 +357,7 @@ void PermissionPolicy::CopyPermissionPolicy(const PermissionPolicy& srcPolicy)
     canFindWaterMarkConfig_ = srcPolicy.canFindWaterMarkConfig_;
     canFindCountdown_ = srcPolicy.canFindCountdown_;
     nickNameMask_ = srcPolicy.nickNameMask_;
+    appIdentifier = srcPolicy.appIdentifier;
 }
 
 int32_t PermissionPolicy::CheckActionUponExpiry()
