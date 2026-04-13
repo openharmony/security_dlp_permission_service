@@ -296,7 +296,7 @@ static int32_t SetDlpParams(const std::shared_ptr<DlpFile>& filePtr, const DlpPr
     bool ret = DlpUtils::GetAppIdentifierFromToken(appIdentifier);
     if (!ret) {
         DLP_LOG_ERROR(LABEL, "GetAppIdentifierFromToken failed, error code: %d.", ret);
-        return ret;
+        return DLP_SERVICE_ERROR_PERMISSION_DENY;
     }
     policy.appIdentifier = appIdentifier;
     filePtr->SetFileId(property.fileId);

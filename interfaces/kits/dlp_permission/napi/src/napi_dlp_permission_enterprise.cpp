@@ -45,20 +45,23 @@ namespace DlpPermission {
 using namespace OHOS::Security::DlpConnection;
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "DlpPermissionNapi"};
+static const std::string PERMISSION_ENTERPRISE_ACCESS_DLP_FILE = "ohos.permission.ENTERPRISE_ACCESS_DLP_FILE";
 }  // namespace
 
-static bool CheckEmulator(napi_env env)
-{
 #ifdef IS_EMULATOR
-    DlpNapiThrow(env, DLP_DEVICE_ERROR_CAPABILITY_NOT_SUPPORTED_EMULATOR);
-    return true;
+#define CheckEmulator(env)                                              \
+    do {                                                                \
+        DlpNapiThrow(env, DLP_DEVICE_ERROR_CAPABILITY_NOT_SUPPORTED_EMULATOR);   \
+        return nullptr;                                                 \
+    } while (0)
+#else
+#define CheckEmulator(env)
 #endif
-    return false;
-}
 
 napi_value NapiDlpPermission::CloseOpenedEnterpriseDlpFiles(napi_env env, napi_callback_info cbInfo)
 {
-    if (CheckEmulator(env)) {
+    CheckEmulator(env);
+    if (!CheckPermission(env, PERMISSION_ENTERPRISE_ACCESS_DLP_FILE)) {
         return nullptr;
     }
     DLP_LOG_INFO(LABEL, "Enter CloseOpenedEnterpriseDlpFiles.");
@@ -114,15 +117,14 @@ void NapiDlpPermission::CloseOpenedEnterpriseDlpFilesComplete(napi_env env, napi
     napi_value resJs = nullptr;
     if (asyncContext->errCode == DLP_OK) {
         NAPI_CALL_RETURN_VOID(env, napi_get_undefined(env, &resJs));
-    } else {
-        DlpNapiThrow(env, asyncContext->errCode, GetJsErrMsg(asyncContext->errCode));
     }
     ProcessCallbackOrPromise(env, asyncContext, resJs);
 }
 
 napi_value NapiDlpPermission::QueryOpenedEnterpriseDlpFiles(napi_env env, napi_callback_info cbInfo)
 {
-    if (CheckEmulator(env)) {
+    CheckEmulator(env);
+    if (!CheckPermission(env, PERMISSION_ENTERPRISE_ACCESS_DLP_FILE)) {
         return nullptr;
     }
     DLP_LOG_INFO(LABEL, "Enter QueryOpenedEnterpriseDlpFiles.");
@@ -179,8 +181,6 @@ void NapiDlpPermission::QueryOpenedEnterpriseDlpFilesComplete(napi_env env, napi
     napi_value resJs = nullptr;
     if (asyncContext->errCode == DLP_OK) {
         resJs = VectorStringToJs(env, asyncContext->resultUris);
-    } else {
-        DlpNapiThrow(env, asyncContext->errCode, GetJsErrMsg(asyncContext->errCode));
     }
     ProcessCallbackOrPromise(env, asyncContext, resJs);
 }

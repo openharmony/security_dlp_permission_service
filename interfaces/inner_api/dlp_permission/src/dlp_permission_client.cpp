@@ -824,6 +824,10 @@ int32_t DlpPermissionClient::CloseOpenedEnterpriseDlpFiles(const std::string& la
 int32_t DlpPermissionClient::SetEnterpriseInfos(const std::string& uri, const std::string& fileId,
     DLPFileAccess dlpFileAccess, const std::string& classificationLabel, const std::string& appIdentifier)
 {
+    if (dlpFileAccess > DLPFileAccess::FULL_CONTROL || dlpFileAccess <= DLPFileAccess::NO_PERMISSION
+        || uri.empty() || fileId.empty() || appIdentifier.empty()) {
+        return DLP_SERVICE_ERROR_VALUE_INVALID;
+    }
     auto proxy = GetProxy(true);
     if (proxy == nullptr) {
         DLP_LOG_ERROR(LABEL, "Proxy is null");

@@ -552,7 +552,7 @@ static void ParseCustomProperty(PermissionPolicy& policy, unordered_json policyJ
         && policyJson.at(CUSTOM_PROPERTY).is_string()) {
         std::string customPropertyStr = policyJson.at(CUSTOM_PROPERTY).get<std::string>();
         auto parseResult = unordered_json::parse(customPropertyStr, nullptr, false);
-        if (!parseResult.is_discarded()) {
+        if (!parseResult.is_discarded() && parseResult.is_object()) {
             unordered_json customPropertyJson = parseResult;
             if (customPropertyJson.find(ENTERPRISE) != customPropertyJson.end()
                 && customPropertyJson.at(ENTERPRISE).is_string()) {

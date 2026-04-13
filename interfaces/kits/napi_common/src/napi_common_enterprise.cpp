@@ -32,6 +32,7 @@ namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "DlpPermissionCommon"};
 static constexpr size_t MAX_ENTERPRISEPOLICY_SIZE = 1024 * 1024 * 4;
 static constexpr size_t MAX_ACCOUNT_LEN = 255;
+static constexpr size_t MAX_LABEL_SIZE = 255;
 }
 
 bool GetAccountTypeInEnterpriseParam(
@@ -208,6 +209,10 @@ bool GetCustomProperty(napi_env env, napi_value jsObject, CustomProperty& custom
             DLP_LOG_WARN(LABEL, "js get option fail, use default");
         }
     }
+    if (customProperty.options.classificationLabel.size() > MAX_LABEL_SIZE) {
+        DLP_LOG_ERROR(LABEL, "js get classificationLabel fail");
+        return false;
+    }
     return true;
 }
 
@@ -253,8 +258,8 @@ bool GetDlpFileQueryOptions(napi_env env, napi_value jsObject, DlpFileQueryOptio
     return true;
 }
 
-bool GetDlpFileQueryOptionsParams(
-    const napi_env env, const napi_callback_info info, DlpFileQueryOptionsAsyncContext& asyncContext)
+bool GetDlpFileQueryOptionsParamsImplement(
+    const napi_env env, const napi_callback_info info, DlpFileQueryOptions& options)
 {
     size_t argc = PARAM_SIZE_ONE;
     napi_value argv[PARAM_SIZE_ONE] = {nullptr};
@@ -264,51 +269,15 @@ bool GetDlpFileQueryOptionsParams(
         napi_valuetype valueType;
         NAPI_CALL_BASE(env, napi_typeof(env, argv[PARAM0], &valueType), false);
         if (valueType == napi_object) {
-            if (!GetDlpFileQueryOptions(env, argv[PARAM0], asyncContext.queryOptions)) {
+            if (!GetDlpFileQueryOptions(env, argv[PARAM0], options)) {
                 DLP_LOG_ERROR(LABEL, "js get DlpFileQueryOptions fail");
                 DlpNapiThrow(env, ERR_JS_INVALID_PARAMETER, "Invalid parameter value.");
                 return false;
             }
-        }
-    }
-    return true;
-}
-
-bool GetDlpFileQueryOptionsParams(
-    const napi_env env, const napi_callback_info info, CloseOpenedEnterpriseDlpFilesContext& asyncContext)
-{
-    size_t argc = PARAM_SIZE_ONE;
-    napi_value argv[PARAM_SIZE_ONE] = {nullptr};
-    NAPI_CALL_BASE(env, napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr), false);
-
-    if (argc > PARAM0 && argv[PARAM0] != nullptr) {
-        napi_valuetype valueType;
-        NAPI_CALL_BASE(env, napi_typeof(env, argv[PARAM0], &valueType), false);
-        if (valueType == napi_object) {
-            if (!GetDlpFileQueryOptions(env, argv[PARAM0], asyncContext.options)) {
-                DLP_LOG_ERROR(LABEL, "js get DlpFileQueryOptions fail");
-                DlpNapiThrow(env, ERR_JS_INVALID_PARAMETER, "Invalid parameter value.");
-                return false;
-            }
-        }
-    }
-    return true;
-}
-
-bool GetDlpFileQueryOptionsParams(
-    const napi_env env, const napi_callback_info info, QueryOpenedEnterpriseDlpFilesContext& asyncContext)
-{
-    size_t argc = PARAM_SIZE_ONE;
-    napi_value argv[PARAM_SIZE_ONE] = {nullptr};
-    NAPI_CALL_BASE(env, napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr), false);
-
-    if (argc > PARAM0 && argv[PARAM0] != nullptr) {
-        napi_valuetype valueType;
-        NAPI_CALL_BASE(env, napi_typeof(env, argv[PARAM0], &valueType), false);
-        if (valueType == napi_object) {
-            if (!GetDlpFileQueryOptions(env, argv[PARAM0], asyncContext.options)) {
-                DLP_LOG_ERROR(LABEL, "js get DlpFileQueryOptions fail");
-                DlpNapiThrow(env, ERR_JS_INVALID_PARAMETER, "Invalid parameter value.");
+            if (options.classificationLabel.size() > MAX_LABEL_SIZE) {
+                int32_t jsErrCode = ERR_JS_INVALID_PARAMETER;
+                NAPI_CALL_BASE(env, napi_throw(env, GenerateBusinessError(env, jsErrCode, GetJsErrMsg(jsErrCode))), false);
+                DLP_LOG_ERROR(LABEL, "classificationLabel is too long.");
                 return false;
             }
         }
