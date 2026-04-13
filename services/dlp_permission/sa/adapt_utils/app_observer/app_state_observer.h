@@ -30,6 +30,23 @@ namespace Security {
 namespace DlpPermission {
 using OHOS::AppExecFwk::RunningProcessInfo;
 enum class CurrentTaskState { IDLE, SHORT_TASK, LONG_TASK };
+
+struct EnterpriseInfo {
+    std::string classificationLabel = "";
+    DLPFileAccess dlpFileAccess = DLPFileAccess::NO_PERMISSION;
+    std::string fileId = "";
+    std::string appId = "";
+    int32_t uid = -1;
+};
+
+struct InputSandboxInfo {
+    const std::string bundleName;
+    DLPFileAccess dlpFileAccess;
+    int32_t userId;
+    const std::string uri;
+    const std::string path;
+};
+
 class AppStateObserver : public AppExecFwk::ApplicationStateObserverStub {
 public:
     explicit AppStateObserver();
@@ -44,25 +61,38 @@ public:
     bool CheckSandboxInfo(const std::string& bundleName, int32_t appIndex, int32_t userId);
     void DumpSandbox(int fd);
     int32_t ExitSaAfterAllDlpManagerDie();
-    void GetOpeningReadOnlySandbox(const std::string& bundleName, int32_t userId, int32_t& appIndex);
+    void GetOpeningReadOnlySandbox(const std::string& bundleName,
+        int32_t userId, int32_t& appIndex, int32_t& bindAppIndex);
     void AddCallbackListener(int32_t pid);
     bool RemoveCallbackListener(int32_t pid);
     bool CallbackListenerEmpty();
     bool GetSandboxInfo(int32_t uid, DlpSandboxInfo& appInfo);
+    void GetSandboxInfosByClassficationLabel(const std::string& label,
+        const std::string& appIdentifier, std::vector<std::string>& uris);
+    void GetNeededDelEnterpriseSandbox(const std::string& label,
+        const std::string& appIdentifier, std::vector<DlpSandboxInfo>& appInfos);
     void GetDelSandboxInfo(std::unordered_map<int32_t, DlpSandboxInfo>& sandboxInfo);
     void UpdatReadFlag(int32_t uid);
     bool GetOpeningSandboxInfo(const std::string& bundleName, const std::string& uri,
         int32_t userId, SandboxInfo& sandboxInfo, const std::string& fileId);
+    bool GetOpeningEnterpriseSandboxInfo(SandboxInfo& sandboxInfo,
+        const InputSandboxInfo& inputSandboxInfo, const EnterpriseInfo& enterpriseInfo);
+    void GetOpeningEnterpriseReadOnlySandbox(const InputSandboxInfo& inputSandboxInfo,
+        const EnterpriseInfo& enterpriseInfo, DlpSandboxInfo& dlpSandboxInfo);
     void SetAppProxy(const sptr<AppExecFwk::AppMgrProxy>& appProxy);
     bool AddUriAndFileInfo(const std::string& uri, const FileInfo& fileInfo);
     bool GetFileInfoByUri(const std::string& uri, FileInfo& fileInfo);
     void EraseFileInfoByUri(const std::string& uri);
+    bool AddUriAndEnterpriseInfo(const std::string& uri, const EnterpriseInfo& enterpriseInfo);
+    bool GetEnterpriseInfoByUri(const std::string& uri, EnterpriseInfo& enterpriseInfo);
+    void UpdateEnterpriseUidByUri(const std::string& uri, const std::string& fileId, int32_t uid);
+    void EraseEnterpriseInfoByUid(const std::vector<DlpSandboxInfo>& appInfos);
+    void EraseEnterpriseInfoByUri(const std::string& uri, const std::string& fileId);
     std::mutex& GetTerminalMutex();
     void PostDelayUnloadTask(CurrentTaskState newTaskState);
     void DecMaskInfoCnt(const DlpSandboxInfo& appInfo);
     void AddMaskInfoCnt(const DlpSandboxInfo& appInfo);
     bool GetSandboxInfoByAppIndex(const std::string& bundleName, int32_t appIndex, DlpSandboxInfo& appInfo);
-    void GetOpeningReadOnlyBindSandbox(const std::string& bundleName, int32_t userId, int32_t& bindAppIndex);
 
 private:
     void UninstallDlpSandbox(DlpSandboxInfo& appInfo);
@@ -81,11 +111,13 @@ private:
     bool GetUidByTokenId(uint32_t tokenId, int32_t& uid);
     void EraseUidTokenIdMap(uint32_t tokenId);
     bool GetRunningProcessesInfo(std::vector<RunningProcessInfo>& infoVec);
+    bool FillSandboxInfoIfProcessRunning(const DlpSandboxInfo& appInfo, SandboxInfo& sandboxInfo);
     bool CanUninstallByGid(DlpSandboxInfo& appInfo, const AppExecFwk::ProcessData& processData);
     void OnDlpmanagerDied(const AppExecFwk::ProcessData& processData);
     bool InitUnloadHandler();
     void CheckHasBackgroundTask();
 
+    // 应该重构让 fileId 来当 map 的 key
     std::unordered_map<uint32_t, int32_t> tokenIdToUidMap_;
     std::mutex tokenIdToUidMapLock_;
     std::unordered_map<int32_t, DlpSandboxInfo> sandboxInfo_;
@@ -97,6 +129,8 @@ private:
     sptr<AppExecFwk::AppMgrProxy> appProxy_ = nullptr;
     std::unordered_map<std::string, FileInfo> fileInfoUriMap_;
     std::mutex fileInfoUriMapLock_;
+    std::unordered_map<std::string, EnterpriseInfo> enterpriseUriMap_;
+    std::mutex enterpriseUriMapLock_;
     std::mutex terminalMutex_;
     std::shared_ptr<AppExecFwk::EventHandler> unloadHandler_ = nullptr;
     CurrentTaskState taskState_;

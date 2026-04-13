@@ -267,6 +267,23 @@ struct SetEnterprisePolicyContext : public CommonAsyncContext {
     EnterprisePolicy policy;
 };
 
+struct DlpFileQueryOptionsAsyncContext : public CommonAsyncContext {
+    explicit DlpFileQueryOptionsAsyncContext(napi_env env) : CommonAsyncContext(env) {};
+    DlpFileQueryOptions queryOptions;
+    std::vector<std::string> uriList;
+};
+
+struct CloseOpenedEnterpriseDlpFilesContext : public CommonAsyncContext {
+    explicit CloseOpenedEnterpriseDlpFilesContext(napi_env env) : CommonAsyncContext(env) {};
+    DlpFileQueryOptions options;
+};
+
+struct QueryOpenedEnterpriseDlpFilesContext : public CommonAsyncContext {
+    explicit QueryOpenedEnterpriseDlpFilesContext(napi_env env) : CommonAsyncContext(env) {};
+    DlpFileQueryOptions options;
+    std::vector<std::string> resultUris;
+};
+
 class UIExtensionCallback {
 public:
     explicit UIExtensionCallback(std::shared_ptr<UIExtensionRequestContext>& reqContext);
@@ -356,6 +373,14 @@ void GetDlpPropertyExpireTime(napi_env env, napi_value jsObject, DlpProperty& pr
 bool GetDlpProperty(napi_env env, napi_value object, DlpProperty& property);
 bool GetCustomProperty(napi_env env, napi_value object, CustomProperty& customProperty);
 bool ParseCallback(const napi_env& env, const napi_value& value, napi_ref& callbackRef);
+
+bool GetDlpFileQueryOptions(napi_env env, napi_value jsObject, DlpFileQueryOptions& queryOptions);
+bool GetDlpFileQueryOptionsParams(
+    const napi_env env, const napi_callback_info info, DlpFileQueryOptionsAsyncContext& asyncContext);
+bool GetDlpFileQueryOptionsParams(
+    const napi_env env, const napi_callback_info info, CloseOpenedEnterpriseDlpFilesContext& asyncContext);
+bool GetDlpFileQueryOptionsParams(
+    const napi_env env, const napi_callback_info info, QueryOpenedEnterpriseDlpFilesContext& asyncContext);
 
 napi_value GetNapiValue(napi_env env, napi_value jsObject, const std::string& key);
 bool GetStringValue(napi_env env, napi_value jsObject, std::string& result);

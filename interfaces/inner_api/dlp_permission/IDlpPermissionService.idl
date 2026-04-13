@@ -83,4 +83,8 @@ interface OHOS.Security.DlpPermission.IDlpPermissionService {
     void RemoveMDMPolicy();
     void SetEnterprisePolicy([in] String policy);
     void SetFileInfo([in] String uri, [in] FileInfo fileInfo);
+    void QueryOpenedEnterpriseDlpFiles([in] String label, [out] String[] resultUris);
+    void CloseOpenedEnterpriseDlpFiles([in] String label);
+    void SetEnterpriseInfos([in] String uri, [in] String fileId, [in] DLPFileAccess dlpFileAccesss,
+        [in] String classificationLabel, [in] String appIdentifier);
 }

@@ -307,6 +307,23 @@ int32_t DlpPermissionKit::SetFileInfo(const std::string& uri, const FileInfo& fi
     return DlpPermissionClient::GetInstance().SetFileInfo(uri, fileInfo);
 }
 
+int32_t DlpPermissionKit::QueryOpenedEnterpriseDlpFiles(const std::string& label, std::vector<std::string>& resultUris)
+{
+    return DlpPermissionClient::GetInstance().QueryOpenedEnterpriseDlpFiles(label, resultUris);
+}
+
+int32_t DlpPermissionKit::CloseOpenedEnterpriseDlpFiles(const std::string& label)
+{
+    return DlpPermissionClient::GetInstance().CloseOpenedEnterpriseDlpFiles(label);
+}
+
+int32_t DlpPermissionKit::SetEnterpriseInfos(const std::string& uri, const std::string& fileId,
+    DLPFileAccess dlpFileAccess, const std::string& classificationLabel, const std::string& appIdentifier)
+{
+    return DlpPermissionClient::GetInstance().SetEnterpriseInfos(uri, fileId, dlpFileAccess,
+        classificationLabel, appIdentifier);
+}
+
 }  // namespace DlpPermission
 }  // namespace Security
 }  // namespace OHOS

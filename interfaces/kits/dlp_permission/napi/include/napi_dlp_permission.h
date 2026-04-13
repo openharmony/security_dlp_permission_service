@@ -163,6 +163,14 @@ private:
     static void QueryDlpPolicyComplete(napi_env env, napi_status status, void* data);
 
     static napi_value SetEnterprisePolicy(napi_env env, napi_callback_info cbInfo);
+
+    static napi_value CloseOpenedEnterpriseDlpFiles(napi_env env, napi_callback_info cbInfo);
+    static void CloseOpenedEnterpriseDlpFilesExcute(napi_env env, void* data);
+    static void CloseOpenedEnterpriseDlpFilesComplete(napi_env env, napi_status status, void* data);
+
+    static napi_value QueryOpenedEnterpriseDlpFiles(napi_env env, napi_callback_info cbInfo);
+    static void QueryOpenedEnterpriseDlpFilesExcute(napi_env env, void* data);
+    static void QueryOpenedEnterpriseDlpFilesComplete(napi_env env, napi_status status, void* data);
 };
 }  // namespace DlpPermission
 }  // namespace Security

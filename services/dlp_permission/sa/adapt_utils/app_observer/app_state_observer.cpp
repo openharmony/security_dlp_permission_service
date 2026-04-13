@@ -204,6 +204,38 @@ bool AppStateObserver::GetSandboxInfo(int32_t uid, DlpSandboxInfo& appInfo)
     return false;
 }
 
+void AppStateObserver::GetSandboxInfosByClassficationLabel(const std::string& label,
+    const std::string& appIdentifier, std::vector<std::string>& uris)
+{
+    uris.clear();
+    std::lock_guard<std::mutex> lock(enterpriseUriMapLock_);
+    for (const auto& entry : enterpriseUriMap_) {
+        const EnterpriseInfo& enterpriseInfo = entry.second;
+        if ((label.empty() || enterpriseInfo.classificationLabel == label) &&
+            enterpriseInfo.appId == appIdentifier &&
+            enterpriseInfo.uid >= 0) {
+            uris.emplace_back(entry.first);
+        }
+    }
+}
+
+void AppStateObserver::GetNeededDelEnterpriseSandbox(const std::string& label,
+    const std::string& appIdentifier, std::vector<DlpSandboxInfo>& appInfos)
+{
+    appInfos.clear();
+    {
+        std::lock_guard<std::mutex> lock(sandboxInfoLock_);
+        for (const auto& entry : sandboxInfo_) {
+            const DlpSandboxInfo& appInfo = entry.second;
+            if ((label.empty() || appInfo.classificationLabel == label) &&
+                appInfo.appId == appIdentifier) {
+                appInfos.emplace_back(appInfo);
+            }
+        }
+    }
+    EraseEnterpriseInfoByUid(appInfos);
+}
+
 void AppStateObserver::UpdatReadFlag(int32_t uid)
 {
     std::lock_guard<std::mutex> lock(sandboxInfoLock_);
@@ -355,35 +387,59 @@ bool AppStateObserver::GetRunningProcessesInfo(std::vector<RunningProcessInfo>& 
     return true;
 }
 
+bool AppStateObserver::FillSandboxInfoIfProcessRunning(const DlpSandboxInfo& appInfo, SandboxInfo& sandboxInfo)
+{
+    std::vector<RunningProcessInfo> infoVec;
+    (void)GetRunningProcessesInfo(infoVec);
+    for (const auto& processInfo : infoVec) {
+        if (processInfo.uid_ != appInfo.uid) {
+            continue;
+        }
+        if (processInfo.state_ == AppProcessState::APP_STATE_END ||
+            processInfo.state_ == AppProcessState::APP_STATE_TERMINATED) {
+            DLP_LOG_INFO(LABEL, "APP is dead, appName:%{public}s, state=%{public}d",
+                processInfo.processName_.c_str(), processInfo.state_);
+            return false;
+        }
+        DLP_LOG_INFO(LABEL, "APP is running, appName:%{public}s, state=%{public}d",
+            processInfo.processName_.c_str(), processInfo.state_);
+        sandboxInfo.appIndex = appInfo.appIndex;
+        sandboxInfo.bindAppIndex = appInfo.bindAppIndex;
+        sandboxInfo.tokenId = appInfo.tokenId;
+        return true;
+    }
+    return false;
+}
+
 bool AppStateObserver::GetOpeningSandboxInfo(const std::string& bundleName, const std::string& uri,
     int32_t userId, SandboxInfo& sandboxInfo, const std::string& fileId)
 {
     std::lock_guard<std::mutex> lock(sandboxInfoLock_);
-    for (auto iter = sandboxInfo_.begin(); iter != sandboxInfo_.end(); iter++) {
-        DlpSandboxInfo appInfo = iter->second;
+    for (const auto& entry : sandboxInfo_) {
+        const DlpSandboxInfo& appInfo = entry.second;
         if (appInfo.userId != userId || appInfo.bundleName != bundleName ||
             appInfo.uri != uri || appInfo.fileId != fileId) {
             continue;
         }
-        std::vector<RunningProcessInfo> infoVec;
-        (void)GetRunningProcessesInfo(infoVec);
-        for (auto it = infoVec.begin(); it != infoVec.end(); it++) {
-            if (it->uid_ != appInfo.uid) {
-                continue;
-            }
-            if (it->state_ == AppProcessState::APP_STATE_END || it->state_ == AppProcessState::APP_STATE_TERMINATED) {
-                DLP_LOG_INFO(LABEL, "APP is dead, appName:%{public}s, state=%{public}d", it->processName_.c_str(),
-                    it->state_);
-                return false;
-            }
-            DLP_LOG_INFO(LABEL, "APP is running, appName:%{public}s, state=%{public}d", it->processName_.c_str(),
-                it->state_);
-            sandboxInfo.appIndex = appInfo.appIndex;
-            sandboxInfo.bindAppIndex = appInfo.bindAppIndex;
-            sandboxInfo.tokenId = appInfo.tokenId;
-            return true;
+        return FillSandboxInfoIfProcessRunning(appInfo, sandboxInfo);
+    }
+    return false;
+}
+
+bool AppStateObserver::GetOpeningEnterpriseSandboxInfo(SandboxInfo& sandboxInfo,
+    const InputSandboxInfo& inputSandboxInfo, const EnterpriseInfo& enterpriseInfo)
+{
+    std::lock_guard<std::mutex> lock(sandboxInfoLock_);
+    for (const auto& entry : sandboxInfo_) {
+        const DlpSandboxInfo& appInfo = entry.second;
+        if (appInfo.userId != inputSandboxInfo.userId ||
+            appInfo.bundleName != inputSandboxInfo.bundleName ||
+            appInfo.uri != inputSandboxInfo.uri ||
+            appInfo.fileId != enterpriseInfo.fileId ||
+            appInfo.classificationLabel != enterpriseInfo.classificationLabel) {
+            continue;
         }
-        break;
+        return FillSandboxInfoIfProcessRunning(appInfo, sandboxInfo);
     }
     return false;
 }
@@ -410,43 +466,50 @@ bool AppStateObserver::CanUninstallByGid(DlpSandboxInfo& appInfo, const AppExecF
     return true;
 }
 
-void AppStateObserver::GetOpeningReadOnlySandbox(const std::string& bundleName, int32_t userId, int32_t& appIndex)
+void AppStateObserver::GetOpeningReadOnlySandbox(const std::string& bundleName,
+    int32_t userId, int32_t& appIndex, int32_t& bindAppIndex)
 {
     std::lock_guard<std::mutex> lock(sandboxInfoLock_);
-    for (auto iter = sandboxInfo_.begin(); iter != sandboxInfo_.end(); iter++) {
-        DlpSandboxInfo appInfo = iter->second;
+    for (const auto& iter : sandboxInfo_) {
+        const DlpSandboxInfo& appInfo = iter.second;
         if (appInfo.userId == userId && appInfo.bundleName == bundleName &&
             appInfo.dlpFileAccess == DLPFileAccess::READ_ONLY && !appInfo.isReadOnce) {
             appIndex = appInfo.appIndex;
+            bindAppIndex = appInfo.bindAppIndex;
             DLP_LOG_INFO(LABEL,
-                "GetOpeningReadOnlySandbox, appIndex:%{public}d, bundleName=%{public}s",
-                appIndex, bundleName.c_str());
+                "GetOpeningReadOnlySandbox, appIndex:%{public}d, bindAppIndex:%{public}d, bundleName=%{public}s",
+                appIndex, bindAppIndex, bundleName.c_str());
             return;
         }
     }
     appIndex = -1;
-    return;
-}
-
-void AppStateObserver::GetOpeningReadOnlyBindSandbox(const std::string& bundleName,
-    int32_t userId, int32_t& bindAppIndex)
-{
-    std::lock_guard<std::mutex> lock(sandboxInfoLock_);
-    for (auto iter = sandboxInfo_.begin(); iter != sandboxInfo_.end(); iter++) {
-        DlpSandboxInfo appInfo = iter->second;
-        if (appInfo.userId == userId && appInfo.bundleName == bundleName &&
-            appInfo.dlpFileAccess == DLPFileAccess::READ_ONLY && !appInfo.isReadOnce) {
-            bindAppIndex = appInfo.bindAppIndex;
-            DLP_LOG_INFO(LABEL,
-                "GetOpeningReadOnlySandbox, bindAppIndex:%{public}d, bundleName=%{public}s",
-                bindAppIndex, bundleName.c_str());
-            return;
-        }
-    }
     bindAppIndex = -1;
     return;
 }
- 
+
+void AppStateObserver::GetOpeningEnterpriseReadOnlySandbox(const InputSandboxInfo& inputSandboxInfo,
+    const EnterpriseInfo& enterpriseInfo, DlpSandboxInfo& dlpsandboxInfo)
+{
+    std::lock_guard<std::mutex> lock(sandboxInfoLock_);
+    for (const auto& iter : sandboxInfo_) {
+        const DlpSandboxInfo& appInfo = iter.second;
+        if (appInfo.userId == inputSandboxInfo.userId &&
+            appInfo.bundleName == inputSandboxInfo.bundleName &&
+            appInfo.dlpFileAccess == DLPFileAccess::READ_ONLY &&
+            !appInfo.isReadOnce &&
+            appInfo.classificationLabel == enterpriseInfo.classificationLabel) {
+            dlpsandboxInfo.appIndex = appInfo.appIndex;
+            dlpsandboxInfo.bindAppIndex = appInfo.bindAppIndex;
+            DLP_LOG_INFO(LABEL,
+                "OpenedEnterpriseReadOnlySandbox, appIndex:%{public}d, bindAppIndex:%{public}d, bundleName=%{public}s",
+                dlpsandboxInfo.appIndex, dlpsandboxInfo.bindAppIndex, inputSandboxInfo.bundleName.c_str());
+            return;
+        }
+    }
+    dlpsandboxInfo.appIndex = -1;
+    dlpsandboxInfo.bindAppIndex = -1;
+    return;
+}
 
 uint32_t AppStateObserver::EraseDlpSandboxInfo(int uid)
 {
@@ -697,6 +760,72 @@ bool AppStateObserver::GetFileInfoByUri(const std::string& uri, FileInfo& fileIn
         return true;
     }
     return false;
+}
+
+bool AppStateObserver::AddUriAndEnterpriseInfo(const std::string& uri, const EnterpriseInfo& enterpriseInfo)
+{
+    if (uri.empty()) {
+        DLP_LOG_ERROR(LABEL, "uri is invalid");
+        return false;
+    }
+    std::lock_guard<std::mutex> lock(enterpriseUriMapLock_);
+    DLP_LOG_INFO(LABEL, "add enterpriseUriMap, classificationLabel: %{public}s",
+        enterpriseInfo.classificationLabel.c_str());
+    enterpriseUriMap_[uri] = enterpriseInfo;
+    return true;
+}
+
+bool AppStateObserver::GetEnterpriseInfoByUri(const std::string& uri, EnterpriseInfo& enterpriseInfo)
+{
+    std::lock_guard<std::mutex> lock(enterpriseUriMapLock_);
+    auto iter = enterpriseUriMap_.find(uri);
+    if (iter != enterpriseUriMap_.end()) {
+        enterpriseInfo = iter->second;
+        DLP_LOG_INFO(LABEL, "enterprise info hit for uri");
+        return true;
+    }
+    return false;
+}
+
+void AppStateObserver::UpdateEnterpriseUidByUri(const std::string& uri, const std::string& fileId, int32_t uid)
+{
+    std::lock_guard<std::mutex> lock(enterpriseUriMapLock_);
+    auto iter = enterpriseUriMap_.find(uri);
+    if (iter != enterpriseUriMap_.end() && iter->second.fileId == fileId) {
+        iter->second.uid = uid;
+    }
+}
+
+void AppStateObserver::EraseEnterpriseInfoByUid(const std::vector<DlpSandboxInfo>& appInfos)
+{
+    if (appInfos.empty()) {
+        return;
+    }
+    std::lock_guard<std::mutex> lock(enterpriseUriMapLock_);
+    for (auto mapIter = enterpriseUriMap_.begin(); mapIter != enterpriseUriMap_.end();) {
+        bool needErase = false;
+        for (const auto& appInfo : appInfos) {
+            if (mapIter->second.uid == appInfo.uid) {
+                needErase = true;
+                break;
+            }
+        }
+        if (needErase) {
+            mapIter = enterpriseUriMap_.erase(mapIter);
+            continue;
+        }
+        ++mapIter;
+    }
+}
+
+void AppStateObserver::EraseEnterpriseInfoByUri(const std::string& uri, const std::string& fileId)
+{
+    std::lock_guard<std::mutex> lock(enterpriseUriMapLock_);
+    auto iter = enterpriseUriMap_.find(uri);
+    if (iter != enterpriseUriMap_.end() && iter->second.fileId == fileId) {
+        DLP_LOG_INFO(LABEL, "erase enterprise info by uri");
+        enterpriseUriMap_.erase(iter);
+    }
 }
 
 void AppStateObserver::GetDelSandboxInfo(std::unordered_map<int32_t, DlpSandboxInfo>& sandboxInfo)

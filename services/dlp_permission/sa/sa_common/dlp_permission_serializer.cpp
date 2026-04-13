@@ -72,6 +72,7 @@ const std::string ACCOUNT_ID = "accountId";
 const std::string ACTION_UPON_EXPIRY = "actionUponExpiry";
 const std::string CUSTOM_PROPERTY = "customProperty";
 const std::string ENTERPRISE = "enterprise";
+const std::string CLASSIFICATIONLABEL = "classificationLabel";
 const std::string APPID = "appId";
 const std::string FILEID = "fileId";
 const std::string ALLOWED_OPEN_COUNT = "allowedOpenCount";
@@ -80,6 +81,7 @@ const std::string COUNTDOWN = "countdown";
 const std::string CLIENT_POLICY = "clientPolicy";
 const std::string COLLABORATIVE_POLICY = "collaborativePolicy";
 const std::string NICK_NAME_MASK = "nickNameMask";
+const std::string APPIDENTIFIER = "appIdentifier";
 constexpr uint64_t  VALID_TIME_STAMP = 2147483647;
 static const uint32_t DOMAIN_VERSION = 2;
 static const uint32_t CLOUD_VERSION = 1;
@@ -340,6 +342,9 @@ static void SerializeCustomProperty(const PermissionPolicy& policy, unordered_js
         return;
     }
     customProperty[ENTERPRISE] = policy.customProperty_;
+    if (!policy.classificationLabel_.empty()) {
+        customProperty[CLASSIFICATIONLABEL] = policy.classificationLabel_;
+    }
     policyJson[CUSTOM_PROPERTY] = customProperty.dump();
 }
 
@@ -433,6 +438,7 @@ static int32_t SerializeDomainAccountPolicy(const PermissionPolicy& policy, unor
     policyJson[NEED_ONLINE] = policy.needOnline_;
     policyJson[DLP_FILE_DEBUG_FLAG] = policy.debug_;
     policyJson[ACCOUNT_INDEX] = authUsersJson;
+    policyJson[APPIDENTIFIER] = policy.appIdentifier;
     SerializeCustomProperty(policy, policyJson);
     SerializeEveryoneInfo(policy, policyJson);
     if (policy.ownerAccountType_ == ENTERPRISE_ACCOUNT) {
@@ -540,6 +546,28 @@ static void InitPermissionAccountInfo(PermissionPolicy& policy, unordered_json p
     }
 }
 
+static void ParseCustomProperty(PermissionPolicy& policy, unordered_json policyJson)
+{
+    if (policyJson.find(CUSTOM_PROPERTY) != policyJson.end()
+        && policyJson.at(CUSTOM_PROPERTY).is_string()) {
+        std::string customPropertyStr = policyJson.at(CUSTOM_PROPERTY).get<std::string>();
+        auto parseResult = unordered_json::parse(customPropertyStr, nullptr, false);
+        if (!parseResult.is_discarded()) {
+            unordered_json customPropertyJson = parseResult;
+            if (customPropertyJson.find(ENTERPRISE) != customPropertyJson.end()
+                && customPropertyJson.at(ENTERPRISE).is_string()) {
+                customPropertyJson.at(ENTERPRISE).get_to(policy.customProperty_);
+            }
+            if (customPropertyJson.find(CLASSIFICATIONLABEL) != customPropertyJson.end()
+                && customPropertyJson.at(CLASSIFICATIONLABEL).is_string()) {
+                customPropertyJson.at(CLASSIFICATIONLABEL).get_to(policy.classificationLabel_);
+            }
+        } else {
+            DLP_LOG_ERROR(LABEL, "Parse customProperty json failed");
+        }
+    }
+}
+
 static void InitDomainAccountPolicy(PermissionPolicy& policy, const std::vector<AuthUserInfo>& userList,
     unordered_json policyJson)
 {
@@ -563,8 +591,9 @@ static void InitDomainAccountPolicy(PermissionPolicy& policy, const std::vector<
     if (policyJson.find(OPEN_MODE) != policyJson.end() && policyJson.at(OPEN_MODE).is_number()) {
         policy.perm_ = DLPFileAccess::READ_ONLY;
     }
-    if (policyJson.find(CUSTOM_PROPERTY) != policyJson.end() && policyJson.at(CUSTOM_PROPERTY).is_string()) {
-        policyJson.at(CUSTOM_PROPERTY).get_to(policy.customProperty_);
+    ParseCustomProperty(policy, policyJson);
+    if (policyJson.find(APPIDENTIFIER) != policyJson.end() && policyJson.at(APPIDENTIFIER).is_string()) {
+        policyJson.at(APPIDENTIFIER).get_to(policy.appIdentifier);
     }
     policy.ownerAccountType_ = DOMAIN_ACCOUNT;
 }
@@ -583,8 +612,13 @@ static void ParseClientJson(PermissionPolicy& policy, unordered_json clientJson)
     if (clientJson.find(OPEN_MODE) != clientJson.end() && clientJson.at(OPEN_MODE).is_number()) {
         policy.perm_ = DLPFileAccess::READ_ONLY;
     }
-    if (clientJson.find(CUSTOM_PROPERTY) != clientJson.end() && clientJson.at(CUSTOM_PROPERTY).is_string()) {
-        clientJson.at(CUSTOM_PROPERTY).get_to(policy.customProperty_);
+    if (clientJson.find(CUSTOM_PROPERTY) != clientJson.end()) {
+        if (clientJson.at(CUSTOM_PROPERTY).is_string()) {
+            clientJson.at(CUSTOM_PROPERTY).get_to(policy.customProperty_);
+        } else if (clientJson.at(CUSTOM_PROPERTY).is_object()) {
+            // New format: store object as JSON string
+            policy.customProperty_ = clientJson.at(CUSTOM_PROPERTY).dump();
+        }
     }
     if (clientJson.find(WATERMARK_CONFIG) != clientJson.end() && clientJson.at(WATERMARK_CONFIG).is_boolean()) {
         clientJson.at(WATERMARK_CONFIG).get_to(policy.waterMarkConfig_);

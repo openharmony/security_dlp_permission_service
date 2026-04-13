@@ -799,6 +799,38 @@ int32_t DlpPermissionClient::SetFileInfo(const std::string& uri, const FileInfo&
     }
     return proxy->SetFileInfo(uri, fileInfo);
 }
+
+int32_t DlpPermissionClient::QueryOpenedEnterpriseDlpFiles(const std::string& label,
+    std::vector<std::string>& resultUris)
+{
+    auto proxy = GetProxy(true);
+    if (proxy == nullptr) {
+        DLP_LOG_ERROR(LABEL, "Proxy is null");
+        return DLP_SERVICE_ERROR_SERVICE_NOT_EXIST;
+    }
+    return proxy->QueryOpenedEnterpriseDlpFiles(label, resultUris);
+}
+
+int32_t DlpPermissionClient::CloseOpenedEnterpriseDlpFiles(const std::string& label)
+{
+    auto proxy = GetProxy(true);
+    if (proxy == nullptr) {
+        DLP_LOG_ERROR(LABEL, "Proxy is null");
+        return DLP_SERVICE_ERROR_SERVICE_NOT_EXIST;
+    }
+    return proxy->CloseOpenedEnterpriseDlpFiles(label);
+}
+
+int32_t DlpPermissionClient::SetEnterpriseInfos(const std::string& uri, const std::string& fileId,
+    DLPFileAccess dlpFileAccess, const std::string& classificationLabel, const std::string& appIdentifier)
+{
+    auto proxy = GetProxy(true);
+    if (proxy == nullptr) {
+        DLP_LOG_ERROR(LABEL, "Proxy is null");
+        return DLP_SERVICE_ERROR_SERVICE_NOT_EXIST;
+    }
+    return proxy->SetEnterpriseInfos(uri, fileId, dlpFileAccess, classificationLabel, appIdentifier);
+}
 }  // namespace DlpPermission
 }  // namespace Security
 }  // namespace OHOS
