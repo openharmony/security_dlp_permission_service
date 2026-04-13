@@ -267,11 +267,6 @@ struct SetEnterprisePolicyContext : public CommonAsyncContext {
     EnterprisePolicy policy;
 };
 
-struct DlpFileQueryOptionsAsyncContext : public CommonAsyncContext {
-    explicit DlpFileQueryOptionsAsyncContext(napi_env env) : CommonAsyncContext(env) {};
-    DlpFileQueryOptions queryOptions;
-    std::vector<std::string> uriList;
-};
 
 struct CloseOpenedEnterpriseDlpFilesContext : public CommonAsyncContext {
     explicit CloseOpenedEnterpriseDlpFilesContext(napi_env env) : CommonAsyncContext(env) {};
@@ -375,12 +370,20 @@ bool GetCustomProperty(napi_env env, napi_value object, CustomProperty& customPr
 bool ParseCallback(const napi_env& env, const napi_value& value, napi_ref& callbackRef);
 
 bool GetDlpFileQueryOptions(napi_env env, napi_value jsObject, DlpFileQueryOptions& queryOptions);
-bool GetDlpFileQueryOptionsParams(
-    const napi_env env, const napi_callback_info info, DlpFileQueryOptionsAsyncContext& asyncContext);
-bool GetDlpFileQueryOptionsParams(
-    const napi_env env, const napi_callback_info info, CloseOpenedEnterpriseDlpFilesContext& asyncContext);
-bool GetDlpFileQueryOptionsParams(
-    const napi_env env, const napi_callback_info info, QueryOpenedEnterpriseDlpFilesContext& asyncContext);
+
+
+bool GetDlpFileQueryOptionsParamsImplement(
+    const napi_env env, const napi_callback_info info, DlpFileQueryOptions &options);
+
+template <typename ContextType>
+bool GetDlpFileQueryOptionsParams(const napi_env env, const napi_callback_info info, ContextType &asyncContext)
+{
+    static_assert(std::is_same<ContextType, CloseOpenedEnterpriseDlpFilesContext>::value ||
+        std::is_same<ContextType, QueryOpenedEnterpriseDlpFilesContext>::value,
+        "Template class is only for the specified three Context types.");
+    return GetDlpFileQueryOptionsParamsImplement(env, info, asyncContext.options);
+}
+
 
 napi_value GetNapiValue(napi_env env, napi_value jsObject, const std::string& key);
 bool GetStringValue(napi_env env, napi_value jsObject, std::string& result);
