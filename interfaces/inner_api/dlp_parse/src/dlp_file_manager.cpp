@@ -680,7 +680,7 @@ static int32_t SetEnterpriseInfoForDlpFile(int32_t dlpFileFd, std::shared_ptr<Dl
         if (res == DLP_OK) {
             DLPFileAccess dlpFileAccess = filePtr->GetAuthPerm();
             (void)DlpPermissionKit::SetEnterpriseInfos(uri, certParcel->fileId, dlpFileAccess,
-                policy.classificationLabel_, certParcel->appId);
+                policy.classificationLabel_, policy.appIdentifier);
         }
     }
     return DLP_OK;
