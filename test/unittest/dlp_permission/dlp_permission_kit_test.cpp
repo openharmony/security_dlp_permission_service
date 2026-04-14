@@ -1699,7 +1699,8 @@ HWTEST_F(DlpPermissionKitTest, QueryOpenedEnterpriseDlpFiles001, TestSize.Level0
 
     std::vector<std::string> uris;
     int32_t ret = DlpPermissionKit::QueryOpenedEnterpriseDlpFiles("L1", uris);
-    ASSERT_TRUE(ret == DLP_OK || ret == DLP_SERVICE_ERROR_PERMISSION_DENY || ret == DLP_SERVICE_ERROR_SERVICE_NOT_EXIST);
+    ASSERT_TRUE(ret == DLP_OK || ret == DLP_SERVICE_ERROR_PERMISSION_DENY ||
+        ret == DLP_SERVICE_ERROR_SERVICE_NOT_EXIST);
 
     std::string longLabel(256, 'a');
     ret = DlpPermissionKit::QueryOpenedEnterpriseDlpFiles(longLabel, uris);

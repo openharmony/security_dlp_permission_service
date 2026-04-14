@@ -35,6 +35,7 @@
 #include "dlp_sandbox_change_callback_stub.h"
 #include "dlp_sandbox_change_callback_death_recipient.h"
 #include "file_operator.h"
+#include "file_uri.h"
 #include "ipc_skeleton.h"
 #include "open_dlp_file_callback_proxy.h"
 #include "open_dlp_file_callback_stub.h"
@@ -43,6 +44,7 @@
 #include "huks_apply_permission_test_common.h"
 #include "retention_file_manager.h"
 #include "sandbox_json_manager.h"
+#include "token_setproc.h"
 #include "visited_dlp_file_info.h"
 #define private public
 #include "visit_record_file_manager.h"
@@ -54,6 +56,7 @@ using namespace OHOS;
 using namespace OHOS::Security::DlpPermission;
 using namespace OHOS::Security::AccessToken;
 using namespace std::chrono;
+using OHOS::AppExecFwk::RunningProcessInfo;
 
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
@@ -62,6 +65,7 @@ static const int32_t DEFAULT_USERID = 100;
 static const std::string DLP_MANAGER_APP = "com.ohos.dlpmanager";
 static const std::string PERMISSION_APP = "com.ohos.permissionmanager";
 static const std::string HIPREVIEW_HIGH = "com.huawei.hmos.hipreview";
+static const std::string PASTEBOARD_SERVICE_NAME = "pasteboard_service";
 static const uint32_t MAX_APPID_SIZE = 1024;
 static const uint32_t MAX_BUNDLENAME_SIZE = 1024;
 static const uint32_t MAX_URI_SIZE = 4095;
@@ -423,6 +427,94 @@ HWTEST_F(DlpPermissionServiceTest, SetEnterpriseInfos001, TestSize.Level1)
 }
 
 /**
+ * @tc.name: SetEnterpriseInfos002
+ * @tc.desc: SetEnterpriseInfos uri empty and uri size check
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionServiceTest, SetEnterpriseInfos002, TestSize.Level1)
+{
+    DLP_LOG_DEBUG(LABEL, "SetEnterpriseInfos002");
+    std::string fileId = "file_id_uri";
+    std::string label = "label_uri";
+    std::string appIdentifier = CALLER_APP_IDENTIFIER;
+
+    int32_t ret = dlpPermissionService_->SetEnterpriseInfos(
+        "enterprise_uri_uri", fileId, DLPFileAccess::READ_ONLY, label, appIdentifier);
+    ASSERT_EQ(DLP_OK, ret);
+
+    ret = dlpPermissionService_->SetEnterpriseInfos(
+        "", fileId, DLPFileAccess::READ_ONLY, label, appIdentifier);
+    ASSERT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, ret);
+
+    std::string longUri(MAX_URI_SIZE + 1, 'a');
+    ret = dlpPermissionService_->SetEnterpriseInfos(
+        longUri, fileId, DLPFileAccess::READ_ONLY, label, appIdentifier);
+    ASSERT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, ret);
+}
+
+/**
+ * @tc.name: SetEnterpriseInfos003
+ * @tc.desc: SetEnterpriseInfos fileId and appIdentifier size check
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionServiceTest, SetEnterpriseInfos003, TestSize.Level1)
+{
+    DLP_LOG_DEBUG(LABEL, "SetEnterpriseInfos003");
+    std::string uri = "enterprise_uri_size";
+    std::string label = "label_size";
+    std::string appIdentifier = CALLER_APP_IDENTIFIER;
+
+    int32_t ret = dlpPermissionService_->SetEnterpriseInfos(
+        uri, "file_id_size", DLPFileAccess::READ_ONLY, label, appIdentifier);
+    ASSERT_EQ(DLP_OK, ret);
+
+    std::string longFileId(MAX_FILEID_SIZE + 1, 'b');
+    ret = dlpPermissionService_->SetEnterpriseInfos(
+        uri, longFileId, DLPFileAccess::READ_ONLY, label, appIdentifier);
+    ASSERT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, ret);
+
+    std::string longAppIdentifier(MAX_APPID_SIZE + 1, 'c');
+    ret = dlpPermissionService_->SetEnterpriseInfos(
+        uri, "file_id_size2", DLPFileAccess::READ_ONLY, label, longAppIdentifier);
+    ASSERT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, ret);
+}
+
+/**
+ * @tc.name: SetEnterpriseInfos004
+ * @tc.desc: SetEnterpriseInfos label size and dlpFileAccess range check
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionServiceTest, SetEnterpriseInfos004, TestSize.Level1)
+{
+    DLP_LOG_DEBUG(LABEL, "SetEnterpriseInfos004");
+    std::string uri = "enterprise_uri_access";
+    std::string fileId = "file_id_access";
+    std::string appIdentifier = CALLER_APP_IDENTIFIER;
+
+    int32_t ret = dlpPermissionService_->SetEnterpriseInfos(
+        uri, fileId, DLPFileAccess::FULL_CONTROL, "label_access", appIdentifier);
+    ASSERT_EQ(DLP_OK, ret);
+
+    std::string longLabel(MAX_CLASSIFICATION_LABEL_SIZE + 1, 'd');
+    ret = dlpPermissionService_->SetEnterpriseInfos(
+        uri, fileId, DLPFileAccess::READ_ONLY, longLabel, appIdentifier);
+    ASSERT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, ret);
+
+    DLPFileAccess tooLargeAccess = static_cast<DLPFileAccess>(
+        static_cast<int32_t>(DLPFileAccess::FULL_CONTROL) + 1);
+    ret = dlpPermissionService_->SetEnterpriseInfos(
+        uri, fileId, tooLargeAccess, "label_access2", appIdentifier);
+    ASSERT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, ret);
+
+    ret = dlpPermissionService_->SetEnterpriseInfos(
+        uri, fileId, DLPFileAccess::NO_PERMISSION, "label_access3", appIdentifier);
+    ASSERT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, ret);
+}
+
+/**
  * @tc.name: QueryOpenedEnterpriseDlpFiles001
  * @tc.desc: QueryOpenedEnterpriseDlpFiles filters by label and appIdentifier
  * @tc.type: FUNC
@@ -476,6 +568,20 @@ HWTEST_F(DlpPermissionServiceTest, CloseOpenedEnterpriseDlpFiles001, TestSize.Le
 {
     DLP_LOG_DEBUG(LABEL, "CloseOpenedEnterpriseDlpFiles001");
 
+    std::string backupIdentifier = DlpPermissionServiceTest::mockAppIdentifier;
+    DlpPermissionServiceTest::mockAppIdentifier = CALLER_APP_IDENTIFIER;
+
+    DlpSandboxInfo appInfo;
+    appInfo.uid = 1301;
+    appInfo.userId = DEFAULT_USERID;
+    appInfo.appIndex = 101;
+    appInfo.tokenId = 1301;
+    appInfo.bundleName = DLP_MANAGER_APP;
+    appInfo.dlpFileAccess = DLPFileAccess::READ_ONLY;
+    appInfo.classificationLabel = "L1";
+    appInfo.appIdentifier = CALLER_APP_IDENTIFIER;
+    dlpPermissionService_->appStateObserver_->AddDlpSandboxInfo(appInfo);
+
     int32_t ret = dlpPermissionService_->CloseOpenedEnterpriseDlpFiles("L1");
     ASSERT_EQ(DLP_OK, ret);
 
@@ -487,4 +593,233 @@ HWTEST_F(DlpPermissionServiceTest, CloseOpenedEnterpriseDlpFiles001, TestSize.Le
     ret = dlpPermissionService_->CloseOpenedEnterpriseDlpFiles("L1");
     ASSERT_EQ(DLP_SERVICE_ERROR_PERMISSION_DENY, ret);
     DlpPermissionServiceTest::permType = 0;
+
+    dlpPermissionService_->appStateObserver_->EraseDlpSandboxInfo(appInfo.uid);
+    DlpPermissionServiceTest::mockAppIdentifier = backupIdentifier;
+}
+
+/**
+ * @tc.name: InstallDlpSandbox007
+ * @tc.desc: InstallDlpSandbox enter enterprise branch and clear enterprise info when install failed
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionServiceTest, InstallDlpSandbox007, TestSize.Level1)
+{
+    DLP_LOG_DEBUG(LABEL, "InstallDlpSandbox007");
+
+    std::string uri = "datashare:///media/file/777";
+    AppFileService::ModuleFileUri::FileUri fileUri(uri);
+    std::string path = fileUri.GetRealPath();
+
+    EnterpriseInfo enterpriseInfo;
+    enterpriseInfo.fileId = "enterprise_file_007";
+    enterpriseInfo.classificationLabel = "L1";
+    enterpriseInfo.appIdentifier = CALLER_APP_IDENTIFIER;
+    ASSERT_TRUE(dlpPermissionService_->appStateObserver_->AddUriAndEnterpriseInfo(path, enterpriseInfo));
+
+    SandboxInfo sandboxInfo;
+    int32_t ret = dlpPermissionService_->InstallDlpSandbox(
+        "com.invalid.bundle", DLPFileAccess::READ_ONLY, DEFAULT_USERID, sandboxInfo, uri);
+    ASSERT_NE(DLP_OK, ret);
+
+    EnterpriseInfo queryInfo;
+    ASSERT_FALSE(dlpPermissionService_->appStateObserver_->GetEnterpriseInfoByUri(path, queryInfo));
+}
+
+/**
+ * @tc.name: HandleEnterpriseInstallDlpSandbox001
+ * @tc.desc: HandleEnterpriseInstallDlpSandbox return error when retention query fails
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionServiceTest, HandleEnterpriseInstallDlpSandbox001, TestSize.Level1)
+{
+    DLP_LOG_DEBUG(LABEL, "HandleEnterpriseInstallDlpSandbox001");
+
+    SandboxInfo sandboxInfo;
+    EnterpriseInfo enterpriseInfo;
+    enterpriseInfo.fileId = "enterprise_file_001";
+    enterpriseInfo.classificationLabel = "L1";
+    enterpriseInfo.appIdentifier = CALLER_APP_IDENTIFIER;
+
+    // Empty bundleName forces GetRetentionSandboxList path to return non-DLP_OK.
+    InputSandboxInfo inputSandboxInfo = {"", DLPFileAccess::READ_ONLY, DEFAULT_USERID,
+        "datashare:///media/file/1001", ""};
+    int32_t ret = dlpPermissionService_->HandleEnterpriseInstallDlpSandbox(sandboxInfo, inputSandboxInfo,
+        enterpriseInfo);
+    ASSERT_NE(DLP_OK, ret);
+}
+
+/**
+ * @tc.name: HandleEnterpriseInstallDlpSandbox002
+ * @tc.desc: HandleEnterpriseInstallDlpSandbox erase enterprise info when install branch failed
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionServiceTest, HandleEnterpriseInstallDlpSandbox002, TestSize.Level1)
+{
+    DLP_LOG_DEBUG(LABEL, "HandleEnterpriseInstallDlpSandbox002");
+
+    std::string uri = "datashare:///media/file/1002";
+    AppFileService::ModuleFileUri::FileUri fileUri(uri);
+    std::string path = fileUri.GetRealPath();
+
+    EnterpriseInfo enterpriseInfo;
+    enterpriseInfo.fileId = "enterprise_file_002";
+    enterpriseInfo.classificationLabel = "L2";
+    enterpriseInfo.appIdentifier = CALLER_APP_IDENTIFIER;
+    ASSERT_TRUE(dlpPermissionService_->appStateObserver_->AddUriAndEnterpriseInfo(path, enterpriseInfo));
+
+    SandboxInfo sandboxInfo;
+    InputSandboxInfo inputSandboxInfo = {"com.invalid.bundle", DLPFileAccess::READ_ONLY,
+        DEFAULT_USERID, uri, path};
+    int32_t ret = dlpPermissionService_->HandleEnterpriseInstallDlpSandbox(sandboxInfo, inputSandboxInfo,
+        enterpriseInfo);
+    ASSERT_NE(DLP_OK, ret);
+
+    EnterpriseInfo queryInfo;
+    ASSERT_FALSE(dlpPermissionService_->appStateObserver_->GetEnterpriseInfoByUri(path, queryInfo));
+}
+
+/**
+ * @tc.name: HandleEnterpriseInstallDlpSandbox003
+ * @tc.desc: HandleEnterpriseInstallDlpSandbox covers read-only reuse branch
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionServiceTest, HandleEnterpriseInstallDlpSandbox003, TestSize.Level1)
+{
+    DLP_LOG_DEBUG(LABEL, "HandleEnterpriseInstallDlpSandbox003");
+
+    DlpSandboxInfo existInfo;
+    existInfo.uid = 2101;
+    existInfo.userId = DEFAULT_USERID;
+    existInfo.appIndex = 88;
+    existInfo.tokenId = 2101;
+    existInfo.bundleName = DLP_MANAGER_APP;
+    existInfo.dlpFileAccess = DLPFileAccess::READ_ONLY;
+    existInfo.classificationLabel = "L3";
+    existInfo.appIdentifier = CALLER_APP_IDENTIFIER;
+    dlpPermissionService_->appStateObserver_->AddDlpSandboxInfo(existInfo);
+
+    SandboxInfo sandboxInfo;
+    EnterpriseInfo enterpriseInfo;
+    enterpriseInfo.fileId = "enterprise_file_003";
+    enterpriseInfo.classificationLabel = "L3";
+    enterpriseInfo.appIdentifier = CALLER_APP_IDENTIFIER;
+    std::string uri = "datashare:///media/file/1003";
+    AppFileService::ModuleFileUri::FileUri fileUri(uri);
+    std::string path = fileUri.GetRealPath();
+    InputSandboxInfo inputSandboxInfo = {DLP_MANAGER_APP, DLPFileAccess::READ_ONLY, DEFAULT_USERID, uri, path};
+
+    int32_t ret = dlpPermissionService_->HandleEnterpriseInstallDlpSandbox(sandboxInfo, inputSandboxInfo,
+        enterpriseInfo);
+    ASSERT_NE(DLP_SERVICE_ERROR_VALUE_INVALID, ret);
+
+    dlpPermissionService_->appStateObserver_->EraseDlpSandboxInfo(existInfo.uid);
+}
+
+class MockAppMgrProxyForInstall final : public AppExecFwk::AppMgrProxy {
+public:
+    explicit MockAppMgrProxyForInstall(const std::vector<RunningProcessInfo>& infoVec)
+        : AppExecFwk::AppMgrProxy(nullptr), infoVec_(infoVec) {}
+
+    int32_t GetAllRunningProcesses(std::vector<RunningProcessInfo>& infoVec) override
+    {
+        infoVec = infoVec_;
+        return ERR_OK;
+    }
+
+private:
+    std::vector<RunningProcessInfo> infoVec_;
+};
+
+static RunningProcessInfo MakeRunningProcessInfoForInstall(int32_t uid, const std::string& processName,
+    AppExecFwk::AppProcessState state, int32_t pid)
+{
+    RunningProcessInfo info;
+    info.uid_ = uid;
+    info.processName_ = processName;
+    info.state_ = state;
+    info.pid_ = pid;
+    info.bundleNames = {processName};
+    return info;
+}
+
+/**
+ * @tc.name: HandleEnterpriseInstallDlpSandbox004
+ * @tc.desc: Cover opened enterprise sandbox fast-return branch
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionServiceTest, HandleEnterpriseInstallDlpSandbox004, TestSize.Level1)
+{
+    DLP_LOG_DEBUG(LABEL, "HandleEnterpriseInstallDlpSandbox004");
+
+    std::string uri = "datashare:///media/file/1004";
+    AppFileService::ModuleFileUri::FileUri fileUri(uri);
+    std::string path = fileUri.GetRealPath();
+
+    DlpSandboxInfo openedInfo;
+    openedInfo.uid = 2201;
+    openedInfo.userId = DEFAULT_USERID;
+    openedInfo.appIndex = 66;
+    openedInfo.bindAppIndex = 16;
+    openedInfo.tokenId = 2201;
+    openedInfo.bundleName = DLP_MANAGER_APP;
+    openedInfo.uri = uri;
+    openedInfo.fileId = "enterprise_file_004";
+    openedInfo.classificationLabel = "L4";
+    openedInfo.dlpFileAccess = DLPFileAccess::READ_ONLY;
+    dlpPermissionService_->appStateObserver_->AddDlpSandboxInfo(openedInfo);
+
+    std::vector<RunningProcessInfo> infoVec = {
+        MakeRunningProcessInfoForInstall(
+            openedInfo.uid, DLP_MANAGER_APP, AppExecFwk::AppProcessState::APP_STATE_FOREGROUND, 401),
+    };
+    dlpPermissionService_->appStateObserver_->SetAppProxy(new (std::nothrow) MockAppMgrProxyForInstall(infoVec));
+
+    SandboxInfo sandboxInfo;
+    EnterpriseInfo enterpriseInfo;
+    enterpriseInfo.fileId = openedInfo.fileId;
+    enterpriseInfo.classificationLabel = openedInfo.classificationLabel;
+    enterpriseInfo.appIdentifier = CALLER_APP_IDENTIFIER;
+    InputSandboxInfo inputSandboxInfo = {DLP_MANAGER_APP, DLPFileAccess::READ_ONLY, DEFAULT_USERID, uri, path};
+
+    int32_t ret = dlpPermissionService_->HandleEnterpriseInstallDlpSandbox(sandboxInfo, inputSandboxInfo,
+        enterpriseInfo);
+    ASSERT_EQ(DLP_OK, ret);
+    ASSERT_EQ(openedInfo.appIndex, sandboxInfo.appIndex);
+    ASSERT_EQ(openedInfo.bindAppIndex, sandboxInfo.bindAppIndex);
+    ASSERT_EQ(openedInfo.tokenId, sandboxInfo.tokenId);
+
+    dlpPermissionService_->appStateObserver_->EraseDlpSandboxInfo(openedInfo.uid);
+}
+
+/**
+ * @tc.name: HandleEnterpriseInstallDlpSandbox005
+ * @tc.desc: Cover isNeedInstall && isReadOnly branch
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionServiceTest, HandleEnterpriseInstallDlpSandbox005, TestSize.Level1)
+{
+    DLP_LOG_DEBUG(LABEL, "HandleEnterpriseInstallDlpSandbox005");
+
+    std::string uri = "datashare:///media/file/1005";
+    AppFileService::ModuleFileUri::FileUri fileUri(uri);
+    std::string path = fileUri.GetRealPath();
+
+    SandboxInfo sandboxInfo;
+    EnterpriseInfo enterpriseInfo;
+    enterpriseInfo.fileId = "enterprise_file_005";
+    enterpriseInfo.classificationLabel = "L5";
+    enterpriseInfo.appIdentifier = CALLER_APP_IDENTIFIER;
+    InputSandboxInfo inputSandboxInfo = {"com.branch.cover.bundle", DLPFileAccess::READ_ONLY,
+        DEFAULT_USERID, uri, path};
+
+    int32_t ret = dlpPermissionService_->HandleEnterpriseInstallDlpSandbox(sandboxInfo, inputSandboxInfo,
+        enterpriseInfo);
+    ASSERT_NE(DLP_SERVICE_ERROR_VALUE_INVALID, ret);
 }

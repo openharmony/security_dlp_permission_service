@@ -37,6 +37,11 @@ static const int32_t INCORRECT_UID = 777;
 static const std::string DLP_BUNDLENAME = "com.ohos.dlpmanager";
 static const std::string HIPREVIEW_HIGH = "com.huawei.hmos.hipreview";
 static const int32_t DEFAULT_NUM = 1;
+static const int UID_DEAD_PROC = 201;
+static const int UID_RUNNING_PROC = 202;
+static const int UID_WRONG_LABEL = 203;
+static const int UID_READ_ONCE = 301;
+static const int UID_LABEL_MISMATCH = 302;
 }
 
 static bool VectorContainsUri(const std::vector<std::string>& uris, const std::string& uri)
@@ -47,6 +52,83 @@ static bool VectorContainsUri(const std::vector<std::string>& uris, const std::s
         }
     }
     return false;
+}
+
+class MockAppMgrProxy final : public AppExecFwk::AppMgrProxy {
+public:
+    explicit MockAppMgrProxy(const std::vector<RunningProcessInfo>& infoVec)
+        : AppExecFwk::AppMgrProxy(nullptr), infoVec_(infoVec) {}
+
+    int32_t GetAllRunningProcesses(std::vector<RunningProcessInfo>& infoVec) override
+    {
+        infoVec = infoVec_;
+        return ERR_OK;
+    }
+
+private:
+    std::vector<RunningProcessInfo> infoVec_;
+};
+
+static RunningProcessInfo MakeRunningProcessInfo(int32_t uid, const std::string& processName,
+    AppExecFwk::AppProcessState state, int32_t pid)
+{
+    RunningProcessInfo info;
+    info.uid_ = uid;
+    info.processName_ = processName;
+    info.state_ = state;
+    info.pid_ = pid;
+    info.bundleNames = {processName};
+    return info;
+}
+
+static void SetMockAppProxy(AppStateObserver& observer, const std::vector<RunningProcessInfo>& infoVec)
+{
+    observer.SetAppProxy(new (std::nothrow) MockAppMgrProxy(infoVec));
+}
+
+static InputSandboxInfo MakeInputSandboxInfo(const std::string& bundleName, int32_t userId,
+    const std::string& uri, const std::string& path)
+{
+    return {bundleName, DLPFileAccess::READ_ONLY, userId, uri, path};
+}
+
+static EnterpriseInfo MakeEnterpriseInfo(const std::string& classificationLabel, const std::string& fileId,
+    const std::string& appIdentifier)
+{
+    EnterpriseInfo enterpriseInfo;
+    enterpriseInfo.classificationLabel = classificationLabel;
+    enterpriseInfo.fileId = fileId;
+    enterpriseInfo.appIdentifier = appIdentifier;
+    return enterpriseInfo;
+}
+
+struct EnterpriseSandboxSpec {
+    int32_t uid;
+    int32_t userId;
+    int32_t appIndex;
+    int32_t bindAppIndex;
+    std::string bundleName;
+    std::string uri;
+    std::string fileId;
+    std::string classificationLabel;
+    DLPFileAccess access;
+    bool isReadOnce = false;
+};
+
+static DlpSandboxInfo MakeEnterpriseSandboxInfo(const EnterpriseSandboxSpec& spec)
+{
+    return {
+        .uid = spec.uid,
+        .userId = spec.userId,
+        .appIndex = spec.appIndex,
+        .bindAppIndex = spec.bindAppIndex,
+        .bundleName = spec.bundleName,
+        .uri = spec.uri,
+        .fileId = spec.fileId,
+        .classificationLabel = spec.classificationLabel,
+        .dlpFileAccess = spec.access,
+        .isReadOnce = spec.isReadOnce
+    };
 }
 
 void AppStateObserverTest::SetUpTestCase() {}
@@ -1142,26 +1224,26 @@ HWTEST_F(AppStateObserverTest, GetNeededDelEnterpriseSandbox001, TestSize.Level1
     AppStateObserver observer;
 
     DlpSandboxInfo sandboxInfo1;
-    sandboxInfo1.uid = 201;
+    sandboxInfo1.uid = UID_DEAD_PROC;
     sandboxInfo1.classificationLabel = "L1";
     sandboxInfo1.appIdentifier = "appA";
     observer.sandboxInfo_[sandboxInfo1.uid] = sandboxInfo1;
 
     DlpSandboxInfo sandboxInfo2;
-    sandboxInfo2.uid = 202;
+    sandboxInfo2.uid = UID_RUNNING_PROC;
     sandboxInfo2.classificationLabel = "L2";
     sandboxInfo2.appIdentifier = "appA";
     observer.sandboxInfo_[sandboxInfo2.uid] = sandboxInfo2;
 
     EnterpriseInfo enterpriseInfo1;
-    enterpriseInfo1.uid = 201;
+    enterpriseInfo1.uid = UID_DEAD_PROC;
     enterpriseInfo1.fileId = "f1";
     enterpriseInfo1.classificationLabel = "L1";
     enterpriseInfo1.appIdentifier = "appA";
     observer.enterpriseUriMap_["uri1"] = enterpriseInfo1;
 
     EnterpriseInfo enterpriseInfo2;
-    enterpriseInfo2.uid = 202;
+    enterpriseInfo2.uid = UID_RUNNING_PROC;
     enterpriseInfo2.fileId = "f2";
     enterpriseInfo2.classificationLabel = "L2";
     enterpriseInfo2.appIdentifier = "appA";
@@ -1170,7 +1252,7 @@ HWTEST_F(AppStateObserverTest, GetNeededDelEnterpriseSandbox001, TestSize.Level1
     std::vector<DlpSandboxInfo> appInfos;
     observer.GetNeededDelEnterpriseSandbox("L1", "appA", appInfos);
     ASSERT_EQ(appInfos.size(), 1);
-    ASSERT_EQ(appInfos[0].uid, 201);
+    ASSERT_EQ(appInfos[0].uid, UID_DEAD_PROC);
     ASSERT_TRUE(observer.enterpriseUriMap_.find("uri1") == observer.enterpriseUriMap_.end());
     ASSERT_TRUE(observer.enterpriseUriMap_.find("uri2") != observer.enterpriseUriMap_.end());
 }
@@ -1400,4 +1482,299 @@ HWTEST_F(AppStateObserverTest, UpdatePidWhenSandboxExists002, TestSize.Level1)
     ASSERT_EQ(observer.sandboxInfo_[appInfo.uid].fileId, "test_file_id");
     ASSERT_EQ(observer.sandboxInfo_[appInfo.uid].dlpFileAccess, DLPFileAccess::READ_ONLY);
     DLP_LOG_INFO(LABEL, "Other fields remain unchanged when updating PID");
+}
+
+/**
+ * @tc.name: FillSandboxInfoIfProcessRunning001
+ * @tc.desc: Cover all branches of FillSandboxInfoIfProcessRunning
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AppStateObserverTest, FillSandboxInfoIfProcessRunning001, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL, "FillSandboxInfoIfProcessRunning001");
+    AppStateObserver observer;
+
+    DlpSandboxInfo appInfo;
+    appInfo.uid = 100;
+    appInfo.appIndex = 12;
+    appInfo.bindAppIndex = 34;
+    appInfo.tokenId = 56;
+
+    SandboxInfo sandboxInfo;
+
+    std::vector<RunningProcessInfo> infoVec1 = {
+        MakeRunningProcessInfo(
+            101, "other_process", AppExecFwk::AppProcessState::APP_STATE_FOREGROUND, 201),
+        MakeRunningProcessInfo(100, "dead_process", AppExecFwk::AppProcessState::APP_STATE_END, 202),
+    };
+    SetMockAppProxy(observer, infoVec1);
+    ASSERT_FALSE(observer.FillSandboxInfoIfProcessRunning(appInfo, sandboxInfo));
+    ASSERT_EQ(-1, sandboxInfo.appIndex);
+    ASSERT_EQ(-1, sandboxInfo.bindAppIndex);
+    ASSERT_EQ(0, sandboxInfo.tokenId);
+
+    std::vector<RunningProcessInfo> infoVec2 = {
+        MakeRunningProcessInfo(
+            101, "other_process", AppExecFwk::AppProcessState::APP_STATE_FOREGROUND, 201),
+        MakeRunningProcessInfo(
+            100, "running_process", AppExecFwk::AppProcessState::APP_STATE_FOREGROUND, 203),
+    };
+    SetMockAppProxy(observer, infoVec2);
+    sandboxInfo = {};
+    ASSERT_TRUE(observer.FillSandboxInfoIfProcessRunning(appInfo, sandboxInfo));
+    ASSERT_EQ(appInfo.appIndex, sandboxInfo.appIndex);
+    ASSERT_EQ(appInfo.bindAppIndex, sandboxInfo.bindAppIndex);
+    ASSERT_EQ(appInfo.tokenId, sandboxInfo.tokenId);
+
+    observer.SetAppProxy(nullptr);
+    sandboxInfo = {};
+    ASSERT_FALSE(observer.FillSandboxInfoIfProcessRunning(appInfo, sandboxInfo));
+}
+
+/**
+ * @tc.name: GetOpeningEnterpriseSandboxInfo001
+ * @tc.desc: Cover all branches of GetOpeningEnterpriseSandboxInfo
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AppStateObserverTest, GetOpeningEnterpriseSandboxInfo001, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL, "GetOpeningEnterpriseSandboxInfo001");
+    AppStateObserver observer;
+    InputSandboxInfo inputSandboxInfo = MakeInputSandboxInfo(
+        "com.example.enterprise", 100, "uri://enterprise", "/data/test");
+    EnterpriseInfo enterpriseInfo = MakeEnterpriseInfo("L1", "file_1", "app_1");
+
+    SandboxInfo sandboxInfo;
+    ASSERT_FALSE(observer.GetOpeningEnterpriseSandboxInfo(sandboxInfo, inputSandboxInfo, enterpriseInfo));
+    InputSandboxInfo mismatchBundle = MakeInputSandboxInfo(
+        "com.example.enterprise.other", 100, "uri://enterprise", "/data/test");
+    ASSERT_FALSE(observer.GetOpeningEnterpriseSandboxInfo(sandboxInfo, mismatchBundle, enterpriseInfo));
+    EnterpriseInfo mismatchFile = enterpriseInfo;
+    mismatchFile.fileId = "file_other";
+    ASSERT_FALSE(observer.GetOpeningEnterpriseSandboxInfo(sandboxInfo, inputSandboxInfo, mismatchFile));
+
+    DlpSandboxInfo deadInfo = MakeEnterpriseSandboxInfo({
+        UID_DEAD_PROC,
+        100,
+        10,
+        20,
+        inputSandboxInfo.bundleName,
+        inputSandboxInfo.uri,
+        enterpriseInfo.fileId,
+        enterpriseInfo.classificationLabel,
+        DLPFileAccess::READ_ONLY,
+        false,
+    });
+    observer.AddSandboxInfo(deadInfo);
+    SetMockAppProxy(observer, {
+        MakeRunningProcessInfo(UID_DEAD_PROC, "enterprise_dead", AppExecFwk::AppProcessState::APP_STATE_END, 301),
+    });
+    ASSERT_FALSE(observer.GetOpeningEnterpriseSandboxInfo(sandboxInfo, inputSandboxInfo, enterpriseInfo));
+}
+
+/**
+ * @tc.name: GetOpeningEnterpriseSandboxInfo002
+ * @tc.desc: Cover running and wrong-label branches for enterprise sandbox info
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AppStateObserverTest, GetOpeningEnterpriseSandboxInfo002, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL, "GetOpeningEnterpriseSandboxInfo002");
+    AppStateObserver observer;
+    InputSandboxInfo inputSandboxInfo = MakeInputSandboxInfo(
+        "com.example.enterprise", 100, "uri://enterprise", "/data/test");
+    EnterpriseInfo enterpriseInfo = MakeEnterpriseInfo("L1", "file_1", "app_1");
+    SandboxInfo sandboxInfo;
+
+    DlpSandboxInfo runningInfo = MakeEnterpriseSandboxInfo({
+        UID_RUNNING_PROC,
+        100,
+        10,
+        20,
+        inputSandboxInfo.bundleName,
+        inputSandboxInfo.uri,
+        enterpriseInfo.fileId,
+        enterpriseInfo.classificationLabel,
+        DLPFileAccess::READ_ONLY,
+        false,
+    });
+    observer.AddSandboxInfo(runningInfo);
+    SetMockAppProxy(observer, {
+        MakeRunningProcessInfo(
+            UID_RUNNING_PROC, "enterprise_running", AppExecFwk::AppProcessState::APP_STATE_FOREGROUND, 302),
+    });
+    sandboxInfo = {};
+    ASSERT_TRUE(observer.GetOpeningEnterpriseSandboxInfo(sandboxInfo, inputSandboxInfo, enterpriseInfo));
+    ASSERT_EQ(runningInfo.appIndex, sandboxInfo.appIndex);
+    ASSERT_EQ(runningInfo.bindAppIndex, sandboxInfo.bindAppIndex);
+    ASSERT_EQ(runningInfo.tokenId, sandboxInfo.tokenId);
+
+    observer.EraseSandboxInfo(runningInfo.uid);
+    DlpSandboxInfo wrongLabel = MakeEnterpriseSandboxInfo({
+        UID_WRONG_LABEL,
+        200,
+        10,
+        20,
+        inputSandboxInfo.bundleName,
+        inputSandboxInfo.uri,
+        enterpriseInfo.fileId,
+        "L2",
+        DLPFileAccess::READ_ONLY,
+        false,
+    });
+    observer.AddSandboxInfo(wrongLabel);
+    sandboxInfo = {};
+    ASSERT_FALSE(observer.GetOpeningEnterpriseSandboxInfo(sandboxInfo, inputSandboxInfo, enterpriseInfo));
+}
+
+/**
+ * @tc.name: VerifyGetOpeningEnterpriseReadOnlySandboxNoMatch
+ * @tc.desc: Verify no-match branches for enterprise read-only sandbox query
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AppStateObserverTest, VerifyGetOpeningEnterpriseReadOnlySandboxNoMatch, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL, "VerifyGetOpeningEnterpriseReadOnlySandboxNoMatch");
+    AppStateObserver observer;
+    InputSandboxInfo inputSandboxInfo = MakeInputSandboxInfo(
+        "com.example.enterprise", 100, "uri://enterprise", "/data/test");
+    EnterpriseInfo enterpriseInfo = MakeEnterpriseInfo("L1", "file_1", "app_1");
+    DlpSandboxInfo dlpSandboxInfo;
+
+    observer.GetOpeningEnterpriseReadOnlySandbox(inputSandboxInfo, enterpriseInfo, dlpSandboxInfo);
+    ASSERT_EQ(-1, dlpSandboxInfo.appIndex);
+    ASSERT_EQ(-1, dlpSandboxInfo.bindAppIndex);
+
+    DlpSandboxInfo wrongAccessInfo = MakeEnterpriseSandboxInfo({
+        300,
+        inputSandboxInfo.userId,
+        30,
+        40,
+        inputSandboxInfo.bundleName,
+        inputSandboxInfo.uri,
+        enterpriseInfo.fileId,
+        enterpriseInfo.classificationLabel,
+        DLPFileAccess::CONTENT_EDIT,
+        false,
+    });
+    observer.AddSandboxInfo(wrongAccessInfo);
+    dlpSandboxInfo = {};
+    observer.GetOpeningEnterpriseReadOnlySandbox(inputSandboxInfo, enterpriseInfo, dlpSandboxInfo);
+    ASSERT_EQ(-1, dlpSandboxInfo.appIndex);
+    ASSERT_EQ(-1, dlpSandboxInfo.bindAppIndex);
+
+    observer.EraseSandboxInfo(wrongAccessInfo.uid);
+    DlpSandboxInfo readOnceInfo = wrongAccessInfo;
+    readOnceInfo.uid = UID_READ_ONCE;
+    readOnceInfo.dlpFileAccess = DLPFileAccess::READ_ONLY;
+    readOnceInfo.isReadOnce = true;
+    observer.AddSandboxInfo(readOnceInfo);
+    dlpSandboxInfo = {};
+    observer.GetOpeningEnterpriseReadOnlySandbox(inputSandboxInfo, enterpriseInfo, dlpSandboxInfo);
+    ASSERT_EQ(-1, dlpSandboxInfo.appIndex);
+    ASSERT_EQ(-1, dlpSandboxInfo.bindAppIndex);
+}
+
+/**
+ * @tc.name: VerifyGetOpeningEnterpriseReadOnlySandboxNoMatch002
+ * @tc.desc: Verify label mismatch no-match branch for enterprise read-only sandbox
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AppStateObserverTest, VerifyGetOpeningEnterpriseReadOnlySandboxNoMatch002, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL, "VerifyGetOpeningEnterpriseReadOnlySandboxNoMatch002");
+    AppStateObserver observer;
+    InputSandboxInfo inputSandboxInfo = MakeInputSandboxInfo(
+        "com.example.enterprise", 100, "uri://enterprise", "/data/test");
+    EnterpriseInfo enterpriseInfo = MakeEnterpriseInfo("L1", "file_1", "app_1");
+    DlpSandboxInfo dlpSandboxInfo;
+
+    DlpSandboxInfo baseInfo = MakeEnterpriseSandboxInfo({
+        300,
+        inputSandboxInfo.userId,
+        30,
+        40,
+        inputSandboxInfo.bundleName,
+        inputSandboxInfo.uri,
+        enterpriseInfo.fileId,
+        enterpriseInfo.classificationLabel,
+        DLPFileAccess::READ_ONLY,
+        false,
+    });
+
+    DlpSandboxInfo labelMismatchInfo = baseInfo;
+    labelMismatchInfo.uid = UID_LABEL_MISMATCH;
+    labelMismatchInfo.classificationLabel = "L2";
+    observer.AddSandboxInfo(labelMismatchInfo);
+    dlpSandboxInfo = {};
+    observer.GetOpeningEnterpriseReadOnlySandbox(inputSandboxInfo, enterpriseInfo, dlpSandboxInfo);
+    ASSERT_EQ(-1, dlpSandboxInfo.appIndex);
+    ASSERT_EQ(-1, dlpSandboxInfo.bindAppIndex);
+}
+
+/**
+ * @tc.name: VerifyGetOpeningEnterpriseReadOnlySandboxMatch
+ * @tc.desc: Verify match branches for enterprise read-only sandbox query
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AppStateObserverTest, VerifyGetOpeningEnterpriseReadOnlySandboxMatch, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL, "VerifyGetOpeningEnterpriseReadOnlySandboxMatch");
+    AppStateObserver observer;
+    InputSandboxInfo inputSandboxInfo = MakeInputSandboxInfo(
+        "com.example.enterprise", 100, "uri://enterprise", "/data/test");
+    EnterpriseInfo enterpriseInfo = MakeEnterpriseInfo("L1", "file_1", "app_1");
+    DlpSandboxInfo dlpSandboxInfo;
+
+    DlpSandboxInfo matchInfo = MakeEnterpriseSandboxInfo({
+        303,
+        inputSandboxInfo.userId,
+        30,
+        40,
+        inputSandboxInfo.bundleName,
+        inputSandboxInfo.uri,
+        enterpriseInfo.fileId,
+        enterpriseInfo.classificationLabel,
+        DLPFileAccess::READ_ONLY,
+        false,
+    });
+    observer.AddSandboxInfo(matchInfo);
+    dlpSandboxInfo = {};
+    observer.GetOpeningEnterpriseReadOnlySandbox(inputSandboxInfo, enterpriseInfo, dlpSandboxInfo);
+    ASSERT_EQ(matchInfo.appIndex, dlpSandboxInfo.appIndex);
+    ASSERT_EQ(matchInfo.bindAppIndex, dlpSandboxInfo.bindAppIndex);
+
+    InputSandboxInfo mismatchBundleInput = MakeInputSandboxInfo(
+        "com.example.enterprise.other", inputSandboxInfo.userId, inputSandboxInfo.uri, inputSandboxInfo.path);
+    dlpSandboxInfo = {};
+    observer.GetOpeningEnterpriseReadOnlySandbox(mismatchBundleInput, enterpriseInfo, dlpSandboxInfo);
+    ASSERT_EQ(-1, dlpSandboxInfo.appIndex);
+    ASSERT_EQ(-1, dlpSandboxInfo.bindAppIndex);
+}
+
+/**
+ * @tc.name: GetOpeningEnterpriseReadOnlySandbox001
+ * @tc.desc: Cover all branches of GetOpeningEnterpriseReadOnlySandbox
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AppStateObserverTest, GetOpeningEnterpriseReadOnlySandbox001, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL, "GetOpeningEnterpriseReadOnlySandbox001");
+    AppStateObserver observer;
+
+    InputSandboxInfo inputSandboxInfo = MakeInputSandboxInfo(
+        "com.example.enterprise", 100, "uri://enterprise", "/data/test");
+    EnterpriseInfo enterpriseInfo = MakeEnterpriseInfo("L1", "file_1", "app_1");
+
+    DlpSandboxInfo dlpSandboxInfo;
+    observer.GetOpeningEnterpriseReadOnlySandbox(inputSandboxInfo, enterpriseInfo, dlpSandboxInfo);
+    ASSERT_EQ(-1, dlpSandboxInfo.appIndex);
+    ASSERT_EQ(-1, dlpSandboxInfo.bindAppIndex);
 }

@@ -25,6 +25,7 @@
 #include "dlp_raw_file.h"
 #include "dlp_zip_file.h"
 #include "dlp_permission.h"
+#include "dlp_permission_kit.h"
 #include "dlp_permission_log.h"
 #include "accesstoken_kit.h"
 #include "nativetoken_kit.h"
@@ -62,6 +63,40 @@ static void RestartAccessTokenService()
 
     std::cout << PID_OF_ACCESS_TOKEN_SERVICE << std::endl;
     std::system(PID_OF_ACCESS_TOKEN_SERVICE);
+}
+
+static void FillCipherForPolicy(PermissionPolicy& policy)
+{
+    uint8_t aesKey[16] = {1};
+    uint8_t ivKey[16] = {2};
+    uint8_t hmacKey[16] = {3};
+    policy.SetAeskey(aesKey, sizeof(aesKey));
+    policy.SetIv(ivKey, sizeof(ivKey));
+    policy.SetHmacKey(hmacKey, sizeof(hmacKey));
+}
+
+static sptr<CertParcel> BuildCertParcelByType(DlpAccountType type)
+{
+    PermissionPolicy policy;
+    FillCipherForPolicy(policy);
+    policy.ownerAccountType_ = type;
+    policy.ownerAccount_ = "owner";
+    policy.ownerAccountId_ = "ownerId";
+    policy.fileId = "file_id_case";
+    policy.classificationLabel_ = "L1";
+    policy.appIdentifier = "app_identifier_case";
+
+    std::vector<uint8_t> cert;
+    if (DlpPermissionKit::GenerateDlpCertificate(policy, cert) != DLP_OK) {
+        return nullptr;
+    }
+    sptr<CertParcel> certParcel = new (std::nothrow) CertParcel();
+    if (certParcel == nullptr) {
+        return nullptr;
+    }
+    certParcel->cert = cert;
+    certParcel->fileId = "file_id_case";
+    return certParcel;
 }
 
 void DlpFileManagerTest::SetUpTestCase()
@@ -998,6 +1033,70 @@ HWTEST_F(DlpFileManagerTest, OpenZipDlpFile001, TestSize.Level0)
     std::shared_ptr<DlpFile> filePtr = std::make_shared<DlpZipFile>(1001, DLP_TEST_DIR, 0, realType);
 
     EXPECT_NE(DLP_OK, DlpFileManager::GetInstance().OpenZipDlpFile(1001, filePtr, DLP_TEST_DIR, appId, realType));
+}
+
+/**
+ * @tc.name: SetDlpFileParamsEnterprise001
+ * @tc.desc: cover line 290 branch when GetAppIdentifierFromToken fails
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpFileManagerTest, SetDlpFileParamsEnterprise001, TestSize.Level0)
+{
+    DLP_LOG_INFO(LABEL, "SetDlpFileParamsEnterprise001");
+    uint64_t backupToken = GetSelfTokenID();
+    if (SetSelfTokenID(0) != 0) {
+        return;
+    }
+
+    DlpProperty property;
+    property.ownerAccountType = ENTERPRISE_ACCOUNT;
+    property.ownerAccount = "owner";
+    property.ownerAccountId = "owner";
+    property.contactAccount = "owner";
+    std::shared_ptr<DlpFile> filePtr = std::make_shared<DlpZipFile>(1002, DLP_TEST_DIR, 0, "txt");
+    ASSERT_NE(filePtr, nullptr);
+
+    int32_t ret = DlpFileManager::GetInstance().SetDlpFileParams(filePtr, property);
+    ASSERT_EQ(0, SetSelfTokenID(backupToken));
+    ASSERT_EQ(DLP_SERVICE_ERROR_PERMISSION_DENY, ret);
+}
+
+/**
+ * @tc.name: ParseZipDlpFile005
+ * @tc.desc: cover non-enterprise branch in SetEnterpriseInfoForDlpFile
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpFileManagerTest, ParseZipDlpFile005, TestSize.Level0)
+{
+    DLP_LOG_INFO(LABEL, "ParseZipDlpFile005");
+    std::shared_ptr<DlpFile> filePtr = std::make_shared<DlpZipFile>(1004, DLP_TEST_DIR, 0, "txt");
+    ASSERT_NE(filePtr, nullptr);
+
+    sptr<CertParcel> certParcel = BuildCertParcelByType(CLOUD_ACCOUNT);
+    ASSERT_NE(certParcel, nullptr);
+    int32_t ret = DlpFileManager::GetInstance().ParseZipDlpFile(filePtr, "app_id", -1, certParcel);
+    ASSERT_NE(DLP_PARSE_ERROR_FD_ERROR, ret);
+}
+
+/**
+ * @tc.name: ParseZipDlpFile006
+ * @tc.desc: cover SetEnterpriseInfos fail branch in SetEnterpriseInfoForDlpFile
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpFileManagerTest, ParseZipDlpFile006, TestSize.Level0)
+{
+    DLP_LOG_INFO(LABEL, "ParseZipDlpFile006");
+    std::shared_ptr<DlpFile> filePtr = std::make_shared<DlpZipFile>(1005, DLP_TEST_DIR, 0, "txt");
+    ASSERT_NE(filePtr, nullptr);
+
+    sptr<CertParcel> certParcel = BuildCertParcelByType(ENTERPRISE_ACCOUNT);
+    ASSERT_NE(certParcel, nullptr);
+    int32_t ret = DlpFileManager::GetInstance().ParseZipDlpFile(filePtr, "app_id", 0, certParcel);
+    ASSERT_NE(DLP_OK, ret);
+    ASSERT_NE(DLP_PARSE_ERROR_FD_ERROR, ret);
 }
 
 }  // namespace DlpPermission
