@@ -1088,7 +1088,7 @@ HWTEST_F(AppStateObserverTest, EnterpriseUriMapQuery001, TestSize.Level1)
     EnterpriseInfo info1;
     info1.classificationLabel = "L1";
     info1.fileId = "f1";
-    info1.appId = "appA";
+    info1.appIdentifier = "appA";
     info1.uid = -1;
 
     EnterpriseInfo info2 = info1;
@@ -1097,7 +1097,7 @@ HWTEST_F(AppStateObserverTest, EnterpriseUriMapQuery001, TestSize.Level1)
 
     EnterpriseInfo info3 = info1;
     info3.fileId = "f3";
-    info3.appId = "appB";
+    info3.appIdentifier = "appB";
 
     ASSERT_TRUE(observer.AddUriAndEnterpriseInfo("uri1", info1));
     ASSERT_TRUE(observer.AddUriAndEnterpriseInfo("uri2", info2));
@@ -1132,7 +1132,7 @@ HWTEST_F(AppStateObserverTest, EnterpriseUriMapQuery001, TestSize.Level1)
 
 /**
  * @tc.name: GetNeededDelEnterpriseSandbox001
- * @tc.desc: get and erase enterprise sandbox info by label and appId
+ * @tc.desc: get and erase enterprise sandbox info by label and appIdentifier
  * @tc.type: FUNC
  * @tc.require:
  */
@@ -1144,27 +1144,27 @@ HWTEST_F(AppStateObserverTest, GetNeededDelEnterpriseSandbox001, TestSize.Level1
     DlpSandboxInfo sandboxInfo1;
     sandboxInfo1.uid = 201;
     sandboxInfo1.classificationLabel = "L1";
-    sandboxInfo1.appId = "appA";
+    sandboxInfo1.appIdentifier = "appA";
     observer.sandboxInfo_[sandboxInfo1.uid] = sandboxInfo1;
 
     DlpSandboxInfo sandboxInfo2;
     sandboxInfo2.uid = 202;
     sandboxInfo2.classificationLabel = "L2";
-    sandboxInfo2.appId = "appA";
+    sandboxInfo2.appIdentifier = "appA";
     observer.sandboxInfo_[sandboxInfo2.uid] = sandboxInfo2;
 
     EnterpriseInfo enterpriseInfo1;
     enterpriseInfo1.uid = 201;
     enterpriseInfo1.fileId = "f1";
     enterpriseInfo1.classificationLabel = "L1";
-    enterpriseInfo1.appId = "appA";
+    enterpriseInfo1.appIdentifier = "appA";
     observer.enterpriseUriMap_["uri1"] = enterpriseInfo1;
 
     EnterpriseInfo enterpriseInfo2;
     enterpriseInfo2.uid = 202;
     enterpriseInfo2.fileId = "f2";
     enterpriseInfo2.classificationLabel = "L2";
-    enterpriseInfo2.appId = "appA";
+    enterpriseInfo2.appIdentifier = "appA";
     observer.enterpriseUriMap_["uri2"] = enterpriseInfo2;
 
     std::vector<DlpSandboxInfo> appInfos;
