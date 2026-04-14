@@ -204,7 +204,7 @@ bool AppStateObserver::GetSandboxInfo(int32_t uid, DlpSandboxInfo& appInfo)
     return false;
 }
 
-void AppStateObserver::GetSandboxInfosByClassficationLabel(const std::string& label,
+void AppStateObserver::GetSandboxInfosByClassificationLabel(const std::string& label,
     const std::string& appIdentifier, std::vector<std::string>& uris)
 {
     uris.clear();
@@ -212,7 +212,7 @@ void AppStateObserver::GetSandboxInfosByClassficationLabel(const std::string& la
     for (const auto& entry : enterpriseUriMap_) {
         const EnterpriseInfo& enterpriseInfo = entry.second;
         if ((label.empty() || enterpriseInfo.classificationLabel == label) &&
-            enterpriseInfo.appId == appIdentifier &&
+            enterpriseInfo.appIdentifier == appIdentifier &&
             enterpriseInfo.uid >= 0) {
             uris.emplace_back(entry.first);
         }
@@ -228,7 +228,7 @@ void AppStateObserver::GetNeededDelEnterpriseSandbox(const std::string& label,
         for (const auto& entry : sandboxInfo_) {
             const DlpSandboxInfo& appInfo = entry.second;
             if ((label.empty() || appInfo.classificationLabel == label) &&
-                appInfo.appId == appIdentifier) {
+                appInfo.appIdentifier == appIdentifier) {
                 appInfos.emplace_back(appInfo);
             }
         }
@@ -769,7 +769,7 @@ bool AppStateObserver::AddUriAndEnterpriseInfo(const std::string& uri, const Ent
         return false;
     }
     std::lock_guard<std::mutex> lock(enterpriseUriMapLock_);
-    DLP_LOG_INFO(LABEL, "add enterpriseUriMap, classificationLabel: %{public}s",
+    DLP_LOG_INFO(LABEL, "add enterpriseUriMap, classificationLabel: %{private}s",
         enterpriseInfo.classificationLabel.c_str());
     enterpriseUriMap_[uri] = enterpriseInfo;
     return true;

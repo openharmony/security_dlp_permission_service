@@ -35,7 +35,7 @@ struct EnterpriseInfo {
     std::string classificationLabel = "";
     DLPFileAccess dlpFileAccess = DLPFileAccess::NO_PERMISSION;
     std::string fileId = "";
-    std::string appId = "";
+    std::string appIdentifier = "";
     int32_t uid = -1;
 };
 
@@ -67,7 +67,7 @@ public:
     bool RemoveCallbackListener(int32_t pid);
     bool CallbackListenerEmpty();
     bool GetSandboxInfo(int32_t uid, DlpSandboxInfo& appInfo);
-    void GetSandboxInfosByClassficationLabel(const std::string& label,
+    void GetSandboxInfosByClassificationLabel(const std::string& label,
         const std::string& appIdentifier, std::vector<std::string>& uris);
     void GetNeededDelEnterpriseSandbox(const std::string& label,
         const std::string& appIdentifier, std::vector<DlpSandboxInfo>& appInfos);
@@ -117,7 +117,6 @@ private:
     bool InitUnloadHandler();
     void CheckHasBackgroundTask();
 
-    // 应该重构让 fileId 来当 map 的 key
     std::unordered_map<uint32_t, int32_t> tokenIdToUidMap_;
     std::mutex tokenIdToUidMapLock_;
     std::unordered_map<int32_t, DlpSandboxInfo> sandboxInfo_;

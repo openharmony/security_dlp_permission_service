@@ -675,7 +675,7 @@ static void FillSandboxInfoFromFileInfo(DlpSandboxInfo& sandboxInfo, const FileI
 static void FillSandboxInfoFromEnterpriseFileInfo(DlpSandboxInfo& sandboxInfo, const EnterpriseInfo& enterpriseInfo)
 {
     sandboxInfo.fileId = enterpriseInfo.fileId;
-    sandboxInfo.appId = enterpriseInfo.appId;
+    sandboxInfo.appIdentifier = enterpriseInfo.appIdentifier;
     sandboxInfo.classificationLabel = enterpriseInfo.classificationLabel;
     DLP_LOG_DEBUG(LABEL, "label=%s",
         enterpriseInfo.classificationLabel.c_str());
@@ -1913,7 +1913,7 @@ int32_t DlpPermissionService::QueryOpenedEnterpriseDlpFiles(const std::string& l
         return DLP_SERVICE_ERROR_VALUE_INVALID;
     }
 
-    appStateObserver_->GetSandboxInfosByClassficationLabel(label, appIdentifier, resultUris);
+    appStateObserver_->GetSandboxInfosByClassificationLabel(label, appIdentifier, resultUris);
     DLP_LOG_INFO(LABEL, "QueryOpenedEnterpriseDlpFiles label:%{private}s, count:%{public}zu", label.c_str(),
         resultUris.size());
     return DLP_OK;
@@ -1970,7 +1970,7 @@ int32_t DlpPermissionService::SetEnterpriseInfos(const std::string& uri, const s
     enterpriseInfo.classificationLabel = classificationLabel;
     enterpriseInfo.dlpFileAccess = dlpFileAccess;
     enterpriseInfo.fileId = fileId;
-    enterpriseInfo.appId = appIdentifier;
+    enterpriseInfo.appIdentifier = appIdentifier;
 
     bool res = appStateObserver_->AddUriAndEnterpriseInfo(uri, enterpriseInfo);
     if (!res) {
