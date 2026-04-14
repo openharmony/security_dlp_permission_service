@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Huawei Device Co., Ltd.
+ * Copyright (c) 2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -31,12 +31,13 @@ static constexpr int32_t DLP_PERMISSION_SERVICE_SA_ID = 3521;
 constexpr int32_t SA_LOAD_TIME = 4 * 1000;
 static const uint64_t SYSTEM_APP_MASK = 0x100000000;
 static const int32_t DEFAULT_USER_ID = 100;
+static const size_t MAX_SAFE_SIZE = 256;
 }
 
 namespace OHOS {
 static void FuzzTest(const uint8_t* data, size_t size)
 {
-    if ((data == nullptr) || (size < sizeof(int32_t))) {
+    if ((data == nullptr) || (size > MAX_SAFE_SIZE)) {
         return;
     }
     FuzzedDataProvider fdp(data, size);

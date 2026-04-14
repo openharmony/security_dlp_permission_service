@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Huawei Device Co., Ltd.
+ * Copyright (c) 2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -31,6 +31,7 @@ using namespace OHOS::Security::AccessToken;
 namespace {
 static const uint64_t SYSTEM_APP_MASK = 0x100000000;
 static const int32_t DEFAULT_USER_ID = 100;
+static const size_t MAX_SAFE_SIZE = 1024;
 } // namespace
 
 namespace OHOS {
@@ -39,14 +40,14 @@ constexpr uint32_t MIN_SIZE = sizeof(int32_t) * 3;
 
 static void FuzzTest(const uint8_t* data, size_t size)
 {
-    if ((data == nullptr) || (size < MIN_SIZE)) {
+    if ((data == nullptr) || (size < MIN_SIZE) || (size > MAX_SAFE_SIZE)) {
         return;
     }
     FuzzedDataProvider fdp(data, size);
-    std::string uri = fdp.ConsumeBytesAsString(size / 3);
-    std::string fileId = fdp.ConsumeBytesAsString(size / 3);
-    DLPFileAccess dlpFileAccess = static_cast<DLPFileAccess>(fdp.ConsumeIntegral<int32_t>());
-    std::string classificationLabel = fdp.ConsumeBytesAsString(size / 3);
+    std::string uri = fdp.ConsumeBytesAsString(size / 4);
+    std::string fileId = fdp.ConsumeBytesAsString(size / 4);
+    DLPFileAccess dlpFileAccess = static_cast<DLPFileAccess>(fdp.ConsumeIntegral<int32_t>() % 4);
+    std::string classificationLabel = fdp.ConsumeBytesAsString(size / 4);
     std::string appIdentifier = fdp.ConsumeRemainingBytesAsString();
 
     MessageParcel datas;
