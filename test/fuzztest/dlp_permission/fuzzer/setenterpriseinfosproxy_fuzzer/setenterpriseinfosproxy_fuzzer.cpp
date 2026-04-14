@@ -38,8 +38,8 @@ static const size_t MAX_SAFE_SIZE = 1024;
 namespace OHOS {
 static void FuzzTest(const uint8_t* data, size_t size)
 {
-    if ((data == nullptr) || (size < sizeof(int32_t) * MIN_INT32_COUNT)
-        || (size > MAX_SAFE_SIZE)) {
+    if ((data == nullptr) || (size < sizeof(int32_t) * MIN_INT32_COUNT) ||
+        (size > MAX_SAFE_SIZE)) {
         return;
     }
     FuzzedDataProvider fdp(data, size);
