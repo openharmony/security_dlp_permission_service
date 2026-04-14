@@ -612,14 +612,6 @@ static void ParseClientJson(PermissionPolicy& policy, unordered_json clientJson)
     if (clientJson.find(OPEN_MODE) != clientJson.end() && clientJson.at(OPEN_MODE).is_number()) {
         policy.perm_ = DLPFileAccess::READ_ONLY;
     }
-    if (clientJson.find(CUSTOM_PROPERTY) != clientJson.end()) {
-        if (clientJson.at(CUSTOM_PROPERTY).is_string()) {
-            clientJson.at(CUSTOM_PROPERTY).get_to(policy.customProperty_);
-        } else if (clientJson.at(CUSTOM_PROPERTY).is_object()) {
-            // New format: store object as JSON string
-            policy.customProperty_ = clientJson.at(CUSTOM_PROPERTY).dump();
-        }
-    }
     if (clientJson.find(WATERMARK_CONFIG) != clientJson.end() && clientJson.at(WATERMARK_CONFIG).is_boolean()) {
         clientJson.at(WATERMARK_CONFIG).get_to(policy.waterMarkConfig_);
         policy.canFindWaterMarkConfig_ = true;

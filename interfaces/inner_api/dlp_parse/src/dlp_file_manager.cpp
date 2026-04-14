@@ -285,20 +285,21 @@ static int32_t SetDlpParams(const std::shared_ptr<DlpFile>& filePtr, const DlpPr
         return result;
     }
 
+    bool ret = true;
     if (property.ownerAccountType == ENTERPRISE_ACCOUNT) {
         policy.appId = filePtr->GetAppId();
+        ret = DlpUtils::GetAppIdentifierFromToken(policy.appIdentifier);
+    }
+
+    if (!ret) {
+        DLP_LOG_ERROR(LABEL, "GetAppIdentifierFromToken failed, error code: %d.", ret);
+        return DLP_SERVICE_ERROR_PERMISSION_DENY;
     }
     policy.fileId = property.fileId;
     policy.allowedOpenCount_ = property.allowedOpenCount;
     policy.waterMarkConfig_ = property.waterMarkConfig;
     policy.countdown_ = property.countdown;
-    std::string appIdentifier = "";
-    bool ret = DlpUtils::GetAppIdentifierFromToken(appIdentifier);
-    if (!ret) {
-        DLP_LOG_ERROR(LABEL, "GetAppIdentifierFromToken failed, error code: %d.", ret);
-        return DLP_SERVICE_ERROR_PERMISSION_DENY;
-    }
-    policy.appIdentifier = appIdentifier;
+    
     filePtr->SetFileId(property.fileId);
     filePtr->SetAllowedOpenCount(property.allowedOpenCount);
     filePtr->SetOfflineAccess(property.offlineAccess, property.allowedOpenCount);
