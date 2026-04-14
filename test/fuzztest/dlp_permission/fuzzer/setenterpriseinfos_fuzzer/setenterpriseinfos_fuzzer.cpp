@@ -30,7 +30,7 @@ using namespace OHOS::Security::AccessToken;
 namespace {
 static const uint64_t SYSTEM_APP_MASK = 0x100000000;
 static const int32_t DEFAULT_USER_ID = 100;
-static const size_t MIN_INT32_COUNT = 3;
+static const size_t MIN_INT32_COUNT = 4;
 static const size_t MAX_SAFE_SIZE = 1024;
 } // namespace
 

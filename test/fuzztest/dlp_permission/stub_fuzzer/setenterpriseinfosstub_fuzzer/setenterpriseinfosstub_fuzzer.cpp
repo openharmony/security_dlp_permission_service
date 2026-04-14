@@ -36,7 +36,7 @@ static const size_t MAX_SAFE_SIZE = 1024;
 
 namespace OHOS {
 static constexpr int32_t SA_ID_DLP_PERMISSION_SERVICE = 3521;
-constexpr uint32_t MIN_SIZE = sizeof(int32_t) * 3;
+constexpr uint32_t MIN_SIZE = sizeof(int32_t) * 4;
 
 static void FuzzTest(const uint8_t* data, size_t size)
 {
