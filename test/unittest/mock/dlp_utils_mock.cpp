@@ -462,7 +462,7 @@ bool DlpUtils::GetAppIdentifierFromToken(std::string &appIdentifier)
     AppExecFwk::BundleInfo bundleInfo;
     int32_t ret = bundleMgrProxy->GetBundleInfoForSelf(static_cast<int32_t>(
         AppExecFwk::GetBundleInfoFlag::GET_BUNDLE_INFO_WITH_SIGNATURE_INFO), bundleInfo);
-    if (ret != DLP_OK || bundleInfo.appId.size() == 0) {
+    if (ret != DLP_OK || bundleInfo.signatureInfo.appIdentifier.size() == 0) {
         DLP_LOG_ERROR(LABEL, "GetBundleInfoForSelf failed %{public}d", ret);
         return false;
     }
