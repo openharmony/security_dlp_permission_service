@@ -1061,7 +1061,7 @@ HWTEST_F(AppStateObserverTest, AddUriAndEnterpriseInfo001, TestSize.Level1)
     EnterpriseInfo enterpriseInfo;
     enterpriseInfo.classificationLabel = "L1";
     enterpriseInfo.fileId = "f1";
-    enterpriseInfo.appId = "app1";
+    enterpriseInfo.appIdentifier = "app1";
 
     ASSERT_FALSE(observer.AddUriAndEnterpriseInfo("", enterpriseInfo));
     ASSERT_TRUE(observer.AddUriAndEnterpriseInfo("uri1", enterpriseInfo));
@@ -1070,7 +1070,7 @@ HWTEST_F(AppStateObserverTest, AddUriAndEnterpriseInfo001, TestSize.Level1)
     ASSERT_TRUE(observer.GetEnterpriseInfoByUri("uri1", queryInfo));
     ASSERT_EQ(queryInfo.classificationLabel, "L1");
     ASSERT_EQ(queryInfo.fileId, "f1");
-    ASSERT_EQ(queryInfo.appId, "app1");
+    ASSERT_EQ(queryInfo.appIdentifier, "app1");
     ASSERT_FALSE(observer.GetEnterpriseInfoByUri("uri_not_exist", queryInfo));
 }
 
@@ -1106,18 +1106,18 @@ HWTEST_F(AppStateObserverTest, EnterpriseUriMapQuery001, TestSize.Level1)
     // FileId mismatch should not update uid.
     observer.UpdateEnterpriseUidByUri("uri1", "f_not_match", 101);
     std::vector<std::string> resultUris;
-    observer.GetSandboxInfosByClassficationLabel("L1", "appA", resultUris);
+    observer.GetSandboxInfosByClassificationLabel("L1", "appA", resultUris);
     ASSERT_TRUE(resultUris.empty());
 
     observer.UpdateEnterpriseUidByUri("uri1", "f1", 101);
     observer.UpdateEnterpriseUidByUri("uri2", "f2", 102);
     observer.UpdateEnterpriseUidByUri("uri3", "f3", 103);
 
-    observer.GetSandboxInfosByClassficationLabel("L1", "appA", resultUris);
+    observer.GetSandboxInfosByClassificationLabel("L1", "appA", resultUris);
     ASSERT_EQ(resultUris.size(), 1);
     ASSERT_TRUE(VectorContainsUri(resultUris, "uri1"));
 
-    observer.GetSandboxInfosByClassficationLabel("", "appA", resultUris);
+    observer.GetSandboxInfosByClassificationLabel("", "appA", resultUris);
     ASSERT_EQ(resultUris.size(), 2);
     ASSERT_TRUE(VectorContainsUri(resultUris, "uri1"));
     ASSERT_TRUE(VectorContainsUri(resultUris, "uri2"));

@@ -408,7 +408,7 @@ HWTEST_F(DlpPermissionServiceTest, SetEnterpriseInfos001, TestSize.Level1)
     ASSERT_TRUE(dlpPermissionService_->appStateObserver_->GetEnterpriseInfoByUri(uri, enterpriseInfo));
     ASSERT_EQ(enterpriseInfo.fileId, fileId);
     ASSERT_EQ(enterpriseInfo.classificationLabel, label);
-    ASSERT_EQ(enterpriseInfo.appId, appIdentifier);
+    ASSERT_EQ(enterpriseInfo.appIdentifier, appIdentifier);
 
     std::string longLabel(MAX_CLASSIFICATION_LABEL_SIZE + 1, 'a');
     ret = dlpPermissionService_->SetEnterpriseInfos(
@@ -424,7 +424,7 @@ HWTEST_F(DlpPermissionServiceTest, SetEnterpriseInfos001, TestSize.Level1)
 
 /**
  * @tc.name: QueryOpenedEnterpriseDlpFiles001
- * @tc.desc: QueryOpenedEnterpriseDlpFiles filters by label and appId
+ * @tc.desc: QueryOpenedEnterpriseDlpFiles filters by label and appIdentifier
  * @tc.type: FUNC
  * @tc.require:
  */
