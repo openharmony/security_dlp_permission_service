@@ -1961,7 +1961,8 @@ int32_t DlpPermissionService::SetEnterpriseInfos(const std::string& uri, const s
 
     if (uri.empty() || uri.size() > MAX_URI_SIZE ||
         fileId.size() > MAX_FILEID_SIZE || appIdentifier.size() > MAX_APPID_SIZE ||
-        classificationLabel.size() > MAX_CLASSIFICATION_LABEL_SIZE) {
+        classificationLabel.size() > MAX_CLASSIFICATION_LABEL_SIZE ||
+        dlpFileAccess > DLPFileAccess::FULL_CONTROL || dlpFileAccess <= DLPFileAccess::NO_PERMISSION) {
         DLP_LOG_ERROR(LABEL, "input param is invalid");
         return DLP_SERVICE_ERROR_VALUE_INVALID;
     }

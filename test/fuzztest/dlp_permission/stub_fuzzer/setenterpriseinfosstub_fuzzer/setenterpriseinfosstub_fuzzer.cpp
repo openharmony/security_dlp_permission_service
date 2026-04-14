@@ -32,8 +32,8 @@ namespace {
 static const uint64_t SYSTEM_APP_MASK = 0x100000000;
 static const int32_t DEFAULT_USER_ID = 100;
 static const size_t MAX_SAFE_SIZE = 1024;
-static const int32_t MIN_DLPFileAccess = 0;
-static const int32_t MAX_DLPFileAccess = 3;
+static const int32_t MIN_DLPFILEACCESS = 0;
+static const int32_t MAX_DLPFILEACCESS = 3;
 } // namespace
 
 namespace OHOS {
@@ -49,7 +49,7 @@ static void FuzzTest(const uint8_t* data, size_t size)
     std::string uri = fdp.ConsumeBytesAsString(size / 4);
     std::string fileId = fdp.ConsumeBytesAsString(size / 4);
     DLPFileAccess dlpFileAccess = static_cast<DLPFileAccess>(
-        fdp.ConsumeIntegralInRange<int32_t>(MIN_DLPFileAccess, MAX_DLPFileAccess));
+        fdp.ConsumeIntegralInRange<int32_t>(MIN_DLPFILEACCESS, MAX_DLPFILEACCESS));
     std::string classificationLabel = fdp.ConsumeBytesAsString(size / 4);
     std::string appIdentifier = fdp.ConsumeRemainingBytesAsString();
 
