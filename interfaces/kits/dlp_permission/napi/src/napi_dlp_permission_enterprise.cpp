@@ -48,19 +48,20 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_
 static const std::string PERMISSION_ENTERPRISE_ACCESS_DLP_FILE = "ohos.permission.ENTERPRISE_ACCESS_DLP_FILE";
 }  // namespace
 
+static bool CheckEmulator()
+{
 #ifdef IS_EMULATOR
-#define CheckEmulator(env)                                              \
-    do {                                                                \
-        DlpNapiThrow(env, DLP_DEVICE_ERROR_CAPABILITY_NOT_SUPPORTED_EMULATOR);   \
-        return nullptr;                                                 \
-    } while (0)
-#else
-#define CheckEmulator(env)
+    return true;
 #endif
+    return false;
+}
 
 napi_value NapiDlpPermission::CloseOpenedEnterpriseDlpFiles(napi_env env, napi_callback_info cbInfo)
 {
-    CheckEmulator(env);
+    if (CheckEmulator()) {
+        DlpNapiThrow(env, DLP_DEVICE_ERROR_CAPABILITY_NOT_SUPPORTED_EMULATOR);
+        return nullptr;
+    }
     if (!CheckPermission(env, PERMISSION_ENTERPRISE_ACCESS_DLP_FILE)) {
         return nullptr;
     }
@@ -123,7 +124,10 @@ void NapiDlpPermission::CloseOpenedEnterpriseDlpFilesComplete(napi_env env, napi
 
 napi_value NapiDlpPermission::QueryOpenedEnterpriseDlpFiles(napi_env env, napi_callback_info cbInfo)
 {
-    CheckEmulator(env);
+    if (CheckEmulator()) {
+        DlpNapiThrow(env, DLP_DEVICE_ERROR_CAPABILITY_NOT_SUPPORTED_EMULATOR);
+        return nullptr;
+    }
     if (!CheckPermission(env, PERMISSION_ENTERPRISE_ACCESS_DLP_FILE)) {
         return nullptr;
     }

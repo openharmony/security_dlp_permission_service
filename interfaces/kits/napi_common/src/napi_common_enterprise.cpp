@@ -276,7 +276,8 @@ bool GetDlpFileQueryOptionsParamsImplement(
             }
             if (options.classificationLabel.size() > MAX_LABEL_SIZE) {
                 int32_t jsErrCode = ERR_JS_INVALID_PARAMETER;
-                NAPI_CALL_BASE(env, napi_throw(env, GenerateBusinessError(env, jsErrCode, GetJsErrMsg(jsErrCode))), false);
+                NAPI_CALL_BASE(env,
+                    napi_throw(env, GenerateBusinessError(env, jsErrCode, GetJsErrMsg(jsErrCode))), false);
                 DLP_LOG_ERROR(LABEL, "classificationLabel is too long.");
                 return false;
             }
