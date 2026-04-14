@@ -677,10 +677,16 @@ static int32_t SetEnterpriseInfoForDlpFile(int32_t dlpFileFd, std::shared_ptr<Dl
     if (filePtr->GetAccountType() == ENTERPRISE_ACCOUNT) {
         std::string uri;
         int32_t res = DlpUtils::GetFilePathByFd(dlpFileFd, uri);
-        if (res == DLP_OK) {
-            DLPFileAccess dlpFileAccess = filePtr->GetAuthPerm();
-            (void)DlpPermissionKit::SetEnterpriseInfos(uri, certParcel->fileId, dlpFileAccess,
-                policy.classificationLabel_, policy.appIdentifier);
+        if (res != DLP_OK) {
+            DLP_LOG_ERROR(LABEL, "GetFilePathByFd fail, errno=%d", res);
+            return res;
+        }
+        DLPFileAccess dlpFileAccess = filePtr->GetAuthPerm();
+        res = DlpPermissionKit::SetEnterpriseInfos(
+            uri, certParcel->fileId, dlpFileAccess, policy.classificationLabel_, policy.appIdentifier);
+        if (res != DLP_OK) {
+            DLP_LOG_ERROR(LABEL, "SetEnterpriseInfos fail, errno=%d", res);
+            return res;
         }
     }
     return DLP_OK;
