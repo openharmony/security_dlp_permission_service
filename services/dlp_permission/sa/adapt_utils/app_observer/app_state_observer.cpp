@@ -95,6 +95,7 @@ void AppStateObserver::UninstallDlpSandbox(DlpSandboxInfo& appInfo)
     if (appInfo.bindAppIndex > HIPREVIEW_SANDBOX_LOW_BOUND && appInfo.bundleName == HIPREVIEW_HIGH) {
         bundleMgrClient.UninstallSandboxApp(HIPREVIEW_LOW_BUNDLE_NAME, appInfo.bindAppIndex, appInfo.userId);
     }
+    EraseEnterpriseInfoByUid({appInfo});
     RetentionFileManager::GetInstance().DelSandboxInfo(appInfo.tokenId);
 }
 
@@ -265,6 +266,7 @@ void AppStateObserver::EraseSandboxInfo(int32_t uid)
         std::string path = fileUri.GetRealPath();
         EraseFileInfoByUri(path);
         DecMaskInfoCnt(iter->second);
+        EraseEnterpriseInfoByUid({iter->second});
         DLP_LOG_INFO(LABEL, "sandbox app %{public}s%{public}d info delete success, uid: %{public}d",
             iter->second.bundleName.c_str(), iter->second.appIndex, iter->second.uid);
         sandboxInfo_.erase(iter);
@@ -496,7 +498,7 @@ void AppStateObserver::GetOpeningEnterpriseReadOnlySandbox(const InputSandboxInf
         if (appInfo.userId == inputSandboxInfo.userId &&
             appInfo.bundleName == inputSandboxInfo.bundleName &&
             appInfo.dlpFileAccess == DLPFileAccess::READ_ONLY &&
-            !appInfo.isReadOnce &&
+            !appInfo.isReadOnce && appInfo.appIdentifier == enterpriseInfo.appIdentifier &&
             appInfo.classificationLabel == enterpriseInfo.classificationLabel) {
             dlpsandboxInfo.appIndex = appInfo.appIndex;
             dlpsandboxInfo.bindAppIndex = appInfo.bindAppIndex;
