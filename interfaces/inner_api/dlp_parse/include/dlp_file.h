@@ -218,6 +218,16 @@ public:
         return accountType_;
     };
 
+    void SetEventId(std::string eventId)
+    {
+        eventId_ = eventId;
+    };
+
+    std::string GetEventId()
+    {
+        return eventId_;
+    };
+
     std::string GetAppId()
     {
         return appId_;
@@ -317,6 +327,7 @@ private:
     bool waterMarkConfig_;
     int32_t countdown_;
     std::string nickNameMask_;
+    std::string eventId_;
 };
 }  // namespace DlpPermission
 }  // namespace Security

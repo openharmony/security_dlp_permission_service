@@ -15,6 +15,7 @@
 
 #include "dlp_raw_file.h"
 
+#include <chrono>
 #include <cstdlib>
 #include <fcntl.h>
 #include <string>
@@ -50,6 +51,8 @@ const int32_t FILEID_SIZE_OPPOSITE = -46;
 const int32_t COUNTDOWN_OPPOSITE = -62;
 const int32_t NICK_NAME_MASK_OPPOSITE = -102;
 const int32_t NICK_NAME_MASK_SIZE = 40;
+const int32_t ENTERPRISE_INFO_SIZE = 12;
+const int32_t EVENTID_MAX_SIZE = 20;
 } // namespace
 
 static int32_t GetFileSize(int32_t fd, uint64_t& fileLen);
@@ -226,7 +229,33 @@ int32_t DlpRawFile::ParseRawDlpHeader(uint64_t fileLen, uint32_t dlpHeaderSize)
     return DLP_OK;
 }
 
-int32_t DlpRawFile::ParseEnterpriseFileId(uint64_t fileLen, uint32_t fileIdSize)
+int32_t DlpRawFile::ParseEnterpriseEventId()
+{
+    uint32_t idSize = 0;
+    if (read(dlpFd_, &idSize, sizeof(uint32_t)) != sizeof(uint32_t) || idSize > EVENTID_MAX_SIZE) {
+        DLP_LOG_ERROR(LABEL, "can not read eventId size , %{public}s", strerror(errno));
+        return DLP_PARSE_ERROR_FD_ERROR;
+    }
+    uint8_t *buff = new (std::nothrow) uint8_t[idSize + 1];
+    if (buff == nullptr) {
+        DLP_LOG_ERROR(LABEL, "buff is null");
+        return DLP_PARSE_ERROR_FD_ERROR;
+    }
+    (void)memset_s(buff, idSize + 1, 0, idSize + 1);
+    if (read(dlpFd_, buff, idSize) != idSize) {
+        delete []buff;
+        DLP_LOG_ERROR(LABEL, "can not read dlp file eventId, %{public}s", strerror(errno));
+        return DLP_PARSE_ERROR_FD_ERROR;
+    }
+    char *char_buffer = reinterpret_cast<char *>(buff);
+    std::string str(char_buffer, idSize);
+    delete []buff;
+    buff = nullptr;
+    eventId_ = str;
+    return DLP_OK;
+}
+
+int32_t DlpRawFile::ParseEnterpriseFileIdInner(uint32_t fileIdSize)
 {
     uint32_t idSize = 0;
     if (read(dlpFd_, &idSize, sizeof(uint32_t)) != sizeof(uint32_t) || idSize > fileIdSize) {
@@ -249,6 +278,15 @@ int32_t DlpRawFile::ParseEnterpriseFileId(uint64_t fileLen, uint32_t fileIdSize)
     delete []buff;
     buff = nullptr;
     fileId_ = str;
+    return DLP_OK;
+}
+
+int32_t DlpRawFile::ParseEnterpriseFileId(uint64_t fileLen, uint32_t fileIdSize)
+{
+    if (ParseEnterpriseFileIdInner(fileIdSize) != DLP_OK || ParseEnterpriseEventId() != DLP_OK) {
+        return DLP_PARSE_ERROR_FD_ERROR;
+    }
+
     offlineAccess_ = head_.offlineAccess;
     if (head_.txtSize == 0) {
         if (fileLen < head_.hmacOffset + head_.certSize) {
@@ -750,6 +788,15 @@ int32_t DlpRawFile::DoWriteHeaderAndContactAccount(int32_t inPlainFileFd, uint64
             DLP_LOG_ERROR(LABEL, "write fileId_ failed, %{public}s", strerror(errno));
             return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
         }
+        idSize = eventId_.size();
+        if (write(dlpFd_, &idSize, sizeof(uint32_t)) != sizeof(uint32_t)) {
+            DLP_LOG_ERROR(LABEL, "write eventId_ size failed, %{public}s", strerror(errno));
+            return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
+        }
+        if (write(dlpFd_, eventId_.c_str(), idSize) != static_cast<int32_t>(idSize)) {
+            DLP_LOG_ERROR(LABEL, "write eventId_ failed, %{public}s", strerror(errno));
+            return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
+        }
     } else {
         if (write(dlpFd_, contactAccount_.c_str(), contactAccount_.size()) !=
             static_cast<int32_t>(contactAccount_.size())) {
@@ -769,8 +816,11 @@ int32_t DlpRawFile::GenFileInRaw(int32_t inPlainFileFd)
         return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
     }
     if (accountType_ == ENTERPRISE_ACCOUNT) {
+        eventId_ = std::to_string(std::chrono::duration_cast<std::chrono::milliseconds>
+            (std::chrono::system_clock::now().time_since_epoch()).count());
         head_.contactAccountSize = 0;
-        head_.contactAccountOffset = FILE_HEAD + sizeof(DlpHeader) + appId_.size() + fileId_.size() + FILE_HEAD;
+        head_.contactAccountOffset = FILE_HEAD + sizeof(DlpHeader) + appId_.size() +
+            fileId_.size() + eventId_.size() + ENTERPRISE_INFO_SIZE;
         head_.txtOffset = head_.contactAccountOffset + head_.contactAccountSize;
     }
     head_.txtSize = static_cast<uint64_t>(fileLen);
@@ -806,8 +856,8 @@ int32_t DlpRawFile::GenFileInRaw(int32_t inPlainFileFd)
         DLP_LOG_ERROR(LABEL, "write dlp dlpHeaderSize failed, %{public}s", strerror(errno));
         return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
     }
-    uint32_t dlpHeaderSize = accountType_ == ENTERPRISE_ACCOUNT ?
-        (sizeof(DlpHeader) + appId_.size() + fileId_.size() + FILE_HEAD) : sizeof(struct DlpHeader);
+    uint32_t dlpHeaderSize = accountType_ == ENTERPRISE_ACCOUNT ? (sizeof(DlpHeader) + appId_.size() + fileId_.size()
+        + eventId_.size() + ENTERPRISE_INFO_SIZE) : sizeof(struct DlpHeader);
     if (write(dlpFd_, &dlpHeaderSize, sizeof(uint32_t)) != sizeof(uint32_t)) {
         DLP_LOG_ERROR(LABEL, "write dlp dlpHeaderSize failed, %{public}s", strerror(errno));
         return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
