@@ -1730,6 +1730,7 @@ HWTEST_F(AppStateObserverTest, VerifyGetOpeningEnterpriseReadOnlySandboxMatch, T
     InputSandboxInfo inputSandboxInfo = MakeInputSandboxInfo(
         "com.example.enterprise", 100, "uri://enterprise", "/data/test");
     EnterpriseInfo enterpriseInfo = MakeEnterpriseInfo("L1", "file_1", "app_1");
+    enterpriseInfo.appIdentifier = "test";
     DlpSandboxInfo dlpSandboxInfo;
 
     DlpSandboxInfo matchInfo = MakeEnterpriseSandboxInfo({
@@ -1744,6 +1745,7 @@ HWTEST_F(AppStateObserverTest, VerifyGetOpeningEnterpriseReadOnlySandboxMatch, T
         DLPFileAccess::READ_ONLY,
         false,
     });
+    matchInfo.appIdentifier = "test";
     observer.AddSandboxInfo(matchInfo);
     dlpSandboxInfo = {};
     observer.GetOpeningEnterpriseReadOnlySandbox(inputSandboxInfo, enterpriseInfo, dlpSandboxInfo);
