@@ -104,7 +104,6 @@ public:
     int32_t CloseOpenedEnterpriseDlpFiles(const std::string& label) override;
     int32_t SetEnterpriseInfos(const std::string& uri, const std::string& fileId,
         DLPFileAccess dlpFileAccess, const std::string& classificationLabel, const std::string& appIdentifier) override;
-    int32_t RemoveOpenedEnterpriseInfo(const std::string& fileId) override;
     void OnAddSystemAbility(int32_t systemAbilityId, const std::string &deviceId) override;
 
 private:
