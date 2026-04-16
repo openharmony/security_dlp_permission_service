@@ -1952,25 +1952,6 @@ int32_t DlpPermissionService::CloseOpenedEnterpriseDlpFiles(const std::string& l
     return DLP_OK;
 }
 
-int32_t DlpPermissionService::RemoveOpenedEnterpriseInfo(const std::string& fileId)
-{
-    appStateObserver_->PostDelayUnloadTask(CurrentTaskState::SHORT_TASK);
-    DLP_LOG_ERROR(LABEL, "----lms enter remove fileId %{public}s", fileId.c_str());
-    if (!PermissionManagerAdapter::CheckPermission(PERMISSION_ACCESS_DLP_FILE) &&
-        !PermissionManagerAdapter::CheckPermission(PERMISSION_ENTERPRISE_ACCESS_DLP_FILE)) {
-        return DLP_SERVICE_ERROR_PERMISSION_DENY;
-    }
-
-    if (fileId.size() > MAX_FILEID_SIZE) {
-        DLP_LOG_ERROR(LABEL, "fileId is invalid");
-        return DLP_SERVICE_ERROR_VALUE_INVALID;
-    }
-
-    appStateObserver_->EraseEnterpriseInfoByFileId(fileId);
-    DLP_LOG_INFO(LABEL, "-------lms remove finish");
-    return DLP_OK;
-}
-
 int32_t DlpPermissionService::SetEnterpriseInfos(const std::string& uri, const std::string& fileId,
     DLPFileAccess dlpFileAccess, const std::string& classificationLabel, const std::string& appIdentifier)
 {
