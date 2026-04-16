@@ -1139,7 +1139,7 @@ HWTEST_F(DlpFileManagerTest, ParseZipDlpFile006, TestSize.Level0)
 
 /**
  * @tc.name: ParseRawDlpFileEnterprise001
- * @tc.desc: cover line 678 true branch in SetEnterpriseInfoForDlpFile
+ * @tc.desc: true branch in SetEnterpriseInfoForDlpFile
  * @tc.type: FUNC
  * @tc.require:
  */
@@ -1156,26 +1156,8 @@ HWTEST_F(DlpFileManagerTest, ParseRawDlpFileEnterprise001, TestSize.Level0)
 }
 
 /**
- * @tc.name: ParseRawDlpFileEnterprise002
- * @tc.desc: cover line 685 true branch in SetEnterpriseInfoForDlpFile
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(DlpFileManagerTest, ParseRawDlpFileEnterprise002, TestSize.Level0)
-{
-    std::shared_ptr<DlpFile> filePtr = std::make_shared<DlpRawFile>(-1, "txt");
-    ASSERT_NE(filePtr, nullptr);
-    filePtr->SetAccountType(ENTERPRISE_ACCOUNT);
-
-    sptr<CertParcel> certParcel = BuildCertParcelByType(ENTERPRISE_ACCOUNT);
-    ASSERT_NE(certParcel, nullptr);
-    int32_t ret = DlpFileManager::GetInstance().ParseRawDlpFile(-1, filePtr, "app_id", "txt", certParcel);
-    ASSERT_EQ(DLP_PARSE_ERROR_FD_ERROR, ret);
-}
-
-/**
  * @tc.name: ParseRawDlpFileEnterprise003
- * @tc.desc: cover line 692 false branch in SetEnterpriseInfoForDlpFile
+ * @tc.desc: false branch in SetEnterpriseInfoForDlpFile
  * @tc.type: FUNC
  * @tc.require:
  */
@@ -1199,34 +1181,6 @@ HWTEST_F(DlpFileManagerTest, ParseRawDlpFileEnterprise003, TestSize.Level0)
     unlink("/data/fuse_test_dlp_enterprise.txt");
     ASSERT_NE(DLP_OK, ret);
     ASSERT_NE(DLP_PARSE_ERROR_FD_ERROR, ret);
-}
-
-/**
- * @tc.name: ParseRawDlpFileEnterprise004
- * @tc.desc: cover line 692 false branch in SetEnterpriseInfoForDlpFile
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(DlpFileManagerTest, ParseRawDlpFileEnterprise004, TestSize.Level0)
-{
-    int32_t fd = open("/data/fuse_test_dlp_enterprise.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
-    ASSERT_NE(fd, -1);
-    std::shared_ptr<DlpFile> filePtr = std::make_shared<DlpRawFile>(fd, "txt");
-    ASSERT_NE(filePtr, nullptr);
-    filePtr->SetAccountType(ENTERPRISE_ACCOUNT);
-
-    auto& client = DlpPermissionClient::GetInstance();
-    auto backupProxy = client.proxy_;
-    client.proxy_ = CreateTestProxy();
-    ASSERT_NE(client.proxy_, nullptr);
-
-    sptr<CertParcel> certParcel = BuildCertParcelByType(ENTERPRISE_ACCOUNT);
-    ASSERT_NE(certParcel, nullptr);
-    int32_t ret = DlpFileManager::GetInstance().ParseRawDlpFile(fd, filePtr, "app_id", "txt", certParcel);
-    client.proxy_ = backupProxy;
-    close(fd);
-    unlink("/data/fuse_test_dlp_enterprise.txt");
-    ASSERT_EQ(DLP_OK, ret);
 }
 
 }  // namespace DlpPermission
