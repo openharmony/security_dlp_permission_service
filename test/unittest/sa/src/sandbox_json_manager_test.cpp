@@ -419,7 +419,7 @@ HWTEST_F(SandboxJsonManagerTest, RemoveRetentionInfoByUserIdBranches001, TestSiz
     info.bundleName = "com.ohos.dlpmanager";
     info.appIndex = 0;
     info.userId = 100;
-    info.tokenId = AccessToken::AccessTokenKit::GetHapTokenID(100, info.bundleName, info.appIndex);
+    info.tokenId = OHOS::Security::AccessToken::AccessTokenKit::GetHapTokenID(100, info.bundleName, info.appIndex);
     manager.infoVec_.push_back(info);
     ASSERT_FALSE(manager.CheckReInstall(info, 100));
 
