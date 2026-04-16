@@ -86,6 +86,7 @@ public:
     int32_t CloseOpenedEnterpriseDlpFiles(const std::string& label);
     int32_t SetEnterpriseInfos(const std::string& uri, const std::string& fileId,
         DLPFileAccess dlpFileAccess, const std::string& classificationLabel, const std::string& appIdentifier);
+    int32_t RemoveOpenedEnterpriseInfo(const std::string& fileId);
 
 private:
     DlpPermissionClient();
