@@ -674,8 +674,14 @@ static int32_t SetEnterpriseInfoForDlpFile(int32_t dlpFileFd, std::shared_ptr<Dl
     const PermissionPolicy& policy, sptr<CertParcel>& certParcel)
 {
     if (filePtr->GetAccountType() == ENTERPRISE_ACCOUNT) {
+        int32_t res = filePtr->SetPolicy(policy);
+        if (res != DLP_OK) {
+            DLP_LOG_ERROR(LABEL, "SetPolicy fail, errno=%{public}d", res);
+            return res;
+        }
+        filePtr->SetFileId(policy.fileId);
         std::string uri;
-        int32_t res = DlpUtils::GetFilePathByFd(dlpFileFd, uri);
+        res = DlpUtils::GetFilePathByFd(dlpFileFd, uri);
         if (res != DLP_OK) {
             DLP_LOG_ERROR(LABEL, "GetFilePathByFd fail, errno=%d", res);
             return res;
