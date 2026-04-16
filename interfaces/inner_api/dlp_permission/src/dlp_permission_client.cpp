@@ -835,6 +835,20 @@ int32_t DlpPermissionClient::SetEnterpriseInfos(const std::string& uri, const st
     }
     return proxy->SetEnterpriseInfos(uri, fileId, dlpFileAccess, classificationLabel, appIdentifier);
 }
+
+int32_t DlpPermissionClient::RemoveOpenedEnterpriseInfo(const std::string& fileId)
+{
+    DLP_LOG_ERROR(LABEL, "----lms enter client remove fileId %{public}s", fileId.c_str());
+    if (fileId.empty()) {
+        return DLP_SERVICE_ERROR_VALUE_INVALID;
+    }
+    auto proxy = GetProxy(false);
+    if (proxy == nullptr) {
+        DLP_LOG_ERROR(LABEL, "Proxy is null");
+        return DLP_SERVICE_ERROR_SERVICE_NOT_EXIST;
+    }
+    return proxy->RemoveOpenedEnterpriseInfo(fileId);
+}
 }  // namespace DlpPermission
 }  // namespace Security
 }  // namespace OHOS

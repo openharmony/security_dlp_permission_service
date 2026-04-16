@@ -88,6 +88,7 @@ public:
     void UpdateEnterpriseUidByUri(const std::string& uri, const std::string& fileId, int32_t uid);
     void EraseEnterpriseInfoByUid(const std::vector<DlpSandboxInfo>& appInfos);
     void EraseEnterpriseInfoByUri(const std::string& uri, const std::string& fileId);
+    void EraseEnterpriseInfoByFileId(const std::string& fileId);
     std::mutex& GetTerminalMutex();
     void PostDelayUnloadTask(CurrentTaskState newTaskState);
     void DecMaskInfoCnt(const DlpSandboxInfo& appInfo);

@@ -324,6 +324,11 @@ int32_t DlpPermissionKit::SetEnterpriseInfos(const std::string& uri, const std::
         classificationLabel, appIdentifier);
 }
 
+int32_t DlpPermissionKit::RemoveOpenedEnterpriseInfo(const std::string& fileId)
+{
+    return DlpPermissionClient::GetInstance().RemoveOpenedEnterpriseInfo(fileId);
+}
+
 }  // namespace DlpPermission
 }  // namespace Security
 }  // namespace OHOS

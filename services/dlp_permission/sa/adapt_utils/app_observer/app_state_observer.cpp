@@ -830,6 +830,17 @@ void AppStateObserver::EraseEnterpriseInfoByUri(const std::string& uri, const st
     }
 }
 
+void AppStateObserver::EraseEnterpriseInfoByFileId(const std::string& fileId)
+{
+    std::lock_guard<std::mutex> lock(enterpriseUriMapLock_);
+    for (auto mapIter = enterpriseUriMap_.begin(); mapIter != enterpriseUriMap_.end();) {
+        if (mapIter->second.fileId == fileId) {
+            enterpriseUriMap_.erase(mapIter);
+            break;
+        };
+    }
+}
+
 void AppStateObserver::GetDelSandboxInfo(std::unordered_map<int32_t, DlpSandboxInfo>& sandboxInfo)
 {
     std::lock_guard<std::mutex> lock(sandboxInfoLock_);
