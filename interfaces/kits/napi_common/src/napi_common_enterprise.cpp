@@ -192,6 +192,11 @@ bool GetGenerateDlpFileForEnterpriseParam(
         return false;
     }
 
+    if (asyncContext.customProperty.options.classificationLabel.size() > MAX_LABEL_SIZE) {
+        DLP_LOG_ERROR(LABEL, "js get classificationLabel too long");
+        DlpNapiThrow(env, ERR_JS_INVALID_PARAMETER, "Invalid parameter value.");
+        return false;
+    }
     return true;
 }
 
@@ -208,10 +213,6 @@ bool GetCustomProperty(napi_env env, napi_value jsObject, CustomProperty& custom
         if (!GetDlpFileQueryOptions(env, optionsValue, customProperty.options)) {
             DLP_LOG_WARN(LABEL, "js get option fail, use default");
         }
-    }
-    if (customProperty.options.classificationLabel.size() > MAX_LABEL_SIZE) {
-        DLP_LOG_ERROR(LABEL, "js get classificationLabel fail");
-        return false;
     }
     return true;
 }
