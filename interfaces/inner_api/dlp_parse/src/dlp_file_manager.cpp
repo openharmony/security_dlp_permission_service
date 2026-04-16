@@ -20,6 +20,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <string>
+#include "nlohmann/json.hpp"
 
 #include "dlp_crypt.h"
 #include "dlp_file.h"
@@ -33,6 +34,11 @@
 #include "securec.h"
 #include "dlp_utils.h"
 
+#ifdef SECURITY_GUARD_ENABLE
+#include "event_info.h"
+#include "sg_collect_client.h"
+#endif
+
 namespace OHOS {
 namespace Security {
 namespace DlpPermission {
@@ -45,8 +51,11 @@ const std::string SUPPORT_PHOTO_DLP = "support_photo_dlp";
 const std::string SUPPORT_VIDEO_DLP = "support_video_dlp";
 const std::string SUPPORT_AUDIO_DLP = "support_audio_dlp";
 const std::string SUPPORT_DOCUMENT_DLP = "support_document_dlp";
-
 static const std::string DEFAULT_STRING = "";
+#ifdef SECURITY_GUARD_ENABLE
+static const int64_t EVENTID = 0x00F000006;
+static const std::string SGVERSION = "1";
+#endif
 }
 
 int32_t DlpFileManager::AddDlpFileNode(const std::shared_ptr<DlpFile>& filePtr)
@@ -832,6 +841,43 @@ int32_t DlpFileManager::OpenZipDlpFile(int32_t dlpFileFd, std::shared_ptr<DlpFil
     return ParseZipDlpFileAndAddNode(filePtr, appId, dlpFileFd);
 }
 
+static int32_t ProcessReport(std::shared_ptr<DlpFile> &filePtr, int32_t ret)
+{
+    int32_t res = DLP_OK;
+#ifdef SECURITY_GUARD_ENABLE
+    std::string udid;
+    if (!DlpUtils::GetUdid(udid)) {
+        DLP_LOG_ERROR(LABEL, "GetUdid fail");
+        udid = "UNKNOW";
+    }
+    int64_t timeStamp = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now()
+        .time_since_epoch()).count();
+    
+    nlohmann::json reportJson;
+    std::string fileId;
+    filePtr->GetFileId(fileId);
+    reportJson["operation"] =  "DLP_FILE_OPEN";
+    reportJson["status"] =  ret == DLP_OK ? "0" : "1";
+    reportJson["deviceUDID"] =  udid;
+    reportJson["fileIdentification"] =  fileId;
+    reportJson["lastOperationId"] =  filePtr->GetEventId();
+    reportJson["currOperationId"] =  "";
+    reportJson["happenTime"] =  timeStamp;
+
+    std::string context = reportJson.dump();
+    std::shared_ptr<SecurityGuard::EventInfo> eventInfo =
+        std::make_shared<SecurityGuard::EventInfo>(EVENTID, SGVERSION, context);
+    
+    res = OHOS::Security::SecurityGuard::NativeDataCollectKit::ReportSecurityInfo(eventInfo);
+    if (res == DLP_OK) {
+        DLP_LOG_INFO(LABEL, "ReportSecurityInfo success");
+    } else {
+        DLP_LOG_ERROR(LABEL, "ReportSecurityInfo, fail: %{public}d", res);
+    }
+#endif
+    return res;
+}
+
 int32_t DlpFileManager::OpenDlpFile(int32_t dlpFileFd, std::shared_ptr<DlpFile>& filePtr, const std::string& workDir,
                                     const std::string& appId)
 {
@@ -871,7 +917,9 @@ int32_t DlpFileManager::OpenDlpFile(int32_t dlpFileFd, std::shared_ptr<DlpFile>&
     if (IsZipFile(dlpFileFd)) {
         return OpenZipDlpFile(dlpFileFd, filePtr, workDir, appId, realType);
     } else {
-        return OpenRawDlpFile(dlpFileFd, filePtr, appId, realType);
+        int32_t ret = OpenRawDlpFile(dlpFileFd, filePtr, appId, realType);
+        filePtr->GetAccountType() == ENTERPRISE_ACCOUNT ? ProcessReport(filePtr, ret) : ret;
+        return ret;
     }
 }
 

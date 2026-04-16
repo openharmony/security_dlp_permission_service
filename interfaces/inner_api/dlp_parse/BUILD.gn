@@ -71,6 +71,7 @@ ohos_shared_library("libdlpparse") {
     "c_utils:utils",
     "hilog:libhilog",
     "hitrace:hitrace_meter",
+    "init:libbegetutil",
     "ipc:ipc_core",
     "json:nlohmann_json_static",
     "openssl:libcrypto_shared",
@@ -138,6 +139,7 @@ ohos_shared_library("libdlpparse_inner") {
     "c_utils:utils",
     "hilog:libhilog",
     "hitrace:hitrace_meter",
+    "init:libbegetutil",
     "ipc:ipc_core",
     "json:nlohmann_json_static",
     "openssl:libcrypto_shared",
@@ -147,6 +149,14 @@ ohos_shared_library("libdlpparse_inner") {
   ]
 
   cflags_cc = [ "-DHILOG_ENABLE" ]
+
+  if (security_guard_flag) {
+    external_deps += [
+      "security_guard:libsg_collect_sdk",
+    ]
+    cflags_cc += [ "-DSECURITY_GUARD_ENABLE" ]
+  }
+  
   public_configs = [ ":dlpparse_public_config" ]
   configs = [
     "${dlp_root_dir}/config:coverage_flags",
