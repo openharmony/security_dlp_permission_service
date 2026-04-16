@@ -18,14 +18,18 @@
 #include <cstdio>
 #include <cstring>
 #include <fcntl.h>
+#include <nlohmann/json.hpp>
+#include "iremote_stub.h"
 #include "c_mock_common.h"
 #define private public
 #include "dlp_file_manager.h"
+#include "dlp_permission_client.h"
 #undef private
 #include "dlp_raw_file.h"
 #include "dlp_zip_file.h"
 #include "dlp_permission.h"
 #include "dlp_permission_kit.h"
+#include "dlp_permission_service_proxy.h"
 #include "dlp_permission_log.h"
 #include "accesstoken_kit.h"
 #include "nativetoken_kit.h"
@@ -41,10 +45,16 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_
 static int g_fdDlp = -1;
 static const std::string DLP_TEST_DIR = "/data/dlpTest/";
 static constexpr uint32_t WAIT_FOR_ACCESS_TOKEN_START = 500;
+using ordered_json = nlohmann::ordered_json;
 #define AC_TKN_SVC "accesstoken_service"
 #define SVC_CTRL "service_control"
 static constexpr char PID_OF_ACCESS_TOKEN_SERVICE[] = "pidof " AC_TKN_SVC;
 uint64_t g_selfTokenId = 0;
+
+class DlpTestRemoteObj : public IRemoteBroker {
+public:
+    DECLARE_INTERFACE_DESCRIPTOR(u"ohos.dlp.test");
+};
 }
 
 static void RestartAccessTokenService()
@@ -96,6 +106,34 @@ static sptr<CertParcel> BuildCertParcelByType(DlpAccountType type)
     }
     certParcel->cert = cert;
     certParcel->fileId = "file_id_case";
+    return certParcel;
+}
+
+static sptr<IDlpPermissionService> CreateTestProxy()
+{
+    sptr<DlpTestRemoteObj> remote = new (std::nothrow) IRemoteStub<DlpTestRemoteObj>();
+    if (remote == nullptr) {
+        return nullptr;
+    }
+    return new (std::nothrow) DlpPermissionServiceProxy(remote->AsObject());
+}
+
+static sptr<CertParcel> BuildInvalidEnterpriseCertParcel()
+{
+    auto certParcel = BuildCertParcelByType(ENTERPRISE_ACCOUNT);
+    if (certParcel == nullptr || certParcel->cert.empty()) {
+        return nullptr;
+    }
+    ordered_json jsonObj = ordered_json::parse(
+        std::string(certParcel->cert.begin(), certParcel->cert.end()), nullptr, false);
+    if (jsonObj.is_discarded() || !jsonObj.is_object()) {
+        return nullptr;
+    }
+    jsonObj["account"] = ordered_json::object();
+    jsonObj["account"][""]["accountType"] = static_cast<uint32_t>(CLOUD_ACCOUNT);
+    jsonObj["account"][""]["permExpiryTime"] = 0;
+    std::string certStr = jsonObj.dump();
+    certParcel->cert = std::vector<uint8_t>(certStr.begin(), certStr.end());
     return certParcel;
 }
 
@@ -1097,6 +1135,98 @@ HWTEST_F(DlpFileManagerTest, ParseZipDlpFile006, TestSize.Level0)
     int32_t ret = DlpFileManager::GetInstance().ParseZipDlpFile(filePtr, "app_id", 0, certParcel);
     ASSERT_NE(DLP_OK, ret);
     ASSERT_NE(DLP_PARSE_ERROR_FD_ERROR, ret);
+}
+
+/**
+ * @tc.name: ParseRawDlpFileEnterprise001
+ * @tc.desc: cover line 678 true branch in SetEnterpriseInfoForDlpFile
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpFileManagerTest, ParseRawDlpFileEnterprise001, TestSize.Level0)
+{
+    std::shared_ptr<DlpFile> filePtr = std::make_shared<DlpRawFile>(-1, "txt");
+    ASSERT_NE(filePtr, nullptr);
+    filePtr->SetAccountType(ENTERPRISE_ACCOUNT);
+
+    sptr<CertParcel> certParcel = BuildInvalidEnterpriseCertParcel();
+    ASSERT_NE(certParcel, nullptr);
+    int32_t ret = DlpFileManager::GetInstance().ParseRawDlpFile(-1, filePtr, "app_id", "txt", certParcel);
+    ASSERT_EQ(DLP_PARSE_ERROR_VALUE_INVALID, ret);
+}
+
+/**
+ * @tc.name: ParseRawDlpFileEnterprise002
+ * @tc.desc: cover line 685 true branch in SetEnterpriseInfoForDlpFile
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpFileManagerTest, ParseRawDlpFileEnterprise002, TestSize.Level0)
+{
+    std::shared_ptr<DlpFile> filePtr = std::make_shared<DlpRawFile>(-1, "txt");
+    ASSERT_NE(filePtr, nullptr);
+    filePtr->SetAccountType(ENTERPRISE_ACCOUNT);
+
+    sptr<CertParcel> certParcel = BuildCertParcelByType(ENTERPRISE_ACCOUNT);
+    ASSERT_NE(certParcel, nullptr);
+    int32_t ret = DlpFileManager::GetInstance().ParseRawDlpFile(-1, filePtr, "app_id", "txt", certParcel);
+    ASSERT_EQ(DLP_PARSE_ERROR_FD_ERROR, ret);
+}
+
+/**
+ * @tc.name: ParseRawDlpFileEnterprise003
+ * @tc.desc: cover line 692 false branch in SetEnterpriseInfoForDlpFile
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpFileManagerTest, ParseRawDlpFileEnterprise003, TestSize.Level0)
+{
+    int32_t fd = open("/data/fuse_test_dlp_enterprise.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
+    ASSERT_NE(fd, -1);
+    std::shared_ptr<DlpFile> filePtr = std::make_shared<DlpRawFile>(fd, "txt");
+    ASSERT_NE(filePtr, nullptr);
+    filePtr->SetAccountType(ENTERPRISE_ACCOUNT);
+
+    auto& client = DlpPermissionClient::GetInstance();
+    auto backupProxy = client.proxy_;
+    client.proxy_ = nullptr;
+
+    sptr<CertParcel> certParcel = BuildCertParcelByType(ENTERPRISE_ACCOUNT);
+    ASSERT_NE(certParcel, nullptr);
+    int32_t ret = DlpFileManager::GetInstance().ParseRawDlpFile(fd, filePtr, "app_id", "txt", certParcel);
+    client.proxy_ = backupProxy;
+    close(fd);
+    unlink("/data/fuse_test_dlp_enterprise.txt");
+    ASSERT_NE(DLP_OK, ret);
+    ASSERT_NE(DLP_PARSE_ERROR_FD_ERROR, ret);
+}
+
+/**
+ * @tc.name: ParseRawDlpFileEnterprise004
+ * @tc.desc: cover line 692 false branch in SetEnterpriseInfoForDlpFile
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpFileManagerTest, ParseRawDlpFileEnterprise004, TestSize.Level0)
+{
+    int32_t fd = open("/data/fuse_test_dlp_enterprise.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
+    ASSERT_NE(fd, -1);
+    std::shared_ptr<DlpFile> filePtr = std::make_shared<DlpRawFile>(fd, "txt");
+    ASSERT_NE(filePtr, nullptr);
+    filePtr->SetAccountType(ENTERPRISE_ACCOUNT);
+
+    auto& client = DlpPermissionClient::GetInstance();
+    auto backupProxy = client.proxy_;
+    client.proxy_ = CreateTestProxy();
+    ASSERT_NE(client.proxy_, nullptr);
+
+    sptr<CertParcel> certParcel = BuildCertParcelByType(ENTERPRISE_ACCOUNT);
+    ASSERT_NE(certParcel, nullptr);
+    int32_t ret = DlpFileManager::GetInstance().ParseRawDlpFile(fd, filePtr, "app_id", "txt", certParcel);
+    client.proxy_ = backupProxy;
+    close(fd);
+    unlink("/data/fuse_test_dlp_enterprise.txt");
+    ASSERT_EQ(DLP_OK, ret);
 }
 
 }  // namespace DlpPermission
