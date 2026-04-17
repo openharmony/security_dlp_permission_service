@@ -287,11 +287,17 @@ static int32_t SetDlpParams(const std::shared_ptr<DlpFile>& filePtr, const DlpPr
 
     if (property.ownerAccountType == ENTERPRISE_ACCOUNT) {
         policy.appId = filePtr->GetAppId();
+        if (!DlpUtils::GetAppIdentifierFromToken(policy.appIdentifier)) {
+            DLP_LOG_ERROR(LABEL, "GetAppIdentifierFromToken failed.");
+            return DLP_SERVICE_ERROR_PERMISSION_DENY;
+        }
     }
+
     policy.fileId = property.fileId;
     policy.allowedOpenCount_ = property.allowedOpenCount;
     policy.waterMarkConfig_ = property.waterMarkConfig;
     policy.countdown_ = property.countdown;
+    
     filePtr->SetFileId(property.fileId);
     filePtr->SetAllowedOpenCount(property.allowedOpenCount);
     filePtr->SetOfflineAccess(property.offlineAccess, property.allowedOpenCount);
@@ -318,7 +324,6 @@ int32_t DlpFileManager::PrepareParms(const std::shared_ptr<DlpFile>& filePtr, co
         DLP_LOG_ERROR(LABEL, "Set dlp obj params fail, prepare encrypt params error, errno=%{public}d", result);
         return result;
     }
-
     do {
         result = filePtr->SetCipher(key, usage, hmacKey);
         if (result != DLP_OK) {
@@ -665,6 +670,33 @@ static int32_t VerifyAndGetWaterMark(PermissionPolicy& policy, std::shared_ptr<D
     return DLP_OK;
 }
 
+static int32_t SetEnterpriseInfoForDlpFile(int32_t dlpFileFd, std::shared_ptr<DlpFile>& filePtr,
+    const PermissionPolicy& policy, sptr<CertParcel>& certParcel)
+{
+    if (filePtr->GetAccountType() == ENTERPRISE_ACCOUNT) {
+        int32_t res = filePtr->SetPolicy(policy);
+        if (res != DLP_OK) {
+            DLP_LOG_ERROR(LABEL, "SetPolicy fail, errno=%{public}d", res);
+            return res;
+        }
+        filePtr->SetFileId(policy.fileId);
+        std::string uri;
+        res = DlpUtils::GetFilePathByFd(dlpFileFd, uri);
+        if (res != DLP_OK) {
+            DLP_LOG_ERROR(LABEL, "GetFilePathByFd fail, errno=%d", res);
+            return res;
+        }
+        DLPFileAccess dlpFileAccess = filePtr->GetAuthPerm();
+        res = DlpPermissionKit::SetEnterpriseInfos(
+            uri, certParcel->fileId, dlpFileAccess, policy.classificationLabel_, policy.appIdentifier);
+        if (res != DLP_OK) {
+            DLP_LOG_ERROR(LABEL, "SetEnterpriseInfos fail, errno=%d", res);
+            return res;
+        }
+    }
+    return DLP_OK;
+}
+
 int32_t DlpFileManager::ParseRawDlpFile(int32_t dlpFileFd, std::shared_ptr<DlpFile>& filePtr, const std::string& appId,
     const std::string& realType, sptr<CertParcel>& certParcel)
 {
@@ -677,6 +709,7 @@ int32_t DlpFileManager::ParseRawDlpFile(int32_t dlpFileFd, std::shared_ptr<DlpFi
         certParcel->decryptType = DECRYPTTYPEFORUSER;
         certParcel->appId = filePtr->GetAppId();
     }
+
     filePtr->GetRealType(certParcel->realFileType);
     filePtr->GetFileIdPlaintext(certParcel->fileId);
     StartTrace(HITRACE_TAG_ACCESS_CONTROL, "DlpParseCertificate");
@@ -698,6 +731,11 @@ int32_t DlpFileManager::ParseRawDlpFile(int32_t dlpFileFd, std::shared_ptr<DlpFi
     result = filePtr->SetCipher(key, usage, hmacKey);
     if (result != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "SetCipher fail, errno=%{public}d", result);
+        return result;
+    }
+    result = SetEnterpriseInfoForDlpFile(dlpFileFd, filePtr, policy, certParcel);
+    if (result != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "SetEnterpriseInfoForDlpFile fail, errno=%{public}d", result);
         return result;
     }
     filePtr->SetAllowedOpenCount(policy.GetAllowedOpenCount());
@@ -739,6 +777,22 @@ int32_t DlpFileManager::OpenRawDlpFile(int32_t dlpFileFd, std::shared_ptr<DlpFil
     return DlpRawHmacCheckAndUpdate(filePtr, certParcel->offlineCert, filePtr->GetAllowedOpenCount());
 }
 
+static int32_t SetEnterpriseInfoForDlpFileAndCheck(int32_t dlpFileFd, std::shared_ptr<DlpFile>& filePtr,
+    const PermissionPolicy& policy, sptr<CertParcel>& certParcel)
+{
+    int32_t result = SetEnterpriseInfoForDlpFile(dlpFileFd, filePtr, policy, certParcel);
+    if (result != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "SetEnterpriseInfoForDlpFile fail, errno=%{public}d", result);
+        return result;
+    }
+    result = filePtr->HmacCheck();
+    if (result != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "HmacCheck fail, errno=%{public}d", result);
+        return result;
+    }
+    return DLP_OK;
+}
+
 int32_t DlpFileManager::ParseZipDlpFile(std::shared_ptr<DlpFile>& filePtr, const std::string& appId, int32_t dlpFileFd,
     sptr<CertParcel>& certParcel)
 {
@@ -770,9 +824,9 @@ int32_t DlpFileManager::ParseZipDlpFile(std::shared_ptr<DlpFile>& filePtr, const
         DLP_LOG_ERROR(LABEL, "SetCipher fail, errno=%{public}d", result);
         return result;
     }
-    result = filePtr->HmacCheck();
+    result = SetEnterpriseInfoForDlpFileAndCheck(dlpFileFd, filePtr, policy, certParcel);
     if (result != DLP_OK) {
-        DLP_LOG_ERROR(LABEL, "HmacCheck fail, errno=%{public}d", result);
+        DLP_LOG_ERROR(LABEL, "SetEnterpriseInfoForDlpFileAndCheck fail, errno=%{public}d", result);
         return result;
     }
     result = UpdateDlpFile(certParcel->offlineCert, filePtr, policy.GetAllowedOpenCount());

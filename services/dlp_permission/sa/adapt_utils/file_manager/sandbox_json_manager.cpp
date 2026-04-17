@@ -277,7 +277,7 @@ int32_t SandboxJsonManager::GetRetentionSandboxList(const std::string& bundleNam
         if (iter->bundleName != bundleName || iter->userId != userId) {
             continue;
         }
-        if (isRetention && iter->docUriSet.empty() && bundleName != HIPREVIEW_HIGH) {
+        if (isRetention && iter->docUriSet.empty()) {
             continue;
         }
         if (!isRetention && !iter->docUriSet.empty()) {

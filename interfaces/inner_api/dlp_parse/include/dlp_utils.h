@@ -490,6 +490,7 @@ public:
         AppExecFwk::BundleInfo &bundleInfo, int32_t userId);
     static bool GetFileType(const std::string& realFileType);
     static bool GetAppIdFromToken(std::string& appId);
+    static bool GetAppIdentifierFromToken(std::string& appIdentifier);
     static bool GetUserIdByForegroundAccount(int32_t &userId);
     static std::string GetAppIdentifierByAppId(const std::string &appId, const int32_t &userId);
     static int32_t GetRawFileAllowedOpenCount(const int32_t& fd, int32_t& allowedOpenCount, bool& waterMarkConfig);

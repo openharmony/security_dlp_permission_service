@@ -19,6 +19,8 @@
 #include <securec.h>
 #include "dlp_permission.h"
 #include "dlp_permission_log.h"
+#include "dlp_permission_service_proxy.h"
+#include "iremote_stub.h"
 
 using namespace testing::ext;
 using namespace OHOS;
@@ -28,6 +30,20 @@ using namespace std;
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
     LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "DlpPermissionClientTest"};
+
+class DlpTestRemoteObj : public IRemoteBroker {
+public:
+    DECLARE_INTERFACE_DESCRIPTOR(u"ohos.dlp.test");
+};
+
+sptr<IDlpPermissionService> CreateTestProxy()
+{
+    sptr<DlpTestRemoteObj> remote = new (std::nothrow) IRemoteStub<DlpTestRemoteObj>();
+    if (remote == nullptr) {
+        return nullptr;
+    }
+    return new (std::nothrow) DlpPermissionServiceProxy(remote->AsObject());
+}
 }
 
 void DlpPermissionClientTest::SetUpTestCase() {}
@@ -213,4 +229,58 @@ HWTEST_F(DlpPermissionClientTest, SetFileInfo001, TestSize.Level0)
     fileInfo.isNotOwnerAndReadOnce = false;
     ret = DlpPermissionClient::GetInstance().SetFileInfo(uri, fileInfo);
     ASSERT_EQ(ret, DLP_SERVICE_ERROR_PERMISSION_DENY);
+}
+
+/**
+ * @tc.name: SetEnterpriseInfos001
+ * @tc.desc: SetEnterpriseInfos invalid param test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionClientTest, SetEnterpriseInfos001, TestSize.Level0)
+{
+    DLP_LOG_INFO(LABEL, "SetEnterpriseInfos001");
+
+    int32_t ret = DlpPermissionClient::GetInstance().SetEnterpriseInfos(
+        "", "file_id", DLPFileAccess::READ_ONLY, "label", "appId");
+    ASSERT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, ret);
+
+    ret = DlpPermissionClient::GetInstance().SetEnterpriseInfos(
+        "uri", "", DLPFileAccess::READ_ONLY, "label", "appId");
+    ASSERT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, ret);
+
+    ret = DlpPermissionClient::GetInstance().SetEnterpriseInfos(
+        "uri", "file_id", DLPFileAccess::NO_PERMISSION, "label", "appId");
+    ASSERT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, ret);
+
+    ret = DlpPermissionClient::GetInstance().SetEnterpriseInfos(
+        "uri", "file_id", static_cast<DLPFileAccess>(4),
+        "label", "appId");
+    ASSERT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, ret);
+
+    ret = DlpPermissionClient::GetInstance().SetEnterpriseInfos(
+        "uri", "file_id", DLPFileAccess::READ_ONLY, "label", "");
+    ASSERT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, ret);
+}
+
+/**
+ * @tc.name: SetEnterpriseInfos002
+ * @tc.desc: SetEnterpriseInfos proxy available test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionClientTest, SetEnterpriseInfos002, TestSize.Level0)
+{
+    DLP_LOG_INFO(LABEL, "SetEnterpriseInfos002");
+
+    auto& client = DlpPermissionClient::GetInstance();
+    auto proxy = client.proxy_;
+    client.proxy_ = CreateTestProxy();
+    ASSERT_NE(nullptr, client.proxy_);
+
+    int32_t ret = client.SetEnterpriseInfos(
+        "uri", "file_id", DLPFileAccess::READ_ONLY, "label", "appId");
+    ASSERT_NE(DLP_SERVICE_ERROR_SERVICE_NOT_EXIST, ret);
+
+    client.proxy_ = proxy;
 }

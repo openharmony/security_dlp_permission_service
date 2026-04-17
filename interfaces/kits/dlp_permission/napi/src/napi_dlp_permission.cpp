@@ -2140,6 +2140,9 @@ void NapiDlpPermission::InitFunction(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("queryDlpPolicy", QueryDlpPolicy),
 
         DECLARE_NAPI_FUNCTION("setEnterprisePolicy", SetEnterprisePolicy),
+
+        DECLARE_NAPI_FUNCTION("closeOpenedEnterpriseDlpFiles", CloseOpenedEnterpriseDlpFiles),
+        DECLARE_NAPI_FUNCTION("queryOpenedEnterpriseDlpFiles", QueryOpenedEnterpriseDlpFiles),
     };
     NAPI_CALL_RETURN_VOID(env, napi_define_properties(env, exports, sizeof(desc) / sizeof(desc[PARAM0]), desc));
 }
@@ -2218,9 +2221,9 @@ napi_value NapiDlpPermission::JsConstructor(napi_env env, napi_callback_info cbi
         DLP_LOG_ERROR(LABEL, "property is null");
     }
     NAPI_CALL(env, napi_set_named_property(env, thisVar, "dlpProperty", argv[PARAM1]));
-
     return thisVar;
 }
+
 }  // namespace DlpPermission
 }  // namespace Security
 }  // namespace OHOS

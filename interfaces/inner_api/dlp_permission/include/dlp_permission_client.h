@@ -82,6 +82,10 @@ public:
     int32_t SetDlpFeature(uint32_t dlpFeatureInfo, bool& statusSetInfo);
     int32_t SetEnterprisePolicy(const std::string& policy);
     int32_t SetFileInfo(const std::string& uri, const FileInfo& fileInfo);
+    int32_t QueryOpenedEnterpriseDlpFiles(const std::string& label, std::vector<std::string>& resultUris);
+    int32_t CloseOpenedEnterpriseDlpFiles(const std::string& label);
+    int32_t SetEnterpriseInfos(const std::string& uri, const std::string& fileId,
+        DLPFileAccess dlpFileAccess, const std::string& classificationLabel, const std::string& appIdentifier);
 
 private:
     DlpPermissionClient();

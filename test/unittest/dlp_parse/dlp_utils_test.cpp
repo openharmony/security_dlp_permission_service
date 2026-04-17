@@ -22,11 +22,13 @@
 #include <thread>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include "accesstoken_kit.h"
 #include "dlp_file.h"
 #include "dlp_file_manager.h"
 #include "dlp_permission.h"
 #include "dlp_permission_log.h"
 #include "dlp_utils.cpp"
+#include "token_setproc.h"
 #include "c_mock_common.h"
 
 using namespace testing::ext;
@@ -38,7 +40,26 @@ static constexpr OHOS::HiviewDFX::HiLogLabel UT_LABEL = {LOG_CORE, SECURITY_DOMA
 static const int32_t DEFAULT_USERID = 100;
 static const std::string TXT_STRINGS = "txt";
 static const std::string PPT_STRINGS = "ppt";
+static const std::string DLP_MANAGER_BUNDLE = "com.ohos.dlpmanager";
+static const std::string PASTEBOARD_SERVICE_NAME = "pasteboard_service";
 const int32_t FILEID_SIZE_VALID = 1;
+}
+
+static bool GetBundleInfoForSelfByCurrentToken(int32_t& ret, OHOS::AppExecFwk::BundleInfo& bundleInfo)
+{
+    auto bundleMgrProxy = DlpUtils::GetBundleMgrProxy();
+    if (bundleMgrProxy == nullptr) {
+        ret = DLP_SERVICE_ERROR_VALUE_INVALID;
+        return false;
+    }
+    ret = bundleMgrProxy->GetBundleInfoForSelf(static_cast<int32_t>(
+        OHOS::AppExecFwk::GetBundleInfoFlag::GET_BUNDLE_INFO_WITH_SIGNATURE_INFO), bundleInfo);
+    return true;
+}
+
+static void RestoreTokenOrFail(uint64_t tokenId)
+{
+    ASSERT_EQ(0, SetSelfTokenID(tokenId));
 }
 
 void DlpUtilsTest::SetUpTestCase() {}
@@ -612,4 +633,85 @@ HWTEST_F(DlpUtilsTest, GetGenerateInfoStr001, TestSize.Level0)
     DLP_LOG_INFO(UT_LABEL, "GetGenerateInfoStr001");
     int32_t fd = 0;
     ASSERT_EQ(GetGenerateInfoStr(fd), DEFAULT_STRINGS);
+}
+
+/**
+ * @tc.name: GetAppIdentifierFromToken001
+ * @tc.desc: cover branch when SetSelfTokenID invalid and GetAppIdentifierFromToken fails
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpUtilsTest, GetAppIdentifierFromToken001, TestSize.Level1)
+{
+    DLP_LOG_INFO(UT_LABEL, "GetAppIdentifierFromToken001");
+    uint64_t selfTokenId = GetSelfTokenID();
+
+    if (SetSelfTokenID(0) != 0) {
+        return;
+    }
+
+    std::string appIdentifier = "seed";
+    bool ret = DlpUtils::GetAppIdentifierFromToken(appIdentifier);
+    RestoreTokenOrFail(selfTokenId);
+    ASSERT_FALSE(ret);
+}
+
+/**
+ * @tc.name: GetAppIdentifierFromToken002
+ * @tc.desc: cover ret != DLP_OK or empty appIdentifier branch for native token
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpUtilsTest, GetAppIdentifierFromToken002, TestSize.Level1)
+{
+    DLP_LOG_INFO(UT_LABEL, "GetAppIdentifierFromToken002");
+    uint64_t selfTokenId = GetSelfTokenID();
+    uint64_t nativeToken = OHOS::Security::AccessToken::AccessTokenKit::GetNativeTokenId(
+        PASTEBOARD_SERVICE_NAME);
+    ASSERT_EQ(0, SetSelfTokenID(nativeToken));
+
+    std::string appIdentifier = "seed";
+    OHOS::AppExecFwk::BundleInfo bundleInfo;
+    int32_t infoRet = DLP_OK;
+    bool hasProxy = GetBundleInfoForSelfByCurrentToken(infoRet, bundleInfo);
+    bool ret = DlpUtils::GetAppIdentifierFromToken(appIdentifier);
+    RestoreTokenOrFail(selfTokenId);
+
+    if (!hasProxy || infoRet != DLP_OK) {
+        ASSERT_FALSE(ret);
+        return;
+    }
+    ASSERT_TRUE(bundleInfo.signatureInfo.appIdentifier.empty());
+    ASSERT_FALSE(ret);
+}
+
+/**
+ * @tc.name: GetAppIdentifierFromToken003
+ * @tc.desc: cover success branch when GetBundleInfoForSelf returns non-empty appIdentifier
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpUtilsTest, GetAppIdentifierFromToken003, TestSize.Level1)
+{
+    DLP_LOG_INFO(UT_LABEL, "GetAppIdentifierFromToken003");
+    uint64_t selfTokenId = GetSelfTokenID();
+    uint64_t hapToken = OHOS::Security::AccessToken::AccessTokenKit::GetHapTokenID(
+        DEFAULT_USERID, DLP_MANAGER_BUNDLE, 0);
+    if (hapToken != 0 && SetSelfTokenID(hapToken) != 0) {
+        return;
+    }
+
+    std::string appIdentifier;
+    OHOS::AppExecFwk::BundleInfo bundleInfo;
+    int32_t infoRet = DLP_OK;
+    bool hasProxy = GetBundleInfoForSelfByCurrentToken(infoRet, bundleInfo);
+    bool ret = DlpUtils::GetAppIdentifierFromToken(appIdentifier);
+    RestoreTokenOrFail(selfTokenId);
+
+    if (hasProxy && infoRet == DLP_OK && !bundleInfo.signatureInfo.appIdentifier.empty()) {
+        ASSERT_TRUE(ret);
+        ASSERT_EQ(appIdentifier, bundleInfo.signatureInfo.appIdentifier);
+        return;
+    }
+    ASSERT_FALSE(ret);
 }

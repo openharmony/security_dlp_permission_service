@@ -448,6 +448,126 @@ HWTEST_F(DlpPermissionSerializerTest, DeserializeAuthUserInfo001, TestSize.Level
 }
 
 /**
+ * @tc.name: SerializeDlpPermission008
+ * @tc.desc: Cover classificationLabel branches in SerializeCustomProperty
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionSerializerTest, SerializeDlpPermission008, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL, "SerializeDlpPermission008");
+    char aesKey[AESKEY_STR_LEN] = "1234567890123456789012345678901234567890123456789012345678901234";
+    char ivKey[IVKEY_STR_LEN] = "12345678901234567890123456789012";
+    char hmacKey[HMACKEY_STR_LEN] = "1234567890123456789012345678901234567890123456789012345678901234";
+
+    DlpPermissionSerializer serialize;
+
+    PermissionPolicy withClassification;
+    withClassification.ownerAccountType_ = OHOS::Security::DlpPermission::CLOUD_ACCOUNT;
+    withClassification.customProperty_ = "enterprise1";
+    withClassification.classificationLabel_ = "L3";
+    withClassification.SetAeskey(reinterpret_cast<uint8_t*>(aesKey), AESKEY_LEN);
+    withClassification.SetIv(reinterpret_cast<uint8_t*>(ivKey), IVKEY_LEN);
+    withClassification.SetHmacKey(reinterpret_cast<uint8_t*>(hmacKey), HMACKEY_LEN);
+
+    unordered_json permInfoJson;
+    int32_t ret = serialize.SerializeDlpPermission(withClassification, permInfoJson);
+    ASSERT_EQ(DLP_OK, ret);
+    ASSERT_TRUE(permInfoJson.contains("clientPolicy"));
+    ASSERT_TRUE(permInfoJson["clientPolicy"].contains("customProperty"));
+    unordered_json customWithClassification =
+        unordered_json::parse(permInfoJson["clientPolicy"]["customProperty"].get<std::string>());
+    ASSERT_TRUE(customWithClassification.contains("enterprise"));
+    ASSERT_TRUE(customWithClassification.contains("classificationLabel"));
+
+    PermissionPolicy withoutClassification;
+    withoutClassification.ownerAccountType_ = OHOS::Security::DlpPermission::CLOUD_ACCOUNT;
+    withoutClassification.customProperty_ = "enterprise2";
+    withoutClassification.classificationLabel_ = "";
+    withoutClassification.SetAeskey(reinterpret_cast<uint8_t*>(aesKey), AESKEY_LEN);
+    withoutClassification.SetIv(reinterpret_cast<uint8_t*>(ivKey), IVKEY_LEN);
+    withoutClassification.SetHmacKey(reinterpret_cast<uint8_t*>(hmacKey), HMACKEY_LEN);
+
+    unordered_json permInfoJson2;
+    ret = serialize.SerializeDlpPermission(withoutClassification, permInfoJson2);
+    ASSERT_EQ(DLP_OK, ret);
+    ASSERT_TRUE(permInfoJson2.contains("clientPolicy"));
+    ASSERT_TRUE(permInfoJson2["clientPolicy"].contains("customProperty"));
+    unordered_json customWithoutClassification =
+        unordered_json::parse(permInfoJson2["clientPolicy"]["customProperty"].get<std::string>());
+    ASSERT_TRUE(customWithoutClassification.contains("enterprise"));
+    ASSERT_FALSE(customWithoutClassification.contains("classificationLabel"));
+}
+
+/**
+ * @tc.name: DeserializeDlpPermission005
+ * @tc.desc: Cover ParseCustomProperty and appIdentifier branches
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionSerializerTest, DeserializeDlpPermission005, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL, "DeserializeDlpPermission005");
+    DlpPermissionSerializer serialize;
+
+    // CUSTOM_PROPERTY absent -> line 551 false, APPIDENTIFIER valid string -> line 595 true and 596 executes.
+    unordered_json permJson1;
+    permJson1["policy"] = {{"account", unordered_json::object()}, {"appIdentifier", "appid_1"}};
+    permJson1["file"] = unordered_json::object();
+    PermissionPolicy policy1;
+    int32_t ret = serialize.DeserializeDlpPermission(permJson1, policy1);
+    ASSERT_EQ(DLP_OK, ret);
+    ASSERT_EQ("appid_1", policy1.appIdentifier);
+
+    // CUSTOM_PROPERTY is non-string -> line 551 false, APPIDENTIFIER non-string -> line 595 false.
+    unordered_json permJson2;
+    permJson2["policy"] =
+        {{"account", unordered_json::object()}, {"customProperty", 123}, {"appIdentifier", 321}};
+    permJson2["file"] = unordered_json::object();
+    PermissionPolicy policy2;
+    ret = serialize.DeserializeDlpPermission(permJson2, policy2);
+    ASSERT_EQ(DLP_OK, ret);
+    ASSERT_EQ("", policy2.appIdentifier);
+
+    // CUSTOM_PROPERTY string but invalid json -> line 551 true, line 555 false.
+    unordered_json permJson3;
+    permJson3["policy"] = {{"account", unordered_json::object()}, {"customProperty", "{]"}};
+    permJson3["file"] = unordered_json::object();
+    PermissionPolicy policy3;
+    ret = serialize.DeserializeDlpPermission(permJson3, policy3);
+    ASSERT_EQ(DLP_OK, ret);
+    ASSERT_EQ("", policy3.customProperty_);
+    ASSERT_EQ("", policy3.classificationLabel_);
+
+    // CUSTOM_PROPERTY valid object with both string fields -> lines 555/557/561 true.
+    unordered_json permJson4;
+    unordered_json customProperty4 = {{"enterprise", "ent_a"}, {"classificationLabel", "L2"}};
+    permJson4["policy"] = {
+        {"account", unordered_json::object()},
+        {"customProperty", customProperty4.dump()},
+        {"appIdentifier", "appid_4"}
+    };
+    permJson4["file"] = unordered_json::object();
+    PermissionPolicy policy4;
+    ret = serialize.DeserializeDlpPermission(permJson4, policy4);
+    ASSERT_EQ(DLP_OK, ret);
+    ASSERT_EQ("ent_a", policy4.customProperty_);
+    ASSERT_EQ("L2", policy4.classificationLabel_);
+    ASSERT_EQ("appid_4", policy4.appIdentifier);
+
+    // CUSTOM_PROPERTY valid object but field types invalid -> lines 557/561 false.
+    unordered_json permJson5;
+    unordered_json customProperty5 = {{"enterprise", 100}, {"classificationLabel", false}};
+    permJson5["policy"] = {{"account", unordered_json::object()}, {"customProperty", customProperty5.dump()}};
+    permJson5["file"] = unordered_json::object();
+    PermissionPolicy policy5;
+    ret = serialize.DeserializeDlpPermission(permJson5, policy5);
+    ASSERT_EQ(DLP_OK, ret);
+    ASSERT_EQ("", policy5.customProperty_);
+    ASSERT_EQ("", policy5.classificationLabel_);
+}
+
+/**
  * @tc.name: CheckAuthPolicy001
  * @tc.desc: CheckAuthPolicy001 test
  * @tc.type: FUNC

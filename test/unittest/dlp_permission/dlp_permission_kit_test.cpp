@@ -223,6 +223,7 @@ static void GetDlpManagerHapReqPerm(std::vector<std::string> &reqPerm)
     reqPerm.emplace_back("ohos.permission.GET_BUNDLE_INFO");
     reqPerm.emplace_back("ohos.permission.EXEMPT_PRIVACY_SECURITY_CENTER");
     reqPerm.emplace_back("ohos.permission.REPORT_SECURITY_EVENT");
+    reqPerm.emplace_back("ohos.permission.ENTERPRISE_ACCESS_DLP_FILE");
 }
 
 void DlpPermissionKitTest::SetUpTestCase()
@@ -1679,6 +1680,60 @@ HWTEST_F(DlpPermissionKitTest, SetFileInfo001, TestSize.Level0)
     uri = "uri";
     fileInfo.isNotOwnerAndReadOnce = false;
     (void)DlpPermissionKit::SetFileInfo(uri, fileInfo);
+}
+
+/* *
+ * @tc.name: QueryOpenedEnterpriseDlpFiles001
+ * @tc.desc: QueryOpenedEnterpriseDlpFiles.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionKitTest, QueryOpenedEnterpriseDlpFiles001, TestSize.Level0)
+{
+    DLP_LOG_DEBUG(LABEL, "QueryOpenedEnterpriseDlpFiles001");
+
+    int32_t uid = getuid();
+    AccessTokenID tokenId = GetSelfTokenID();
+    SetSelfTokenID(DlpPermissionTestCommon::GetNativeTokenIdFromProcess(DLP_PERMISSION_SERVICE));
+    ASSERT_TRUE(TestSetSelfTokenId(g_dlpManagerTokenId));
+
+    std::vector<std::string> uris;
+    int32_t ret = DlpPermissionKit::QueryOpenedEnterpriseDlpFiles("L1", uris);
+    ASSERT_TRUE(ret == DLP_OK || ret == DLP_SERVICE_ERROR_PERMISSION_DENY ||
+        ret == DLP_SERVICE_ERROR_SERVICE_NOT_EXIST);
+
+    std::string longLabel(256, 'a');
+    ret = DlpPermissionKit::QueryOpenedEnterpriseDlpFiles(longLabel, uris);
+    ASSERT_TRUE(ret == DLP_SERVICE_ERROR_VALUE_INVALID || ret == DLP_SERVICE_ERROR_PERMISSION_DENY ||
+        ret == DLP_SERVICE_ERROR_SERVICE_NOT_EXIST);
+
+    TestRecoverProcessInfo(uid, tokenId);
+}
+
+/* *
+ * @tc.name: CloseOpenedEnterpriseDlpFiles001
+ * @tc.desc: CloseOpenedEnterpriseDlpFiles.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionKitTest, CloseOpenedEnterpriseDlpFiles001, TestSize.Level0)
+{
+    DLP_LOG_DEBUG(LABEL, "CloseOpenedEnterpriseDlpFiles001");
+
+    int32_t uid = getuid();
+    AccessTokenID tokenId = GetSelfTokenID();
+    SetSelfTokenID(DlpPermissionTestCommon::GetNativeTokenIdFromProcess(DLP_PERMISSION_SERVICE));
+    ASSERT_TRUE(TestSetSelfTokenId(g_dlpManagerTokenId));
+
+    int32_t ret = DlpPermissionKit::CloseOpenedEnterpriseDlpFiles("L1");
+    ASSERT_TRUE(ret == DLP_SERVICE_ERROR_PERMISSION_DENY);
+
+    std::string longLabel(256, 'a');
+    ret = DlpPermissionKit::CloseOpenedEnterpriseDlpFiles(longLabel);
+    ASSERT_TRUE(ret == DLP_SERVICE_ERROR_VALUE_INVALID || ret == DLP_SERVICE_ERROR_PERMISSION_DENY ||
+        ret == DLP_SERVICE_ERROR_SERVICE_NOT_EXIST);
+
+    TestRecoverProcessInfo(uid, tokenId);
 }
 
 /* *

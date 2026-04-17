@@ -1,0 +1,83 @@
+/*
+ * Copyright (c) 2026 Huawei Device Co., Ltd.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#include "closeopenedenterprisedlpfilesstub_fuzzer.h"
+#include <fuzzer/FuzzedDataProvider.h>
+#include <iostream>
+#include <string>
+#include <vector>
+#include "accesstoken_kit.h"
+#include "dlp_permission_log.h"
+#include "dlp_permission.h"
+#include "idlp_permission_service.h"
+#include "securec.h"
+#include "token_setproc.h"
+
+using namespace OHOS::Security::DlpPermission;
+using namespace OHOS::Security::AccessToken;
+
+namespace {
+static const uint64_t SYSTEM_APP_MASK = 0x100000000;
+static const int32_t DEFAULT_USER_ID = 100;
+static const size_t MAX_SAFE_SIZE = 256;
+} // namespace
+
+namespace OHOS {
+static constexpr int32_t SA_ID_DLP_PERMISSION_SERVICE = 3521;
+
+static void FuzzTest(const uint8_t* data, size_t size)
+{
+    if ((data == nullptr) || (size > MAX_SAFE_SIZE)) {
+        return;
+    }
+    FuzzedDataProvider fdp(data, size);
+    std::string label = fdp.ConsumeBytesAsString(size);
+
+    MessageParcel datas;
+    datas.WriteInterfaceToken(IDlpPermissionService::GetDescriptor());
+    if (!datas.WriteString(label)) {
+        return;
+    }
+
+    uint32_t code = static_cast<uint32_t>(IDlpPermissionServiceIpcCode::COMMAND_CLOSE_OPENED_ENTERPRISE_DLP_FILES);
+    MessageParcel reply;
+    MessageOption option;
+    auto service = std::make_shared<DlpPermissionService>(SA_ID_DLP_PERMISSION_SERVICE, true);
+    service->appStateObserver_ = new (std::nothrow) AppStateObserver();
+    service->OnRemoteRequest(code, datas, reply, option);
+}
+
+bool CloseOpenedEnterpriseDlpFilesFuzzTest(const uint8_t* data, size_t size)
+{
+    FuzzTest(data, size);
+    return true;
+}
+} // namespace OHOS
+
+/* Fuzzer entry point */
+extern "C" int LLVMFuzzerInitialize(int *argc, char ***argv)
+{
+    AccessTokenIDEx tokenIdEx = AccessTokenKit::GetHapTokenIDEx(DEFAULT_USER_ID, "com.ohos.dlpmanager", 0);
+    tokenIdEx.tokenIDEx |= SYSTEM_APP_MASK;
+    SetSelfTokenID(tokenIdEx.tokenIDEx);
+    return 0;
+}
+
+/* Fuzzer entry point */
+extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
+{
+    OHOS::CloseOpenedEnterpriseDlpFilesFuzzTest(data, size);
+    return 0;
+}
