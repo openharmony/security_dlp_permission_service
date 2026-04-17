@@ -98,8 +98,13 @@ enum ActionType : uint32_t {
     OPEN = 1
 };
 
+struct DlpFileQueryOptions {
+    std::string classificationLabel = "";
+};
+
 struct CustomProperty {
     std::string enterprise = "";
+    DlpFileQueryOptions options;
 };
 
 struct EnterprisePolicy {
@@ -171,6 +176,7 @@ public:
     bool debug_ = false;
     uint32_t actionUponExpiry_ = 0;
     std::string customProperty_ = "";
+    std::string classificationLabel_ = "";
     std::string fileId = "";
     std::string appId = "";
     int32_t allowedOpenCount_ = 0;
@@ -179,6 +185,7 @@ public:
     bool canFindWaterMarkConfig_ = false;
     bool canFindCountdown_ = false;
     std::string nickNameMask_ = "";
+    std::string appIdentifier = "";
 
 private:
     uint8_t* aeskey_;

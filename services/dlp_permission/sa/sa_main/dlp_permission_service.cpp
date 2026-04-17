@@ -101,6 +101,7 @@ static const uint32_t MAX_ACCOUNT_SIZE = 1024;
 static const uint32_t MAX_FILEID_SIZE = 1024;
 static const uint32_t MAX_ENTERPRISEPOLICY_SIZE = 1024 * 1024 * 4;
 static const uint32_t MAX_CERT_SIZE = 1024 * 1024 * 40 * 2;
+static const uint32_t MAX_CLASSIFICATION_LABEL_SIZE = 255;
 static const std::string MDM_ENABLE_VALUE = "status";
 static const std::string MDM_BUNDLE_NAME = "appId";
 static const uint32_t ENABLE_VALUE_TRUE = 1;
@@ -657,8 +658,30 @@ int32_t DlpPermissionService::SetWaterMark(const int32_t pid)
     return DLP_OK;
 }
 
-bool DlpPermissionService::InsertDlpSandboxInfo(DlpSandboxInfo& sandboxInfo, bool hasRetention,
-    const FileInfo& fileInfo)
+static void FillSandboxInfoFromFileInfo(DlpSandboxInfo& sandboxInfo, const FileInfo& fileInfo)
+{
+    if (fileInfo.accountName != "") {
+        sandboxInfo.accountName = fileInfo.accountName;
+    }
+    sandboxInfo.isReadOnce = fileInfo.isNotOwnerAndReadOnce;
+    sandboxInfo.isWatermark = fileInfo.isWatermark;
+    sandboxInfo.accountAndUserId = fileInfo.accountName + std::to_string(sandboxInfo.userId);
+    sandboxInfo.maskInfo = fileInfo.maskInfo;
+    sandboxInfo.fileId = fileInfo.fileId;
+    DLP_LOG_INFO(LABEL, "isNotOwnerAndReadOnce=%{public}d, isWatermark=%{public}d",
+        fileInfo.isNotOwnerAndReadOnce, fileInfo.isWatermark);
+}
+
+static void FillSandboxInfoFromEnterpriseFileInfo(DlpSandboxInfo& sandboxInfo, const EnterpriseInfo& enterpriseInfo)
+{
+    sandboxInfo.fileId = enterpriseInfo.fileId;
+    sandboxInfo.appIdentifier = enterpriseInfo.appIdentifier;
+    sandboxInfo.classificationLabel = enterpriseInfo.classificationLabel;
+    DLP_LOG_DEBUG(LABEL, "label=%s",
+        enterpriseInfo.classificationLabel.c_str());
+}
+
+bool DlpPermissionService::InsertDlpSandboxInfo(DlpSandboxInfo& sandboxInfo, bool hasRetention)
 {
     AppExecFwk::BundleInfo info;
     AppExecFwk::BundleMgrClient bundleMgrClient;
@@ -676,21 +699,11 @@ bool DlpPermissionService::InsertDlpSandboxInfo(DlpSandboxInfo& sandboxInfo, boo
         }
         return false;
     }
-    if (fileInfo.accountName != "") {
-        sandboxInfo.accountName = fileInfo.accountName;
-    }
     sandboxInfo.uid = info.uid;
     sandboxInfo.tokenId = AccessToken::AccessTokenKit::GetHapTokenID(sandboxInfo.userId, sandboxInfo.bundleName,
         sandboxInfo.appIndex);
-    sandboxInfo.isReadOnce = fileInfo.isNotOwnerAndReadOnce;
-    sandboxInfo.isWatermark = fileInfo.isWatermark;
-    sandboxInfo.accountAndUserId = fileInfo.accountName + std::to_string(sandboxInfo.userId);
-    sandboxInfo.maskInfo = fileInfo.maskInfo;
-    sandboxInfo.fileId = fileInfo.fileId;
     appStateObserver_->AddDlpSandboxInfo(sandboxInfo);
     SetHasBackgroundTask(true);
-    DLP_LOG_INFO(LABEL, "isNotOwnerAndReadOnce=%{public}d, isWatermark=%{public}d",
-        fileInfo.isNotOwnerAndReadOnce, fileInfo.isWatermark);
     VisitRecordFileManager::GetInstance().AddVisitRecord(sandboxInfo.bundleName, sandboxInfo.userId, sandboxInfo.uri);
     return true;
 }
@@ -827,6 +840,100 @@ static int32_t InstallDlpSandboxExecute(bool& isNeedInstall, DLPFileAccess& dlpF
     return DLP_OK;
 }
 
+void DlpPermissionService::UpdateSandboxInstallResult(SandboxInfo& sandboxInfo, const DlpSandboxInfo& dlpSandboxInfo)
+{
+    sandboxInfo.appIndex = dlpSandboxInfo.appIndex;
+    sandboxInfo.bindAppIndex = dlpSandboxInfo.bindAppIndex;
+    sandboxInfo.tokenId = dlpSandboxInfo.tokenId;
+    std::unique_lock<std::shared_mutex> lock(dlpSandboxDataMutex_);
+    if (dlpSandboxData_.find(dlpSandboxInfo.uid) == dlpSandboxData_.end()) {
+        dlpSandboxData_.insert(std::make_pair(dlpSandboxInfo.uid, dlpSandboxInfo.dlpFileAccess));
+    }
+}
+
+int32_t DlpPermissionService::HandleEnterpriseInstallDlpSandbox(SandboxInfo& sandboxInfo,
+    InputSandboxInfo& inputSandboxInfo, const EnterpriseInfo& enterpriseInfo)
+{
+    if (appStateObserver_->GetOpeningEnterpriseSandboxInfo(sandboxInfo, inputSandboxInfo, enterpriseInfo)) {
+        DLP_LOG_INFO(LABEL, "enterprise dlp file already opened, return install result directly");
+        return DLP_OK;
+    }
+
+    bool isReadOnly = inputSandboxInfo.dlpFileAccess == DLPFileAccess::READ_ONLY;
+    bool isNeedInstall = true;
+    DlpSandboxInfo dlpSandboxInfo;
+    int32_t res = DLP_OK;
+
+    GetAppIndexParams params = {inputSandboxInfo.bundleName, isReadOnly, inputSandboxInfo.uri, false};
+    res = GetAppIndexFromRetentionInfo(params, dlpSandboxInfo, isNeedInstall);
+    if (res != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "GetAppIndexFromRetentionInfo fail, %{public}d", res);
+        return res;
+    }
+
+    if (isNeedInstall && isReadOnly) {
+        appStateObserver_->GetOpeningEnterpriseReadOnlySandbox(inputSandboxInfo, enterpriseInfo,
+            dlpSandboxInfo);
+        isNeedInstall = (dlpSandboxInfo.appIndex != -1) ? false : true;
+    }
+
+    res = InstallDlpSandboxExecute(isNeedInstall, inputSandboxInfo.dlpFileAccess,
+        inputSandboxInfo.bundleName, inputSandboxInfo.userId, dlpSandboxInfo);
+    if (res != DLP_OK) {
+        appStateObserver_->EraseEnterpriseInfoByUri(inputSandboxInfo.path, enterpriseInfo.fileId);
+        return res;
+    }
+
+    FillDlpSandboxInfo(dlpSandboxInfo, inputSandboxInfo.bundleName, inputSandboxInfo.dlpFileAccess,
+        inputSandboxInfo.userId, inputSandboxInfo.uri);
+    FillSandboxInfoFromEnterpriseFileInfo(dlpSandboxInfo, enterpriseInfo);
+    if (!InsertDlpSandboxInfo(dlpSandboxInfo, !isNeedInstall)) {
+        return DLP_SERVICE_ERROR_INSTALL_SANDBOX_FAIL;
+    }
+    appStateObserver_->UpdateEnterpriseUidByUri(inputSandboxInfo.path, enterpriseInfo.fileId, dlpSandboxInfo.uid);
+    UpdateSandboxInstallResult(sandboxInfo, dlpSandboxInfo);
+    return DLP_OK;
+}
+
+int32_t DlpPermissionService::HandleInstallDlpSandbox(SandboxInfo& sandboxInfo,
+    InputSandboxInfo& inputSandboxInfo, const FileInfo& fileInfo)
+{
+    if (appStateObserver_->GetOpeningSandboxInfo(inputSandboxInfo.bundleName, inputSandboxInfo.uri,
+        inputSandboxInfo.userId, sandboxInfo, fileInfo.fileId)) {
+        DLP_LOG_INFO(LABEL, "GetOpeningSandboxInfo success");
+        return DLP_OK;
+    }
+    bool isReadOnly = inputSandboxInfo.dlpFileAccess == DLPFileAccess::READ_ONLY;
+    bool isNeedInstall = true;
+    DlpSandboxInfo dlpSandboxInfo;
+    GetAppIndexParams params = {inputSandboxInfo.bundleName, isReadOnly, inputSandboxInfo.uri,
+        fileInfo.isNotOwnerAndReadOnce};
+    int32_t res = GetAppIndexFromRetentionInfo(params, dlpSandboxInfo, isNeedInstall);
+    if (res != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "GetAppIndexFromRetentionInfo fail, %{public}d", res);
+        return res;
+    }
+    if (isNeedInstall && isReadOnly && !fileInfo.isNotOwnerAndReadOnce) {
+        appStateObserver_->GetOpeningReadOnlySandbox(inputSandboxInfo.bundleName, inputSandboxInfo.userId,
+            dlpSandboxInfo.appIndex, dlpSandboxInfo.bindAppIndex);
+        isNeedInstall = (dlpSandboxInfo.appIndex != -1) ? false : true;
+    }
+
+    res = InstallDlpSandboxExecute(isNeedInstall, inputSandboxInfo.dlpFileAccess,
+        inputSandboxInfo.bundleName, inputSandboxInfo.userId, dlpSandboxInfo);
+    if (res != DLP_OK) {
+        return res;
+    }
+    FillDlpSandboxInfo(dlpSandboxInfo, inputSandboxInfo.bundleName, inputSandboxInfo.dlpFileAccess,
+        inputSandboxInfo.userId, inputSandboxInfo.uri);
+    FillSandboxInfoFromFileInfo(dlpSandboxInfo, fileInfo);
+    if (!InsertDlpSandboxInfo(dlpSandboxInfo, !isNeedInstall)) {
+        return DLP_SERVICE_ERROR_INSTALL_SANDBOX_FAIL;
+    }
+    UpdateSandboxInstallResult(sandboxInfo, dlpSandboxInfo);
+    return DLP_OK;
+}
+
 int32_t DlpPermissionService::InstallDlpSandbox(const std::string& bundleName, DLPFileAccess dlpFileAccess,
     int32_t userId, SandboxInfo& sandboxInfo, const std::string& uri)
 {
@@ -839,44 +946,18 @@ int32_t DlpPermissionService::InstallDlpSandbox(const std::string& bundleName, D
     if (res != DLP_OK) {
         return res;
     }
-    FileInfo fileInfo;
     AppFileService::ModuleFileUri::FileUri fileUri(uri);
     std::string path = fileUri.GetRealPath();
+    InputSandboxInfo inputSandboxInfo = {bundleName, dlpFileAccess, userId, uri, path};
+
+    EnterpriseInfo enterpriseInfo;
+    if (appStateObserver_->GetEnterpriseInfoByUri(path, enterpriseInfo)) {
+        return HandleEnterpriseInstallDlpSandbox(sandboxInfo, inputSandboxInfo, enterpriseInfo);
+    }
+
+    FileInfo fileInfo;
     appStateObserver_->GetFileInfoByUri(path, fileInfo);
-    if (appStateObserver_->GetOpeningSandboxInfo(bundleName, uri, userId, sandboxInfo, fileInfo.fileId)) {
-        DLP_LOG_INFO(LABEL, "GetOpeningSandboxInfo success");
-        return DLP_OK;
-    }
-    bool isReadOnly = dlpFileAccess == DLPFileAccess::READ_ONLY;
-    bool isNeedInstall = true;
-    DlpSandboxInfo dlpSandboxInfo;
-    GetAppIndexParams params = {bundleName, isReadOnly, uri, fileInfo.isNotOwnerAndReadOnce};
-    res = GetAppIndexFromRetentionInfo(params, dlpSandboxInfo, isNeedInstall);
-    if (res != DLP_OK) {
-        DLP_LOG_ERROR(LABEL, "GetAppIndexFromRetentionInfo fail, %{public}d", res);
-        return res;
-    }
-    if (isNeedInstall && isReadOnly && !fileInfo.isNotOwnerAndReadOnce) {
-        appStateObserver_->GetOpeningReadOnlySandbox(bundleName, userId, dlpSandboxInfo.appIndex);
-        appStateObserver_->GetOpeningReadOnlyBindSandbox(bundleName, userId, dlpSandboxInfo.bindAppIndex);
-        isNeedInstall = (dlpSandboxInfo.appIndex != -1) ? false : true;
-    }
-    res = InstallDlpSandboxExecute(isNeedInstall, dlpFileAccess, bundleName, userId, dlpSandboxInfo);
-    if (res != DLP_OK) {
-        return res;
-    }
-    FillDlpSandboxInfo(dlpSandboxInfo, bundleName, dlpFileAccess, userId, uri);
-    if (!InsertDlpSandboxInfo(dlpSandboxInfo, !isNeedInstall, fileInfo)) {
-        return DLP_SERVICE_ERROR_INSTALL_SANDBOX_FAIL;
-    }
-    sandboxInfo.appIndex = dlpSandboxInfo.appIndex;
-    sandboxInfo.bindAppIndex = dlpSandboxInfo.bindAppIndex;
-    sandboxInfo.tokenId = dlpSandboxInfo.tokenId;
-    std::unique_lock<std::shared_mutex> lock(dlpSandboxDataMutex_);
-    if (dlpSandboxData_.find(dlpSandboxInfo.uid) == dlpSandboxData_.end()) {
-        dlpSandboxData_.insert(std::make_pair(dlpSandboxInfo.uid, dlpSandboxInfo.dlpFileAccess));
-    }
-    return DLP_OK;
+    return HandleInstallDlpSandbox(sandboxInfo, inputSandboxInfo, fileInfo);
 }
 
 uint32_t DlpPermissionService::DeleteDlpSandboxInfo(const std::string& bundleName, int32_t appIndex, int32_t userId)
@@ -1810,6 +1891,98 @@ int DlpPermissionService::SetFileInfo(const std::string& uri, const FileInfo& fi
         DLP_LOG_ERROR(LABEL, "AddUriAndFileInfo error");
         return DLP_SERVICE_ERROR_VALUE_INVALID;
     }
+    return DLP_OK;
+}
+
+int32_t DlpPermissionService::QueryOpenedEnterpriseDlpFiles(const std::string& label,
+    std::vector<std::string>& resultUris)
+{
+    appStateObserver_->PostDelayUnloadTask(CurrentTaskState::SHORT_TASK);
+    std::string appIdentifier;
+    if (!PermissionManagerAdapter::GetAppIdentifierForCalling(appIdentifier)) {
+        DLP_LOG_ERROR(LABEL, "Failed to get appIdentifier.");
+        return DLP_SERVICE_ERROR_PERMISSION_DENY;
+    }
+
+    if (!PermissionManagerAdapter::CheckPermission(PERMISSION_ENTERPRISE_ACCESS_DLP_FILE)) {
+        return DLP_SERVICE_ERROR_PERMISSION_DENY;
+    }
+
+    if (label.size() > MAX_CLASSIFICATION_LABEL_SIZE) {
+        DLP_LOG_ERROR(LABEL, "label is invalid");
+        return DLP_SERVICE_ERROR_VALUE_INVALID;
+    }
+
+    appStateObserver_->GetSandboxInfosByClassificationLabel(label, appIdentifier, resultUris);
+    DLP_LOG_INFO(LABEL, "QueryOpenedEnterpriseDlpFiles label:%{private}s, count:%{public}zu", label.c_str(),
+        resultUris.size());
+    return DLP_OK;
+}
+
+int32_t DlpPermissionService::CloseOpenedEnterpriseDlpFiles(const std::string& label)
+{
+    appStateObserver_->PostDelayUnloadTask(CurrentTaskState::SHORT_TASK);
+    std::string appIdentifier;
+    if (!PermissionManagerAdapter::GetAppIdentifierForCalling(appIdentifier)) {
+        DLP_LOG_ERROR(LABEL, "Failed to get appIdentifier.");
+        return DLP_SERVICE_ERROR_PERMISSION_DENY;
+    }
+
+    if (!PermissionManagerAdapter::CheckPermission(PERMISSION_ENTERPRISE_ACCESS_DLP_FILE)) {
+        return DLP_SERVICE_ERROR_PERMISSION_DENY;
+    }
+
+    if (label.size() > MAX_CLASSIFICATION_LABEL_SIZE) {
+        DLP_LOG_ERROR(LABEL, "label is invalid");
+        return DLP_SERVICE_ERROR_VALUE_INVALID;
+    }
+    std::vector<DlpSandboxInfo> appInfos;
+    appStateObserver_->GetNeededDelEnterpriseSandbox(label, appIdentifier, appInfos);
+    DLP_LOG_INFO(LABEL, "CloseOpenedEnterpriseDlpFiles label:%{private}s, count:%{public}zu", label.c_str(),
+        appInfos.size());
+    for (const auto& appInfo : appInfos) {
+        DeleteDlpSandboxInfo(appInfo.bundleName, appInfo.appIndex, appInfo.userId);
+        if (appInfo.bundleName == HIPREVIEW_HIGH) {
+            UninstallDlpSandboxApp(HIPREVIEW_LOW, appInfo.bindAppIndex, appInfo.userId);
+        }
+        UninstallDlpSandboxApp(appInfo.bundleName, appInfo.appIndex, appInfo.userId);
+        RetentionFileManager::GetInstance().RemoveRetentionState(appInfo.bundleName, appInfo.appIndex);
+        DlpSandboxChangeCallbackManager::GetInstance().ExecuteCallbackAsync(appInfo);
+    }
+    return DLP_OK;
+}
+
+int32_t DlpPermissionService::SetEnterpriseInfos(const std::string& uri, const std::string& fileId,
+    DLPFileAccess dlpFileAccess, const std::string& classificationLabel, const std::string& appIdentifier)
+{
+    appStateObserver_->PostDelayUnloadTask(CurrentTaskState::SHORT_TASK);
+
+    if (!PermissionManagerAdapter::CheckPermission(PERMISSION_ACCESS_DLP_FILE) &&
+        !PermissionManagerAdapter::CheckPermission(PERMISSION_ENTERPRISE_ACCESS_DLP_FILE)) {
+        return DLP_SERVICE_ERROR_PERMISSION_DENY;
+    }
+
+    if (uri.empty() || uri.size() > MAX_URI_SIZE ||
+        fileId.size() > MAX_FILEID_SIZE || appIdentifier.size() > MAX_APPID_SIZE ||
+        classificationLabel.size() > MAX_CLASSIFICATION_LABEL_SIZE ||
+        dlpFileAccess > DLPFileAccess::FULL_CONTROL || dlpFileAccess <= DLPFileAccess::NO_PERMISSION) {
+        DLP_LOG_ERROR(LABEL, "input param is invalid");
+        return DLP_SERVICE_ERROR_VALUE_INVALID;
+    }
+
+    EnterpriseInfo enterpriseInfo;
+    enterpriseInfo.classificationLabel = classificationLabel;
+    enterpriseInfo.dlpFileAccess = dlpFileAccess;
+    enterpriseInfo.fileId = fileId;
+    enterpriseInfo.appIdentifier = appIdentifier;
+
+    bool res = appStateObserver_->AddUriAndEnterpriseInfo(uri, enterpriseInfo);
+    if (!res) {
+        DLP_LOG_ERROR(LABEL, "AddUriAndEnterpriseInfo error");
+        return DLP_SERVICE_ERROR_VALUE_INVALID;
+    }
+
+    DLP_LOG_INFO(LABEL, "SetEnterpriseInfos success with uri: %{public}s", uri.c_str());
     return DLP_OK;
 }
 } // namespace DlpPermission

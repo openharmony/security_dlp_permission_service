@@ -1058,16 +1058,15 @@ HWTEST_F(DlpPermissionServiceTest, InsertDlpSandboxInfo001, TestSize.Level1)
 {
     auto appStateObserver = dlpPermissionService_->appStateObserver_;
     DlpSandboxInfo sandboxInfo;
-    FileInfo fileInfo;
-    fileInfo.isNotOwnerAndReadOnce = true;
-    dlpPermissionService_->InsertDlpSandboxInfo(sandboxInfo, false, fileInfo);
+    sandboxInfo.isReadOnce = true;
+    dlpPermissionService_->InsertDlpSandboxInfo(sandboxInfo, false);
     std::string bundleName;
     int32_t appIndex = 111;
     int32_t userId = 111;
     ASSERT_TRUE(0 == dlpPermissionService_->DeleteDlpSandboxInfo(bundleName, appIndex, userId));
     dlpPermissionService_->appStateObserver_ = appStateObserver;
-    fileInfo.isNotOwnerAndReadOnce = false;
-    dlpPermissionService_->InsertDlpSandboxInfo(sandboxInfo, true, fileInfo);
+    sandboxInfo.isReadOnce = false;
+    dlpPermissionService_->InsertDlpSandboxInfo(sandboxInfo, true);
 }
 
 /**
@@ -1581,9 +1580,8 @@ HWTEST_F(DlpPermissionServiceTest, GetDLPFileVisitRecord002, TestSize.Level1)
     DLP_LOG_INFO(LABEL, "GetDLPFileVisitRecord002");
     auto appStateObserver = dlpPermissionService_->appStateObserver_;
     DlpSandboxInfo sandboxInfo;
-    FileInfo fileInfo;
-    fileInfo.isNotOwnerAndReadOnce = true;
-    dlpPermissionService_->InsertDlpSandboxInfo(sandboxInfo, false, fileInfo);
+    sandboxInfo.isReadOnce = true;
+    dlpPermissionService_->InsertDlpSandboxInfo(sandboxInfo, false);
     std::vector<VisitedDLPFileInfo> infoVec;
     int32_t ret = dlpPermissionService_->GetDLPFileVisitRecord(infoVec);
     ASSERT_EQ(ret, DLP_SERVICE_ERROR_API_NOT_FOR_SANDBOX_ERROR);

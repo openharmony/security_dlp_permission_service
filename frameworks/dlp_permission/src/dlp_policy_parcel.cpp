@@ -106,6 +106,10 @@ bool DlpPolicyParcel::MarshallingDlpPolicy(Parcel& out) const
         DLP_LOG_ERROR(LABEL, "Write owner nickNameMask fail");
         return false;
     }
+    if (!(out.WriteString(this->policyParams_.appIdentifier))) {
+        DLP_LOG_ERROR(LABEL, "Write appIdentifier fail");
+        return false;
+    }
     return true;
 }
 
@@ -164,6 +168,10 @@ bool DlpPolicyParcel::MarshallingAccountInfo(Parcel& out) const
     }
     if (!(out.WriteString(this->policyParams_.customProperty_))) {
         DLP_LOG_ERROR(LABEL, "Write customProperty fail");
+        return false;
+    }
+    if (!(out.WriteString(this->policyParams_.classificationLabel_))) {
+        DLP_LOG_ERROR(LABEL, "Write classificationLabel fail");
         return false;
     }
     return true;
@@ -328,6 +336,10 @@ static bool ReadAccountInfo(PermissionPolicy& policy, Parcel& in)
         DLP_LOG_ERROR(LABEL, "Read customProperty fail");
         return false;
     }
+    if (!(in.ReadString(policy.classificationLabel_))) {
+        DLP_LOG_ERROR(LABEL, "Read classificationLabel fail");
+        return false;
+    }
     policy.acountType_ = static_cast<DlpAccountType>(type);
     return true;
 }
@@ -378,6 +390,10 @@ static bool ReadPropertyParcel(Parcel& in, DlpPolicyParcel* policyParcel)
     }
     if (!(in.ReadString(policyParcel->policyParams_.nickNameMask_))) {
         DLP_LOG_ERROR(LABEL, "Read nickNameMask fail");
+        return false;
+    }
+    if (!(in.ReadString(policyParcel->policyParams_.appIdentifier))) {
+        DLP_LOG_ERROR(LABEL, "Read appIdentifier fail");
         return false;
     }
     return true;
