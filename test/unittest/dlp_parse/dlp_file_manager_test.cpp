@@ -764,7 +764,8 @@ HWTEST_F(DlpFileManagerTest, OpenDlpFile001, TestSize.Level0)
     char buffer[] = "123456";
     ASSERT_NE(write(plainFileFd, buffer, sizeof(buffer)), -1);
 
-    int32_t ret = DlpFileManager::GetInstance().GenerateDlpFile(plainFileFd, dlpFileFd, property, filePtr, DLP_TEST_DIR);
+    int32_t ret = DlpFileManager::GetInstance().GenerateDlpFile(plainFileFd, dlpFileFd,
+        property, filePtr, DLP_TEST_DIR);
     ASSERT_NE(DLP_PARSE_ERROR_FD_ERROR, ret);
     close(plainFileFd);
 
