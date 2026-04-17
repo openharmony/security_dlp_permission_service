@@ -774,7 +774,7 @@ HWTEST_F(DlpFileManagerTest, OpenDlpFile001, TestSize.Level0)
     DlpFileManager::GetInstance().AddDlpFileNode(filePtr1);
     if (ret == DLP_OK) {
         EXPECT_EQ(DLP_OK,
-        DlpFileManager::GetInstance().OpenDlpFile(dlpFileFd, filePtr, "", appId));
+            DlpFileManager::GetInstance().OpenDlpFile(dlpFileFd, filePtr, "", appId));
         EXPECT_EQ(filePtr1, filePtr);
         DlpFileManager::GetInstance().RemoveDlpFileNode(filePtr1);
 
@@ -782,7 +782,7 @@ HWTEST_F(DlpFileManagerTest, OpenDlpFile001, TestSize.Level0)
             DlpFileManager::GetInstance().OpenDlpFile(dlpFileFd, filePtr, "", appId));
     } else {
         EXPECT_NE(DLP_OK,
-        DlpFileManager::GetInstance().OpenDlpFile(dlpFileFd, filePtr, "", appId));
+            DlpFileManager::GetInstance().OpenDlpFile(dlpFileFd, filePtr, "", appId));
         DlpFileManager::GetInstance().RemoveDlpFileNode(filePtr1);
 
         EXPECT_NE(DLP_OK,
