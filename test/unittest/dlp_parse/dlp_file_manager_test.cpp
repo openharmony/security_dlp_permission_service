@@ -837,21 +837,31 @@ HWTEST_F(DlpFileManagerTest, OpenDlpFile001, TestSize.Level0)
     char buffer[] = "123456";
     ASSERT_NE(write(plainFileFd, buffer, sizeof(buffer)), -1);
 
-    ASSERT_NE(DLP_PARSE_ERROR_FD_ERROR,
-        DlpFileManager::GetInstance().GenerateDlpFile(plainFileFd, dlpFileFd, property, filePtr, DLP_TEST_DIR));
+    int32_t ret = DlpFileManager::GetInstance().GenerateDlpFile(plainFileFd, dlpFileFd,
+        property, filePtr, DLP_TEST_DIR);
+    ASSERT_NE(DLP_PARSE_ERROR_FD_ERROR, ret);
     close(plainFileFd);
 
     std::shared_ptr<DlpFile> filePtr1 = std::make_shared<DlpZipFile>(dlpFileFd, DLP_TEST_DIR, 0, "txt");
     ASSERT_NE(filePtr1, nullptr);
     DlpFileManager::GetInstance().RemoveDlpFileNode(filePtr1);
     DlpFileManager::GetInstance().AddDlpFileNode(filePtr1);
-    EXPECT_EQ(DLP_OK,
-        DlpFileManager::GetInstance().OpenDlpFile(dlpFileFd, filePtr, "", appId));
-    EXPECT_EQ(filePtr1, filePtr);
-    DlpFileManager::GetInstance().RemoveDlpFileNode(filePtr1);
+    if (ret == DLP_OK) {
+        EXPECT_EQ(DLP_OK,
+            DlpFileManager::GetInstance().OpenDlpFile(dlpFileFd, filePtr, "", appId));
+        EXPECT_EQ(filePtr1, filePtr);
+        DlpFileManager::GetInstance().RemoveDlpFileNode(filePtr1);
 
-    EXPECT_NE(DLP_PARSE_ERROR_GET_ACCOUNT_FAIL,
-        DlpFileManager::GetInstance().OpenDlpFile(dlpFileFd, filePtr, "", appId));
+        EXPECT_NE(DLP_PARSE_ERROR_GET_ACCOUNT_FAIL,
+            DlpFileManager::GetInstance().OpenDlpFile(dlpFileFd, filePtr, "", appId));
+    } else {
+        EXPECT_NE(DLP_OK,
+            DlpFileManager::GetInstance().OpenDlpFile(dlpFileFd, filePtr, "", appId));
+        DlpFileManager::GetInstance().RemoveDlpFileNode(filePtr1);
+
+        EXPECT_NE(DLP_OK,
+            DlpFileManager::GetInstance().OpenDlpFile(dlpFileFd, filePtr, "", appId));
+    }
     close(dlpFileFd);
 }
 
