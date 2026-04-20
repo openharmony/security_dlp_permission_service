@@ -224,6 +224,14 @@ void DlpPermissionService::DelSandboxInfoByAccount(bool isRegister)
             continue;
         }
         DeleteDlpSandboxInfo(bundleName, appIndex, userId);
+        if (bundleName == HIPREVIEW_HIGH) {
+            int32_t bindAppIndex = sandboxInfoEntry.bindAppIndex;
+            if (UninstallDlpSandboxApp(HIPREVIEW_LOW, bindAppIndex, userId) != DLP_OK) {
+                DLP_LOG_ERROR(LABEL, "UninstallDlpSandboxApp failed, bindAppIndex=%d",  bindAppIndex);
+            } else {
+                DLP_LOG_INFO(LABEL, "UninstallDlpSandboxApp success, bindAppIndex=%d", bindAppIndex);
+            }
+        }
         UninstallDlpSandboxApp(bundleName, appIndex, userId);
         RetentionFileManager::GetInstance().RemoveRetentionState(bundleName, appIndex);
         DlpSandboxChangeCallbackManager::GetInstance().ExecuteCallbackAsync(sandboxInfoEntry);
