@@ -76,6 +76,7 @@ static const uint32_t MAX_CLASSIFICATION_LABEL_SIZE = 255;
 static const uint32_t MAX_ENTERPRISEPOLICY_SIZE = 1024 * 1024 * 4;
 static const uint32_t MAX_CERT_SIZE = 1024 * 1024 * 40 * 2;
 static const std::string CALLER_APP_IDENTIFIER = "1234567890";
+static const std::string HIPREVIEW_LOW = "com.huawei.hmos.hipreviewext";
 }
 
 static bool ContainsUri(const std::vector<std::string>& uris, const std::string& uri)
@@ -822,4 +823,180 @@ HWTEST_F(DlpPermissionServiceTest, HandleEnterpriseInstallDlpSandbox005, TestSiz
     int32_t ret = dlpPermissionService_->HandleEnterpriseInstallDlpSandbox(sandboxInfo, inputSandboxInfo,
         enterpriseInfo);
     ASSERT_NE(DLP_SERVICE_ERROR_VALUE_INVALID, ret);
+}
+
+/**
+ * @tc.name: DelSandboxInfoByAccount001
+ * @tc.desc: DelSandboxInfoByAccount covers HIPREVIEW_HIGH branch with valid bindAppIndex
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionServiceTest, DelSandboxInfoByAccount001, TestSize.Level1)
+{
+    DLP_LOG_DEBUG(LABEL, "DelSandboxInfoByAccount001");
+
+    dlpPermissionService_->waterMarkInfo_.accountAndUserId = "test_watermark_before";
+
+    DlpSandboxInfo hippreviewHighInfo;
+    hippreviewHighInfo.uid = 3301;
+    hippreviewHighInfo.userId = DEFAULT_USERID;
+    hippreviewHighInfo.appIndex = 101;
+    hippreviewHighInfo.bindAppIndex = 201;
+    hippreviewHighInfo.tokenId = 3301;
+    hippreviewHighInfo.bundleName = HIPREVIEW_HIGH;
+    hippreviewHighInfo.dlpFileAccess = DLPFileAccess::READ_ONLY;
+    hippreviewHighInfo.accountName = "test_account_del";
+    dlpPermissionService_->appStateObserver_->AddDlpSandboxInfo(hippreviewHighInfo);
+
+    DlpSandboxInfo queryInfo;
+    bool existsBefore = dlpPermissionService_->appStateObserver_->GetSandboxInfo(hippreviewHighInfo.uid, queryInfo);
+    ASSERT_TRUE(existsBefore);
+
+    dlpPermissionService_->DelSandboxInfoByAccount(false);
+
+    ASSERT_EQ(dlpPermissionService_->waterMarkInfo_.accountAndUserId, "");
+
+    dlpPermissionService_->appStateObserver_->EraseDlpSandboxInfo(hippreviewHighInfo.uid);
+}
+
+/**
+ * @tc.name: DelSandboxInfoByAccount002
+ * @tc.desc: DelSandboxInfoByAccount covers HIPREVIEW_HIGH branch with isRegister=true
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionServiceTest, DelSandboxInfoByAccount002, TestSize.Level1)
+{
+    DLP_LOG_DEBUG(LABEL, "DelSandboxInfoByAccount002");
+
+    dlpPermissionService_->waterMarkInfo_.accountAndUserId = "test_watermark_register";
+
+    DlpSandboxInfo hippreviewHighInfo;
+    hippreviewHighInfo.uid = 3302;
+    hippreviewHighInfo.userId = DEFAULT_USERID;
+    hippreviewHighInfo.appIndex = 102;
+    hippreviewHighInfo.bindAppIndex = 202;
+    hippreviewHighInfo.tokenId = 3302;
+    hippreviewHighInfo.bundleName = HIPREVIEW_HIGH;
+    hippreviewHighInfo.dlpFileAccess = DLPFileAccess::CONTENT_EDIT;
+    hippreviewHighInfo.accountName = "register_account_del";
+    dlpPermissionService_->appStateObserver_->AddDlpSandboxInfo(hippreviewHighInfo);
+
+    DlpSandboxInfo queryInfo;
+    bool existsBefore = dlpPermissionService_->appStateObserver_->GetSandboxInfo(hippreviewHighInfo.uid, queryInfo);
+    ASSERT_TRUE(existsBefore);
+
+    dlpPermissionService_->DelSandboxInfoByAccount(true);
+
+    ASSERT_EQ(dlpPermissionService_->waterMarkInfo_.accountAndUserId, "");
+
+    dlpPermissionService_->appStateObserver_->EraseDlpSandboxInfo(hippreviewHighInfo.uid);
+}
+
+/**
+ * @tc.name: DelSandboxInfoByAccount003
+ * @tc.desc: DelSandboxInfoByAccount covers non-HIPREVIEW_HIGH bundle (skip bind uninstall)
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionServiceTest, DelSandboxInfoByAccount003, TestSize.Level1)
+{
+    DLP_LOG_DEBUG(LABEL, "DelSandboxInfoByAccount003");
+
+    dlpPermissionService_->waterMarkInfo_.accountAndUserId = "test_watermark_normal";
+
+    DlpSandboxInfo normalInfo;
+    normalInfo.uid = 3303;
+    normalInfo.userId = DEFAULT_USERID;
+    normalInfo.appIndex = 103;
+    normalInfo.bindAppIndex = 203;
+    normalInfo.tokenId = 3303;
+    normalInfo.bundleName = DLP_MANAGER_APP;
+    normalInfo.dlpFileAccess = DLPFileAccess::READ_ONLY;
+    normalInfo.accountName = "normal_account_del";
+    dlpPermissionService_->appStateObserver_->AddDlpSandboxInfo(normalInfo);
+
+    DlpSandboxInfo queryInfo;
+    bool existsBefore = dlpPermissionService_->appStateObserver_->GetSandboxInfo(normalInfo.uid, queryInfo);
+    ASSERT_TRUE(existsBefore);
+
+    dlpPermissionService_->DelSandboxInfoByAccount(false);
+
+    ASSERT_EQ(dlpPermissionService_->waterMarkInfo_.accountAndUserId, "");
+
+    dlpPermissionService_->appStateObserver_->EraseDlpSandboxInfo(normalInfo.uid);
+}
+
+/**
+ * @tc.name: DelSandboxInfoByAccount004
+ * @tc.desc: DelSandboxInfoByAccount with empty accountName skips processing for that entry
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionServiceTest, DelSandboxInfoByAccount004, TestSize.Level1)
+{
+    DLP_LOG_DEBUG(LABEL, "DelSandboxInfoByAccount004");
+
+    dlpPermissionService_->waterMarkInfo_.accountAndUserId = "test_watermark_empty";
+
+    DlpSandboxInfo emptyAccountInfo;
+    emptyAccountInfo.uid = 3304;
+    emptyAccountInfo.userId = DEFAULT_USERID;
+    emptyAccountInfo.appIndex = 104;
+    emptyAccountInfo.bindAppIndex = 204;
+    emptyAccountInfo.tokenId = 3304;
+    emptyAccountInfo.bundleName = HIPREVIEW_HIGH;
+    emptyAccountInfo.dlpFileAccess = DLPFileAccess::READ_ONLY;
+    emptyAccountInfo.accountName = "";
+    dlpPermissionService_->appStateObserver_->AddDlpSandboxInfo(emptyAccountInfo);
+
+    DlpSandboxInfo queryInfo;
+    bool existsBefore = dlpPermissionService_->appStateObserver_->GetSandboxInfo(emptyAccountInfo.uid, queryInfo);
+    ASSERT_TRUE(existsBefore);
+
+    dlpPermissionService_->DelSandboxInfoByAccount(false);
+
+    ASSERT_EQ(dlpPermissionService_->waterMarkInfo_.accountAndUserId, "");
+
+    bool existsAfter = dlpPermissionService_->appStateObserver_->GetSandboxInfo(emptyAccountInfo.uid, queryInfo);
+    ASSERT_TRUE(existsAfter);
+
+    dlpPermissionService_->appStateObserver_->EraseDlpSandboxInfo(emptyAccountInfo.uid);
+}
+
+/**
+ * @tc.name: DelSandboxInfoByAccount005
+ * @tc.desc: DelSandboxInfoByAccount with different userId skips processing for that entry
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionServiceTest, DelSandboxInfoByAccount005, TestSize.Level1)
+{
+    DLP_LOG_DEBUG(LABEL, "DelSandboxInfoByAccount005");
+
+    dlpPermissionService_->waterMarkInfo_.accountAndUserId = "test_watermark_diff_user";
+
+    DlpSandboxInfo differentUserIdInfo;
+    differentUserIdInfo.uid = 3305;
+    differentUserIdInfo.userId = 200;
+    differentUserIdInfo.appIndex = 105;
+    differentUserIdInfo.bindAppIndex = 205;
+    differentUserIdInfo.tokenId = 3305;
+    differentUserIdInfo.bundleName = HIPREVIEW_HIGH;
+    differentUserIdInfo.dlpFileAccess = DLPFileAccess::READ_ONLY;
+    differentUserIdInfo.accountName = "different_user_account";
+    dlpPermissionService_->appStateObserver_->AddDlpSandboxInfo(differentUserIdInfo);
+
+    DlpSandboxInfo queryInfo;
+    bool existsBefore = dlpPermissionService_->appStateObserver_->GetSandboxInfo(differentUserIdInfo.uid, queryInfo);
+    ASSERT_TRUE(existsBefore);
+
+    dlpPermissionService_->DelSandboxInfoByAccount(false);
+
+    ASSERT_EQ(dlpPermissionService_->waterMarkInfo_.accountAndUserId, "");
+
+    bool existsAfter = dlpPermissionService_->appStateObserver_->GetSandboxInfo(differentUserIdInfo.uid, queryInfo);
+    ASSERT_TRUE(existsAfter);
+
+    dlpPermissionService_->appStateObserver_->EraseDlpSandboxInfo(differentUserIdInfo.uid);
 }
