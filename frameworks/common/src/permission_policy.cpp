@@ -162,7 +162,7 @@ PermissionPolicy::PermissionPolicy()
     canFindWaterMarkConfig_ = false;
     canFindCountdown_ = false;
     nickNameMask_ = "";
-    appIdentifier = "";
+    appIdentifier_ = "";
 }
 
 PermissionPolicy::PermissionPolicy(const DlpProperty& property)
@@ -357,7 +357,7 @@ void PermissionPolicy::CopyPermissionPolicy(const PermissionPolicy& srcPolicy)
     canFindWaterMarkConfig_ = srcPolicy.canFindWaterMarkConfig_;
     canFindCountdown_ = srcPolicy.canFindCountdown_;
     nickNameMask_ = srcPolicy.nickNameMask_;
-    appIdentifier = srcPolicy.appIdentifier;
+    appIdentifier_ = srcPolicy.appIdentifier_;
 }
 
 int32_t PermissionPolicy::CheckActionUponExpiry()
