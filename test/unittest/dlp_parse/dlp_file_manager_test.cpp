@@ -94,7 +94,7 @@ static sptr<CertParcel> BuildCertParcelByType(DlpAccountType type)
     policy.ownerAccountId_ = "ownerId";
     policy.fileId = "file_id_case";
     policy.classificationLabel_ = "L1";
-    policy.appIdentifier = "app_identifier_case";
+    policy.appIdentifier_ = "app_identifier_case";
 
     std::vector<uint8_t> cert;
     if (DlpPermissionKit::GenerateDlpCertificate(policy, cert) != DLP_OK) {

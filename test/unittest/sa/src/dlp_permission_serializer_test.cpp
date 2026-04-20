@@ -517,7 +517,7 @@ HWTEST_F(DlpPermissionSerializerTest, DeserializeDlpPermission005, TestSize.Leve
     PermissionPolicy policy1;
     int32_t ret = serialize.DeserializeDlpPermission(permJson1, policy1);
     ASSERT_EQ(DLP_OK, ret);
-    ASSERT_EQ("appid_1", policy1.appIdentifier);
+    ASSERT_EQ("appid_1", policy1.appIdentifier_);
 
     // CUSTOM_PROPERTY is non-string -> line 551 false, APPIDENTIFIER non-string -> line 595 false.
     unordered_json permJson2;
@@ -527,7 +527,7 @@ HWTEST_F(DlpPermissionSerializerTest, DeserializeDlpPermission005, TestSize.Leve
     PermissionPolicy policy2;
     ret = serialize.DeserializeDlpPermission(permJson2, policy2);
     ASSERT_EQ(DLP_OK, ret);
-    ASSERT_EQ("", policy2.appIdentifier);
+    ASSERT_EQ("", policy2.appIdentifier_);
 
     // CUSTOM_PROPERTY string but invalid json -> line 551 true, line 555 false.
     unordered_json permJson3;
@@ -553,7 +553,7 @@ HWTEST_F(DlpPermissionSerializerTest, DeserializeDlpPermission005, TestSize.Leve
     ASSERT_EQ(DLP_OK, ret);
     ASSERT_EQ("ent_a", policy4.customProperty_);
     ASSERT_EQ("L2", policy4.classificationLabel_);
-    ASSERT_EQ("appid_4", policy4.appIdentifier);
+    ASSERT_EQ("appid_4", policy4.appIdentifier_);
 
     // CUSTOM_PROPERTY valid object but field types invalid -> lines 557/561 false.
     unordered_json permJson5;
