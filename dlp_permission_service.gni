@@ -30,6 +30,14 @@ declare_args() {
   } else {
     dlp_credential_enable = false
   }
+
+  if (!defined(global_parts_info) ||
+      defined(global_parts_info.security_security_guard)) {
+    security_guard_flag = true
+  } else {
+    security_guard_flag = false
+  }
+
   dlp_permission_service_credential_connection_enable = true
 
   dlp_file_version_inner = true

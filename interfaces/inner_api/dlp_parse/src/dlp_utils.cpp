@@ -25,6 +25,7 @@
 #include "dlp_permission_public_interface.h"
 #include "dlp_file.h"
 #include "dlp_zip.h"
+#include "parameter.h"
 #include "ipc_skeleton.h"
 #include "securec.h"
 
@@ -48,6 +49,7 @@ const int32_t FILEID_SIZE = 46;
 const int32_t FILEID_SIZE_OPPOSITE = -46;
 const int32_t WATERMARK_OPPOSITE = -58;
 const int32_t COUNTDOWN_FILETYPE = 10000;
+const int32_t INPUT_UDID_LEN = 65;
 }
 
 
@@ -525,6 +527,25 @@ std::string DlpUtils::GetAppIdentifierByAppId(const std::string &appId, const in
         return DEFAULT_STRINGS;
     }
     return bundleInfo.signatureInfo.appIdentifier;
+}
+
+bool DlpUtils::GetUdid(std::string &udid)
+{
+    char *udidStr = reinterpret_cast<char*>(malloc(INPUT_UDID_LEN));
+    if (udidStr == nullptr) {
+        DLP_LOG_ERROR(LABEL, "udidStr is nullptr.");
+        return false;
+    }
+    (void)memset_s(udidStr, INPUT_UDID_LEN, 0, INPUT_UDID_LEN);
+    int32_t res = GetDevUdid(udidStr, INPUT_UDID_LEN);
+    if (res != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "GetDevUdid is error : %{public}d.", res);
+        free(udidStr);
+        return false;
+    }
+    udid = udidStr;
+    free(udidStr);
+    return true;
 }
 }  // namespace DlpPermission
 }  // namespace Security
