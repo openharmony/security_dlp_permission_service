@@ -76,7 +76,6 @@ static const uint32_t MAX_CLASSIFICATION_LABEL_SIZE = 255;
 static const uint32_t MAX_ENTERPRISEPOLICY_SIZE = 1024 * 1024 * 4;
 static const uint32_t MAX_CERT_SIZE = 1024 * 1024 * 40 * 2;
 static const std::string CALLER_APP_IDENTIFIER = "1234567890";
-static const std::string HIPREVIEW_LOW = "com.huawei.hmos.hipreviewext";
 }
 
 static bool ContainsUri(const std::vector<std::string>& uris, const std::string& uri)
