@@ -32,6 +32,8 @@ public:
     int32_t RemoveDlpPermission(int outPlainFileFd);
     int32_t DlpFileRead(uint64_t offset, void* buf, uint32_t size, bool& hasRead, int32_t uid);
     int32_t DlpFileWrite(uint64_t offset, void* buf, uint32_t size);
+    int32_t ParseEnterpriseEventId();
+    int32_t ParseEnterpriseFileIdInner(uint32_t fileIdSize);
 
     uint64_t GetFsContentSize() const;
     void SetOfflineAccess(bool flag, int32_t allowedOpenCount);

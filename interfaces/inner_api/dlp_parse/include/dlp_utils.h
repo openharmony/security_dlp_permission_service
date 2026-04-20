@@ -495,6 +495,7 @@ public:
     static std::string GetAppIdentifierByAppId(const std::string &appId, const int32_t &userId);
     static int32_t GetRawFileAllowedOpenCount(const int32_t& fd, int32_t& allowedOpenCount, bool& waterMarkConfig);
     static std::string GetExtractRealType(const std::string& typeStr);
+    static bool GetUdid(std::string &udid);
 };
 }  // namespace DlpPermission
 }  // namespace Security

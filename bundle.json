@@ -61,7 +61,8 @@
         "window_manager",
         "resource_management",
         "eventhandler",
-        "memmgr"
+        "memmgr",
+        "security_guard"
       ],
       "third_party": []
     },
