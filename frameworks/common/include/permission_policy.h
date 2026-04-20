@@ -185,7 +185,7 @@ public:
     bool canFindWaterMarkConfig_ = false;
     bool canFindCountdown_ = false;
     std::string nickNameMask_ = "";
-    std::string appIdentifier = "";
+    std::string appIdentifier_ = "";
 
 private:
     uint8_t* aeskey_;

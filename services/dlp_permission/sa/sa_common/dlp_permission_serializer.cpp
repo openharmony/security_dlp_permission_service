@@ -438,7 +438,7 @@ static int32_t SerializeDomainAccountPolicy(const PermissionPolicy& policy, unor
     policyJson[NEED_ONLINE] = policy.needOnline_;
     policyJson[DLP_FILE_DEBUG_FLAG] = policy.debug_;
     policyJson[ACCOUNT_INDEX] = authUsersJson;
-    policyJson[APPIDENTIFIER] = policy.appIdentifier;
+    policyJson[APPIDENTIFIER] = policy.appIdentifier_;
     SerializeCustomProperty(policy, policyJson);
     SerializeEveryoneInfo(policy, policyJson);
     if (policy.ownerAccountType_ == ENTERPRISE_ACCOUNT) {
@@ -593,7 +593,7 @@ static void InitDomainAccountPolicy(PermissionPolicy& policy, const std::vector<
     }
     ParseCustomProperty(policy, policyJson);
     if (policyJson.find(APPIDENTIFIER) != policyJson.end() && policyJson.at(APPIDENTIFIER).is_string()) {
-        policyJson.at(APPIDENTIFIER).get_to(policy.appIdentifier);
+        policyJson.at(APPIDENTIFIER).get_to(policy.appIdentifier_);
     }
     policy.ownerAccountType_ = DOMAIN_ACCOUNT;
 }
