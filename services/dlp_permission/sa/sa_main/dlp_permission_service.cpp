@@ -1906,11 +1906,6 @@ int32_t DlpPermissionService::QueryOpenedEnterpriseDlpFiles(const std::string& l
     std::vector<std::string>& resultUris)
 {
     appStateObserver_->PostDelayUnloadTask(CurrentTaskState::SHORT_TASK);
-    std::string appIdentifier;
-    if (!PermissionManagerAdapter::GetAppIdentifierForCalling(appIdentifier)) {
-        DLP_LOG_ERROR(LABEL, "Failed to get appIdentifier.");
-        return DLP_SERVICE_ERROR_PERMISSION_DENY;
-    }
 
     if (!PermissionManagerAdapter::CheckPermission(PERMISSION_ENTERPRISE_ACCESS_DLP_FILE)) {
         return DLP_SERVICE_ERROR_PERMISSION_DENY;
@@ -1920,7 +1915,11 @@ int32_t DlpPermissionService::QueryOpenedEnterpriseDlpFiles(const std::string& l
         DLP_LOG_ERROR(LABEL, "label is invalid");
         return DLP_SERVICE_ERROR_VALUE_INVALID;
     }
-
+    std::string appIdentifier;
+    if (!PermissionManagerAdapter::GetAppIdentifierForCalling(appIdentifier)) {
+        DLP_LOG_ERROR(LABEL, "Failed to get appIdentifier.");
+        return DLP_PARSE_ERROR_BMS_ERROR;
+    }
     appStateObserver_->GetSandboxInfosByClassificationLabel(label, appIdentifier, resultUris);
     DLP_LOG_INFO(LABEL, "QueryOpenedEnterpriseDlpFiles label:%{private}s, count:%{public}zu", label.c_str(),
         resultUris.size());
@@ -1930,11 +1929,6 @@ int32_t DlpPermissionService::QueryOpenedEnterpriseDlpFiles(const std::string& l
 int32_t DlpPermissionService::CloseOpenedEnterpriseDlpFiles(const std::string& label)
 {
     appStateObserver_->PostDelayUnloadTask(CurrentTaskState::SHORT_TASK);
-    std::string appIdentifier;
-    if (!PermissionManagerAdapter::GetAppIdentifierForCalling(appIdentifier)) {
-        DLP_LOG_ERROR(LABEL, "Failed to get appIdentifier.");
-        return DLP_SERVICE_ERROR_PERMISSION_DENY;
-    }
 
     if (!PermissionManagerAdapter::CheckPermission(PERMISSION_ENTERPRISE_ACCESS_DLP_FILE)) {
         return DLP_SERVICE_ERROR_PERMISSION_DENY;
@@ -1944,20 +1938,27 @@ int32_t DlpPermissionService::CloseOpenedEnterpriseDlpFiles(const std::string& l
         DLP_LOG_ERROR(LABEL, "label is invalid");
         return DLP_SERVICE_ERROR_VALUE_INVALID;
     }
+    std::string appIdentifier;
+    if (!PermissionManagerAdapter::GetAppIdentifierForCalling(appIdentifier)) {
+        DLP_LOG_ERROR(LABEL, "Failed to get appIdentifier.");
+        return DLP_PARSE_ERROR_BMS_ERROR;
+    }
     std::vector<DlpSandboxInfo> appInfos;
     appStateObserver_->GetNeededDelEnterpriseSandbox(label, appIdentifier, appInfos);
     DLP_LOG_INFO(LABEL, "CloseOpenedEnterpriseDlpFiles label:%{private}s, count:%{public}zu", label.c_str(),
         appInfos.size());
+    bool allUninstalled = true;
     for (const auto& appInfo : appInfos) {
         DeleteDlpSandboxInfo(appInfo.bundleName, appInfo.appIndex, appInfo.userId);
         if (appInfo.bundleName == HIPREVIEW_HIGH) {
             UninstallDlpSandboxApp(HIPREVIEW_LOW, appInfo.bindAppIndex, appInfo.userId);
         }
-        UninstallDlpSandboxApp(appInfo.bundleName, appInfo.appIndex, appInfo.userId);
+        allUninstalled = (UninstallDlpSandboxApp(appInfo.bundleName, appInfo.appIndex, appInfo.userId) == DLP_OK) &&
+            allUninstalled;
         RetentionFileManager::GetInstance().RemoveRetentionState(appInfo.bundleName, appInfo.appIndex);
         DlpSandboxChangeCallbackManager::GetInstance().ExecuteCallbackAsync(appInfo);
     }
-    return DLP_OK;
+    return allUninstalled ? DLP_OK : DLP_PARSE_ERROR_BMS_ERROR;
 }
 
 int32_t DlpPermissionService::SetEnterpriseInfos(const std::string& uri, const std::string& fileId,
@@ -1990,7 +1991,7 @@ int32_t DlpPermissionService::SetEnterpriseInfos(const std::string& uri, const s
         return DLP_SERVICE_ERROR_VALUE_INVALID;
     }
 
-    DLP_LOG_INFO(LABEL, "SetEnterpriseInfos success with uri: %{public}s", uri.c_str());
+    DLP_LOG_INFO(LABEL, "SetEnterpriseInfos success with uri: %{private}s", uri.c_str());
     return DLP_OK;
 }
 } // namespace DlpPermission

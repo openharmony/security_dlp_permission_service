@@ -106,7 +106,7 @@ bool DlpPolicyParcel::MarshallingDlpPolicy(Parcel& out) const
         DLP_LOG_ERROR(LABEL, "Write owner nickNameMask fail");
         return false;
     }
-    if (!(out.WriteString(this->policyParams_.appIdentifier))) {
+    if (!(out.WriteString(this->policyParams_.appIdentifier_))) {
         DLP_LOG_ERROR(LABEL, "Write appIdentifier fail");
         return false;
     }
@@ -392,7 +392,7 @@ static bool ReadPropertyParcel(Parcel& in, DlpPolicyParcel* policyParcel)
         DLP_LOG_ERROR(LABEL, "Read nickNameMask fail");
         return false;
     }
-    if (!(in.ReadString(policyParcel->policyParams_.appIdentifier))) {
+    if (!(in.ReadString(policyParcel->policyParams_.appIdentifier_))) {
         DLP_LOG_ERROR(LABEL, "Read appIdentifier fail");
         return false;
     }

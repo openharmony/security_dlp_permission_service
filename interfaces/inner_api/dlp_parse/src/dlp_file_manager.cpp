@@ -296,7 +296,7 @@ static int32_t SetDlpParams(const std::shared_ptr<DlpFile>& filePtr, const DlpPr
 
     if (property.ownerAccountType == ENTERPRISE_ACCOUNT) {
         policy.appId = filePtr->GetAppId();
-        if (!DlpUtils::GetAppIdentifierFromToken(policy.appIdentifier)) {
+        if (!DlpUtils::GetAppIdentifierFromToken(policy.appIdentifier_)) {
             DLP_LOG_ERROR(LABEL, "GetAppIdentifierFromToken failed.");
             return DLP_SERVICE_ERROR_PERMISSION_DENY;
         }
@@ -697,7 +697,7 @@ static int32_t SetEnterpriseInfoForDlpFile(int32_t dlpFileFd, std::shared_ptr<Dl
         }
         DLPFileAccess dlpFileAccess = filePtr->GetAuthPerm();
         res = DlpPermissionKit::SetEnterpriseInfos(
-            uri, certParcel->fileId, dlpFileAccess, policy.classificationLabel_, policy.appIdentifier);
+            uri, certParcel->fileId, dlpFileAccess, policy.classificationLabel_, policy.appIdentifier_);
         if (res != DLP_OK) {
             DLP_LOG_ERROR(LABEL, "SetEnterpriseInfos fail, errno=%d", res);
             return res;
