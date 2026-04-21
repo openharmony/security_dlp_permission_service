@@ -1953,8 +1953,8 @@ int32_t DlpPermissionService::CloseOpenedEnterpriseDlpFiles(const std::string& l
         if (appInfo.bundleName == HIPREVIEW_HIGH) {
             UninstallDlpSandboxApp(HIPREVIEW_LOW, appInfo.bindAppIndex, appInfo.userId);
         }
-        allUninstalled = allUninstalled &&
-            (UninstallDlpSandboxApp(appInfo.bundleName, appInfo.appIndex, appInfo.userId) == DLP_OK);
+        allUninstalled = (UninstallDlpSandboxApp(appInfo.bundleName, appInfo.appIndex, appInfo.userId) == DLP_OK) &&
+            allUninstalled;
         RetentionFileManager::GetInstance().RemoveRetentionState(appInfo.bundleName, appInfo.appIndex);
         DlpSandboxChangeCallbackManager::GetInstance().ExecuteCallbackAsync(appInfo);
     }
