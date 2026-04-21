@@ -48,6 +48,7 @@ public:
     static bool isCheckSandbox;
     static int32_t permType;
     static std::string mockAppIdentifier;
+    static bool mockGetAppIdentifierSuccess;
 };
 }  // namespace DlpPermission
 }  // namespace Security

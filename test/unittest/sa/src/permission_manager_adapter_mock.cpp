@@ -40,6 +40,7 @@ bool DlpPermissionServiceTest::isSandbox = true;
 bool DlpPermissionServiceTest::isCheckSandbox = true;
 int32_t DlpPermissionServiceTest::permType = 0;
 std::string DlpPermissionServiceTest::mockAppIdentifier = MDM_HAP_IDENTIFIER;
+bool DlpPermissionServiceTest::mockGetAppIdentifierSuccess = true;
 
 bool PermissionManagerAdapter::CheckPermission(const std::string& permission)
 {
@@ -105,7 +106,7 @@ int32_t PermissionManagerAdapter::CheckSandboxFlagWithService(AccessToken::Acces
 bool PermissionManagerAdapter::GetAppIdentifierForCalling(std::string &appIdentifier)
 {
     appIdentifier = "1234567890";
-    return true;
+    return DlpPermissionServiceTest::mockGetAppIdentifierSuccess;
 }
 
 int32_t PermissionManagerAdapter::CheckAuthPolicy(const std::string& appId, const std::string& realFileType,

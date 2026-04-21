@@ -583,7 +583,7 @@ HWTEST_F(DlpPermissionServiceTest, CloseOpenedEnterpriseDlpFiles001, TestSize.Le
     dlpPermissionService_->appStateObserver_->AddDlpSandboxInfo(appInfo);
 
     int32_t ret = dlpPermissionService_->CloseOpenedEnterpriseDlpFiles("L1");
-    ASSERT_EQ(DLP_OK, ret);
+    ASSERT_EQ(DLP_PARSE_ERROR_BMS_ERROR, ret);
 
     std::string longLabel(MAX_CLASSIFICATION_LABEL_SIZE + 1, 'a');
     ret = dlpPermissionService_->CloseOpenedEnterpriseDlpFiles(longLabel);
@@ -998,4 +998,74 @@ HWTEST_F(DlpPermissionServiceTest, DelSandboxInfoByAccount005, TestSize.Level1)
     ASSERT_TRUE(existsAfter);
 
     dlpPermissionService_->appStateObserver_->EraseDlpSandboxInfo(differentUserIdInfo.uid);
+}
+
+/**
+ * @tc.name: QueryOpenedEnterpriseDlpFiles002
+ * @tc.desc: QueryOpenedEnterpriseDlpFiles returns DLP_PARSE_ERROR_BMS_ERROR when GetAppIdentifierForCalling fails
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionServiceTest, QueryOpenedEnterpriseDlpFiles002, TestSize.Level1)
+{
+    DLP_LOG_DEBUG(LABEL, "QueryOpenedEnterpriseDlpFiles002");
+
+    bool backupSuccess = DlpPermissionServiceTest::mockGetAppIdentifierSuccess;
+    DlpPermissionServiceTest::mockGetAppIdentifierSuccess = false;
+
+    std::vector<std::string> uris;
+    int32_t ret = dlpPermissionService_->QueryOpenedEnterpriseDlpFiles("L1", uris);
+    ASSERT_EQ(DLP_PARSE_ERROR_BMS_ERROR, ret);
+
+    DlpPermissionServiceTest::mockGetAppIdentifierSuccess = backupSuccess;
+}
+
+/**
+ * @tc.name: CloseOpenedEnterpriseDlpFiles002
+ * @tc.desc: CloseOpenedEnterpriseDlpFiles returns DLP_PARSE_ERROR_BMS_ERROR when GetAppIdentifierForCalling fails
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionServiceTest, CloseOpenedEnterpriseDlpFiles002, TestSize.Level1)
+{
+    DLP_LOG_DEBUG(LABEL, "CloseOpenedEnterpriseDlpFiles002");
+
+    bool backupSuccess = DlpPermissionServiceTest::mockGetAppIdentifierSuccess;
+    DlpPermissionServiceTest::mockGetAppIdentifierSuccess = false;
+
+    int32_t ret = dlpPermissionService_->CloseOpenedEnterpriseDlpFiles("L1");
+    ASSERT_EQ(DLP_PARSE_ERROR_BMS_ERROR, ret);
+
+    DlpPermissionServiceTest::mockGetAppIdentifierSuccess = backupSuccess;
+}
+
+/**
+ * @tc.name: CloseOpenedEnterpriseDlpFiles003
+ * @tc.desc: CloseOpenedEnterpriseDlpFiles returns DLP_PARSE_ERROR_BMS_ERROR when UninstallDlpSandboxApp fails
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionServiceTest, CloseOpenedEnterpriseDlpFiles003, TestSize.Level1)
+{
+    DLP_LOG_DEBUG(LABEL, "CloseOpenedEnterpriseDlpFiles003");
+
+    std::string backupIdentifier = DlpPermissionServiceTest::mockAppIdentifier;
+    DlpPermissionServiceTest::mockAppIdentifier = CALLER_APP_IDENTIFIER;
+
+    DlpSandboxInfo appInfo;
+    appInfo.uid = 1401;
+    appInfo.userId = DEFAULT_USERID;
+    appInfo.appIndex = 301;
+    appInfo.tokenId = 1401;
+    appInfo.bundleName = "com.test.uninstall.fail";
+    appInfo.dlpFileAccess = DLPFileAccess::READ_ONLY;
+    appInfo.classificationLabel = "L1";
+    appInfo.appIdentifier = CALLER_APP_IDENTIFIER;
+    dlpPermissionService_->appStateObserver_->AddDlpSandboxInfo(appInfo);
+
+    int32_t ret = dlpPermissionService_->CloseOpenedEnterpriseDlpFiles("L1");
+    ASSERT_EQ(DLP_PARSE_ERROR_BMS_ERROR, ret);
+
+    dlpPermissionService_->appStateObserver_->EraseDlpSandboxInfo(appInfo.uid);
+    DlpPermissionServiceTest::mockAppIdentifier = backupIdentifier;
 }
