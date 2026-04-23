@@ -724,6 +724,7 @@ int32_t DlpPermissionSerializer::DeserializeCloudAccountPolicy(const unordered_j
         plainPolicyJson.at(CLIENT_POLICY).get_to(clientPolicyJson);
     }
 
+    DeserializeEveryoneInfo(collaborativePolicyJson, policy);
     std::vector<AuthUserInfo> userList;
     res = DeserializeAuthUserList(accountListJson, userList);
     if (res != DLP_OK) {
