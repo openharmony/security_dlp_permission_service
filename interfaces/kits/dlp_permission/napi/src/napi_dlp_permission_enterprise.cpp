@@ -37,6 +37,7 @@
 #include "tokenid_kit.h"
 #include "token_setproc.h"
 #include "napi_dlp_connection_plugin.h"
+#include "parameters.h"
 
 namespace OHOS {
 namespace Security {
@@ -46,6 +47,7 @@ using namespace OHOS::Security::DlpConnection;
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "DlpPermissionNapi"};
 static const std::string PERMISSION_ENTERPRISE_ACCESS_DLP_FILE = "ohos.permission.ENTERPRISE_ACCESS_DLP_FILE";
+static std::string VERSION_FOR_2B = "1";
 }  // namespace
 
 static bool CheckEmulator()
@@ -56,8 +58,21 @@ static bool CheckEmulator()
     return false;
 }
 
+static bool CheckEnterprisePlatform()
+{
+    std::string value = OHOS::system::GetParameter("const.dlp.functiontypes", "0");
+    if (value == VERSION_FOR_2B) {
+        return true;
+    }
+    return false;
+}
+
 napi_value NapiDlpPermission::CloseOpenedEnterpriseDlpFiles(napi_env env, napi_callback_info cbInfo)
 {
+    if (!CheckEnterprisePlatform()) {
+        DlpNapiThrow(env, DLP_DEVICE_ERROR_CAPABILITY_NOT_SUPPORTED);
+        return nullptr;
+    }
     if (CheckEmulator()) {
         DlpNapiThrow(env, DLP_DEVICE_ERROR_CAPABILITY_NOT_SUPPORTED_EMULATOR);
         return nullptr;
@@ -124,6 +139,10 @@ void NapiDlpPermission::CloseOpenedEnterpriseDlpFilesComplete(napi_env env, napi
 
 napi_value NapiDlpPermission::QueryOpenedEnterpriseDlpFiles(napi_env env, napi_callback_info cbInfo)
 {
+    if (!CheckEnterprisePlatform()) {
+        DlpNapiThrow(env, DLP_DEVICE_ERROR_CAPABILITY_NOT_SUPPORTED);
+        return nullptr;
+    }
     if (CheckEmulator()) {
         DlpNapiThrow(env, DLP_DEVICE_ERROR_CAPABILITY_NOT_SUPPORTED_EMULATOR);
         return nullptr;
