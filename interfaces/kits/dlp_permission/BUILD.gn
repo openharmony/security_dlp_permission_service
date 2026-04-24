@@ -80,6 +80,7 @@ ohos_shared_library("libdlppermission_napi") {
     "bundle_framework:appexecfwk_core",
     "c_utils:utils",
     "file_api:filemgmt_libn",
+    "graphic_2d:color_manager",
     "hilog:libhilog",
     "ipc:ipc_core",
     "napi:ace_napi",
@@ -141,6 +142,7 @@ ohos_shared_library("libdlpsetdlpfeature_napi") {
     "access_token:libtokensetproc_shared",
     "ace_engine:ace_uicontent",
     "bundle_framework:appexecfwk_base",
+    "graphic_2d:color_manager",
     "napi:ace_napi",
     "ipc:ipc_single",
   ]
