@@ -143,8 +143,14 @@ bool GetEnterpriseDlpProperty(napi_env env, napi_value jsObject, DlpProperty& pr
             return false;
         }
         if (permList.size() > 0) {
-            uint32_t perm = *(std::max_element(permList.begin(), permList.end()));
-            property.everyonePerm = static_cast<DLPFileAccess>(perm);
+            uint32_t maxPerm = *(std::max_element(permList.begin(), permList.end()));
+            uint32_t minPerm = *(std::min_element(permList.begin(), permList.end()));
+            if (maxPerm > static_cast<uint32_t>(DLPFileAccess::FULL_CONTROL) ||
+                minPerm < static_cast<uint32_t>(DLPFileAccess::NO_PERMISSION)) {
+                maxPerm = static_cast<uint32_t>(DLPFileAccess::NO_PERMISSION);
+                DLP_LOG_ERROR(LABEL, "js get everyoneAccessList fail, invalid perm");
+            }
+            property.everyonePerm = static_cast<DLPFileAccess>(maxPerm);
             property.supportEveryone = true;
         }
     }
@@ -202,7 +208,8 @@ bool GetGenerateDlpFileForEnterpriseParam(
 
 bool GetCustomProperty(napi_env env, napi_value jsObject, CustomProperty& customProperty)
 {
-    if (!GetStringValueByKey(env, jsObject, "enterprise", customProperty.enterprise)) {
+    if (!GetStringValueByKey(env, jsObject, "enterprise", customProperty.enterprise) ||
+        !IsStringLengthValid(customProperty.enterprise, MAX_ENTERPRISEPOLICY_SIZE)) {
         DLP_LOG_ERROR(LABEL, "js get enterprise fail");
         return false;
     }
