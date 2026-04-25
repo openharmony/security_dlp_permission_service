@@ -1648,7 +1648,9 @@ bool GetVectorAuthUser(napi_env env, napi_value jsObject, std::vector<AuthUserIn
             return false;
         }
         int64_t perm;
-        if (!GetInt64ValueByKey(env, obj, "dlpFileAccess", perm)) {
+        if (!GetInt64ValueByKey(env, obj, "dlpFileAccess", perm) ||
+            (perm > static_cast<uint32_t>(DLPFileAccess::FULL_CONTROL) ||
+            perm < static_cast<uint32_t>(DLPFileAccess::NO_PERMISSION))) {
             DLP_LOG_ERROR(LABEL, "js get auth perm fail");
             resultVec.clear();
             return false;
@@ -1662,7 +1664,9 @@ bool GetVectorAuthUser(napi_env env, napi_value jsObject, std::vector<AuthUserIn
         }
         userInfo.permExpiryTime = static_cast<uint64_t>(time);
         int64_t type;
-        if (!GetInt64ValueByKey(env, obj, "authAccountType", type)) {
+        if (!GetInt64ValueByKey(env, obj, "authAccountType", type) ||
+            (perm > static_cast<uint32_t>(ENTERPRISE_ACCOUNT) ||
+            perm < static_cast<uint32_t>(INVALID_ACCOUNT))) {
             DLP_LOG_ERROR(LABEL, "js get type fail");
             resultVec.clear();
             return false;
