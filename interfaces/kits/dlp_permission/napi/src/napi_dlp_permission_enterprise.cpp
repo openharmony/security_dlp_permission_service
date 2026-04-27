@@ -118,7 +118,8 @@ void NapiDlpPermission::CloseOpenedEnterpriseDlpFilesExcute(napi_env env, void* 
         DLP_LOG_ERROR(LABEL, "AsyncContext is nullptr.");
         return;
     }
-    asyncContext->errCode = DlpPermissionKit::CloseOpenedEnterpriseDlpFiles(asyncContext->options.classificationLabel);
+    DlpFileQueryOptions options = asyncContext->options;
+    asyncContext->errCode = DlpPermissionKit::CloseOpenedEnterpriseDlpFiles(options.classificationLabel);
 }
 
 void NapiDlpPermission::CloseOpenedEnterpriseDlpFilesComplete(napi_env env, napi_status status, void* data)
@@ -188,8 +189,9 @@ void NapiDlpPermission::QueryOpenedEnterpriseDlpFilesExcute(napi_env env, void* 
         DLP_LOG_ERROR(LABEL, "AsyncContext is nullptr.");
         return;
     }
+    DlpFileQueryOptions options = asyncContext->options;
     asyncContext->errCode = DlpPermissionKit::QueryOpenedEnterpriseDlpFiles(
-        asyncContext->options.classificationLabel, asyncContext->resultUris);
+        options.classificationLabel, asyncContext->resultUris);
 }
 
 void NapiDlpPermission::QueryOpenedEnterpriseDlpFilesComplete(napi_env env, napi_status status, void* data)
