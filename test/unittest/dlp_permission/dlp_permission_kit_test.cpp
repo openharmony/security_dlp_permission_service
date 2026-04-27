@@ -789,6 +789,21 @@ HWTEST_F(DlpPermissionKitTest, QueryDlpFileCopyableByTokenId004, TestSize.Level0
 }
 
 /**
+ * @tc.name: QueryDlpFileCopyableByTokenId005
+ * @tc.desc: QueryDlpFileCopyableByTokenId
+ * @tc.type: FUNC
+ * @tc.require: SR000GVIGL AR000GVIGM
+ */
+HWTEST_F(DlpPermissionKitTest, QueryDlpFileCopyableByTokenId005, TestSize.Level0)
+{
+    bool copyable = false;
+    AccessTokenID normalTokenId;
+    ASSERT_TRUE(TestGetTokenId(DEFAULT_USERID, DLP_MANAGER_APP, 0, normalTokenId));
+    int32_t res = DlpPermissionKit::QueryDlpFileCopyableByTokenId(copyable, normalTokenId);
+    ASSERT_TRUE(res == DLP_OK || res == DLP_SERVICE_ERROR_APPOBSERVER_ERROR);
+}
+
+/**
  * @tc.name: QueryDlpFileAccess001
  * @tc.desc: QueryDlpFileAccess in normal app.
  * @tc.type: FUNC
