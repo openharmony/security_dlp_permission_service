@@ -55,25 +55,25 @@ static napi_value NapiGetNull(napi_env env)
 }
 
 #ifdef FILE_IDENTIFY_ENABLE
-struct DIASdkLib{
-	DIASdkLib(){
-		std::lock_guard<std::mutex> lock(g_lockDIACredSdk);
-		LOG_INFO("dlopen diaSdk");
-	    if (g_diaCredentialSdkHandle == nullptr) {
-	        g_diaCredentialSdkHandle = dlopen(DIA_SDK_PATH_64_BIT.c_str(), RTLD_LAZY);
-	        if (g_diaCredentialSdkHandle == nullptr) {
-	            LOG_ERROR("dlopen fail");
-	        }
-	    }
-	}
-	~DIASdkLib(){
-		std::lock_guard<std::mutex> lock(g_lockDIACredSdk);
-		LOG_INFO("dlclose diaSdk");
-	    if (g_diaCredentialSdkHandle != nullptr) {
-	        dlclose(g_diaCredentialSdkHandle);
-	        g_diaCredentialSdkHandle = nullptr;
-    	}
-	}
+struct DIASdkLib {
+    DIASdkLib() {
+        std::lock_guard<std::mutex> lock(g_lockDIACredSdk);
+        LOG_INFO("dlopen diaSdk");
+        if (g_diaCredentialSdkHandle == nullptr) {
+            g_diaCredentialSdkHandle = dlopen(DIA_SDK_PATH_64_BIT.c_str(), RTLD_LAZY);
+            if (g_diaCredentialSdkHandle == nullptr) {
+                LOG_ERROR("dlopen fail");
+            }
+        }
+    }
+    ~DIASdkLib() {
+        std::lock_guard<std::mutex> lock(g_lockDIACredSdk);
+        LOG_INFO("dlclose diaSdk");
+        if (g_diaCredentialSdkHandle != nullptr) {
+            dlclose(g_diaCredentialSdkHandle);
+            g_diaCredentialSdkHandle = nullptr;
+        }
+    }
 }; 
 
 static DIASdkLib diaSdkLib;
