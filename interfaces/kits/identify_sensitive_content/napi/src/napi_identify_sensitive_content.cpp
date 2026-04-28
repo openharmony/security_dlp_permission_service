@@ -29,7 +29,6 @@ typedef int (*IdentifySensitiveFileFunction)(const PolicyC *policies, unsigned p
     MatchResultC **matchResults, unsigned *matchResultLength);
 typedef void (*ReleaseMatchResultListFunction)(MatchResultC **matchResults, unsigned matchResultLength);
 static void *g_diaCredentialSdkHandle = nullptr;
-static int sdkCount = 0;
 std::mutex g_lockDIACredSdk;
 static const std::string DIA_SDK_PATH_64_BIT = "/system/lib64/platformsdk/libdia_sdk.z.so";
 #endif
@@ -56,42 +55,36 @@ static napi_value NapiGetNull(napi_env env)
 }
 
 #ifdef FILE_IDENTIFY_ENABLE
-static void *GetDIACredSdkLibFunc(const char *funcName)
-{
-    LOG_INFO("start GetDIACredSdkLibFunc.");
-    std::lock_guard<std::mutex> lock(g_lockDIACredSdk);
-    if (g_diaCredentialSdkHandle == nullptr) {
-        g_diaCredentialSdkHandle = dlopen(DIA_SDK_PATH_64_BIT.c_str(), RTLD_LAZY);
+struct DIASdkLib {
+    DIASdkLib() {
+        std::lock_guard<std::mutex> lock(g_lockDIACredSdk);
+        LOG_INFO("dlopen diaSdk");
         if (g_diaCredentialSdkHandle == nullptr) {
-            LOG_ERROR("dlopen file");
-            return nullptr;
+            g_diaCredentialSdkHandle = dlopen(DIA_SDK_PATH_64_BIT.c_str(), RTLD_LAZY);
+            if (g_diaCredentialSdkHandle == nullptr) {
+                LOG_ERROR("dlopen fail");
+            }
         }
     }
-    sdkCount++;
-    void *func = dlsym(g_diaCredentialSdkHandle, funcName);
-    return func;
-}
+    ~DIASdkLib() {
+        std::lock_guard<std::mutex> lock(g_lockDIACredSdk);
+        LOG_INFO("dlclose diaSdk");
+        if (g_diaCredentialSdkHandle != nullptr) {
+            dlclose(g_diaCredentialSdkHandle);
+            g_diaCredentialSdkHandle = nullptr;
+        }
+    }
+};
 
+static DIASdkLib diaSdkLib;
 static void *GetDIASdkLibFunc(const char *funcName)
 {
-    LOG_INFO("start GetDIASdkLibFunc.");
+    LOG_DEBUG("start GetDIASdkLibFunc.");
     std::lock_guard<std::mutex> lock(g_lockDIACredSdk);
     if (g_diaCredentialSdkHandle) {
         return dlsym(g_diaCredentialSdkHandle, funcName);
     }
     return nullptr;
-}
-
-static void DestroyDIACredentialSdk()
-{
-    LOG_INFO("start DestroyDIACredentialSdk.");
-    std::lock_guard<std::mutex> lock(g_lockDIACredSdk);
-    sdkCount--;
-    if (g_diaCredentialSdkHandle != nullptr && !sdkCount) {
-        dlclose(g_diaCredentialSdkHandle);
-        g_diaCredentialSdkHandle = nullptr;
-        LOG_INFO("dlclose diaSdk end.");
-    }
 }
 
 bool ParseFileOperationContext(napi_env env, napi_callback_info info, ScanFileAsyncContext &asyncContext)
@@ -120,6 +113,10 @@ int PoliciesToPolicyC(std::vector<PolicyC> &policyCTmp, ScanFileAsyncContext *sc
     int ret = DIA_SUCCESS;
     for (size_t i = 0; i < scanFileAsyncContext->policies.size(); i++) {
         // sensitiveLabel
+        if (scanFileAsyncContext->policies[i].sensitiveLabel.length() > UINT32_MAX) {
+            LOG_ERROR("sensitiveLabel length exceeds UINT32_MAX");
+            return DIA_ERR_INVALID_PARAM;
+        }
         policyCTmp[i].sensitiveLabel.data =
             const_cast<char *>(scanFileAsyncContext->policies[i].sensitiveLabel.c_str());
         policyCTmp[i].sensitiveLabel.dataLength = scanFileAsyncContext->policies[i].sensitiveLabel.length();
@@ -133,10 +130,18 @@ int PoliciesToPolicyC(std::vector<PolicyC> &policyCTmp, ScanFileAsyncContext *sc
         }
         policyCTmp[i].keywordsLength = keywordsVecSize;
         for (size_t j = 0; j < keywordsVecSize; j++) {
+            if (scanFileAsyncContext->policies[i].keywords[j].length() > UINT32_MAX) {
+                LOG_ERROR("keywords length exceeds UINT32_MAX");
+                return DIA_ERR_INVALID_PARAM;
+            }
             policyCTmp[i].keywords[j].data = const_cast<char *>(scanFileAsyncContext->policies[i].keywords[j].c_str());
             policyCTmp[i].keywords[j].dataLength = scanFileAsyncContext->policies[i].keywords[j].length();
         }
         // regex
+        if (scanFileAsyncContext->policies[i].regex.length() > UINT32_MAX) {
+            LOG_ERROR("regex length exceeds UINT32_MAX");
+            return DIA_ERR_INVALID_PARAM;
+        }
         policyCTmp[i].regex.data = const_cast<char *>(scanFileAsyncContext->policies[i].regex.c_str());
         policyCTmp[i].regex.dataLength = scanFileAsyncContext->policies[i].regex.length();
     }
@@ -163,18 +168,17 @@ void NapiIdentifySensitiveFileExcute(napi_env env, void *data)
     }
     //dlopen
     IdentifySensitiveFileFunction identifySensitiveFileFunction =
-        reinterpret_cast<IdentifySensitiveFileFunction>(GetDIACredSdkLibFunc("IdentifySensitiveFileC"));
+        reinterpret_cast<IdentifySensitiveFileFunction>(GetDIASdkLibFunc("IdentifySensitiveFileC"));
     if (!identifySensitiveFileFunction) {
         LOG_ERROR("identifySensitiveFileFunction is nullptr.");
-        DestroyDIACredentialSdk();
         scanFileAsyncContext->errCode = ERR_DIA_JS_SYSTEM_SERVICE_EXCEPTION;
         return;
     }
     std::vector<PolicyC> policyCTmp(scanFileAsyncContext->policies.size());
     if (PoliciesToPolicyC(policyCTmp, scanFileAsyncContext) != DIA_SUCCESS) {
         LOG_ERROR("PoliciesToPolicyC error.");
-        DestroyDIACredentialSdk();
         DestroyPolicyC(policyCTmp);
+        scanFileAsyncContext->errCode = ERR_DIA_JS_INVALID_PARAMETER;
         return;
     }
     DIA_String filePathTmp;
@@ -201,7 +205,6 @@ void NapiIdentifySensitiveFileExcute(napi_env env, void *data)
             (*releaseMatchResultListFunction)(&matchResults, matchResultLength);
         }
     }
-    DestroyDIACredentialSdk();
     return;
 }
 
