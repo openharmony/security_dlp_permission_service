@@ -74,7 +74,7 @@ struct DIASdkLib {
             g_diaCredentialSdkHandle = nullptr;
         }
     }
-}; 
+};
 
 static DIASdkLib diaSdkLib;
 static void *GetDIASdkLibFunc(const char *funcName)
