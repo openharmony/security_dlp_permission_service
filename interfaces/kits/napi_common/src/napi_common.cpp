@@ -1670,8 +1670,8 @@ bool GetVectorAuthUser(napi_env env, napi_value jsObject, std::vector<AuthUserIn
         userInfo.permExpiryTime = static_cast<uint64_t>(time);
         int64_t type;
         if (!GetInt64ValueByKey(env, obj, "authAccountType", type) ||
-            (perm > static_cast<uint32_t>(ENTERPRISE_ACCOUNT) ||
-            perm < static_cast<uint32_t>(INVALID_ACCOUNT))) {
+            (type > static_cast<uint32_t>(ENTERPRISE_ACCOUNT) ||
+            type < static_cast<uint32_t>(INVALID_ACCOUNT))) {
             DLP_LOG_ERROR(LABEL, "js get type fail");
             resultVec.clear();
             return false;
