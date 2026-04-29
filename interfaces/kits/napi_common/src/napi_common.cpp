@@ -1182,6 +1182,11 @@ bool GetAccountTypeInDlpProperty(napi_env env, napi_value jsObject, DlpProperty&
         return false;
     }
 
+    if ((type > static_cast<uint32_t>(ENTERPRISE_ACCOUNT)) ||
+        (type < static_cast<uint32_t>(INVALID_ACCOUNT))) {
+        DLP_LOG_ERROR(LABEL, "js get wrong owner account type.");
+        return false;
+    }
     property.ownerAccountType = static_cast<DlpAccountType>(type);
     return true;
 }
