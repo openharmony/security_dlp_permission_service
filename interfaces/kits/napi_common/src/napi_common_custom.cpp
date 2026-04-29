@@ -133,9 +133,7 @@ bool GetDlpProperty(napi_env env, napi_value jsObject, DlpProperty& property)
         return false;
     }
     int64_t type;
-    if (!GetInt64ValueByKey(env, jsObject, "ownerAccountType", type) ||
-        !(type >= static_cast<int>(INVALID_ACCOUNT) && 
-        type <= static_cast<int>(ENTERPRISE_ACCOUNT))) {
+    if (!GetInt64ValueByKey(env, jsObject, "ownerAccountType", type)) {
         DLP_LOG_ERROR(LABEL, "js get owner account type fail");
         return false;
     }
