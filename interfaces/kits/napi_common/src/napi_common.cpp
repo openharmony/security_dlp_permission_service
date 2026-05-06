@@ -1654,8 +1654,8 @@ bool GetVectorAuthUser(napi_env env, napi_value jsObject, std::vector<AuthUserIn
         }
         int64_t perm;
         if (!GetInt64ValueByKey(env, obj, "dlpFileAccess", perm) ||
-            (perm > static_cast<uint32_t>(DLPFileAccess::FULL_CONTROL) ||
-            perm < static_cast<uint32_t>(DLPFileAccess::NO_PERMISSION))) {
+            (static_cast<uint32_t>(perm) > static_cast<uint32_t>(DLPFileAccess::FULL_CONTROL) ||
+            static_cast<uint32_t>(perm) < static_cast<uint32_t>(DLPFileAccess::NO_PERMISSION))) {
             DLP_LOG_ERROR(LABEL, "js get auth perm fail");
             resultVec.clear();
             return false;
