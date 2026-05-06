@@ -925,7 +925,7 @@ HWTEST_F(DlpFuseTest, LinkFileTruncate001, TestSize.Level0)
     DlpLinkFile linkFile("linkfile", filePtr);
 
     EXPECT_EQ(linkFile.Truncate(-1), DLP_FUSE_ERROR_VALUE_INVALID);
-    EXPECT_EQ(linkFile.Truncate(0xffffffff), DLP_FUSE_ERROR_VALUE_INVALID);
+    EXPECT_EQ(linkFile.Truncate(0x100000000 + 0xA00000), DLP_FUSE_ERROR_VALUE_INVALID);
     EXPECT_EQ(linkFile.Truncate(0), DLP_FUSE_ERROR_DLP_FILE_NULL);
     filePtr = std::make_shared<DlpZipFile>(-1, DLP_TEST_DIR, 0, "txt");
     ASSERT_NE(filePtr, nullptr);

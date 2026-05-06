@@ -1816,7 +1816,7 @@ HWTEST_F(DlpFileTest, Truncate001, TestSize.Level0)
     EXPECT_EQ(DLP_PARSE_ERROR_VALUE_INVALID, testFile.Truncate(16));
     testFile.dlpFd_ = fdDlp;
 
-    EXPECT_EQ(DLP_PARSE_ERROR_VALUE_INVALID, testFile.Truncate(0xffffffff));
+    EXPECT_EQ(DLP_PARSE_ERROR_VALUE_INVALID, testFile.Truncate(0x100000000 + 0xA00000));
 
     EXPECT_EQ(DLP_OK, testFile.Truncate(0));
 

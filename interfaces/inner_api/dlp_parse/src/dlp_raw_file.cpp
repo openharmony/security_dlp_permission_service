@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Huawei Device Co., Ltd.
+ * Copyright (c) 2025-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -811,7 +811,7 @@ int32_t DlpRawFile::DoWriteHeaderAndContactAccount(int32_t inPlainFileFd, uint64
 int32_t DlpRawFile::GenFileInRaw(int32_t inPlainFileFd)
 {
     off_t fileLen = lseek(inPlainFileFd, 0, SEEK_END);
-    if (fileLen == static_cast<off_t>(-1) || fileLen > static_cast<off_t>(DLP_MAX_RAW_CONTENT_SIZE)) {
+    if (fileLen == static_cast<off_t>(-1) || static_cast<uint64_t>(fileLen) > DLP_MAX_RAW_CONTENT_SIZE) {
         DLP_LOG_ERROR(LABEL, "can not get dlp file len, %{public}s", strerror(errno));
         return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
     }
@@ -884,7 +884,7 @@ int32_t DlpRawFile::GenFile(int32_t inPlainFileFd)
 int32_t DlpRawFile::RemoveDlpPermissionInRaw(int32_t outPlainFileFd)
 {
     off_t fileLen = lseek(dlpFd_, 0, SEEK_END);
-    if (fileLen == static_cast<off_t>(-1) || fileLen > static_cast<off_t>(DLP_MAX_RAW_CONTENT_SIZE)) {
+    if (fileLen == static_cast<off_t>(-1) || static_cast<uint64_t>(fileLen) > DLP_MAX_RAW_CONTENT_SIZE) {
         DLP_LOG_ERROR(LABEL, "can not get dlp file len, %{public}s", strerror(errno));
         return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
     }
