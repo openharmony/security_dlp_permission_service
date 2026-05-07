@@ -365,7 +365,7 @@ int HcFileRead(FileHandle file, void *dst, int dstSize)
     char *dstBuffer = static_cast<char *>(dst);
     int total = 0;
     while (total < dstSize) {
-        int readCount = (int)fread(dstBuffer + total, 1, dstSize - total, fp);
+        int readCount = static_cast<int>(fread(dstBuffer + total, 1, dstSize - total, fp));
         if (ferror(fp) != 0) {
             DLP_LOG_ERROR(LABEL, "read file error!");
         }
@@ -388,7 +388,7 @@ int HcFileWrite(FileHandle file, const void *src, int srcSize)
     const char *srcBuffer = static_cast<const char *>(src);
     int total = 0;
     while (total < srcSize) {
-        int writeCount = (int)fwrite(srcBuffer + total, 1, srcSize - total, fp);
+        int writeCount = static_cast<int>(fwrite(srcBuffer + total, 1, srcSize - total, fp));
         if (ferror(fp) != 0) {
             DLP_LOG_ERROR(LABEL, "write file error!");
         }
