@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -506,7 +506,7 @@ int32_t DlpFileManager::GenerateDlpFile(
     }
 
     off_t fileLen = lseek(plainFileFd, 0, SEEK_END);
-    if (fileLen == static_cast<off_t>(-1) || fileLen > static_cast<off_t>(DLP_MAX_CONTENT_SIZE)) {
+    if (fileLen == static_cast<off_t>(-1) || static_cast<uint64_t>(fileLen) > DLP_MAX_CONTENT_SIZE) {
         DLP_LOG_ERROR(LABEL, "fileLen invalid");
         return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Huawei Device Co., Ltd.
+ * Copyright (c) 2025-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -429,7 +429,7 @@ static int32_t GetFileSize(int32_t fd, uint64_t& fileLen)
 {
     int32_t ret = DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
     off_t readLen = lseek(fd, 0, SEEK_END);
-    if (readLen == static_cast<off_t>(-1) || static_cast<uint64_t>(readLen) > UINT32_MAX) {
+    if (readLen == static_cast<off_t>(-1)) {
         DLP_LOG_ERROR(LABEL, "get file size failed, %{public}s", strerror(errno));
     } else {
         fileLen = static_cast<uint64_t>(readLen);
@@ -732,7 +732,7 @@ int32_t DlpZipFile::UpdateDlpFileContentSize()
 int32_t DlpZipFile::DlpFileRead(uint64_t offset, void* buf, uint32_t size, bool& hasRead, int32_t uid)
 {
     int32_t opFd = encDataFd_;
-    if (buf == nullptr || size == 0 || size > DLP_FUSE_MAX_BUFFLEN || size >= DLP_MAX_CONTENT_SIZE ||
+    if (buf == nullptr || size == 0 || size > DLP_FUSE_MAX_BUFFLEN ||
         (offset >= DLP_MAX_CONTENT_SIZE - size) ||
         opFd < 0 || !IsValidCipher(cipher_.encKey, cipher_.usageSpec, cipher_.hmacKey)) {
         DLP_LOG_ERROR(LABEL, "params is error");
@@ -893,7 +893,7 @@ int32_t DlpZipFile::DlpFileWrite(uint64_t offset, void* buf, uint32_t size)
         return DLP_PARSE_ERROR_FILE_READ_ONLY;
     }
     int32_t opFd = encDataFd_;
-    if (buf == nullptr || size == 0 || size > DLP_FUSE_MAX_BUFFLEN || size >= DLP_MAX_CONTENT_SIZE ||
+    if (buf == nullptr || size == 0 || size > DLP_FUSE_MAX_BUFFLEN ||
         (offset >= DLP_MAX_CONTENT_SIZE - size) ||
         opFd < 0 || !IsValidCipher(cipher_.encKey, cipher_.usageSpec, cipher_.hmacKey)) {
         DLP_LOG_ERROR(LABEL, "Dlp file param invalid");
