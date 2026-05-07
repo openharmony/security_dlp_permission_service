@@ -87,7 +87,7 @@ bool GetGenerateDlpFileForDomainParam(
         ThrowParamError(env, "customProperty", "CustomProperty");
         return false;
     }
-
+    DLP_LOG_INFO(LABEL, "Successfully obtained GetGenerateDlpFileForEnterprise parameters.");
     return true;
 }
 
@@ -203,6 +203,7 @@ bool GetGenerateDlpFileForEnterpriseParam(
         DlpNapiThrow(env, ERR_JS_INVALID_PARAMETER, "Invalid parameter value.");
         return false;
     }
+    DLP_LOG_INFO(LABEL, "Successfully retrieved GetGenerateDlpFileForEnterprise parameters.");
     return true;
 }
 
