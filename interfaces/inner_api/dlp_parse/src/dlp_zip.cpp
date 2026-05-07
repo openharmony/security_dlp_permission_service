@@ -54,7 +54,7 @@ int32_t AddZeroBuffToZip(zipFile& zf, const char *nameInZip, uint32_t size)
             return DLP_ZIP_FAIL;
         }
         (void)memset_s(buffer, MAX_CERT_SIZE - size, 0, MAX_CERT_SIZE - size);
-        int32_t err = zipWriteInFileInZip(zf, buffer, (unsigned)(MAX_CERT_SIZE - size));
+        int32_t err = zipWriteInFileInZip(zf, buffer, static_cast<unsigned>(MAX_CERT_SIZE - size));
         delete[] buffer;
         if (err != ZIP_OK) {
             DLP_LOG_ERROR(LABEL, "zipWriteInFileInZip fail err %{public}d, %{public}s", err, nameInZip);
@@ -92,7 +92,7 @@ int32_t AddBuffToZip(const void *buf, uint32_t size, const char *nameInZip, cons
         return DLP_ZIP_FAIL;
     }
     int32_t res = DLP_ZIP_OK;
-    err = zipWriteInFileInZip (zf, buf, (unsigned)size);
+    err = zipWriteInFileInZip (zf, buf, static_cast<unsigned>(size));
     if (err != ZIP_OK) {
         DLP_LOG_ERROR(LABEL, "zipWriteInFileInZip fail err %{public}d, %{public}s", err, nameInZip);
         res = DLP_ZIP_FAIL;
@@ -143,7 +143,7 @@ int32_t AddFileContextToZip(int32_t fd, const char *nameInZip, const char *zipNa
     int32_t res = DLP_ZIP_OK;
     auto buf = std::make_unique<char[]>(ZIP_BUFF_SIZE);
     while ((readLen = read(fd, buf.get(), ZIP_BUFF_SIZE)) > 0) {
-        err = zipWriteInFileInZip (zf, buf.get(), (unsigned)readLen);
+        err = zipWriteInFileInZip (zf, buf.get(), static_cast<unsigned>(readLen));
         if (err != ZIP_OK) {
             DLP_LOG_ERROR(LABEL, "zipWriteInFileInZip fail err %{public}d, %{public}s", err, nameInZip);
             res = DLP_ZIP_FAIL;
