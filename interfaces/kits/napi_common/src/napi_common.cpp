@@ -1671,7 +1671,7 @@ bool GetVectorAuthUser(napi_env env, napi_value jsObject, std::vector<AuthUserIn
         int64_t type;
         if (!GetInt64ValueByKey(env, obj, "authAccountType", type) ||
             type > static_cast<int64_t>(ENTERPRISE_ACCOUNT) ||
-            type < static_cast<int64_t>(INVALID_ACCOUNT))) {
+            type < static_cast<int64_t>(INVALID_ACCOUNT)) {
             DLP_LOG_ERROR(LABEL, "js get type fail");
             resultVec.clear();
             return false;
