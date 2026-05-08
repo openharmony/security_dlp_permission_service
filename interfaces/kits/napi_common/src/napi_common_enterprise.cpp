@@ -148,6 +148,8 @@ bool GetEnterpriseDlpProperty(napi_env env, napi_value jsObject, DlpProperty& pr
             if (maxPerm > static_cast<uint32_t>(DLPFileAccess::FULL_CONTROL) ||
                 minPerm < static_cast<uint32_t>(DLPFileAccess::NO_PERMISSION)) {
                 maxPerm = static_cast<uint32_t>(DLPFileAccess::NO_PERMISSION);
+                property.everyonePerm = DLPFileAccess::NO_PERMISSION;
+                property.supportEveryone = false;
                 DLP_LOG_ERROR(LABEL, "js get everyoneAccessList fail, invalid permission");
             }
             property.everyonePerm = static_cast<DLPFileAccess>(maxPerm);
