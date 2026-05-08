@@ -1182,6 +1182,11 @@ bool GetAccountTypeInDlpProperty(napi_env env, napi_value jsObject, DlpProperty&
         return false;
     }
 
+    if ((type > static_cast<int64_t>(ENTERPRISE_ACCOUNT)) ||
+        (type < static_cast<int64_t>(INVALID_ACCOUNT))) {
+        DLP_LOG_ERROR(LABEL, "js get wrong owner account type.");
+        return false;
+    }
     property.ownerAccountType = static_cast<DlpAccountType>(type);
     return true;
 }
@@ -1648,7 +1653,9 @@ bool GetVectorAuthUser(napi_env env, napi_value jsObject, std::vector<AuthUserIn
             return false;
         }
         int64_t perm;
-        if (!GetInt64ValueByKey(env, obj, "dlpFileAccess", perm)) {
+        if (!GetInt64ValueByKey(env, obj, "dlpFileAccess", perm) ||
+            (perm > static_cast<int64_t>(DLPFileAccess::FULL_CONTROL) ||
+            perm < static_cast<int64_t>(DLPFileAccess::NO_PERMISSION))) {
             DLP_LOG_ERROR(LABEL, "js get auth perm fail");
             resultVec.clear();
             return false;
@@ -1662,7 +1669,9 @@ bool GetVectorAuthUser(napi_env env, napi_value jsObject, std::vector<AuthUserIn
         }
         userInfo.permExpiryTime = static_cast<uint64_t>(time);
         int64_t type;
-        if (!GetInt64ValueByKey(env, obj, "authAccountType", type)) {
+        if (!GetInt64ValueByKey(env, obj, "authAccountType", type) ||
+            type > static_cast<int64_t>(ENTERPRISE_ACCOUNT) ||
+            type < static_cast<int64_t>(INVALID_ACCOUNT)) {
             DLP_LOG_ERROR(LABEL, "js get type fail");
             resultVec.clear();
             return false;

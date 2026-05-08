@@ -44,6 +44,10 @@ void GetDlpPropertyExpireTime(napi_env env, napi_value jsObject, DlpProperty& pr
     if (!GetInt64ValueByKey(env, jsObject, "actionUponExpiry", jsActionUponExpiry)) {
         DLP_LOG_ERROR(LABEL, "js get action upon expiry fail");
     }
+    if (jsActionUponExpiry < static_cast<int64_t>(NOTOPEN) || jsActionUponExpiry > static_cast<int64_t>(OPEN)) {
+        DLP_LOG_ERROR(LABEL, "js get action upon expiry is invaild, will set NOTOPEN");
+        jsActionUponExpiry = 0;
+    }
     property.actionUponExpiry = static_cast<ActionType>(jsActionUponExpiry);
 }
 
@@ -101,9 +105,17 @@ bool GetEveryoneAccessList(napi_env env, napi_value jsObject, DlpProperty& prope
             return false;
         }
         if (permList.size() > 0) {
-            uint32_t perm = *(std::max_element(permList.begin(), permList.end()));
-            property.everyonePerm = static_cast<DLPFileAccess>(perm);
-            property.supportEveryone = true;
+            uint32_t maxPerm = *(std::max_element(permList.begin(), permList.end()));
+            uint32_t minPerm = *(std::min_element(permList.begin(), permList.end()));
+            if (maxPerm > static_cast<uint32_t>(DLPFileAccess::FULL_CONTROL) ||
+                minPerm < static_cast<uint32_t>(DLPFileAccess::NO_PERMISSION)) {
+                property.everyonePerm = DLPFileAccess::NO_PERMISSION;
+                property.supportEveryone = false;
+                DLP_LOG_ERROR(LABEL, "js get everyoneAccessList fail, invalid perm");
+            } else {
+                property.everyonePerm = static_cast<DLPFileAccess>(maxPerm);
+                property.supportEveryone = true;
+            }
         }
     }
     return true;
