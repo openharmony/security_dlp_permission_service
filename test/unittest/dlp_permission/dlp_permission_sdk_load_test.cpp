@@ -19,11 +19,8 @@
 
 using namespace testing::ext;
 using namespace OHOS;
-using namespace OHOS::Security::DlpPermission;
 
 namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
-    LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "DlpPermissionSdkLoadTest"};
 static const std::string DLP_PERMISSION_SDK_PATH = "/system/lib64/libdlp_permission_sdk.z.so";
 }
 
