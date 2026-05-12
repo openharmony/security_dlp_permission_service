@@ -87,12 +87,6 @@ void DlpPermissionClient::CleanUpResource()
     DLP_LOG_INFO(LABEL, "CleanUpResource end.");
 }
 
-extern "C" __attribute__((destructor)) void CleanUp()
-{
-    DLP_LOG_INFO(LABEL, "start CleanUpResource with destructor.");
-    DlpPermissionClient::GetInstance().CleanUpResource();
-}
-
 static bool IsFeatureProvidedWithDlp()
 {
     std::string value = OHOS::system::GetParameter(DLP_ENABLE, "");

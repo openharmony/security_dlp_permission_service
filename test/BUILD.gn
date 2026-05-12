@@ -32,6 +32,7 @@ group("dlp_permission_build_module_test") {
       ":dlp_permission_serializer_sub_test",
       ":dlp_credential_static_test",
       ":dlp_permission_static_test",
+      ":dlp_permission_sdk_load_test",
     ]
   }
 }
@@ -1254,6 +1255,44 @@ ohos_unittest("dlp_fuse_test") {
     "os_account:os_account_innerkits",
     "samgr:samgr_proxy",
     "zlib:shared_libz",
+  ]
+
+  if (current_cpu == "arm64") {
+    defines = [ "_ARM64_" ]
+  }
+}
+
+ohos_unittest("dlp_permission_sdk_load_test") {
+  branch_protector_ret = "pac_ret"
+
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
+
+  subsystem_name = "security"
+  part_name = "dlp_permission_service"
+  module_out_path = part_name + "/" + part_name
+
+  include_dirs = [
+    "${dlp_root_dir}/frameworks/common/include",
+    "${dlp_root_dir}/test/unittest/mock/test_common",
+  ]
+
+  sources = [ "unittest/dlp_permission/dlp_permission_sdk_load_test.cpp" ]
+
+  cflags_cc = [ "-DHILOG_ENABLE" ]
+
+  configs = [
+    "${dlp_permission_public_config_path}/:dlp_permission_sdk_config",
+    "${dlp_root_dir}/config:coverage_flags",
+    ":stub_tdd_need_skip_timer_config",
+  ]
+
+  external_deps = [
+    "c_utils:utils",
+    "hilog:libhilog",
   ]
 
   if (current_cpu == "arm64") {
