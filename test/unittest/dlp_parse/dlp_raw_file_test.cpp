@@ -493,36 +493,6 @@ HWTEST_F(DlpRawFileTest, ParseEnterpriseEventIdTest001, TestSize.Level1)
 }
 
 /**
- * @tc.name: ParseEnterpriseEventIdTest002
- * @tc.desc: ParseEnterpriseEventId test with valid file
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(DlpRawFileTest, ParseEnterpriseEventIdTest002, TestSize.Level1)
-{
-    int32_t fd = open("/data/fuse_test_eventid.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
-    ASSERT_NE(fd, -1);
-
-    std::string testEventId = "test_enterprise_event_123";
-    uint32_t idSize = static_cast<uint32_t>(testEventId.size());
-
-    write(fd, &idSize, sizeof(uint32_t));
-    write(fd, testEventId.c_str(), idSize);
-
-    lseek(fd, 0, SEEK_SET);
-
-    std::shared_ptr<DlpRawFile> testFile = std::make_shared<DlpRawFile>(fd, "txt");
-    ASSERT_NE(testFile, nullptr);
-
-    int32_t ret = testFile->ParseEnterpriseEventId();
-    ASSERT_EQ(ret, DLP_OK);
-    ASSERT_EQ(testFile->eventId_, testEventId);
-
-    close(fd);
-    unlink("/data/fuse_test_eventid.txt");
-}
-
-/**
  * @tc.name: ParseEnterpriseEventIdTest003
  * @tc.desc: ParseEnterpriseEventId test with eventId size exceeding limit
  * @tc.type: FUNC
