@@ -476,3 +476,73 @@ HWTEST_F(DlpRawFileTest, SetOfflineAccessTest001, TestSize.Level1)
     EXPECT_NE(1, testFile->offlineAccess_);
     EXPECT_NE(1, testFile->head_.offlineAccess);
 }
+
+/**
+ * @tc.name: ParseEnterpriseEventIdTest001
+ * @tc.desc: ParseEnterpriseEventId test with invalid fd
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpRawFileTest, ParseEnterpriseEventIdTest001, TestSize.Level1)
+{
+    std::shared_ptr<DlpRawFile> testFile = std::make_shared<DlpRawFile>(-1, "txt");
+    ASSERT_NE(testFile, nullptr);
+
+    int32_t ret = testFile->ParseEnterpriseEventId();
+    ASSERT_NE(ret, DLP_OK);
+}
+
+/**
+ * @tc.name: ParseEnterpriseEventIdTest003
+ * @tc.desc: ParseEnterpriseEventId test with eventId size exceeding limit
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpRawFileTest, ParseEnterpriseEventIdTest003, TestSize.Level1)
+{
+    int32_t fd = open("/data/fuse_test_eventid_large.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
+    ASSERT_NE(fd, -1);
+
+    const uint32_t maxSize = 20;
+    uint32_t idSize = maxSize + 1;
+
+    write(fd, &idSize, sizeof(uint32_t));
+
+    lseek(fd, 0, SEEK_SET);
+
+    std::shared_ptr<DlpRawFile> testFile = std::make_shared<DlpRawFile>(fd, "txt");
+    ASSERT_NE(testFile, nullptr);
+
+    int32_t ret = testFile->ParseEnterpriseEventId();
+    ASSERT_NE(ret, DLP_OK);
+
+    close(fd);
+    unlink("/data/fuse_test_eventid_large.txt");
+}
+
+/**
+ * @tc.name: ParseEnterpriseEventIdTest004
+ * @tc.desc: ParseEnterpriseEventId test with empty eventId
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpRawFileTest, ParseEnterpriseEventIdTest004, TestSize.Level1)
+{
+    int32_t fd = open("/data/fuse_test_eventid_empty.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
+    ASSERT_NE(fd, -1);
+
+    uint32_t idSize = 0;
+    write(fd, &idSize, sizeof(uint32_t));
+
+    lseek(fd, 0, SEEK_SET);
+
+    std::shared_ptr<DlpRawFile> testFile = std::make_shared<DlpRawFile>(fd, "txt");
+    ASSERT_NE(testFile, nullptr);
+
+    int32_t ret = testFile->ParseEnterpriseEventId();
+    ASSERT_EQ(ret, DLP_OK);
+    ASSERT_EQ(testFile->eventId_, "");
+
+    close(fd);
+    unlink("/data/fuse_test_eventid_empty.txt");
+}

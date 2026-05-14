@@ -2653,3 +2653,63 @@ HWTEST_F(DlpFileTest, GetOfflineCert001, TestSize.Level0)
 
     close(fdDlp);
 }
+
+/**
+ * @tc.name: SetEventId001
+ * @tc.desc: test SetEventId and GetEventId
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpFileTest, SetEventId001, TestSize.Level0)
+{
+    DLP_LOG_INFO(LABEL, "SetEventId001");
+
+    DlpRawFile testFile(1000, "txt");
+
+    std::string eventIdBefore = testFile.GetEventId();
+    ASSERT_EQ(eventIdBefore, "");
+
+    std::string testEventId = "test_event_12345";
+    testFile.SetEventId(testEventId);
+
+    std::string eventIdAfter = testFile.GetEventId();
+    ASSERT_EQ(eventIdAfter, testEventId);
+}
+
+/**
+ * @tc.name: SetEventId002
+ * @tc.desc: test SetEventId with empty string
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpFileTest, SetEventId002, TestSize.Level0)
+{
+    DLP_LOG_INFO(LABEL, "SetEventId002");
+
+    DlpRawFile testFile(1000, "txt");
+
+    testFile.SetEventId("initial_event");
+    ASSERT_EQ(testFile.GetEventId(), "initial_event");
+
+    testFile.SetEventId("");
+    ASSERT_EQ(testFile.GetEventId(), "");
+}
+
+/**
+ * @tc.name: SetEventId003
+ * @tc.desc: test SetEventId with long string
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpFileTest, SetEventId003, TestSize.Level0)
+{
+    DLP_LOG_INFO(LABEL, "SetEventId003");
+
+    DlpRawFile testFile(1000, "txt");
+
+    std::string longEventId(100, 'a');
+    testFile.SetEventId(longEventId);
+
+    ASSERT_EQ(testFile.GetEventId(), longEventId);
+    ASSERT_EQ(testFile.GetEventId().size(), 100);
+}
