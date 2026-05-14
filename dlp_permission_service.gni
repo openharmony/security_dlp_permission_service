@@ -41,4 +41,6 @@ declare_args() {
   dlp_permission_service_credential_connection_enable = true
 
   dlp_file_version_inner = true
+
+  dlp_permission_service_pc_feature = false
 }
