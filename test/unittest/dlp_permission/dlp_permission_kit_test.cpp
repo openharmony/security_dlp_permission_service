@@ -1790,6 +1790,100 @@ HWTEST_F(DlpPermissionKitTest, GetDomainAccountNameInfo001, TestSize.Level0)
         DLP_NAPI_ERROR_NATIVE_BINDING_FAIL);
 }
 
+/* *
+ * @tc.name: SetEnterpriseInfos001
+ * @tc.desc: SetEnterpriseInfos normal test.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionKitTest, SetEnterpriseInfos001, TestSize.Level0)
+{
+    DLP_LOG_DEBUG(LABEL, "SetEnterpriseInfos001");
+
+    int32_t uid = getuid();
+    AccessTokenID tokenId = GetSelfTokenID();
+    SetSelfTokenID(DlpPermissionTestCommon::GetNativeTokenIdFromProcess(DLP_PERMISSION_SERVICE));
+    ASSERT_TRUE(TestSetSelfTokenId(g_dlpManagerTokenId));
+
+    std::string uri = "datashare:///media/file/test";
+    std::string fileId = "test_file_id_12345";
+    DLPFileAccess dlpFileAccess = DLPFileAccess::FULL_CONTROL;
+    std::string classificationLabel = "L1";
+    std::string appIdentifier = "com.ohos.test.app";
+
+    int32_t ret = DlpPermissionKit::SetEnterpriseInfos(uri, fileId, dlpFileAccess,
+        classificationLabel, appIdentifier);
+    ASSERT_TRUE(ret == DLP_OK || ret == DLP_SERVICE_ERROR_PERMISSION_DENY ||
+        ret == DLP_SERVICE_ERROR_SERVICE_NOT_EXIST);
+
+    TestRecoverProcessInfo(uid, tokenId);
+}
+
+/* *
+ * @tc.name: SetEnterpriseInfos002
+ * @tc.desc: SetEnterpriseInfos with empty uri test.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionKitTest, SetEnterpriseInfos002, TestSize.Level0)
+{
+    DLP_LOG_DEBUG(LABEL, "SetEnterpriseInfos002");
+
+    int32_t uid = getuid();
+    AccessTokenID tokenId = GetSelfTokenID();
+    SetSelfTokenID(DlpPermissionTestCommon::GetNativeTokenIdFromProcess(DLP_PERMISSION_SERVICE));
+    ASSERT_TRUE(TestSetSelfTokenId(g_dlpManagerTokenId));
+
+    std::string uri = "";
+    std::string fileId = "test_file_id";
+    DLPFileAccess dlpFileAccess = DLPFileAccess::READ_ONLY;
+    std::string classificationLabel = "L2";
+    std::string appIdentifier = "com.ohos.test.app2";
+
+    int32_t ret = DlpPermissionKit::SetEnterpriseInfos(uri, fileId, dlpFileAccess,
+        classificationLabel, appIdentifier);
+    ASSERT_TRUE(ret != DLP_OK || ret == DLP_SERVICE_ERROR_VALUE_INVALID ||
+        ret == DLP_SERVICE_ERROR_PERMISSION_DENY);
+
+    TestRecoverProcessInfo(uid, tokenId);
+}
+
+/* *
+ * @tc.name: SetEnterpriseInfos003
+ * @tc.desc: SetEnterpriseInfos with different access levels test.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionKitTest, SetEnterpriseInfos003, TestSize.Level0)
+{
+    DLP_LOG_DEBUG(LABEL, "SetEnterpriseInfos003");
+
+    int32_t uid = getuid();
+    AccessTokenID tokenId = GetSelfTokenID();
+    SetSelfTokenID(DlpPermissionTestCommon::GetNativeTokenIdFromProcess(DLP_PERMISSION_SERVICE));
+    ASSERT_TRUE(TestSetSelfTokenId(g_dlpManagerTokenId));
+
+    std::string uri = "datashare:///media/file/test3";
+    std::string fileId = "test_file_id_3";
+    std::string classificationLabel = "L3";
+    std::string appIdentifier = "com.ohos.test.app3";
+
+    DLPFileAccess accessLevels[] = {
+        DLPFileAccess::READ_ONLY,
+        DLPFileAccess::CONTENT_EDIT,
+        DLPFileAccess::FULL_CONTROL
+    };
+
+    for (const auto& access : accessLevels) {
+        int32_t ret = DlpPermissionKit::SetEnterpriseInfos(uri, fileId, access,
+            classificationLabel, appIdentifier);
+        ASSERT_TRUE(ret == DLP_OK || ret == DLP_SERVICE_ERROR_PERMISSION_DENY ||
+            ret == DLP_SERVICE_ERROR_SERVICE_NOT_EXIST);
+    }
+
+    TestRecoverProcessInfo(uid, tokenId);
+}
+
 }  // namespace DlpPermission
 }  // namespace Security
 }  // namespace OHOS
