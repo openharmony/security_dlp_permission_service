@@ -503,8 +503,8 @@ HWTEST_F(DlpRawFileTest, ParseEnterpriseEventIdTest003, TestSize.Level1)
     int32_t fd = open("/data/fuse_test_eventid_large.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
     ASSERT_NE(fd, -1);
 
-    const uint32_t EVENTID_MAX_SIZE = 20;
-    uint32_t idSize = EVENTID_MAX_SIZE + 1;
+    const uint32_t maxSize = 20;
+    uint32_t idSize = maxSize + 1;
 
     write(fd, &idSize, sizeof(uint32_t));
 
