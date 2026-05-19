@@ -33,6 +33,7 @@ namespace {
 static const uint64_t SYSTEM_APP_MASK = 0x100000000;
 static const int32_t DEFAULT_USER_ID = 100;
 static const size_t MAX_SAFE_SIZE = 1024;
+static const size_t MIN_DATA_SIZE = sizeof(int32_t) * 2;
 } // namespace
 
 namespace OHOS {
@@ -40,7 +41,7 @@ static constexpr int32_t SA_ID_DLP_PERMISSION_SERVICE = 3521;
 
 static void FuzzTest(const uint8_t* data, size_t size)
 {
-    if ((data == nullptr) || (size < sizeof(int32_t) * 2) || (size > MAX_SAFE_SIZE)) {
+    if ((data == nullptr) || (size < MIN_DATA_SIZE) || (size > MAX_SAFE_SIZE)) {
         return;
     }
     FuzzedDataProvider fdp(data, size);
