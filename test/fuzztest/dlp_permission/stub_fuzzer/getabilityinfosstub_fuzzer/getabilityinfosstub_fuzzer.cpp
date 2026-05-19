@@ -49,7 +49,7 @@ static void FuzzTest(const uint8_t* data, size_t size)
     int32_t userId = fdp.ConsumeIntegral<int32_t>();
 
     AAFwk::Want want;
-    want.SetBundleName(bundleName);
+    want.SetBundle(bundleName);
 
     MessageParcel datas;
     datas.WriteInterfaceToken(IDlpPermissionService::GetDescriptor());
