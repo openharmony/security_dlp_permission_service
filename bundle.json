@@ -22,7 +22,8 @@
     "features": [
       "dlp_permission_service_feature_coverage",
       "dlp_permission_service_gathering_policy",
-      "dlp_permission_service_credential_connection_enable"
+      "dlp_permission_service_credential_connection_enable",
+      "dlp_permission_service_pc_feature"
     ],
     "adapted_system_type": [
       "standard"

@@ -149,6 +149,11 @@ enum DLPErrCode : int32_t {
     DDLP_HAP_DISCONN_ERROR = -818,
     DLP_ABILITY_CONNECT_ERROR = -819,
     DLP_SET_WATERMARK_TO_RS_ERROR = -820,
+
+    // dlptransparentenc
+    DLP_ERROR_USERID_INCONSISTENT = -900,
+    DLP_ERROR_NOT_ENTERPRISE_WORKSPACE = -901,
+    DLP_TRANSPARENT_ENC_ERROR = -902,
 };
 }  // namespace DlpPermission
 }  // namespace Security

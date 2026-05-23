@@ -52,6 +52,9 @@ static const std::unordered_map<int32_t, std::string> JS_ERROR_MSG_MAP = {
     { ERR_JS_DLP_SET_ENTERPRISE_POLICY_FAIL, "Failed to set the enterprise policy." },
     { ERR_JS_DLP_ALLOWED_OPEN_COUNT_INVALID, "Allowed open count invalid." },
     { ERR_JS_CAPABILITY_NOT_SUPPORTED_EMULATOR, "The capability is not supported on the emulator at this time." },
+    { ERR_JS_DLP_USERID_INCONSISTENT, "The specified userId is inconsistent with the current userId." },
+    { ERR_JS_DLP_NOT_ENTERPRISE_WORKSPACE,
+      "The specified userId belongs to a personal space user and cannot be controlled." },
 };
 
 static const std::unordered_map<int32_t, int32_t> NATIVE_CODE_TO_JS_CODE_MAP = {
@@ -176,6 +179,15 @@ static const std::unordered_map<int32_t, int32_t> NATIVE_CODE_TO_JS_CODE_MAP = {
 
     // ERR_JS_CAPABILITY_NOT_SUPPORTED
     { DLP_DEVICE_ERROR_CAPABILITY_NOT_SUPPORTED, ERR_JS_CAPABILITY_NOT_SUPPORTED },
+
+    // ERR_JS_DLP_USERID_INCONSISTENT
+    { DLP_ERROR_USERID_INCONSISTENT, ERR_JS_DLP_USERID_INCONSISTENT },
+
+    // ERR_JS_DLP_NOT_ENTERPRISE_WORKSPACE
+    { DLP_ERROR_NOT_ENTERPRISE_WORKSPACE, ERR_JS_DLP_NOT_ENTERPRISE_WORKSPACE },
+
+    // ERR_JS_SYSTEM_SERVICE_EXCEPTION
+    { DLP_TRANSPARENT_ENC_ERROR, ERR_JS_SYSTEM_SERVICE_EXCEPTION },
 };
 
 std::string GetJsErrMsg(int32_t jsErrCode)

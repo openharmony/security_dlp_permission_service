@@ -37,6 +37,7 @@
 #include "tokenid_kit.h"
 #include "token_setproc.h"
 #include "napi_dlp_connection_plugin.h"
+#include "napi_dlp_transparent_enc.h"
 
 namespace OHOS {
 namespace Security {
@@ -2151,6 +2152,7 @@ napi_value NapiDlpPermission::Init(napi_env env, napi_value exports)
 {
     InitFunction(env, exports);
     InitDlpConnectFunction(env, exports);
+    InitDlpTransparentEncFunction(env, exports);
     napi_property_descriptor descriptor[] = {DECLARE_NAPI_FUNCTION("DLPFile", DlpFile)};
     NAPI_CALL(
         env, napi_define_properties(env, exports, sizeof(descriptor) / sizeof(napi_property_descriptor), descriptor));
