@@ -140,6 +140,9 @@ static void ParseDlpCertificateFUZZ(const uint8_t* data, size_t size)
 
     FuzzedDataProvider fdp(data, size);
     sptr<IDlpPermissionCallback> stub = new (std::nothrow) DlpPermissionAsyncStubTests();
+    if (stub == nullptr) {
+        return;
+    }
     std::string policy;
     std::string account;
     DlpAccountType accountType = OHOS::Security::DlpPermission::CLOUD_ACCOUNT;
