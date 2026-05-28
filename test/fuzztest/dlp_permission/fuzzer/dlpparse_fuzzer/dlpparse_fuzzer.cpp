@@ -46,16 +46,22 @@ static const std::string DLP_TEST_DIR = "/data";
 static const std::string LOGIN_EVENT = "Ohos.account.event.LOGIN";
 static const std::string LOGOUT_EVENT = "Ohos.account.event.LOGOUT";
 static constexpr int32_t MIN_LENGTH = 100;
-static constexpr uint64_t MAX_CONTENT_SIZE = 0xffffffff;
-static constexpr uint64_t TRUNC_SHORT = 10;
-static constexpr uint64_t TRUNC_LONG = 100000;
-static constexpr uint64_t OFFSET_SHORT = 20;
-static constexpr uint64_t OFFSET_LONG = 111111;
-static constexpr uint8_t ARRAY_CHAR_SIZE = 62;
+static constexpr uint64_t TRUNC_SHORT = 1;
+static constexpr uint64_t OFFSET_SHORT = 1;
+static constexpr uint8_t ARRAY_CHAR_SIZE = 1;
 static constexpr uint8_t TWO = 2;
-static constexpr uint8_t ACCOUNT_LEN = 10;
-static constexpr uint8_t BUFF_LEN = 10;
+static constexpr uint8_t ACCOUNT_LEN = 1;
+static constexpr uint8_t BUFF_LEN = 1;
+static constexpr int32_t ARRAY_SIZE = 3;
+static const uint32_t METHOD_NUMBER_GROUP = 2;
+static const std::vector<uint64_t> index1Actions = {TRUNC_SHORT};
+static const std::vector<uint64_t> index2Actions = {OFFSET_SHORT};
 }
+
+enum class DlpParseMethodGroup {
+    FIRSTGROUP = 0,
+    SECONDGROUP,
+};
 
 namespace OHOS {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = { LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION,
@@ -68,6 +74,12 @@ static void GenerateRandStr(uint32_t len, const uint8_t *data, std::string& res)
         uint32_t index = data[i] % ARRAY_CHAR_SIZE;
         res.push_back(CHAR_ARRAY[index]);
     }
+}
+
+static void UpdateCertAndText(DlpBlob offlineCert)
+{
+    std::vector<uint8_t> cert;
+    g_Dlpfile->UpdateCertAndText(cert, offlineCert);
 }
 
 static void GenerateProp(DlpProperty& prop, const std::string& account)
@@ -119,16 +131,14 @@ static void RawFileFuzzTest(const uint8_t* data, size_t size)
     g_Dlpfile->authPerm_ = DLPFileAccess::FULL_CONTROL;
     res = g_Dlpfile->RemoveDlpPermission(recoveryFileFd);
     DLP_LOG_INFO(LABEL, "RemoveDlpPermission res=%{public}d", res);
-    g_Dlpfile->Truncate(MAX_CONTENT_SIZE);
-    g_Dlpfile->Truncate(TRUNC_SHORT);
-    g_Dlpfile->Truncate(TRUNC_LONG);
+    size_t actionIndex = fdp.ConsumeIntegralInRange<size_t>(0, index1Actions.size());
+    g_Dlpfile->Truncate(index1Actions[actionIndex]);
     std::string bufdata;
     GenerateRandStr(BUFF_LEN, data + offset, bufdata);
     void* bufData = reinterpret_cast<void*>(strdup(bufdata.c_str()));
     uint32_t bufLen = bufdata.length();
-    g_Dlpfile->DlpFileWrite(MAX_CONTENT_SIZE, bufData, bufLen);
-    g_Dlpfile->DlpFileWrite(OFFSET_SHORT, bufData, bufLen);
-    g_Dlpfile->DlpFileWrite(OFFSET_LONG, bufData, bufLen);
+    actionIndex = fdp.ConsumeIntegralInRange<size_t>(0, index2Actions.size());
+    g_Dlpfile->DlpFileWrite(index2Actions[actionIndex], bufData, bufLen);
     DlpFileManager::GetInstance().CloseDlpFile(g_Dlpfile);
     free(bufData);
     close(plainFileFd);
@@ -138,9 +148,7 @@ static void RawFileFuzzTest(const uint8_t* data, size_t size)
 
 static void ZipFileFuzzTest(const uint8_t* data, size_t size)
 {
-    if ((data == nullptr) || (size <= sizeof(uint8_t) * MIN_LENGTH)) {
-        return;
-    }
+    if ((data == nullptr) || (size <= sizeof(uint8_t) * MIN_LENGTH)) {return;}
     int plainFileFd = open("/data/file_test.txt", O_CREAT | O_RDWR | O_TRUNC, S_IRWXU | S_IRWXG | S_IRWXO);
     int dlpFileFd = open("/data/file_test.txt.dlp", O_CREAT | O_RDWR | O_TRUNC, S_IRWXU | S_IRWXG | S_IRWXO);
     std::string text = "text";
@@ -154,12 +162,12 @@ static void ZipFileFuzzTest(const uint8_t* data, size_t size)
     DlpProperty prop;
     GenerateProp(prop, account);
     AccountSA::OhosAccountKits::GetInstance().UpdateOhosAccountInfo(account, account, LOGIN_EVENT);
-    DlpFileManager::DlpFileMes dlpFileMes = {
-        .plainFileFd = plainFileFd,
-        .dlpFileFd = dlpFileFd,
-        .realFileType = "txt",
-    };
-    int32_t res = DlpFileManager::GetInstance().GenZipDlpFile(dlpFileMes, prop, g_Dlpfile, DLP_TEST_DIR);
+    DlpFileManager::DlpFileMes dFM = {.plainFileFd = plainFileFd, .dlpFileFd = dlpFileFd, .realFileType = "txt"};
+    bool hasRead = true;
+    DlpBlob cert;
+    DlpBlob offlineCert;
+    uint8_t writeBuffer[ARRAY_SIZE] = {0x1};
+    int32_t res = DlpFileManager::GetInstance().GenZipDlpFile(dFM, prop, g_Dlpfile, DLP_TEST_DIR);
     DLP_LOG_INFO(LABEL, "GenerateDlpFile res=%{public}d", res);
     int recoveryFileFd = open("/data/file_test.txt.recovery", O_CREAT | O_RDWR | O_TRUNC, S_IRWXU | S_IRWXG | S_IRWXO);
     DlpFileManager::GetInstance().CloseDlpFile(g_Dlpfile);
@@ -169,16 +177,20 @@ static void ZipFileFuzzTest(const uint8_t* data, size_t size)
     g_Dlpfile->authPerm_ = DLPFileAccess::FULL_CONTROL;
     res = g_Dlpfile->RemoveDlpPermission(recoveryFileFd);
     DLP_LOG_INFO(LABEL, "RemoveDlpPermission res=%{public}d", res);
-    g_Dlpfile->Truncate(MAX_CONTENT_SIZE);
-    g_Dlpfile->Truncate(TRUNC_SHORT);
-    g_Dlpfile->Truncate(TRUNC_LONG);
+    size_t actionIndex = fdp.ConsumeIntegralInRange<size_t>(0, index1Actions.size());
+    g_Dlpfile->Truncate(index1Actions[actionIndex]);
     std::string bufdata;
     GenerateRandStr(BUFF_LEN, data + offset, bufdata);
     void* bufData = reinterpret_cast<void*>(strdup(bufdata.c_str()));
     uint32_t bufLen = bufdata.length();
-    g_Dlpfile->DlpFileWrite(MAX_CONTENT_SIZE, bufData, bufLen);
-    g_Dlpfile->DlpFileWrite(OFFSET_SHORT, bufData, bufLen);
-    g_Dlpfile->DlpFileWrite(OFFSET_LONG, bufData, bufLen);
+    actionIndex = fdp.ConsumeIntegralInRange<size_t>(0, index2Actions.size());
+    g_Dlpfile->DlpFileWrite(index2Actions[actionIndex], bufData, bufLen);
+    g_Dlpfile->GetEncryptCert(cert);
+    g_Dlpfile->GetOfflineCert(offlineCert);
+    g_Dlpfile->GetOfflineCertSize();
+    g_Dlpfile->DlpFileRead(0, writeBuffer, ARRAY_SIZE, hasRead, 0);
+    g_Dlpfile->CheckDlpFile();
+    UpdateCertAndText(offlineCert);
     DlpFileManager::GetInstance().CloseDlpFile(g_Dlpfile);
     free(bufData);
     close(plainFileFd);
@@ -188,8 +200,21 @@ static void ZipFileFuzzTest(const uint8_t* data, size_t size)
 
 bool DlpFileFuzzTest(const uint8_t* data, size_t size)
 {
-    RawFileFuzzTest(data, size);
-    ZipFileFuzzTest(data, size);
+    FuzzedDataProvider fdp(data, size);
+    size_t methodIndex = fdp.ConsumeIntegral<size_t>();
+    switch (static_cast<DlpParseMethodGroup>(methodIndex % METHOD_NUMBER_GROUP)) {
+        case DlpParseMethodGroup::FIRSTGROUP: {
+            RawFileFuzzTest(data, size);
+            break;
+        }
+        case DlpParseMethodGroup::SECONDGROUP: {
+            ZipFileFuzzTest(data, size);
+            break;
+        }
+        default: {
+            break;
+        }
+    }
     return true;
 }
 } // namespace OHOS
