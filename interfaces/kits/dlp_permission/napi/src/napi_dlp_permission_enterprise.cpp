@@ -189,7 +189,7 @@ void NapiDlpPermission::QueryOpenedEnterpriseDlpFilesExcute(napi_env env, void* 
         return;
     }
     asyncContext->SetErrCode(DlpPermissionKit::QueryOpenedEnterpriseDlpFiles(
-        asyncContext->GetClassificationLabel(), asyncContext->resultUris));
+        asyncContext->GetClassificationLabel(), asyncContext->GetResultUris()));
 }
 
 void NapiDlpPermission::QueryOpenedEnterpriseDlpFilesComplete(napi_env env, napi_status status, void* data)
@@ -203,7 +203,7 @@ void NapiDlpPermission::QueryOpenedEnterpriseDlpFilesComplete(napi_env env, napi
     std::unique_ptr<QueryOpenedEnterpriseDlpFilesContext> asyncContextPtr { asyncContext };
     napi_value resJs = nullptr;
     if (asyncContext->errCode == DLP_OK) {
-        resJs = VectorStringToJs(env, asyncContext->resultUris);
+        resJs = VectorStringToJs(env, asyncContext->GetResultUris());
     }
     ProcessCallbackOrPromise(env, asyncContext, resJs);
 }

@@ -279,8 +279,11 @@ struct CloseOpenedEnterpriseDlpFilesContext : public CommonAsyncContext {
 struct QueryOpenedEnterpriseDlpFilesContext : public CommonAsyncContext {
     explicit QueryOpenedEnterpriseDlpFilesContext(napi_env env) : CommonAsyncContext(env) {};
     DlpFileQueryOptions options;
-    std::vector<std::string> resultUris;
     std::string GetClassificationLabel() const { return options.classificationLabel; }
+    std::vector<std::string>& GetResultUris() { return resultUris; }
+    const std::vector<std::string>& GetResultUris() const { return resultUris; }
+private:
+    std::vector<std::string> resultUris;
 };
 
 class UIExtensionCallback {
