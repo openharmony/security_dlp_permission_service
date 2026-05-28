@@ -202,7 +202,7 @@ bool DlpFileFuzzTest(const uint8_t* data, size_t size)
 {
     FuzzedDataProvider fdp(data, size);
     size_t methodIndex = fdp.ConsumeIntegral<size_t>();
-    switch (static_cast<DlpParseMethodGroup>(methodIndex / METHOD_NUMBER_GROUP)) {
+    switch (static_cast<DlpParseMethodGroup>(methodIndex % METHOD_NUMBER_GROUP)) {
         case DlpParseMethodGroup::FIRSTGROUP: {
             RawFileFuzzTest(data, size);
             break;
