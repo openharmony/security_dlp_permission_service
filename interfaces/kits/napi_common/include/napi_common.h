@@ -73,6 +73,8 @@ struct CommonAsyncContext {
     napi_deferred deferred = nullptr;  // promise handle
     napi_ref callbackRef = nullptr;    // callback handle
     napi_async_work work = nullptr;    // work handle
+    void SetErrCode(int32_t code) { errCode = code; }
+    int32_t GetErrCode() const { return errCode; }
 };
 
 struct RegisterDlpSandboxChangeWorker {
@@ -271,12 +273,14 @@ struct SetEnterprisePolicyContext : public CommonAsyncContext {
 struct CloseOpenedEnterpriseDlpFilesContext : public CommonAsyncContext {
     explicit CloseOpenedEnterpriseDlpFilesContext(napi_env env) : CommonAsyncContext(env) {};
     DlpFileQueryOptions options;
+    std::string GetClassificationLabel() const { return options.classificationLabel; }
 };
 
 struct QueryOpenedEnterpriseDlpFilesContext : public CommonAsyncContext {
     explicit QueryOpenedEnterpriseDlpFilesContext(napi_env env) : CommonAsyncContext(env) {};
     DlpFileQueryOptions options;
     std::vector<std::string> resultUris;
+    std::string GetClassificationLabel() const { return options.classificationLabel; }
 };
 
 class UIExtensionCallback {
