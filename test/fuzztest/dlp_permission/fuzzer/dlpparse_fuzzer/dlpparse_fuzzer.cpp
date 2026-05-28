@@ -162,11 +162,11 @@ static void ZipFileFuzzTest(const uint8_t* data, size_t size)
     DlpProperty prop;
     GenerateProp(prop, account);
     AccountSA::OhosAccountKits::GetInstance().UpdateOhosAccountInfo(account, account, LOGIN_EVENT);
-    DlpFileManager::DlpFileMes dlpFileMes = {.plainFileFd = plainFileFd, .dlpFileFd = dlpFileFd, .realFileType = "txt"};
+    DlpFileManager::DlpFileMes dFM = {.plainFileFd = plainFileFd, .dlpFileFd = dlpFileFd, .realFileType = "txt"};
     DlpBlob cert;
     DlpBlob offlineCert;
     uint8_t writeBuffer[ARRAY_SIZE] = {0x1};
-    int32_t res = DlpFileManager::GetInstance().GenZipDlpFile(dlpFileMes, prop, g_Dlpfile, DLP_TEST_DIR);
+    int32_t res = DlpFileManager::GetInstance().GenZipDlpFile(dFM, prop, g_Dlpfile, DLP_TEST_DIR);
     DLP_LOG_INFO(LABEL, "GenerateDlpFile res=%{public}d", res);
     int recoveryFileFd = open("/data/file_test.txt.recovery", O_CREAT | O_RDWR | O_TRUNC, S_IRWXU | S_IRWXG | S_IRWXO);
     DlpFileManager::GetInstance().CloseDlpFile(g_Dlpfile);
