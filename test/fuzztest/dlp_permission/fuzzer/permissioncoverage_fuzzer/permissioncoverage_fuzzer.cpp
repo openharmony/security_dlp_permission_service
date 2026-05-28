@@ -52,9 +52,7 @@ static void FuzzTest(const uint8_t* data, size_t size)
     FuzzedDataProvider fdp(data, size);
     std::string appId = fdp.ConsumeBytesAsString(size);
     AppExecFwk::ApplicationInfo applicationInfo;
-    if (appId >= 0) {
-        GetApplicationInfo(appId, applicationInfo);
-    }
+    GetApplicationInfo(appId, applicationInfo);
 }
 
 bool PermissionCoverageFuzzer(const uint8_t* data, size_t size)
