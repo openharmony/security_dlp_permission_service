@@ -53,14 +53,14 @@ static constexpr uint8_t TWO = 2;
 static constexpr uint8_t ACCOUNT_LEN = 10;
 static constexpr uint8_t BUFF_LEN = 10;
 static constexpr int32_t ARRAY_SIZE = 3;
-static uint32_t METHOD_NUMBER_GROUP = 2;
+static const uint32_t METHOD_NUMBER_GROUP = 2;
 static const std::vector<uint64_t> index1Actions = {TRUNC_SHORT};
 static const std::vector<uint64_t> index2Actions = {OFFSET_SHORT};
 }
 
 enum class DlpParseMethodGroup {
-    FIRSTGROUP = 0;
-    SECONDGROUP;
+    FIRSTGROUP = 0,
+    SECONDGROUP,
 };
 
 namespace OHOS {
@@ -76,7 +76,7 @@ static void GenerateRandStr(uint32_t len, const uint8_t *data, std::string& res)
     }
 }
 
-static void UpdateCertAndText(DlpBlob offlineCert) 
+static void UpdateCertAndText(DlpBlob offlineCert)
 {
     std::vector<uint8_t> cert;
     g_Dlpfile->UpdateCertAndText(cert, offlineCert);
@@ -201,7 +201,7 @@ bool DlpFileFuzzTest(const uint8_t* data, size_t size)
 {
     FuzzedDataProvider fdp(data, size);
     size_t methodIndex = fdp.ConsumeIntegral<size_t>();
-    switch(static_cast<DlpParseMethodGroup>(methodIndex / METHOD_NUMBER_GROUP)) {
+    switch (static_cast<DlpParseMethodGroup>(methodIndex / METHOD_NUMBER_GROUP)) {
         case DlpParseMethodGroup::FIRSTGROUP: {
             RawFileFuzzTest(data, size);
             break;
