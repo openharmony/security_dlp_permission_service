@@ -118,8 +118,7 @@ void NapiDlpPermission::CloseOpenedEnterpriseDlpFilesExcute(napi_env env, void* 
         DLP_LOG_ERROR(LABEL, "AsyncContext is nullptr.");
         return;
     }
-    DlpFileQueryOptions options = asyncContext->options;
-    asyncContext->errCode = DlpPermissionKit::CloseOpenedEnterpriseDlpFiles(options.classificationLabel);
+    asyncContext->SetErrCode(DlpPermissionKit::CloseOpenedEnterpriseDlpFiles(asyncContext->GetClassificationLabel()));
 }
 
 void NapiDlpPermission::CloseOpenedEnterpriseDlpFilesComplete(napi_env env, napi_status status, void* data)
@@ -189,9 +188,8 @@ void NapiDlpPermission::QueryOpenedEnterpriseDlpFilesExcute(napi_env env, void* 
         DLP_LOG_ERROR(LABEL, "AsyncContext is nullptr.");
         return;
     }
-    DlpFileQueryOptions options = asyncContext->options;
-    asyncContext->errCode = DlpPermissionKit::QueryOpenedEnterpriseDlpFiles(
-        options.classificationLabel, asyncContext->resultUris);
+    asyncContext->SetErrCode(DlpPermissionKit::QueryOpenedEnterpriseDlpFiles(
+        asyncContext->GetClassificationLabel(), asyncContext->GetResultUris()));
 }
 
 void NapiDlpPermission::QueryOpenedEnterpriseDlpFilesComplete(napi_env env, napi_status status, void* data)
@@ -205,7 +203,7 @@ void NapiDlpPermission::QueryOpenedEnterpriseDlpFilesComplete(napi_env env, napi
     std::unique_ptr<QueryOpenedEnterpriseDlpFilesContext> asyncContextPtr { asyncContext };
     napi_value resJs = nullptr;
     if (asyncContext->errCode == DLP_OK) {
-        resJs = VectorStringToJs(env, asyncContext->resultUris);
+        resJs = VectorStringToJs(env, asyncContext->GetResultUris());
     }
     ProcessCallbackOrPromise(env, asyncContext, resJs);
 }
