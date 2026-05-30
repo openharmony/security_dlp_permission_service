@@ -387,11 +387,21 @@ int HcFileWrite(FileHandle file, const void *src, int srcSize)
 
     const char *srcBuffer = static_cast<const char *>(src);
     int total = 0;
+    int retryCount = 0;
     while (total < srcSize) {
         int writeCount = static_cast<int>(fwrite(srcBuffer + total, 1, srcSize - total, fp));
         if (ferror(fp) != 0) {
             DLP_LOG_ERROR(LABEL, "write file error!");
         }
+        if (writeCount == 0) {
+            retryCount++;
+            if (retryCount >= MAX_RETRY_COUNT) {
+                LOGE("write file retry exceeded max count!");
+                break;
+            }
+            continue;
+        }
+        retryCount = 0;
         total += writeCount;
     }
     return total;
