@@ -29,6 +29,7 @@ namespace {
 constexpr OHOS::HiviewDFX::HiLogLabel LABEL = { LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "AlgUtils" };
 const int PARCEL_DEFAULT_INCREASE_STEP = 16;
 const uint32_t PARCEL_UINT_MAX = 0xffffffffU;
+const uint32_t MAX_RETRY_COUNT = 3;
 }
 
 void *HcMalloc(uint32_t size, char val)
@@ -387,11 +388,21 @@ int HcFileWrite(FileHandle file, const void *src, int srcSize)
 
     const char *srcBuffer = static_cast<const char *>(src);
     int total = 0;
+    int retryCount = 0;
     while (total < srcSize) {
         int writeCount = static_cast<int>(fwrite(srcBuffer + total, 1, srcSize - total, fp));
         if (ferror(fp) != 0) {
             DLP_LOG_ERROR(LABEL, "write file error!");
         }
+        if (writeCount == 0) {
+            retryCount++;
+            if (retryCount >= MAX_RETRY_COUNT) {
+                DLP_LOG_ERROR(LABEL, "write file retry exceeded max count!");
+                break;
+            }
+            continue;
+        }
+        retryCount = 0;
         total += writeCount;
     }
     return total;

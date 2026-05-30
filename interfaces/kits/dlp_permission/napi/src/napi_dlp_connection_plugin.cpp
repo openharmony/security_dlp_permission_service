@@ -191,6 +191,7 @@ void NapiCallVoidFunction(napi_env env, napi_value *argv, size_t argc, napi_ref 
 static void ConnectServerWork(JsDlpConnectionParam *param)
 {
     napi_handle_scope scope = nullptr;
+    bool hasCreateCallBack = false;
     int32_t res = 0;
     do {
         napi_status status = napi_open_handle_scope(param->env, &scope);
@@ -210,6 +211,7 @@ static void ConnectServerWork(JsDlpConnectionParam *param)
             res = 1;
             break;
         }
+        hasCreateCallBack = true;
         napi_value napiRequestId = CreateString(param->requestId, param);
         if (napiRequestId == nullptr) {
             DLP_LOG_ERROR(LABEL, "napiRequestId is error.");
@@ -230,7 +232,7 @@ static void ConnectServerWork(JsDlpConnectionParam *param)
     param->lockInfo->condition.notify_all();
     param->lockInfo->mutex.unlock();
     napi_close_handle_scope(param->env, scope);
-    if (res != 0) {
+    if (res != 0 && !hasCreateCallBack) {
         delete param;
     }
 }
