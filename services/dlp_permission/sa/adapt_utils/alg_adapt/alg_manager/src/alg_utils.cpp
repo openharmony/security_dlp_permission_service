@@ -397,7 +397,7 @@ int HcFileWrite(FileHandle file, const void *src, int srcSize)
         if (writeCount == 0) {
             retryCount++;
             if (retryCount >= MAX_RETRY_COUNT) {
-                LOGE("write file retry exceeded max count!");
+                DLP_LOG_ERROR(LABEL, "write file retry exceeded max count!");
                 break;
             }
             continue;
