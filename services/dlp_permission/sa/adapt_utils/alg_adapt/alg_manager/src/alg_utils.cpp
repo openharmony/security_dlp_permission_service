@@ -29,6 +29,7 @@ namespace {
 constexpr OHOS::HiviewDFX::HiLogLabel LABEL = { LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "AlgUtils" };
 const int PARCEL_DEFAULT_INCREASE_STEP = 16;
 const uint32_t PARCEL_UINT_MAX = 0xffffffffU;
+const uint32_t MAX_RETRY_COUNT = 3;
 }
 
 void *HcMalloc(uint32_t size, char val)
