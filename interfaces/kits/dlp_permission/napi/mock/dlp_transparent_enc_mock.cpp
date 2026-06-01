@@ -29,6 +29,7 @@ DlpTransparentEncMock &DlpTransparentEncMock::GetInstance()
 
 int32_t DlpTransparentEncMock::SetControlledAppLists(int32_t userid, const std::vector<std::string> &appLists)
 {
+    (void)userid;
     controlledAppLists_ = appLists;
     return mockResult_;
 }
