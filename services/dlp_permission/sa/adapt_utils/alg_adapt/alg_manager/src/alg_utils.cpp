@@ -27,7 +27,7 @@ namespace Security {
 namespace DlpPermission {
 namespace {
 constexpr OHOS::HiviewDFX::HiLogLabel LABEL = { LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "AlgUtils" };
-const int PARCEL_DEFAULT_INCREASE_STEP = 16;
+const uint32_t PARCEL_DEFAULT_INCREASE_STEP = 16;
 const uint32_t PARCEL_UINT_MAX = 0xffffffffU;
 const uint32_t MAX_RETRY_COUNT = 3;
 }
@@ -388,7 +388,7 @@ int HcFileWrite(FileHandle file, const void *src, int srcSize)
 
     const char *srcBuffer = static_cast<const char *>(src);
     int total = 0;
-    int retryCount = 0;
+    uint32_t retryCount = 0;
     while (total < srcSize) {
         int writeCount = static_cast<int>(fwrite(srcBuffer + total, 1, srcSize - total, fp));
         if (ferror(fp) != 0) {
