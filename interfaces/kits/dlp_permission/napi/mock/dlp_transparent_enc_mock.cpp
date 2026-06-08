@@ -27,9 +27,11 @@ DlpTransparentEncMock &DlpTransparentEncMock::GetInstance()
     return instance;
 }
 
-int32_t DlpTransparentEncMock::SetControlledAppLists(int32_t userid, const std::vector<std::string> &appLists)
+int32_t DlpTransparentEncMock::SetControlledAppLists(int32_t userid, bool userIdSet,
+                                                     const std::vector<std::string> &appLists)
 {
     (void)userid;
+    (void)userIdSet;
     controlledAppLists_ = appLists;
     return mockResult_;
 }
@@ -46,7 +48,7 @@ void DlpTransparentEncMock::SetMockResult(int32_t result)
 }
 
 extern "C" {
-int32_t DLP_SetControlledAppLists(int32_t userid, const char *const *appLists, uint32_t appListsLen)
+int32_t DLP_SetControlledAppLists(int32_t userid, bool userIdSet, const char *const *appLists, uint32_t appListsLen)
 {
     if (appLists == nullptr || appListsLen == 0) {
         return -1;
@@ -57,7 +59,7 @@ int32_t DLP_SetControlledAppLists(int32_t userid, const char *const *appLists, u
             appListVec.push_back(std::string(appLists[i]));
         }
     }
-    return DlpTransparentEncMock::GetInstance().SetControlledAppLists(userid, appListVec);
+    return DlpTransparentEncMock::GetInstance().SetControlledAppLists(userid, userIdSet, appListVec);
 }
 
 int32_t DLP_GetControlledAppLists(char ***appLists, uint32_t *appListsLen)
@@ -82,7 +84,7 @@ int32_t DLP_GetControlledAppLists(char ***appLists, uint32_t *appListsLen)
     if (*appLists == nullptr) {
         return -1;
     }
-    
+
     for (size_t i = 0; i < appListVec.size(); i++) {
         (*appLists)[i] = strdup(appListVec[i].c_str());
         if ((*appLists)[i] == nullptr) {

@@ -25,7 +25,7 @@ namespace Security {
 namespace DlpPermission {
 
 extern "C" {
-int32_t DLP_SetControlledAppLists(int32_t userid, const char *const *appLists, uint32_t appListsLen);
+int32_t DLP_SetControlledAppLists(int32_t userid, bool userIdSet, const char *const *appLists, uint32_t appListsLen);
 int32_t DLP_GetControlledAppLists(char ***appLists, uint32_t *appListsLen);
 int32_t DLP_FreeControlledAppLists(char ***appLists, uint32_t *appListsLen);
 }
@@ -33,7 +33,7 @@ int32_t DLP_FreeControlledAppLists(char ***appLists, uint32_t *appListsLen);
 class DlpTransparentEncMock {
 public:
     static DlpTransparentEncMock &GetInstance();
-    int32_t SetControlledAppLists(int32_t userid, const std::vector<std::string> &appLists);
+    int32_t SetControlledAppLists(int32_t userid, bool userIdSet, const std::vector<std::string> &appLists);
     int32_t GetControlledAppLists(std::vector<std::string> &appLists);
     void SetMockResult(int32_t result);
 
