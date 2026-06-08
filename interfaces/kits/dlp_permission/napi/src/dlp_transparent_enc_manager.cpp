@@ -66,8 +66,8 @@ int32_t DlpTransparentEncManager::LoadDlpCredentialService()
         return DLP_ERROR_DLOPEN;
     }
 
-    setControlledAppListsFunc_ = reinterpret_cast<SetControlledAppLists_Func>(
-        dlsym(credentialServiceHandle_, "DLP_SetControlledAppLists"));
+    setControlledAppListsFunc_ =
+        reinterpret_cast<SetControlledAppLists_Func>(dlsym(credentialServiceHandle_, "DLP_SetControlledAppLists"));
     if (setControlledAppListsFunc_ == nullptr) {
         DLP_LOG_ERROR(LABEL, "dlsym DLP_SetControlledAppLists failed, error: %{public}s", dlerror());
         dlclose(credentialServiceHandle_);
@@ -75,8 +75,8 @@ int32_t DlpTransparentEncManager::LoadDlpCredentialService()
         return DLP_ERROR_DLSYM;
     }
 
-    getControlledAppListsFunc_ = reinterpret_cast<GetControlledAppLists_Func>(
-        dlsym(credentialServiceHandle_, "DLP_GetControlledAppLists"));
+    getControlledAppListsFunc_ =
+        reinterpret_cast<GetControlledAppLists_Func>(dlsym(credentialServiceHandle_, "DLP_GetControlledAppLists"));
     if (getControlledAppListsFunc_ == nullptr) {
         DLP_LOG_ERROR(LABEL, "dlsym DLP_GetControlledAppLists failed, error: %{public}s", dlerror());
         dlclose(credentialServiceHandle_);
@@ -85,8 +85,8 @@ int32_t DlpTransparentEncManager::LoadDlpCredentialService()
         return DLP_ERROR_DLSYM;
     }
 
-    freeControlledAppListsFunc_ = reinterpret_cast<FreeControlledAppLists_Func>(
-        dlsym(credentialServiceHandle_, "DLP_FreeControlledAppLists"));
+    freeControlledAppListsFunc_ =
+        reinterpret_cast<FreeControlledAppLists_Func>(dlsym(credentialServiceHandle_, "DLP_FreeControlledAppLists"));
     if (freeControlledAppListsFunc_ == nullptr) {
         DLP_LOG_ERROR(LABEL, "dlsym DLP_FreeControlledAppLists failed, error: %{public}s", dlerror());
         dlclose(credentialServiceHandle_);
@@ -99,7 +99,8 @@ int32_t DlpTransparentEncManager::LoadDlpCredentialService()
     return DLP_OK;
 }
 
-int32_t DlpTransparentEncManager::SetControlledAppLists(const std::vector<std::string> &appLists, int32_t userId)
+int32_t DlpTransparentEncManager::SetControlledAppLists(const std::vector<std::string> &appLists, int32_t userId,
+                                                        bool userIdSet)
 {
     std::lock_guard<std::mutex> lock(mutex_);
     int32_t ret = LoadDlpCredentialService();
@@ -118,7 +119,7 @@ int32_t DlpTransparentEncManager::SetControlledAppLists(const std::vector<std::s
         appListPtrs.push_back(app.c_str());
     }
 
-    ret = setControlledAppListsFunc_(userId, appListPtrs.data(), static_cast<uint32_t>(appListPtrs.size()));
+    ret = setControlledAppListsFunc_(userId, userIdSet, appListPtrs.data(), static_cast<uint32_t>(appListPtrs.size()));
     if (ret != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "DLP_SetControlledAppLists failed, ret = %{public}d", ret);
         return ret;
@@ -131,7 +132,7 @@ int32_t DlpTransparentEncManager::SetControlledAppLists(const std::vector<std::s
 int32_t DlpTransparentEncManager::GetControlledAppLists(std::vector<std::string> &appLists)
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    
+
     DLP_LOG_INFO(LABEL, "GetControlledAppLists enter");
     int32_t ret = LoadDlpCredentialService();
     if (ret != DLP_OK) {

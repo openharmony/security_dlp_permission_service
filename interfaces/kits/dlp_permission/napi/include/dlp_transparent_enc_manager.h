@@ -29,7 +29,7 @@ namespace DlpPermission {
 class DlpTransparentEncManager {
 public:
     static DlpTransparentEncManager &GetInstance();
-    int32_t SetControlledAppLists(const std::vector<std::string> &appLists, int32_t userId);
+    int32_t SetControlledAppLists(const std::vector<std::string> &appLists, int32_t userId, bool userIdSet);
     int32_t GetControlledAppLists(std::vector<std::string> &appLists);
 
 private:
@@ -39,7 +39,8 @@ private:
     int32_t LoadDlpCredentialService();
     void *credentialServiceHandle_ = nullptr;
 
-    typedef int32_t (*SetControlledAppLists_Func)(int32_t userid, const char *const *appLists, uint32_t appListsLen);
+    typedef int32_t (*SetControlledAppLists_Func)(int32_t userid, bool userIdSet, const char *const *appLists,
+                                                  uint32_t appListsLen);
     typedef int32_t (*GetControlledAppLists_Func)(char ***appLists, uint32_t *appListsLen);
     typedef int32_t (*FreeControlledAppLists_Func)(char ***appLists, uint32_t *appListsLen);
     SetControlledAppLists_Func setControlledAppListsFunc_ = nullptr;

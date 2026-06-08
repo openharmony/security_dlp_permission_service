@@ -40,7 +40,8 @@ int32_t DlpTransparentEncManager::LoadDlpCredentialService()
     return DLP_OK;
 }
 
-int32_t DlpTransparentEncManager::SetControlledAppLists(const std::vector<std::string> &appLists, int32_t userId)
+int32_t DlpTransparentEncManager::SetControlledAppLists(const std::vector<std::string> &appLists, int32_t userId,
+                                                        bool userIdSet)
 {
     return DLP_OK;
 }
@@ -49,6 +50,6 @@ int32_t DlpTransparentEncManager::GetControlledAppLists(std::vector<std::string>
 {
     return DLP_OK;
 }
-} // namespace DlpPermission
-} // namespace Security
-} // namespace OHOS
+}  // namespace DlpPermission
+}  // namespace Security
+}  // namespace OHOS

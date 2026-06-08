@@ -83,6 +83,7 @@ struct SetControlledAppListsAsyncContext : public CommonAsyncContext {
     explicit SetControlledAppListsAsyncContext(napi_env env) : CommonAsyncContext(env){};
     std::vector<std::string> appLists;
     int32_t userId = DEFAULT_USER_ID;
+    bool userIdSet = false;
 };
 
 struct GetControlledAppListsAsyncContext : public CommonAsyncContext {
@@ -135,6 +136,8 @@ bool GetSetControlledAppListsParams(const napi_env env, const napi_callback_info
     }
     if (!GetInt32Value(env, argv[THE_PARAM_ONE], asyncContext.userId)) {
         DLP_LOG_DEBUG(LABEL, "js get userId fail");
+    } else {
+        asyncContext.userIdSet = true;
     }
     return true;
 }
@@ -148,8 +151,8 @@ void SetControlledAppListsExecute(napi_env env, void *data)
         return;
     }
 
-    int32_t res =
-        DlpTransparentEncManager::GetInstance().SetControlledAppLists(asyncContext->appLists, asyncContext->userId);
+    int32_t res = DlpTransparentEncManager::GetInstance().SetControlledAppLists(
+        asyncContext->appLists, asyncContext->userId, asyncContext->userIdSet);
     asyncContext->errCode = ConvertCredentialError(res);
 }
 

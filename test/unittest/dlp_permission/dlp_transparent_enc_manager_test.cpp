@@ -51,21 +51,6 @@ void DlpTransparentEncManagerTest::TearDown()
 }
 
 /**
- * @tc.name: SetControlledAppLists001
- * @tc.desc: SetControlledAppLists with multiple apps, should fail due to dlopen.
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(DlpTransparentEncManagerTest, SetControlledAppLists001, TestSize.Level1)
-{
-    std::vector<std::string> appLists;
-    appLists.push_back("com.test.app1");
-    appLists.push_back("com.test.app2");
-    int32_t ret = DlpTransparentEncManager::GetInstance().SetControlledAppLists(appLists, DEFAULT_USER_ID);
-    ASSERT_NE(ret, DLP_OK);
-}
-
-/**
  * @tc.name: GetInstance001
  * @tc.desc: GetInstance test - singleton pattern verification.
  * @tc.type: FUNC
@@ -76,6 +61,49 @@ HWTEST_F(DlpTransparentEncManagerTest, GetInstance001, TestSize.Level0)
     auto& instance1 = DlpTransparentEncManager::GetInstance();
     auto& instance2 = DlpTransparentEncManager::GetInstance();
     ASSERT_EQ(&instance1, &instance2);
+}
+
+/**
+ * @tc.name: SetControlledAppLists001
+ * @tc.desc: SetControlledAppLists with multiple apps, should fail due to dlopen.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpTransparentEncManagerTest, SetControlledAppLists001, TestSize.Level1)
+{
+    std::vector<std::string> appLists;
+    appLists.push_back("com.test.app1");
+    appLists.push_back("com.test.app2");
+    int32_t ret = DlpTransparentEncManager::GetInstance().SetControlledAppLists(appLists, DEFAULT_USER_ID, true);
+    ASSERT_NE(ret, DLP_OK);
+}
+
+/**
+ * @tc.name: SetControlledAppLists002
+ * @tc.desc: SetControlledAppLists with userId=0
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpTransparentEncManagerTest, SetControlledAppLists002, TestSize.Level1)
+{
+    std::vector<std::string> appLists;
+    appLists.push_back("com.test.app1");
+    int32_t ret = DlpTransparentEncManager::GetInstance().SetControlledAppLists(appLists, 0, true);
+    ASSERT_NE(ret, DLP_OK);
+}
+
+/**
+ * @tc.name: SetControlledAppLists003
+ * @tc.desc: SetControlledAppLists with userIdSet=false
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpTransparentEncManagerTest, SetControlledAppLists003, TestSize.Level1)
+{
+    std::vector<std::string> appLists;
+    appLists.push_back("com.test.app1");
+    int32_t ret = DlpTransparentEncManager::GetInstance().SetControlledAppLists(appLists, 0, false);
+    ASSERT_NE(ret, DLP_OK);
 }
 }  // namespace DlpPermission
 }  // namespace Security
