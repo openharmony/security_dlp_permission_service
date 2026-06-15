@@ -96,7 +96,10 @@ ohos_shared_library("libdlppermission_napi") {
     "hilog:libhilog",
     "ipc:ipc_core",
     "napi:ace_napi",
-    "samgr:samgr_proxy"
+    "samgr:samgr_proxy",
+    "image_framework:image_native",
+    "ability_base:configuration",
+    "init:libbegetutil",
   ]
 
   if (dlp_credential_enable == true) {
@@ -157,6 +160,7 @@ ohos_shared_library("libdlpsetdlpfeature_napi") {
     "graphic_2d:color_manager",
     "napi:ace_napi",
     "ipc:ipc_single",
+    "image_framework:image_native",
   ]
 
   relative_install_dir = "module"
