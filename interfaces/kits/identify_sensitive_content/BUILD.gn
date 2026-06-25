@@ -41,6 +41,8 @@ ohos_shared_library("identifysensitivecontent_napi") {
     "hilog:libhilog",
     "ipc:ipc_core",
     "napi:ace_napi",
+    "libuv:uv",
+    "node:node_header_notice",
   ]
 
   if(target_platform == "pc" && data_identify_anonymize_service_enable) {

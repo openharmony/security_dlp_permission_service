@@ -63,7 +63,9 @@
         "resource_management",
         "eventhandler",
         "memmgr",
-        "security_guard"
+        "security_guard",
+        "node",
+        "libuv"
       ],
       "third_party": []
     },
