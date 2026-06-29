@@ -92,3 +92,123 @@ HWTEST_F(AccountEventSubscriberTest, OnReceiveEvent001, TestSize.Level1)
     ASSERT_EQ(1, g_cntRegister);
     ASSERT_EQ(2, g_cntUnregister);
 }
+
+/**
+ * @tc.name: OnReceiveEvent002
+ * @tc.desc: OnReceiveEvent test with null register callback
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccountEventSubscriberTest, OnReceiveEvent002, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL, "OnReceiveEvent002");
+
+    AccountListenerCallback callback;
+    callback.registerAccount = nullptr;
+    callback.unregisterAccount = UnregisterAccount;
+    MatchingSkills matchingSkills;
+    matchingSkills.AddEvent(CommonEventSupport::COMMON_EVENT_DISTRIBUTED_ACCOUNT_LOGIN);
+    matchingSkills.AddEvent(CommonEventSupport::COMMON_EVENT_DISTRIBUTED_ACCOUNT_LOGOUT);
+    CommonEventSubscribeInfo subscribeInfo(matchingSkills);
+    AccountEventSubscriber subscriber(subscribeInfo, callback);
+
+    EventFwk::CommonEventData data;
+    OHOS::AAFwk::Want want;
+    want.SetAction(CommonEventSupport::COMMON_EVENT_DISTRIBUTED_ACCOUNT_LOGIN);
+    data.SetWant(want);
+    subscriber.OnReceiveEvent(data);
+    ASSERT_EQ(0, g_cntRegister);
+    ASSERT_EQ(0, g_cntUnregister);
+}
+
+/**
+ * @tc.name: OnReceiveEvent003
+ * @tc.desc: OnReceiveEvent test with null unregister callback
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccountEventSubscriberTest, OnReceiveEvent003, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL, "OnReceiveEvent003");
+
+    AccountListenerCallback callback;
+    callback.registerAccount = RegisterAccount;
+    callback.unregisterAccount = nullptr;
+    MatchingSkills matchingSkills;
+    matchingSkills.AddEvent(CommonEventSupport::COMMON_EVENT_DISTRIBUTED_ACCOUNT_LOGIN);
+    matchingSkills.AddEvent(CommonEventSupport::COMMON_EVENT_DISTRIBUTED_ACCOUNT_LOGOUT);
+    CommonEventSubscribeInfo subscribeInfo(matchingSkills);
+    AccountEventSubscriber subscriber(subscribeInfo, callback);
+
+    EventFwk::CommonEventData data;
+    OHOS::AAFwk::Want want;
+    want.SetAction(CommonEventSupport::COMMON_EVENT_DISTRIBUTED_ACCOUNT_LOGOUT);
+    data.SetWant(want);
+    subscriber.OnReceiveEvent(data);
+    ASSERT_EQ(0, g_cntRegister);
+    ASSERT_EQ(0, g_cntUnregister);
+}
+
+/**
+ * @tc.name: OnReceiveEvent004
+ * @tc.desc: OnReceiveEvent test with both null callbacks
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccountEventSubscriberTest, OnReceiveEvent004, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL, "OnReceiveEvent004");
+
+    AccountListenerCallback callback;
+    callback.registerAccount = nullptr;
+    callback.unregisterAccount = nullptr;
+    MatchingSkills matchingSkills;
+    matchingSkills.AddEvent(CommonEventSupport::COMMON_EVENT_DISTRIBUTED_ACCOUNT_LOGIN);
+    matchingSkills.AddEvent(CommonEventSupport::COMMON_EVENT_DISTRIBUTED_ACCOUNT_LOGOUT);
+    matchingSkills.AddEvent(CommonEventSupport::COMMON_EVENT_DISTRIBUTED_ACCOUNT_LOGOFF);
+    CommonEventSubscribeInfo subscribeInfo(matchingSkills);
+    AccountEventSubscriber subscriber(subscribeInfo, callback);
+
+    EventFwk::CommonEventData data;
+    OHOS::AAFwk::Want want;
+    want.SetAction(CommonEventSupport::COMMON_EVENT_DISTRIBUTED_ACCOUNT_LOGIN);
+    data.SetWant(want);
+    subscriber.OnReceiveEvent(data);
+    want.SetAction(CommonEventSupport::COMMON_EVENT_DISTRIBUTED_ACCOUNT_LOGOUT);
+    data.SetWant(want);
+    subscriber.OnReceiveEvent(data);
+    want.SetAction(CommonEventSupport::COMMON_EVENT_DISTRIBUTED_ACCOUNT_LOGOFF);
+    data.SetWant(want);
+    subscriber.OnReceiveEvent(data);
+    ASSERT_EQ(0, g_cntRegister);
+    ASSERT_EQ(0, g_cntUnregister);
+}
+
+/**
+ * @tc.name: Destructor001
+ * @tc.desc: AccountEventSubscriber destructor test with mutex protection
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccountEventSubscriberTest, Destructor001, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL, "Destructor001");
+
+    AccountListenerCallback callback;
+    callback.registerAccount = RegisterAccount;
+    callback.unregisterAccount = UnregisterAccount;
+    MatchingSkills matchingSkills;
+    matchingSkills.AddEvent(CommonEventSupport::COMMON_EVENT_DISTRIBUTED_ACCOUNT_LOGIN);
+    CommonEventSubscribeInfo subscribeInfo(matchingSkills);
+    AccountEventSubscriber* subscriber = new AccountEventSubscriber(subscribeInfo, callback);
+
+    EventFwk::CommonEventData data;
+    OHOS::AAFwk::Want want;
+    want.SetAction(CommonEventSupport::COMMON_EVENT_DISTRIBUTED_ACCOUNT_LOGIN);
+    data.SetWant(want);
+    subscriber->OnReceiveEvent(data);
+    ASSERT_EQ(1, g_cntRegister);
+
+    delete subscriber;
+    ASSERT_EQ(1, g_cntRegister);
+}

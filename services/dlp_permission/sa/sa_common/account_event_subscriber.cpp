@@ -30,6 +30,7 @@ AccountEventSubscriber::AccountEventSubscriber(
 
 AccountEventSubscriber::~AccountEventSubscriber()
 {
+    std::lock_guard<std::mutex> lock(callbackMutex_);
     callback_.registerAccount = nullptr;
     callback_.unregisterAccount = nullptr;
 }
@@ -37,13 +38,19 @@ AccountEventSubscriber::~AccountEventSubscriber()
 void AccountEventSubscriber::HandleRegisterCloudAccount()
 {
     DLP_LOG_INFO(LABEL, "HandleRegisterCloudAccount Start.");
-    callback_.registerAccount();
+    std::lock_guard<std::mutex> lock(callbackMutex_);
+    if (callback_.registerAccount != nullptr) {
+        callback_.registerAccount();
+    }
 }
 
 void AccountEventSubscriber::HandleUnregisterCloudAccount()
 {
     DLP_LOG_INFO(LABEL, "HandleUnregisterCloudAccount Start.");
-    callback_.unregisterAccount();
+    std::lock_guard<std::mutex> lock(callbackMutex_);
+    if (callback_.unregisterAccount != nullptr) {
+        callback_.unregisterAccount();
+    }
 }
 
 void AccountEventSubscriber::OnReceiveEvent(const EventFwk::CommonEventData &data)

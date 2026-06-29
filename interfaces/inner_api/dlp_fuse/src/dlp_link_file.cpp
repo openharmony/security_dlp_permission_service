@@ -65,20 +65,21 @@ bool DlpLinkFile::SubAndCheckZeroRef(int ref)
     if (refcount_ < ref) {
         DLP_LOG_WARN(LABEL, "Need sub reference %{public}d is larger than refcount %{public}d",
             ref, static_cast<int>(refcount_));
-        return true;
+        return false;
     }
     refcount_ -= ref;
     return (refcount_ <= 0);
 }
 
-void DlpLinkFile::IncreaseRef()
+bool DlpLinkFile::IncreaseRef()
 {
     std::lock_guard<std::mutex> lock(refLock_);
     if (refcount_ <= 0) {
         DLP_LOG_WARN(LABEL, "refcount <= 0, can not increase");
-        return;
+        return false;
     }
     refcount_++;
+    return true;
 }
 
 struct stat DlpLinkFile::GetLinkStat()

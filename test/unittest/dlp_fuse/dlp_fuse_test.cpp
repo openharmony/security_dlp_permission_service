@@ -784,6 +784,20 @@ HWTEST_F(DlpFuseTest, LookUpDlpLinkFile001, TestSize.Level0)
     dlpLinkManager->dlpLinkFileNameMap_.erase("linkfile");
 }
 
+HWTEST_F(DlpFuseTest, LookUpDlpLinkFile002, TestSize.Level0)
+{
+    DLP_LOG_INFO(LABEL, "LookUpDlpLinkFile002");
+    std::shared_ptr<DlpFile> filePtr = std::make_shared<DlpZipFile>(1000, DLP_TEST_DIR, 0, "txt");
+    ASSERT_NE(filePtr, nullptr);
+    DlpLinkFile* node = new (std::nothrow) DlpLinkFile("linkfile_ref", filePtr);
+    ASSERT_NE(node, nullptr);
+    node->refcount_ = 0;
+    dlpLinkManager->dlpLinkFileNameMap_["linkfile_ref"] = node;
+    EXPECT_EQ(dlpLinkManager->LookUpDlpLinkFile("linkfile_ref"), nullptr);
+    dlpLinkManager->dlpLinkFileNameMap_.erase("linkfile_ref");
+    delete node;
+}
+
 /**
  * @tc.name: DumpDlpLinkFile001
  * @tc.desc: test dump link file abnoral branch
@@ -878,7 +892,16 @@ HWTEST_F(DlpFuseTest, SubAndCheckZeroRef001, TestSize.Level0)
     std::shared_ptr<DlpFile> filePtr = nullptr;
     DlpLinkFile linkFile("linkfile", filePtr);
     EXPECT_FALSE(linkFile.SubAndCheckZeroRef(-1));
-    EXPECT_TRUE(linkFile.SubAndCheckZeroRef(5));
+    EXPECT_FALSE(linkFile.SubAndCheckZeroRef(5));
+}
+
+HWTEST_F(DlpFuseTest, SubAndCheckZeroRef002, TestSize.Level0)
+{
+    DLP_LOG_INFO(LABEL, "SubAndCheckZeroRef002");
+    std::shared_ptr<DlpFile> filePtr = nullptr;
+    DlpLinkFile linkFile("linkfile", filePtr);
+    EXPECT_TRUE(linkFile.SubAndCheckZeroRef(1));
+    EXPECT_EQ(linkFile.refcount_, 0);
 }
 
 /**
@@ -893,8 +916,18 @@ HWTEST_F(DlpFuseTest, IncreaseRef001, TestSize.Level0)
     std::shared_ptr<DlpFile> filePtr = nullptr;
     DlpLinkFile linkFile("linkfile", filePtr);
     linkFile.refcount_ = 0;
-    linkFile.IncreaseRef();
+    EXPECT_FALSE(linkFile.IncreaseRef());
     ASSERT_NE(linkFile.refcount_, 1);
+}
+
+HWTEST_F(DlpFuseTest, IncreaseRef002, TestSize.Level0)
+{
+    DLP_LOG_INFO(LABEL, "IncreaseRef002");
+    std::shared_ptr<DlpFile> filePtr = nullptr;
+    DlpLinkFile linkFile("linkfile", filePtr);
+    linkFile.refcount_ = 1;
+    EXPECT_TRUE(linkFile.IncreaseRef());
+    ASSERT_EQ(linkFile.refcount_, 2);
 }
 
 /**

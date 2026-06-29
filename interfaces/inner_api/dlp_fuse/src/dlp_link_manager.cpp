@@ -211,7 +211,11 @@ DlpLinkFile* DlpLinkManager::LookUpDlpLinkFile(const std::string& dlpLinkName)
                     dlpLinkName.c_str());
                 return nullptr;
             }
-            node->IncreaseRef();
+            if (!node->IncreaseRef()) {
+                DLP_LOG_ERROR(LABEL, "Look up link file fail, increase ref failed for %{private}s",
+                    dlpLinkName.c_str());
+                return nullptr;
+            }
             return node;
         }
     }

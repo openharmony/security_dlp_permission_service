@@ -40,7 +40,7 @@ public:
     DlpLinkFile(const std::string& dlpLinkName, const std::shared_ptr<DlpFile>& dlpFile);
     ~DlpLinkFile();
     bool SubAndCheckZeroRef(int ref);
-    void IncreaseRef();
+    bool IncreaseRef();
     struct stat GetLinkStat();
     void UpdateAtimeStat();
     void UpdateMtimeStat();
