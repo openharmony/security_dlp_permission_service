@@ -16,6 +16,7 @@
 #ifndef DLP_ACCOUNT_EVENT_SUBSCRIBER_H
 #define DLP_ACCOUNT_EVENT_SUBSCRIBER_H
 
+#include <mutex>
 #include "common_event_subscriber.h"
 #include "account_status_listener.h"
 
@@ -33,6 +34,7 @@ private:
     void HandleRegisterCloudAccount();
     void HandleUnregisterCloudAccount();
     AccountListenerCallback callback_;
+    std::mutex callbackMutex_;
 };
 }  // namespace DlpPermission
 }  // namespace Security
