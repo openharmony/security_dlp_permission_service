@@ -17,11 +17,6 @@ import("../../../dlp_permission_service.gni")
 ohos_shared_library("ohdlp_permission") {
   sanitize = {
     integer_overflow = true
-    cfi = true
-    cfi_cross_dso = true
-    cfi_no_nvcall = true
-    cfi_vcall_icall_only = true
-    debug = false
   }
   branch_protector_ret = "pac_ret"
 
