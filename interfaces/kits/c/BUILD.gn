@@ -18,6 +18,7 @@ ohos_shared_library("ohdlp_permission") {
   sanitize = {
     integer_overflow = true
   }
+  branch_protector_ret = "pac_ret"
 
   include_dirs = [
     "${dlp_root_dir}/frameworks/common/include",
