@@ -1248,9 +1248,14 @@ napi_value NapiDlpPermission::Subscribe(napi_env env, napi_callback_info cbInfo)
         return nullptr;
     }
     std::string type;
-    if (!GetStringValue(env, argv[PARAM0], type) || !IsStringLengthValid(type, MAX_TYPE_LEN)) {
+    if (!GetStringValue(env, argv[PARAM0], type)) {
         DLP_LOG_ERROR(LABEL, "event type is invalid");
         ThrowParamError(env, "type", "string");
+        return nullptr;
+    }
+    if (!IsStringLengthValid(type, MAX_TYPE_LEN)) {
+        DLP_LOG_ERROR(LABEL, "event type length is invalid");
+        DlpNapiThrow(env, ERR_JSD_PARAMETER_ERROR, "event type length is invalid");
         return nullptr;
     }
     napi_ref callback = nullptr;
@@ -1317,9 +1322,14 @@ napi_value NapiDlpPermission::UnSubscribe(napi_env env, napi_callback_info cbInf
         return nullptr;
     }
     std::string type;
-    if (!GetStringValue(env, argv[PARAM0], type) || !IsStringLengthValid(type, MAX_TYPE_LEN)) {
+    if (!GetStringValue(env, argv[PARAM0], type)) {
         DLP_LOG_ERROR(LABEL, "event type is invalid");
         ThrowParamError(env, "type", "string");
+        return nullptr;
+    }
+    if (!IsStringLengthValid(type, MAX_TYPE_LEN)) {
+        DLP_LOG_ERROR(LABEL, "event type length is invalid");
+        DlpNapiThrow(env, ERR_JSD_PARAMETER_ERROR, "event type length is invalid");
         return nullptr;
     }
     napi_ref callback = nullptr;
