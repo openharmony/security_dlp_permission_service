@@ -1255,7 +1255,7 @@ napi_value NapiDlpPermission::Subscribe(napi_env env, napi_callback_info cbInfo)
     }
     if (!IsStringLengthValid(type, MAX_TYPE_LEN)) {
         DLP_LOG_ERROR(LABEL, "event type length is invalid");
-        DlpNapiThrow(env, ERR_JSD_PARAMETER_ERROR, "event type length is invalid");
+        DlpNapiThrow(env, ERR_JS_PARAMETER_ERROR, "event type length is invalid");
         return nullptr;
     }
     napi_ref callback = nullptr;
@@ -1329,7 +1329,7 @@ napi_value NapiDlpPermission::UnSubscribe(napi_env env, napi_callback_info cbInf
     }
     if (!IsStringLengthValid(type, MAX_TYPE_LEN)) {
         DLP_LOG_ERROR(LABEL, "event type length is invalid");
-        DlpNapiThrow(env, ERR_JSD_PARAMETER_ERROR, "event type length is invalid");
+        DlpNapiThrow(env, ERR_JS_PARAMETER_ERROR, "event type length is invalid");
         return nullptr;
     }
     napi_ref callback = nullptr;
