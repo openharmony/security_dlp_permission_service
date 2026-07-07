@@ -873,11 +873,9 @@ bool GetInstallDlpSandboxParams(const napi_env env, const napi_callback_info inf
     size_t argc = PARAM_SIZE_FIVE;
     napi_value argv[PARAM_SIZE_FIVE] = {nullptr};
     NAPI_CALL_BASE(env, napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr), false);
-
     if (!NapiCheckArgc(env, argc, PARAM_SIZE_FIVE)) {
         return false;
     }
-
     if (!GetStringValue(env, argv[PARAM0], asyncContext.bundleName)) {
         DLP_LOG_ERROR(LABEL, "js get bundle name fail");
         ThrowParamError(env, "bundleName", "string");
@@ -911,14 +909,12 @@ bool GetInstallDlpSandboxParams(const napi_env env, const napi_callback_info inf
         DlpNapiThrow(env, ERR_JS_PARAMETER_ERROR, "uri length is vaild");
         return false;
     }
-
     if (argc == PARAM_SIZE_FIVE) {
         if (!ParseCallback(env, argv[PARAM4], asyncContext.callbackRef)) {
             ThrowParamError(env, "callback", "function");
             return false;
         }
     }
-
     DLP_LOG_DEBUG(LABEL, "bundleName: %{private}s, dlpFileAccess: %{private}d, userId: %{private}d",
         asyncContext.bundleName.c_str(), asyncContext.dlpFileAccess, asyncContext.userId);
     return true;
@@ -1686,6 +1682,82 @@ napi_value GetArrayValueByKey(napi_env env, napi_value jsObject, const std::stri
     return array;
 }
 
+static bool ParseAuthAccount(napi_env env, napi_value obj, AuthUserInfo& userInfo)
+{
+    if (!GetStringValueByKey(env, obj, "authAccount", userInfo.authAccount)) {
+        DLP_LOG_ERROR(LABEL, "js get auth account fail");
+        ThrowParamError(env, "property", "DlpProperty");
+        return false;
+    }
+    if (!IsStringLengthValid(userInfo.authAccount, MAX_ACCOUNT_LEN)) {
+        DLP_LOG_ERROR(LABEL, "auth account length is vaild");
+        DlpNapiThrow(env, ERR_JS_PARAMETER_ERROR, "auth account length is vaild");
+        return false;
+    }
+    return true;
+}
+
+static bool ParseAuthPerm(napi_env env, napi_value obj, AuthUserInfo& userInfo)
+{
+    int64_t perm;
+    if (!GetInt64ValueByKey(env, obj, "dlpFileAccess", perm)) {
+        DLP_LOG_ERROR(LABEL, "js get auth perm fail");
+        ThrowParamError(env, "property", "DlpProperty");
+        return false;
+    }
+    if (perm > static_cast<int64_t>(DLPFileAccess::FULL_CONTROL) ||
+        perm < static_cast<int64_t>(DLPFileAccess::NO_PERMISSION)) {
+        DLP_LOG_ERROR(LABEL, "wrong auth perm type");
+        DlpNapiThrow(env, ERR_JS_PARAMETER_ERROR, "wrong auth perm type");
+        return false;
+    }
+    userInfo.authPerm = static_cast<DLPFileAccess>(perm);
+    return true;
+}
+
+static bool ParsePermExpiryTime(napi_env env, napi_value obj, AuthUserInfo& userInfo)
+{
+    int64_t time;
+    if (!GetInt64ValueByKey(env, obj, "permExpiryTime", time)) {
+        DLP_LOG_ERROR(LABEL, "js get time fail");
+        ThrowParamError(env, "property", "DlpProperty");
+        return false;
+    }
+    userInfo.permExpiryTime = static_cast<uint64_t>(time);
+    return true;
+}
+
+static bool ParseAuthAccountType(napi_env env, napi_value obj, AuthUserInfo& userInfo)
+{
+    int64_t type;
+    if (!GetInt64ValueByKey(env, obj, "authAccountType", type) ||
+        type > static_cast<int64_t>(ENTERPRISE_ACCOUNT) ||
+        type < static_cast<int64_t>(INVALID_ACCOUNT)) {
+        DLP_LOG_ERROR(LABEL, "js get type fail");
+        ThrowParamError(env, "property", "DlpProperty");
+        return false;
+    }
+    userInfo.authAccountType = static_cast<DlpAccountType>(type);
+    return true;
+}
+
+static bool ParseSingleAuthUserInfo(napi_env env, napi_value obj, AuthUserInfo& userInfo)
+{
+    if (!ParseAuthAccount(env, obj, userInfo)) {
+        return false;
+    }
+    if (!ParseAuthPerm(env, obj, userInfo)) {
+        return false;
+    }
+    if (!ParsePermExpiryTime(env, obj, userInfo)) {
+        return false;
+    }
+    if (!ParseAuthAccountType(env, obj, userInfo)) {
+        return false;
+    }
+    return true;
+}
+
 bool GetVectorAuthUser(napi_env env, napi_value jsObject, std::vector<AuthUserInfo>& resultVec)
 {
     uint32_t size = 0;
@@ -1698,51 +1770,10 @@ bool GetVectorAuthUser(napi_env env, napi_value jsObject, std::vector<AuthUserIn
         napi_value obj;
         NAPI_CALL_BASE(env, napi_get_element(env, jsObject, i, &obj), false);
         AuthUserInfo userInfo;
-        if (!GetStringValueByKey(env, obj, "authAccount", userInfo.authAccount)) {
-            DLP_LOG_ERROR(LABEL, "js get auth account fail");
+        if (!ParseSingleAuthUserInfo(env, obj, userInfo)) {
             resultVec.clear();
-            ThrowParamError(env, "property", "DlpProperty");
             return false;
         }
-        if (!IsStringLengthValid(userInfo.authAccount, MAX_ACCOUNT_LEN)) {
-            DLP_LOG_ERROR(LABEL, "auth account length is vaild");
-            resultVec.clear();
-            DlpNapiThrow(env, ERR_JS_PARAMETER_ERROR, "auth account length is vaild");
-            return false;
-        }
-        int64_t perm;
-        if (!GetInt64ValueByKey(env, obj, "dlpFileAccess", perm)) {
-            DLP_LOG_ERROR(LABEL, "js get auth perm fail");
-            resultVec.clear();
-            ThrowParamError(env, "property", "DlpProperty");
-            return false;
-        }
-        if ((perm > static_cast<int64_t>(DLPFileAccess::FULL_CONTROL) ||
-            perm < static_cast<int64_t>(DLPFileAccess::NO_PERMISSION))) {
-            DLP_LOG_ERROR(LABEL, "wrong auth perm type");
-            resultVec.clear();
-            DlpNapiThrow(env, ERR_JS_PARAMETER_ERROR, "wrong auth perm type");
-            return false;
-        }
-        userInfo.authPerm = static_cast<DLPFileAccess>(perm);
-        int64_t time;
-        if (!GetInt64ValueByKey(env, obj, "permExpiryTime", time)) {
-            DLP_LOG_ERROR(LABEL, "js get time fail");
-            resultVec.clear();
-            ThrowParamError(env, "property", "DlpProperty");
-            return false;
-        }
-        userInfo.permExpiryTime = static_cast<uint64_t>(time);
-        int64_t type;
-        if (!GetInt64ValueByKey(env, obj, "authAccountType", type) ||
-            type > static_cast<int64_t>(ENTERPRISE_ACCOUNT) ||
-            type < static_cast<int64_t>(INVALID_ACCOUNT)) {
-            DLP_LOG_ERROR(LABEL, "js get type fail");
-            resultVec.clear();
-            ThrowParamError(env, "property", "DlpProperty");
-            return false;
-        }
-        userInfo.authAccountType = static_cast<DlpAccountType>(type);
         resultVec.push_back(userInfo);
     }
     return true;
