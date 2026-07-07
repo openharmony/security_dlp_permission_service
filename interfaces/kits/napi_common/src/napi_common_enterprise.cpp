@@ -135,18 +135,8 @@ static bool GetEnterpriseDlpPropertyAccount(napi_env env, napi_value jsObject, D
     return true;
 }
 
-bool GetEnterpriseDlpProperty(napi_env env, napi_value jsObject, DlpProperty& property)
+static bool ParseContactAccount(napi_env env, napi_value jsObject, DlpProperty& property)
 {
-    if (!GetEnterpriseDlpPropertyAccount(env, jsObject, property)) {
-        return false;
-    }
-    napi_value authUserListObj = GetNapiValue(env, jsObject, "authUserList");
-    if (authUserListObj != nullptr) {
-        if (!GetVectorAuthUser(env, authUserListObj, property.authUsers)) {
-            DLP_LOG_ERROR(LABEL, "js get auth users fail");
-            return false;
-        }
-    }
     if (!GetStringValueByKey(env, jsObject, "contactAccount", property.contactAccount)) {
         DLP_LOG_ERROR(LABEL, "js get contact account fail");
         ThrowParamError(env, "property", "DlpProperty");
@@ -156,37 +146,54 @@ bool GetEnterpriseDlpProperty(napi_env env, napi_value jsObject, DlpProperty& pr
         DlpNapiThrow(env, ERR_JS_PARAMETER_ERROR, "contactAccount length is vaild");
         return false;
     }
+    return true;
+}
+
+static bool ParseOfflineAccess(napi_env env, napi_value jsObject, DlpProperty& property)
+{
     if (!GetBoolValueByKey(env, jsObject, "offlineAccess", property.offlineAccess)) {
         DLP_LOG_ERROR(LABEL, "js get offline access flag fail");
         ThrowParamError(env, "property", "DlpProperty");
         return false;
     }
-    GetDlpPropertyExpireTime(env, jsObject, property);
+    return true;
+}
 
-    napi_value everyoneAccessListObj = GetNapiValue(env, jsObject, "everyoneAccessList");
-    if (everyoneAccessListObj != nullptr) {
-        std::vector<uint32_t> permList = {};
-        if (!GetVectorUint32(env, everyoneAccessListObj, permList)) {
-            DLP_LOG_ERROR(LABEL, "js get everyoneAccessList fail");
-            ThrowParamError(env, "property", "DlpProperty");
-            return false;
-        }
-        if (permList.size() > 0) {
-            uint32_t maxPerm = *(std::max_element(permList.begin(), permList.end()));
-            uint32_t minPerm = *(std::min_element(permList.begin(), permList.end()));
-            if (maxPerm > static_cast<uint32_t>(DLPFileAccess::FULL_CONTROL) ||
-                minPerm < static_cast<uint32_t>(DLPFileAccess::NO_PERMISSION)) {
-                maxPerm = static_cast<uint32_t>(DLPFileAccess::NO_PERMISSION);
-                property.everyonePerm = DLPFileAccess::NO_PERMISSION;
-                property.supportEveryone = false;
-                DLP_LOG_ERROR(LABEL, "js get everyoneAccessList fail, invalid permission");
-            } else {
-                property.everyonePerm = static_cast<DLPFileAccess>(maxPerm);
-                property.supportEveryone = true;
-            }
-        }
+static void ValidateEveryonePermRange(std::vector<uint32_t>& permList, DlpProperty& property)
+{
+    uint32_t maxPerm = *(std::max_element(permList.begin(), permList.end()));
+    uint32_t minPerm = *(std::min_element(permList.begin(), permList.end()));
+    if (maxPerm > static_cast<uint32_t>(DLPFileAccess::FULL_CONTROL) ||
+        minPerm < static_cast<uint32_t>(DLPFileAccess::NO_PERMISSION)) {
+        property.everyonePerm = DLPFileAccess::NO_PERMISSION;
+        property.supportEveryone = false;
+        DLP_LOG_ERROR(LABEL, "js get everyoneAccessList fail, invalid permission");
+        return;
     }
+    property.everyonePerm = static_cast<DLPFileAccess>(maxPerm);
+    property.supportEveryone = true;
+}
 
+static bool ParseEveryoneAccessList(napi_env env, napi_value jsObject, DlpProperty& property)
+{
+    napi_value everyoneAccessListObj = GetNapiValue(env, jsObject, "everyoneAccessList");
+    if (everyoneAccessListObj == nullptr) {
+        return true;
+    }
+    std::vector<uint32_t> permList = {};
+    if (!GetVectorUint32(env, everyoneAccessListObj, permList)) {
+        DLP_LOG_ERROR(LABEL, "js get everyoneAccessList fail");
+        ThrowParamError(env, "property", "DlpProperty");
+        return false;
+    }
+    if (permList.size() > 0) {
+        ValidateEveryonePermRange(permList, property);
+    }
+    return true;
+}
+
+static bool ParseFileId(napi_env env, napi_value jsObject, DlpProperty& property)
+{
     if (!GetStringValueByKey(env, jsObject, "fileId", property.fileId)) {
         DLP_LOG_ERROR(LABEL, "js get fileId fail");
         ThrowParamError(env, "property", "DlpProperty");
@@ -194,6 +201,43 @@ bool GetEnterpriseDlpProperty(napi_env env, napi_value jsObject, DlpProperty& pr
     }
     if (!IsStringLengthValid(property.fileId, MAX_ACCOUNT_LEN)) {
         DlpNapiThrow(env, ERR_JS_PARAMETER_ERROR, "fileId length is vaild");
+        return false;
+    }
+    return true;
+}
+
+static bool ParseAuthUserList(napi_env env, napi_value jsObject, DlpProperty& property)
+{
+    napi_value authUserListObj = GetNapiValue(env, jsObject, "authUserList");
+    if (authUserListObj == nullptr) {
+        return true;
+    }
+    if (!GetVectorAuthUser(env, authUserListObj, property.authUsers)) {
+        DLP_LOG_ERROR(LABEL, "js get auth users fail");
+        return false;
+    }
+    return true;
+}
+
+static bool GetEnterpriseDlpProperty(napi_env env, napi_value jsObject, DlpProperty& property)
+{
+    if (!GetEnterpriseDlpPropertyAccount(env, jsObject, property)) {
+        return false;
+    }
+    if (!ParseAuthUserList(env, jsObject, property)) {
+        return false;
+    }
+    if (!ParseContactAccount(env, jsObject, property)) {
+        return false;
+    }
+    if (!ParseOfflineAccess(env, jsObject, property)) {
+        return false;
+    }
+    GetDlpPropertyExpireTime(env, jsObject, property);
+    if (!ParseEveryoneAccessList(env, jsObject, property)) {
+        return false;
+    }
+    if (!ParseFileId(env, jsObject, property)) {
         return false;
     }
     return true;
