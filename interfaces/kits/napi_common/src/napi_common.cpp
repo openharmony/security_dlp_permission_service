@@ -638,6 +638,14 @@ bool GetGenerateDlpFileParams(
         ThrowParamError(env, "property", "DlpProperty");
         return false;
     }
+    if(!IsStringLengthValid(asyncContext.property.ownerAccount, MAX_ACCOUNT_LEN) ||
+       !IsStringLengthValid(asyncContext.property.ownerAccountId, MAX_ACCOUNT_LEN) ||
+       !IsStringLengthValid(asyncContext.property.contactAccount, MAX_ACCOUNT_LEN) ||
+       !IsStringLengthValid(asyncContext.property.fileId, MAX_ACCOUNT_LEN)) {
+        DLP_LOG_ERROR(LABEL, "property is invaild");
+        DlpNapiThrow(env, ERR_JS_PARAMETER_ERROR, "property is invaild");
+        return false;
+    }
 
     if (argc == PARAM_SIZE_FOUR) {
         if (!ParseCallback(env, argv[PARAM3], asyncContext.callbackRef)) {
@@ -665,10 +673,15 @@ bool GetOpenDlpFileParams(const napi_env env, const napi_callback_info info, Dlp
         return false;
     }
 
-    if (!GetStringValue(env, argv[PARAM1], asyncContext.appId) ||
-        !IsStringLengthValid(asyncContext.appId, MAX_APPID_LEN, MIN_APPID_LEN)) {
+    if (!GetStringValue(env, argv[PARAM1], asyncContext.appId)) {
         DLP_LOG_ERROR(LABEL, "js get appId fail");
         ThrowParamError(env, "appId", "string");
+        return false;
+    }
+
+    if (!IsStringLengthValid(asyncContext.appId, MAX_APPID_LEN, MIN_APPID_LEN)) {
+        DLP_LOG_ERROR(LABEL, "appId length is vaild");
+        DlpNapiThrow(env, ERR_JS_PARAMETER_ERROR, "appId length is vaild");
         return false;
     }
 
@@ -736,10 +749,14 @@ bool GetDlpLinkFileParams(const napi_env env, const napi_callback_info info, Dlp
         return false;
     }
 
-    if (!GetStringValue(env, argv[PARAM0], asyncContext.linkFileName) ||
-        !IsStringLengthValid(asyncContext.linkFileName, MAX_FILE_NAME_LEN)) {
+    if (!GetStringValue(env, argv[PARAM0], asyncContext.linkFileName)) {
         DLP_LOG_ERROR(LABEL, "linkFileName is invalid");
         ThrowParamError(env, "linkFileName", "string");
+        return false;
+    }
+    if (!IsStringLengthValid(asyncContext.linkFileName, MAX_FILE_NAME_LEN)) {
+        DLP_LOG_ERROR(LABEL, "appId length is vaild");
+        DlpNapiThrow(env, ERR_JS_PARAMETER_ERROR, "appId length is vaild");
         return false;
     }
 
@@ -861,10 +878,14 @@ bool GetInstallDlpSandboxParams(const napi_env env, const napi_callback_info inf
         return false;
     }
 
-    if (!GetStringValue(env, argv[PARAM0], asyncContext.bundleName) ||
-        !IsStringLengthValid(asyncContext.bundleName, MAX_BUNDLENAME_LEN, MIN_BUNDLENAME_LEN)) {
+    if (!GetStringValue(env, argv[PARAM0], asyncContext.bundleName)) {
         DLP_LOG_ERROR(LABEL, "js get bundle name fail");
         ThrowParamError(env, "bundleName", "string");
+        return false;
+    }
+    if (!IsStringLengthValid(asyncContext.bundleName, MAX_BUNDLENAME_LEN, MIN_BUNDLENAME_LEN)) {
+        DLP_LOG_ERROR(LABEL, "bundle name length is vaild");
+        DlpNapiThrow(env, ERR_JS_PARAMETER_ERROR, "bundle name length is vaild");
         return false;
     }
     int64_t res;
@@ -880,10 +901,14 @@ bool GetInstallDlpSandboxParams(const napi_env env, const napi_callback_info inf
         return false;
     }
     asyncContext.userId = static_cast<int32_t>(res);
-    if (!GetStringValue(env, argv[PARAM3], asyncContext.uri) ||
-        !IsStringLengthValid(asyncContext.uri, MAX_URI_LEN)) {
+    if (!GetStringValue(env, argv[PARAM3], asyncContext.uri)) {
         DLP_LOG_ERROR(LABEL, "js get uri fail");
         ThrowParamError(env, "uri", "string");
+        return false;
+    }
+    if (!IsStringLengthValid(asyncContext.uri, MAX_URI_LEN)) {
+        DLP_LOG_ERROR(LABEL, "uri length is vaild");
+        DlpNapiThrow(env, ERR_JS_PARAMETER_ERROR, "uri length is vaild");
         return false;
     }
 
@@ -910,10 +935,14 @@ bool GetUninstallDlpSandboxParams(
         return false;
     }
 
-    if (!GetStringValue(env, argv[PARAM0], asyncContext.bundleName) ||
-        !IsStringLengthValid(asyncContext.bundleName, MAX_BUNDLENAME_LEN, MIN_BUNDLENAME_LEN)) {
+    if (!GetStringValue(env, argv[PARAM0], asyncContext.bundleName)) {
         DLP_LOG_ERROR(LABEL, "js get bundle name fail");
         ThrowParamError(env, "bundleName", "string");
+        return false;
+    }
+    if (!IsStringLengthValid(asyncContext.bundleName, MAX_BUNDLENAME_LEN, MIN_BUNDLENAME_LEN)) {
+        DLP_LOG_ERROR(LABEL, "bundle name length is vaild");
+        DlpNapiThrow(env, ERR_JS_PARAMETER_ERROR, "bundle name length is vaild");
         return false;
     }
 
@@ -1066,6 +1095,14 @@ bool GetRetentionStateParams(const napi_env env, const napi_callback_info info,
         return false;
     }
 
+    for (std::string docUri : asyncContext.docUris) {
+        if (!IsStringLengthValid(docUri, MAX_URI_LEN)) {
+            DLP_LOG_ERROR(LABEL, "auth users length is vaild");
+            DlpNapiThrow(env, ERR_JS_PARAMETER_ERROR, "auth users length is vaild");
+            return false;
+        }
+    }
+
     if (argc == PARAM_SIZE_TWO) {
         if (!ParseCallback(env, argv[PARAM1], asyncContext.callbackRef)) {
             ThrowParamError(env, "callback", "function");
@@ -1088,17 +1125,27 @@ bool GetRetentionSandboxListParams(const napi_env env, const napi_callback_info 
             ThrowParamError(env, "callback", "function");
             return false;
         }
-        if (!GetStringValue(env, argv[PARAM0], asyncContext.bundleName) ||
-            !IsStringLengthValid(asyncContext.bundleName, MAX_BUNDLENAME_LEN, MIN_BUNDLENAME_LEN)) {
+        if (!GetStringValue(env, argv[PARAM0], asyncContext.bundleName)) {
             DLP_LOG_ERROR(LABEL, "js get bundle name fail");
             ThrowParamError(env, "bundleName", "string");
             return false;
         }
+        if (!IsStringLengthValid(asyncContext.bundleName, MAX_BUNDLENAME_LEN, MIN_BUNDLENAME_LEN)) {
+            DLP_LOG_ERROR(LABEL, "bundle name length is vaild");
+            DlpNapiThrow(env, ERR_JS_PARAMETER_ERROR, "bundle name length is vaild");
+            return false;
+        }
     }
     if (argc == PARAM_SIZE_ONE) {
-        if (!(GetStringValue(env, argv[PARAM0], asyncContext.bundleName) &&
-            IsStringLengthValid(asyncContext.bundleName, MAX_BUNDLENAME_LEN, MIN_BUNDLENAME_LEN)) &&
-            !ParseCallback(env, argv[PARAM0], asyncContext.callbackRef)) {
+        if (GetStringValue(env, argv[PARAM0], asyncContext.bundleName)) {
+            if (!IsStringLengthValid(asyncContext.bundleName, MAX_BUNDLENAME_LEN, MIN_BUNDLENAME_LEN)) {
+                DLP_LOG_ERROR(LABEL, "bundle name length is vaild");
+                DlpNapiThrow(env, ERR_JS_PARAMETER_ERROR, "bundle name length is vaild");
+                return false;
+            }
+            return true;
+        }
+        if (!ParseCallback(env, argv[PARAM0], asyncContext.callbackRef)) {
             DLP_LOG_ERROR(LABEL, "js get bundle name or callback fail");
             ThrowParamError(env, "bundleName or callback", "string or function");
             return false;
@@ -1115,9 +1162,13 @@ bool GetOriginalFilenameParams(const napi_env env, const napi_callback_info info
     NAPI_CALL_BASE(env, napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr), false);
 
     if (argc == PARAM_SIZE_ONE) {
-        if (!GetStringValue(env, argv[PARAM0], asyncContext.dlpFilename) ||
-            !IsStringLengthValid(asyncContext.dlpFilename, MAX_FILE_NAME_LEN)) {
+        if (!GetStringValue(env, argv[PARAM0], asyncContext.dlpFilename)) {
             ThrowParamError(env, "fileName", "string");
+            return false;
+        }
+        if (!IsStringLengthValid(asyncContext.dlpFilename, MAX_FILE_NAME_LEN)) {
+            DLP_LOG_ERROR(LABEL, "dlpFilename length is vaild");
+            DlpNapiThrow(env, ERR_JS_PARAMETER_ERROR, "dlpFilename length is vaild");
             return false;
         }
     }
@@ -1145,9 +1196,14 @@ bool GetSandboxAppConfigParams(const napi_env env, const napi_callback_info info
     if (!NapiCheckArgc(env, argc, PARAM_SIZE_ONE)) {
         return false;
     }
-    if (!GetStringValue(env, argv[PARAM0], asyncContext->configInfo) ||
-        !IsStringLengthValid(asyncContext->configInfo, MAX_CONFIGINFO_LEN)) {
+    if (!GetStringValue(env, argv[PARAM0], asyncContext->configInfo)) {
         ThrowParamError(env, "config", "string");
+        return false;
+    }
+
+    if (!IsStringLengthValid(asyncContext->configInfo, MAX_CONFIGINFO_LEN)) {
+        DLP_LOG_ERROR(LABEL, "configInfo length is vaild");
+        DlpNapiThrow(env, ERR_JS_PARAMETER_ERROR, "configInfo length is vaild");
         return false;
     }
     if (asyncContext->configInfo.empty()) {
@@ -1182,11 +1238,6 @@ bool GetAccountTypeInDlpProperty(napi_env env, napi_value jsObject, DlpProperty&
         return false;
     }
 
-    if ((type > static_cast<int64_t>(ENTERPRISE_ACCOUNT)) ||
-        (type < static_cast<int64_t>(INVALID_ACCOUNT))) {
-        DLP_LOG_ERROR(LABEL, "js get wrong owner account type.");
-        return false;
-    }
     property.ownerAccountType = static_cast<DlpAccountType>(type);
     return true;
 }
@@ -1640,24 +1691,37 @@ bool GetVectorAuthUser(napi_env env, napi_value jsObject, std::vector<AuthUserIn
     uint32_t size = 0;
     if (napi_get_array_length(env, jsObject, &size) != napi_ok) {
         DLP_LOG_ERROR(LABEL, "js get array size fail");
+        ThrowParamError(env, "property", "DlpProperty");
         return false;
     }
     for (uint32_t i = 0; i < size; i++) {
         napi_value obj;
         NAPI_CALL_BASE(env, napi_get_element(env, jsObject, i, &obj), false);
         AuthUserInfo userInfo;
-        if (!GetStringValueByKey(env, obj, "authAccount", userInfo.authAccount) ||
-            !IsStringLengthValid(userInfo.authAccount, MAX_ACCOUNT_LEN)) {
+        if (!GetStringValueByKey(env, obj, "authAccount", userInfo.authAccount)) {
             DLP_LOG_ERROR(LABEL, "js get auth account fail");
             resultVec.clear();
+            ThrowParamError(env, "property", "DlpProperty");
+            return false;
+        }
+        if (!IsStringLengthValid(userInfo.authAccount, MAX_ACCOUNT_LEN)) {
+            DLP_LOG_ERROR(LABEL, "auth account length is vaild");
+            resultVec.clear();
+            DlpNapiThrow(env, ERR_JS_PARAMETER_ERROR, "auth account length is vaild");
             return false;
         }
         int64_t perm;
-        if (!GetInt64ValueByKey(env, obj, "dlpFileAccess", perm) ||
-            (perm > static_cast<int64_t>(DLPFileAccess::FULL_CONTROL) ||
-            perm < static_cast<int64_t>(DLPFileAccess::NO_PERMISSION))) {
+        if (!GetInt64ValueByKey(env, obj, "dlpFileAccess", perm)) {
             DLP_LOG_ERROR(LABEL, "js get auth perm fail");
             resultVec.clear();
+            ThrowParamError(env, "property", "DlpProperty");
+            return false;
+        }
+        if ((perm > static_cast<int64_t>(DLPFileAccess::FULL_CONTROL) ||
+            perm < static_cast<int64_t>(DLPFileAccess::NO_PERMISSION))) {
+            DLP_LOG_ERROR(LABEL, "wrong auth perm type");
+            resultVec.clear();
+            DlpNapiThrow(env, ERR_JS_PARAMETER_ERROR, "wrong auth perm type");
             return false;
         }
         userInfo.authPerm = static_cast<DLPFileAccess>(perm);
@@ -1665,6 +1729,7 @@ bool GetVectorAuthUser(napi_env env, napi_value jsObject, std::vector<AuthUserIn
         if (!GetInt64ValueByKey(env, obj, "permExpiryTime", time)) {
             DLP_LOG_ERROR(LABEL, "js get time fail");
             resultVec.clear();
+            ThrowParamError(env, "property", "DlpProperty");
             return false;
         }
         userInfo.permExpiryTime = static_cast<uint64_t>(time);
@@ -1674,6 +1739,7 @@ bool GetVectorAuthUser(napi_env env, napi_value jsObject, std::vector<AuthUserIn
             type < static_cast<int64_t>(INVALID_ACCOUNT)) {
             DLP_LOG_ERROR(LABEL, "js get type fail");
             resultVec.clear();
+            ThrowParamError(env, "property", "DlpProperty");
             return false;
         }
         userInfo.authAccountType = static_cast<DlpAccountType>(type);
@@ -1711,7 +1777,7 @@ bool GetVectorDocUriByKey(napi_env env, napi_value jsObject, const std::string& 
         napi_value obj;
         NAPI_CALL_BASE(env, napi_get_element(env, jsObject, i, &obj), false);
         std::string docUri;
-        if (!GetStringValue(env, obj, docUri) || !IsStringLengthValid(docUri, MAX_URI_LEN)) {
+        if (!GetStringValue(env, obj, docUri)) {
             DLP_LOG_ERROR(LABEL, "js get docUri fail");
             return false;
         }
@@ -1775,10 +1841,15 @@ bool ParseWantReq(napi_env env, const napi_value& obj, OHOS::AAFwk::Want& reques
 {
     requestWant.SetElementName(DLP_MANAGER_BUNDLENAME, DLP_MANAGER_ABILITYNAME);
     std::string uri;
-    bool ret = GetStringValueByKey(env, obj, "uri", uri) && IsStringLengthValid(uri, MAX_URI_LEN);
-    if (!ret || uri.empty()) {
+    bool ret = GetStringValueByKey(env, obj, "uri", uri);
+    if (!ret) {
         DLP_LOG_ERROR(LABEL, "get uri failed");
         DlpNapiThrow(env, ERR_JS_URI_NOT_EXIST, "uri not exist in want");
+        return false;
+    }
+    if (!IsStringLengthValid(uri, MAX_URI_LEN) || uri.empty()) {
+        DLP_LOG_ERROR(LABEL, "uri length is invaild");
+        DlpNapiThrow(env, ERR_JS_PARAMETER_ERROR, "uri length is invaild");
         return false;
     }
     requestWant.SetUri(uri);
@@ -1790,11 +1861,15 @@ bool ParseWantReq(napi_env env, const napi_value& obj, OHOS::AAFwk::Want& reques
         return false;
     }
     std::string displayName;
-    ret = GetStringValueByKey(env, wantParameters, "displayName", displayName) &&
-        IsStringLengthValid(displayName, MAX_FILE_NAME_LEN);
-    if (!ret || displayName.empty()) {
+    ret = GetStringValueByKey(env, wantParameters, "displayName", displayName)
+    if (!ret) {
         DLP_LOG_ERROR(LABEL, "get displayName failed");
         DlpNapiThrow(env, ERR_JS_PARAM_DISPLAY_NAME_NOT_EXIST, "displayName not exist in want parameters");
+        return false;
+    }
+    if (!IsStringLengthValid(displayName, MAX_FILE_NAME_LEN) || displayName.empty()) {
+        DLP_LOG_ERROR(LABEL, "displayName length is invaild");
+        DlpNapiThrow(env, ERR_JS_PARAMETER_ERROR, "displayName length is invaild");
         return false;
     }
     AAFwk::WantParams requestWantParam;
