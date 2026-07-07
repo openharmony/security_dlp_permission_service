@@ -1841,15 +1841,14 @@ bool ParseWantReq(napi_env env, const napi_value& obj, OHOS::AAFwk::Want& reques
 {
     requestWant.SetElementName(DLP_MANAGER_BUNDLENAME, DLP_MANAGER_ABILITYNAME);
     std::string uri;
-    bool ret = GetStringValueByKey(env, obj, "uri", uri);
-    if (!ret) {
+    if (!GetStringValueByKey(env, obj, "uri", uri)) {
         DLP_LOG_ERROR(LABEL, "get uri failed");
         DlpNapiThrow(env, ERR_JS_URI_NOT_EXIST, "uri not exist in want");
         return false;
     }
     if (!IsStringLengthValid(uri, MAX_URI_LEN) || uri.empty()) {
         DLP_LOG_ERROR(LABEL, "uri length is invaild");
-        DlpNapiThrow(env, ERR_JS_PARAMETER_ERROR, "uri length is invaild");
+        DlpNapiThrow(env, ERR_JS_URI_NOT_EXIST, "uri length is invaild");
         return false;
     }
     requestWant.SetUri(uri);
@@ -1861,15 +1860,14 @@ bool ParseWantReq(napi_env env, const napi_value& obj, OHOS::AAFwk::Want& reques
         return false;
     }
     std::string displayName;
-    ret = GetStringValueByKey(env, wantParameters, "displayName", displayName)
-    if (!ret) {
+    if (!GetStringValueByKey(env, wantParameters, "displayName", displayName)) {
         DLP_LOG_ERROR(LABEL, "get displayName failed");
         DlpNapiThrow(env, ERR_JS_PARAM_DISPLAY_NAME_NOT_EXIST, "displayName not exist in want parameters");
         return false;
     }
     if (!IsStringLengthValid(displayName, MAX_FILE_NAME_LEN) || displayName.empty()) {
         DLP_LOG_ERROR(LABEL, "displayName length is invaild");
-        DlpNapiThrow(env, ERR_JS_PARAMETER_ERROR, "displayName length is invaild");
+        DlpNapiThrow(env, ERR_JS_PARAM_DISPLAY_NAME_NOT_EXIST, "displayName length is invaild");
         return false;
     }
     AAFwk::WantParams requestWantParam;
@@ -1877,7 +1875,7 @@ bool ParseWantReq(napi_env env, const napi_value& obj, OHOS::AAFwk::Want& reques
     AAFwk::WantParams fileNameObj;
     fileNameObj.SetParam("name", AAFwk::String::Box(displayName));
     requestWantParam.SetParam("fileName", AAFwk::WantParamWrapper::Box(fileNameObj));
-
+    bool ret = false;
     napi_status result = napi_has_named_property(env, wantParameters, "linkFileName", &ret);
     if (result == napi_ok && ret) {
         napi_value linkFileName = GetNapiValue(env, wantParameters, "linkFileName");
@@ -1891,7 +1889,6 @@ bool ParseWantReq(napi_env env, const napi_value& obj, OHOS::AAFwk::Want& reques
             DLP_LOG_DEBUG(LABEL, "set linkFileName");
         }
     }
-
     requestWant.SetParams(requestWantParam);
     requestWant.SetParam(PARAM_UI_EXTENSION_TYPE, SYS_COMMON_UI);
     DLP_LOG_DEBUG(LABEL, "end ParseWantReq");
