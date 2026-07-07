@@ -219,7 +219,7 @@ static bool ParseAuthUserList(napi_env env, napi_value jsObject, DlpProperty& pr
     return true;
 }
 
-static bool GetEnterpriseDlpProperty(napi_env env, napi_value jsObject, DlpProperty& property)
+bool GetEnterpriseDlpProperty(napi_env env, napi_value jsObject, DlpProperty& property)
 {
     if (!GetEnterpriseDlpPropertyAccount(env, jsObject, property)) {
         return false;
