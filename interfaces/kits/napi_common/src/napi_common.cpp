@@ -1837,10 +1837,8 @@ bool ParseUIAbilityContextReq(
     return true;
 }
 
-bool ParseWantReq(napi_env env, const napi_value& obj, OHOS::AAFwk::Want& requestWant)
+static bool ParseWantUri(napi_env env, const napi_value& obj, OHOS::AAFwk::Want& requestWant, std::string& uri)
 {
-    requestWant.SetElementName(DLP_MANAGER_BUNDLENAME, DLP_MANAGER_ABILITYNAME);
-    std::string uri;
     if (!GetStringValueByKey(env, obj, "uri", uri)) {
         DLP_LOG_ERROR(LABEL, "get uri failed");
         DlpNapiThrow(env, ERR_JS_URI_NOT_EXIST, "uri not exist in want");
@@ -1852,14 +1850,20 @@ bool ParseWantReq(napi_env env, const napi_value& obj, OHOS::AAFwk::Want& reques
         return false;
     }
     requestWant.SetUri(uri);
-
-    napi_value wantParameters = GetNapiValue(env, obj, "parameters");
+    return true;
+}
+static bool ParseWantParameters(napi_env env, const napi_value& obj, napi_value& wantParameters)
+{
+    wantParameters = GetNapiValue(env, obj, "parameters");
     if (wantParameters == nullptr) {
         DLP_LOG_ERROR(LABEL, "get wantParameters failed");
         DlpNapiThrow(env, ERR_JS_PARAM_DISPLAY_NAME_NOT_EXIST, "parameters not exist in want");
         return false;
     }
-    std::string displayName;
+    return true;
+}
+static bool ParseDisplayName(napi_env env, napi_value wantParameters, std::string& displayName)
+{
     if (!GetStringValueByKey(env, wantParameters, "displayName", displayName)) {
         DLP_LOG_ERROR(LABEL, "get displayName failed");
         DlpNapiThrow(env, ERR_JS_PARAM_DISPLAY_NAME_NOT_EXIST, "displayName not exist in want parameters");
@@ -1870,11 +1874,17 @@ bool ParseWantReq(napi_env env, const napi_value& obj, OHOS::AAFwk::Want& reques
         DlpNapiThrow(env, ERR_JS_PARAM_DISPLAY_NAME_NOT_EXIST, "displayName length is invaild");
         return false;
     }
-    AAFwk::WantParams requestWantParam;
+    return true;
+}
+static void BuildWantParams(AAFwk::WantParams& requestWantParam, const std::string& displayName)
+{
     requestWantParam.SetParam("displayName", AAFwk::String::Box(displayName));
     AAFwk::WantParams fileNameObj;
     fileNameObj.SetParam("name", AAFwk::String::Box(displayName));
     requestWantParam.SetParam("fileName", AAFwk::WantParamWrapper::Box(fileNameObj));
+}
+static void ParseLinkFileName(napi_env env, napi_value wantParameters, AAFwk::WantParams& requestWantParam)
+{
     bool ret = false;
     napi_status result = napi_has_named_property(env, wantParameters, "linkFileName", &ret);
     if (result == napi_ok && ret) {
@@ -1889,6 +1899,25 @@ bool ParseWantReq(napi_env env, const napi_value& obj, OHOS::AAFwk::Want& reques
             DLP_LOG_DEBUG(LABEL, "set linkFileName");
         }
     }
+}
+bool ParseWantReq(napi_env env, const napi_value& obj, OHOS::AAFwk::Want& requestWant)
+{
+    requestWant.SetElementName(DLP_MANAGER_BUNDLENAME, DLP_MANAGER_ABILITYNAME);
+    std::string uri;
+    if (!ParseWantUri(env, obj, requestWant, uri)) {
+        return false;
+    }
+    napi_value wantParameters;
+    if (!ParseWantParameters(env, obj, wantParameters)) {
+        return false;
+    }
+    std::string displayName;
+    if (!ParseDisplayName(env, wantParameters, displayName)) {
+        return false;
+    }
+    AAFwk::WantParams requestWantParam;
+    BuildWantParams(requestWantParam, displayName);
+    ParseLinkFileName(env, wantParameters, requestWantParam);
     requestWant.SetParams(requestWantParam);
     requestWant.SetParam(PARAM_UI_EXTENSION_TYPE, SYS_COMMON_UI);
     DLP_LOG_DEBUG(LABEL, "end ParseWantReq");
