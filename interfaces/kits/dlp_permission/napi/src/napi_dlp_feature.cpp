@@ -73,6 +73,11 @@ bool GetDlpFeatureParams(
         ThrowParamError(env, "dlpFeatureInfo", "number");
         return false;
     }
+    if (res != NOT_ENABLED_FEATURE && res != ENABLED_FEATURE) {
+        DLP_LOG_ERROR(LABEL, "dlpFeatureInfo type is invalid");
+        DlpNapiThrow(env, ERR_JS_PARAMETER_ERROR, "dlpFeatureInfo type is invalid");
+        return false;
+    }
     asyncContext.dlpFeatureInfo.status = static_cast<DlpFeatureStatus>(res);
     return true;
 }
