@@ -52,7 +52,7 @@ bool GetAccountTypeInEnterpriseParam(
     }
     if ((asyncContext.property.ownerAccountType > static_cast<int64_t>(ENTERPRISE_ACCOUNT)) ||
         (asyncContext.property.ownerAccountType < static_cast<int64_t>(INVALID_ACCOUNT))) {
-        DLP_LOG_ERROR(LABEL, "js get wrong owner account type.")
+        DLP_LOG_ERROR(LABEL, "js get wrong owner account type.");
         DlpNapiThrow(env, ERR_JS_PARAMETER_ERROR, "js get wrong owner account type.");
         return false;
     }
@@ -106,12 +106,12 @@ bool GetGenerateDlpFileForDomainParam(
 
 static bool GetEnterpriseDlpPropertyAccount(napi_env env, napi_value jsObject, DlpProperty& property)
 {
-    if (!GetStringValueByKey(env, jsObject, "ownerAccount", property.ownerAccount) {
+    if (!GetStringValueByKey(env, jsObject, "ownerAccount", property.ownerAccount)) {
         DLP_LOG_ERROR(LABEL, "js get owner account fail");
         ThrowParamError(env, "property.ownerAccount", "string");
         return false;
     }
-    if (!IsStringLengthValid(property.ownerAccount, MAX_ACCOUNT_LEN))) {
+    if (!IsStringLengthValid(property.ownerAccount, MAX_ACCOUNT_LEN)) {
         DLP_LOG_ERROR(LABEL, "owner account length is vaild");
         DlpNapiThrow(env, ERR_JS_PARAMETER_ERROR, "owner account length is vaild");
         return false;
@@ -121,7 +121,7 @@ static bool GetEnterpriseDlpPropertyAccount(napi_env env, napi_value jsObject, D
         ThrowParamError(env, "property.ownerAccountId", "string");
         return false;
     }
-    if (!IsStringLengthValid(property.ownerAccountId, MAX_ACCOUNT_LEN))) {
+    if (!IsStringLengthValid(property.ownerAccountId, MAX_ACCOUNT_LEN)) {
         DLP_LOG_ERROR(LABEL, "owner accountId length is vaild");
         DlpNapiThrow(env, ERR_JS_PARAMETER_ERROR, "owner accountId length is vaild");
         return false;
@@ -250,7 +250,7 @@ bool GetCustomProperty(napi_env env, napi_value jsObject, CustomProperty& custom
     }
     if (!IsStringLengthValid(customProperty.enterprise, MAX_ENTERPRISEPOLICY_SIZE)) {
         DLP_LOG_ERROR(LABEL, "enterprise length is vaild");
-         DlpNapiThrow(env, ERR_JS_INVALID_PARAMETER, "enterprise length is vaild");
+         DlpNapiThrow(env, ERR_JS_PARAMETER_ERROR, "enterprise length is vaild");
         return false;
     }
     // Get optional options field (DlpFileQueryOptions)
