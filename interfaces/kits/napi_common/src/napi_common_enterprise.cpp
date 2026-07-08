@@ -294,7 +294,7 @@ bool GetCustomProperty(napi_env env, napi_value jsObject, CustomProperty& custom
     }
     if (!IsStringLengthValid(customProperty.enterprise, MAX_ENTERPRISEPOLICY_SIZE)) {
         DLP_LOG_ERROR(LABEL, "enterprise length is invalid");
-         DlpNapiThrow(env, ERR_JS_PARAMETER_ERROR, "enterprise length is invalid");
+        DlpNapiThrow(env, ERR_JS_PARAMETER_ERROR, "enterprise length is invalid");
         return false;
     }
     // Get optional options field (DlpFileQueryOptions)
