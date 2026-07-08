@@ -91,8 +91,8 @@ bool GetGenerateDlpFileForDomainParam(
        !IsStringLengthValid(asyncContext.property.ownerAccountId, MAX_ACCOUNT_LEN) ||
        !IsStringLengthValid(asyncContext.property.contactAccount, MAX_ACCOUNT_LEN) ||
        !IsStringLengthValid(asyncContext.property.fileId, MAX_ACCOUNT_LEN)) {
-        DLP_LOG_ERROR(LABEL, "property is invaild");
-        DlpNapiThrow(env, ERR_JS_PARAMETER_ERROR, "property is invaild");
+        DLP_LOG_ERROR(LABEL, "property is invalid");
+        DlpNapiThrow(env, ERR_JS_PARAMETER_ERROR, "property is invalid");
         return false;
     }
 
@@ -112,8 +112,8 @@ static bool GetEnterpriseDlpPropertyAccount(napi_env env, napi_value jsObject, D
         return false;
     }
     if (!IsStringLengthValid(property.ownerAccount, MAX_ACCOUNT_LEN)) {
-        DLP_LOG_ERROR(LABEL, "owner account length is vaild");
-        DlpNapiThrow(env, ERR_JS_PARAMETER_ERROR, "owner account length is vaild");
+        DLP_LOG_ERROR(LABEL, "owner account length is invalid");
+        DlpNapiThrow(env, ERR_JS_PARAMETER_ERROR, "owner account length is invalid");
         return false;
     }
     if (!GetStringValueByKey(env, jsObject, "ownerAccountID", property.ownerAccountId)) {
@@ -122,8 +122,8 @@ static bool GetEnterpriseDlpPropertyAccount(napi_env env, napi_value jsObject, D
         return false;
     }
     if (!IsStringLengthValid(property.ownerAccountId, MAX_ACCOUNT_LEN)) {
-        DLP_LOG_ERROR(LABEL, "owner accountId length is vaild");
-        DlpNapiThrow(env, ERR_JS_PARAMETER_ERROR, "owner accountId length is vaild");
+        DLP_LOG_ERROR(LABEL, "owner accountId length is invalid");
+        DlpNapiThrow(env, ERR_JS_PARAMETER_ERROR, "owner accountId length is invalid");
         return false;
     }
     int64_t type;
@@ -143,7 +143,7 @@ static bool ParseContactAccount(napi_env env, napi_value jsObject, DlpProperty& 
         return false;
     }
     if (!IsStringLengthValid(property.contactAccount, MAX_ACCOUNT_LEN)) {
-        DlpNapiThrow(env, ERR_JS_PARAMETER_ERROR, "contactAccount length is vaild");
+        DlpNapiThrow(env, ERR_JS_PARAMETER_ERROR, "contactAccount length is invalid");
         return false;
     }
     return true;
@@ -200,7 +200,7 @@ static bool ParseFileId(napi_env env, napi_value jsObject, DlpProperty& property
         return false;
     }
     if (!IsStringLengthValid(property.fileId, MAX_ACCOUNT_LEN)) {
-        DlpNapiThrow(env, ERR_JS_PARAMETER_ERROR, "fileId length is vaild");
+        DlpNapiThrow(env, ERR_JS_PARAMETER_ERROR, "fileId length is invalid");
         return false;
     }
     return true;
@@ -293,8 +293,8 @@ bool GetCustomProperty(napi_env env, napi_value jsObject, CustomProperty& custom
         return false;
     }
     if (!IsStringLengthValid(customProperty.enterprise, MAX_ENTERPRISEPOLICY_SIZE)) {
-        DLP_LOG_ERROR(LABEL, "enterprise length is vaild");
-         DlpNapiThrow(env, ERR_JS_PARAMETER_ERROR, "enterprise length is vaild");
+        DLP_LOG_ERROR(LABEL, "enterprise length is invalid");
+         DlpNapiThrow(env, ERR_JS_PARAMETER_ERROR, "enterprise length is invalid");
         return false;
     }
     // Get optional options field (DlpFileQueryOptions)
