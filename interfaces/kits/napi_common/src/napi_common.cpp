@@ -642,8 +642,8 @@ bool GetGenerateDlpFileParams(
        !IsStringLengthValid(asyncContext.property.ownerAccountId, MAX_ACCOUNT_LEN) ||
        !IsStringLengthValid(asyncContext.property.contactAccount, MAX_ACCOUNT_LEN) ||
        !IsStringLengthValid(asyncContext.property.fileId, MAX_ACCOUNT_LEN)) {
-        DLP_LOG_ERROR(LABEL, "property is ininvalid");
-        DlpNapiThrow(env, ERR_JS_PARAMETER_ERROR, "property is ininvalid");
+        DLP_LOG_ERROR(LABEL, "property is invalid");
+        DlpNapiThrow(env, ERR_JS_PARAMETER_ERROR, "property is invalid");
         return false;
     }
 
@@ -1876,8 +1876,8 @@ static bool ParseWantUri(napi_env env, const napi_value& obj, OHOS::AAFwk::Want&
         return false;
     }
     if (!IsStringLengthValid(uri, MAX_URI_LEN) || uri.empty()) {
-        DLP_LOG_ERROR(LABEL, "uri length is ininvalid");
-        DlpNapiThrow(env, ERR_JS_URI_NOT_EXIST, "uri length is ininvalid");
+        DLP_LOG_ERROR(LABEL, "uri length is invalid");
+        DlpNapiThrow(env, ERR_JS_URI_NOT_EXIST, "uri length is invalid");
         return false;
     }
     requestWant.SetUri(uri);
@@ -1901,8 +1901,8 @@ static bool ParseDisplayName(napi_env env, napi_value wantParameters, std::strin
         return false;
     }
     if (!IsStringLengthValid(displayName, MAX_FILE_NAME_LEN) || displayName.empty()) {
-        DLP_LOG_ERROR(LABEL, "displayName length is ininvalid");
-        DlpNapiThrow(env, ERR_JS_PARAM_DISPLAY_NAME_NOT_EXIST, "displayName length is ininvalid");
+        DLP_LOG_ERROR(LABEL, "displayName length is invalid");
+        DlpNapiThrow(env, ERR_JS_PARAM_DISPLAY_NAME_NOT_EXIST, "displayName length is invalid");
         return false;
     }
     return true;
