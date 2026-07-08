@@ -638,7 +638,7 @@ bool GetGenerateDlpFileParams(
         ThrowParamError(env, "property", "DlpProperty");
         return false;
     }
-    if(!IsStringLengthValid(asyncContext.property.ownerAccount, MAX_ACCOUNT_LEN) ||
+    if (!IsStringLengthValid(asyncContext.property.ownerAccount, MAX_ACCOUNT_LEN) ||
        !IsStringLengthValid(asyncContext.property.ownerAccountId, MAX_ACCOUNT_LEN) ||
        !IsStringLengthValid(asyncContext.property.contactAccount, MAX_ACCOUNT_LEN)) {
         DLP_LOG_ERROR(LABEL, "property is invalid");
