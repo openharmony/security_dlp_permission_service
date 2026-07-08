@@ -1729,11 +1729,15 @@ static bool ParsePermExpiryTime(napi_env env, napi_value obj, AuthUserInfo& user
 static bool ParseAuthAccountType(napi_env env, napi_value obj, AuthUserInfo& userInfo)
 {
     int64_t type;
-    if (!GetInt64ValueByKey(env, obj, "authAccountType", type) ||
-        type > static_cast<int64_t>(ENTERPRISE_ACCOUNT) ||
-        type < static_cast<int64_t>(INVALID_ACCOUNT)) {
+    if (!GetInt64ValueByKey(env, obj, "authAccountType", type)) {
         DLP_LOG_ERROR(LABEL, "js get type fail");
         ThrowParamError(env, "property", "DlpProperty");
+        return false;
+    }
+    if (type > static_cast<int64_t>(ENTERPRISE_ACCOUNT) ||
+        type < static_cast<int64_t>(INVALID_ACCOUNT)) {
+        DLP_LOG_ERROR(LABEL, "auth user type is invalid.");
+        DlpNapiThrow(env, ERR_JS_PARAMETER_ERROR, "auth user type is invalid.");
         return false;
     }
     userInfo.authAccountType = static_cast<DlpAccountType>(type);
