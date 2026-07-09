@@ -124,13 +124,11 @@ bool GetEveryoneAccessList(napi_env env, napi_value jsObject, DlpProperty& prope
 
 bool GetDlpProperty(napi_env env, napi_value jsObject, DlpProperty& property)
 {
-    if (!GetStringValueByKey(env, jsObject, "ownerAccount", property.ownerAccount) ||
-        !IsStringLengthValid(property.ownerAccount, MAX_ACCOUNT_LEN)) {
+    if (!GetStringValueByKey(env, jsObject, "ownerAccount", property.ownerAccount)) {
         DLP_LOG_ERROR(LABEL, "js get owner account fail");
         return false;
     }
-    if (!GetStringValueByKey(env, jsObject, "ownerAccountID", property.ownerAccountId) ||
-        !IsStringLengthValid(property.ownerAccountId, MAX_ACCOUNT_LEN)) {
+    if (!GetStringValueByKey(env, jsObject, "ownerAccountID", property.ownerAccountId)) {
         DLP_LOG_ERROR(LABEL, "js get owner accountId fail");
         return false;
     }
@@ -147,8 +145,7 @@ bool GetDlpProperty(napi_env env, napi_value jsObject, DlpProperty& property)
             return false;
         }
     }
-    if (!GetStringValueByKey(env, jsObject, "contactAccount", property.contactAccount) ||
-        !IsStringLengthValid(property.contactAccount, MAX_ACCOUNT_LEN)) {
+    if (!GetStringValueByKey(env, jsObject, "contactAccount", property.contactAccount)) {
         DLP_LOG_ERROR(LABEL, "js get contact account fail");
         return false;
     }
