@@ -65,7 +65,8 @@
         "memmgr",
         "security_guard",
         "node",
-        "libuv"
+        "libuv",
+        "bounds_checking_function"
       ],
       "third_party": []
     },
