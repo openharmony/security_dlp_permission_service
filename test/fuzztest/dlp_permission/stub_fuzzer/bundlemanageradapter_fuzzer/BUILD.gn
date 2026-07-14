@@ -49,6 +49,7 @@ ohos_fuzztest("BundleManagerAdapterFuzzTest") {
     "ability_runtime:ability_manager",
     "ability_runtime:ability_connect_callback_stub",
     "app_file_service:fileuri_native",
+    "bounds_checking_function:libsec_shared",
     "bundle_framework:appexecfwk_base",
     "bundle_framework:appexecfwk_core",
     "c_utils:utils",

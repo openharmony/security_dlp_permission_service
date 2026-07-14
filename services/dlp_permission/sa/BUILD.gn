@@ -84,6 +84,7 @@ ohos_static_library("dlp_permission_serializer_static") {
   external_deps = [
     "ability_base:base",
     "ability_base:want",
+    "bounds_checking_function:libsec_shared",
     "c_utils:utils",
     "hilog:libhilog",
     "ipc:ipc_single",
@@ -222,6 +223,7 @@ ohos_shared_library("dlp_permission_service") {
     "app_file_service:fileuri_native",
     "bundle_framework:appexecfwk_base",
     "bundle_framework:appexecfwk_core",
+    "bounds_checking_function:libsec_shared",
     "c_utils:utils",
     "common_event_service:cesfwk_core",
     "common_event_service:cesfwk_innerkits",

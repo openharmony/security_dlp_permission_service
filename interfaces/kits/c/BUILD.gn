@@ -52,6 +52,7 @@ ohos_shared_library("ohdlp_permission") {
     "access_token:libaccesstoken_sdk",
     "access_token:libtokensetproc_shared",
     "bundle_framework:appexecfwk_base",
+    "bounds_checking_function:libsec_shared",
     "c_utils:utils",
     "hilog:libhilog",
     "ipc:ipc_core",

@@ -90,6 +90,7 @@ ohos_shared_library("libdlppermission_napi") {
     "ace_engine:ace_uicontent",
     "bundle_framework:appexecfwk_base",
     "bundle_framework:appexecfwk_core",
+    "bounds_checking_function:libsec_shared",
     "c_utils:utils",
     "file_api:filemgmt_libn",
     "graphic_2d:color_manager",
