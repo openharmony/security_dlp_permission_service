@@ -1327,15 +1327,17 @@ ohos_unittest("dlp_transparent_enc_manager_test") {
     "${dlp_root_dir}/interfaces/kits/dlp_permission/napi/mock",
     "${dlp_root_dir}/frameworks/common/include",
     "${dlp_root_dir}/test/unittest/mock/test_common",
+    "${dlp_root_dir}/test/unittest/dlp_permission",
   ]
 
   sources = [
     "unittest/dlp_permission/dlp_transparent_enc_manager_test.cpp",
+    "unittest/dlp_permission/dlfcn_mock.cpp",
     "${dlp_root_dir}/interfaces/kits/dlp_permission/napi/src/dlp_transparent_enc_manager.cpp",
     "${dlp_root_dir}/interfaces/kits/dlp_permission/napi/mock/dlp_transparent_enc_mock.cpp",
   ]
 
-  cflags_cc = [ "-DHILOG_ENABLE" ]
+  cflags_cc = [ "-DHILOG_ENABLE", "-DDLP_FUZZ_TDD_TEST" ]
 
   configs = [
     "${dlp_permission_public_config_path}/:dlp_permission_sdk_config",

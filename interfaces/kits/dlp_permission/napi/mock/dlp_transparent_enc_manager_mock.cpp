@@ -30,9 +30,18 @@ DlpTransparentEncManager &DlpTransparentEncManager::GetInstance()
 DlpTransparentEncManager::~DlpTransparentEncManager()
 {
     credentialServiceHandle_ = nullptr;
+    ResetFunctionPointers();
+}
+
+void DlpTransparentEncManager::ResetFunctionPointers()
+{
     setControlledAppListsFunc_ = nullptr;
     getControlledAppListsFunc_ = nullptr;
     freeControlledAppListsFunc_ = nullptr;
+    processPluginCommandFunc_ = nullptr;
+    freePluginCommandResultFunc_ = nullptr;
+    getDockerPolicyFunc_ = nullptr;
+    freeDockerPolicyFunc_ = nullptr;
 }
 
 int32_t DlpTransparentEncManager::LoadDlpCredentialService()
@@ -40,13 +49,24 @@ int32_t DlpTransparentEncManager::LoadDlpCredentialService()
     return DLP_OK;
 }
 
-int32_t DlpTransparentEncManager::SetControlledAppLists(const std::vector<std::string> &appLists, int32_t userId,
-                                                        bool userIdSet)
+int32_t DlpTransparentEncManager::SetControlledAppLists(
+    const std::vector<std::string> &appLists, int32_t userId, bool userIdSet)
 {
     return DLP_OK;
 }
 
 int32_t DlpTransparentEncManager::GetControlledAppLists(std::vector<std::string> &appLists)
+{
+    return DLP_OK;
+}
+
+int32_t DlpTransparentEncManager::ProcessPluginCommand(
+    int32_t code, const std::string &message, std::string &result)
+{
+    return DLP_OK;
+}
+
+int32_t DlpTransparentEncManager::GetDockerPolicy(const std::string &fileUri, DockerPolicyInfo &policy)
 {
     return DLP_OK;
 }

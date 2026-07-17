@@ -13,23 +13,37 @@
  * limitations under the License.
  */
 
-#ifndef DLP_TRANSPARENT_ENC_MANAGER_TEST_H
-#define DLP_TRANSPARENT_ENC_MANAGER_TEST_H
+#ifndef DLP_DLCFN_MOCK_H
+#define DLP_DLCFN_MOCK_H
 
-#include <gtest/gtest.h>
-#include "dlp_transparent_enc_manager.h"
+#include <dlfcn.h>
+
+#ifdef DLP_FUZZ_TDD_TEST
+#define dlopen MockDlopen
+#define dlsym MockDlsym
+#define dlclose MockDlclose
+#endif
 
 namespace OHOS {
 namespace Security {
 namespace DlpPermission {
-class DlpTransparentEncManagerTest : public testing::Test {
-public:
-    static void SetUpTestCase();
-    static void TearDownTestCase();
-    void SetUp() override;
-    void TearDown() override;
-};
+namespace TestMock {
+
+void SetDlopenShouldFail(bool shouldFail);
+void SetDlsymShouldFailFor(const char *symbol);
+void ResetDlfcnMock();
+
+}  // namespace TestMock
 }  // namespace DlpPermission
 }  // namespace Security
 }  // namespace OHOS
-#endif  // DLP_TRANSPARENT_ENC_MANAGER_TEST_H
+
+#ifdef DLP_FUZZ_TDD_TEST
+extern "C" {
+void *MockDlopen(const char *filename, int flag);
+void *MockDlsym(void *handle, const char *symbol);
+int MockDlclose(void *handle);
+}
+#endif
+
+#endif  // DLP_DLCFN_MOCK_H
