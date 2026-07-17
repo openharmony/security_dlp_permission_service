@@ -55,6 +55,7 @@ static const std::unordered_map<int32_t, std::string> JS_ERROR_MSG_MAP = {
     { ERR_JS_DLP_USERID_INCONSISTENT, "The specified userId is inconsistent with the current userId." },
     { ERR_JS_DLP_NOT_ENTERPRISE_WORKSPACE,
       "The specified userId belongs to a personal space user and cannot be controlled." },
+    { ERR_JS_DLP_FILE_INVALID, "The file is invalid." },
 };
 
 static const std::unordered_map<int32_t, int32_t> NATIVE_CODE_TO_JS_CODE_MAP = {
@@ -185,6 +186,9 @@ static const std::unordered_map<int32_t, int32_t> NATIVE_CODE_TO_JS_CODE_MAP = {
 
     // ERR_JS_DLP_NOT_ENTERPRISE_WORKSPACE
     { DLP_ERROR_NOT_ENTERPRISE_WORKSPACE, ERR_JS_DLP_NOT_ENTERPRISE_WORKSPACE },
+
+    // ERR_JS_DLP_FILE_INVALID
+    { DLP_ERROR_FILE_INVALID, ERR_JS_DLP_FILE_INVALID },
 
     // ERR_JS_SYSTEM_SERVICE_EXCEPTION
     { DLP_TRANSPARENT_ENC_ERROR, ERR_JS_SYSTEM_SERVICE_EXCEPTION },

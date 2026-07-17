@@ -20,6 +20,8 @@
 #include <string>
 #include <vector>
 
+#include "dlp_transparent_enc_manager.h"
+
 namespace OHOS {
 namespace Security {
 namespace DlpPermission {
@@ -28,6 +30,10 @@ extern "C" {
 int32_t DLP_SetControlledAppLists(int32_t userid, bool userIdSet, const char *const *appLists, uint32_t appListsLen);
 int32_t DLP_GetControlledAppLists(char ***appLists, uint32_t *appListsLen);
 int32_t DLP_FreeControlledAppLists(char ***appLists, uint32_t *appListsLen);
+int32_t DLP_ProcessPluginCommand(int32_t code, const char *message, char **result, uint32_t *resultLen);
+int32_t DLP_FreePluginCommandResult(char **result, uint32_t *resultLen);
+int32_t DLP_GetDockerPolicy(const char *fileUri, DockerPolicyPayload **policy);
+int32_t DLP_FreeDockerPolicy(DockerPolicyPayload **policy);
 }
 
 class DlpTransparentEncMock {
@@ -35,7 +41,12 @@ public:
     static DlpTransparentEncMock &GetInstance();
     int32_t SetControlledAppLists(int32_t userid, bool userIdSet, const std::vector<std::string> &appLists);
     int32_t GetControlledAppLists(std::vector<std::string> &appLists);
+    int32_t ProcessPluginCommand(int32_t code, const std::string &message, std::string &result);
+    int32_t GetDockerPolicy(const std::string &fileUri, DockerPolicyInfo &policy);
     void SetMockResult(int32_t result);
+    void SetMockPluginCommandResult(const std::string &result);
+    void SetMockControlledAppLists(const std::vector<std::string> &appLists);
+    void SetMockDockerPolicyInfo(const DockerPolicyInfo &policy);
 
 private:
     DlpTransparentEncMock() = default;
@@ -43,6 +54,8 @@ private:
 
     int32_t mockResult_ = 0;
     std::vector<std::string> controlledAppLists_;
+    std::string pluginCommandResult_;
+    DockerPolicyInfo dockerPolicyInfo_;
 };
 
 }  // namespace DlpPermission

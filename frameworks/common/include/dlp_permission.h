@@ -154,6 +154,7 @@ enum DLPErrCode : int32_t {
     DLP_ERROR_USERID_INCONSISTENT = -900,
     DLP_ERROR_NOT_ENTERPRISE_WORKSPACE = -901,
     DLP_TRANSPARENT_ENC_ERROR = -902,
+    DLP_ERROR_FILE_INVALID = -903,
 };
 }  // namespace DlpPermission
 }  // namespace Security

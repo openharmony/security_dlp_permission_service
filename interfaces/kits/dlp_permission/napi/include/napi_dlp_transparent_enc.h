@@ -29,6 +29,7 @@ typedef enum {
     DLP_ERR_NOT_ENTERPRISE_WORKSPACE = 0x0000D004,
     DLP_ERR_USERID_INCONSISTENT = 0x0000D007,
     DLP_ERR_CHECK_PERFMISSION = 0x00002009,
+    DLP_ERR_FILE_INVALID = 0x0000D00B,
 } DLP_ErrorCode;
 
 napi_value InitDlpTransparentEncFunction(napi_env env, napi_value exports);

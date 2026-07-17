@@ -54,6 +54,7 @@ enum JsErrorCode : int32_t {
     // dlptransparentenc
     ERR_JS_DLP_USERID_INCONSISTENT = 19100023,
     ERR_JS_DLP_NOT_ENTERPRISE_WORKSPACE = 19100024,
+    ERR_JS_DLP_FILE_INVALID = 19100025,
 };
 
 std::string GetJsErrMsg(int32_t errNo);

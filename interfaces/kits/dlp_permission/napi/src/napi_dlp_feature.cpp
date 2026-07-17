@@ -163,7 +163,8 @@ napi_value NapiDlpFeature::Init(napi_env env, napi_value exports)
     napi_property_descriptor descriptors[] = {
         DECLARE_NAPI_PROPERTY("DlpFeatureStatus", CreateEnumDlpFeatureStatus(env)),
     };
-    napi_define_properties(env, exports, sizeof(descriptors) / sizeof(napi_property_descriptor), descriptors);
+    NAPI_CALL(env,
+        napi_define_properties(env, exports, sizeof(descriptors) / sizeof(napi_property_descriptor), descriptors));
 
     return exports;
 }

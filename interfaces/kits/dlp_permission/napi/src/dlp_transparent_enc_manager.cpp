@@ -15,6 +15,9 @@
 
 #include "dlp_transparent_enc_manager.h"
 
+#ifdef DLP_FUZZ_TDD_TEST
+#include "dlfcn_mock.h"
+#endif
 #include <dlfcn.h>
 #include <cstring>
 
@@ -25,8 +28,9 @@ namespace OHOS {
 namespace Security {
 namespace DlpPermission {
 namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION,
-                                                      "DlpTransparentEncManager"};
+static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
+    LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "DlpTransparentEncManager"
+};
 constexpr size_t SIZE_64_BIT = 8;
 static const std::string DLP_CREDENTIAL_TRANSPARENT_ENC_32_PATH = "/system/lib/libdlp_transparent_enc_sdk.z.so";
 static const std::string DLP_CREDENTIAL_TRANSPARENT_ENC_64_PATH = "/system/lib64/libdlp_transparent_enc_sdk.z.so";
@@ -40,13 +44,37 @@ DlpTransparentEncManager &DlpTransparentEncManager::GetInstance()
 
 DlpTransparentEncManager::~DlpTransparentEncManager()
 {
+    std::lock_guard<std::mutex> lock(mutex_);
     if (credentialServiceHandle_ != nullptr) {
         dlclose(credentialServiceHandle_);
         credentialServiceHandle_ = nullptr;
-        setControlledAppListsFunc_ = nullptr;
-        getControlledAppListsFunc_ = nullptr;
-        freeControlledAppListsFunc_ = nullptr;
     }
+    ResetFunctionPointers();
+}
+
+void DlpTransparentEncManager::ResetFunctionPointers()
+{
+    setControlledAppListsFunc_ = nullptr;
+    getControlledAppListsFunc_ = nullptr;
+    freeControlledAppListsFunc_ = nullptr;
+    processPluginCommandFunc_ = nullptr;
+    freePluginCommandResultFunc_ = nullptr;
+    getDockerPolicyFunc_ = nullptr;
+    freeDockerPolicyFunc_ = nullptr;
+}
+
+template<typename FuncType>
+int32_t DlpTransparentEncManager::ResolveSymbol(FuncType &funcPtr, const char *symbol)
+{
+    funcPtr = reinterpret_cast<FuncType>(dlsym(credentialServiceHandle_, symbol));
+    if (funcPtr == nullptr) {
+        DLP_LOG_ERROR(LABEL, "dlsym %{public}s failed, error: %{public}s", symbol, dlerror());
+        dlclose(credentialServiceHandle_);
+        credentialServiceHandle_ = nullptr;
+        ResetFunctionPointers();
+        return DLP_ERROR_DLSYM;
+    }
+    return DLP_OK;
 }
 
 int32_t DlpTransparentEncManager::LoadDlpCredentialService()
@@ -66,52 +94,51 @@ int32_t DlpTransparentEncManager::LoadDlpCredentialService()
         return DLP_ERROR_DLOPEN;
     }
 
-    setControlledAppListsFunc_ =
-        reinterpret_cast<SetControlledAppLists_Func>(dlsym(credentialServiceHandle_, "DLP_SetControlledAppLists"));
-    if (setControlledAppListsFunc_ == nullptr) {
-        DLP_LOG_ERROR(LABEL, "dlsym DLP_SetControlledAppLists failed, error: %{public}s", dlerror());
-        dlclose(credentialServiceHandle_);
-        credentialServiceHandle_ = nullptr;
-        return DLP_ERROR_DLSYM;
+    int32_t ret = ResolveSymbol(setControlledAppListsFunc_, "DLP_SetControlledAppLists");
+    if (ret != DLP_OK) {
+        return ret;
     }
-
-    getControlledAppListsFunc_ =
-        reinterpret_cast<GetControlledAppLists_Func>(dlsym(credentialServiceHandle_, "DLP_GetControlledAppLists"));
-    if (getControlledAppListsFunc_ == nullptr) {
-        DLP_LOG_ERROR(LABEL, "dlsym DLP_GetControlledAppLists failed, error: %{public}s", dlerror());
-        dlclose(credentialServiceHandle_);
-        credentialServiceHandle_ = nullptr;
-        setControlledAppListsFunc_ = nullptr;
-        return DLP_ERROR_DLSYM;
+    ret = ResolveSymbol(getControlledAppListsFunc_, "DLP_GetControlledAppLists");
+    if (ret != DLP_OK) {
+        return ret;
     }
-
-    freeControlledAppListsFunc_ =
-        reinterpret_cast<FreeControlledAppLists_Func>(dlsym(credentialServiceHandle_, "DLP_FreeControlledAppLists"));
-    if (freeControlledAppListsFunc_ == nullptr) {
-        DLP_LOG_ERROR(LABEL, "dlsym DLP_FreeControlledAppLists failed, error: %{public}s", dlerror());
-        dlclose(credentialServiceHandle_);
-        credentialServiceHandle_ = nullptr;
-        setControlledAppListsFunc_ = nullptr;
-        getControlledAppListsFunc_ = nullptr;
-        return DLP_ERROR_DLSYM;
+    ret = ResolveSymbol(freeControlledAppListsFunc_, "DLP_FreeControlledAppLists");
+    if (ret != DLP_OK) {
+        return ret;
     }
-
+    ret = ResolveSymbol(processPluginCommandFunc_, "DLP_ProcessPluginCommand");
+    if (ret != DLP_OK) {
+        return ret;
+    }
+    ret = ResolveSymbol(freePluginCommandResultFunc_, "DLP_FreePluginCommandResult");
+    if (ret != DLP_OK) {
+        return ret;
+    }
+    ret = ResolveSymbol(getDockerPolicyFunc_, "DLP_GetDockerPolicy");
+    if (ret != DLP_OK) {
+        return ret;
+    }
+    ret = ResolveSymbol(freeDockerPolicyFunc_, "DLP_FreeDockerPolicy");
+    if (ret != DLP_OK) {
+        return ret;
+    }
     return DLP_OK;
 }
 
-int32_t DlpTransparentEncManager::SetControlledAppLists(const std::vector<std::string> &appLists, int32_t userId,
-                                                        bool userIdSet)
+int32_t DlpTransparentEncManager::SetControlledAppLists(const std::vector<std::string> &appLists,
+    int32_t userId, bool userIdSet)
 {
-    std::lock_guard<std::mutex> lock(mutex_);
-    int32_t ret = LoadDlpCredentialService();
-    if (ret != DLP_OK) {
-        DLP_LOG_ERROR(LABEL, "LoadDlpCredentialService failed, ret = %{public}d", ret);
-        return ret;
-    }
-
-    if (setControlledAppListsFunc_ == nullptr) {
-        DLP_LOG_ERROR(LABEL, "setControlledAppListsFunc_ is nullptr");
-        return DLP_ERROR_DLSYM;
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        int32_t ret = LoadDlpCredentialService();
+        if (ret != DLP_OK) {
+            DLP_LOG_ERROR(LABEL, "LoadDlpCredentialService failed, ret = %{public}d", ret);
+            return ret;
+        }
+        if (setControlledAppListsFunc_ == nullptr) {
+            DLP_LOG_ERROR(LABEL, "setControlledAppListsFunc_ is nullptr");
+            return DLP_ERROR_DLSYM;
+        }
     }
 
     std::vector<const char *> appListPtrs;
@@ -119,7 +146,8 @@ int32_t DlpTransparentEncManager::SetControlledAppLists(const std::vector<std::s
         appListPtrs.push_back(app.c_str());
     }
 
-    ret = setControlledAppListsFunc_(userId, userIdSet, appListPtrs.data(), static_cast<uint32_t>(appListPtrs.size()));
+    int32_t ret = setControlledAppListsFunc_(userId, userIdSet, appListPtrs.data(),
+        static_cast<uint32_t>(appListPtrs.size()));
     if (ret != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "DLP_SetControlledAppLists failed, ret = %{public}d", ret);
         return ret;
@@ -131,23 +159,23 @@ int32_t DlpTransparentEncManager::SetControlledAppLists(const std::vector<std::s
 
 int32_t DlpTransparentEncManager::GetControlledAppLists(std::vector<std::string> &appLists)
 {
-    std::lock_guard<std::mutex> lock(mutex_);
-
     DLP_LOG_INFO(LABEL, "GetControlledAppLists enter");
-    int32_t ret = LoadDlpCredentialService();
-    if (ret != DLP_OK) {
-        DLP_LOG_ERROR(LABEL, "LoadDlpCredentialService failed, ret = %{public}d", ret);
-        return ret;
-    }
-
-    if (getControlledAppListsFunc_ == nullptr || freeControlledAppListsFunc_ == nullptr) {
-        DLP_LOG_ERROR(LABEL, "getControlledAppListsFunc_ or freeControlledAppListsFunc_ is nullptr");
-        return DLP_ERROR_DLSYM;
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        int32_t ret = LoadDlpCredentialService();
+        if (ret != DLP_OK) {
+            DLP_LOG_ERROR(LABEL, "LoadDlpCredentialService failed, ret = %{public}d", ret);
+            return ret;
+        }
+        if (getControlledAppListsFunc_ == nullptr || freeControlledAppListsFunc_ == nullptr) {
+            DLP_LOG_ERROR(LABEL, "getControlledAppListsFunc_ or freeControlledAppListsFunc_ is nullptr");
+            return DLP_ERROR_DLSYM;
+        }
     }
 
     char **appListPtrs = nullptr;
     uint32_t appListsLen = 0;
-    ret = getControlledAppListsFunc_(&appListPtrs, &appListsLen);
+    int32_t ret = getControlledAppListsFunc_(&appListPtrs, &appListsLen);
     if (ret != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "DLP_GetControlledAppLists failed, ret = %{public}d", ret);
         return ret;
@@ -163,6 +191,74 @@ int32_t DlpTransparentEncManager::GetControlledAppLists(std::vector<std::string>
     }
 
     DLP_LOG_INFO(LABEL, "GetControlledAppLists success, size = %{public}zu", appLists.size());
+    return DLP_OK;
+}
+
+int32_t DlpTransparentEncManager::ProcessPluginCommand(int32_t code,
+    const std::string &message, std::string &result)
+{
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        int32_t ret = LoadDlpCredentialService();
+        if (ret != DLP_OK) {
+            DLP_LOG_ERROR(LABEL, "LoadDlpCredentialService failed, ret = %{public}d", ret);
+            return ret;
+        }
+        if (processPluginCommandFunc_ == nullptr || freePluginCommandResultFunc_ == nullptr) {
+            DLP_LOG_ERROR(LABEL, "processPluginCommandFunc_ or freePluginCommandResultFunc_ is nullptr");
+            return DLP_ERROR_DLSYM;
+        }
+    }
+
+    char *resultPtr = nullptr;
+    uint32_t resultLen = 0;
+    int32_t ret = processPluginCommandFunc_(code, message.c_str(), &resultPtr, &resultLen);
+    if (ret != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "DLP_ProcessPluginCommand failed, ret = %{public}d", ret);
+        return ret;
+    }
+
+    if (resultPtr != nullptr && resultLen > 0) {
+        result = std::string(resultPtr, resultLen);
+        freePluginCommandResultFunc_(&resultPtr, &resultLen);
+    }
+
+    DLP_LOG_INFO(LABEL, "ProcessPluginCommand success");
+    return DLP_OK;
+}
+
+int32_t DlpTransparentEncManager::GetDockerPolicy(const std::string &fileUri, DockerPolicyInfo &policy)
+{
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        int32_t ret = LoadDlpCredentialService();
+        if (ret != DLP_OK) {
+            DLP_LOG_ERROR(LABEL, "LoadDlpCredentialService failed, ret = %{public}d", ret);
+            return ret;
+        }
+        if (getDockerPolicyFunc_ == nullptr || freeDockerPolicyFunc_ == nullptr) {
+            DLP_LOG_ERROR(LABEL, "getDockerPolicyFunc_ or freeDockerPolicyFunc_ is nullptr");
+            return DLP_ERROR_DLSYM;
+        }
+    }
+
+    DockerPolicyPayload *policyPtr = nullptr;
+    int32_t ret = getDockerPolicyFunc_(fileUri.c_str(), &policyPtr);
+    if (ret != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "DLP_GetDockerPolicy failed, ret = %{public}d", ret);
+        return ret;
+    }
+
+    if (policyPtr != nullptr) {
+        policy.isEncrypted = policyPtr->is_encrypted;
+        policy.needSandbox = policyPtr->need_sandbox;
+        policy.bundleName = std::string(policyPtr->bundle_name);
+        policy.mimeType = policyPtr->mime_type;
+        policy.permission = policyPtr->permission;
+        freeDockerPolicyFunc_(&policyPtr);
+    }
+
+    DLP_LOG_INFO(LABEL, "GetDockerPolicy success");
     return DLP_OK;
 }
 
