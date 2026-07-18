@@ -491,8 +491,6 @@ int32_t DlpCredential::GenerateDlpCertificate(const std::string& policy, const s
     };
     if (packPolicy.featureName == nullptr || packPolicy.data == nullptr) {
         DLP_LOG_ERROR(LABEL, "Strdup failed.");
-        free(accountCfg.accountId);
-        accountCfg.accountId = nullptr;
         FreeDlpPackPolicyParams(packPolicy);
         return DLP_PARSE_ERROR_ACCOUNT_INVALID;
     }
