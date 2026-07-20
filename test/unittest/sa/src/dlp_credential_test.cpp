@@ -407,6 +407,41 @@ HWTEST_F(DlpCredentialTest, DlpCredentialTest007, TestSize.Level1)
 }
 
 /**
+ * @tc.name: DlpCredentialTest_AccountIdOnly
+ * @tc.desc: FreeDlpPackPolicyParams test - accountId should be freed once when featureName/data is nullptr,
+ *           covering the double-free fix in GenerateDlpCertificate
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpCredentialTest, DlpCredentialTest_AccountIdOnly, TestSize.Level1)
+{
+    DLP_PackPolicyParams packPolicy;
+    packPolicy.featureName = nullptr;
+    packPolicy.data = nullptr;
+    packPolicy.senderAccountInfo.accountId = (uint8_t *)HcMalloc(MALLOC_SIZE, MALLOC_VAL);
+    FreeDlpPackPolicyParams(packPolicy);
+    EXPECT_EQ(nullptr, packPolicy.featureName);
+    EXPECT_EQ(nullptr, packPolicy.data);
+    EXPECT_EQ(nullptr, packPolicy.senderAccountInfo.accountId);
+
+    packPolicy.featureName = nullptr;
+    packPolicy.data = (uint8_t *)HcMalloc(MALLOC_SIZE, MALLOC_VAL);
+    packPolicy.senderAccountInfo.accountId = (uint8_t *)HcMalloc(MALLOC_SIZE, MALLOC_VAL);
+    FreeDlpPackPolicyParams(packPolicy);
+    EXPECT_EQ(nullptr, packPolicy.featureName);
+    EXPECT_EQ(nullptr, packPolicy.data);
+    EXPECT_EQ(nullptr, packPolicy.senderAccountInfo.accountId);
+
+    packPolicy.featureName = (char *)HcMalloc(MALLOC_SIZE, MALLOC_VAL);
+    packPolicy.data = nullptr;
+    packPolicy.senderAccountInfo.accountId = (uint8_t *)HcMalloc(MALLOC_SIZE, MALLOC_VAL);
+    FreeDlpPackPolicyParams(packPolicy);
+    EXPECT_EQ(nullptr, packPolicy.featureName);
+    EXPECT_EQ(nullptr, packPolicy.data);
+    EXPECT_EQ(nullptr, packPolicy.senderAccountInfo.accountId);
+}
+
+/**
  * @tc.name: DlpCredentialTest008
  * @tc.desc: GetEnterpriseAccountName test
  * @tc.type: FUNC
