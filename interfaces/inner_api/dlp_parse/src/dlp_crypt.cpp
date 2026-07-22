@@ -270,6 +270,14 @@ int32_t DlpHIAEDecrypt(const struct DlpBlob *key, const struct DlpUsageSpec *usa
     return ret;
 }
 
+inline bool DlpOpensslCheckMsg(const struct DlpBlob* blob)
+{
+    if (blob == nullptr || blob->data == nullptr || blob->size == 0) {
+        return false;
+    }
+    return true;
+}
+
 inline bool DlpOpensslCheckBlob(const struct DlpBlob* blob)
 {
     return (blob != nullptr) && (blob->data != nullptr);
@@ -688,7 +696,7 @@ int32_t DlpOpensslAesEncryptUpdate(void* cryptoCtx, const struct DlpBlob* messag
         DLP_LOG_ERROR(LABEL, "Aes encrypt update fail, ctx is null");
         return DLP_PARSE_ERROR_VALUE_INVALID;
     }
-    if (!DlpOpensslCheckBlobZero(message)) {
+    if (!DlpOpensslCheckMsg(message)) {
         DLP_LOG_ERROR(LABEL, "Aes encrypt update fail, msg is invalid");
         return DLP_PARSE_ERROR_VALUE_INVALID;
     }
@@ -790,7 +798,7 @@ int32_t DlpOpensslAesDecryptUpdate(void* cryptoCtx, const struct DlpBlob* messag
         DLP_LOG_ERROR(LABEL, "Aes decrypt update fail, ctx is null");
         return DLP_PARSE_ERROR_VALUE_INVALID;
     }
-    if (!DlpOpensslCheckBlobZero(message)) {
+    if (!DlpOpensslCheckMsg(message)) {
         DLP_LOG_ERROR(LABEL, "Aes decrypt update fail, msg is invalid");
         return DLP_PARSE_ERROR_VALUE_INVALID;
     }
@@ -891,7 +899,7 @@ static bool AesParamCheck(const struct DlpBlob* key, const struct DlpUsageSpec* 
         return false;
     }
 
-    if (!DlpOpensslCheckBlob(message)) {
+    if (!DlpOpensslCheckMsg(message)) {
         DLP_LOG_ERROR(LABEL, "Check aes params fail, msg in invalid");
         return false;
     }
