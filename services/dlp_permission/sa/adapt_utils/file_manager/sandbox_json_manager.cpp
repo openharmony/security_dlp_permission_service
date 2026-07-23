@@ -448,8 +448,12 @@ static bool CheckJsonElement(const std::string& key, const Json& retentionJson, 
 
 void SandboxJsonManager::FromJson(const Json& jsonObject)
 {
-    if (jsonObject.is_null() || jsonObject.is_discarded()) {
+    if (jsonObject.is_null() || jsonObject.is_discarded() || !jsonObject.is_object()) {
         DLP_LOG_ERROR(LABEL, "json error");
+        return;
+    }
+    if (!jsonObject.contains("retention") || !jsonObject.at("retention").is_array()) {
+        DLP_LOG_ERROR(LABEL, "json has no retention array");
         return;
     }
     for (const auto& retentionJson : jsonObject["retention"]) {
