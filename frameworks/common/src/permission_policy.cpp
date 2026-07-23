@@ -34,6 +34,9 @@ const uint32_t MAX_FILEID_SIZE = 1024;
 const uint32_t MAX_APPID_SIZE = 1024;
 const uint32_t MAX_ACCOUNT_NUM = 100;
 const uint32_t NO_EXPIRATION_DATA = 0;
+const uint32_t MAX_CLASSIFICATION_LABEL_SIZE = 255;
+const uint32_t MAX_NICK_NAME_SIZE = 255;
+const uint32_t MAX_APPIDENTIFIER_SIZE = 1024;
 const std::set<uint32_t> VALID_AESPARAM_LEN = {16, 24, 32};
 }  // namespace
 
@@ -52,9 +55,8 @@ static bool CheckAesParam(const uint8_t* buff, uint32_t len)
 
 static bool CheckAccount(const std::string& account)
 {
-    uint32_t accountSize = account.size();
-    if (accountSize == 0 || accountSize > MAX_ACCOUNT_SIZE) {
-        DLP_LOG_ERROR(LABEL, "Account len invalid, len=%{public}u", accountSize);
+    if (account.empty() || account.size() > MAX_ACCOUNT_SIZE) {
+        DLP_LOG_ERROR(LABEL, "Account len invalid, len=%{public}zu", account.size());
         return false;
     }
     return true;
@@ -107,7 +109,10 @@ static bool CheckStringParamLen(const PermissionPolicy& policy)
             policy.acountId_.size() <= MAX_ACCOUNT_SIZE &&
             policy.customProperty_.size() <= MAX_CUSTOMPROPERTY_SIZE &&
             policy.fileId.size() <= MAX_FILEID_SIZE &&
-            policy.appId.size() <= MAX_APPID_SIZE);
+            policy.appId.size() <= MAX_APPID_SIZE &&
+            policy.classificationLabel_.size() <= MAX_CLASSIFICATION_LABEL_SIZE &&
+            policy.nickNameMask_.size() <= MAX_NICK_NAME_SIZE &&
+            policy.appIdentifier_.size() <= MAX_APPIDENTIFIER_SIZE);
 }
 
 static void FreeUint8Buffer(uint8_t** buff, uint32_t& buffLen)

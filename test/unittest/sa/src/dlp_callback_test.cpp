@@ -242,7 +242,7 @@ HWTEST_F(DlpCallbackTest, OpenDlpFileCallback005, TestSize.Level1)
 {
     OpenDlpFileCallbackManager::GetInstance().openDlpFileCallbackMap_.clear();
     int32_t res = OpenDlpFileCallbackManager::GetInstance().RemoveCallback(getpid(), nullptr);
-    EXPECT_EQ(res, DLP_CALLBACK_PARAM_INVALID);
+    EXPECT_EQ(res, DLP_SERVICE_ERROR_VALUE_INVALID);
 }
 
 /**
@@ -484,4 +484,16 @@ HWTEST_F(DlpCallbackTest, IsCallbackEmpty001, TestSize.Level1)
     OpenDlpFileCallbackManager::GetInstance().openDlpFileCallbackMap_.clear();
     bool ret = OpenDlpFileCallbackManager::GetInstance().IsCallbackEmpty();
     EXPECT_EQ(true, ret);
+}
+
+/**
+ * @tc.name: OpenDlpFileCallback017
+ * @tc.desc: Test RemoveCallback with nullptr callback
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpCallbackTest, OpenDlpFileCallback017, TestSize.Level1)
+{
+    int32_t ret = OpenDlpFileCallbackManager::GetInstance().RemoveCallback(1, nullptr);
+    EXPECT_EQ(ret, DLP_SERVICE_ERROR_VALUE_INVALID);
 }

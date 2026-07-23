@@ -350,7 +350,7 @@ int32_t DlpPermissionClient::GetDlpSupportFileType(std::vector<std::string>& sup
     auto proxy = GetProxy(true);
     if (proxy == nullptr) {
         DLP_LOG_INFO(LABEL, "Proxy is null");
-        return DLP_OK;
+        return DLP_CALLBACK_SA_WORK_ABNORMAL;
     }
 
     return proxy->GetDlpSupportFileType(supportFileType);
@@ -493,7 +493,7 @@ int32_t DlpPermissionClient::GetDlpGatheringPolicy(bool& isGathering)
     auto proxy = GetProxy(false);
     if (proxy == nullptr) {
         DLP_LOG_ERROR(LABEL, "Proxy is null");
-        return DLP_OK;
+        return DLP_CALLBACK_SA_WORK_ABNORMAL;
     }
 
     return proxy->GetDlpGatheringPolicy(isGathering);
@@ -588,7 +588,7 @@ int32_t DlpPermissionClient::SetMDMPolicy(const std::vector<std::string>& appIdL
     auto proxy = GetProxy(true);
     if (proxy == nullptr) {
         DLP_LOG_ERROR(LABEL, "Proxy is null");
-        return DLP_OK;
+        return DLP_CALLBACK_SA_WORK_ABNORMAL;
     }
 
     return proxy->SetMDMPolicy(appIdList);
@@ -603,7 +603,7 @@ int32_t DlpPermissionClient::GetMDMPolicy(std::vector<std::string>& appIdList)
     auto proxy = GetProxy(true);
     if (proxy == nullptr) {
         DLP_LOG_ERROR(LABEL, "Proxy is null");
-        return DLP_OK;
+        return DLP_CALLBACK_SA_WORK_ABNORMAL;
     }
 
     return proxy->GetMDMPolicy(appIdList);
@@ -618,7 +618,7 @@ int32_t DlpPermissionClient::RemoveMDMPolicy()
     auto proxy = GetProxy(true);
     if (proxy == nullptr) {
         DLP_LOG_ERROR(LABEL, "Proxy is null");
-        return DLP_OK;
+        return DLP_CALLBACK_SA_WORK_ABNORMAL;
     }
 
     return proxy->RemoveMDMPolicy();

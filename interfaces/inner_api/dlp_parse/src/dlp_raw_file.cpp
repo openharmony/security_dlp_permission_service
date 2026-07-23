@@ -394,9 +394,6 @@ int32_t DlpRawFile::CheckDlpFile()
     } else {
         return ParseEnterpriseRawDlpHeader(fileLen, dlpHeaderSize);
     }
-
-    DLP_LOG_ERROR(LABEL, "the version or HeaderSize is error");
-    return DLP_PARSE_ERROR_FILE_FORMAT_ERROR;
 }
 
 uint32_t DlpRawFile::GetOfflineCertSize(void)

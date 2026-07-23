@@ -34,11 +34,11 @@ const int64_t PARSE_WAIT_TIME_OUT = 30;
 void ClientGenerateDlpCertificateCallback::OnGenerateDlpCertificate(int32_t result, const std::vector<uint8_t>& cert)
 {
     DLP_LOG_INFO(LABEL, "Callback");
+    std::unique_lock<std::mutex> lck(generateMtx_);
     this->result_ = result;
     if (result == DLP_OK) {
         this->cert_ = cert;
     }
-    std::unique_lock<std::mutex> lck(generateMtx_);
     this->isCallBack_ = true;
     generateCv_.notify_all();
 }
@@ -47,18 +47,19 @@ void ClientParseDlpCertificateCallback::OnParseDlpCertificate(int32_t result, co
     const std::vector<uint8_t>& cert)
 {
     DLP_LOG_INFO(LABEL, "Callback");
+    std::unique_lock<std::mutex> lck(parseMtx_);
     this->result_ = result;
     if (result == DLP_OK) {
         this->policy_.CopyPermissionPolicy(policy);
         this->offlineCert_ = cert;
     }
-    std::unique_lock<std::mutex> lck(parseMtx_);
     this->isCallBack_ = true;
     parseCv_.notify_all();
 }
 
 void GetWaterMarkCallback::OnCall(int32_t result, const GeneralInfo& info)
 {
+    std::unique_lock<std::mutex> lck(getWaterMarkMtx_);
     this->result_ = result;
     if (result == DLP_OK) {
         this->info_.SetWaterMark = true;
@@ -83,16 +84,16 @@ int32_t DlpPermissionKit::GenerateDlpCertificate(const PermissionPolicy& policy,
         if (!callback->isCallBack_) {
             callback->generateCv_.wait_for(lck, std::chrono::seconds(TIME_WAIT_TIME_OUT));
         }
+        if (!callback->isCallBack_) {
+            DLP_LOG_ERROR(LABEL, "service did not call back! timeout!");
+            return DLP_SERVICE_ERROR_CREDENTIAL_TASK_TIMEOUT;
+        }
+        DLP_LOG_INFO(LABEL, "get callback succeed!");
+        if (callback->result_ == DLP_OK) {
+            cert = callback->cert_;
+        }
+        return callback->result_;
     }
-    if (!callback->isCallBack_) {
-        DLP_LOG_ERROR(LABEL, "service did not call back! timeout!");
-        return DLP_SERVICE_ERROR_CREDENTIAL_TASK_TIMEOUT;
-    }
-    DLP_LOG_INFO(LABEL, "get callback succeed!");
-    if (callback->result_ == DLP_OK) {
-        cert = callback->cert_;
-    }
-    return callback->result_;
 }
 
 int32_t DlpPermissionKit::ParseDlpCertificate(sptr<CertParcel>& certParcel, PermissionPolicy& policy,
@@ -115,18 +116,18 @@ int32_t DlpPermissionKit::ParseDlpCertificate(sptr<CertParcel>& certParcel, Perm
         if (!callback->isCallBack_) {
             callback->parseCv_.wait_for(lck, std::chrono::seconds(PARSE_WAIT_TIME_OUT));
         }
-    }
 
-    if (!callback->isCallBack_) {
-        return DLP_CREDENTIAL_ERROR_NO_INTERNET;
-    }
+        if (!callback->isCallBack_) {
+            return DLP_CREDENTIAL_ERROR_NO_INTERNET;
+        }
 
-    if (callback->result_ == DLP_OK) {
-        policy.CopyPermissionPolicy(callback->policy_);
-        certParcel->offlineCert = callback->offlineCert_;
-    }
+        if (callback->result_ == DLP_OK) {
+            policy.CopyPermissionPolicy(callback->policy_);
+            certParcel->offlineCert = callback->offlineCert_;
+        }
 
-    return callback->result_;
+        return callback->result_;
+    }
 }
 
 int32_t DlpPermissionKit::GetWaterMark(const bool waterMarkConfig)

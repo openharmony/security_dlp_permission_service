@@ -1084,7 +1084,7 @@ bool GetRetentionStateParams(const napi_env env, const napi_callback_info info,
     }
 
     if (!GetVectorDocUriByKey(env, argv[PARAM0], "docUris", asyncContext.docUris)) {
-        DLP_LOG_ERROR(LABEL, "js get auth users fail");
+        DLP_LOG_ERROR(LABEL, "The docUris is error");
         std::string jsErrMsg = "The docUris is error";
         DlpNapiThrow(env, ERR_JS_PARAMETER_ERROR, jsErrMsg);
         return false;
@@ -1092,8 +1092,8 @@ bool GetRetentionStateParams(const napi_env env, const napi_callback_info info,
 
     for (std::string docUri : asyncContext.docUris) {
         if (!IsStringLengthValid(docUri, MAX_URI_LEN)) {
-            DLP_LOG_ERROR(LABEL, "auth users length is invalid");
-            DlpNapiThrow(env, ERR_JS_PARAMETER_ERROR, "auth users length is invalid");
+            DLP_LOG_ERROR(LABEL, "The uri length of docUris is invalid");
+            DlpNapiThrow(env, ERR_JS_PARAMETER_ERROR, "The uri length of docUris is invalid");
             return false;
         }
     }
@@ -1958,27 +1958,9 @@ bool ParseWantReq(napi_env env, const napi_value& obj, OHOS::AAFwk::Want& reques
     return true;
 }
 
-void StartUIExtensionAbility(std::shared_ptr<UIExtensionRequestContext> asyncContext)
+OHOS::Ace::ModalUIExtensionCallbacks CreateExtensionCallbacks(
+    std::shared_ptr<UIExtensionCallback>& uiExtCallback)
 {
-    DLP_LOG_DEBUG(LABEL, "begin StartUIExtensionAbility");
-    if (asyncContext == nullptr) {
-        DLP_LOG_ERROR(LABEL, "asyncContext is null");
-        return;
-    }
-    auto abilityContext = asyncContext->context;
-    if (abilityContext == nullptr) {
-        DLP_LOG_ERROR(LABEL, "abilityContext is null");
-        DlpNapiThrow(asyncContext->env, ERR_JS_INVALID_PARAMETER, "abilityContext is null");
-        return;
-    }
-    auto uiContent = abilityContext->GetUIContent();
-    if (uiContent == nullptr) {
-        DLP_LOG_ERROR(LABEL, "uiContent is null");
-        DlpNapiThrow(asyncContext->env, ERR_JS_INVALID_PARAMETER, "uiContent is null");
-        return;
-    }
-
-    auto uiExtCallback = std::make_shared<UIExtensionCallback>(asyncContext);
     OHOS::Ace::ModalUIExtensionCallbacks extensionCallbacks = {
         [uiExtCallback](int32_t releaseCode) { uiExtCallback->OnRelease(releaseCode); },
         [uiExtCallback](int32_t resultCode, const OHOS::AAFwk::Want& result) {
@@ -1990,16 +1972,53 @@ void StartUIExtensionAbility(std::shared_ptr<UIExtensionRequestContext> asyncCon
             uiExtCallback->OnRemoteReady(uiProxy); },
         [uiExtCallback]() { uiExtCallback->OnDestroy(); }
     };
+    return extensionCallbacks;
+}
 
-    OHOS::Ace::ModalUIExtensionConfig uiExtConfig;
-    uiExtConfig.isProhibitBack = false;
-    int32_t sessionId = uiContent->CreateModalUIExtension(asyncContext->requestWant, extensionCallbacks, uiExtConfig);
-    DLP_LOG_INFO(LABEL, "end CreateModalUIExtension sessionId = %{public}d", sessionId);
-    if (sessionId == 0) {
-        DLP_LOG_ERROR(LABEL, "CreateModalUIExtension failed, sessionId is %{public}d", sessionId);
+void StartUIExtensionAbility(std::shared_ptr<UIExtensionRequestContext> asyncContext)
+{
+    DLP_LOG_DEBUG(LABEL, "begin StartUIExtensionAbility");
+    if (asyncContext == nullptr) {
+        DLP_LOG_ERROR(LABEL, "asyncContext is null");
+        return;
     }
-    uiExtCallback->SetSessionId(sessionId);
-    return;
+    int32_t errCode = ERR_JS_INVALID_PARAMETER;
+    const char* errMsg = "StartUIExtensionAbility failed";
+    do {
+        auto abilityContext = asyncContext->context;
+        if (abilityContext == nullptr) {
+            DLP_LOG_ERROR(LABEL, "abilityContext is null");
+            errMsg = "abilityContext is null";
+            break;
+        }
+        auto uiContent = abilityContext->GetUIContent();
+        if (uiContent == nullptr) {
+            DLP_LOG_ERROR(LABEL, "uiContent is null");
+            errMsg = "uiContent is null";
+            break;
+        }
+
+        auto uiExtCallback = std::make_shared<UIExtensionCallback>(asyncContext);
+        auto extensionCallbacks = CreateExtensionCallbacks(uiExtCallback);
+
+        OHOS::Ace::ModalUIExtensionConfig uiExtConfig;
+        uiExtConfig.isProhibitBack = false;
+        int32_t sessionId =
+            uiContent->CreateModalUIExtension(asyncContext->requestWant, extensionCallbacks, uiExtConfig);
+        DLP_LOG_INFO(LABEL, "end CreateModalUIExtension sessionId = %{public}d", sessionId);
+        if (sessionId == 0) {
+            DLP_LOG_ERROR(LABEL, "CreateModalUIExtension failed, sessionId is %{public}d", sessionId);
+            errCode = ERR_JS_SYSTEM_SERVICE_EXCEPTION;
+            errMsg = "CreateModalUIExtension failed";
+            break;
+        }
+        uiExtCallback->SetSessionId(sessionId);
+        return;
+    } while (0);
+
+    napi_value error = GenerateBusinessError(asyncContext->env, errCode, errMsg);
+    napi_reject_deferred(asyncContext->env, asyncContext->deferred, error);
+    asyncContext->deferred = nullptr;
 }
 
 bool IsStringLengthValid(std::string& str, size_t maxLen, size_t minLen)

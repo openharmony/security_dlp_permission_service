@@ -496,7 +496,7 @@ int FuseDaemon::WaitDaemonEnable(void)
     DLP_LOG_INFO(LABEL, "Wait fuse fs daemon enable");
     std::unique_lock<std::mutex> lck(daemonEnableMtx_);
     if (daemonStatus_ == DAEMON_UNDEF) {
-        daemonEnableCv_.wait_for(lck, std::chrono::seconds(1));
+        daemonEnableCv_.wait_for(lck, std::chrono::seconds(1), []{ return daemonStatus_ != DAEMON_UNDEF; });
     }
 
     if (daemonStatus_ == DAEMON_ENABLE) {

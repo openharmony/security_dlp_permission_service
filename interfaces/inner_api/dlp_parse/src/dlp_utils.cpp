@@ -163,17 +163,22 @@ std::string DlpUtils::GetDlpFileRealSuffix(const std::string& dlpFileName, bool&
 
 int32_t DlpUtils::GetFilePathByFd(const int32_t &fd, std::string &filePath)
 {
-    char *fileName = new (std::nothrow) char[MAX_DLP_FILE_SIZE + 1];
+    char *fileName = new (std::nothrow) char[MAX_DLP_FILE_SIZE + 2];
     if (fileName == nullptr) {
         return DLP_PARSE_ERROR_MEMORY_OPERATE_FAIL;
     }
-    (void)memset_s(fileName, MAX_DLP_FILE_SIZE + 1, 0, MAX_DLP_FILE_SIZE + 1);
+    (void)memset_s(fileName, MAX_DLP_FILE_SIZE + 2, 0, MAX_DLP_FILE_SIZE + 2);
 
     std::string path = DESCRIPTOR_MAP_PATH + std::to_string(fd);
 
-    int readLinkRes = readlink(path.c_str(), fileName, MAX_DLP_FILE_SIZE);
+    int readLinkRes = readlink(path.c_str(), fileName, MAX_DLP_FILE_SIZE + 1);
     if (readLinkRes < 0) {
         DLP_LOG_ERROR(LABEL, "fail to readlink uri, errno = %{public}d", errno);
+        delete[] fileName;
+        return DLP_PARSE_ERROR_FD_ERROR;
+    }
+    if (readLinkRes > MAX_DLP_FILE_SIZE) {
+        DLP_LOG_ERROR(LABEL, "readlink result truncated, path too long");
         delete[] fileName;
         return DLP_PARSE_ERROR_FD_ERROR;
     }
@@ -201,17 +206,22 @@ int32_t DlpUtils::GetFileNameWithDlpFd(const int32_t &fd, std::string &srcFileNa
 
 int32_t DlpUtils::GetFileNameWithFd(const int32_t &fd, std::string &srcFileName)
 {
-    char *fileName = new (std::nothrow) char[MAX_DLP_FILE_SIZE + 1];
+    char *fileName = new (std::nothrow) char[MAX_DLP_FILE_SIZE + 2];
     if (fileName == nullptr) {
         return DLP_PARSE_ERROR_MEMORY_OPERATE_FAIL;
     }
-    (void)memset_s(fileName, MAX_DLP_FILE_SIZE + 1, 0, MAX_DLP_FILE_SIZE + 1);
+    (void)memset_s(fileName, MAX_DLP_FILE_SIZE + 2, 0, MAX_DLP_FILE_SIZE + 2);
 
     std::string path = DESCRIPTOR_MAP_PATH + std::to_string(fd);
 
-    int readLinkRes = readlink(path.c_str(), fileName, MAX_DLP_FILE_SIZE);
+    int readLinkRes = readlink(path.c_str(), fileName, MAX_DLP_FILE_SIZE + 1);
     if (readLinkRes < 0) {
         DLP_LOG_ERROR(LABEL, "fail to readlink uri");
+        delete[] fileName;
+        return DLP_PARSE_ERROR_FD_ERROR;
+    }
+    if (readLinkRes > MAX_DLP_FILE_SIZE) {
+        DLP_LOG_ERROR(LABEL, "readlink result truncated, path too long");
         delete[] fileName;
         return DLP_PARSE_ERROR_FD_ERROR;
     }
@@ -230,6 +240,7 @@ int32_t DlpUtils::GetFilePathWithFd(const int32_t &fd, std::string &srcFilePath)
         DLP_LOG_ERROR(LABEL, "GetFilePathByFd fail, err = %{public}d.", res);
         return res;
     }
+   
     std::size_t pos = filePath.find_last_of(PATH_SEPARATOR);
     if (std::string::npos == pos) {
         return DLP_PARSE_ERROR_FD_ERROR;
