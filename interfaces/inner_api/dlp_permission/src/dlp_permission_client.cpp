@@ -402,22 +402,10 @@ int32_t DlpPermissionClient::UnregisterDlpSandboxChangeCallback(bool &result)
 int32_t DlpPermissionClient::CreateOpenDlpFileCallback(
     const std::shared_ptr<OpenDlpFileCallbackCustomize>& customizedCb, sptr<OpenDlpFileCallback>& callback)
 {
-    std::lock_guard<std::mutex> lock(callbackMutex_);
-    if (callbackMap_.size() == MAX_CALLBACK_MAP_SIZE) {
-        DLP_LOG_ERROR(LABEL, "the maximum number of callback has been reached");
-        return DLP_SERVICE_ERROR_VALUE_INVALID;
-    }
-
-    auto goalCallback = callbackMap_.find(customizedCb);
-    if (goalCallback != callbackMap_.end()) {
-        DLP_LOG_ERROR(LABEL, "already has the same callback");
-        return DLP_SERVICE_ERROR_VALUE_INVALID;
-    } else {
-        callback = new (std::nothrow) OpenDlpFileCallback(customizedCb);
-        if (!callback) {
-            DLP_LOG_ERROR(LABEL, "memory allocation for callback failed!");
-            return DLP_SERVICE_ERROR_MEMORY_OPERATE_FAIL;
-        }
+    callback = new (std::nothrow) OpenDlpFileCallback(customizedCb);
+    if (!callback) {
+        DLP_LOG_ERROR(LABEL, "memory allocation for callback failed!");
+        return DLP_SERVICE_ERROR_MEMORY_OPERATE_FAIL;
     }
     return DLP_OK;
 }
@@ -447,11 +435,25 @@ int32_t DlpPermissionClient::RegisterOpenDlpFileCallback(const std::shared_ptr<O
         return DLP_SERVICE_ERROR_SERVICE_NOT_EXIST;
     }
     result = proxy->RegisterOpenDlpFileCallback(cb->AsObject());
-    if (result == DLP_OK) {
+    if (result != DLP_OK) {
+        return result;
+    }
+    {
         std::lock_guard<std::mutex> lock(callbackMutex_);
+        if (callbackMap_.size() >= MAX_CALLBACK_MAP_SIZE) {
+            DLP_LOG_ERROR(LABEL, "the maximum number of callback has been reached");
+            proxy->UnRegisterOpenDlpFileCallback(cb->AsObject());
+            return DLP_SERVICE_ERROR_VALUE_INVALID;
+        }
+        auto goalCallback = callbackMap_.find(callback);
+        if (goalCallback != callbackMap_.end()) {
+            DLP_LOG_ERROR(LABEL, "already has the same callback");
+            proxy->UnRegisterOpenDlpFileCallback(cb->AsObject());
+            return DLP_SERVICE_ERROR_VALUE_INVALID;
+        }
         callbackMap_[callback] = cb;
     }
-    return result;
+    return DLP_OK;
 }
 
 int32_t DlpPermissionClient::UnRegisterOpenDlpFileCallback(
