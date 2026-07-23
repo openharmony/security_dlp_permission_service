@@ -2543,7 +2543,7 @@ HWTEST_F(DlpFileTest, GenEncData001, TestSize.Level0)
     DlpZipFile testFile(fdDlp, DLP_TEST_DIR, 0, "txt");
     initDlpFileCiper(testFile);
     testFile.contactAccount_ = "aa";
-    EXPECT_EQ(-1, testFile.GenEncData(-1));
+    EXPECT_EQ(DLP_PARSE_ERROR_FILE_OPERATE_FAIL, testFile.GenEncData(-1));
 
     DlpZipFile testFile2(fdDlp, DLP_TEST_DIR, 1, "txt");
     initDlpFileCiper(testFile2);
