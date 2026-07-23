@@ -1596,7 +1596,7 @@ bool GetBoolValue(napi_env env, napi_value jsObject, bool& result)
         return false;
     }
 
-    napi_get_value_bool(env, jsObject, &result);
+    NAPI_CALL_BASE(env, napi_get_value_bool(env, jsObject, &result), false);
     return true;
 }
 
