@@ -960,6 +960,10 @@ int32_t DlpPermissionService::InstallDlpSandbox(const std::string& bundleName, D
     if (!AccessTokenAdapter::IsSystemApp()) {
         return DLP_SERVICE_ERROR_NOT_SYSTEM_APP;
     }
+    if (userId < 0) {
+        DLP_LOG_ERROR(LABEL, "Invalid userId");
+        return DLP_SERVICE_ERROR_VALUE_INVALID;
+    }
     int32_t res = CheckWithInstallDlpSandbox(bundleName, uri, dlpFileAccess);
     if (res != DLP_OK) {
         return res;

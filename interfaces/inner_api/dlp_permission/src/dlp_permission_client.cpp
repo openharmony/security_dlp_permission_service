@@ -199,7 +199,8 @@ int32_t DlpPermissionClient::InstallDlpSandbox(const std::string& bundleName, DL
     int32_t userId, SandboxInfo& sandboxInfo, const std::string& uri)
 {
     if (bundleName.empty() ||
-        dlpFileAccess > DLPFileAccess::FULL_CONTROL || dlpFileAccess <= DLPFileAccess::NO_PERMISSION || uri.empty()) {
+        dlpFileAccess > DLPFileAccess::FULL_CONTROL || dlpFileAccess <= DLPFileAccess::NO_PERMISSION || uri.empty() ||
+        userId < 0) {
         return DLP_SERVICE_ERROR_VALUE_INVALID;
     }
     auto proxy = GetProxy(true);
