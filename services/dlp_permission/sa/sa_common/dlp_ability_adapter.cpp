@@ -81,11 +81,11 @@ void DlpAbilityAdapter::DisconnectPermServiceAbility()
 }
 
 int32_t DlpAbilityAdapter::HandleGetWaterMark(int32_t userId,
-    WaterMarkInfo &waterMarkInfo, std::condition_variable &waterMarkInfoCv)
+    std::shared_ptr<WaterMarkInfo> waterMarkInfo, std::condition_variable &waterMarkInfoCv)
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
     int32_t res = ConnectPermServiceAbility(userId,
-        [this, &waterMarkInfo, &waterMarkInfoCv](sptr<IRemoteObject> remoteObj) -> void {
+        [this, waterMarkInfo, &waterMarkInfoCv](sptr<IRemoteObject> remoteObj) -> void {
         do {
             if (remoteObj == nullptr) {
                 DLP_LOG_ERROR(LABEL, "ConnectCallback is nullptr.");
@@ -97,11 +97,11 @@ int32_t DlpAbilityAdapter::HandleGetWaterMark(int32_t userId,
                 DLP_LOG_ERROR(LABEL, "DlpAbilityStub is nullptr.");
                 break;
             }
-            int32_t waterMarkFd = proxy.HandleGetWaterMark(stub, waterMarkInfo);
+            int32_t waterMarkFd = proxy.HandleGetWaterMark(stub, *waterMarkInfo);
             if (waterMarkFd < 0) {
                 DLP_LOG_ERROR(LABEL, "HandleGetWaterMark failed, fd: %{public}d", waterMarkFd);
             }
-            waterMarkInfo.waterMarkFd = waterMarkFd;
+            waterMarkInfo->waterMarkFd = waterMarkFd;
             DLP_LOG_DEBUG(LABEL, "Get watermark success.");
         } while (0);
         waterMarkInfoCv.notify_all();
@@ -128,6 +128,7 @@ void DlpAbilityAdapter::SetIsDestroyFlag(bool flag)
 
 DlpAbilityAdapter::~DlpAbilityAdapter()
 {
+    SetIsDestroyFlag(true);
     DisconnectPermServiceAbility();
 }
 } // namespace DlpPermission

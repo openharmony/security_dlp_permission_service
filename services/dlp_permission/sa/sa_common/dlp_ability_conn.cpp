@@ -65,6 +65,10 @@ void DlpAbilityConnection::OnAbilityConnectDone(const AppExecFwk::ElementName &e
         return;
     }
     std::lock_guard<std::recursive_mutex> lock(mutex_);
+    if (isDestroyFlag_) {
+        DLP_LOG_ERROR(LABEL, "Object is destroying, ignore connect callback.");
+        return;
+    }
     remoteObj_ = remoteObj;
     DLP_LOG_INFO(LABEL, "Get Ability Connection.");
     if (connectCallback_ != nullptr) {
