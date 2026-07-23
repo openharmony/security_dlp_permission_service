@@ -40,6 +40,7 @@ DlpAbilityConnection::DlpAbilityConnection(ConnectCallback connectCallback,
 
 DlpAbilityConnection::~DlpAbilityConnection()
 {
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
     connectCallback_ = nullptr;
     disconnectCallback_ = nullptr;
 }
