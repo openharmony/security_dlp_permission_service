@@ -66,14 +66,6 @@ struct DIASdkLib {
             }
         }
     }
-    ~DIASdkLib() {
-        std::lock_guard<std::mutex> lock(g_lockDIACredSdk);
-        LOG_INFO("dlclose diaSdk");
-        if (g_diaCredentialSdkHandle != nullptr) {
-            dlclose(g_diaCredentialSdkHandle);
-            g_diaCredentialSdkHandle = nullptr;
-        }
-    }
 };
 
 static DIASdkLib diaSdkLib;
