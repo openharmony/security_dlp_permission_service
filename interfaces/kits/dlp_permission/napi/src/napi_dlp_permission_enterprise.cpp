@@ -418,7 +418,9 @@ napi_value NapiDlpPermission::SetEnterprisePolicy(napi_env env, napi_callback_in
     if (asyncContext->errCode != DLP_OK) {
         DlpNapiThrow(env, asyncContext->errCode, GetJsErrMsg(asyncContext->errCode));
     }
-    return nullptr;
+    napi_value result = nullptr;
+    NAPI_CALL_RETURN_VOID(env, napi_get_undefined(env, &result));
+    return result;
 }
 
 }  // namespace DlpPermission

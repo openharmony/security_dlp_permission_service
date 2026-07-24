@@ -79,9 +79,11 @@ int32_t OpenDlpFileCallbackManager::AddCallback(
             return DLP_OK;
         }
     }
-    if (callbackDeathRecipient_ != nullptr) {
-        callback->AddDeathRecipient(callbackDeathRecipient_);
+    if (callbackDeathRecipient_ == nullptr) {
+        DLP_LOG_ERROR(LABEL, "callbackDeathRecipient_ is nullptr");
+        return DLP_SERVICE_ERROR_VALUE_INVALID;
     }
+    callback->AddDeathRecipient(callbackDeathRecipient_);
     OpenDlpFileCallbackRecord recordInstance;
     recordInstance.callbackObject = callback;
     recordInstance.userId = userId;
