@@ -50,6 +50,7 @@ const int32_t FILEID_SIZE_OPPOSITE = -46;
 const int32_t WATERMARK_OPPOSITE = -58;
 const int32_t COUNTDOWN_FILETYPE = 10000;
 const int32_t INPUT_UDID_LEN = 65;
+const int32_t ADD_TWO = 2;
 }
 
 
@@ -163,11 +164,11 @@ std::string DlpUtils::GetDlpFileRealSuffix(const std::string& dlpFileName, bool&
 
 int32_t DlpUtils::GetFilePathByFd(const int32_t &fd, std::string &filePath)
 {
-    char *fileName = new (std::nothrow) char[MAX_DLP_FILE_SIZE + 2];
+    char *fileName = new (std::nothrow) char[MAX_DLP_FILE_SIZE + ADD_TWO];
     if (fileName == nullptr) {
         return DLP_PARSE_ERROR_MEMORY_OPERATE_FAIL;
     }
-    (void)memset_s(fileName, MAX_DLP_FILE_SIZE + 2, 0, MAX_DLP_FILE_SIZE + 2);
+    (void)memset_s(fileName, MAX_DLP_FILE_SIZE + ADD_TWO, 0, MAX_DLP_FILE_SIZE + ADD_TWO);
 
     std::string path = DESCRIPTOR_MAP_PATH + std::to_string(fd);
 
@@ -206,11 +207,11 @@ int32_t DlpUtils::GetFileNameWithDlpFd(const int32_t &fd, std::string &srcFileNa
 
 int32_t DlpUtils::GetFileNameWithFd(const int32_t &fd, std::string &srcFileName)
 {
-    char *fileName = new (std::nothrow) char[MAX_DLP_FILE_SIZE + 2];
+    char *fileName = new (std::nothrow) char[MAX_DLP_FILE_SIZE + ADD_TWO];
     if (fileName == nullptr) {
         return DLP_PARSE_ERROR_MEMORY_OPERATE_FAIL;
     }
-    (void)memset_s(fileName, MAX_DLP_FILE_SIZE + 2, 0, MAX_DLP_FILE_SIZE + 2);
+    (void)memset_s(fileName, MAX_DLP_FILE_SIZE + ADD_TWO, 0, MAX_DLP_FILE_SIZE + ADD_TWO);
 
     std::string path = DESCRIPTOR_MAP_PATH + std::to_string(fd);
 
