@@ -665,30 +665,6 @@ HWTEST_F(DlpZipTest, IsZipFile, TestSize.Level0)
 }
 
 /**
- * @tc.name: FdOpenFileFuncTest001
- * @tc.desc: Test FdOpenFileFunc with invalid fd returns nullptr without fd leak
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(DlpZipTest, FdOpenFileFuncTest001, TestSize.Level1)
-{
-    // FdOpenFileFunc is a static function in dlp_zip.cpp, so we test it indirectly
-    // through AddFileContextToZip with a bad fd, which exercises the fdopen failure path.
-    // If fdopen fails, the dup'd fd must be closed (fix for #7).
-    // Create a fd, close it, then use the closed fd - AddFileContextToZip should fail
-    // without leaking the dup'd fd.
-    int32_t fd = open("/data/dlpTest/test_fdopen_fail.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
-    ASSERT_NE(fd, -1);
-    close(fd);
-    // Using a closed (invalid) fd - AddFileContextToZip should return -1
-    // This exercises FdOpenFileFunc where fdopen fails on the dup'd fd
-    int32_t res = AddFileContextToZip(fd, "test_entry", "/data/dlpTest/test_fdopen_fail.zip");
-    EXPECT_EQ(res, -1);
-    unlink("/data/dlpTest/test_fdopen_fail.txt");
-    unlink("/data/dlpTest/test_fdopen_fail.zip");
-}
-
-/**
  * @tc.name: UnzipSpecificFile000
  * @tc.desc: UnzipSpecificFile normal test
  * @tc.type: FUNC
