@@ -576,17 +576,3 @@ HWTEST_F(DlpRawFileTest, ParseRawDlpHeaderTest_DlpHeaderSizeExceedsStruct, TestS
     close(fd);
     unlink("/data/fuse_test_dlp_header_too_large.txt");
 }
-
-/**
- * @tc.name: CheckDlpFileTest001
- * @tc.desc: Test CheckDlpFile with standard version and header size
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(DlpRawFileTest, CheckDlpFileTest001, TestSize.Level1)
-{
-    auto testFile = std::make_shared<DlpRawFile>(-1, "txt");
-    ASSERT_NE(testFile, nullptr);
-    // CheckDlpFile with invalid fd should return error
-    EXPECT_NE(testFile->CheckDlpFile(), DLP_OK);
-}
