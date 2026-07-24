@@ -446,6 +446,34 @@ static bool CheckJsonElement(const std::string& key, const Json& retentionJson, 
     return false;
 }
 
+bool SandboxJsonManager::ParseRetentionInfo(const Json& retentionJson, RetentionInfo& info)
+{
+    if (!CheckJsonElement(APPINDEX, retentionJson, KeyType::NUMBER) ||
+        !CheckJsonElement(BUNDLENAME, retentionJson, KeyType::STRING) ||
+        !CheckJsonElement(TOKENID, retentionJson, KeyType::NUMBER) ||
+        !CheckJsonElement(DOCURISET, retentionJson, KeyType::ARRAY) ||
+        !CheckJsonElement(USERID, retentionJson, KeyType::NUMBER) ||
+        !CheckJsonElement(DLPFILEACCESS, retentionJson, KeyType::NUMBER) ||
+        !CheckJsonElement(HAS_READ, retentionJson, KeyType::BOOL)) {
+        DLP_LOG_ERROR(LABEL, "json contains error");
+        return false;
+    }
+    retentionJson.at(APPINDEX).get_to(info.appIndex);
+    retentionJson.at(BUNDLENAME).get_to(info.bundleName);
+    retentionJson.at(DOCURISET).get_to(info.docUriSet);
+    retentionJson.at(TOKENID).get_to(info.tokenId);
+    retentionJson.at(DLPFILEACCESS).get_to(info.dlpFileAccess);
+    retentionJson.at(USERID).get_to(info.userId);
+    retentionJson.at(HAS_READ).get_to(info.hasRead);
+    if (retentionJson.find(BINDAPPINDEX) != retentionJson.end() &&
+        CheckJsonElement(BINDAPPINDEX, retentionJson, KeyType::NUMBER)) {
+        retentionJson.at(BINDAPPINDEX).get_to(info.bindAppIndex);
+    } else {
+        info.bindAppIndex = -1;
+    }
+    return true;
+}
+
 void SandboxJsonManager::FromJson(const Json& jsonObject)
 {
     if (jsonObject.is_null() || jsonObject.is_discarded() || !jsonObject.is_object()) {
@@ -458,28 +486,8 @@ void SandboxJsonManager::FromJson(const Json& jsonObject)
     }
     for (const auto& retentionJson : jsonObject["retention"]) {
         RetentionInfo info;
-        if (!CheckJsonElement(APPINDEX, retentionJson, KeyType::NUMBER) ||
-            !CheckJsonElement(BUNDLENAME, retentionJson, KeyType::STRING) ||
-            !CheckJsonElement(TOKENID, retentionJson, KeyType::NUMBER) ||
-            !CheckJsonElement(DOCURISET, retentionJson, KeyType::ARRAY) ||
-            !CheckJsonElement(USERID, retentionJson, KeyType::NUMBER) ||
-            !CheckJsonElement(DLPFILEACCESS, retentionJson, KeyType::NUMBER) ||
-            !CheckJsonElement(HAS_READ, retentionJson, KeyType::BOOL)) {
-            DLP_LOG_ERROR(LABEL, "json contains error");
+        if (!ParseRetentionInfo(retentionJson, info)) {
             continue;
-        }
-        retentionJson.at(APPINDEX).get_to(info.appIndex);
-        retentionJson.at(BUNDLENAME).get_to(info.bundleName);
-        retentionJson.at(DOCURISET).get_to(info.docUriSet);
-        retentionJson.at(TOKENID).get_to(info.tokenId);
-        retentionJson.at(DLPFILEACCESS).get_to(info.dlpFileAccess);
-        retentionJson.at(USERID).get_to(info.userId);
-        retentionJson.at(HAS_READ).get_to(info.hasRead);
-        if (retentionJson.find(BINDAPPINDEX) != retentionJson.end() &&
-            CheckJsonElement(BINDAPPINDEX, retentionJson, KeyType::NUMBER)) {
-            retentionJson.at(BINDAPPINDEX).get_to(info.bindAppIndex);
-        } else {
-            info.bindAppIndex = -1;
         }
         if (info.bundleName.empty() || info.appIndex < 0 || info.userId < 0 || info.tokenId == 0) {
             DLP_LOG_ERROR(LABEL, "param is invalid");
