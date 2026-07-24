@@ -51,7 +51,7 @@ typedef union {
 
 #define MODE_FILE_READ 0
 #define MODE_FILE_WRITE 1
-#define USER_R_W_FILE_PERMISSION 600
+#define USER_R_W_FILE_PERMISSION 066
 
 #define DLP_FREE_PTR(ptr) \
 { \
