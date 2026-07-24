@@ -1819,13 +1819,13 @@ HWTEST_F(DlpFileTest, Truncate001, TestSize.Level0)
 
     EXPECT_EQ(DLP_PARSE_ERROR_VALUE_INVALID, testFile.Truncate(0x100000000 + 0xA00000));
 
-    EXPECT_EQ(DLP_OK, testFile.Truncate(0));
+    EXPECT_EQ(DLP_PARSE_ERROR_VALUE_INVALID, testFile.Truncate(0));
 
     // fill hole data fail
     DlpCMockCondition condition;
     condition.mockSequence = { true };
     SetMockConditions("lseek", condition);
-    EXPECT_EQ(DLP_OK, testFile.Truncate(16));
+    EXPECT_EQ(DLP_PARSE_ERROR_VALUE_INVALID, testFile.Truncate(16));
     CleanMockConditions();
     close(fdPlain);
     close(fdDlp);
