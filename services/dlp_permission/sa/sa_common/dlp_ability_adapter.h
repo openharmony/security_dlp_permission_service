@@ -18,6 +18,7 @@
 
 #include <mutex>
 #include <functional>
+#include <memory>
 #include <iremote_object.h>
 #include "dlp_ability_conn.h"
 #include "dlp_ability_stub.h"
@@ -31,7 +32,8 @@ namespace DlpPermission {
 class DlpAbilityAdapter {
 public:
     explicit DlpAbilityAdapter(ReceiveDataCallback &callback);
-    int32_t HandleGetWaterMark(int32_t userId, WaterMarkInfo &waterMarkInfo, std::condition_variable &waterMarkInfoCv);
+    int32_t HandleGetWaterMark(int32_t userId, std::shared_ptr<WaterMarkInfo> waterMarkInfo,
+        std::condition_variable &waterMarkInfoCv);
     void SetIsDestroyFlag(bool flag);
     ~DlpAbilityAdapter();
 

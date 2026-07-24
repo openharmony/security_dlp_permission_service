@@ -522,6 +522,7 @@ int32_t EnterpriseSpaceDlpPermissionKit::DecryptDlpFile(int32_t plainFileFd, int
     result = DlpFileManager::GetInstance().RecoverDlpFile(filePtr, plainFileFd);
     if (result != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "recover dlp file fail with enterprise space.");
+        return result;
     }
     return DLP_OK;
 }

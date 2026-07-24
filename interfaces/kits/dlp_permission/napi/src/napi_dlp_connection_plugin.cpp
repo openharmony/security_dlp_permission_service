@@ -20,9 +20,11 @@
 #include "napi/native_node_api.h"
 #include "napi_common.h"
 #include "securec.h"
+#include "accesstoken_kit.h"
 #include "dlp_permission.h"
 #include "dlp_permission_log.h"
 #include "dlp_file_operator.h"
+#include "token_setproc.h"
 
 namespace OHOS {
 namespace Security {
@@ -408,8 +410,12 @@ static napi_value UnregisterPlugin(napi_env env, napi_callback_info cbInfo)
     if (CheckEmulator(env)) {
         return nullptr;
     }
-    if (!CheckPermission(env, PERMISSION_ENTERPRISE_ACCESS_DLP_FILE) &&
-        !CheckPermission(env, PERMISSION_ACCESS_DLP_SERVICE)) {
+    bool hasEnterprisePerm = AccessToken::AccessTokenKit::VerifyAccessToken(
+        GetSelfTokenID(), PERMISSION_ENTERPRISE_ACCESS_DLP_FILE) == AccessToken::PERMISSION_GRANTED;
+    bool hasAccessPerm = AccessToken::AccessTokenKit::VerifyAccessToken(
+        GetSelfTokenID(), PERMISSION_ACCESS_DLP_SERVICE) == AccessToken::PERMISSION_GRANTED;
+    if (!hasEnterprisePerm && !hasAccessPerm) {
+        DlpNapiThrow(env, ERR_JS_PERMISSION_DENIED);
         return nullptr;
     }
     DLP_LOG_INFO(LABEL, "Enter UnregisterPlugin.");

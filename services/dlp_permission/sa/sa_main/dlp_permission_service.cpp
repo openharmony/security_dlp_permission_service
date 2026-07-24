@@ -15,6 +15,7 @@
 
 #include "dlp_permission_service.h"
 #include <chrono>
+#include <unistd.h>
 #include "accesstoken_kit.h"
 #include "access_token_adapter.h"
 #include "account_adapt.h"
@@ -484,6 +485,10 @@ static int32_t GetPixelmapFromFd(WaterMarkInfo& waterMarkInfo)
         waterMarkInfo.waterMarkImg = resPixelmap->GetInnerPixelmap();
         DLP_LOG_INFO(LABEL, "watermark pixelmap size: %{public}d", waterMarkInfo.waterMarkImg->GetCapacity());
     } while (0);
+    if (waterMarkInfo.waterMarkFd >= 0) {
+        close(waterMarkInfo.waterMarkFd);
+        waterMarkInfo.waterMarkFd = -1;
+    }
     if (resPixelmap) {
         delete resPixelmap;
     }
@@ -561,18 +566,18 @@ int32_t DlpPermissionService::GetWaterMark(const bool waterMarkConfig,
     }
 
     int32_t userId = GetCallingUserId();
-    WaterMarkInfo wmInfo;
+    auto wmInfo = std::make_shared<WaterMarkInfo>();
     ReceiveDataCallback recvCallback = ReceiveCallback;
     DlpAbilityAdapter dlpAbilityAdapter(recvCallback);
     dlpAbilityAdapter.HandleGetWaterMark(userId, wmInfo, waterMarkInfoCv_);
-    
+
     waterMarkInfoCv_.wait_for(lock, std::chrono::seconds(PARSE_WAIT_TIME_OUT));
-    if (wmInfo.waterMarkFd < 0) {
+    if (wmInfo->waterMarkFd < 0) {
         DLP_LOG_ERROR(LABEL, "Get watermark fd failed.");
         return DLP_IPC_CALLBACK_ERROR;
     }
-    waterMarkInfo_.waterMarkFd = wmInfo.waterMarkFd;
-    waterMarkInfo_.maskInfo = wmInfo.maskInfo;
+    waterMarkInfo_.waterMarkFd = wmInfo->waterMarkFd;
+    waterMarkInfo_.maskInfo = wmInfo->maskInfo;
     res = GetPixelmapFromFd(waterMarkInfo_);
     if (res != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "GetPixelmapFromFd failed.");
@@ -957,6 +962,10 @@ int32_t DlpPermissionService::InstallDlpSandbox(const std::string& bundleName, D
     appStateObserver_->PostDelayUnloadTask(CurrentTaskState::SHORT_TASK);
     if (!AccessTokenAdapter::IsSystemApp()) {
         return DLP_SERVICE_ERROR_NOT_SYSTEM_APP;
+    }
+    if (userId < 0) {
+        DLP_LOG_ERROR(LABEL, "Invalid userId");
+        return DLP_SERVICE_ERROR_VALUE_INVALID;
     }
     int32_t res = CheckWithInstallDlpSandbox(bundleName, uri, dlpFileAccess);
     if (res != DLP_OK) {

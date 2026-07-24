@@ -52,7 +52,11 @@ DlpEventSubSubscriber::DlpEventSubSubscriber()
         matchingSkills.AddEvent(EventFwk::CommonEventSupport::COMMON_EVENT_PACKAGE_FULLY_REMOVED);
         EventFwk::CommonEventSubscribeInfo subscribeInfo(matchingSkills);
         subscriber_ = std::make_shared<AppUninstallObserver>(subscribeInfo);
-        EventFwk::CommonEventManager::SubscribeCommonEvent(subscriber_);
+        bool subscribeResult = EventFwk::CommonEventManager::SubscribeCommonEvent(subscriber_);
+        if (!subscribeResult) {
+            DLP_LOG_ERROR(LABEL, "SubscribeCommonEvent failed");
+            subscriber_ = nullptr;
+        }
     }
 }
 

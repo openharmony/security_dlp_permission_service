@@ -151,12 +151,12 @@ HWTEST_F(DlpAbilityAdapterTest, DlpAbilityAdapterTest003, TestSize.Level1)
     adapter.abilityConnection_ = BuildConnectedAbilityConnection();
     ASSERT_NE(adapter.abilityConnection_, nullptr);
 
-    WaterMarkInfo waterMarkInfo;
+    auto waterMarkInfoPtr = std::make_shared<WaterMarkInfo>();
     std::condition_variable waterMarkInfoCv;
-    int32_t ret = adapter.HandleGetWaterMark(USER_ID, waterMarkInfo, waterMarkInfoCv);
+    int32_t ret = adapter.HandleGetWaterMark(USER_ID, waterMarkInfoPtr, waterMarkInfoCv);
 
     EXPECT_EQ(ret, DLP_OK);
-    EXPECT_LT(waterMarkInfo.waterMarkFd, 0);
+    EXPECT_LT(waterMarkInfoPtr->waterMarkFd, 0);
     EXPECT_EQ(adapter.abilityConnection_, nullptr);
 }
 
@@ -292,12 +292,12 @@ HWTEST_F(DlpAbilityAdapterTest, DlpAbilityAdapterTest009, TestSize.Level1)
     adapter.abilityConnection_ = BuildConnectedAbilityConnection();
     ASSERT_NE(adapter.abilityConnection_, nullptr);
 
-    WaterMarkInfo waterMarkInfo;
+    auto waterMarkInfoPtr = std::make_shared<WaterMarkInfo>();
     std::condition_variable waterMarkInfoCv;
-    int32_t ret = adapter.HandleGetWaterMark(USER_ID, waterMarkInfo, waterMarkInfoCv);
+    int32_t ret = adapter.HandleGetWaterMark(USER_ID, waterMarkInfoPtr, waterMarkInfoCv);
 
     EXPECT_EQ(ret, DLP_OK);
-    EXPECT_LT(waterMarkInfo.waterMarkFd, 0);
+    EXPECT_LT(waterMarkInfoPtr->waterMarkFd, 0);
     EXPECT_EQ(adapter.abilityConnection_, nullptr);
 }
 
@@ -411,9 +411,9 @@ HWTEST_F(DlpAbilityAdapterTest, DlpAbilityAdapterTest013, TestSize.Level1)
     DlpAbilityAdapter adapter(callback);
     AAFwk::ExtensionManagerClient::SetConnectResult(DLP_ABILITY_CONNECT_ERROR);
 
-    WaterMarkInfo waterMarkInfo;
+    auto waterMarkInfoPtr = std::make_shared<WaterMarkInfo>();
     std::condition_variable waterMarkInfoCv;
-    int32_t ret = adapter.HandleGetWaterMark(USER_ID, waterMarkInfo, waterMarkInfoCv);
+    int32_t ret = adapter.HandleGetWaterMark(USER_ID, waterMarkInfoPtr, waterMarkInfoCv);
 
     EXPECT_EQ(ret, DLP_ABILITY_CONNECT_ERROR);
     EXPECT_EQ(adapter.abilityConnection_, nullptr);

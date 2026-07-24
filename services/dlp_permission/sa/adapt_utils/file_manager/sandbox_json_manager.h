@@ -70,6 +70,7 @@ public:
     int32_t RemoveRetentionInfoByUserId(const int32_t userId, const std::set<std::string>& bundleNameSet);
 
 private:
+    bool ParseRetentionInfo(const Json& retentionJson, RetentionInfo& info);
     bool InsertSandboxInfo(const RetentionInfo& info);
     sptr<AppExecFwk::IBundleMgr> GetBundleMgr();
     bool GetUserIdByUid(int32_t& userId);

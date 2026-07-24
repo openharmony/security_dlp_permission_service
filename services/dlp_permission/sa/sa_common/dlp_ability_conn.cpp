@@ -40,6 +40,7 @@ DlpAbilityConnection::DlpAbilityConnection(ConnectCallback connectCallback,
 
 DlpAbilityConnection::~DlpAbilityConnection()
 {
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
     connectCallback_ = nullptr;
     disconnectCallback_ = nullptr;
 }
@@ -65,6 +66,10 @@ void DlpAbilityConnection::OnAbilityConnectDone(const AppExecFwk::ElementName &e
         return;
     }
     std::lock_guard<std::recursive_mutex> lock(mutex_);
+    if (isDestroyFlag_) {
+        DLP_LOG_ERROR(LABEL, "Object is destroying, ignore connect callback.");
+        return;
+    }
     remoteObj_ = remoteObj;
     DLP_LOG_INFO(LABEL, "Get Ability Connection.");
     if (connectCallback_ != nullptr) {
@@ -77,6 +82,7 @@ void DlpAbilityConnection::OnAbilityConnectDone(const AppExecFwk::ElementName &e
 void DlpAbilityConnection::OnAbilityDisconnectDone(const AppExecFwk::ElementName &element, int res)
 {
     (void)res;
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
     if (disconnectCallback_ != nullptr && isDestroyFlag_ == false) {
         disconnectCallback_(DDLP_HAP_DISCONN_ERROR, 0, nullptr, 0);
     } else {
@@ -94,6 +100,7 @@ bool DlpAbilityConnection::IsConnected()
 
 void DlpAbilityConnection::SetIsDestroyFlag(bool flag)
 {
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
     isDestroyFlag_ = flag;
     DLP_LOG_INFO(LABEL, "Set DestroyFlag to %{public}d", flag);
 }

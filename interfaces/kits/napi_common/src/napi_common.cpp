@@ -1345,12 +1345,12 @@ napi_value DlpPropertyToJs(napi_env env, const DlpProperty& property)
     }
     NAPI_CALL(env, napi_set_named_property(env, dlpPropertyJs, "everyoneAccessList", everyoneAccessListJs));
 
-    napi_value offlineAccessJs;
-    napi_get_boolean(env, property.offlineAccess, &offlineAccessJs);
+    napi_value offlineAccessJs = nullptr;
+    NAPI_CALL(env, napi_get_boolean(env, property.offlineAccess, &offlineAccessJs));
     NAPI_CALL(env, napi_set_named_property(env, dlpPropertyJs, "offlineAccess", offlineAccessJs));
 
-    napi_value expireTimeJs;
-    napi_create_int64(env, property.expireTime, &expireTimeJs);
+    napi_value expireTimeJs = nullptr;
+    NAPI_CALL(env, napi_create_int64(env, property.expireTime, &expireTimeJs));
     NAPI_CALL(env, napi_set_named_property(env, dlpPropertyJs, "expireTime", expireTimeJs));
 
     napi_value ownerAccountJs;
@@ -1381,8 +1381,8 @@ napi_value DlpPropertyToJs(napi_env env, const DlpProperty& property)
     NAPI_CALL(env, napi_create_int32(env, property.allowedOpenCount, &allowedOpenCountJs));
     NAPI_CALL(env, napi_set_named_property(env, dlpPropertyJs, "allowedOpenCount", allowedOpenCountJs));
 
-    napi_value waterMarkConfigJs;
-    napi_get_boolean(env, property.waterMarkConfig, &waterMarkConfigJs);
+    napi_value waterMarkConfigJs = nullptr;
+    NAPI_CALL(env, napi_get_boolean(env, property.waterMarkConfig, &waterMarkConfigJs));
     NAPI_CALL(env, napi_set_named_property(env, dlpPropertyJs, "waterMarkConfig", waterMarkConfigJs));
 
     napi_value countdownJs;
@@ -1596,7 +1596,7 @@ bool GetBoolValue(napi_env env, napi_value jsObject, bool& result)
         return false;
     }
 
-    napi_get_value_bool(env, jsObject, &result);
+    NAPI_CALL_BASE(env, napi_get_value_bool(env, jsObject, &result), false);
     return true;
 }
 
