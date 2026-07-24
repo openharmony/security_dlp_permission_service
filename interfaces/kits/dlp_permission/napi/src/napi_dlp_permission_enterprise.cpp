@@ -418,7 +418,6 @@ napi_value NapiDlpPermission::SetEnterprisePolicy(napi_env env, napi_callback_in
     if (asyncContext->errCode != DLP_OK) {
         DlpNapiThrow(env, asyncContext->errCode, GetJsErrMsg(asyncContext->errCode));
     }
-    asyncContextPtr.release();
     return nullptr;
 }
 
