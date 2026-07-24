@@ -116,13 +116,16 @@ int32_t DlpPermissionKit::ParseDlpCertificate(sptr<CertParcel>& certParcel, Perm
         if (!callback->isCallBack_) {
             callback->parseCv_.wait_for(lck, std::chrono::seconds(PARSE_WAIT_TIME_OUT));
         }
+
         if (!callback->isCallBack_) {
             return DLP_CREDENTIAL_ERROR_NO_INTERNET;
         }
+
         if (callback->result_ == DLP_OK) {
             policy.CopyPermissionPolicy(callback->policy_);
             certParcel->offlineCert = callback->offlineCert_;
         }
+        
         return callback->result_;
     }
 }
