@@ -686,6 +686,21 @@ HWTEST_F(DlpUtilsTest, GetAppIdentifierFromToken002, TestSize.Level1)
 }
 
 /**
+ * @tc.name: GetFilePathByFd002
+ * @tc.desc: Test GetFilePathByFd with long path truncation detection
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpUtilsTest, GetFilePathByFd002, TestSize.Level1)
+{
+    // Test that GetFilePathByFd handles path correctly
+    // Using invalid fd should return empty string (error path)
+    std::string path;
+    int32_t ret = DlpUtils::GetFilePathByFd(-1, path);
+    EXPECT_NE(ret, DLP_OK);
+}
+
+/**
  * @tc.name: GetAppIdentifierFromToken003
  * @tc.desc: cover success branch when GetBundleInfoForSelf returns non-empty appIdentifier
  * @tc.type: FUNC

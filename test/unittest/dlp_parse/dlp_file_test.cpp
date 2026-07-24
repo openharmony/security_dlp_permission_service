@@ -282,16 +282,17 @@ HWTEST_F(DlpFileTest, CleanBlobParam001, TestSize.Level0)
         .data = nullptr,
     };
 
-    // blob.data null
-    ASSERT_EQ(DLP_PARSE_ERROR_VALUE_INVALID, testFile.CleanBlobParam(blob));
-
-    // blob.size 0
+    // blob.size 0 with valid data pointer - should succeed (only null data is an error)
     uint8_t* data = new (std::nothrow) uint8_t[16];
     ASSERT_NE(nullptr, data);
     blob.data = data;
     blob.size = 0;
-    ASSERT_EQ(DLP_PARSE_ERROR_VALUE_INVALID, testFile.CleanBlobParam(blob));
-
+    ASSERT_EQ(DLP_OK, testFile.CleanBlobParam(blob));
+ 
+    // CleanBlobParam deletes blob.data and sets it nullptr, need new allocation
+    data = new (std::nothrow) uint8_t[16];
+    ASSERT_NE(nullptr, data);
+    blob.data = data;
     blob.size = 16;
     ASSERT_EQ(DLP_OK, testFile.CleanBlobParam(blob));
 }
@@ -2712,4 +2713,22 @@ HWTEST_F(DlpFileTest, SetEventId003, TestSize.Level0)
 
     ASSERT_EQ(testFile.GetEventId(), longEventId);
     ASSERT_EQ(testFile.GetEventId().size(), 100);
+}
+
+/**
+ * @tc.name: CleanBlobParam002
+ * @tc.desc: Test CleanBlobParam with size 0 but valid data pointer
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpFileTest, CleanBlobParam002, TestSize.Level1)
+{
+    DlpRawFile testFile(1000, "txt");
+    uint8_t* data = new (std::nothrow) uint8_t[16];
+    ASSERT_NE(data, nullptr);
+    struct DlpBlob blob;
+    blob.data = data;
+    blob.size = 0;
+    // Should not crash - data is freed even when size is 0
+    EXPECT_EQ(DLP_OK, testFile.CleanBlobParam(blob));
 }

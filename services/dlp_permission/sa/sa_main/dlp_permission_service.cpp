@@ -302,6 +302,7 @@ bool DlpPermissionService::RegisterAppStateObserver()
     sptr<AppExecFwk::AppMgrProxy> proxy = new (std::nothrow)AppExecFwk::AppMgrProxy(obj);
     if (proxy == nullptr) {
         DLP_LOG_ERROR(LABEL, "Failed to create AppMgrProxy instance");
+        iAppMgr_->UnregisterApplicationStateObserver(tempAppStateObserver);
         iAppMgr_ = nullptr;
         return false;
     }
@@ -901,6 +902,8 @@ int32_t DlpPermissionService::HandleEnterpriseInstallDlpSandbox(SandboxInfo& san
         inputSandboxInfo.userId, inputSandboxInfo.uri);
     FillSandboxInfoFromEnterpriseFileInfo(dlpSandboxInfo, enterpriseInfo);
     if (!InsertDlpSandboxInfo(dlpSandboxInfo, !isNeedInstall)) {
+        UninstallDlpSandboxApp(inputSandboxInfo.bundleName, dlpSandboxInfo.appIndex, inputSandboxInfo.userId);
+        appStateObserver_->EraseEnterpriseInfoByUri(inputSandboxInfo.path, enterpriseInfo.fileId);
         return DLP_SERVICE_ERROR_INSTALL_SANDBOX_FAIL;
     }
     appStateObserver_->UpdateEnterpriseUidByUri(inputSandboxInfo.path, enterpriseInfo.fileId, dlpSandboxInfo.uid);
@@ -1187,7 +1190,8 @@ void DlpPermissionService::GetConfigFileValue(const std::string& cfgFile, std::v
         return ;
     }
     auto result = jsonObj.find(SUPPORT_FILE_TYPE);
-    if (result != jsonObj.end() && result->is_array() && !result->empty() && (*result)[0].is_string()) {
+    if (result != jsonObj.end() && result->is_array() && !result->empty() &&
+        std::all_of(result->begin(), result->end(), [](const auto& item) { return item.is_string(); })) {
         typeList = result->get<std::vector<std::string>>();
     }
 }
