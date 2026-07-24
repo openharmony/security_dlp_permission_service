@@ -122,7 +122,8 @@ int32_t DlpPermissionAsyncStub::OnParseDlpCertificateStub(MessageParcel& data, M
     std::vector<uint8_t> cert;
     if (!data.ReadUInt8Vector(&cert)) {
         DLP_LOG_ERROR(LABEL, "Read int8 vector fail");
-        this->OnGenerateDlpCertificate(DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL, {});
+        PermissionPolicy policyNull;
+        this->OnParseDlpCertificate(DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL, policyNull, {});
         return DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL;
     }
     this->OnParseDlpCertificate(result, policyParcel->policyParams_, cert);

@@ -464,7 +464,8 @@ int32_t DlpZipFile::GenEncData(int32_t inPlainFileFd)
 {
     int32_t encFile = -1;
     if (inPlainFileFd == -1) {
-        encFile = open(DLP_OPENING_ENC_DATA.c_str(), O_RDWR);
+        OPEN_AND_CHECK(encFile, DLP_OPENING_ENC_DATA.c_str(), O_RDWR, 0,
+            DLP_PARSE_ERROR_FILE_OPERATE_FAIL, LABEL);
     } else {
         uint64_t fileLen = 0;
         int32_t ret = GetFileSize(inPlainFileFd, fileLen);
@@ -907,7 +908,6 @@ int32_t DlpZipFile::DlpFileWrite(uint64_t offset, void* buf, uint32_t size)
         return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
     }
     int32_t res = DoDlpFileWrite(offset, buf, size);
-    UpdateDlpFileContentSize();
 
     // modify dlp file, clear old hmac value and will generate new
     if (hmac_.size != 0) {
@@ -939,11 +939,9 @@ int32_t DlpZipFile::Truncate(uint64_t size)
     int32_t res = DLP_OK;
     if (size < curSize) {
         res = ftruncate(opFd, size);
-        UpdateDlpFileContentSize();
         GenFileInZip(-1);
     } else if (size > curSize) {
         res = FillHoleData(curSize, size - curSize);
-        UpdateDlpFileContentSize();
         GenFileInZip(-1);
     } else {
         DLP_LOG_INFO(LABEL, "Truncate file size equals origin file");

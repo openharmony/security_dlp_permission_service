@@ -188,6 +188,9 @@ static void *FdOpenFileFunc(void *opaque, const char *filename, int mode)
         int fd = dup(*static_cast<int *>(opaque));
         if (fd != -1) {
             file = fdopen(fd, modeFopen);
+            if (file == nullptr) {
+                close(fd);
+            }
         }
     }
 

@@ -2238,3 +2238,102 @@ HWTEST_F(DlpCryptTest, DlpHIAECryptTest, TestSize.Level0)
     ASSERT_EQ(DlpHIAEDecrypt(nullptr, nullptr, 0, nullptr, nullptr), DLP_PARSE_ERROR_VALUE_INVALID);
     ClearDlpHIAEMgr();
 }
+
+/**
+ * @tc.name: DlpOpensslAesEncryptUpdate_MsgSizeZero
+ * @tc.desc: DlpOpensslAesEncryptUpdate with message size zero (DlpOpensslCheckMsg)
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpCryptTest, DlpOpensslAesEncryptUpdate_MsgSizeZero, TestSize.Level0)
+{
+    DLP_LOG_INFO(LABEL, "DlpOpensslAesEncryptUpdate_MsgSizeZero");
+    struct DlpBlob key = {32, g_key};
+    struct DlpCipherParam tagIv = {{16, g_iv}};
+    struct DlpUsageSpec usageSpec = {DLP_MODE_CTR, &tagIv};
+
+    uint8_t enc[16] = {0};
+    struct DlpBlob cipherText = {16, enc};
+
+    void* ctx;
+    int32_t ret = DlpOpensslAesEncryptInit(&ctx, &key, &usageSpec);
+    ASSERT_EQ(0, ret);
+
+    // message size is 0, data is non-null -> DlpOpensslCheckMsg returns false
+    uint8_t dummyData[1] = {0};
+    struct DlpBlob message = {0, dummyData};
+    ret = DlpOpensslAesEncryptUpdate(ctx, &message, &cipherText);
+    EXPECT_EQ(DLP_PARSE_ERROR_VALUE_INVALID, ret);
+
+    DlpOpensslAesHalFreeCtx(&ctx);
+}
+
+/**
+ * @tc.name: DlpOpensslAesDecryptUpdate_MsgSizeZero
+ * @tc.desc: DlpOpensslAesDecryptUpdate with message size zero (DlpOpensslCheckMsg)
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpCryptTest, DlpOpensslAesDecryptUpdate_MsgSizeZero, TestSize.Level0)
+{
+    DLP_LOG_INFO(LABEL, "DlpOpensslAesDecryptUpdate_MsgSizeZero");
+    struct DlpBlob key = {32, g_key};
+    struct DlpCipherParam tagIv = {{16, g_iv}};
+    struct DlpUsageSpec usageSpec = {DLP_MODE_CTR, &tagIv};
+
+    uint8_t dec[16] = {0};
+    struct DlpBlob plainText = {16, dec};
+
+    void* ctx;
+    int32_t ret = DlpOpensslAesDecryptInit(&ctx, &key, &usageSpec);
+    ASSERT_EQ(0, ret);
+
+    // message size is 0, data is non-null -> DlpOpensslCheckMsg returns false
+    uint8_t dummyData[1] = {0};
+    struct DlpBlob message = {0, dummyData};
+    ret = DlpOpensslAesDecryptUpdate(ctx, &message, &plainText);
+    EXPECT_EQ(DLP_PARSE_ERROR_VALUE_INVALID, ret);
+
+    DlpOpensslAesHalFreeCtx(&ctx);
+}
+
+/**
+ * @tc.name: AesParamCheck_MsgSizeZero
+ * @tc.desc: AesParamCheck with message size zero (DlpOpensslCheckMsg branch)
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpCryptTest, AesParamCheck_MsgSizeZero, TestSize.Level0)
+{
+    DLP_LOG_INFO(LABEL, "AesParamCheck_MsgSizeZero");
+    struct DlpBlob key = {32, g_key};
+    struct DlpCipherParam tagIv = {{16, g_iv}};
+    struct DlpUsageSpec usageSpec = {DLP_MODE_CTR, &tagIv};
+
+    // AesParamCheck is static, test via DlpOpensslAesEncryptInit path
+    // message size is 0, data is non-null -> DlpOpensslCheckMsg returns false
+    uint8_t dummyData[1] = {0};
+    struct DlpBlob message = {0, dummyData};
+    struct DlpBlob cipherText = {16, dummyData};
+
+    void* ctx = nullptr;
+    int32_t ret = DlpOpensslAesEncryptInit(&ctx, &key, &usageSpec);
+    ASSERT_EQ(0, ret);
+    ASSERT_NE(ctx, nullptr);
+
+    // AesEncryptUpdate calls DlpOpensslCheckMsg which checks size==0
+    ret = DlpOpensslAesEncryptUpdate(ctx, &message, &cipherText);
+    EXPECT_EQ(DLP_PARSE_ERROR_VALUE_INVALID, ret);
+
+    DlpOpensslAesHalFreeCtx(&ctx);
+
+    // Also test through DlpOpensslAesDecryptInit path
+    ret = DlpOpensslAesDecryptInit(&ctx, &key, &usageSpec);
+    ASSERT_EQ(0, ret);
+    ASSERT_NE(ctx, nullptr);
+
+    ret = DlpOpensslAesDecryptUpdate(ctx, &message, &cipherText);
+    EXPECT_EQ(DLP_PARSE_ERROR_VALUE_INVALID, ret);
+
+    DlpOpensslAesHalFreeCtx(&ctx);
+}

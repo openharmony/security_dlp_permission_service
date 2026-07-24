@@ -376,6 +376,10 @@ static bool RemoveDirRecursive(const char *path)
     }
     DIR *dir = opendir(path);
     if (dir == nullptr) {
+        if (errno == ENOENT) {
+            DLP_LOG_DEBUG(LABEL, "Path does not exist, skip removal");
+            return true;
+        }
         return false;
     }
 
@@ -405,15 +409,22 @@ static bool RemoveDirRecursive(const char *path)
 }
 
 std::mutex g_dirCleanLock;
-static void PrepareDirs(const std::string& path)
+static int32_t PrepareDirs(const std::string& path)
 {
     std::lock_guard<std::mutex> lock(g_dirCleanLock);
     static bool cleanOnce = true;
     if (cleanOnce) {
+        if (!RemoveDirRecursive(path.c_str())) {
+            DLP_LOG_ERROR(LABEL, "RemoveDirRecursive fail, path=%{private}s", path.c_str());
+            return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
+        }
         cleanOnce = false;
-        RemoveDirRecursive(path.c_str());
-        mkdir(path.c_str(), S_IRWXU);
+        if (mkdir(path.c_str(), S_IRWXU) != 0 && errno != EEXIST) {
+            DLP_LOG_ERROR(LABEL, "mkdir fail, path=%{private}s, errno=%{public}s", path.c_str(), strerror(errno));
+            return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
+        }
     }
+    return DLP_OK;
 }
 
 static int32_t GenerateRandomWorkDir(std::string &workDir)
@@ -430,9 +441,13 @@ static int32_t GenerateRandomWorkDir(std::string &workDir)
     return DLP_OK;
 }
 
-static void PrepareWorkDir(const std::string& path)
+static int32_t PrepareWorkDir(const std::string& path)
 {
-    mkdir(path.c_str(), S_IRWXU);
+    if (mkdir(path.c_str(), S_IRWXU) != 0 && errno != EEXIST) {
+        DLP_LOG_ERROR(LABEL, "mkdir fail, path=%{private}s, errno=%{public}s", path.c_str(), strerror(errno));
+        return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
+    }
+    return DLP_OK;
 }
 
 static std::string GetFileSuffix(const std::string& fileName)
@@ -469,16 +484,23 @@ int32_t DlpFileManager::GenZipDlpFile(DlpFileMes& dlpFileMes, const DlpProperty&
                                       std::shared_ptr<DlpFile>& filePtr, const std::string& workDir)
 {
     std::string cache = workDir + PATH_CACHE;
-    PrepareDirs(cache);
-
+    int32_t result = PrepareDirs(cache);
+    if (result != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "PrepareDirs fail, errno=%{public}d", result);
+        return result;
+    }
     std::string randomWorkDir;
-    int32_t result = GenerateRandomWorkDir(randomWorkDir);
+    result = GenerateRandomWorkDir(randomWorkDir);
     if (result != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "GenerateRandomWorkDir fail, errno=%{public}d", result);
         return result;
     }
     std::string realWorkDir = cache + '/' + randomWorkDir;
-    PrepareWorkDir(realWorkDir);
+    result = PrepareWorkDir(realWorkDir);
+    if (result != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "PrepareWorkDir fail, errno=%{public}d", result);
+        return result;
+    }
     int64_t timeStamp = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now()
         .time_since_epoch()).count();
     
@@ -879,15 +901,23 @@ int32_t DlpFileManager::OpenZipDlpFile(int32_t dlpFileFd, std::shared_ptr<DlpFil
                                        const std::string& realType)
 {
     std::string cache = workDir + PATH_CACHE;
-    PrepareDirs(cache);
+    int32_t result = PrepareDirs(cache);
+    if (result != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "PrepareDirs fail, errno=%{public}d", result);
+        return result;
+    }
     std::string randomWorkDir;
-    int32_t result = GenerateRandomWorkDir(randomWorkDir);
+    result = GenerateRandomWorkDir(randomWorkDir);
     if (result != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "Generate dir fail, errno=%{public}d", result);
         return result;
     }
     std::string realWorkDir = cache + '/' + randomWorkDir;
-    PrepareWorkDir(realWorkDir);
+    result = PrepareWorkDir(realWorkDir);
+    if (result != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "PrepareWorkDir fail, errno=%{public}d", result);
+        return result;
+    }
     int64_t timeStamp = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now()
         .time_since_epoch()).count();
 

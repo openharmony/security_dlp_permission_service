@@ -59,6 +59,7 @@ void ClientParseDlpCertificateCallback::OnParseDlpCertificate(int32_t result, co
 
 void GetWaterMarkCallback::OnCall(int32_t result, const GeneralInfo& info)
 {
+    std::unique_lock<std::mutex> lck(getWaterMarkMtx_);
     this->result_ = result;
     if (result == DLP_OK) {
         this->info_.SetWaterMark = true;

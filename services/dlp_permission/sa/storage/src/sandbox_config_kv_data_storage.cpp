@@ -51,7 +51,6 @@ int32_t SandboxConfigKvDataStorage::GetSandboxConfigFromDataStorage(int32_t user
         return DLP_SERVICE_ERROR_VALUE_INVALID;
     }
     res = IsKeyExists(key);
-    // if GetSandboxAppConfig not found, will return ok and configInfo is empty.
     if (!res) {
         DLP_LOG_ERROR(LABEL, "the key not exists.");
         return DLP_OK;
@@ -122,7 +121,7 @@ int32_t SandboxConfigKvDataStorage::GetKeyMapByUserId(const int32_t userId, std:
     for (auto it = infos.begin(); it != infos.end(); ++it) {
         std::size_t first = it->first.find_first_of(KEY_SEPATATOR);
         std::size_t second = it->first.find_last_of(KEY_SEPATATOR);
-        if (it->first.find(prefix) != std::string::npos && first != second) {
+        if (it->first.find(prefix) == 0 && first != second) {
             std::string bundleName = it->first.substr(prefix.length(), second - first - 1);
             std::string tokenId = it->first.substr(second + 1, it->first.length() - second - 1);
             keyMap[bundleName] = tokenId;

@@ -205,6 +205,7 @@ static void DlpPackPolicyCallback(uint64_t requestId, int errorCode, DLP_EncPoli
     int32_t res = DlpPermissionSerializer::GetInstance().SerializeEncPolicyData(*outParams, encDataJson);
     if (res != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "Serialize fail");
+        info.callback->OnGenerateDlpCertificate(res, std::vector<uint8_t>());
         return;
     }
     std::string encData = encDataJson.dump();
@@ -578,7 +579,6 @@ static int32_t GetDomainAccountName(std::string& account, const std::string& con
 
 static int32_t GetEnterpriseAccountName(AccountInfo& accountCfg, const std::string& appId, bool* isOwner)
 {
-    (void)isOwner;
     std::string account = appId;
     accountCfg.accountId = reinterpret_cast<uint8_t *>(strdup(account.c_str()));
     accountCfg.accountIdLen = strlen(account.c_str());
@@ -808,8 +808,16 @@ int32_t ParseUint8TypedArrayToStringVector(uint8_t *policy, const uint32_t *poli
     }
     int32_t offset = sizeof(uint32_t);
     for (uint32_t i = 0; i < count; i++) {
-        int32_t length = reinterpret_cast<int32_t *>(policy + offset)[0];
+        if (offset + sizeof(uint32_t) > static_cast<int32_t>(*policyLen)) {
+            DLP_LOG_ERROR(LABEL, "policy buffer overflow when reading length");
+            return DLP_SERVICE_ERROR_VALUE_INVALID;
+        }
+        uint32_t length = reinterpret_cast<uint32_t *>(policy + offset)[0];
         offset += sizeof(uint32_t);
+        if (length > MAX_APPID_LENGTH || offset + static_cast<int32_t>(length) > static_cast<int32_t>(*policyLen)) {
+            DLP_LOG_ERROR(LABEL, "policy buffer overflow when reading appId");
+            return DLP_SERVICE_ERROR_VALUE_INVALID;
+        }
         appIdList.push_back(std::string(reinterpret_cast<char *>(policy + offset), length));
         offset += length;
     }

@@ -39,6 +39,10 @@ void GetDlpPropertyExpireTime(napi_env env, napi_value jsObject, DlpProperty& pr
     if (!GetInt64ValueByKey(env, jsObject, "expireTime", jsExpireTime)) {
         DLP_LOG_INFO(LABEL, "js get expity time fail, set zero");
     }
+    if (jsExpireTime < 0) {
+        DLP_LOG_ERROR(LABEL, "js get expire time is invalid, will set zero");
+        jsExpireTime = 0;
+    }
     property.expireTime = static_cast<uint64_t>(jsExpireTime);
     int64_t jsActionUponExpiry = 0;
     if (!GetInt64ValueByKey(env, jsObject, "actionUponExpiry", jsActionUponExpiry)) {

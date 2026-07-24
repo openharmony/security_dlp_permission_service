@@ -518,3 +518,32 @@ HWTEST_F(DlpPermissionAsyncStubTest, OnRemoteRequest006, TestSize.Level0)
     int32_t ret = callback->OnRemoteRequest(100, data, reply, option);
     ASSERT_NE(DLP_OK, ret);
 }
+
+/**
+ * @tc.name: OnParseDlpCertificateStub006
+ * @tc.desc: Test OnParseDlpCertificateStub calls correct callback on result error
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionAsyncStubTest, OnParseDlpCertificateStub006, TestSize.Level1)
+{
+    class MockParseCallback : public ParseDlpCertificateCallback {
+    public:
+        void OnParseDlpCertificate(int32_t result, const PermissionPolicy& policy,
+            const std::vector<uint8_t>& cert) override {}
+    };
+    auto parseCallback = std::make_shared<MockParseCallback>();
+    auto callback = new (std::nothrow) DlpPermissionAsyncStub(parseCallback);
+    ASSERT_NE(callback, nullptr);
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+    ASSERT_TRUE(data.WriteInterfaceToken(DlpPermissionAsyncStub::GetDescriptor()));
+    ASSERT_TRUE(data.WriteInt32(DLP_PARSE_ERROR_VALUE_INVALID));
+ 
+    int32_t ret = callback->OnRemoteRequest(
+        static_cast<uint32_t>(DlpPermissionCallbackInterfaceCode::ON_PARSE_DLP_CERTIFICATE),
+        data, reply, option);
+    EXPECT_EQ(ret, DLP_OK);
+    delete callback;
+}

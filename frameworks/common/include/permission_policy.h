@@ -188,12 +188,12 @@ public:
     std::string appIdentifier_ = "";
 
 private:
-    uint8_t* aeskey_;
-    uint32_t aeskeyLen_;
-    uint8_t* iv_;
-    uint32_t ivLen_;
-    uint8_t* hmacKey_;
-    uint32_t hmacKeyLen_;
+    uint8_t* aeskey_ = nullptr;
+    uint32_t aeskeyLen_ = 0;
+    uint8_t* iv_ = nullptr;
+    uint32_t ivLen_ = 0;
+    uint8_t* hmacKey_ = nullptr;
+    uint32_t hmacKeyLen_ = 0;
 };
 
 void FreeCharBuffer(char* buff, uint32_t buffLen);

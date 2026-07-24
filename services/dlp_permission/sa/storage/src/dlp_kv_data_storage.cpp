@@ -59,10 +59,12 @@ void DlpKvDataStorage::TryTwice(const std::function<DistributedKv::Status()> &fu
 
 int32_t DlpKvDataStorage::LoadAllData(std::map<std::string, std::string> &infos)
 {
-    bool res = CheckKvStore();
-    if (!res) {
-        DLP_LOG_ERROR(LABEL, "kvStore is nullptr");
-        return DLP_COMMON_CHECK_KVSTORE_ERROR;
+    {
+        std::lock_guard<std::mutex> lock(kvStorePtrMutex_);
+        if (!CheckKvStore()) {
+            DLP_LOG_ERROR(LABEL, "kvStore is nullptr");
+            return DLP_COMMON_CHECK_KVSTORE_ERROR;
+        }
     }
     OHOS::DistributedKv::Status status = DistributedKv::Status::SUCCESS;
     std::vector<OHOS::DistributedKv::Entry> allEntries;
@@ -101,7 +103,6 @@ OHOS::DistributedKv::Status DlpKvDataStorage::GetKvStore()
 
 bool DlpKvDataStorage::CheckKvStore()
 {
-    std::lock_guard<std::mutex> lock(kvStorePtrMutex_);
     if (kvStorePtr_ != nullptr) {
         return true;
     }
@@ -130,15 +131,15 @@ int32_t DlpKvDataStorage::AddOrUpdateValue(const std::string &key, const std::st
 
 int32_t DlpKvDataStorage::RemoveValueFromKvStore(const std::string &keyStr)
 {
-    if (!CheckKvStore()) {
-        DLP_LOG_ERROR(LABEL, "kvStore is nullptr");
-        return DLP_COMMON_CHECK_KVSTORE_ERROR;
-    }
     OHOS::DistributedKv::Key key(keyStr);
     OHOS::DistributedKv::Status status;
     OHOS::DistributedKv::Value value;
     {
         std::lock_guard<std::mutex> lock(kvStorePtrMutex_);
+        if (!CheckKvStore()) {
+            DLP_LOG_ERROR(LABEL, "kvStore is nullptr");
+            return DLP_COMMON_CHECK_KVSTORE_ERROR;
+        }
         // check exist
         status = kvStorePtr_->Get(key, value);
         if (status == OHOS::DistributedKv::Status::IPC_ERROR) {
@@ -166,14 +167,13 @@ int32_t DlpKvDataStorage::RemoveValueFromKvStore(const std::string &keyStr)
 
 int32_t DlpKvDataStorage::DeleteKvStore()
 {
-    bool res = CheckKvStore();
-    if (!res) {
-        DLP_LOG_ERROR(LABEL, "kvStore is nullptr");
-        return DLP_QUERY_DISTRIBUTE_DATA_ERROR;
-    }
     OHOS::DistributedKv::Status status;
     {
         std::lock_guard<std::mutex> lock(kvStorePtrMutex_);
+        if (!CheckKvStore()) {
+            DLP_LOG_ERROR(LABEL, "kvStore is nullptr");
+            return DLP_QUERY_DISTRIBUTE_DATA_ERROR;
+        }
         dataManager_.CloseKvStore(this->appId_, this->storeId_);
         kvStorePtr_ = nullptr;
         status = dataManager_.DeleteKvStore(this->appId_, this->storeId_, baseDir_);
@@ -187,16 +187,15 @@ int32_t DlpKvDataStorage::DeleteKvStore()
 
 int32_t DlpKvDataStorage::PutValueToKvStore(const std::string &keyStr, const std::string &valueStr)
 {
-    bool res = CheckKvStore();
-    if (!res) {
-        DLP_LOG_ERROR(LABEL, "kvStore is nullptr");
-        return DLP_COMMON_CHECK_KVSTORE_ERROR;
-    }
     OHOS::DistributedKv::Key key(keyStr);
     OHOS::DistributedKv::Value value(valueStr);
     OHOS::DistributedKv::Status status;
     {
         std::lock_guard<std::mutex> lock(kvStorePtrMutex_);
+        if (!CheckKvStore()) {
+            DLP_LOG_ERROR(LABEL, "kvStore is nullptr");
+            return DLP_COMMON_CHECK_KVSTORE_ERROR;
+        }
         status = kvStorePtr_->Put(key, value);
         if (status == OHOS::DistributedKv::Status::IPC_ERROR) {
             status = kvStorePtr_->Put(key, value);
@@ -211,16 +210,15 @@ int32_t DlpKvDataStorage::PutValueToKvStore(const std::string &keyStr, const std
 
 int32_t DlpKvDataStorage::GetValueFromKvStore(const std::string &keyStr, std::string &valueStr)
 {
-    bool res = CheckKvStore();
-    if (!res) {
-        DLP_LOG_ERROR(LABEL, "kvStore is nullptr");
-        return DLP_COMMON_CHECK_KVSTORE_ERROR;
-    }
     OHOS::DistributedKv::Key key(keyStr);
     OHOS::DistributedKv::Value value;
     OHOS::DistributedKv::Status status;
     {
         std::lock_guard<std::mutex> lock(kvStorePtrMutex_);
+        if (!CheckKvStore()) {
+            DLP_LOG_ERROR(LABEL, "kvStore is nullptr");
+            return DLP_COMMON_CHECK_KVSTORE_ERROR;
+        }
         status = kvStorePtr_->Get(key, value);
         if (status == OHOS::DistributedKv::Status::IPC_ERROR) {
             DLP_LOG_ERROR(LABEL, "kvstore ipc error and try again, status = %{public}d", status);
@@ -240,6 +238,10 @@ OHOS::DistributedKv::Status DlpKvDataStorage::GetEntries(
 {
     OHOS::DistributedKv::Key allEntryKeyPrefix(subId);
     std::lock_guard<std::mutex> lock(kvStorePtrMutex_);
+    if (kvStorePtr_ == nullptr) {
+        DLP_LOG_ERROR(LABEL, "kvStore is nullptr");
+        return OHOS::DistributedKv::Status::ERROR;
+    }
     return kvStorePtr_->GetEntries(allEntryKeyPrefix, allEntries);
 }
 

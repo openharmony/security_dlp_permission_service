@@ -186,7 +186,7 @@ bool DlpRawFile::IsValidEnterpriseDlpHeader(const struct DlpHeader& head, uint32
 
 int32_t DlpRawFile::ParseRawDlpHeader(uint64_t fileLen, uint32_t dlpHeaderSize)
 {
-    if (fileLen <= FILE_HEAD || fileLen - FILE_HEAD <= dlpHeaderSize || dlpHeaderSize >= DLP_MAX_CERT_SIZE) {
+    if (fileLen <= FILE_HEAD || fileLen - FILE_HEAD <= dlpHeaderSize || dlpHeaderSize > sizeof(struct DlpHeader)) {
         DLP_LOG_ERROR(LABEL, "dlp file error");
         return DLP_PARSE_ERROR_FD_ERROR;
     }
@@ -394,9 +394,6 @@ int32_t DlpRawFile::CheckDlpFile()
     } else {
         return ParseEnterpriseRawDlpHeader(fileLen, dlpHeaderSize);
     }
-
-    DLP_LOG_ERROR(LABEL, "the version or HeaderSize is error");
-    return DLP_PARSE_ERROR_FILE_FORMAT_ERROR;
 }
 
 uint32_t DlpRawFile::GetOfflineCertSize(void)

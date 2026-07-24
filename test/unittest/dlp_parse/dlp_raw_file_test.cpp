@@ -546,3 +546,33 @@ HWTEST_F(DlpRawFileTest, ParseEnterpriseEventIdTest004, TestSize.Level1)
     close(fd);
     unlink("/data/fuse_test_eventid_empty.txt");
 }
+
+/**
+ * @tc.name: ParseRawDlpHeaderTest_DlpHeaderSizeExceedsStruct
+ * @tc.desc: test ParseRawDlpHeader with dlpHeaderSize > sizeof(struct DlpHeader)
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpRawFileTest, ParseRawDlpHeaderTest_DlpHeaderSizeExceedsStruct, TestSize.Level0)
+{
+    int32_t fd = open("/data/fuse_test_dlp_header_too_large.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
+    ASSERT_NE(fd, -1);
+    std::shared_ptr<DlpRawFile> filePtr = std::make_shared<DlpRawFile>(fd, "mp4");
+    ASSERT_NE(filePtr, nullptr);
+
+    // dlpHeaderSize > sizeof(struct DlpHeader) should fail with DLP_PARSE_ERROR_FD_ERROR
+    uint32_t dlpHeaderSize = sizeof(struct DlpHeader) + 1;
+    uint64_t fileLen = FILE_HEAD + dlpHeaderSize + 1;
+    ASSERT_EQ(DLP_PARSE_ERROR_FD_ERROR, filePtr->ParseRawDlpHeader(fileLen, dlpHeaderSize));
+
+    // dlpHeaderSize == sizeof(struct DlpHeader) should not fail this check
+    // (may fail on read validation, but not on the size check itself)
+    dlpHeaderSize = sizeof(struct DlpHeader);
+    fileLen = FILE_HEAD + dlpHeaderSize + 1;
+    // This should not return DLP_PARSE_ERROR_FD_ERROR from the size check
+    // It may fail on read but the size boundary condition passes
+    filePtr->ParseRawDlpHeader(fileLen, dlpHeaderSize);
+
+    close(fd);
+    unlink("/data/fuse_test_dlp_header_too_large.txt");
+}

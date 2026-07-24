@@ -44,12 +44,16 @@ static bool checkParams(GenerateInfoParams& params, const nlohmann::json& jsonOb
                         const std::string& versionKey, const std::string& infoKey)
 {
     auto iter = jsonObj.find(versionKey);
-    if (iter == jsonObj.end() || !iter->is_number_integer()) {
+    if (iter == jsonObj.end() || !iter->is_number_unsigned()) {
         return false;
     }
     iter = jsonObj.find(infoKey);
-    if (iter != jsonObj.end() && iter->is_array() &&
-        !iter->empty() && iter->at(0).is_string()) {
+    if (iter != jsonObj.end() && iter->is_array() && !iter->empty()) {
+        for (size_t i = 0; i < iter->size(); ++i) {
+            if (!iter->at(i).is_string()) {
+                return false;
+            }
+        }
         return true;
     }
     return false;

@@ -475,6 +475,60 @@ HWTEST_F(PermissionPolicyTest, CopyPermissionPolicy001, TestSize.Level1)
     policyDest->aeskey_ = nullptr;
     policyDest->aeskeyLen_ = 0;
 }
+
+/**
+ * @tc.name: IsValid009
+ * @tc.desc: Test IsValid with oversized classificationLabel_ nickNameMask_ appIdentifier_
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionPolicyTest, IsValid009, TestSize.Level1)
+{
+    PermissionPolicy policy;
+    policy.ownerAccount_ = "test";
+    policy.ownerAccountId_ = "test";
+    policy.ownerAccountType_ = CLOUD_ACCOUNT;
+    uint8_t key[16] = {0};
+    policy.SetAeskey(key, 16);
+    uint8_t iv[16] = {0};
+    policy.SetIv(iv, 16);
+    // classificationLabel_ exceeds MAX_FILEID_SIZE
+    policy.classificationLabel_ = std::string(1025, 'a');
+    EXPECT_FALSE(policy.IsValid());
+    policy.classificationLabel_ = "valid";
+    // nickNameMask_ exceeds MAX_FILEID_SIZE
+    policy.nickNameMask_ = std::string(1025, 'a');
+    EXPECT_FALSE(policy.IsValid());
+    policy.nickNameMask_ = "valid";
+    // appIdentifier_ exceeds MAX_FILEID_SIZE
+    policy.appIdentifier_ = std::string(1025, 'a');
+    EXPECT_FALSE(policy.IsValid());
+    policy.appIdentifier_ = "valid";
+    EXPECT_TRUE(policy.IsValid());
+}
+ 
+/**
+ * @tc.name: IsValid010
+ * @tc.desc: Test IsValid with empty account name
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionPolicyTest, IsValid010, TestSize.Level1)
+{
+    PermissionPolicy policy;
+    policy.ownerAccountId_ = "test";
+    policy.ownerAccountType_ = CLOUD_ACCOUNT;
+    uint8_t key[16] = {0};
+    policy.SetAeskey(key, 16);
+    uint8_t iv[16] = {0};
+    policy.SetIv(iv, 16);
+    // empty ownerAccount_ should fail
+    policy.ownerAccount_ = "";
+    EXPECT_FALSE(policy.IsValid());
+    // valid ownerAccount_ should pass
+    policy.ownerAccount_ = "test";
+    EXPECT_TRUE(policy.IsValid());
+}
 }  // namespace DlpPermission
 }  // namespace Security
 }  // namespace OHOS

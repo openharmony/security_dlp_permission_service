@@ -284,3 +284,76 @@ HWTEST_F(DlpPermissionClientTest, SetEnterpriseInfos002, TestSize.Level0)
 
     client.proxy_ = proxy;
 }
+
+/**
+ * @tc.name: RemoveMDMPolicy001
+ * @tc.desc: Test RemoveMDMPolicy with proxy available
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionClientTest, RemoveMDMPolicy001, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL, "RemoveMDMPolicy001");
+    auto& client = DlpPermissionClient::GetInstance();
+    int32_t ret = client.RemoveMDMPolicy();
+    ASSERT_TRUE(ret != DLP_CALLBACK_SA_WORK_ABNORMAL);
+}
+ 
+/**
+ * @tc.name: SetMDMPolicy001
+ * @tc.desc: Test SetMDMPolicy with proxy available
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionClientTest, SetMDMPolicy001, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL, "SetMDMPolicy001");
+    auto& client = DlpPermissionClient::GetInstance();
+    int32_t ret = client.SetMDMPolicy({"test"});
+    ASSERT_TRUE(ret != DLP_CALLBACK_SA_WORK_ABNORMAL);
+}
+ 
+/**
+ * @tc.name: GetMDMPolicy001
+ * @tc.desc: Test GetMDMPolicy with proxy available
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionClientTest, GetMDMPolicy001, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL, "GetMDMPolicy001");
+    auto& client = DlpPermissionClient::GetInstance();
+    std::vector<std::string> policy;
+    int32_t ret = client.GetMDMPolicy(policy);
+    ASSERT_TRUE(ret != DLP_CALLBACK_SA_WORK_ABNORMAL);
+}
+ 
+/**
+ * @tc.name: GetDlpSupportFileType001
+ * @tc.desc: Test GetDlpSupportFileType with proxy available
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionClientTest, GetDlpSupportFileType001, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL, "GetDlpSupportFileType001");
+    auto& client = DlpPermissionClient::GetInstance();
+    std::vector<std::string> types;
+    int32_t ret = client.GetDlpSupportFileType(types);
+    ASSERT_TRUE(ret != DLP_CALLBACK_SA_WORK_ABNORMAL);
+}
+ 
+/**
+ * @tc.name: GetDlpGatheringPolicy001
+ * @tc.desc: Test GetDlpGatheringPolicy with proxy available
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionClientTest, GetDlpGatheringPolicy001, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL, "GetDlpGatheringPolicy001");
+    auto& client = DlpPermissionClient::GetInstance();
+    bool isGathering = false;
+    int32_t ret = client.GetDlpGatheringPolicy(isGathering);
+    ASSERT_TRUE(ret != DLP_CALLBACK_SA_WORK_ABNORMAL);
+}

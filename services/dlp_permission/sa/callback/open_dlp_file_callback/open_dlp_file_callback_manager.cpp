@@ -64,7 +64,6 @@ int32_t OpenDlpFileCallbackManager::AddCallback(
         DLP_LOG_ERROR(LABEL, "callback size has reached limitation");
         return DLP_SERVICE_ERROR_VALUE_INVALID;
     }
-    callback->AddDeathRecipient(callbackDeathRecipient_);
     auto goalCallback = openDlpFileCallbackMap_.find(pid);
     if (goalCallback != openDlpFileCallbackMap_.end()) {
         DLP_LOG_INFO(LABEL, "callbacks in %{public}d not empty", pid);
@@ -80,6 +79,11 @@ int32_t OpenDlpFileCallbackManager::AddCallback(
             return DLP_OK;
         }
     }
+    if (callbackDeathRecipient_ == nullptr) {
+        DLP_LOG_ERROR(LABEL, "callbackDeathRecipient_ is nullptr");
+        return DLP_SERVICE_ERROR_VALUE_INVALID;
+    }
+    callback->AddDeathRecipient(callbackDeathRecipient_);
     OpenDlpFileCallbackRecord recordInstance;
     recordInstance.callbackObject = callback;
     recordInstance.userId = userId;
@@ -127,6 +131,10 @@ int32_t OpenDlpFileCallbackManager::RemoveCallback(int32_t pid, const sptr<IRemo
     DLP_LOG_INFO(LABEL, "RemoveCallback");
     if (pid == 0) {
         DLP_LOG_ERROR(LABEL, "pid == 0");
+        return DLP_SERVICE_ERROR_VALUE_INVALID;
+    }
+    if (callback == nullptr) {
+        DLP_LOG_ERROR(LABEL, "callback is nullptr");
         return DLP_SERVICE_ERROR_VALUE_INVALID;
     }
 
@@ -192,9 +200,11 @@ void OpenDlpFileCallbackManager::ExecuteCallbackAsync(const DlpSandboxInfo& dlpS
     }
     uint32_t sendCnt = 0;
     for (const auto& iter : callbackList) {
-        auto task = [this, iter, dlpSandboxInfo] { this->OnOpenDlpFile(iter, dlpSandboxInfo); };
+        auto task = [this, iter, dlpSandboxInfo] {
+            pthread_setname_np(pthread_self(), THREAD_EVENT);
+            this->OnOpenDlpFile(iter, dlpSandboxInfo);
+        };
         std::thread taskThread(task);
-        pthread_setname_np(taskThread.native_handle(), THREAD_EVENT);
         taskThread.detach();
         ++sendCnt;
     }

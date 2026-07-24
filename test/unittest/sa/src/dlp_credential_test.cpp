@@ -620,6 +620,23 @@ HWTEST_F(DlpCredentialTest, onGetDlpWaterMark01, TestSize.Level1)
     proxy->OnGetDlpWaterMark(result, info);
     EXPECT_EQ(info.SetWaterMark, true);
 }
+/**
+ * @tc.name: DlpCredentialTest013
+ * @tc.desc: Test ParseUint8TypedArrayToStringVector with empty policy buffer
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpCredentialTest, DlpCredentialTest013, TestSize.Level1)
+{
+    // ParseUint8TypedArrayToStringVector with zero-length valid buffer
+    uint8_t policy[sizeof(uint32_t)] = {0};
+    uint32_t policyLen = sizeof(uint32_t);
+    std::vector<std::string> appIdList;
+    // count=0 in buffer, should return OK with empty list
+    int32_t ret = ParseUint8TypedArrayToStringVector(policy, &policyLen, appIdList);
+    EXPECT_EQ(DLP_OK, ret);
+    EXPECT_EQ(static_cast<size_t>(0), appIdList.size());
+}
 }  // namespace DlpPermission
 }  // namespace Security
 }  // namespace OHOS

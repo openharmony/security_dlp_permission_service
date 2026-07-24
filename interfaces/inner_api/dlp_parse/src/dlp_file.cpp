@@ -140,12 +140,14 @@ int32_t DlpFile::CopyBlobParam(const struct DlpBlob& src, struct DlpBlob& dst) c
 
 int32_t DlpFile::CleanBlobParam(struct DlpBlob& blob) const
 {
-    if (blob.data == nullptr || blob.size == 0) {
+    if (blob.data == nullptr) {
         DLP_LOG_ERROR(LABEL, "blobData null");
         return DLP_PARSE_ERROR_VALUE_INVALID;
     }
-
-    (void)memset_s(blob.data, blob.size, 0, blob.size);
+ 
+    if (blob.size != 0) {
+        (void)memset_s(blob.data, blob.size, 0, blob.size);
+    }
     delete[] blob.data;
     blob.data = nullptr;
     blob.size = 0;

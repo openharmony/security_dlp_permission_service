@@ -926,6 +926,20 @@ HWTEST_F(FuseDaemonTest, FuseDaemonInit001, TestSize.Level0)
     FuseDaemon::fuseDaemonOper_.init(nullptr, &conn);
     EXPECT_EQ(FUSE_CAP_WRITEBACK_CACHE, conn.want);
 }
+
+/**
+ * @tc.name: WaitDaemonEnable001
+ * @tc.desc: Test WaitDaemonEnable returns correct status
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(FuseDaemonTest, WaitDaemonEnable001, TestSize.Level1)
+{
+    // WaitDaemonEnable on uninitialized daemon should return non-zero
+    int ret = FuseDaemon::WaitDaemonEnable();
+    // When daemon is not enabled, should return error
+    EXPECT_NE(ret, 0);
+}
 }  // namespace DlpPermission
 }  // namespace Security
 }  // namespace OHOS

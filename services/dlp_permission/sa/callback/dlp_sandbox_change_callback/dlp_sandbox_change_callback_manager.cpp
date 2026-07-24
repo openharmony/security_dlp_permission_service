@@ -128,7 +128,7 @@ int32_t DlpSandboxChangeCallbackManager::RemoveCallback(int32_t pid, bool &resul
 
 void DlpSandboxChangeCallbackManager::ExecuteCallbackAsync(const DlpSandboxInfo &dlpSandboxInfo)
 {
-    auto callbackStart = [&dlpSandboxInfo, this]() {
+    auto callbackStart = [dlpSandboxInfo, this]() {
         std::lock_guard<std::mutex> lock(mutex_);
         std::string name = "DlpCallback";
         pthread_setname_np(pthread_self(), name.substr(0, MAX_PTHREAD_NAME_LEN).c_str());
