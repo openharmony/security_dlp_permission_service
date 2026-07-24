@@ -18,6 +18,7 @@
 
 #include <mutex>
 #include <functional>
+#include <memory>
 #include <iremote_object.h>
 #include "dlp_ability_conn.h"
 #include "dlp_ability_stub.h"
