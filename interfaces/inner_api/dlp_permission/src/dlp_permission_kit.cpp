@@ -125,7 +125,7 @@ int32_t DlpPermissionKit::ParseDlpCertificate(sptr<CertParcel>& certParcel, Perm
             policy.CopyPermissionPolicy(callback->policy_);
             certParcel->offlineCert = callback->offlineCert_;
         }
-        
+
         return callback->result_;
     }
 }
