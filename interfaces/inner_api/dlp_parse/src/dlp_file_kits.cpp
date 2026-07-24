@@ -276,37 +276,38 @@ bool DlpFileKits::IsDlpFile(int32_t dlpFd)
         DLP_LOG_ERROR(LABEL, "seek dlp file start failed, %{public}s", strerror(errno));
         return false;
     }
-
-    uint32_t version = 0;
-    if (read(dlpFd, &version, sizeof(uint32_t)) != sizeof(uint32_t)) {
-        DLP_LOG_ERROR(LABEL, "can not read version, %{public}s", strerror(errno));
-        return false;
-    }
-
+ 
+    bool checkFlag = false;
     uint32_t dlpHeaderSize = 0;
-    if (read(dlpFd, &dlpHeaderSize, sizeof(uint32_t)) != sizeof(uint32_t)) {
-        DLP_LOG_ERROR(LABEL, "can not read dlpHeaderSize, %{public}s", strerror(errno));
-        return false;
-    }
-    if (version != CURRENT_VERSION || dlpHeaderSize < sizeof(struct DlpHeader) ||
-        dlpHeaderSize > ENTERPRISE_HEAD_MAX) {
-        DLP_LOG_ERROR(LABEL, "version or dlpHeaderSize is error");
-        return false;
-    }
-
     struct DlpHeader head;
-    if (read(dlpFd, &head, sizeof(struct DlpHeader)) != sizeof(struct DlpHeader)) {
-        DLP_LOG_ERROR(LABEL, "can not read dlp file head, %{public}s", strerror(errno));
-        return false;
-    }
+    uint32_t version = 0;
+    do {
+        if (read(dlpFd, &version, sizeof(uint32_t)) != sizeof(uint32_t)) {
+            DLP_LOG_ERROR(LABEL, "can not read version, %{public}s", strerror(errno));
+            break;
+        }
+        if (read(dlpFd, &dlpHeaderSize, sizeof(uint32_t)) != sizeof(uint32_t)) {
+            DLP_LOG_ERROR(LABEL, "can not read dlpHeaderSize, %{public}s", strerror(errno));
+            break;
+        }
+        if (version != CURRENT_VERSION || dlpHeaderSize < sizeof(struct DlpHeader) ||
+            dlpHeaderSize > ENTERPRISE_HEAD_MAX) {
+            DLP_LOG_ERROR(LABEL, "version or dlpHeaderSize is error");
+            break;
+        }
+        if (read(dlpFd, &head, sizeof(struct DlpHeader)) != sizeof(struct DlpHeader)) {
+            DLP_LOG_ERROR(LABEL, "can not read dlp file head, %{public}s", strerror(errno));
+            break;
+        }
+        checkFlag = true;
+    } while (0);
 
     if (lseek(dlpFd, curPos, SEEK_SET) < 0) {
         DLP_LOG_ERROR(LABEL, "seek dlp file back failed, %{public}s", strerror(errno));
         return false;
     }
-
-    return dlpHeaderSize == sizeof(struct DlpHeader) ? IsValidDlpHeader(head) :
-        IsValidEnterpriseDlpHeader(head, dlpHeaderSize);
+    return checkFlag ? (dlpHeaderSize == sizeof(struct DlpHeader) ? IsValidDlpHeader(head) :
+        IsValidEnterpriseDlpHeader(head, dlpHeaderSize)) : false;
 }
 
 static bool GetIsReadOnceOrWaterMark(const int32_t& fd, const std::string& generateInfoStr)

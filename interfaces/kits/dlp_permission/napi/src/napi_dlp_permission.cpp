@@ -386,6 +386,7 @@ void NapiDlpPermission::AddDlpLinkFileExcute(napi_env env, void* data)
     DlpLinkManager* manager = DlpFuseHelper::GetDlpLinkManagerInstance();
     if (!manager) {
         DLP_LOG_ERROR(LABEL, "Get instance failed.");
+        asyncContext->errCode = DLP_FUSE_ERROR_DLP_FILE_NULL;
         return;
     }
     asyncContext->errCode = manager->AddDlpLinkFile(asyncContext->dlpFileNative, asyncContext->linkFileName);
@@ -456,6 +457,7 @@ void NapiDlpPermission::StopDlpLinkFileExcute(napi_env env, void* data)
     DlpLinkManager* manager = DlpFuseHelper::GetDlpLinkManagerInstance();
     if (!manager) {
         DLP_LOG_ERROR(LABEL, "Get instance failed.");
+        asyncContext->errCode = DLP_FUSE_ERROR_DLP_FILE_NULL;
         return;
     }
     asyncContext->errCode = manager->StopDlpLinkFile(asyncContext->dlpFileNative);
@@ -526,6 +528,7 @@ void NapiDlpPermission::RestartDlpLinkFileExcute(napi_env env, void* data)
     DlpLinkManager* manager = DlpFuseHelper::GetDlpLinkManagerInstance();
     if (!manager) {
         DLP_LOG_ERROR(LABEL, "Get instance failed.");
+        asyncContext->errCode = DLP_FUSE_ERROR_DLP_FILE_NULL;
         return;
     }
     asyncContext->errCode = manager->RestartDlpLinkFile(asyncContext->dlpFileNative);
@@ -596,6 +599,7 @@ void NapiDlpPermission::ReplaceDlpLinkFileExcute(napi_env env, void* data)
     DlpLinkManager* manager = DlpFuseHelper::GetDlpLinkManagerInstance();
     if (!manager) {
         DLP_LOG_ERROR(LABEL, "Get instance failed.");
+        asyncContext->errCode = DLP_FUSE_ERROR_DLP_FILE_NULL;
         return;
     }
     asyncContext->errCode = manager->ReplaceDlpLinkFile(asyncContext->dlpFileNative, asyncContext->linkFileName);
@@ -666,6 +670,7 @@ void NapiDlpPermission::DeleteDlpLinkFileExcute(napi_env env, void* data)
     DlpLinkManager* manager = DlpFuseHelper::GetDlpLinkManagerInstance();
     if (!manager) {
         DLP_LOG_ERROR(LABEL, "Get instance failed.");
+        asyncContext->errCode = DLP_FUSE_ERROR_DLP_FILE_NULL;
         return;
     }
     asyncContext->errCode = manager->DeleteDlpLinkFile(asyncContext->dlpFileNative);

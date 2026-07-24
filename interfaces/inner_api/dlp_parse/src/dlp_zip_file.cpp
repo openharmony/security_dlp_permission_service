@@ -908,7 +908,10 @@ int32_t DlpZipFile::DlpFileWrite(uint64_t offset, void* buf, uint32_t size)
         return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
     }
     int32_t res = DoDlpFileWrite(offset, buf, size);
-
+    if (res < 0) {
+        DLP_LOG_ERROR(LABEL, "Do Dlp File Write failed");
+        return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
+    }
     // modify dlp file, clear old hmac value and will generate new
     if (hmac_.size != 0) {
         CleanBlobParam(hmac_);
