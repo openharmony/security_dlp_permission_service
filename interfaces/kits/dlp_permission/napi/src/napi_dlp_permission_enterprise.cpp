@@ -419,7 +419,7 @@ napi_value NapiDlpPermission::SetEnterprisePolicy(napi_env env, napi_callback_in
         DlpNapiThrow(env, asyncContext->errCode, GetJsErrMsg(asyncContext->errCode));
     }
     napi_value result = nullptr;
-    NAPI_CALL_RETURN_VOID(env, napi_get_undefined(env, &result));
+    NAPI_CALL(env, napi_get_undefined(env, &result));
     return result;
 }
 
