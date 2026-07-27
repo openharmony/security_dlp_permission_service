@@ -51,6 +51,7 @@ const int32_t WATERMARK_OPPOSITE = -58;
 const int32_t COUNTDOWN_FILETYPE = 10000;
 const int32_t INPUT_UDID_LEN = 65;
 const int32_t ADD_TWO = 2;
+const int32_t FILE_MAX_SIZE = 102400;
 }
 
 
@@ -173,7 +174,7 @@ int32_t DlpUtils::GetFilePathByFd(const int32_t &fd, std::string &filePath)
     std::string path = DESCRIPTOR_MAP_PATH + std::to_string(fd);
 
     int readLinkRes = readlink(path.c_str(), fileName, MAX_DLP_FILE_SIZE + 1);
-    if (readLinkRes < 0) {
+    if (readLinkRes < 0 || readLinkRes == static_cast<int>(MAX_DLP_FILE_SIZE)) {
         DLP_LOG_ERROR(LABEL, "fail to readlink uri, errno = %{public}d", errno);
         delete[] fileName;
         return DLP_PARSE_ERROR_FD_ERROR;
@@ -258,6 +259,11 @@ static bool IsExistFile(const std::string& path)
 
     struct stat buf = {};
     if (stat(path.c_str(), &buf) != 0) {
+        return false;
+    }
+
+    if (buf.st_size >= FILE_MAX_SIZE) {
+        DLP_LOG_ERROR(LABEL, "File is too large");
         return false;
     }
 
@@ -432,7 +438,7 @@ std::string DlpUtils::GetRealTypeWithFd(const int32_t& fd, bool& isFromUriName, 
             }
             GenerateInfoParams params;
             if (ParseDlpGeneralInfo(generateInfoStr, params) != DLP_OK) {
-                DLP_LOG_ERROR(LABEL, "ParseDlpGeneralInfo error: %{public}s", generateInfoStr.c_str());
+                DLP_LOG_ERROR(LABEL, "ParseDlpGeneralInfo error");
                 break;
             }
             realType = DlpUtils::GetExtractRealType(params.realType);

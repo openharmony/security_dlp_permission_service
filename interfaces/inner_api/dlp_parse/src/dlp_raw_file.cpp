@@ -693,12 +693,12 @@ int32_t DlpRawFile::DoWriteHmacAndCert(uint32_t hmacStrLen, std::string& hmacStr
         DLP_LOG_ERROR(LABEL, "write hmacStr failed, %{public}s", strerror(errno));
         return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
     }
-    if (write(dlpFd_, cert_.data, head_.certSize) != (ssize_t)head_.certSize) {
-        DLP_LOG_ERROR(LABEL, "write dlp cert data failed, %{public}s", strerror(errno));
-        return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
-    }
     if (MAX_CERT_SIZE < head_.certSize) {
         DLP_LOG_ERROR(LABEL, "the cert size is error");
+        return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
+    }
+    if (write(dlpFd_, cert_.data, head_.certSize) != (ssize_t)head_.certSize) {
+        DLP_LOG_ERROR(LABEL, "write dlp cert data failed, %{public}s", strerror(errno));
         return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
     }
     uint8_t* buffer = new (std::nothrow) uint8_t[MAX_CERT_SIZE - head_.certSize];
@@ -999,6 +999,7 @@ uint64_t DlpRawFile::GetFsContentSize() const
     if (fileStat.st_size < static_cast<off_t>(head_.txtOffset) ||
         fileStat.st_size - static_cast<off_t>(head_.txtOffset) <= head_.hmacSize ||
         fileStat.st_size - static_cast<off_t>(head_.txtOffset) - head_.hmacSize < head_.certSize ||
+        fileStat.st_size - static_cast<off_t>(head_.txtOffset) - head_.hmacSize < MAX_CERT_SIZE ||
         fileStat.st_size > static_cast<off_t>(DLP_MAX_RAW_CONTENT_SIZE)) {
         DLP_LOG_ERROR(LABEL, "size error %{public}s %{public}s", std::to_string(head_.txtOffset).c_str(),
             std::to_string(static_cast<uint64_t>(fileStat.st_size)).c_str());
@@ -1179,6 +1180,10 @@ int32_t DlpRawFile::Truncate(uint64_t size)
 
     uint64_t curSize = GetFsContentSize();
     int32_t res = DLP_OK;
+    if (curSize == INVALID_FILE_SIZE) {
+        DLP_LOG_ERROR(LABEL, "FsContentSize invalid");
+        return DLP_PARSE_ERROR_VALUE_INVALID;
+    }
     if (size < curSize) {
         res = ftruncate(opFd, head_.txtOffset + size);
         UpdateDlpFileContentSize();
