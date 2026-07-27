@@ -178,7 +178,7 @@ int32_t DlpUtils::GetFilePathByFd(const int32_t &fd, std::string &filePath)
         delete[] fileName;
         return DLP_PARSE_ERROR_FD_ERROR;
     }
-    if (readLinkRes > MAX_DLP_FILE_SIZE) {
+    if (readLinkRes > static_cast<int>(MAX_DLP_FILE_SIZE)) {
         DLP_LOG_ERROR(LABEL, "readlink result truncated, path too long");
         delete[] fileName;
         return DLP_PARSE_ERROR_FD_ERROR;
@@ -221,7 +221,7 @@ int32_t DlpUtils::GetFileNameWithFd(const int32_t &fd, std::string &srcFileName)
         delete[] fileName;
         return DLP_PARSE_ERROR_FD_ERROR;
     }
-    if (readLinkRes > MAX_DLP_FILE_SIZE) {
+    if (readLinkRes > static_cast<int>(MAX_DLP_FILE_SIZE)) {
         DLP_LOG_ERROR(LABEL, "readlink result truncated, path too long");
         delete[] fileName;
         return DLP_PARSE_ERROR_FD_ERROR;

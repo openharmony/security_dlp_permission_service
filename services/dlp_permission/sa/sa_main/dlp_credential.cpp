@@ -806,20 +806,21 @@ int32_t ParseUint8TypedArrayToStringVector(uint8_t *policy, const uint32_t *poli
         DLP_LOG_ERROR(LABEL, "get appId List too large");
         return DLP_SERVICE_ERROR_VALUE_INVALID;
     }
-    int32_t offset = sizeof(uint32_t);
+    int32_t sizeOfUint32 = static_cast<int32_t>(sizeof(uint32_t));
+    int32_t offset = sizeOfUint32;
     for (uint32_t i = 0; i < count; i++) {
-        if (offset + sizeof(uint32_t) > static_cast<int32_t>(*policyLen)) {
+        if (offset + sizeOfUint32 > static_cast<int32_t>(*policyLen)) {
             DLP_LOG_ERROR(LABEL, "policy buffer overflow when reading length");
             return DLP_SERVICE_ERROR_VALUE_INVALID;
         }
         uint32_t length = reinterpret_cast<uint32_t *>(policy + offset)[0];
-        offset += sizeof(uint32_t);
+        offset += sizeOfUint32;
         if (length > MAX_APPID_LENGTH || offset + static_cast<int32_t>(length) > static_cast<int32_t>(*policyLen)) {
             DLP_LOG_ERROR(LABEL, "policy buffer overflow when reading appId");
             return DLP_SERVICE_ERROR_VALUE_INVALID;
         }
         appIdList.push_back(std::string(reinterpret_cast<char *>(policy + offset), length));
-        offset += length;
+        offset += static_cast<int32_t>(length);
     }
     return DLP_OK;
 }
