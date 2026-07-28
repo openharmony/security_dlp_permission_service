@@ -1108,7 +1108,7 @@ HWTEST_F(DlpPermissionServiceTest, GenerateDlpCertificate001, TestSize.Level1)
     AuthUserInfo user;
     NewUserSample(user);
     policy.authUsers_.emplace_back(user);
-    policyParcel->policyParams_ = policy;
+    policyParcel->policyParams_.CopyPermissionPolicy(policy);
     res = dlpPermissionService_->GenerateDlpCertificate(policyParcel, callback);
     ASSERT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, res);
 }

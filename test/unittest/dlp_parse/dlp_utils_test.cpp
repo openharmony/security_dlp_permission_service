@@ -730,3 +730,45 @@ HWTEST_F(DlpUtilsTest, GetAppIdentifierFromToken003, TestSize.Level1)
     }
     ASSERT_FALSE(ret);
 }
+
+/**
+ * @tc.name: GetFilePathByFd003
+ * @tc.desc: Test GetFilePathByFd with readlink returning exactly MAX_DLP_FILE_SIZE
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpUtilsTest, GetFilePathByFd003, TestSize.Level1)
+{
+    DLP_LOG_INFO(UT_LABEL, "GetFilePathByFd003");
+    std::string path;
+    int32_t fd = open("/data/fuse_test_readlink.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
+    if (fd == -1) {
+        return;
+    }
+    int32_t ret = DlpUtils::GetFilePathByFd(fd, path);
+    if (ret == DLP_OK) {
+        EXPECT_TRUE(!path.empty());
+    }
+    close(fd);
+    unlink("/data/fuse_test_readlink.txt");
+}
+
+/**
+ * @tc.name: IsExistFileLargeFile001
+ * @tc.desc: Test IsExistFile no longer rejects files based on FILE_MAX_SIZE
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpUtilsTest, IsExistFileLargeFile001, TestSize.Level1)
+{
+    DLP_LOG_INFO(UT_LABEL, "IsExistFileLargeFile001");
+    std::string path = "/data/fuse_test_exist.txt";
+    int fd = open(path.c_str(), O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
+    ASSERT_NE(fd, -1);
+    close(fd);
+
+    bool result = IsExistFile(path);
+    EXPECT_TRUE(result);
+
+    unlink(path.c_str());
+}

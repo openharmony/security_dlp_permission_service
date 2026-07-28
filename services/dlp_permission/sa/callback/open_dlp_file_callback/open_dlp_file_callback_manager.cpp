@@ -163,7 +163,7 @@ int32_t OpenDlpFileCallbackManager::RemoveCallback(int32_t pid, const sptr<IRemo
         return DLP_OK;
     }
     DLP_LOG_INFO(LABEL, "Remove callback not found");
-    return DLP_OK;
+    return DLP_CALLBACK_PARAM_INVALID;
 }
 
 bool OpenDlpFileCallbackManager::OnOpenDlpFile(

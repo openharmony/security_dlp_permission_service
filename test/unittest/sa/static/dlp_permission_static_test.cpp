@@ -41,6 +41,7 @@
 #define private public
 #include "dlp_permission_service.h"
 #include "dlp_permission_service.cpp"
+#include "dlp_permission_service_ext.cpp"
 namespace OHOS {
 namespace Security {
 namespace DlpPermission {

@@ -339,7 +339,7 @@ HWTEST_F(DlpCallbackTest, OpenDlpFileCallback010, TestSize.Level1)
     sptr<TestOpenDlpFileCallback> callback2 = new (std::nothrow) TestOpenDlpFileCallback();
     ASSERT_NE(nullptr, callback2);
     res = OpenDlpFileCallbackManager::GetInstance().RemoveCallback(getpid(), callback2->AsObject());
-    EXPECT_EQ(DLP_OK, res);
+    EXPECT_EQ(DLP_CALLBACK_PARAM_INVALID, res);
 }
 
 /**

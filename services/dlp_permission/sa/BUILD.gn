@@ -174,6 +174,7 @@ ohos_shared_library("dlp_permission_service") {
     "sa_main/dlp_credential.cpp",
     "sa_main/dlp_permission_async_proxy.cpp",
     "sa_main/dlp_permission_service.cpp",
+    "sa_main/dlp_permission_service_ext.cpp",
     "storage/src/dlp_kv_data_storage.cpp",
     "storage/src/sandbox_config_kv_data_storage.cpp",
   ]

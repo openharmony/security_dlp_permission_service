@@ -312,6 +312,38 @@ HWTEST_F(DlpCredentialStaticTest, SetMDMPolicyTest001, TestSize.Level1) {
     ASSERT_EQ(ret, DLP_SERVICE_ERROR_VALUE_INVALID);
 }
 
+#ifdef SUPPORT_DLP_CREDENTIAL
+/**
+ * @tc.name: GetDlpCredSdkLibFunc001
+ * @tc.desc: Test GetDlpCredSdkLibFunc returns nullptr when g_sdkDestroying is true
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpCredentialStaticTest, GetDlpCredSdkLibFunc001, TestSize.Level1)
+{
+    g_sdkDestroying = true;
+    void *func = GetDlpCredSdkLibFunc("DLP_PackPolicy");
+    EXPECT_EQ(nullptr, func);
+    g_sdkDestroying = false;
+}
+
+/**
+ * @tc.name: ReleaseSdkRef001
+ * @tc.desc: Test ReleaseSdkRef decrements g_sdkUseCount when > 0, and no decrement when == 0
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpCredentialStaticTest, ReleaseSdkRef001, TestSize.Level1)
+{
+    g_sdkUseCount = 2;
+    ReleaseSdkRef();
+    EXPECT_EQ(1, g_sdkUseCount);
+    ReleaseSdkRef();
+    EXPECT_EQ(0, g_sdkUseCount);
+    ReleaseSdkRef();
+    EXPECT_EQ(0, g_sdkUseCount);
+}
+#endif
 }  // namespace DlpPermission
 }  // namespace Security
 }  // namespace OHOS

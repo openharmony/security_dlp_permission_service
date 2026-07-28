@@ -69,6 +69,8 @@ typedef int32_t (*DlpSetEnterprisePolicyFunction)(const uint8_t *policy, uint32_
 
 static void *g_dlpCredentialSdkHandle = nullptr;
 std::mutex g_lockDlpCredSdk;
+static int g_sdkUseCount = 0;
+static bool g_sdkDestroying = false;
 #endif
 }  // namespace
 
@@ -181,8 +183,29 @@ static int32_t QueryRequestIdle()
     return DLP_OK;
 }
 
+static void ReleaseSdkRef()
+{
+#ifdef SUPPORT_DLP_CREDENTIAL
+    std::lock_guard<std::mutex> lock(g_lockDlpCredSdk);
+    if (g_sdkUseCount <= 0) {
+        DLP_LOG_ERROR(LABEL, "ReleaseSdkRef g_sdkUseCount=%{public}d, possible double release!", g_sdkUseCount);
+        return;
+    }
+    g_sdkUseCount--;
+#endif
+}
+
+class SdkRefGuard {
+public:
+    SdkRefGuard() = default;
+    ~SdkRefGuard() { ReleaseSdkRef(); }
+    SdkRefGuard(const SdkRefGuard&) = delete;
+    SdkRefGuard& operator=(const SdkRefGuard&) = delete;
+};
+
 static void DlpPackPolicyCallback(uint64_t requestId, int errorCode, DLP_EncPolicyData* outParams)
 {
+    SdkRefGuard sdkRefGuard;
     DLP_LOG_INFO(LABEL, "Called, requestId: %{public}llu", static_cast<unsigned long long>(requestId));
     RequestInfo info;
     if (!GetCallbackFromRequestMap(requestId, info)) {
@@ -249,7 +272,7 @@ static int32_t GetNewCert(const unordered_json& plainPolicyJson, std::vector<uin
 }
 
 static int32_t DlpRestorePolicyCallbackCheck(sptr<IDlpPermissionCallback> callback, DlpAccountType accountType,
-    int errorCode, DLP_RestorePolicyData* outParams, PermissionPolicy policyInfo)
+    int errorCode, DLP_RestorePolicyData* outParams, const PermissionPolicy& policyInfo)
 {
     if (callback == nullptr || accountType == INVALID_ACCOUNT) {
         DLP_LOG_ERROR(LABEL, "callback is null or accountType is 0");
@@ -334,6 +357,7 @@ static int32_t CheckDebugPermission(const RequestInfo& requestInfo, PermissionPo
 
 static void DlpRestorePolicyCallback(uint64_t requestId, int errorCode, DLP_RestorePolicyData* outParams)
 {
+    SdkRefGuard sdkRefGuard;
     DLP_LOG_INFO(LABEL, "Called, requestId: %{public}llu", static_cast<unsigned long long>(requestId));
     RequestInfo requestInfo;
     if (!GetCallbackFromRequestMap(requestId, requestInfo)) {
@@ -391,6 +415,10 @@ static void FreeDlpPackPolicyParams(DLP_PackPolicyParams& packPolicy)
 static void *GetDlpCredSdkLibFunc(const char *funcName)
 {
     std::lock_guard<std::mutex> lock(g_lockDlpCredSdk);
+    if (g_sdkDestroying) {
+        DLP_LOG_ERROR(LABEL, "SDK is destroying, reject new call: %{public}s", funcName);
+        return nullptr;
+    }
     if (g_dlpCredentialSdkHandle == nullptr) {
         if (sizeof(void *) == LENGTH_FOR_64_BIT) {
             g_dlpCredentialSdkHandle = dlopen(DLP_CREDENTIAL_SDK_PATH_64_BIT.c_str(), RTLD_LAZY);
@@ -403,13 +431,23 @@ static void *GetDlpCredSdkLibFunc(const char *funcName)
     }
 
     void *func = dlsym(g_dlpCredentialSdkHandle, funcName);
+    if (func != nullptr) {
+        g_sdkUseCount++;
+    }
     return func;
 }
+#endif
 
+#ifdef SUPPORT_DLP_CREDENTIAL
 static void DestroyDlpCredentialSdk()
 {
     DLP_LOG_INFO(LABEL, "start DestroyDlpCredentialSdk.");
     std::lock_guard<std::mutex> lock(g_lockDlpCredSdk);
+    g_sdkDestroying = true;
+    if (g_sdkUseCount != 0) {
+        DLP_LOG_ERROR(LABEL, "%{public}d SDK calls still active, skip dlclose.", g_sdkUseCount);
+        return;
+    }
     if (g_dlpCredentialSdkHandle != nullptr) {
         dlclose(g_dlpCredentialSdkHandle);
         g_dlpCredentialSdkHandle = nullptr;
@@ -452,6 +490,7 @@ static int32_t PackPolicy(DLP_PackPolicyParams &packPolicy, DlpAccountType accou
 #endif
     if (res != 0) {
         DLP_LOG_ERROR(LABEL, "Start request fail, error: %{public}d", res);
+        ReleaseSdkRef();
         return ConvertCredentialError(res);
     }
     DLP_LOG_INFO(
@@ -683,6 +722,7 @@ static int32_t RestorePolicy(DLP_EncPolicyData &encPolicy, AppExecFwk::Applicati
 #endif
     if (res != 0) {
         DLP_LOG_ERROR(LABEL, "Start request fail, error: %{public}d", res);
+        ReleaseSdkRef();
         return ConvertCredentialError(res);
     }
     DLP_LOG_INFO(
@@ -887,6 +927,7 @@ int32_t DlpCredential::SetMDMPolicy(const std::vector<std::string>& appIdList)
         return DLP_SERVICE_ERROR_VALUE_INVALID;
     }
     res = (*dlpAddPolicyFunc)(PolicyType::AUTHORIZED_APPLICATION_LIST, policy, policyLen);
+    ReleaseSdkRef();
 #else
     res = DLP_AddPolicy(PolicyType::AUTHORIZED_APPLICATION_LIST, policy, policyLen);
 #endif
@@ -914,6 +955,7 @@ int32_t DlpCredential::GetMDMPolicy(std::vector<std::string>& appIdList)
         return DLP_SERVICE_ERROR_VALUE_INVALID;
     }
     int32_t res = (*dlpGetPolicyFunc)(PolicyType::AUTHORIZED_APPLICATION_LIST, policy, &policyLen);
+    ReleaseSdkRef();
 #else
     int32_t res = DLP_GetPolicy(PolicyType::AUTHORIZED_APPLICATION_LIST, policy, &policyLen);
 #endif
@@ -945,6 +987,7 @@ int32_t DlpCredential::RemoveMDMPolicy()
         return DLP_SERVICE_ERROR_VALUE_INVALID;
     }
     int32_t res = (*dlpRemovePolicyFunc)(PolicyType::AUTHORIZED_APPLICATION_LIST);
+    ReleaseSdkRef();
 #else
     int32_t res = DLP_RemovePolicy(PolicyType::AUTHORIZED_APPLICATION_LIST);
 #endif
@@ -978,6 +1021,7 @@ int32_t DlpCredential::CheckMdmPermission(const std::string& bundleName, int32_t
         return DLP_SERVICE_ERROR_VALUE_INVALID;
     }
     int32_t res = (*dlpCheckPermissionFunc)(PolicyType::AUTHORIZED_APPLICATION_LIST, handle);
+    ReleaseSdkRef();
 #else
     int32_t res = DLP_CheckPermission(PolicyType::AUTHORIZED_APPLICATION_LIST, handle);
 #endif
@@ -1010,6 +1054,7 @@ int32_t DlpCredential::SetEnterprisePolicy(const std::string& policy)
         return DLP_SERVICE_ERROR_VALUE_INVALID;
     }
     int32_t res = (*dlpSetEnterprisePolicyFunc)(reinterpret_cast<uint8_t *>(policyCopy), policyLen);
+    ReleaseSdkRef();
 #else
     int32_t res = DLP_SetEnterprisePolicy(reinterpret_cast<uint8_t *>(policyCopy), policyLen);
 #endif

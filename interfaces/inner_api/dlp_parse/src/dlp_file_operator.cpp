@@ -270,6 +270,7 @@ int32_t EnterpriseSpaceDlpPermissionKit::EnterpriseSpacePrepareWorkDir(int32_t d
     std::string realSuffix = DlpUtils::GetRealTypeWithFd(dlpFileFd, isFromUriName, generateInfoStr, true);
     if (realSuffix == "") {
         DLP_LOG_ERROR(LABEL, "Get real suffix error.");
+        rmdir(realWorkDir.c_str());
         return DLP_PARSE_ERROR_VALUE_INVALID;
     }
     std::string lower = DlpUtils::ToLowerString(realSuffix);

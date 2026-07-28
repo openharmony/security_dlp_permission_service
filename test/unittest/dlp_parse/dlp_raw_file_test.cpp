@@ -16,6 +16,7 @@
 #include "dlp_raw_file_test.h"
 #include <cstdio>
 #include <cstring>
+#include "securec.h"
 #include <fcntl.h>
 #include <iostream>
 #include <fstream>
@@ -42,6 +43,44 @@ static const std::string DLP_TEST_DIR = "/data/dlpTest/";
 static constexpr int32_t SECOND = 2;
 static const uint32_t FILE_HEAD = 8;
 static const uint32_t MAX_CERT_SIZE = 30 * 1024;
+
+void initDlpRawFileCiper(DlpRawFile &testFile)
+{
+    uint8_t keyData[16] = {};
+    struct DlpBlob key = {
+        .data = keyData,
+        .size = 16
+    };
+
+    uint8_t ivData[16] = {};
+    struct DlpCipherParam param;
+    param.iv.data = ivData;
+    param.iv.size = IV_SIZE;
+    struct DlpUsageSpec spec = {
+        .mode = DLP_MODE_CTR,
+        .algParam = &param
+    };
+
+    uint8_t hmacKeyData[32] = {};
+    struct DlpBlob hmacKey = {
+        .data = hmacKeyData,
+        .size = 32
+    };
+
+    testFile.SetCipher(key, spec, hmacKey);
+    uint8_t* cert = new (std::nothrow) uint8_t[16];
+    if (cert == nullptr) {
+        return;
+    }
+    struct DlpBlob certKey = {
+        .data = cert,
+        .size = 16
+    };
+    testFile.SetEncryptCert(certKey);
+    delete[] certKey.data;
+    certKey.data = nullptr;
+    certKey.size = 0;
+}
 }
 
 void DlpRawFileTest::SetUpTestCase() {}
@@ -575,4 +614,33 @@ HWTEST_F(DlpRawFileTest, ParseRawDlpHeaderTest_DlpHeaderSizeExceedsStruct, TestS
 
     close(fd);
     unlink("/data/fuse_test_dlp_header_too_large.txt");
+}
+
+/**
+ * @tc.name: DestructorOfflineCertMemsetSize001
+ * @tc.desc: test destructor uses offlineCert_.size instead of head_.offlineCertSize for memset_s
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpRawFileTest, DestructorOfflineCertMemsetSize001, TestSize.Level0)
+{
+    int32_t fd = open("/data/fuse_test_offline_memset.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
+    ASSERT_NE(fd, -1);
+
+    DlpRawFile* testFile = new DlpRawFile(fd, "txt");
+    initDlpRawFileCiper(*testFile);
+
+    uint8_t offlineData[32] = {};
+    for (int i = 0; i < 32; i++) {
+        offlineData[i] = static_cast<uint8_t>(i + 1);
+    }
+    testFile->offlineCert_.data = new uint8_t[32];
+    testFile->offlineCert_.size = 32;
+    memcpy_s(testFile->offlineCert_.data, 32, offlineData, 32);
+    testFile->head_.offlineCertSize = 16;
+
+    delete testFile;
+
+    close(fd);
+    unlink("/data/fuse_test_offline_memset.txt");
 }

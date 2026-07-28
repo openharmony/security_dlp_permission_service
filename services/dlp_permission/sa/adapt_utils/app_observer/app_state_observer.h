@@ -72,7 +72,7 @@ public:
     void GetNeededDelEnterpriseSandbox(const std::string& label,
         const std::string& appIdentifier, std::vector<DlpSandboxInfo>& appInfos);
     void GetDelSandboxInfo(std::unordered_map<int32_t, DlpSandboxInfo>& sandboxInfo);
-    void UpdatReadFlag(int32_t uid);
+    void UpdateReadFlag(int32_t uid);
     bool GetOpeningSandboxInfo(const std::string& bundleName, const std::string& uri,
         int32_t userId, SandboxInfo& sandboxInfo, const std::string& fileId);
     bool GetOpeningEnterpriseSandboxInfo(SandboxInfo& sandboxInfo,

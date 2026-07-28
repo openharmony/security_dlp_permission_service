@@ -579,6 +579,22 @@ HWTEST_F(DlpFileOperatorTest, GetFileSuffix001, TestSize.Level0)
     EXPECT_EQ(GetAccountTypeFromCert(cert), INVALID_ACCOUNT);
 }
 
+/**
+ * @tc.name: EnterpriseSpacePrepareWorkDirRmdir001
+ * @tc.desc: test EnterpriseSpacePrepareWorkDir cleans up work dir on GetRealTypeWithFd failure
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpFileOperatorTest, EnterpriseSpacePrepareWorkDirRmdir001, TestSize.Level0)
+{
+    DLP_LOG_INFO(UT_LABEL, "EnterpriseSpacePrepareWorkDirRmdir001");
+    std::string workDir = "/data/dlpOperatorTest";
+    EnterpriseSpaceDlpPermissionKit kit;
+    std::shared_ptr<DlpFile> filePtr;
+    int32_t ret = kit.EnterpriseSpacePrepareWorkDir(-1, filePtr, workDir);
+    EXPECT_NE(ret, DLP_OK);
+}
+
 }  // namespace DlpPermission
 }  // namespace Security
 }  // namespace OHOS

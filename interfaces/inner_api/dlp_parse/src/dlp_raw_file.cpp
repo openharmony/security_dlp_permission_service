@@ -100,7 +100,7 @@ DlpRawFile::~DlpRawFile()
     }
 
     if (offlineCert_.data != nullptr) {
-        (void)memset_s(offlineCert_.data, head_.offlineCertSize, 0, head_.offlineCertSize);
+        (void)memset_s(offlineCert_.data, offlineCert_.size, 0, offlineCert_.size);
         delete[] offlineCert_.data;
         offlineCert_.data = nullptr;
     }
@@ -1053,9 +1053,9 @@ int32_t DlpRawFile::WriteFirstBlockData(uint64_t offset, void* buf, uint32_t siz
         if (readLen == 0) {
             break;
         }
-
-        struct DlpBlob message1 = {.size = prefixingSize, .data = enBuf};
-        struct DlpBlob message2 = {.size = prefixingSize, .data = deBuf};
+        uint32_t decryptSize = static_cast<uint32_t>(readLen);
+        struct DlpBlob message1 = {.size = decryptSize, .data = enBuf};
+        struct DlpBlob message2 = {.size = decryptSize, .data = deBuf};
         if (DoDlpBlockCryptOperation(message1, message2, alignOffset, false) != DLP_OK) {
             DLP_LOG_ERROR(LABEL, "decrypt appending bytes fail, %{public}s", strerror(errno));
             return DLP_PARSE_ERROR_CRYPT_FAIL;

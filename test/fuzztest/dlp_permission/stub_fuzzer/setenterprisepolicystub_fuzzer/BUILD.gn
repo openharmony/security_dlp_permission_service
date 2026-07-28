@@ -24,6 +24,7 @@ ohos_fuzztest("SetEnterprisePolicyStubFuzzTest") {
   configs = [ "${dlp_root_dir}/test/fuzztest/dlp_permission:stub_fuzz_config" ]
   sources = [
     "${dlp_root_dir}/services/dlp_permission/sa/sa_main/dlp_permission_service.cpp",
+    "${dlp_root_dir}/services/dlp_permission/sa/sa_main/dlp_permission_service_ext.cpp",
     "${dlp_root_dir}/services/dlp_permission/sa/sa_common/dlp_ability_adapter.cpp",
     "${dlp_root_dir}/services/dlp_permission/sa/sa_common/dlp_ability_conn.cpp",
     "${dlp_root_dir}/services/dlp_permission/sa/sa_common/dlp_ability_proxy.cpp",

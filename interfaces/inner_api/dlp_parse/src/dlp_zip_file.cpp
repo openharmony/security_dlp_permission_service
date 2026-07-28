@@ -250,7 +250,7 @@ bool DlpZipFile::ParseCert()
 
 bool DlpZipFile::ParseEncData()
 {
-    int32_t fd = open(DLP_OPENING_ENC_DATA.c_str(), O_RDWR);
+    int32_t fd = open(DLP_OPENING_ENC_DATA.c_str(), O_RDWR | O_NOFOLLOW);
     if (fd == -1) {
         DLP_LOG_ERROR(LABEL, "ParseEncData failed, %{public}s", strerror(errno));
         return false;
@@ -439,7 +439,7 @@ static int32_t GetFileSize(int32_t fd, uint64_t& fileLen)
     return ret;
 }
 
-static std::string SetDlpGeneralInfo(GenerInfoParams &genInfo)
+static int32_t SetDlpGeneralInfo(GenerInfoParams &genInfo, std::string &out)
 {
     GenerateInfoParams params = {
         .version = genInfo.version,
@@ -455,9 +455,7 @@ static std::string SetDlpGeneralInfo(GenerInfoParams &genInfo)
         .countdown = genInfo.countdown,
         .nickNameMask = genInfo.nickNameMask,
     };
-    std::string out;
-    GenerateDlpGeneralInfo(params, out);
-    return out;
+    return GenerateDlpGeneralInfo(params, out);
 }
 
 int32_t DlpZipFile::GenEncData(int32_t inPlainFileFd)
@@ -573,7 +571,9 @@ int32_t DlpZipFile::AddGeneralInfoToBuff(int32_t encFile)
         .nickNameMask = nickNameMask_,
     };
 
-    std::string ja = SetDlpGeneralInfo(genInfo);
+    std::string ja;
+    ret = SetDlpGeneralInfo(genInfo, ja);
+    CHECK_RET(ret, 0, DLP_PARSE_ERROR_FILE_OPERATE_FAIL, LABEL);
     ret = AddBuffToZip(reinterpret_cast<const void *>(ja.c_str()), ja.size(),
         DLP_GENERAL_INFO.c_str(), DLP_GEN_FILE.c_str());
     CHECK_RET(ret, 0, DLP_PARSE_ERROR_FILE_OPERATE_FAIL, LABEL);
@@ -805,9 +805,9 @@ int32_t DlpZipFile::WriteFirstBlockData(uint64_t offset, void* buf, uint32_t siz
         if (readLen == 0) {
             break;
         }
-
-        struct DlpBlob message1 = {.size = prefixingSize, .data = enBuf};
-        struct DlpBlob message2 = {.size = prefixingSize, .data = deBuf};
+        uint32_t decryptSize = static_cast<uint32_t>(readLen);
+        struct DlpBlob message1 = {.size = decryptSize, .data = enBuf};
+        struct DlpBlob message2 = {.size = decryptSize, .data = deBuf};
         if (DoDlpBlockCryptOperation(message1, message2, alignOffset, false) != DLP_OK) {
             DLP_LOG_ERROR(LABEL, "decrypt appending bytes fail, %{public}s", strerror(errno));
             return DLP_PARSE_ERROR_CRYPT_FAIL;

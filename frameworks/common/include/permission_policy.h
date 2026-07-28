@@ -139,6 +139,7 @@ public:
     PermissionPolicy();
     PermissionPolicy(const DlpProperty& property);
     ~PermissionPolicy();
+    DISALLOW_COPY_AND_MOVE(PermissionPolicy);
     void CopyPermissionPolicy(const PermissionPolicy& srcPolicy);
     void FreePermissionPolicyMem();
     void CopyPolicyHmac(const PermissionPolicy& srcPolicy);

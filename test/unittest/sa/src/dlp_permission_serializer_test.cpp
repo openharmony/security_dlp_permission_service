@@ -597,3 +597,49 @@ HWTEST_F(DlpPermissionSerializerTest, CheckAuthPolicy001, TestSize.Level1)
     ASSERT_EQ(ret, 0);
     (void)PermissionManagerAdapter::CheckAuthPolicy(bundleInfo1.appId, "txt", 0);
 }
+
+/**
+ * @tc.name: DeserializeEveryoneInfoSupportEveryoneMoved001
+ * @tc.desc: test supportEveryone_ is set only after successful deserialization
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionSerializerTest, DeserializeEveryoneInfoSupportEveryoneMoved001, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL, "DeserializeEveryoneInfoSupportEveryoneMoved001");
+    PermissionPolicy policy;
+    policy.supportEveryone_ = false;
+
+    unordered_json invalidJson = unordered_json::parse("{\"authPerm\":1}");
+    bool ret = DlpPermissionSerializer::GetInstance().DeserializeEveryoneInfo(invalidJson, policy);
+    EXPECT_FALSE(ret);
+    EXPECT_FALSE(policy.supportEveryone_);
+
+    unordered_json validJson = unordered_json::parse(
+        "{\"authPerm\":1,\"everyoneAccount\":\"test\",\"everyoneAccountType\":1}");
+    ret = DlpPermissionSerializer::GetInstance().DeserializeEveryoneInfo(validJson, policy);
+    if (ret) {
+        EXPECT_TRUE(policy.supportEveryone_);
+    }
+}
+
+/**
+ * @tc.name: DeserializeEveryoneInfoSupportEveryoneMoved002
+ * @tc.desc: test supportEveryone_ remains false on deserialization failure with invalid authPerm
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionSerializerTest, DeserializeEveryoneInfoSupportEveryoneMoved002, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL, "DeserializeEveryoneInfoSupportEveryoneMoved002");
+    PermissionPolicy policy;
+    policy.supportEveryone_ = false;
+
+    unordered_json validJson = unordered_json::parse(
+        "{\"authPerm\":0,\"everyoneAccount\":\"test\",\"everyoneAccountType\":1}");
+    bool ret = DlpPermissionSerializer::GetInstance().DeserializeEveryoneInfo(validJson, policy);
+    if (ret) {
+        EXPECT_TRUE(policy.supportEveryone_);
+        EXPECT_EQ(policy.everyonePerm_, DLPFileAccess::NO_PERMISSION);
+    }
+}

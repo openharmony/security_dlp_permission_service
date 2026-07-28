@@ -308,8 +308,6 @@ int DLP_PackPolicy(
     ret = pthread_detach(t);
     if (ret != 0) {
         DLP_LOG_ERROR("pthread_detach failed %d\n", ret);
-        FreePackPolicyCallbackTaskPara(taskParams);
-        return DLP_ERROR;
     }
     DLP_LOG_INFO("Start new thread, requestId: %{public}llu", (unsigned long long)*requestId);
     return DLP_SUCCESS;
@@ -391,8 +389,6 @@ int DLP_RestorePolicy(
     ret = pthread_detach(t);
     if (ret != 0) {
         DLP_LOG_ERROR("pthread_detach failed %d\n", ret);
-        FreeRestorePolicyCallbackTaskPara(taskParams);
-        return DLP_ERROR;
     }
     DLP_LOG_INFO("Start new thread, requestId: %{public}llu", (unsigned long long)*requestId);
     return DLP_SUCCESS;

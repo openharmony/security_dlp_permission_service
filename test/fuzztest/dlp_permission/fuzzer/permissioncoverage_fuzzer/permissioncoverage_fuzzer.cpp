@@ -33,6 +33,7 @@
 #include "iremote_stub.h"
 #include <fuzzer/FuzzedDataProvider.h>
 #include "dlp_permission_service.cpp"
+#include "dlp_permission_service_ext.cpp"
 
 using namespace OHOS::Security::DlpPermission;
 using namespace OHOS::Security::AccessToken;

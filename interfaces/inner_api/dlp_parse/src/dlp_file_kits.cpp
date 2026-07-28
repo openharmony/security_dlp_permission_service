@@ -317,7 +317,7 @@ static bool GetIsReadOnceOrWaterMark(const int32_t& fd, const std::string& gener
     if (IsZipFile(fd)) {
         GenerateInfoParams params;
         if (ParseDlpGeneralInfo(generateInfoStr, params) != DLP_OK) {
-            DLP_LOG_ERROR(LABEL, "ParseDlpGeneralInfo error: %{public}s", generateInfoStr.c_str());
+            DLP_LOG_ERROR(LABEL, "ParseDlpGeneralInfo error");
             return false;
         }
         allowedOpenCount = params.allowedOpenCount;

@@ -429,6 +429,16 @@ int32_t DlpPermissionClient::RegisterOpenDlpFileCallback(const std::shared_ptr<O
     if (result != DLP_OK) {
         return result;
     }
+    std::lock_guard<std::mutex> lock(callbackMutex_);
+    if (callbackMap_.size() >= MAX_CALLBACK_MAP_SIZE) {
+        DLP_LOG_ERROR(LABEL, "the maximum number of callback has been reached");
+        return DLP_SERVICE_ERROR_VALUE_INVALID;
+    }
+    auto goalCallback = callbackMap_.find(callback);
+    if (goalCallback != callbackMap_.end()) {
+        DLP_LOG_ERROR(LABEL, "already has the same callback");
+        return DLP_SERVICE_ERROR_VALUE_INVALID;
+    }
     auto proxy = GetProxy(true);
     if (proxy == nullptr) {
         DLP_LOG_ERROR(LABEL, "proxy is null");
@@ -438,21 +448,7 @@ int32_t DlpPermissionClient::RegisterOpenDlpFileCallback(const std::shared_ptr<O
     if (result != DLP_OK) {
         return result;
     }
-    {
-        std::lock_guard<std::mutex> lock(callbackMutex_);
-        if (callbackMap_.size() >= MAX_CALLBACK_MAP_SIZE) {
-            DLP_LOG_ERROR(LABEL, "the maximum number of callback has been reached");
-            proxy->UnRegisterOpenDlpFileCallback(cb->AsObject());
-            return DLP_SERVICE_ERROR_VALUE_INVALID;
-        }
-        auto goalCallback = callbackMap_.find(callback);
-        if (goalCallback != callbackMap_.end()) {
-            DLP_LOG_ERROR(LABEL, "already has the same callback");
-            proxy->UnRegisterOpenDlpFileCallback(cb->AsObject());
-            return DLP_SERVICE_ERROR_VALUE_INVALID;
-        }
-        callbackMap_[callback] = cb;
-    }
+    callbackMap_[callback] = cb;
     return DLP_OK;
 }
 

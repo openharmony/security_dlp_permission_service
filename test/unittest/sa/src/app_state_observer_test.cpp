@@ -700,7 +700,7 @@ HWTEST_F(AppStateObserverTest, AddSandboxInfo001, TestSize.Level1)
 
     DlpSandboxInfo appInfo;
     observer.AddSandboxInfo(appInfo);
-    observer.UpdatReadFlag(uid);
+    observer.UpdateReadFlag(uid);
     ASSERT_FALSE(observer.sandboxInfo_[appInfo.uid].hasRead);
 
     appInfo = {
@@ -711,7 +711,7 @@ HWTEST_F(AppStateObserverTest, AddSandboxInfo001, TestSize.Level1)
         .hasRead = false
     };
     observer.AddSandboxInfo(appInfo);
-    observer.UpdatReadFlag(uid);
+    observer.UpdateReadFlag(uid);
     ASSERT_TRUE(observer.sandboxInfo_[appInfo.uid].hasRead);
 }
 
@@ -759,7 +759,7 @@ HWTEST_F(AppStateObserverTest, ExitSaAfterAllDlpManagerDie001, TestSize.Level1)
     int32_t uid = 1;
     DlpSandboxInfo appInfo;
     observer.AddSandboxInfo(appInfo);
-    observer.UpdatReadFlag(uid);
+    observer.UpdateReadFlag(uid);
     ASSERT_FALSE(observer.sandboxInfo_[appInfo.uid].hasRead);
     observer.ExitSaAfterAllDlpManagerDie();
 }
@@ -778,7 +778,7 @@ HWTEST_F(AppStateObserverTest, ExitSaAfterAllDlpManagerDie002, TestSize.Level1)
     int32_t uid = 1;
     DlpSandboxInfo appInfo;
     observer.AddSandboxInfo(appInfo);
-    observer.UpdatReadFlag(uid);
+    observer.UpdateReadFlag(uid);
     ASSERT_FALSE(observer.sandboxInfo_[appInfo.uid].hasRead);
     observer.ExitSaAfterAllDlpManagerDie();
     observer.AddCallbackListener(uid);
