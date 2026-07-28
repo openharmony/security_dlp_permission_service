@@ -147,20 +147,24 @@ int32_t AppStateObserver::ExitSaAfterAllDlpManagerDie()
 {
     std::lock_guard<std::mutex> lock(userIdListLock_);
     DLP_LOG_DEBUG(LABEL, "ExitSaAfterAllDlpManagerDie userIdList_ size:%{public}zu", userIdList_.size());
-    if (userIdList_.empty() && CallbackListenerEmpty()) {
-        DLP_LOG_INFO(LABEL, "all dlp manager app die, and callbacks are empty, start service exit");
-        auto systemAbilityMgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
-        if (systemAbilityMgr == nullptr) {
-            DLP_LOG_ERROR(LABEL, "Failed to get SystemAbilityManager.");
-            return DLP_SERVICE_ERROR_UNLOAD_ERROR;
-        }
-        int32_t ret = systemAbilityMgr->UnloadSystemAbility(SA_ID_DLP_PERMISSION_SERVICE);
-        if (ret != DLP_OK) {
-            DLP_LOG_ERROR(LABEL, "Failed to UnloadSystemAbility service! errcode=%{public}d", ret);
-            return DLP_SERVICE_ERROR_UNLOAD_ERROR;
-        }
-        DLP_LOG_INFO(LABEL, "UnloadSystemAbility successfully!");
+    if (!userIdList_.empty() || !CallbackListenerEmpty() || GetCriticalCnt() != 0) {
+        DLP_LOG_INFO(LABEL,
+            "cannot exit sa, userIdList empty:%{public}d, callback empty:%{public}d, criticalCnt:%{public}u",
+            userIdList_.empty(), CallbackListenerEmpty(), GetCriticalCnt());
+        return DLP_OK;
     }
+    DLP_LOG_INFO(LABEL, "all dlp manager app die, and callbacks are empty, start service exit");
+    auto systemAbilityMgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+    if (systemAbilityMgr == nullptr) {
+        DLP_LOG_ERROR(LABEL, "Failed to get SystemAbilityManager.");
+        return DLP_SERVICE_ERROR_UNLOAD_ERROR;
+    }
+    int32_t ret = systemAbilityMgr->UnloadSystemAbility(SA_ID_DLP_PERMISSION_SERVICE);
+    if (ret != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "Failed to UnloadSystemAbility service! errcode=%{public}d", ret);
+        return DLP_SERVICE_ERROR_UNLOAD_ERROR;
+    }
+    DLP_LOG_INFO(LABEL, "UnloadSystemAbility successfully!");
     return DLP_OK;
 }
 
@@ -237,7 +241,7 @@ void AppStateObserver::GetNeededDelEnterpriseSandbox(const std::string& label,
     EraseEnterpriseInfoByUid(appInfos);
 }
 
-void AppStateObserver::UpdatReadFlag(int32_t uid)
+void AppStateObserver::UpdateReadFlag(int32_t uid)
 {
     std::lock_guard<std::mutex> lock(sandboxInfoLock_);
     auto iter = sandboxInfo_.find(uid);

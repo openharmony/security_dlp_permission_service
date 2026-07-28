@@ -15,6 +15,7 @@
 
 #include "dlp_permission_serializer.h"
 #include <cinttypes>
+#include <climits>
 #include "domain_account_client.h"
 #include "dlp_permission.h"
 #include "dlp_permission_log.h"
@@ -88,6 +89,34 @@ static const uint32_t CLOUD_VERSION = 1;
 
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
     LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "DlpPermissionSerializer"};
+
+static bool SafeGetUint32(const unordered_json& json, const std::string& key, uint32_t& out)
+{
+    if (json.find(key) == json.end() || !json.at(key).is_number()) {
+        return false;
+    }
+    int64_t tmp = json.at(key).get<int64_t>();
+    if (tmp < 0 || tmp > UINT32_MAX) {
+        DLP_LOG_ERROR(LABEL, "%{public}s value out of range", key.c_str());
+        return false;
+    }
+    out = static_cast<uint32_t>(tmp);
+    return true;
+}
+
+static bool SafeGetInt32(const unordered_json& json, const std::string& key, int32_t& out)
+{
+    if (json.find(key) == json.end() || !json.at(key).is_number()) {
+        return false;
+    }
+    int64_t tmp = json.at(key).get<int64_t>();
+    if (tmp < INT32_MIN || tmp > INT32_MAX) {
+        DLP_LOG_ERROR(LABEL, "%{public}s value out of range", key.c_str());
+        return false;
+    }
+    out = static_cast<int32_t>(tmp);
+    return true;
+}
 }  // namespace
 
 DlpPermissionSerializer& DlpPermissionSerializer::GetInstance()
@@ -496,7 +525,6 @@ bool DlpPermissionSerializer::DeserializeEveryoneInfo(const unordered_json& poli
         return false;
     }
 
-    policy.supportEveryone_ = true;
     unordered_json everyoneInfoJson;
     policyJson.at(EVERYONE_INDEX).get_to(everyoneInfoJson);
 
@@ -525,6 +553,7 @@ bool DlpPermissionSerializer::DeserializeEveryoneInfo(const unordered_json& poli
     } else {
         policy.everyonePerm_ = DLPFileAccess::READ_ONLY;
     }
+    policy.supportEveryone_ = true;
     return true;
 }
 
@@ -580,11 +609,11 @@ static void InitDomainAccountPolicy(PermissionPolicy& policy, const std::vector<
     if (policyJson.find(PERM_EXPIRY_TIME) != policyJson.end() && policyJson.at(PERM_EXPIRY_TIME).is_number()) {
         policyJson.at(PERM_EXPIRY_TIME).get_to(policy.expireTime_);
     }
-    if (policyJson.find(ACTION_UPON_EXPIRY) != policyJson.end() && policyJson.at(ACTION_UPON_EXPIRY).is_number()) {
-        policyJson.at(ACTION_UPON_EXPIRY).get_to(policy.actionUponExpiry_);
+    if (policyJson.find(ACTION_UPON_EXPIRY) != policyJson.end()) {
+        SafeGetUint32(policyJson, ACTION_UPON_EXPIRY, policy.actionUponExpiry_);
     }
-    if (policyJson.find(NEED_ONLINE) != policyJson.end() && policyJson.at(NEED_ONLINE).is_number()) {
-        policyJson.at(NEED_ONLINE).get_to(policy.needOnline_);
+    if (policyJson.find(NEED_ONLINE) != policyJson.end()) {
+        SafeGetUint32(policyJson, NEED_ONLINE, policy.needOnline_);
     }
     if (policyJson.find(DLP_FILE_DEBUG_FLAG) != policyJson.end() && policyJson.at(DLP_FILE_DEBUG_FLAG).is_boolean()) {
         policyJson.at(DLP_FILE_DEBUG_FLAG).get_to(policy.debug_);
@@ -601,11 +630,11 @@ static void InitDomainAccountPolicy(PermissionPolicy& policy, const std::vector<
 
 static void ParseClientJson(PermissionPolicy& policy, unordered_json clientJson)
 {
-    if (clientJson.find(ACTION_UPON_EXPIRY) != clientJson.end() && clientJson.at(ACTION_UPON_EXPIRY).is_number()) {
-        clientJson.at(ACTION_UPON_EXPIRY).get_to(policy.actionUponExpiry_);
+    if (clientJson.find(ACTION_UPON_EXPIRY) != clientJson.end()) {
+        SafeGetUint32(clientJson, ACTION_UPON_EXPIRY, policy.actionUponExpiry_);
     }
-    if (clientJson.find(NEED_ONLINE) != clientJson.end() && clientJson.at(NEED_ONLINE).is_number()) {
-        clientJson.at(NEED_ONLINE).get_to(policy.needOnline_);
+    if (clientJson.find(NEED_ONLINE) != clientJson.end()) {
+        SafeGetUint32(clientJson, NEED_ONLINE, policy.needOnline_);
     }
     if (clientJson.find(DLP_FILE_DEBUG_FLAG) != clientJson.end() && clientJson.at(DLP_FILE_DEBUG_FLAG).is_boolean()) {
         clientJson.at(DLP_FILE_DEBUG_FLAG).get_to(policy.debug_);
@@ -618,8 +647,8 @@ static void ParseClientJson(PermissionPolicy& policy, unordered_json clientJson)
         policy.canFindWaterMarkConfig_ = true;
         DLP_LOG_DEBUG(LABEL, "find waterMarkConfig from policy, %{public}d", policy.waterMarkConfig_);
     }
-    if (clientJson.find(COUNTDOWN) != clientJson.end() && clientJson.at(COUNTDOWN).is_number()) {
-        clientJson.at(COUNTDOWN).get_to(policy.countdown_);
+    if (clientJson.find(COUNTDOWN) != clientJson.end()) {
+        SafeGetInt32(clientJson, COUNTDOWN, policy.countdown_);
     }
     if (clientJson.find(NICK_NAME_MASK) != clientJson.end() && clientJson.at(NICK_NAME_MASK).is_string()) {
         clientJson.at(NICK_NAME_MASK).get_to(policy.nickNameMask_);

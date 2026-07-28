@@ -152,7 +152,9 @@ int32_t SandboxJsonManager::UpdateRetentionState(const std::set<std::string>& do
         DLP_LOG_ERROR(LABEL, "tokenId==0 and bundleName empty");
         return DLP_RETENTION_UPDATE_ERROR;
     }
-    GetUserIdByUid(info.userId);
+    if (!GetUserIdByUid(info.userId)) {
+        return DLP_RETENTION_UPDATE_ERROR;
+    }
     if (info.tokenId == 0) {
         return UpdateRetentionState(docUriSet, info, CompareByBundleName, ClearDocUriSet);
     }
@@ -171,6 +173,7 @@ bool SandboxJsonManager::CompareByBundleName(const RetentionInfo& info1, const R
 
 bool SandboxJsonManager::UpdateDocUriSetByUnion(RetentionInfo& info, const std::set<std::string>& newSet)
 {
+    size_t oldSize = info.docUriSet.size();
     std::set<std::string> temp;
     std::set_union(info.docUriSet.begin(), info.docUriSet.end(), newSet.begin(), newSet.end(),
         std::insert_iterator<std::set<std::string>>(temp, temp.begin()));
@@ -180,7 +183,7 @@ bool SandboxJsonManager::UpdateDocUriSetByUnion(RetentionInfo& info, const std::
         return false;
     }
     info.docUriSet = temp;
-    return info.docUriSet.size() != size;
+    return size != oldSize;
 }
 
 bool SandboxJsonManager::ClearDocUriSet(RetentionInfo& info, const std::set<std::string>& newSet)
@@ -227,7 +230,7 @@ int32_t SandboxJsonManager::UpdateReadFlag(uint32_t tokenId)
             return DLP_OK;
         }
     }
-    DLP_LOG_ERROR(LABEL, "Not update tokenId=%{public}u", tokenId);
+    DLP_LOG_INFO(LABEL, "Not update tokenId=%{public}u", tokenId);
     return DLP_FILE_NO_NEED_UPDATE;
 }
 

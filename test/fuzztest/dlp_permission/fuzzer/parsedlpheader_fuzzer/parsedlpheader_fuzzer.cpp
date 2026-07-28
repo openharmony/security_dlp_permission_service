@@ -85,7 +85,7 @@ static void HcFree(void *addr)
     }
 }
 
-static void PrepareFuzzTest(FuzzedDataProvider& fdp, int& fd, DlpRawFile& testFile,
+static void PrepareFuzzTest(FuzzedDataProvider& fdp, int& fd, std::unique_ptr<DlpRawFile>& testFile,
     std::shared_ptr<DlpRawFile>& filePtr, vector<DlpBlob>& messages)
 {
     fd = open("/data/fuse_test.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
@@ -95,7 +95,7 @@ static void PrepareFuzzTest(FuzzedDataProvider& fdp, int& fd, DlpRawFile& testFi
     }
     uint32_t txtSize = fdp.ConsumeIntegral<uint32_t>();
     std::string workDir = fdp.ConsumeBytesAsString(innerSize - sizeof(int32_t));
-    testFile = DlpRawFile(fd, "txt");
+    testFile = std::make_unique<DlpRawFile>(fd, "txt");
     filePtr = std::make_shared<DlpRawFile>(-1, "mp4");
     messages[0] = {0, nullptr};
     messages[1] = {0, nullptr};
@@ -138,11 +138,13 @@ static void FuzzTest(const uint8_t* data, size_t size)
     g_size = size;
     FuzzedDataProvider fdp(data, size);
     int fd = -1;
-    DlpRawFile testFile(-1, "");
+    std::unique_ptr<DlpRawFile> testFile;
     std::shared_ptr<DlpRawFile> filePtr = nullptr;
     vector<DlpBlob> messages = {{0, nullptr}, {0, nullptr}};
     PrepareFuzzTest(fdp, fd, testFile, filePtr, messages);
-    testFile.ProcessDlpFile();
+    if (testFile != nullptr) {
+        testFile->ProcessDlpFile();
+    }
     close(fd);
 #ifndef SUPPORT_DLP_CREDENTIAL
 #define SUPPORT_DLP_CREDENTIAL

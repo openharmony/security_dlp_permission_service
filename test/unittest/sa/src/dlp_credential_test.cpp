@@ -637,6 +637,55 @@ HWTEST_F(DlpCredentialTest, DlpCredentialTest013, TestSize.Level1)
     EXPECT_EQ(DLP_OK, ret);
     EXPECT_EQ(static_cast<size_t>(0), appIdList.size());
 }
+
+/**
+ * @tc.name: DlpCredentialTest014
+ * @tc.desc: Test ParseUint8TypedArrayToStringVector with overflow offset
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpCredentialTest, DlpCredentialTest014, TestSize.Level1)
+{
+    uint32_t count = 1;
+    uint32_t length = 100;
+    uint32_t policyLen = sizeof(uint32_t) + sizeof(uint32_t) + length;
+    uint8_t* policy = new uint8_t[policyLen];
+    memcpy_s(policy, policyLen, &count, sizeof(uint32_t));
+    memcpy_s(policy + sizeof(uint32_t), policyLen - sizeof(uint32_t), &length, sizeof(uint32_t));
+    for (uint32_t i = 0; i < length; i++) {
+        policy[sizeof(uint32_t) + sizeof(uint32_t) + i] = 'a';
+    }
+
+    std::vector<std::string> appIdList;
+    int32_t ret = ParseUint8TypedArrayToStringVector(policy, &policyLen, appIdList);
+    EXPECT_EQ(DLP_OK, ret);
+    EXPECT_EQ(static_cast<size_t>(1), appIdList.size());
+
+    delete[] policy;
+}
+
+/**
+ * @tc.name: DlpCredentialTest015
+ * @tc.desc: Test ParseUint8TypedArrayToStringVector with buffer overflow
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpCredentialTest, DlpCredentialTest015, TestSize.Level1)
+{
+    uint32_t count = 2;
+    uint8_t* policy = new uint8_t[sizeof(uint32_t) * 3];
+    uint32_t policyLen = sizeof(uint32_t) * 3;
+    memcpy_s(policy, policyLen, &count, sizeof(uint32_t));
+
+    uint32_t length1 = 10;
+    memcpy_s(policy + sizeof(uint32_t), policyLen - sizeof(uint32_t), &length1, sizeof(uint32_t));
+
+    std::vector<std::string> appIdList;
+    int32_t ret = ParseUint8TypedArrayToStringVector(policy, &policyLen, appIdList);
+    EXPECT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, ret);
+
+    delete[] policy;
+}
 }  // namespace DlpPermission
 }  // namespace Security
 }  // namespace OHOS

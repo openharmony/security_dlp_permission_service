@@ -102,6 +102,7 @@ ssize_t read(int fd, void *dest, size_t maxCount)
     }
     return (*func)(fd, dest, maxCount);
 }
+
 #ifdef __cplusplus
 }
 #endif

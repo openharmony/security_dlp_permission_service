@@ -202,7 +202,6 @@ static int FdCloseFileFunc(void *opaque, void *stream)
     if (fclose(static_cast<FILE *>(stream)) != 0) {
         DLP_LOG_ERROR(LABEL, "fclose fail errno %{public}d", errno);
     }
-    free(opaque);  // malloc'ed in FillFdOpenFileFunc()
     return 0;
 }
 
@@ -222,16 +221,23 @@ static void FillFdOpenFileFunc(zlib_filefunc_def *pzlibFilefuncDef, int fd)
     pzlibFilefuncDef->opaque = ptrFd;
 }
 
-static unzFile OpenFdForUnzipping(int zipFD)
+static unzFile OpenFdForUnzipping(int zipFD, void** outOpaque)
 {
     zlib_filefunc_def zipFuncs;
     FillFdOpenFileFunc(&zipFuncs, zipFD);
-    return unzOpen2("fd", &zipFuncs);
+    unzFile uf = unzOpen2("fd", &zipFuncs);
+    if (uf == nullptr) {
+        free(zipFuncs.opaque);
+        *outOpaque = nullptr;
+    } else {
+        *outOpaque = zipFuncs.opaque;
+    }
+    return uf;
 }
 
-static zipFile OpenZipFile(int fd)
+static zipFile OpenZipFile(int fd, void** outOpaque)
 {
-    zipFile uf = OpenFdForUnzipping(fd);
+    zipFile uf = OpenFdForUnzipping(fd, outOpaque);
     if (uf == nullptr) {
         DLP_LOG_ERROR(LABEL, "unzOpenFile fail errno %{public}d", errno);
         return nullptr;
@@ -239,9 +245,33 @@ static zipFile OpenZipFile(int fd)
     return uf;
 }
 
+static bool CheckSingleFileEntry(unzFile uf)
+{
+    unz_file_info64 fileInfo;
+    char fileName[MAX_PATH + 1] = {0};
+    int res = unzGetCurrentFileInfo64(uf, &fileInfo, fileName, MAX_PATH, nullptr, 0, nullptr, 0);
+    if (res != UNZ_OK) {
+        DLP_LOG_ERROR(LABEL, "Call unzGetCurrentFileInfo64 fail res=%{public}d errno=%{public}d", res, errno);
+        return false;
+    }
+    fileName[MAX_PATH] = '\0';
+    auto it = FILE_NAME_SET.find(fileName);
+    if (it == FILE_NAME_SET.end()) {
+        DLP_LOG_ERROR(LABEL, "FileName=%{public}s do not found", fileName);
+        return false;
+    }
+    if (fileInfo.compressed_size < fileInfo.uncompressed_size) {
+        DLP_LOG_ERROR(LABEL, "Compressed_size=%{public}llu is less uncompress_size=%{public}llu",
+            fileInfo.compressed_size, fileInfo.uncompressed_size);
+        return false;
+    }
+    return true;
+}
+
 bool CheckUnzipFileInfo(int32_t fd)
 {
-    zipFile uf = OpenZipFile(fd);
+    void* opaque = nullptr;
+    zipFile uf = OpenZipFile(fd, &opaque);
     if (uf == nullptr) {
         DLP_LOG_ERROR(LABEL, "OpenZipFile fail errno %{public}d", errno);
         return false;
@@ -251,74 +281,31 @@ bool CheckUnzipFileInfo(int32_t fd)
     if (res != UNZ_OK) {
         DLP_LOG_ERROR(LABEL, "Call unzGetGloabalInfo64 fail res=%{public}d errno=%{public}d", res, errno);
         (void)unzClose(uf);
+        free(opaque);
         return false;
     }
-    //The number of files is equal to 3
     if (globalnfo.number_entry != FILE_COUNT) {
         DLP_LOG_ERROR(LABEL, "File count=%{public}llu", globalnfo.number_entry);
         (void)unzClose(uf);
+        free(opaque);
         return false;
     }
-    unz_file_info64 fileInfo;
-    char fileName[MAX_PATH + 1] = {0};
     for (int32_t i = 0; i < FILE_COUNT; i++) {
-        res = unzGetCurrentFileInfo64(uf, &fileInfo, fileName, MAX_PATH, nullptr, 0, nullptr, 0);
-        if (res != UNZ_OK) {
-            DLP_LOG_ERROR(LABEL, "Call unzGetCurrentFileInfo64 fail res=%{public}d errno=%{public}d", res, errno);
+        if (!CheckSingleFileEntry(uf)) {
             (void)unzClose(uf);
-            return false;
-        }
-        fileName[MAX_PATH] = '\0';
-        //The file name has not been changed
-        auto it = FILE_NAME_SET.find(fileName);
-        if (it == FILE_NAME_SET.end()) {
-            DLP_LOG_ERROR(LABEL, "FileName=%{public}s do not found", fileName);
-            (void)unzClose(uf);
-            return false;
-        }
-        //The file has not been compressed
-        if (fileInfo.compressed_size < fileInfo.uncompressed_size) {
-            DLP_LOG_ERROR(LABEL, "Compressed_size=%{public}llu is less uncompress_size=%{public}llu",
-                fileInfo.compressed_size, fileInfo.uncompressed_size);
-            (void)unzClose(uf);
+            free(opaque);
             return false;
         }
         unzGoToNextFile(uf);
     }
     (void)unzClose(uf);
+    free(opaque);
     return true;
 }
 
-int32_t UnzipSpecificFile(int32_t fd, const char*nameInZip, const char *unZipName)
+static int32_t WriteUnzipFileContent(unzFile uf, int32_t outFd, const char *nameInZip)
 {
-    zipFile uf;
-    int32_t outFd = open(unZipName, O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
-    if (outFd == -1) {
-        DLP_LOG_ERROR(LABEL, "open fail %{public}s errno %{public}d", unZipName, errno);
-        return DLP_ZIP_FAIL;
-    }
-    Defer p(nullptr, [&](...) {
-        close(outFd);
-    });
-
-    uf = OpenZipFile(fd);
-    if (uf == nullptr) {
-        return DLP_ZIP_FAIL;
-    }
-
-    if (unzLocateFile(uf, nameInZip, 0) != UNZ_OK) {
-        DLP_LOG_ERROR(LABEL, "unzLocateFile fail %{public}s errno %{public}d", nameInZip, errno);
-        (void)unzClose(uf);
-        return DLP_ZIP_FAIL;
-    }
-
-    int32_t err = unzOpenCurrentFile(uf);
-    if (err != UNZ_OK) {
-        DLP_LOG_ERROR(LABEL, "unzOpenCurrentFile fail %{public}s errno %{public}d", nameInZip, err);
-        (void)unzClose(uf);
-        return DLP_ZIP_FAIL;
-    }
-
+    int32_t err = DLP_ZIP_OK;
     int32_t readSize = 0;
     auto buf = std::make_unique<char[]>(ZIP_BUFF_SIZE);
     do {
@@ -335,6 +322,42 @@ int32_t UnzipSpecificFile(int32_t fd, const char*nameInZip, const char *unZipNam
     if (readSize < 0) {
         DLP_LOG_ERROR(LABEL, "unzReadCurrentFile fail %{public}s errno %{public}d", nameInZip, errno);
     }
+    return err;
+}
+
+int32_t UnzipSpecificFile(int32_t fd, const char*nameInZip, const char *unZipName)
+{
+    int32_t outFd = open(unZipName, O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
+    if (outFd == -1) {
+        DLP_LOG_ERROR(LABEL, "open fail %{public}s errno %{public}d", unZipName, errno);
+        return DLP_ZIP_FAIL;
+    }
+    Defer p(nullptr, [&](...) {
+        close(outFd);
+    });
+
+    void* opaque = nullptr;
+    zipFile uf = OpenZipFile(fd, &opaque);
+    if (uf == nullptr) {
+        return DLP_ZIP_FAIL;
+    }
+
+    if (unzLocateFile(uf, nameInZip, 0) != UNZ_OK) {
+        DLP_LOG_ERROR(LABEL, "unzLocateFile fail %{public}s errno %{public}d", nameInZip, errno);
+        (void)unzClose(uf);
+        free(opaque);
+        return DLP_ZIP_FAIL;
+    }
+
+    int32_t err = unzOpenCurrentFile(uf);
+    if (err != UNZ_OK) {
+        DLP_LOG_ERROR(LABEL, "unzOpenCurrentFile fail %{public}s errno %{public}d", nameInZip, err);
+        (void)unzClose(uf);
+        free(opaque);
+        return DLP_ZIP_FAIL;
+    }
+
+    int32_t res = WriteUnzipFileContent(uf, outFd, nameInZip);
 
     if (unzCloseCurrentFile(uf) != ZIP_OK) {
         DLP_LOG_ERROR(LABEL, "unzCloseCurrentFile fail nameInZip %{public}s", nameInZip);
@@ -342,15 +365,18 @@ int32_t UnzipSpecificFile(int32_t fd, const char*nameInZip, const char *unZipNam
 
     if (unzClose(uf) != ZIP_OK) {
         DLP_LOG_ERROR(LABEL, "zipClose fail nameInZip %{public}s", nameInZip);
+        free(opaque);
         return DLP_ZIP_FAIL;
     }
 
-    return err;
+    free(opaque);
+    return res;
 }
 
 bool IsZipFile(int32_t fd)
 {
-    unzFile uz = OpenFdForUnzipping(fd);
+    void* opaque = nullptr;
+    unzFile uz = OpenFdForUnzipping(fd, &opaque);
     if (uz == nullptr) {
         DLP_LOG_ERROR(LABEL, "unzOpenFile fail, %{public}d", errno);
         return false;
@@ -359,10 +385,12 @@ bool IsZipFile(int32_t fd)
     if (unzLocateFile(uz, DLP_GENERAL_INFO.c_str(), 0) != UNZ_OK) {
         DLP_LOG_ERROR(LABEL, "unzLocateFile fail %{private}s errno %{public}d", DLP_GENERAL_INFO.c_str(), errno);
         (void)unzClose(uz);
+        free(opaque);
         return false;
     }
 
     (void)unzClose(uz);
+    free(opaque);
     return true;
 }
 }  // namespace DlpPermission

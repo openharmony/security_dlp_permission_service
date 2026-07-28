@@ -16,6 +16,7 @@
 #include "dlp_file_test.h"
 #include <cstdio>
 #include <cstring>
+#include "securec.h"
 #include <fcntl.h>
 #include <iostream>
 #include <fstream>
@@ -1928,6 +1929,7 @@ HWTEST_F(DlpFileTest, GenZipFile001, TestSize.Level0)
 
     DlpZipFile testFile(fdDlp, DLP_TEST_DIR, 0, "txt");
     initDlpFileCiper(testFile);
+    testFile.SetContactAccount("testAccount");
 
     EXPECT_EQ(DLP_OK, testFile.GenFile(fdPlain));
 
@@ -2731,4 +2733,94 @@ HWTEST_F(DlpFileTest, CleanBlobParam002, TestSize.Level1)
     blob.size = 0;
     // Should not crash - data is freed even when size is 0
     EXPECT_EQ(DLP_OK, testFile.CleanBlobParam(blob));
+}
+
+/**
+ * @tc.name: TruncateZeroSize002
+ * @tc.desc: test Truncate(0) with INVALID_FILE_SIZE from GetFsContentSize
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpFileTest, TruncateZeroSize002, TestSize.Level0)
+{
+    DLP_LOG_INFO(LABEL, "TruncateZeroSize002");
+    int fdPlain = open("/data/fuse_test_plain_trunc002.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
+    ASSERT_NE(fdPlain, -1);
+    int fdDlp = open("/data/fuse_test_dlp_trunc002.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
+    ASSERT_NE(fdDlp, -1);
+    DlpRawFile testFile(fdDlp, "txt");
+    initDlpFileCiper(testFile);
+
+    testFile.head_.txtOffset = 0;
+    testFile.head_.txtSize = 0;
+    testFile.authPerm_ = DLPFileAccess::FULL_CONTROL;
+    testFile.dlpFd_ = fdDlp;
+
+    EXPECT_EQ(DLP_PARSE_ERROR_VALUE_INVALID, testFile.Truncate(0));
+
+    close(fdPlain);
+    close(fdDlp);
+    unlink("/data/fuse_test_plain_trunc002.txt");
+    unlink("/data/fuse_test_dlp_trunc002.txt");
+}
+
+/**
+ * @tc.name: TruncateFillHoleDataFail002
+ * @tc.desc: test Truncate with lseek fail returns INVALID after GetFsContentSize invalid
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpFileTest, TruncateFillHoleDataFail002, TestSize.Level0)
+{
+    DLP_LOG_INFO(LABEL, "TruncateFillHoleDataFail002");
+    int fdPlain = open("/data/fuse_test_plain_trunc003.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
+    ASSERT_NE(fdPlain, -1);
+    int fdDlp = open("/data/fuse_test_dlp_trunc003.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
+    ASSERT_NE(fdDlp, -1);
+    DlpRawFile testFile(fdDlp, "txt");
+    initDlpFileCiper(testFile);
+
+    testFile.head_.txtOffset = 0;
+    testFile.head_.txtSize = 0;
+    testFile.authPerm_ = DLPFileAccess::FULL_CONTROL;
+    testFile.dlpFd_ = fdDlp;
+
+    DlpCMockCondition condition;
+    condition.mockSequence = { true };
+    SetMockConditions("lseek", condition);
+    EXPECT_EQ(DLP_PARSE_ERROR_VALUE_INVALID, testFile.Truncate(16));
+    CleanMockConditions();
+    close(fdPlain);
+    close(fdDlp);
+    unlink("/data/fuse_test_plain_trunc003.txt");
+    unlink("/data/fuse_test_dlp_trunc003.txt");
+}
+
+/**
+ * @tc.name: DestructorOfflineCertMemsetFix001
+ * @tc.desc: test destructor memset_s uses offlineCert_.size not head_.offlineCertSize
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpFileTest, DestructorOfflineCertMemsetFix001, TestSize.Level0)
+{
+    int32_t fd = open("/data/fuse_test_dlp_offline_memset.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
+    ASSERT_NE(fd, -1);
+
+    DlpRawFile* testFile = new DlpRawFile(fd, "txt");
+    initDlpFileCiper(*testFile);
+
+    uint8_t offlineData[32] = {};
+    for (int i = 0; i < 32; i++) {
+        offlineData[i] = static_cast<uint8_t>(i + 1);
+    }
+    testFile->offlineCert_.data = new uint8_t[32];
+    testFile->offlineCert_.size = 32;
+    memcpy_s(testFile->offlineCert_.data, 32, offlineData, 32);
+    testFile->head_.offlineCertSize = 16;
+
+    delete testFile;
+
+    close(fd);
+    unlink("/data/fuse_test_dlp_offline_memset.txt");
 }

@@ -145,17 +145,22 @@ void NapiDlpPermission::GenerateDlpFileComplete(napi_env env, napi_status status
     napi_value resJs = nullptr;
     if (asyncContext->errCode == DLP_OK) {
         napi_value nativeObjJs;
-        NAPI_CALL_RETURN_VOID(
-            env, napi_create_int64(env, reinterpret_cast<int64_t>(asyncContext->dlpFileNative.get()), &nativeObjJs));
-
-        napi_value dlpPropertyJs = DlpPropertyToJs(env, asyncContext->property);
-        napi_value argv[PARAM_SIZE_TWO] = {nativeObjJs, dlpPropertyJs};
-        napi_value instance = BindingJsWithNative(env, argv, PARAM_SIZE_TWO, dlpFileRef_);
-        if (instance == nullptr) {
-            DLP_LOG_ERROR(LABEL, "native instance binding fail");
+        if (napi_create_int64(env, reinterpret_cast<int64_t>(asyncContext->dlpFileNative.get()),
+            &nativeObjJs) != napi_ok) {
+            DLP_LOG_ERROR(LABEL, "napi_create_int64 failed");
             asyncContext->errCode = DLP_NAPI_ERROR_NATIVE_BINDING_FAIL;
+            napi_get_undefined(env, &resJs);
         } else {
-            resJs = instance;
+            napi_value dlpPropertyJs = DlpPropertyToJs(env, asyncContext->property);
+            napi_value argv[PARAM_SIZE_TWO] = {nativeObjJs, dlpPropertyJs};
+            napi_value instance = BindingJsWithNative(env, argv, PARAM_SIZE_TWO, dlpFileRef_);
+            if (instance == nullptr) {
+                DLP_LOG_ERROR(LABEL, "native instance binding fail");
+                asyncContext->errCode = DLP_NAPI_ERROR_NATIVE_BINDING_FAIL;
+                napi_get_undefined(env, &resJs);
+            } else {
+                resJs = instance;
+            }
         }
     }
 
@@ -230,6 +235,53 @@ void NapiDlpPermission::OpenDlpFileExcute(napi_env env, void* data)
             asyncContext->appId);
 }
 
+static napi_value HandleOpenDlpFileSuccess(napi_env env, DlpFileAsyncContext* asyncContext)
+{
+    if (asyncContext->dlpFileNative == nullptr) {
+        DLP_LOG_ERROR(LABEL, "asyncContext dlpFileNative is nullptr");
+        asyncContext->errCode = DLP_NAPI_ERROR_NATIVE_BINDING_FAIL;
+        return nullptr;
+    }
+    napi_value nativeObjJs;
+    if (napi_create_int64(env, reinterpret_cast<int64_t>(asyncContext->dlpFileNative.get()),
+        &nativeObjJs) != napi_ok) {
+        DLP_LOG_ERROR(LABEL, "napi_create_int64 failed");
+        asyncContext->errCode = DLP_NAPI_ERROR_NATIVE_BINDING_FAIL;
+        return nullptr;
+    }
+    DlpProperty property;
+    GetDlpProperty(asyncContext->dlpFileNative, property);
+    napi_value dlpPropertyJs = DlpPropertyToJs(env, property);
+    napi_value argv[PARAM_SIZE_TWO] = {nativeObjJs, dlpPropertyJs};
+    napi_value instance = BindingJsWithNative(env, argv, PARAM_SIZE_TWO, dlpFileRef_);
+    if (instance == nullptr) {
+        asyncContext->errCode = DLP_NAPI_ERROR_NATIVE_BINDING_FAIL;
+        return nullptr;
+    }
+    return instance;
+}
+
+static napi_value HandleOpenDlpFileError(napi_env env, DlpFileAsyncContext* asyncContext)
+{
+    if (asyncContext->dlpFileNative == nullptr) {
+        return nullptr;
+    }
+    if (asyncContext->errCode != DLP_CREDENTIAL_ERROR_NO_PERMISSION_ERROR &&
+        asyncContext->errCode != DLP_CREDENTIAL_ERROR_TIME_EXPIRED) {
+        return nullptr;
+    }
+    std::string contactAccount = "";
+    asyncContext->dlpFileNative->GetContactAccount(contactAccount);
+    if (contactAccount.empty()) {
+        return nullptr;
+    }
+    napi_value resJs = nullptr;
+    if (napi_create_string_utf8(env, contactAccount.c_str(), NAPI_AUTO_LENGTH, &resJs) != napi_ok) {
+        DLP_LOG_ERROR(LABEL, "napi_create_string_utf8 failed");
+    }
+    return resJs;
+}
+
 void NapiDlpPermission::OpenDlpFileComplete(napi_env env, napi_status status, void* data)
 {
     auto asyncContext = reinterpret_cast<DlpFileAsyncContext*>(data);
@@ -240,34 +292,12 @@ void NapiDlpPermission::OpenDlpFileComplete(napi_env env, napi_status status, vo
     std::unique_ptr<DlpFileAsyncContext> asyncContextPtr { asyncContext };
     napi_value resJs = nullptr;
     if (asyncContext->errCode == DLP_OK) {
-        napi_value nativeObjJs;
-        if (asyncContext->dlpFileNative == nullptr) {
-            DLP_LOG_ERROR(LABEL, "asyncContext dlpFileNative is nullptr");
-            return;
-        }
-        NAPI_CALL_RETURN_VOID(
-            env, napi_create_int64(env, reinterpret_cast<int64_t>(asyncContext->dlpFileNative.get()), &nativeObjJs));
-        DlpProperty property;
-        GetDlpProperty(asyncContext->dlpFileNative, property);
-        napi_value dlpPropertyJs = DlpPropertyToJs(env, property);
-        napi_value argv[PARAM_SIZE_TWO] = {nativeObjJs, dlpPropertyJs};
-        napi_value instance = BindingJsWithNative(env, argv, PARAM_SIZE_TWO, dlpFileRef_);
-        if (instance == nullptr) {
-            asyncContext->errCode = DLP_NAPI_ERROR_NATIVE_BINDING_FAIL;
-        } else {
-            resJs = instance;
-        }
+        resJs = HandleOpenDlpFileSuccess(env, asyncContext);
     } else {
-        if (asyncContext->dlpFileNative != nullptr &&
-            (asyncContext->errCode == DLP_CREDENTIAL_ERROR_NO_PERMISSION_ERROR ||
-            asyncContext->errCode == DLP_CREDENTIAL_ERROR_TIME_EXPIRED)) {
-            std::string contactAccount = "";
-            asyncContext->dlpFileNative->GetContactAccount(contactAccount);
-            if (!contactAccount.empty()) {
-                NAPI_CALL_RETURN_VOID(
-                    env, napi_create_string_utf8(env, contactAccount.c_str(), NAPI_AUTO_LENGTH, &resJs));
-            }
-        }
+        resJs = HandleOpenDlpFileError(env, asyncContext);
+    }
+    if (resJs == nullptr) {
+        napi_get_undefined(env, &resJs);
     }
     ProcessCallbackOrPromise(env, asyncContext, resJs);
 }
@@ -329,7 +359,11 @@ void NapiDlpPermission::IsDlpFileComplete(napi_env env, napi_status status, void
 
     napi_value isDlpFileJs = nullptr;
     if (asyncContext->errCode == DLP_OK) {
-        NAPI_CALL_RETURN_VOID(env, napi_get_boolean(env, asyncContext->isDlpFile, &isDlpFileJs));
+        if (napi_get_boolean(env, asyncContext->isDlpFile, &isDlpFileJs) != napi_ok) {
+            DLP_LOG_ERROR(LABEL, "napi_get_boolean failed");
+            asyncContext->errCode = DLP_NAPI_ERROR_NATIVE_BINDING_FAIL;
+            napi_get_undefined(env, &isDlpFileJs);
+        }
     }
 
     ProcessCallbackOrPromise(env, asyncContext, isDlpFileJs);
@@ -402,7 +436,10 @@ void NapiDlpPermission::AddDlpLinkFileComplete(napi_env env, napi_status status,
     }
     std::unique_ptr<DlpLinkFileAsyncContext> asyncContextPtr { asyncContext };
     napi_value resJs = nullptr;
-    NAPI_CALL_RETURN_VOID(env, napi_get_undefined(env, &resJs));
+    if (napi_get_undefined(env, &resJs) != napi_ok) {
+        DLP_LOG_ERROR(LABEL, "napi_get_undefined failed");
+        asyncContext->errCode = DLP_NAPI_ERROR_NATIVE_BINDING_FAIL;
+    }
     ProcessCallbackOrPromise(env, asyncContext, resJs);
 }
 
@@ -473,7 +510,10 @@ void NapiDlpPermission::StopDlpLinkFileComplete(napi_env env, napi_status status
     }
     std::unique_ptr<DlpLinkFileAsyncContext> asyncContextPtr { asyncContext };
     napi_value resJs = nullptr;
-    NAPI_CALL_RETURN_VOID(env, napi_get_undefined(env, &resJs));
+    if (napi_get_undefined(env, &resJs) != napi_ok) {
+        DLP_LOG_ERROR(LABEL, "napi_get_undefined failed");
+        asyncContext->errCode = DLP_NAPI_ERROR_NATIVE_BINDING_FAIL;
+    }
     ProcessCallbackOrPromise(env, asyncContext, resJs);
 }
 
@@ -544,7 +584,10 @@ void NapiDlpPermission::RestartDlpLinkFileComplete(napi_env env, napi_status sta
     }
     std::unique_ptr<DlpLinkFileAsyncContext> asyncContextPtr { asyncContext };
     napi_value resJs = nullptr;
-    NAPI_CALL_RETURN_VOID(env, napi_get_undefined(env, &resJs));
+    if (napi_get_undefined(env, &resJs) != napi_ok) {
+        DLP_LOG_ERROR(LABEL, "napi_get_undefined failed");
+        asyncContext->errCode = DLP_NAPI_ERROR_NATIVE_BINDING_FAIL;
+    }
     ProcessCallbackOrPromise(env, asyncContext, resJs);
 }
 
@@ -615,7 +658,10 @@ void NapiDlpPermission::ReplaceDlpLinkFileComplete(napi_env env, napi_status sta
     }
     std::unique_ptr<DlpLinkFileAsyncContext> asyncContextPtr { asyncContext };
     napi_value resJs = nullptr;
-    NAPI_CALL_RETURN_VOID(env, napi_get_undefined(env, &resJs));
+    if (napi_get_undefined(env, &resJs) != napi_ok) {
+        DLP_LOG_ERROR(LABEL, "napi_get_undefined failed");
+        asyncContext->errCode = DLP_NAPI_ERROR_NATIVE_BINDING_FAIL;
+    }
     ProcessCallbackOrPromise(env, asyncContext, resJs);
 }
 
@@ -686,7 +732,10 @@ void NapiDlpPermission::DeleteDlpLinkFileComplete(napi_env env, napi_status stat
     }
     std::unique_ptr<DlpLinkFileAsyncContext> asyncContextPtr { asyncContext };
     napi_value resJs = nullptr;
-    NAPI_CALL_RETURN_VOID(env, napi_get_undefined(env, &resJs));
+    if (napi_get_undefined(env, &resJs) != napi_ok) {
+        DLP_LOG_ERROR(LABEL, "napi_get_undefined failed");
+        asyncContext->errCode = DLP_NAPI_ERROR_NATIVE_BINDING_FAIL;
+    }
     ProcessCallbackOrPromise(env, asyncContext, resJs);
 }
 
@@ -753,7 +802,10 @@ void NapiDlpPermission::RecoverDlpFileComplete(napi_env env, napi_status status,
     }
     std::unique_ptr<RecoverDlpFileAsyncContext> asyncContextPtr { asyncContext };
     napi_value resJs = nullptr;
-    NAPI_CALL_RETURN_VOID(env, napi_get_undefined(env, &resJs));
+    if (napi_get_undefined(env, &resJs) != napi_ok) {
+        DLP_LOG_ERROR(LABEL, "napi_get_undefined failed");
+        asyncContext->errCode = DLP_NAPI_ERROR_NATIVE_BINDING_FAIL;
+    }
     ProcessCallbackOrPromise(env, asyncContext, resJs);
 }
 
@@ -816,7 +868,10 @@ void NapiDlpPermission::CloseDlpFileComplete(napi_env env, napi_status status, v
     }
     std::unique_ptr<CloseDlpFileAsyncContext> asyncContextPtr { asyncContext };
     napi_value resJs = nullptr;
-    NAPI_CALL_RETURN_VOID(env, napi_get_undefined(env, &resJs));
+    if (napi_get_undefined(env, &resJs) != napi_ok) {
+        DLP_LOG_ERROR(LABEL, "napi_get_undefined failed");
+        asyncContext->errCode = DLP_NAPI_ERROR_NATIVE_BINDING_FAIL;
+    }
     ProcessCallbackOrPromise(env, asyncContext, resJs);
 }
 
@@ -882,6 +937,11 @@ void NapiDlpPermission::InstallDlpSandboxComplete(napi_env env, napi_status stat
     napi_value sandboxInfoJs = nullptr;
     if (asyncContext->errCode == DLP_OK) {
         sandboxInfoJs = SandboxInfoToJs(env, asyncContext->sandboxInfo);
+        if (sandboxInfoJs == nullptr) {
+            DLP_LOG_ERROR(LABEL, "SandboxInfoToJs failed");
+            asyncContext->errCode = DLP_NAPI_ERROR_NATIVE_BINDING_FAIL;
+            napi_get_undefined(env, &sandboxInfoJs);
+        }
     }
     ProcessCallbackOrPromise(env, asyncContext, sandboxInfoJs);
 }
@@ -947,7 +1007,10 @@ void NapiDlpPermission::UninstallDlpSandboxComplete(napi_env env, napi_status st
     }
     std::unique_ptr<DlpSandboxAsyncContext> asyncContextPtr { asyncContext };
     napi_value resJs = nullptr;
-    NAPI_CALL_RETURN_VOID(env, napi_get_undefined(env, &resJs));
+    if (napi_get_undefined(env, &resJs) != napi_ok) {
+        DLP_LOG_ERROR(LABEL, "napi_get_undefined failed");
+        asyncContext->errCode = DLP_NAPI_ERROR_NATIVE_BINDING_FAIL;
+    }
     ProcessCallbackOrPromise(env, asyncContext, resJs);
 }
 
@@ -1008,6 +1071,11 @@ void NapiDlpPermission::GetDLPPermissionInfoComplete(napi_env env, napi_status s
     napi_value permInfoJs = nullptr;
     if (asyncContext->errCode == DLP_OK) {
         permInfoJs = DlpPermissionInfoToJs(env, asyncContext->permInfo);
+        if (permInfoJs == nullptr) {
+            DLP_LOG_ERROR(LABEL, "DlpPermissionInfoToJs failed");
+            asyncContext->errCode = DLP_NAPI_ERROR_NATIVE_BINDING_FAIL;
+            napi_get_undefined(env, &permInfoJs);
+        }
     }
     ProcessCallbackOrPromise(env, asyncContext, permInfoJs);
 }
@@ -1068,7 +1136,11 @@ void NapiDlpPermission::IsInSandboxComplete(napi_env env, napi_status status, vo
     std::unique_ptr<IsInSandboxAsyncContext> asyncContextPtr { asyncContext };
     napi_value inSandboxJs = nullptr;
     if (asyncContext->errCode == DLP_OK) {
-        NAPI_CALL_RETURN_VOID(env, napi_get_boolean(env, asyncContext->inSandbox, &inSandboxJs));
+        if (napi_get_boolean(env, asyncContext->inSandbox, &inSandboxJs) != napi_ok) {
+            DLP_LOG_ERROR(LABEL, "napi_get_boolean failed");
+            asyncContext->errCode = DLP_NAPI_ERROR_NATIVE_BINDING_FAIL;
+            napi_get_undefined(env, &inSandboxJs);
+        }
     }
     ProcessCallbackOrPromise(env, asyncContext, inSandboxJs);
 }
@@ -1130,6 +1202,11 @@ void NapiDlpPermission::GetDlpSupportFileTypeComplete(napi_env env, napi_status 
     napi_value supportFileTypeJs = nullptr;
     if (asyncContext->errCode == DLP_OK) {
         supportFileTypeJs = VectorStringToJs(env, asyncContext->supportFileType);
+        if (supportFileTypeJs == nullptr) {
+            DLP_LOG_ERROR(LABEL, "VectorStringToJs failed");
+            asyncContext->errCode = DLP_NAPI_ERROR_NATIVE_BINDING_FAIL;
+            napi_get_undefined(env, &supportFileTypeJs);
+        }
     }
     ProcessCallbackOrPromise(env, asyncContext, supportFileTypeJs);
 }
@@ -1232,6 +1309,8 @@ napi_value NapiDlpPermission::SubscribeOpenDlpFile(const napi_env env, const nap
         nullptr, nullptr);
     if (wrapStatus != napi_ok) {
         DLP_LOG_ERROR(LABEL, "Wrap js and native option failed");
+        syncContextPtr->subscriber->SetValid(false);
+        DlpPermissionKit::UnRegisterOpenDlpFileCallback(syncContextPtr->subscriber);
         DlpNapiThrow(env, ERR_JS_INVALID_PARAMETER, "Wrap js and native option failed");
         return nullptr;
     }
@@ -1282,7 +1361,7 @@ napi_value NapiDlpPermission::Subscribe(napi_env env, napi_callback_info cbInfo)
     }
 }
 
-napi_value NapiDlpPermission::UnSubscribeOpenDlpFile(const napi_env env, napi_ref& callback)
+napi_value NapiDlpPermission::UnSubscribeOpenDlpFile(const napi_env env, napi_value thisVar, napi_ref& callback)
 {
     std::lock_guard<std::mutex> lock(g_lockForOpenDlpFileSubscriber);
     if (callback == nullptr) {
@@ -1294,6 +1373,8 @@ napi_value NapiDlpPermission::UnSubscribeOpenDlpFile(const napi_env env, napi_re
                 DlpNapiThrow(env, result);
                 return nullptr;
             }
+            void* nativeResult = nullptr;
+            napi_remove_wrap(env, thisVar, &nativeResult);
             delete *iter;
             iter = g_openDlpFileSubscribers.erase(iter);
         }
@@ -1310,6 +1391,8 @@ napi_value NapiDlpPermission::UnSubscribeOpenDlpFile(const napi_env env, napi_re
                 DlpNapiThrow(env, result);
                 return nullptr;
             }
+            void* nativeResult = nullptr;
+            napi_remove_wrap(env, thisVar, &nativeResult);
             delete *iter;
             g_openDlpFileSubscribers.erase(iter);
             break;
@@ -1344,7 +1427,7 @@ napi_value NapiDlpPermission::UnSubscribe(napi_env env, napi_callback_info cbInf
     }
 
     if (type == "openDLPFile") {
-        return UnSubscribeOpenDlpFile(env, callback);
+        return UnSubscribeOpenDlpFile(env, thisVar, callback);
     } else if (type == "uninstallDLPSandbox") {
         if (callback != nullptr) {
             napi_delete_reference(env, callback);
@@ -1418,7 +1501,11 @@ void NapiDlpPermission::GetDlpGatheringPolicyComplete(napi_env env, napi_status 
     napi_value isGatheringJs = nullptr;
     if (asyncContext->errCode == DLP_OK) {
         GatheringPolicyType policy = asyncContext->isGathering ? GATHERING : NON_GATHERING;
-        NAPI_CALL_RETURN_VOID(env, napi_create_uint32(env, policy, &isGatheringJs));
+        if (napi_create_uint32(env, policy, &isGatheringJs) != napi_ok) {
+            DLP_LOG_ERROR(LABEL, "napi_create_uint32 failed");
+            asyncContext->errCode = DLP_NAPI_ERROR_NATIVE_BINDING_FAIL;
+            napi_get_undefined(env, &isGatheringJs);
+        }
     }
     ProcessCallbackOrPromise(env, asyncContext, isGatheringJs);
 }
@@ -1491,7 +1578,10 @@ void NapiDlpPermission::SetRetentionStateComplete(napi_env env, napi_status stat
     std::unique_ptr<RetentionStateAsyncContext> asyncContextPtr { asyncContext };
     napi_value resJs = nullptr;
     if (asyncContext->errCode == DLP_OK) {
-        NAPI_CALL_RETURN_VOID(env, napi_get_undefined(env, &resJs));
+        if (napi_get_undefined(env, &resJs) != napi_ok) {
+            DLP_LOG_ERROR(LABEL, "napi_get_undefined failed");
+            asyncContext->errCode = DLP_NAPI_ERROR_NATIVE_BINDING_FAIL;
+        }
     }
     ProcessCallbackOrPromise(env, asyncContext, resJs);
 }
@@ -1544,7 +1634,10 @@ void NapiDlpPermission::CancelRetentionStateComplete(napi_env env, napi_status s
     std::unique_ptr<RetentionStateAsyncContext> asyncContextPtr { asyncContext };
     napi_value resJs = nullptr;
     if (asyncContext->errCode == DLP_OK) {
-        NAPI_CALL_RETURN_VOID(env, napi_get_undefined(env, &resJs));
+        if (napi_get_undefined(env, &resJs) != napi_ok) {
+            DLP_LOG_ERROR(LABEL, "napi_get_undefined failed");
+            asyncContext->errCode = DLP_NAPI_ERROR_NATIVE_BINDING_FAIL;
+        }
     }
     ProcessCallbackOrPromise(env, asyncContext, resJs);
 }
@@ -1599,6 +1692,11 @@ void NapiDlpPermission::GetRetentionSandboxListComplete(napi_env env, napi_statu
     napi_value resJs = nullptr;
     if (asyncContext->errCode == DLP_OK) {
         resJs = RetentionSandboxInfoToJs(env, asyncContext->retentionSandBoxInfoVec);
+        if (resJs == nullptr) {
+            DLP_LOG_ERROR(LABEL, "RetentionSandboxInfoToJs failed");
+            asyncContext->errCode = DLP_NAPI_ERROR_NATIVE_BINDING_FAIL;
+            napi_get_undefined(env, &resJs);
+        }
     }
     ProcessCallbackOrPromise(env, asyncContext, resJs);
 }
@@ -1652,6 +1750,11 @@ void NapiDlpPermission::GetDLPFileVisitRecordComplete(napi_env env, napi_status 
     napi_value resJs = nullptr;
     if (asyncContext->errCode == DLP_OK) {
         resJs = VisitInfoToJs(env, asyncContext->visitedDlpFileInfoVec);
+        if (resJs == nullptr) {
+            DLP_LOG_ERROR(LABEL, "VisitInfoToJs failed");
+            asyncContext->errCode = DLP_NAPI_ERROR_NATIVE_BINDING_FAIL;
+            napi_get_undefined(env, &resJs);
+        }
     }
     ProcessCallbackOrPromise(env, asyncContext, resJs);
 }
@@ -1698,7 +1801,10 @@ void NapiDlpPermission::SetSandboxAppConfigComplete(napi_env env, napi_status st
     std::unique_ptr<SandboxAppConfigAsyncContext> asyncContextPtr { asyncContext };
     napi_value resJs = nullptr;
     if (asyncContext->errCode == DLP_OK) {
-        NAPI_CALL_RETURN_VOID(env, napi_get_undefined(env, &resJs));
+        if (napi_get_undefined(env, &resJs) != napi_ok) {
+            DLP_LOG_ERROR(LABEL, "napi_get_undefined failed");
+            asyncContext->errCode = DLP_NAPI_ERROR_NATIVE_BINDING_FAIL;
+        }
     }
     ProcessCallbackOrPromise(env, asyncContext, resJs);
 }
@@ -1741,7 +1847,10 @@ void NapiDlpPermission::CleanSandboxAppConfigComplete(napi_env env, napi_status 
     std::unique_ptr<SandboxAppConfigAsyncContext> asyncContextPtr { asyncContext };
     napi_value resJs = nullptr;
     if (asyncContext->errCode == DLP_OK) {
-        NAPI_CALL_RETURN_VOID(env, napi_get_undefined(env, &resJs));
+        if (napi_get_undefined(env, &resJs) != napi_ok) {
+            DLP_LOG_ERROR(LABEL, "napi_get_undefined failed");
+            asyncContext->errCode = DLP_NAPI_ERROR_NATIVE_BINDING_FAIL;
+        }
     }
     ProcessCallbackOrPromise(env, asyncContext, resJs);
 }
@@ -1787,8 +1896,12 @@ void NapiDlpPermission::GetSandboxAppConfigComplete(napi_env env, napi_status st
     std::unique_ptr<SandboxAppConfigAsyncContext> asyncContextPtr { asyncContext };
     napi_value configInfoJs = nullptr;
     if (asyncContext->errCode == DLP_OK) {
-        NAPI_CALL_RETURN_VOID(env, napi_create_string_utf8(env, asyncContext->configInfo.c_str(),
-            NAPI_AUTO_LENGTH, &configInfoJs));
+        if (napi_create_string_utf8(env, asyncContext->configInfo.c_str(),
+            NAPI_AUTO_LENGTH, &configInfoJs) != napi_ok) {
+            DLP_LOG_ERROR(LABEL, "napi_create_string_utf8 failed");
+            asyncContext->errCode = DLP_NAPI_ERROR_NATIVE_BINDING_FAIL;
+            napi_get_undefined(env, &configInfoJs);
+        }
     }
     ProcessCallbackOrPromise(env, asyncContext, configInfoJs);
 }
@@ -1834,7 +1947,11 @@ void NapiDlpPermission::IsDLPFeatureProvidedComplete(napi_env env, napi_status s
     std::unique_ptr<IsDLPFeatureProvidedAsyncContext> asyncContextPtr { asyncContext };
     napi_value isProvideDLPFeatureJs = nullptr;
     if (asyncContext->errCode == DLP_OK) {
-        NAPI_CALL_RETURN_VOID(env, napi_get_boolean(env, asyncContext->isProvideDLPFeature, &isProvideDLPFeatureJs));
+        if (napi_get_boolean(env, asyncContext->isProvideDLPFeature, &isProvideDLPFeatureJs) != napi_ok) {
+            DLP_LOG_ERROR(LABEL, "napi_get_boolean failed");
+            asyncContext->errCode = DLP_NAPI_ERROR_NATIVE_BINDING_FAIL;
+            napi_get_undefined(env, &isProvideDLPFeatureJs);
+        }
     }
     ProcessCallbackOrPromise(env, asyncContext, isProvideDLPFeatureJs);
 }

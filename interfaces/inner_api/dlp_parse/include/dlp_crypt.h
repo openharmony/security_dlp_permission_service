@@ -117,30 +117,6 @@ int32_t DlpOpensslAesEncrypt(const struct DlpBlob* key, const struct DlpUsageSpe
 int32_t DlpOpensslAesDecrypt(const struct DlpBlob* key, const struct DlpUsageSpec* usageSpec,
     const struct DlpBlob* message, struct DlpBlob* plainText);
 
-int32_t DlpOpensslAesEncryptInit(void** cryptoCtx, const struct DlpBlob* key, const struct DlpUsageSpec* usageSpec);
-
-int32_t DlpOpensslAesEncryptUpdate(void* cryptoCtx, const struct DlpBlob* message, struct DlpBlob* cipherText);
-
-int32_t DlpOpensslAesEncryptFinal(void** cryptoCtx, const struct DlpBlob* message, struct DlpBlob* cipherText);
-
-int32_t DlpOpensslAesDecryptInit(void** cryptoCtx, const struct DlpBlob* key, const struct DlpUsageSpec* usageSpec);
-
-int32_t DlpOpensslAesDecryptUpdate(void* cryptoCtx, const struct DlpBlob* message, struct DlpBlob* plainText);
-
-int32_t DlpOpensslAesDecryptFinal(void** cryptoCtx, const struct DlpBlob* message, struct DlpBlob* plainText);
-
-void DlpOpensslAesHalFreeCtx(void** cryptoCtx);
-
-int32_t DlpOpensslHash(uint32_t alg, const struct DlpBlob* msg, struct DlpBlob* hash);
-
-int32_t DlpOpensslHashInit(void** cryptoCtx, uint32_t alg);
-
-int32_t DlpOpensslHashUpdate(void* cryptoCtx, const struct DlpBlob* msg);
-
-int32_t DlpOpensslHashFinal(void** cryptoCtx, const struct DlpBlob* msg, struct DlpBlob* hash);
-
-int32_t DlpOpensslHashFreeCtx(void** cryptoCtx);
-
 int32_t DlpCtrModeIncreaeIvCounter(struct DlpBlob& iv, uint32_t count);
 
 int32_t DlpHmacEncodeForRaw(const DlpBlob& key, int32_t fd, uint64_t fileSize, DlpBlob& out);

@@ -54,7 +54,6 @@ public:
     void OnStop() override;
 
     bool RegisterAppStateObserver();
-    void UnregisterAppStateObserver();
 
     int32_t GenerateDlpCertificate(
         const sptr<DlpPolicyParcel>& policyParcel, const sptr<IDlpPermissionCallback>& callback) override;
@@ -133,11 +132,13 @@ private:
     int32_t InitAccountListenerCallback();
     void DelSandboxInfoByAccount(bool isRegister);
     void DelWaterMarkInfo();
+    sptr<AppStateObserver> GetAppStateObserver(CurrentTaskState taskState);
 
     std::atomic<int32_t> repeatTime_;
     std::shared_ptr<std::thread> thread_ = nullptr;
     std::mutex mutex_;
     std::shared_mutex dlpSandboxDataMutex_;
+    std::shared_mutex serviceMemberMutex_;
     std::mutex waterMarkInfoMutex_;
     std::condition_variable waterMarkInfoCv_;
     ServiceRunningState state_;
