@@ -19,6 +19,7 @@
 #include <thread>
 #include <unistd.h>
 #include <vector>
+#include <cinttypes>
 #include "gtest/gtest.h"
 #include "ability_info.h"
 #include "accesstoken_kit.h"
@@ -231,7 +232,7 @@ void DlpPermissionKitTest::SetUpTestCase()
     // make test case clean
     DLP_LOG_INFO(LABEL, "SetUpTestCase.");
     g_selfTokenId = GetSelfTokenID();
-    DLP_LOG_INFO(LABEL, "get self tokenId is %{public}llu", g_selfTokenId);
+    DLP_LOG_INFO(LABEL, "get self tokenId is %{public}" PRIu64, g_selfTokenId);
     g_selfUid = getuid();
     DLP_LOG_INFO(LABEL, "get self uid is %{public}d", g_selfUid);
     DlpPermissionTestCommon::SetTestEvironment(g_selfTokenId);
