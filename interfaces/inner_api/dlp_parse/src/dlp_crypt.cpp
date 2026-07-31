@@ -198,9 +198,8 @@ static bool HIAEParamCheck(const struct DlpBlob *key, const struct DlpUsageSpec 
         return false;
     }
 
-    if (usageSpec == nullptr || usageSpec->algParam == nullptr || usageSpec->algParam->iv.data == nullptr ||
-        usageSpec->algParam->iv.size != AES_IV_SIZE) {
-        DLP_LOG_ERROR(LABEL, "check HIAE param fail, usageSpec or iv is invalid");
+    if (usageSpec == nullptr || usageSpec->algParam == nullptr) {
+        DLP_LOG_ERROR(LABEL, "check HIAE param fail, usageSpec is null");
         return false;
     }
 
@@ -394,9 +393,9 @@ static int32_t OpensslAesCipherInit(
     }
 
     if (isEncrypt) {
-        ret = EVP_EncryptInit_ex(*ctx, nullptr, nullptr, key->data, ivData);
+        ret = EVP_EncryptInit_ex(*ctx, cipher, nullptr, nullptr, nullptr);
     } else {
-        ret = EVP_DecryptInit_ex(*ctx, nullptr, nullptr, key->data, ivData);
+        ret = EVP_DecryptInit_ex(*ctx, cipher, nullptr, nullptr, nullptr);
     }
     if (ret != DLP_OPENSSL_SUCCESS) {
         DlpLogOpensslError();
@@ -406,10 +405,10 @@ static int32_t OpensslAesCipherInit(
 
     if (isEncrypt) {
         ret = EVP_EncryptInit_ex(
-            *ctx, nullptr, nullptr, key->data, (cipherParam == nullptr) ? nullptr : cipherParam->iv.data);
+            *ctx, nullptr, nullptr, key->data, ivData);
     } else {
         ret = EVP_DecryptInit_ex(
-            *ctx, nullptr, nullptr, key->data, (cipherParam == nullptr) ? nullptr : cipherParam->iv.data);
+            *ctx, nullptr, nullptr, key->data, ivData);
     }
     if (ret != DLP_OPENSSL_SUCCESS) {
         DlpLogOpensslError();
@@ -497,6 +496,12 @@ static bool AesParamCheck(const struct DlpBlob* key, const struct DlpUsageSpec* 
         return false;
     }
 
+    if (usageSpec->algParam != nullptr && usageSpec->algParam->iv.data != nullptr &&
+        usageSpec->algParam->iv.size != AES_IV_SIZE) {
+        DLP_LOG_ERROR(LABEL, "Aes cipher init fail, iv size is invalid");
+        return false;
+    }
+
     if (cipherText->size < message->size) {
         DLP_LOG_ERROR(LABEL, "Check aes params fail, cipher text size too small");
         return false;
@@ -511,13 +516,6 @@ int32_t DlpOpensslAesEncrypt(const struct DlpBlob* key, const struct DlpUsageSpe
     if (!AesParamCheck(key, usageSpec, message, cipherText)) {
         DLP_LOG_ERROR(LABEL, "Aes encrypt fail, check aes params error");
         return DLP_PARSE_ERROR_VALUE_INVALID;
-    }
-
-    if (usageSpec->algParam != nullptr && usageSpec->algParam->iv.data != nullptr) {
-        if (usageSpec->algParam->iv.size != AES_IV_SIZE) {
-            DLP_LOG_ERROR(LABEL, "Aes cipher init fail, iv size is invalid");
-            return DLP_PARSE_ERROR_VALUE_INVALID;
-        }
     }
 
     EVP_CIPHER_CTX* ctx = nullptr;
@@ -554,12 +552,6 @@ int32_t DlpOpensslAesDecrypt(const struct DlpBlob* key, const struct DlpUsageSpe
     if (!AesParamCheck(key, usageSpec, message, plainText)) {
         DLP_LOG_ERROR(LABEL, "Aes decrypt fail, check aes params error");
         return DLP_PARSE_ERROR_VALUE_INVALID;
-    }
-    if (usageSpec->algParam != nullptr && usageSpec->algParam->iv.data != nullptr) {
-        if (usageSpec->algParam->iv.size != AES_IV_SIZE) {
-            DLP_LOG_ERROR(LABEL, "Aes cipher init fail, iv size is invalid");
-            return DLP_PARSE_ERROR_VALUE_INVALID;
-        }
     }
     EVP_CIPHER_CTX* ctx = nullptr;
     struct DlpBlob tmpPlainText = *plainText;
