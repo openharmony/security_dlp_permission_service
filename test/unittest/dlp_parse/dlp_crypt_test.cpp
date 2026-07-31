@@ -819,3 +819,201 @@ HWTEST_F(DlpCryptTest, DlpHIAECryptTest, TestSize.Level0)
     ASSERT_EQ(DlpHIAEDecrypt(nullptr, nullptr, 0, nullptr, nullptr), DLP_PARSE_ERROR_VALUE_INVALID);
     ClearDlpHIAEMgr();
 }
+
+/**
+ * @tc.name: DlpOpensslAesEncrypt005
+ * @tc.desc: Dlp encrypt test with invalid iv size.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpCryptTest, DlpOpensslAesEncrypt005, TestSize.Level0)
+{
+    DLP_LOG_INFO(LABEL, "DlpOpensslAesEncrypt005");
+    struct DlpCipherParam tagIv = {{8, g_iv}};
+    struct DlpUsageSpec usageSpec = {DLP_MODE_CTR, &tagIv};
+
+    uint8_t input[16] = "aaaaaaaaaaaaaaa";
+    uint8_t enc[16] = {0};
+    struct DlpBlob key = {32, g_key};
+    struct DlpBlob message = {15, input};
+    struct DlpBlob cipherText = {15, enc};
+
+    // iv size != 16, AesParamCheck should return false
+    int32_t ret = DlpOpensslAesEncrypt(&key, &usageSpec, &message, &cipherText);
+    EXPECT_EQ(DLP_PARSE_ERROR_VALUE_INVALID, ret);
+}
+
+/**
+ * @tc.name: DlpOpensslAesEncrypt006
+ * @tc.desc: Dlp encrypt test with cipherText size less than message size.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpCryptTest, DlpOpensslAesEncrypt006, TestSize.Level0)
+{
+    DLP_LOG_INFO(LABEL, "DlpOpensslAesEncrypt006");
+    struct DlpCipherParam tagIv = {{16, g_iv}};
+    struct DlpUsageSpec usageSpec = {DLP_MODE_CTR, &tagIv};
+
+    uint8_t input[16] = "aaaaaaaaaaaaaaa";
+    uint8_t enc[8] = {0};
+    struct DlpBlob key = {32, g_key};
+    struct DlpBlob message = {15, input};
+    struct DlpBlob cipherText = {8, enc};
+
+    // cipherText size < message size, AesParamCheck should return false
+    int32_t ret = DlpOpensslAesEncrypt(&key, &usageSpec, &message, &cipherText);
+    EXPECT_EQ(DLP_PARSE_ERROR_VALUE_INVALID, ret);
+}
+
+/**
+ * @tc.name: DlpOpensslAesDecrypt005
+ * @tc.desc: Dlp decrypt test with invalid iv size.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpCryptTest, DlpOpensslAesDecrypt005, TestSize.Level0)
+{
+    DLP_LOG_INFO(LABEL, "DlpOpensslAesDecrypt005");
+    struct DlpCipherParam tagIv = {{8, g_iv}};
+    struct DlpUsageSpec usageSpec = {DLP_MODE_CTR, &tagIv};
+
+    uint8_t input[16] = "aaaaaaaaaaaaaaa";
+    uint8_t dec[16] = {0};
+    struct DlpBlob key = {32, g_key};
+    struct DlpBlob message = {15, input};
+    struct DlpBlob plainText = {15, dec};
+
+    // iv size != 16, AesParamCheck should return false
+    int32_t ret = DlpOpensslAesDecrypt(&key, &usageSpec, &message, &plainText);
+    EXPECT_EQ(DLP_PARSE_ERROR_VALUE_INVALID, ret);
+}
+
+/**
+ * @tc.name: DlpOpensslAesDecrypt006
+ * @tc.desc: Dlp decrypt test with plainText size less than message size.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpCryptTest, DlpOpensslAesDecrypt006, TestSize.Level0)
+{
+    DLP_LOG_INFO(LABEL, "DlpOpensslAesDecrypt006");
+    struct DlpCipherParam tagIv = {{16, g_iv}};
+    struct DlpUsageSpec usageSpec = {DLP_MODE_CTR, &tagIv};
+
+    uint8_t input[16] = "aaaaaaaaaaaaaaa";
+    uint8_t dec[8] = {0};
+    struct DlpBlob key = {32, g_key};
+    struct DlpBlob message = {15, input};
+    struct DlpBlob plainText = {8, dec};
+
+    // plainText size < message size, AesParamCheck should return false
+    int32_t ret = DlpOpensslAesDecrypt(&key, &usageSpec, &message, &plainText);
+    EXPECT_EQ(DLP_PARSE_ERROR_VALUE_INVALID, ret);
+}
+
+/**
+ * @tc.name: DlpOpensslAesEncrypt007
+ * @tc.desc: Dlp encrypt test with algParam nullptr (ivData is null path in OpensslAesCipherInit).
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpCryptTest, DlpOpensslAesEncrypt007, TestSize.Level0)
+{
+    DLP_LOG_INFO(LABEL, "DlpOpensslAesEncrypt007");
+    struct DlpUsageSpec usageSpec = {DLP_MODE_CTR, nullptr};
+
+    uint8_t input[16] = "aaaaaaaaaaaaaaa";
+    uint8_t enc[16] = {0};
+    struct DlpBlob key = {32, g_key};
+    struct DlpBlob message = {15, input};
+    struct DlpBlob cipherText = {15, enc};
+
+    // algParam is nullptr, ivData will be nullptr in OpensslAesCipherInit
+    int32_t ret = DlpOpensslAesEncrypt(&key, &usageSpec, &message, &cipherText);
+    EXPECT_EQ(DLP_OK, ret);
+}
+
+/**
+ * @tc.name: DlpOpensslAesDecrypt007
+ * @tc.desc: Dlp decrypt test with algParam nullptr (ivData is null path in OpensslAesCipherInit).
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpCryptTest, DlpOpensslAesDecrypt007, TestSize.Level0)
+{
+    DLP_LOG_INFO(LABEL, "DlpOpensslAesDecrypt007");
+    struct DlpUsageSpec usageSpec = {DLP_MODE_CTR, nullptr};
+
+    uint8_t input[16] = "aaaaaaaaaaaaaaa";
+    uint8_t dec[16] = {0};
+    struct DlpBlob key = {32, g_key};
+    struct DlpBlob message = {15, input};
+    struct DlpBlob plainText = {15, dec};
+
+    // algParam is nullptr, ivData will be nullptr in OpensslAesCipherInit
+    int32_t ret = DlpOpensslAesDecrypt(&key, &usageSpec, &message, &plainText);
+    EXPECT_EQ(DLP_OK, ret);
+}
+
+/**
+ * @tc.name: DlpOpensslAesEncryptAndDecrypt008
+ * @tc.desc: Dlp encrypt && decrypt with algParam->iv.data is nullptr.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpCryptTest, DlpOpensslAesEncryptAndDecrypt008, TestSize.Level0)
+{
+    DLP_LOG_INFO(LABEL, "DlpOpensslAesEncryptAndDecrypt008");
+    struct DlpBlob key = {32, nullptr};
+    key.data = g_key;
+
+    struct DlpCipherParam tagIv = {.iv = {.data = nullptr, .size = 16}};
+    struct DlpUsageSpec usage = {
+        .mode = DLP_MODE_CTR,
+        .algParam = &tagIv
+    };
+
+    uint8_t input[16] = "aaaaaaaaaaaaaaa";
+    uint8_t enc[16] = {0};
+    uint8_t dec[16] = {0};
+    struct DlpBlob mIn = {15, input};
+    struct DlpBlob mEnc = {15, enc};
+    struct DlpBlob mDec = {15, dec};
+
+    // algParam is not nullptr but iv.data is nullptr, IV size check short-circuits
+    int32_t ret = DlpOpensslAesEncrypt(&key, &usage, &mIn, &mEnc);
+    EXPECT_EQ(DLP_OK, ret);
+    ret = DlpOpensslAesDecrypt(&key, &usage, &mEnc, &mDec);
+    EXPECT_EQ(DLP_OK, ret);
+}
+
+/**
+ * @tc.name: DlpOpensslAesEncryptAndDecrypt009
+ * @tc.desc: Dlp encrypt && decrypt test with iv size 0 (invalid iv size check).
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpCryptTest, DlpOpensslAesEncryptAndDecrypt009, TestSize.Level0)
+{
+    DLP_LOG_INFO(LABEL, "DlpOpensslAesEncryptAndDecrypt009");
+    struct DlpBlob key = {32, nullptr};
+    key.data = g_key;
+
+    struct DlpCipherParam tagIv = {.iv = {.data = g_iv, .size = 0}};
+    struct DlpUsageSpec usage = {
+        .mode = DLP_MODE_CTR,
+        .algParam = &tagIv
+    };
+
+    uint8_t input[16] = "aaaaaaaaaaaaaaa";
+    uint8_t enc[16] = {0};
+    struct DlpBlob mIn = {15, input};
+    struct DlpBlob mEnc = {15, enc};
+
+    // iv.size = 0, should fail AesParamCheck
+    int32_t ret = DlpOpensslAesEncrypt(&key, &usage, &mIn, &mEnc);
+    EXPECT_EQ(DLP_PARSE_ERROR_VALUE_INVALID, ret);
+    ret = DlpOpensslAesDecrypt(&key, &usage, &mIn, &mEnc);
+    EXPECT_EQ(DLP_PARSE_ERROR_VALUE_INVALID, ret);
+}
