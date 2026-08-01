@@ -306,29 +306,32 @@ int32_t SandboxJsonManager::ClearUnreservedSandbox(int32_t isNotMatch)
     if (!GetUserIdByForegroundAccount(&userId)) {
         return DLP_SERVICE_ERROR_GET_ACCOUNT_FAIL;
     }
-    std::lock_guard<std::mutex> lock(mutex_);
-    bool isChanged = false;
-    AppExecFwk::BundleMgrClient bundleMgrClient;
-    for (auto iter = infoVec_.begin(); iter != infoVec_.end();) {
-        if (!isNotMatch && (!iter->docUriSet.empty() || iter->userId != userId || iter->isInit)) {
-            ++iter;
-            continue;
+    std::vector<RetentionInfo> toRemove;
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        for (auto iter = infoVec_.begin(); iter != infoVec_.end();) {
+            if (!isNotMatch && (!iter->docUriSet.empty() || iter->userId != userId || iter->isInit)) {
+                ++iter;
+                continue;
+            }
+            toRemove.push_back(*iter);
+            iter = infoVec_.erase(iter);
         }
-        int32_t res = bundleMgrClient.UninstallSandboxApp(iter->bundleName, iter->appIndex, iter->userId);
+    }
+    if (toRemove.empty()) {
+        DLP_LOG_INFO(LABEL, "do not need update");
+        return DLP_FILE_NO_NEED_UPDATE;
+    }
+    AppExecFwk::BundleMgrClient bundleMgrClient;
+    for (auto& info : toRemove) {
+        int32_t res = bundleMgrClient.UninstallSandboxApp(info.bundleName, info.appIndex, info.userId);
         if (res != DLP_OK && res != ERR_APPEXECFWK_SANDBOX_INSTALL_NO_SANDBOX_APP_INFO) {
             DLP_LOG_ERROR(LABEL, "uninstall sandbox %{public}s fail, index=%{public}d, error=%{public}d",
-                iter->bundleName.c_str(), iter->appIndex, res);
-            ++iter;
+                info.bundleName.c_str(), info.appIndex, res);
             continue;
         }
         DLP_LOG_DEBUG(LABEL, "uninstall sandbox %{public}s success, index=%{public}d, error=%{public}d",
-            iter->bundleName.c_str(), iter->appIndex, res);
-        iter = infoVec_.erase(iter);
-        isChanged = true;
-    }
-    if (!isChanged) {
-        DLP_LOG_INFO(LABEL, "do not need update");
-        return DLP_FILE_NO_NEED_UPDATE;
+            info.bundleName.c_str(), info.appIndex, res);
     }
     return DLP_OK;
 }
@@ -356,30 +359,36 @@ int32_t SandboxJsonManager::GetBundleNameSetByUserId(const int32_t userId, std::
 int32_t SandboxJsonManager::RemoveRetentionInfoByUserId(const int32_t userId,
     const std::set<std::string>& bundleNameSet)
 {
-    bool isNeedUpdate = false;
-    AppExecFwk::BundleMgrClient bundleMgrClient;
-    std::lock_guard<std::mutex> lock(mutex_);
-    for (auto iter = infoVec_.begin(); iter != infoVec_.end();) {
-        if ((iter->userId != userId) ||
-            ((bundleNameSet.count(iter->bundleName) == 0) && !CheckReInstall(*iter, userId))) {
-            ++iter;
-            continue;
+    std::vector<RetentionInfo> toRemove;
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        for (auto iter = infoVec_.begin(); iter != infoVec_.end();) {
+            if (iter->userId != userId) {
+                ++iter;
+                continue;
+            }
+            if (bundleNameSet.count(iter->bundleName) == 0 && !CheckReInstall(*iter, userId)) {
+                ++iter;
+                continue;
+            }
+            toRemove.push_back(*iter);
+            iter = infoVec_.erase(iter);
         }
-        int32_t res = bundleMgrClient.UninstallSandboxApp(iter->bundleName, iter->appIndex, iter->userId);
+    }
+    if (toRemove.empty()) {
+        DLP_LOG_INFO(LABEL, "do not need update");
+        return DLP_FILE_NO_NEED_UPDATE;
+    }
+    AppExecFwk::BundleMgrClient bundleMgrClient;
+    for (auto& info : toRemove) {
+        int32_t res = bundleMgrClient.UninstallSandboxApp(info.bundleName, info.appIndex, info.userId);
         if (res != DLP_OK && res != ERR_APPEXECFWK_SANDBOX_INSTALL_NO_SANDBOX_APP_INFO) {
             DLP_LOG_ERROR(LABEL, "uninstall sandbox %{public}s fail, index=%{public}d, error=%{public}d",
-                iter->bundleName.c_str(), iter->appIndex, res);
-            ++iter;
+                info.bundleName.c_str(), info.appIndex, res);
             continue;
         }
         DLP_LOG_DEBUG(LABEL, "uninstall sandbox %{public}s success, index=%{public}d, error=%{public}d",
-            iter->bundleName.c_str(), iter->appIndex, res);
-        iter = infoVec_.erase(iter);
-        isNeedUpdate = true;
-    }
-    if (!isNeedUpdate) {
-        DLP_LOG_INFO(LABEL, "do not need update");
-        return DLP_FILE_NO_NEED_UPDATE;
+            info.bundleName.c_str(), info.appIndex, res);
     }
     return DLP_OK;
 }
@@ -502,13 +511,10 @@ void SandboxJsonManager::FromJson(const Json& jsonObject)
 
 std::string SandboxJsonManager::ToString() const
 {
-    {
-        std::lock_guard<std::mutex> lock(mutex_);
-        if (infoVec_.empty()) {
-            return "";
-        }
-    }
     auto jsonObject = ToJson();
+    if (jsonObject.empty()) {
+        return "";
+    }
     return jsonObject.dump();
 }
 } // namespace DlpPermission

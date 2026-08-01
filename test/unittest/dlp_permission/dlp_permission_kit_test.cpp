@@ -892,9 +892,9 @@ HWTEST_F(DlpPermissionKitTest, QueryDlpFileAccess004, TestSize.Level1)
 
     DLPPermissionInfo permInfo;
     int32_t result = DlpPermissionKit::QueryDlpFileAccess(permInfo);
-    ASSERT_TRUE(result == DLP_OK || result == DLP_SERVICE_ERROR_VALUE_INVALID);
-    ASSERT_EQ(permInfo.dlpFileAccess, DLPFileAccess::FULL_CONTROL);
-    ASSERT_EQ(permInfo.flags, ACTION_SET_FC);
+    EXPECT_TRUE(result == DLP_OK || result == DLP_SERVICE_ERROR_VALUE_INVALID);
+    EXPECT_EQ(permInfo.dlpFileAccess, DLPFileAccess::FULL_CONTROL);
+    EXPECT_EQ(permInfo.flags, ACTION_SET_FC);
 
     TestUninstallDlpSandbox(DLP_MANAGER_APP, sandboxInfo.appIndex, DEFAULT_USERID);
     TestRecoverProcessInfo(uid, tokenId);

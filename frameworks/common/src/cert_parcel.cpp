@@ -21,6 +21,7 @@ namespace Security {
 namespace DlpPermission {
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = { LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "CertParcel" };
+static const uint32_t MAX_CERT_SIZE = 1024 * 1024 * 40 * 2;
 }
 
 CertParcel::CertParcel()
@@ -41,8 +42,16 @@ bool CertParcel::Marshalling(Parcel& data) const
         DLP_LOG_ERROR(LABEL, "Write string contactAccount fail");
         return false;
     }
+    if (this->cert.size() > MAX_CERT_SIZE) {
+        DLP_LOG_ERROR(LABEL, "cert size %{public}zu exceeds limit", this->cert.size());
+        return false;
+    }
     if (!data.WriteUInt8Vector(this->cert)) {
         DLP_LOG_ERROR(LABEL, "Write uint8 vector fail");
+        return false;
+    }
+    if (this->offlineCert.size() > MAX_CERT_SIZE) {
+        DLP_LOG_ERROR(LABEL, "offlineCert size %{public}zu exceeds limit", this->offlineCert.size());
         return false;
     }
     if (!data.WriteUInt8Vector(this->offlineCert)) {
@@ -53,6 +62,11 @@ bool CertParcel::Marshalling(Parcel& data) const
         DLP_LOG_ERROR(LABEL, "Write bool needCheckCustomProperty fail");
         return false;
     }
+    return MarshallingProperty(data);
+}
+
+bool CertParcel::MarshallingProperty(Parcel& data) const
+{
     if (!data.WriteInt32(this->decryptType)) {
         DLP_LOG_ERROR(LABEL, "Write decryptType fail");
         return false;
@@ -126,8 +140,16 @@ CertParcel* CertParcel::Unmarshalling(Parcel& data)
         DLP_LOG_ERROR(LABEL, "Read cert fail");
         return FreeCertParcel(parcel);
     }
+    if (parcel->cert.size() > MAX_CERT_SIZE) {
+        DLP_LOG_ERROR(LABEL, "cert size %{public}zu exceeds limit", parcel->cert.size());
+        return FreeCertParcel(parcel);
+    }
     if (!data.ReadUInt8Vector(&parcel->offlineCert)) {
         DLP_LOG_ERROR(LABEL, "Read offlineCert fail");
+        return FreeCertParcel(parcel);
+    }
+    if (parcel->offlineCert.size() > MAX_CERT_SIZE) {
+        DLP_LOG_ERROR(LABEL, "offlineCert size %{public}zu exceeds limit", parcel->offlineCert.size());
         return FreeCertParcel(parcel);
     }
     if (!data.ReadBool(parcel->needCheckCustomProperty)) {

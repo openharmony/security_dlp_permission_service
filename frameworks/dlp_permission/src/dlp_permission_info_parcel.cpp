@@ -20,6 +20,9 @@ namespace Security {
 namespace DlpPermission {
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "DlpPermissionParcel"};
+static const uint32_t ALL_ACTION_FLAGS = ACTION_VIEW | ACTION_SAVE | ACTION_SAVE_AS | ACTION_EDIT |
+    ACTION_SCREEN_CAPTURE | ACTION_SCREEN_SHARE | ACTION_SCREEN_RECORD | ACTION_COPY |
+    ACTION_PRINT | ACTION_EXPORT | ACTION_PERMISSION_CHANGE;
 }
 bool DLPPermissionInfoParcel::Marshalling(Parcel& out) const
 {
@@ -49,10 +52,22 @@ DLPPermissionInfoParcel* DLPPermissionInfoParcel::Unmarshalling(Parcel& in)
         permInfoParcel = nullptr;
         return nullptr;
     }
+    if (res > static_cast<uint32_t>(DLPFileAccess::FULL_CONTROL)) {
+        DLP_LOG_ERROR(LABEL, "Invalid dlpFileAccess: %{public}u", res);
+        delete permInfoParcel;
+        permInfoParcel = nullptr;
+        return nullptr;
+    }
     permInfoParcel->permInfo_.dlpFileAccess = static_cast<DLPFileAccess>(res);
 
     if (!(in.ReadUint32(res))) {
         DLP_LOG_ERROR(LABEL, "Read flags fail");
+        delete permInfoParcel;
+        permInfoParcel = nullptr;
+        return nullptr;
+    }
+    if ((res & ~ALL_ACTION_FLAGS) != 0) {
+        DLP_LOG_ERROR(LABEL, "Invalid action flags: %{public}u", res);
         delete permInfoParcel;
         permInfoParcel = nullptr;
         return nullptr;

@@ -16,6 +16,7 @@
 #ifndef INTERFACES_INNER_API_DLP_FILE_H
 #define INTERFACES_INNER_API_DLP_FILE_H
 
+#include <mutex>
 #include <string>
 #include "dlp_crypt.h"
 #include "permission_policy.h"
@@ -176,26 +177,31 @@ public:
 
     void GetPolicy(PermissionPolicy& policy) const
     {
+        std::lock_guard<std::recursive_mutex> lock(opMutex_);
         policy.CopyPermissionPolicy(policy_);
     };
 
     void GetContactAccount(std::string& contactAccount) const
     {
+        std::lock_guard<std::recursive_mutex> lock(opMutex_);
         contactAccount = contactAccount_;
     };
 
     void SetLinkStatus()
     {
+        std::lock_guard<std::recursive_mutex> lock(opMutex_);
         isFuseLink_ = true;
     };
 
     void RemoveLinkStatus()
     {
+        std::lock_guard<std::recursive_mutex> lock(opMutex_);
         isFuseLink_ = false;
     };
 
     DLPFileAccess GetAuthPerm()
     {
+        std::lock_guard<std::recursive_mutex> lock(opMutex_);
         return authPerm_;
     };
 
@@ -306,6 +312,7 @@ private:
     virtual int32_t FillHoleData(uint64_t holeStart, uint64_t holeSize);
     virtual int32_t DoDlpFileWrite(uint64_t offset, void* buf, uint32_t size) = 0;
 
+    mutable std::recursive_mutex opMutex_;
     std::string realType_;
     bool isFuseLink_;
     DLPFileAccess authPerm_;

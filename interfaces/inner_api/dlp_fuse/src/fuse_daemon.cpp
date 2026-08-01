@@ -53,7 +53,11 @@ std::mutex FuseDaemon::initMutex_;
 // caller need to check ino == ROOT_INODE
 static DlpLinkFile* GetFileNode(fuse_ino_t ino)
 {
-    return reinterpret_cast<DlpLinkFile*>(static_cast<uintptr_t>(ino));
+    DlpLinkManager* manager = DlpFuseHelper::GetDlpLinkManagerInstance();
+    if (manager == nullptr) {
+        return nullptr;
+    }
+    return manager->LookUpDlpLinkFileByIno(ino);
 }
 
 fuse_ino_t GetFileInode(DlpLinkFile* node)
@@ -243,22 +247,26 @@ static void FuseDaemonForget(fuse_req_t req, fuse_ino_t ino, uint64_t nlookup)
 {
     if (ino == ROOT_INODE) {
         DLP_LOG_WARN(LABEL, "Forget root dir is forbidden");
-        fuse_reply_err(req, ENOENT);
+        fuse_reply_none(req);
         return;
     }
 
     DlpLinkFile* dlp = GetFileNode(ino);
     if (dlp == nullptr) {
         DLP_LOG_ERROR(LABEL, "Forgot link file fail, wrong ino");
-        fuse_reply_err(req, EBADF);
+        fuse_reply_none(req);
         return;
     }
     DLP_LOG_DEBUG(LABEL, "Forget link file name %{private}s nlookup %{public}u",
         dlp->GetLinkName().c_str(), static_cast<uint32_t>(nlookup));
     if (dlp->SubAndCheckZeroRef(nlookup)) {
         DLP_LOG_INFO(LABEL, "Link file reference is less than 0, delete link file ok");
-        delete dlp;
+        DlpLinkManager* manager = DlpFuseHelper::GetDlpLinkManagerInstance();
+        if (manager != nullptr) {
+            manager->ReleaseDlpLinkFile(dlp);
+        }
     }
+    fuse_reply_none(req);
 }
 
 static int AddDirentry(DirAddParams& param)

@@ -27,6 +27,7 @@ namespace DlpPermission {
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
     LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "DlpPermissionAsyncStub"};
+static const uint32_t MAX_CERT_SIZE = 1024 * 1024 * 40 * 2;
 }
 DlpPermissionAsyncStub::DlpPermissionAsyncStub(const std::shared_ptr<GenerateDlpCertificateCallback>& impl)
     : generateDlpCertificateCallback_(impl)
@@ -84,6 +85,11 @@ int32_t DlpPermissionAsyncStub::OnGenerateDlpCertificateStub(MessageParcel& data
         this->OnGenerateDlpCertificate(DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL, {});
         return DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL;
     }
+    if (cert.size() > MAX_CERT_SIZE) {
+        DLP_LOG_ERROR(LABEL, "cert size %{public}zu exceeds limit", cert.size());
+        this->OnGenerateDlpCertificate(DLP_SERVICE_ERROR_VALUE_INVALID, {});
+        return DLP_SERVICE_ERROR_VALUE_INVALID;
+    }
     this->OnGenerateDlpCertificate(result, cert);
     return DLP_OK;
 }
@@ -125,6 +131,12 @@ int32_t DlpPermissionAsyncStub::OnParseDlpCertificateStub(MessageParcel& data, M
         PermissionPolicy policyNull;
         this->OnParseDlpCertificate(DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL, policyNull, {});
         return DLP_SERVICE_ERROR_PARCEL_OPERATE_FAIL;
+    }
+    if (cert.size() > MAX_CERT_SIZE) {
+        DLP_LOG_ERROR(LABEL, "cert size %{public}zu exceeds limit", cert.size());
+        PermissionPolicy policyNull;
+        this->OnParseDlpCertificate(DLP_SERVICE_ERROR_VALUE_INVALID, policyNull, {});
+        return DLP_SERVICE_ERROR_VALUE_INVALID;
     }
     this->OnParseDlpCertificate(result, policyParcel->policyParams_, cert);
     return DLP_OK;

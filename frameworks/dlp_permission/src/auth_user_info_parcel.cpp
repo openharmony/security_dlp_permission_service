@@ -65,6 +65,12 @@ AuthUserInfoParcel* AuthUserInfoParcel::Unmarshalling(Parcel& in)
         authUserInfoParcel = nullptr;
         return nullptr;
     }
+    if (res > static_cast<uint32_t>(DLPFileAccess::FULL_CONTROL)) {
+        DLP_LOG_ERROR(LABEL, "Invalid auth user perm: %{public}u", res);
+        delete authUserInfoParcel;
+        authUserInfoParcel = nullptr;
+        return nullptr;
+    }
     authUserInfoParcel->authUserInfo_.authPerm = static_cast<DLPFileAccess>(res);
     if (!(in.ReadUint64(authUserInfoParcel->authUserInfo_.permExpiryTime))) {
         DLP_LOG_ERROR(LABEL, "Read auth user expiry time fail");
@@ -75,6 +81,12 @@ AuthUserInfoParcel* AuthUserInfoParcel::Unmarshalling(Parcel& in)
 
     if (!(in.ReadUint32(res))) {
         DLP_LOG_ERROR(LABEL, "Read auth user account type fail");
+        delete authUserInfoParcel;
+        authUserInfoParcel = nullptr;
+        return nullptr;
+    }
+    if (res > static_cast<uint32_t>(DlpAccountType::ENTERPRISE_ACCOUNT)) {
+        DLP_LOG_ERROR(LABEL, "Invalid auth user account type: %{public}u", res);
         delete authUserInfoParcel;
         authUserInfoParcel = nullptr;
         return nullptr;

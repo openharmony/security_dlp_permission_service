@@ -228,6 +228,7 @@ bool DlpFile::UpdateDlpFilePermission()
 
 int32_t DlpFile::SetCipher(const struct DlpBlob& key, const struct DlpUsageSpec& spec, const struct DlpBlob& hmacKey)
 {
+    std::lock_guard<std::recursive_mutex> lock(opMutex_);
     if (!IsValidCipher(key, spec, hmacKey)) {
         DLP_LOG_ERROR(LABEL, "dlp file cipher is invalid");
         return DLP_PARSE_ERROR_VALUE_INVALID;
@@ -266,6 +267,7 @@ int32_t DlpFile::SetCipher(const struct DlpBlob& key, const struct DlpUsageSpec&
 
 int32_t DlpFile::SetPolicy(const PermissionPolicy& policy)
 {
+    std::lock_guard<std::recursive_mutex> lock(opMutex_);
     if (!policy.IsValid()) {
         DLP_LOG_ERROR(LABEL, "invalid policy");
         return DLP_PARSE_ERROR_VALUE_INVALID;
@@ -280,11 +282,13 @@ int32_t DlpFile::SetPolicy(const PermissionPolicy& policy)
 
 bool DlpFile::GetOfflineAccess()
 {
+    std::lock_guard<std::recursive_mutex> lock(opMutex_);
     return !!offlineAccess_;
 }
 
 bool DlpFile::NeedAdapter()
 {
+    std::lock_guard<std::recursive_mutex> lock(opMutex_);
     return version_ == FIRST && CURRENT_VERSION != FIRST;
 }
 

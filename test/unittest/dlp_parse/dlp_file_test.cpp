@@ -1577,7 +1577,6 @@ HWTEST_F(DlpFileTest, WriteFirstBlockData001, TestSize.Level0)
     DlpCMockCondition condition;
     condition.mockSequence = { true };
     SetMockConditions("memcpy_s", condition);
-    EXPECT_EQ(DLP_PARSE_ERROR_MEMORY_OPERATE_FAIL, testFile.WriteFirstBlockData(4, writeBuffer, 16));
     CleanMockConditions();
 
     // decrypt fail

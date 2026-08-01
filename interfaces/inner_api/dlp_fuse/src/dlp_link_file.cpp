@@ -84,6 +84,7 @@ bool DlpLinkFile::IncreaseRef()
 
 struct stat DlpLinkFile::GetLinkStat()
 {
+    std::unique_lock<std::shared_mutex> lock(linkRwMutex_);
     if (dlpFile_ == nullptr) {
         DLP_LOG_ERROR(LABEL, "Get link file stat fail, dlpFile is null");
         return fileStat_;
@@ -98,6 +99,7 @@ struct stat DlpLinkFile::GetLinkStat()
 
 int32_t DlpLinkFile::Truncate(uint64_t modifySize)
 {
+    std::unique_lock<std::shared_mutex> lock(linkRwMutex_);
     if (stopLinkFlag_) {
         DLP_LOG_INFO(LABEL, "linkFile is stopping link");
         return DLP_LINK_FILE_NOT_ALLOW_OPERATE;
@@ -118,22 +120,25 @@ int32_t DlpLinkFile::Truncate(uint64_t modifySize)
     } else {
         DLP_LOG_INFO(LABEL, "Truncate %{public}s in link file succ", std::to_string(modifySize).c_str());
     }
-    UpdateMtimeStat();
+    DlpFuseUtils::UpdateCurrTimeStat(&fileStat_.st_mtim);
     return res;
 }
 
 void DlpLinkFile::UpdateAtimeStat()
 {
+    std::unique_lock<std::shared_mutex> lock(linkRwMutex_);
     DlpFuseUtils::UpdateCurrTimeStat(&fileStat_.st_atim);
 }
 
 void DlpLinkFile::UpdateMtimeStat()
 {
+    std::unique_lock<std::shared_mutex> lock(linkRwMutex_);
     DlpFuseUtils::UpdateCurrTimeStat(&fileStat_.st_mtim);
 }
 
 int32_t DlpLinkFile::Write(uint64_t offset, void* buf, uint32_t size)
 {
+    std::unique_lock<std::shared_mutex> lock(linkRwMutex_);
     if (stopLinkFlag_) {
         DLP_LOG_INFO(LABEL, "linkFile is stopping link");
         return DLP_LINK_FILE_NOT_ALLOW_OPERATE;
@@ -147,12 +152,13 @@ int32_t DlpLinkFile::Write(uint64_t offset, void* buf, uint32_t size)
     if (res < 0) {
         DLP_LOG_ERROR(LABEL, "Write link file fail, err=%{public}d.", res);
     }
-    UpdateMtimeStat();
+    DlpFuseUtils::UpdateCurrTimeStat(&fileStat_.st_mtim);
     return res;
 }
 
 int32_t DlpLinkFile::Read(uint64_t offset, void* buf, uint32_t size, uint32_t uid)
 {
+    std::unique_lock<std::shared_mutex> lock(linkRwMutex_);
     if (stopLinkFlag_) {
         DLP_LOG_INFO(LABEL, "linkFile is stopping link");
         return DLP_LINK_FILE_NOT_ALLOW_OPERATE;
@@ -162,8 +168,12 @@ int32_t DlpLinkFile::Read(uint64_t offset, void* buf, uint32_t size, uint32_t ui
         DLP_LOG_ERROR(LABEL, "Read link file fail, dlp file is null");
         return DLP_FUSE_ERROR_DLP_FILE_NULL;
     }
-    UpdateAtimeStat();
-    int32_t res = dlpFile_->DlpFileRead(offset, buf, size, hasRead_, uid);
+    DlpFuseUtils::UpdateCurrTimeStat(&fileStat_.st_atim);
+    bool localHasRead = hasRead_.load();
+    int32_t res = dlpFile_->DlpFileRead(offset, buf, size, localHasRead, uid);
+    if (localHasRead) {
+        hasRead_.store(true);
+    }
     if (res < 0) {
         DLP_LOG_ERROR(LABEL, "Read link file failed, res %{public}d.", res);
     }

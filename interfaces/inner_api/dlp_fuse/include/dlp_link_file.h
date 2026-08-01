@@ -16,7 +16,9 @@
 #ifndef DLP_LINK_FILE_H
 #define DLP_LINK_FILE_H
 
+#include <atomic>
 #include <mutex>
+#include <shared_mutex>
 #include <string>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -48,11 +50,13 @@ public:
     int32_t Read(uint64_t offset, void* buf, uint32_t size, uint32_t uid);
     std::shared_ptr<DlpFile> GetDlpFilePtr()
     {
+        std::shared_lock<std::shared_mutex> lock(linkRwMutex_);
         return dlpFile_;
     };
 
     void setDlpFilePtr(const std::shared_ptr<DlpFile>& dlpFile)
     {
+        std::unique_lock<std::shared_mutex> lock(linkRwMutex_);
         dlpFile_ = dlpFile;
     };
 
@@ -65,16 +69,19 @@ public:
 
     void stopLink()
     {
+        std::unique_lock<std::shared_mutex> lock(linkRwMutex_);
         stopLinkFlag_ = true;
     };
 
     void restartLink()
     {
+        std::unique_lock<std::shared_mutex> lock(linkRwMutex_);
         stopLinkFlag_ = false;
     };
 
     struct stat GetFileStat()
     {
+        std::shared_lock<std::shared_mutex> lock(linkRwMutex_);
         return fileStat_;
     };
 
@@ -84,8 +91,9 @@ private:
     struct stat fileStat_;
     std::atomic<int> refcount_;
     std::mutex refLock_;
+    std::shared_mutex linkRwMutex_;
     bool stopLinkFlag_;
-    bool hasRead_;
+    std::atomic<bool> hasRead_;
 };
 }  // namespace DlpPermission
 }  // namespace Security

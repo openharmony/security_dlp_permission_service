@@ -30,6 +30,7 @@
 #include "dlp_permission_log.h"
 #include "dlp_utils.h"
 #include "hex_string.h"
+#include "openssl/crypto.h"
 #ifdef DLP_PARSE_INNER
 #include "os_account_manager.h"
 #endif // DLP_PARSE_INNER
@@ -128,6 +129,7 @@ DlpRawFile::~DlpRawFile()
 
 int32_t DlpRawFile::SetContactAccount(const std::string& contactAccount)
 {
+    std::lock_guard<std::recursive_mutex> lock(opMutex_);
     if (contactAccount.size() == 0 || contactAccount.size() > DLP_MAX_CERT_SIZE) {
         DLP_LOG_ERROR(LABEL, "contactAccount param failed");
         return DLP_PARSE_ERROR_VALUE_INVALID;
@@ -142,6 +144,7 @@ int32_t DlpRawFile::SetContactAccount(const std::string& contactAccount)
 
 void DlpRawFile::SetOfflineAccess(bool flag, int32_t allowedOpenCount)
 {
+    std::lock_guard<std::recursive_mutex> lock(opMutex_);
     bool offlineAccess = false;
     if (allowedOpenCount > 0) {
         offlineAccess = false;
@@ -355,6 +358,7 @@ int32_t DlpRawFile::ParseEnterpriseRawDlpHeader(uint64_t fileLen, uint32_t dlpHe
 
 int32_t DlpRawFile::CheckDlpFile()
 {
+    std::lock_guard<std::recursive_mutex> lock(opMutex_);
     if (dlpFd_ < 0) {
         DLP_LOG_ERROR(LABEL, "dlp file fd is invalid");
         return DLP_PARSE_ERROR_FD_ERROR;
@@ -527,8 +531,43 @@ int32_t DlpRawFile::GetRawDlpHmac(void)
     return WriteFileIdPlaintextProcess();
 }
 
+int32_t DlpRawFile::ReadContactAccountAndOfflineCert()
+{
+    if (accountType_ != ENTERPRISE_ACCOUNT) {
+        LSEEK_AND_CHECK(dlpFd_, head_.contactAccountOffset, SEEK_SET, DLP_PARSE_ERROR_FILE_FORMAT_ERROR, LABEL);
+        uint8_t *tmpBuf = new (std::nothrow)uint8_t[head_.contactAccountSize];
+        if (tmpBuf == nullptr) {
+            return DLP_PARSE_ERROR_MEMORY_OPERATE_FAIL;
+        }
+        if (read(dlpFd_, tmpBuf, head_.contactAccountSize) != (ssize_t)head_.contactAccountSize) {
+            delete[] tmpBuf;
+            DLP_LOG_ERROR(LABEL, "can not read dlp contact account, %{public}s", strerror(errno));
+            return DLP_PARSE_ERROR_FILE_FORMAT_ERROR;
+        }
+        contactAccount_ = std::string(tmpBuf, tmpBuf + head_.contactAccountSize);
+        delete[] tmpBuf;
+    }
+    if (head_.offlineCertSize != 0 && head_.offlineCertSize == head_.certSize) {
+        LSEEK_AND_CHECK(dlpFd_, head_.offlineCertOffset, SEEK_SET, DLP_PARSE_ERROR_FILE_FORMAT_ERROR, LABEL);
+        uint8_t *tmpBuf = new (std::nothrow)uint8_t[head_.offlineCertSize];
+        if (tmpBuf == nullptr) {
+            return DLP_PARSE_ERROR_MEMORY_OPERATE_FAIL;
+        }
+        if (read(dlpFd_, tmpBuf, head_.offlineCertSize) != (ssize_t)head_.offlineCertSize) {
+            delete[] tmpBuf;
+            DLP_LOG_ERROR(LABEL, "can not read dlp offlineCert, %{public}s", strerror(errno));
+            return DLP_PARSE_ERROR_FILE_FORMAT_ERROR;
+        }
+        CleanBlobParam(offlineCert_);
+        offlineCert_.data = tmpBuf;
+        offlineCert_.size = head_.offlineCertSize;
+    }
+    return DLP_OK;
+}
+
 int32_t DlpRawFile::ProcessDlpFile()
 {
+    std::lock_guard<std::recursive_mutex> lock(opMutex_);
     int32_t ret = CheckDlpFile();
     if (ret != DLP_OK) {
         return ret;
@@ -546,41 +585,16 @@ int32_t DlpRawFile::ProcessDlpFile()
     CleanBlobParam(cert_);
     cert_.data = buf;
     cert_.size = head_.certSize;
-    uint8_t *tmpBuf = nullptr;
-    if (accountType_ != ENTERPRISE_ACCOUNT) {
-        LSEEK_AND_CHECK(dlpFd_, head_.contactAccountOffset, SEEK_SET, DLP_PARSE_ERROR_FILE_FORMAT_ERROR, LABEL);
-        uint8_t *tmpBuf = new (std::nothrow)uint8_t[head_.contactAccountSize];
-        if (tmpBuf == nullptr) {
-            return DLP_PARSE_ERROR_MEMORY_OPERATE_FAIL;
-        }
-        if (read(dlpFd_, tmpBuf, head_.contactAccountSize) != (ssize_t)head_.contactAccountSize) {
-            delete[] tmpBuf;
-            DLP_LOG_ERROR(LABEL, "can not read dlp contact account, %{public}s", strerror(errno));
-            return DLP_PARSE_ERROR_FILE_FORMAT_ERROR;
-        }
-        contactAccount_ = std::string(tmpBuf, tmpBuf + head_.contactAccountSize);
-        delete[] tmpBuf;
-    }
-    if (head_.offlineCertSize != 0 && head_.offlineCertSize == head_.certSize) {
-        LSEEK_AND_CHECK(dlpFd_, head_.offlineCertOffset, SEEK_SET, DLP_PARSE_ERROR_FILE_FORMAT_ERROR, LABEL);
-        tmpBuf = new (std::nothrow)uint8_t[head_.offlineCertSize];
-        if (tmpBuf == nullptr) {
-            return DLP_PARSE_ERROR_MEMORY_OPERATE_FAIL;
-        }
-        if (read(dlpFd_, tmpBuf, head_.offlineCertSize) != (ssize_t)head_.offlineCertSize) {
-            delete[] tmpBuf;
-            DLP_LOG_ERROR(LABEL, "can not read dlp offlineCert, %{public}s", strerror(errno));
-            return DLP_PARSE_ERROR_FILE_FORMAT_ERROR;
-        }
-        CleanBlobParam(offlineCert_);
-        offlineCert_.data = tmpBuf;
-        offlineCert_.size = head_.offlineCertSize;
+    ret = ReadContactAccountAndOfflineCert();
+    if (ret != DLP_OK) {
+        return ret;
     }
     return GetRawDlpHmac();
 }
 
 int32_t DlpRawFile::SetEncryptCert(const struct DlpBlob& cert)
 {
+    std::lock_guard<std::recursive_mutex> lock(opMutex_);
     if (cert.data == nullptr || cert.size > DLP_MAX_CERT_SIZE) {
         DLP_LOG_ERROR(LABEL, "Cert data invalid");
         return DLP_PARSE_ERROR_VALUE_INVALID;
@@ -603,6 +617,7 @@ int32_t DlpRawFile::SetEncryptCert(const struct DlpBlob& cert)
 
 int32_t DlpRawFile::UpdateCertAndText(const std::vector<uint8_t>& cert, struct DlpBlob certBlob)
 {
+    std::lock_guard<std::recursive_mutex> lock(opMutex_);
     if (CopyBlobParam(certBlob, cert_) != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "Cert copy failed");
         return DLP_PARSE_ERROR_MEMORY_OPERATE_FAIL;
@@ -864,6 +879,7 @@ int32_t DlpRawFile::GenFileInRaw(int32_t inPlainFileFd)
 
 int32_t DlpRawFile::GenFile(int32_t inPlainFileFd)
 {
+    std::lock_guard<std::recursive_mutex> lock(opMutex_);
     if (inPlainFileFd < 0 || dlpFd_ < 0 || !IsValidCipher(cipher_.encKey, cipher_.usageSpec, cipher_.hmacKey)) {
         DLP_LOG_ERROR(LABEL, "params is error");
         return DLP_PARSE_ERROR_VALUE_INVALID;
@@ -906,6 +922,7 @@ int32_t DlpRawFile::RemoveDlpPermissionInRaw(int32_t outPlainFileFd)
 
 int32_t DlpRawFile::RemoveDlpPermission(int32_t outPlainFileFd)
 {
+    std::lock_guard<std::recursive_mutex> lock(opMutex_);
     if (isFuseLink_) {
         DLP_LOG_ERROR(LABEL, "current dlp file is linking, do not operate it.");
         return DLP_PARSE_ERROR_FILE_LINKING;
@@ -931,6 +948,7 @@ int32_t DlpRawFile::RemoveDlpPermission(int32_t outPlainFileFd)
 
 int32_t DlpRawFile::DlpFileRead(uint64_t offset, void* buf, uint32_t size, bool& hasRead, int32_t uid)
 {
+    std::lock_guard<std::recursive_mutex> lock(opMutex_);
     int32_t opFd = dlpFd_;
     if (buf == nullptr || size == 0 || size > DLP_FUSE_MAX_BUFFLEN || (offset >= DLP_MAX_RAW_CONTENT_SIZE - size) ||
         opFd < 0 || !IsValidCipher(cipher_.encKey, cipher_.usageSpec, cipher_.hmacKey)) {
@@ -947,10 +965,23 @@ int32_t DlpRawFile::DlpFileRead(uint64_t offset, void* buf, uint32_t size, bool&
         return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
     }
 
+    int32_t res = DecryptAndCopyData(alignSize, prefixingSize, alignOffset, buf, size);
+    if (res > 0 && !hasRead) {
+        int32_t ret = DlpPermissionKit::SetReadFlag(uid);
+        if (ret != DLP_OK) {
+            return ret;
+        }
+        hasRead = true;
+    }
+    return res;
+}
+
+int32_t DlpRawFile::DecryptAndCopyData(uint64_t alignSize, uint64_t prefixingSize,
+    uint64_t alignOffset, void* buf, uint32_t size)
+{
     auto encBuff = std::make_unique<uint8_t[]>(alignSize);
     auto outBuff = std::make_unique<uint8_t[]>(alignSize);
-
-    int32_t readLen = read(opFd, encBuff.get(), alignSize);
+    int32_t readLen = read(dlpFd_, encBuff.get(), alignSize);
     if (readLen == -1) {
         DLP_LOG_ERROR(LABEL, "read buff fail, %{public}s", strerror(errno));
         return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
@@ -959,36 +990,33 @@ int32_t DlpRawFile::DlpFileRead(uint64_t offset, void* buf, uint32_t size, bool&
         return 0;
     }
 
-    struct DlpBlob message1 = {.size = readLen, .data = encBuff.get()};
-    struct DlpBlob message2 = {.size = readLen, .data = outBuff.get()};
-    int32_t res = DLP_OK;
+    uint32_t decryptLen = static_cast<uint32_t>(readLen);
+    struct DlpBlob message1 = {.size = decryptLen, .data = encBuff.get()};
+    struct DlpBlob message2 = {.size = decryptLen, .data = outBuff.get()};
+    int32_t res;
     if (head_.algType == DLP_MODE_CTR) {
         res = DoDlpBlockCryptOperation(message1, message2, alignOffset, false);
     } else {
         res = DoDlpHIAECryptOperation(message1, message2, alignOffset, false);
     }
     if (res != DLP_OK) {
+        (void)memset_s(outBuff.get(), alignSize, 0, alignSize);
         DLP_LOG_ERROR(LABEL, "decrypt fail");
         return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
     }
 
     if (memcpy_s(buf, size, outBuff.get() + prefixingSize, message2.size - prefixingSize) != EOK) {
+        (void)memset_s(outBuff.get(), alignSize, 0, alignSize);
         DLP_LOG_ERROR(LABEL, "copy decrypt result failed");
         return DLP_PARSE_ERROR_MEMORY_OPERATE_FAIL;
     }
-    if (hasRead) {
-        return message2.size - prefixingSize;
-    }
-    res = DlpPermissionKit::SetReadFlag(uid);
-    if (res != DLP_OK) {
-        return res;
-    }
-    hasRead = true;
-    return message2.size - prefixingSize;
+    (void)memset_s(outBuff.get(), alignSize, 0, alignSize);
+    return static_cast<int32_t>(message2.size - prefixingSize);
 }
 
 uint64_t DlpRawFile::GetFsContentSize() const
 {
+    std::lock_guard<std::recursive_mutex> lock(opMutex_);
     struct stat fileStat;
     int32_t opFd = dlpFd_;
     int32_t ret = fstat(opFd, &fileStat);
@@ -1031,6 +1059,27 @@ int32_t DlpRawFile::UpdateDlpFileContentSize()
     return DLP_OK;
 }
 
+int32_t DlpRawFile::DecryptPrefixingData(uint32_t prefixingSize, uint64_t alignOffset,
+    uint8_t* enBuf, uint8_t* deBuf)
+{
+    if (prefixingSize == 0) {
+        return DLP_OK;
+    }
+    int32_t readLen = read(dlpFd_, enBuf, prefixingSize);
+    if (readLen == -1) {
+        DLP_LOG_ERROR(LABEL, "read first block prefixing fail, %{public}s", strerror(errno));
+        return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
+    }
+    uint32_t decryptSize = static_cast<uint32_t>(readLen);
+    struct DlpBlob msg1 = {.size = decryptSize, .data = enBuf};
+    struct DlpBlob msg2 = {.size = decryptSize, .data = deBuf};
+    if (DoDlpBlockCryptOperation(msg1, msg2, alignOffset, false) != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "decrypt appending bytes fail, %{public}s", strerror(errno));
+        return DLP_PARSE_ERROR_CRYPT_FAIL;
+    }
+    return DLP_OK;
+}
+
 int32_t DlpRawFile::WriteFirstBlockData(uint64_t offset, void* buf, uint32_t size)
 {
     uint64_t alignOffset = (offset / DLP_BLOCK_SIZE) * DLP_BLOCK_SIZE;
@@ -1039,51 +1088,44 @@ int32_t DlpRawFile::WriteFirstBlockData(uint64_t offset, void* buf, uint32_t siz
     uint32_t writtenSize = prefixingSize + requestSize;
     uint8_t enBuf[DLP_BLOCK_SIZE] = {0};
     uint8_t deBuf[DLP_BLOCK_SIZE] = {0};
-    int32_t opFd = dlpFd_;
+    int32_t res = DLP_PARSE_ERROR_VALUE_INVALID;
 
     do {
-        if (prefixingSize == 0) {
+        res = DecryptPrefixingData(prefixingSize, alignOffset, enBuf, deBuf);
+        if (res != DLP_OK) {
             break;
         }
-        int32_t readLen = read(opFd, enBuf, prefixingSize);
-        if (readLen == -1) {
-            DLP_LOG_ERROR(LABEL, "read first block prefixing fail, %{public}s", strerror(errno));
-            return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
-        }
-        if (readLen == 0) {
+
+        if (memcpy_s(deBuf + prefixingSize, DLP_BLOCK_SIZE - prefixingSize, buf, requestSize) != EOK) {
+            DLP_LOG_ERROR(LABEL, "copy write buffer first block failed, %{public}s", strerror(errno));
+            res = DLP_PARSE_ERROR_MEMORY_OPERATE_FAIL;
             break;
         }
-        uint32_t decryptSize = static_cast<uint32_t>(readLen);
-        struct DlpBlob message1 = {.size = decryptSize, .data = enBuf};
-        struct DlpBlob message2 = {.size = decryptSize, .data = deBuf};
-        if (DoDlpBlockCryptOperation(message1, message2, alignOffset, false) != DLP_OK) {
-            DLP_LOG_ERROR(LABEL, "decrypt appending bytes fail, %{public}s", strerror(errno));
-            return DLP_PARSE_ERROR_CRYPT_FAIL;
+
+        struct DlpBlob msg1 = {.size = writtenSize, .data = deBuf};
+        struct DlpBlob msg2 = {.size = writtenSize, .data = enBuf};
+        if (DoDlpBlockCryptOperation(msg1, msg2, alignOffset, true) != DLP_OK) {
+            DLP_LOG_ERROR(LABEL, "enrypt first block fail");
+            res = DLP_PARSE_ERROR_CRYPT_FAIL;
+            break;
         }
+
+        if (lseek(dlpFd_, head_.txtOffset + alignOffset, SEEK_SET) == static_cast<off_t>(-1)) {
+            DLP_LOG_ERROR(LABEL, "lseek failed, %{public}s", strerror(errno));
+            res = DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
+            break;
+        }
+
+        if (write(dlpFd_, enBuf, writtenSize) != (ssize_t)writtenSize) {
+            DLP_LOG_ERROR(LABEL, "write failed, %{public}s", strerror(errno));
+            res = DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
+            break;
+        }
+        res = static_cast<int32_t>(requestSize);
     } while (false);
 
-    if (memcpy_s(deBuf + prefixingSize, DLP_BLOCK_SIZE - prefixingSize, buf, requestSize) != EOK) {
-        DLP_LOG_ERROR(LABEL, "copy write buffer first block failed, %{public}s", strerror(errno));
-        return DLP_PARSE_ERROR_MEMORY_OPERATE_FAIL;
-    }
-
-    struct DlpBlob message1 = {.size = writtenSize, .data = deBuf};
-    struct DlpBlob message2 = {.size = writtenSize, .data = enBuf};
-    if (DoDlpBlockCryptOperation(message1, message2, alignOffset, true) != DLP_OK) {
-        DLP_LOG_ERROR(LABEL, "enrypt first block fail");
-        return DLP_PARSE_ERROR_CRYPT_FAIL;
-    }
-
-    if (lseek(opFd, head_.txtOffset + alignOffset, SEEK_SET) == static_cast<off_t>(-1)) {
-        DLP_LOG_ERROR(LABEL, "lseek failed, %{public}s", strerror(errno));
-        return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
-    }
-
-    if (write(opFd, enBuf, writtenSize) != (ssize_t)writtenSize) {
-        DLP_LOG_ERROR(LABEL, "write failed, %{public}s", strerror(errno));
-        return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
-    }
-    return requestSize;
+    (void)memset_s(deBuf, DLP_BLOCK_SIZE, 0, DLP_BLOCK_SIZE);
+    return res;
 }
 
 int32_t DlpRawFile::DoDlpFileWrite(uint64_t offset, void* buf, uint32_t size)
@@ -1136,6 +1178,7 @@ int32_t DlpRawFile::DoDlpFileWrite(uint64_t offset, void* buf, uint32_t size)
 
 int32_t DlpRawFile::DlpFileWrite(uint64_t offset, void* buf, uint32_t size)
 {
+    std::lock_guard<std::recursive_mutex> lock(opMutex_);
     if (authPerm_ == DLPFileAccess::READ_ONLY) {
         DLP_LOG_ERROR(LABEL, "Dlp file is readonly, write failed");
         return DLP_PARSE_ERROR_FILE_READ_ONLY;
@@ -1166,6 +1209,7 @@ int32_t DlpRawFile::DlpFileWrite(uint64_t offset, void* buf, uint32_t size)
 
 int32_t DlpRawFile::Truncate(uint64_t size)
 {
+    std::lock_guard<std::recursive_mutex> lock(opMutex_);
     DLP_LOG_INFO(LABEL, "Truncate file size %{public}s", std::to_string(size).c_str());
 
     if (authPerm_ == DLPFileAccess::READ_ONLY) {
@@ -1204,6 +1248,7 @@ int32_t DlpRawFile::Truncate(uint64_t size)
 
 int32_t DlpRawFile::HmacCheck()
 {
+    std::lock_guard<std::recursive_mutex> lock(opMutex_);
     DLP_LOG_DEBUG(LABEL, "start HmacCheck, dlpVersion = %{public}d", version_);
     if (version_ < HMAC_VERSION) {
         DLP_LOG_INFO(LABEL, "no hmac check");
@@ -1230,7 +1275,7 @@ int32_t DlpRawFile::HmacCheck()
     DLP_LOG_DEBUG(LABEL, "end DlpHmacEncodeForRaw");
 
     if ((out.size == 0 && hmac_.size == 0) ||
-        (out.size == hmac_.size && memcmp(hmac_.data, out.data, out.size) == 0)) {
+        (out.size == hmac_.size && CRYPTO_memcmp(hmac_.data, out.data, out.size) == 0)) {
         DLP_LOG_INFO(LABEL, "verify success");
         if (out.size != 0) {
             CleanBlobParam(out);

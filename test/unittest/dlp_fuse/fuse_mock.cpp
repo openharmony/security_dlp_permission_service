@@ -40,6 +40,7 @@ typedef int (*FuseReplyAttrT)(fuse_req_t req, const struct stat *attr, double at
 typedef int (*FuseReplyOpenT)(fuse_req_t req, const struct fuse_file_info *f);
 typedef int (*FuseReplyBufT)(fuse_req_t req, const char *buf, size_t size);
 typedef int (*FuseReplyWriteT)(fuse_req_t req, size_t count);
+typedef void (*FuseReplyNoneT)(fuse_req_t req);
 typedef size_t (*FuseAddDirentryT)(fuse_req_t req, char *buf, size_t bufsize,
     const char *name, const struct stat *stbuf, off_t off);
 
@@ -242,6 +243,23 @@ int fuse_reply_write(fuse_req_t req, size_t count)
         return -1;
     }
     return (*func)(req, count);
+}
+
+void fuse_reply_none(fuse_req_t req)
+{
+    if (IsFuncNeedMock(__func__)) {
+        CommonMockFuncT rawFunc = GetMockFunc(__func__);
+        if (rawFunc != nullptr) {
+            (*reinterpret_cast<FuseReplyNoneT>(rawFunc))(req);
+        }
+        return;
+    }
+
+    FuseReplyNoneT func = reinterpret_cast<FuseReplyNoneT>(GetLibfuseLibFunc(__func__));
+    if (func == nullptr) {
+        return;
+    }
+    (*func)(req);
 }
 
 size_t fuse_add_direntry(fuse_req_t req, char *buf, size_t bufsize,

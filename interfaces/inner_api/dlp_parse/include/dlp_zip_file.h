@@ -57,6 +57,9 @@ private:
     int32_t AddGeneralInfoToBuff(int32_t encFile);
     int32_t DoDlpFileWrite(uint64_t offset, void* buf, uint32_t size);
     int32_t WriteFirstBlockData(uint64_t offset, void* buf, uint32_t size);
+    int32_t DecryptPrefixingData(uint32_t prefixingSize, uint64_t alignOffset, uint8_t* enBuf, uint8_t* deBuf);
+    int32_t DecryptAndCopyData(uint64_t alignSize, uint64_t prefixingSize,
+        uint64_t alignOffset, void* buf, uint32_t size);
     std::string workDir_ = "";
     std::string dirIndex_;
     uint32_t certSize_;
