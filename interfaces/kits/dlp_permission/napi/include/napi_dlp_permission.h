@@ -108,7 +108,7 @@ private:
     static napi_value Subscribe(napi_env env, napi_callback_info cbInfo);
     static napi_value UnSubscribe(napi_env env, napi_callback_info cbInfo);
     static napi_value SubscribeOpenDlpFile(const napi_env env, const napi_value thisVar, napi_ref &callback);
-    static napi_value UnSubscribeOpenDlpFile(const napi_env env, napi_value thisVar, napi_ref &callback);
+    static napi_value UnSubscribeOpenDlpFile(const napi_env env, napi_ref &callback);
 
     static void GetDlpGatheringPolicyExcute(napi_env env, void* data);
     static void GetDlpGatheringPolicyComplete(napi_env env, napi_status status, void* data);

@@ -121,3 +121,29 @@ HWTEST_F(OpenDlpFileCallbackStubTest, OpenDlpFileCallbackStub004, TestSize.Level
     EXPECT_NE(ret, DLP_OK);
     EXPECT_FALSE(stub_->called_);
 }
+
+/**
+ * @tc.name: OpenDlpFileCallbackStub005
+ * @tc.desc: Cover success branch with empty uri and zero timeStamp.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(OpenDlpFileCallbackStubTest, OpenDlpFileCallbackStub005, TestSize.Level1)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+
+    data.WriteInterfaceToken(IOpenDlpFileCallback::GetDescriptor());
+    sptr<OpenDlpFileCallbackInfoParcel> parcel = new (std::nothrow) OpenDlpFileCallbackInfoParcel();
+    ASSERT_NE(parcel, nullptr);
+    parcel->fileInfo.uri = "";
+    parcel->fileInfo.timeStamp = 0;
+    data.WriteParcelable(parcel);
+
+    int32_t ret = stub_->OnRemoteRequest(IOpenDlpFileCallback::ON_OPEN_DLP_FILE, data, reply, option);
+    EXPECT_EQ(ret, DLP_OK);
+    EXPECT_TRUE(stub_->called_);
+    EXPECT_EQ(stub_->lastInfo_.uri, "");
+    EXPECT_EQ(stub_->lastInfo_.timeStamp, 0);
+}
