@@ -472,6 +472,75 @@ HWTEST_F(AppStateObserverTest, GetSandboxInfo001, TestSize.Level1)
 }
 
 /**
+ * @tc.name: GetSandboxHasRead001
+ * @tc.desc: GetSandboxHasRead return false when uid not exist
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AppStateObserverTest, GetSandboxHasRead001, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL, "GetSandboxHasRead001");
+
+    AppStateObserver observer;
+    bool hasRead = false;
+    bool res = observer.GetSandboxHasRead(INCORRECT_UID, hasRead);
+    ASSERT_EQ(res, false);
+    ASSERT_EQ(hasRead, false);
+}
+
+/**
+ * @tc.name: GetSandboxHasRead002
+ * @tc.desc: GetSandboxHasRead return true and hasRead is true
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AppStateObserverTest, GetSandboxHasRead002, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL, "GetSandboxHasRead002");
+
+    AppStateObserver observer;
+    DlpSandboxInfo appInfo;
+    appInfo.bundleName = DLP_BUNDLENAME;
+    appInfo.uid = DEFAULT_NUM;
+    appInfo.appIndex = 1001;
+    appInfo.tokenId = 1;
+    appInfo.userId = DEFAULT_USERID;
+    appInfo.hasRead = true;
+    observer.AddSandboxInfo(appInfo);
+
+    bool hasRead = false;
+    bool res = observer.GetSandboxHasRead(DEFAULT_NUM, hasRead);
+    ASSERT_EQ(res, true);
+    ASSERT_EQ(hasRead, true);
+}
+
+/**
+ * @tc.name: GetSandboxHasRead003
+ * @tc.desc: GetSandboxHasRead return true and hasRead is false
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AppStateObserverTest, GetSandboxHasRead003, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL, "GetSandboxHasRead003");
+
+    AppStateObserver observer;
+    DlpSandboxInfo appInfo;
+    appInfo.bundleName = DLP_BUNDLENAME;
+    appInfo.uid = DEFAULT_NUM;
+    appInfo.appIndex = 1001;
+    appInfo.tokenId = 1;
+    appInfo.userId = DEFAULT_USERID;
+    appInfo.hasRead = false;
+    observer.AddSandboxInfo(appInfo);
+
+    bool hasRead = true;
+    bool res = observer.GetSandboxHasRead(DEFAULT_NUM, hasRead);
+    ASSERT_EQ(res, true);
+    ASSERT_EQ(hasRead, false);
+}
+
+/**
  * @tc.name: QueryDlpFileAccessByUid001
  * @tc.desc: QueryDlpFileAccessByUid test
  * @tc.type: FUNC

@@ -209,6 +209,17 @@ bool AppStateObserver::GetSandboxInfo(int32_t uid, DlpSandboxInfo& appInfo)
     return false;
 }
 
+bool AppStateObserver::GetSandboxHasRead(int32_t uid, bool& hasRead)
+{
+    std::lock_guard<std::mutex> lock(sandboxInfoLock_);
+    auto iter = sandboxInfo_.find(uid);
+    if (iter != sandboxInfo_.end()) {
+        hasRead = iter->second.hasRead;
+        return true;
+    }
+    return false;
+}
+
 void AppStateObserver::GetSandboxInfosByClassificationLabel(const std::string& label,
     const std::string& appIdentifier, std::vector<std::string>& uris)
 {

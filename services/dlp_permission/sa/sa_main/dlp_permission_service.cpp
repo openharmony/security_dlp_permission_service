@@ -1432,7 +1432,6 @@ int32_t DlpPermissionService::GetDlpGatheringPolicy(bool& isGathering)
     return DLP_OK;
 }
 
-
 int32_t DlpPermissionService::SetRetentionState(const std::vector<std::string>& docUriVec)
 {
     CriticalHelper criticalHelper("SetRetentionState");
@@ -1456,13 +1455,12 @@ int32_t DlpPermissionService::SetRetentionState(const std::vector<std::string>& 
     info.tokenId = IPCSkeleton::GetCallingTokenID();
     std::set<std::string> docUriSet(docUriVec.begin(), docUriVec.end());
     int32_t uid = IPCSkeleton::GetCallingUid();
-    DlpSandboxInfo sandboxInfo;
-    bool result = observer->GetSandboxInfo(uid, sandboxInfo);
-    if (!result) {
+    bool hasRead = false;
+    if (!observer->GetSandboxHasRead(uid, hasRead)) {
         DLP_LOG_ERROR(LABEL, "Can not found sandbox info");
         return DLP_SERVICE_ERROR_VALUE_INVALID;
     }
-    info.hasRead = sandboxInfo.hasRead;
+    info.hasRead = hasRead;
     int32_t res = RetentionFileManager::GetInstance().UpdateSandboxInfo(docUriSet, info, true);
     return res;
 }

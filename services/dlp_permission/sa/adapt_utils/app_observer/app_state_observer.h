@@ -67,6 +67,7 @@ public:
     bool RemoveCallbackListener(int32_t pid);
     bool CallbackListenerEmpty();
     bool GetSandboxInfo(int32_t uid, DlpSandboxInfo& appInfo);
+    bool GetSandboxHasRead(int32_t uid, bool& hasRead);
     void GetSandboxInfosByClassificationLabel(const std::string& label,
         const std::string& appIdentifier, std::vector<std::string>& uris);
     void GetNeededDelEnterpriseSandbox(const std::string& label,
