@@ -680,7 +680,6 @@ static int32_t AdapterData(const std::vector<uint8_t>& offlineCert, bool isOwner
     int32_t result = DlpPermissionSerializer::GetInstance().DeserializeEncPolicyDataByFirstVersion(jsonObj,
         offlineJsonObj, encPolicy, ownerAccountId);
     if (result != DLP_OK) {
-        FreeDLPEncPolicyData(encPolicy);
         return result;
     }
     return DLP_OK;
@@ -768,7 +767,12 @@ int32_t DlpCredential::ParseDlpCertificate(const sptr<CertParcel>& certParcel,
         return result;
     }
     if (certParcel->isNeedAdapter) {
-        AdapterData(certParcel->offlineCert, isOwner, jsonObj, encPolicy);
+        result = AdapterData(certParcel->offlineCert, isOwner, jsonObj, encPolicy);
+        if (result != DLP_OK) {
+            DLP_LOG_ERROR(LABEL, "AdapterData failed, ret=%{public}d", result);
+            FreeDLPEncPolicyData(encPolicy);
+            return result;
+        }
     }
     result = ParseDlpInfo(certParcel, callback, encPolicy, applicationInfo, accountType);
     FreeDLPEncPolicyData(encPolicy);
@@ -838,10 +842,16 @@ int32_t ParseStringVectorToUint8TypedArray(const std::vector<std::string>& appId
 int32_t ParseUint8TypedArrayToStringVector(uint8_t *policy, const uint32_t *policyLen,
     std::vector<std::string>& appIdList)
 {
-    if (*policyLen > MAX_APPID_LIST_NUM * MAX_APPID_LENGTH) {
+    if (policy == nullptr || policyLen == nullptr || *policyLen < sizeof(uint32_t) ||
+        *policyLen > MAX_APPID_LIST_NUM * MAX_APPID_LENGTH) {
+        DLP_LOG_ERROR(LABEL, "policyLen is invalid");
         return DLP_SERVICE_ERROR_VALUE_INVALID;
     }
-    uint32_t count = reinterpret_cast<uint32_t *>(policy)[0];
+    uint32_t count = 0;
+    if (memcpy_s(&count, sizeof(uint32_t), policy, sizeof(uint32_t)) != EOK) {
+        DLP_LOG_ERROR(LABEL, "memcpy policy count fail");
+        return DLP_SERVICE_ERROR_VALUE_INVALID;
+    }
     if (count < 0 || count > MAX_APPID_LIST_NUM) {
         DLP_LOG_ERROR(LABEL, "get appId List too large");
         return DLP_SERVICE_ERROR_VALUE_INVALID;
@@ -853,7 +863,11 @@ int32_t ParseUint8TypedArrayToStringVector(uint8_t *policy, const uint32_t *poli
             DLP_LOG_ERROR(LABEL, "policy buffer overflow when reading length");
             return DLP_SERVICE_ERROR_VALUE_INVALID;
         }
-        uint32_t length = reinterpret_cast<uint32_t *>(policy + offset)[0];
+        uint32_t length = 0;
+        if (memcpy_s(&length, sizeof(uint32_t), policy + offset, sizeof(uint32_t)) != EOK) {
+            DLP_LOG_ERROR(LABEL, "memcpy policy length fail");
+            return DLP_SERVICE_ERROR_VALUE_INVALID;
+        }
         offset += sizeOfUint32;
         if (length > MAX_APPID_LENGTH || offset + static_cast<int32_t>(length) > static_cast<int32_t>(*policyLen)) {
             DLP_LOG_ERROR(LABEL, "policy buffer overflow when reading appId");

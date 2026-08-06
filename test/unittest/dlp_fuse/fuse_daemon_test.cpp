@@ -50,6 +50,7 @@ static struct fuse_entry_param g_fuseReplyEntry;
 static struct stat g_fuseReplyAttr;
 static double g_fuseReplyAttrTimeout = 0.0F;
 static size_t g_fuseReplyBufSize = 0;
+static bool g_fuseReplyNoneCalled = false;
 static const std::string DLP_TEST_DIR = "/data/dlpTest/";
 static DlpLinkManager* dlpLinkManager = nullptr;
 constexpr int WAIT_SECOND = 1;
@@ -81,6 +82,40 @@ int FuseReplyAttrMock(fuse_req_t req, const struct stat *attr, double attr_timeo
     g_fuseReplyAttr = *attr;
     g_fuseReplyAttrTimeout = attr_timeout;
     return 0;
+}
+
+static void FuseReplyNoneMock(fuse_req_t req)
+{
+    (void)req;
+    g_fuseReplyNoneCalled = true;
+}
+
+static DlpLinkFile* AddLinkFileToManager(const std::string& name, const std::shared_ptr<DlpFile>& dlpFile)
+{
+    if (dlpLinkManager == nullptr || dlpFile == nullptr) {
+        return nullptr;
+    }
+    DlpLinkFile* node = new (std::nothrow) DlpLinkFile(name, dlpFile);
+    if (node == nullptr) {
+        return nullptr;
+    }
+    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(dlpLinkManager->dlpLinkMapLock_);
+    dlpLinkManager->dlpLinkFileNameMap_[name] = node;
+    return node;
+}
+
+static void RemoveLinkFileFromManager(const std::string& name)
+{
+    if (dlpLinkManager == nullptr) {
+        return;
+    }
+    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(dlpLinkManager->dlpLinkMapLock_);
+    auto iter = dlpLinkManager->dlpLinkFileNameMap_.find(name);
+    if (iter != dlpLinkManager->dlpLinkFileNameMap_.end()) {
+        DlpLinkFile* node = iter->second;
+        dlpLinkManager->dlpLinkFileNameMap_.erase(iter);
+        delete node;
+    }
 }
 
 static const size_t ADD_DIRENTRY_BUFF_LEN = 100;
@@ -176,6 +211,8 @@ public:
             DLP_LOG_ERROR(LABEL, "get dlplinkmanger instance failed");
             return;
         }
+        Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(dlpLinkManager->dlpLinkMapLock_);
+        dlpLinkManager->dlpLinkFileNameMap_.clear();
     };
 
     static void TearDownTestCase()
@@ -313,8 +350,9 @@ HWTEST_F(FuseDaemonTest, FuseDaemonOpen001, TestSize.Level0)
     // open readonly dlp with O_TRUNC
     std::shared_ptr<DlpFile> dlpFile = std::make_shared<DlpZipFile>(-1, DLP_TEST_DIR, 0, "txt");
     ASSERT_NE(dlpFile, nullptr);
-    DlpLinkFile linkfile("test", dlpFile);
-    fuse_ino_t ino = static_cast<fuse_ino_t>(reinterpret_cast<uintptr_t>(&linkfile));
+    DlpLinkFile* linkFile = AddLinkFileToManager("test_open", dlpFile);
+    ASSERT_NE(linkFile, nullptr);
+    fuse_ino_t ino = static_cast<fuse_ino_t>(reinterpret_cast<uintptr_t>(linkFile));
     struct fuse_file_info fi;
     fi.flags = O_TRUNC;
 
@@ -334,6 +372,7 @@ HWTEST_F(FuseDaemonTest, FuseDaemonOpen001, TestSize.Level0)
     FuseDaemon::fuseDaemonOper_.open(req, ino, &fi);
     EXPECT_EQ(O_RDWR, g_fuseReplyOpen.flags);
     CleanMockConditions();
+    RemoveLinkFileFromManager("test_open");
 }
 
 /**
@@ -411,8 +450,9 @@ HWTEST_F(FuseDaemonTest, FuseDaemonRead002, TestSize.Level0)
     // can not read dlp file
     std::shared_ptr<DlpFile> dlpFile = std::make_shared<DlpZipFile>(-1, DLP_TEST_DIR, 0, "txt");
     ASSERT_NE(dlpFile, nullptr);
-    DlpLinkFile linkfile("test", dlpFile);
-    fuse_ino_t ino = static_cast<fuse_ino_t>(reinterpret_cast<uintptr_t>(&linkfile));
+    DlpLinkFile* linkfile = AddLinkFileToManager("test_read", dlpFile);
+    ASSERT_NE(linkfile, nullptr);
+    fuse_ino_t ino = static_cast<fuse_ino_t>(reinterpret_cast<uintptr_t>(linkfile));
 
     condition.mockSequence = { true };
     SetMockConditions("fuse_reply_err", condition);
@@ -421,6 +461,7 @@ HWTEST_F(FuseDaemonTest, FuseDaemonRead002, TestSize.Level0)
     FuseDaemon::fuseDaemonOper_.read(&req, ino, 10, 0, nullptr);
     EXPECT_EQ(EIO, g_fuseReplyErr);
     CleanMockConditions();
+    RemoveLinkFileFromManager("test_read");
 }
 
 /**
@@ -474,8 +515,9 @@ HWTEST_F(FuseDaemonTest, FuseDaemonWrite001, TestSize.Level0)
     // can not write dlp file
     std::shared_ptr<DlpFile> dlpFile = std::make_shared<DlpZipFile>(-1, DLP_TEST_DIR, 0, "txt");
     ASSERT_NE(dlpFile, nullptr);
-    DlpLinkFile linkfile("test", dlpFile);
-    fuse_ino_t ino = static_cast<fuse_ino_t>(reinterpret_cast<uintptr_t>(&linkfile));
+    DlpLinkFile* linkfile = AddLinkFileToManager("test_write", dlpFile);
+    ASSERT_NE(linkfile, nullptr);
+    fuse_ino_t ino = static_cast<fuse_ino_t>(reinterpret_cast<uintptr_t>(linkfile));
 
     condition.mockSequence = { true };
     SetMockConditions("fuse_reply_err", condition);
@@ -484,6 +526,7 @@ HWTEST_F(FuseDaemonTest, FuseDaemonWrite001, TestSize.Level0)
     FuseDaemon::fuseDaemonOper_.write(req, ino, nullptr, 1, 0, nullptr);
     EXPECT_EQ(EIO, g_fuseReplyErr);
     CleanMockConditions();
+    RemoveLinkFileFromManager("test_write");
 }
 
 /**
@@ -500,19 +543,19 @@ HWTEST_F(FuseDaemonTest, FuseDaemonForget001, TestSize.Level0)
     // ino ROOT_INODE
     DlpCMockCondition condition;
     condition.mockSequence = { true };
-    SetMockConditions("fuse_reply_err", condition);
-    SetMockCallback("fuse_reply_err", reinterpret_cast<CommonMockFuncT>(FuseReplyErrMock));
-    g_fuseReplyErr = 0;
+    SetMockConditions("fuse_reply_none", condition);
+    SetMockCallback("fuse_reply_none", reinterpret_cast<CommonMockFuncT>(FuseReplyNoneMock));
+    g_fuseReplyNoneCalled = false;
     FuseDaemon::fuseDaemonOper_.forget(req, ROOT_INODE, 1);
-    EXPECT_EQ(ENOENT, g_fuseReplyErr);
+    EXPECT_TRUE(g_fuseReplyNoneCalled);
     CleanMockConditions();
 
     condition.mockSequence = { true };
-    SetMockConditions("fuse_reply_err", condition);
-    SetMockCallback("fuse_reply_err", reinterpret_cast<CommonMockFuncT>(FuseReplyErrMock));
-    g_fuseReplyErr = 0;
+    SetMockConditions("fuse_reply_none", condition);
+    SetMockCallback("fuse_reply_none", reinterpret_cast<CommonMockFuncT>(FuseReplyNoneMock));
+    g_fuseReplyNoneCalled = false;
     FuseDaemon::fuseDaemonOper_.forget(req, 0, 1);
-    EXPECT_EQ(EBADF, g_fuseReplyErr);
+    EXPECT_TRUE(g_fuseReplyNoneCalled);
     CleanMockConditions();
 }
 
@@ -630,8 +673,8 @@ HWTEST_F(FuseDaemonTest, FuseDaemonReadDir004, TestSize.Level0)
     fuse_req_t req = nullptr;
     std::shared_ptr<DlpFile> filePtr = std::make_shared<DlpZipFile>(-1, DLP_TEST_DIR, 0, "txt");
     ASSERT_NE(filePtr, nullptr);
-    dlpLinkManager->dlpLinkFileNameMap_.clear();
-    dlpLinkManager->AddDlpLinkFile(filePtr, "test");
+    DlpLinkFile* linkfile = AddLinkFileToManager("test", filePtr);
+    ASSERT_NE(linkfile, nullptr);
 
     DlpCMockCondition condition;
     condition.mockSequence = { true };
@@ -647,7 +690,7 @@ HWTEST_F(FuseDaemonTest, FuseDaemonReadDir004, TestSize.Level0)
     EXPECT_EQ(EINVAL, g_fuseReplyErr);
     CleanMockConditions();
 
-    dlpLinkManager->DeleteDlpLinkFile(filePtr);
+    RemoveLinkFileFromManager("test");
 }
 
 /**
@@ -661,7 +704,8 @@ HWTEST_F(FuseDaemonTest, FuseDaemonReadDir005, TestSize.Level0)
     DLP_LOG_INFO(LABEL, "FuseDaemonReadDir005");
     fuse_req_t req = nullptr;
     std::shared_ptr<DlpFile> filePtr = std::make_shared<DlpZipFile>(-1, DLP_TEST_DIR, 0, "txt");
-    dlpLinkManager->AddDlpLinkFile(filePtr, "test");
+    DlpLinkFile* linkfile = AddLinkFileToManager("test", filePtr);
+    ASSERT_NE(linkfile, nullptr);
     DlpCMockCondition condition;
     condition.mockSequence = { true };
     SetMockConditions("fuse_reply_err", condition);
@@ -681,7 +725,7 @@ HWTEST_F(FuseDaemonTest, FuseDaemonReadDir005, TestSize.Level0)
     FuseDaemon::fuseDaemonOper_.readdir(req, ROOT_INODE, ADD_DIRENTRY_BUFF_LEN, ADD_DIRENTRY_BUFF_LEN + 1, nullptr);
     EXPECT_EQ(static_cast<size_t>(1), g_fuseReplyBufSize);
     CleanMockConditions();
-    dlpLinkManager->DeleteDlpLinkFile(filePtr);
+    RemoveLinkFileFromManager("test");
 }
 
 /**
@@ -759,8 +803,9 @@ HWTEST_F(FuseDaemonTest, FuseDaemonSetAttr001, TestSize.Level0)
     // truncate fail
     std::shared_ptr<DlpFile> dlpFile = std::make_shared<DlpZipFile>(-1, DLP_TEST_DIR, 0, "txt");
     ASSERT_NE(dlpFile, nullptr);
-    DlpLinkFile linkfile("test", dlpFile);
-    fuse_ino_t ino = static_cast<fuse_ino_t>(reinterpret_cast<uintptr_t>(&linkfile));
+    DlpLinkFile* linkfile = AddLinkFileToManager("test_setattr1", dlpFile);
+    ASSERT_NE(linkfile, nullptr);
+    fuse_ino_t ino = static_cast<fuse_ino_t>(reinterpret_cast<uintptr_t>(linkfile));
 
     condition.mockSequence = { true };
     SetMockConditions("fuse_reply_err", condition);
@@ -770,6 +815,7 @@ HWTEST_F(FuseDaemonTest, FuseDaemonSetAttr001, TestSize.Level0)
     FuseDaemon::fuseDaemonOper_.setattr(req, ino, &attr, FUSE_SET_ATTR_SIZE, nullptr);
     EXPECT_EQ(EINVAL, g_fuseReplyErr);
     CleanMockConditions();
+    RemoveLinkFileFromManager("test_setattr1");
 }
 
 /**
@@ -788,8 +834,9 @@ HWTEST_F(FuseDaemonTest, FuseDaemonSetAttr002, TestSize.Level0)
 
     std::shared_ptr<DlpFile> dlpFile = std::make_shared<DlpZipFile>(-1, DLP_TEST_DIR, 0, "txt");
     ASSERT_NE(dlpFile, nullptr);
-    DlpLinkFile linkfile("test", dlpFile);
-    fuse_ino_t ino = static_cast<fuse_ino_t>(reinterpret_cast<uintptr_t>(&linkfile));
+    DlpLinkFile* linkfile = AddLinkFileToManager("test_setattr2", dlpFile);
+    ASSERT_NE(linkfile, nullptr);
+    fuse_ino_t ino = static_cast<fuse_ino_t>(reinterpret_cast<uintptr_t>(linkfile));
     struct stat attr;
     g_fuseReplyErr = 0;
 
@@ -808,6 +855,7 @@ HWTEST_F(FuseDaemonTest, FuseDaemonSetAttr002, TestSize.Level0)
     FuseDaemon::fuseDaemonOper_.setattr(req, ino, &attr, FUSE_SET_ATTR_SIZE, nullptr);
     EXPECT_EQ(EINVAL, g_fuseReplyErr);
     CleanMockConditions();
+    RemoveLinkFileFromManager("test_setattr2");
 }
 
 /**

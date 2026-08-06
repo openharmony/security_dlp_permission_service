@@ -318,6 +318,10 @@ static bool ReadAccountInfo(PermissionPolicy& policy, Parcel& in)
         DLP_LOG_ERROR(LABEL, "Read owner account type fail");
         return false;
     }
+    if (res > static_cast<uint8_t>(DlpAccountType::ENTERPRISE_ACCOUNT)) {
+        DLP_LOG_ERROR(LABEL, "Invalid owner account type: %{public}u", res);
+        return false;
+    }
     policy.ownerAccountType_ = static_cast<DlpAccountType>(res);
     if (!(in.ReadString(policy.accountName_))) {
         DLP_LOG_ERROR(LABEL, "Read accountName fail");
@@ -330,6 +334,10 @@ static bool ReadAccountInfo(PermissionPolicy& policy, Parcel& in)
     uint8_t type = 0;
     if (!(in.ReadUint8(type))) {
         DLP_LOG_ERROR(LABEL, "Read account type fail");
+        return false;
+    }
+    if (type > static_cast<uint8_t>(DlpAccountType::ENTERPRISE_ACCOUNT)) {
+        DLP_LOG_ERROR(LABEL, "Invalid account type: %{public}u", type);
         return false;
     }
     if (!(in.ReadString(policy.customProperty_))) {
@@ -413,6 +421,10 @@ static bool ReadParcel(Parcel& in, DlpPolicyParcel* policyParcel)
         DLP_LOG_ERROR(LABEL, "Read everyonePerm_ fail");
         return false;
     }
+    if (everyonePerm > static_cast<uint32_t>(DLPFileAccess::FULL_CONTROL)) {
+        DLP_LOG_ERROR(LABEL, "Invalid everyonePerm: %{public}u", everyonePerm);
+        return false;
+    }
     policyParcel->policyParams_.everyonePerm_ = static_cast<DLPFileAccess>(everyonePerm);
     if (!ReadAccountInfo(policyParcel->policyParams_, in)) {
         DLP_LOG_ERROR(LABEL, "Read owner account info fail");
@@ -421,6 +433,10 @@ static bool ReadParcel(Parcel& in, DlpPolicyParcel* policyParcel)
     uint32_t perm = 0;
     if (!(in.ReadUint32(perm))) {
         DLP_LOG_ERROR(LABEL, "Read owner account type fail");
+        return false;
+    }
+    if (perm > static_cast<uint32_t>(DLPFileAccess::FULL_CONTROL)) {
+        DLP_LOG_ERROR(LABEL, "Invalid perm: %{public}u", perm);
         return false;
     }
     policyParcel->policyParams_.perm_ = static_cast<DLPFileAccess>(perm);

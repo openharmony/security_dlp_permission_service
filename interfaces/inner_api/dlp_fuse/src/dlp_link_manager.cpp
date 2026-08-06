@@ -33,6 +33,7 @@ DlpLinkManager::DlpLinkManager()
 
 DlpLinkManager::~DlpLinkManager()
 {
+    CloseDlpFuseFd();
     Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(dlpLinkMapLock_);
     for (auto iter = dlpLinkFileNameMap_.begin(); iter != dlpLinkFileNameMap_.end();) {
         DlpLinkFile* tmp = iter->second;
@@ -43,7 +44,6 @@ DlpLinkManager::~DlpLinkManager()
             iter++;
         }
     }
-    CloseDlpFuseFd();
 }
 
 static bool IsLinkNameValid(const std::string& linkName)
@@ -200,6 +200,22 @@ int32_t DlpLinkManager::DeleteDlpLinkFile(const std::shared_ptr<DlpFile>& filePt
     return DLP_FUSE_ERROR_LINKFILE_NOT_EXIST;
 }
 
+void DlpLinkManager::ReleaseDlpLinkFile(DlpLinkFile* node)
+{
+    if (node == nullptr) {
+        return;
+    }
+
+    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(dlpLinkMapLock_);
+    for (auto iter = dlpLinkFileNameMap_.begin(); iter != dlpLinkFileNameMap_.end(); iter++) {
+        if (node == iter->second) {
+            dlpLinkFileNameMap_.erase(iter);
+            break;
+        }
+    }
+    delete node;
+}
+
 DlpLinkFile* DlpLinkManager::LookUpDlpLinkFile(const std::string& dlpLinkName)
 {
     Utils::UniqueReadGuard<Utils::RWLock> infoGuard(dlpLinkMapLock_);
@@ -220,6 +236,18 @@ DlpLinkFile* DlpLinkManager::LookUpDlpLinkFile(const std::string& dlpLinkName)
         }
     }
     DLP_LOG_ERROR(LABEL, "Look up link file fail, file %{private}s not exist", dlpLinkName.c_str());
+    return nullptr;
+}
+
+DlpLinkFile* DlpLinkManager::LookUpDlpLinkFileByIno(fuse_ino_t ino)
+{
+    DlpLinkFile* target = reinterpret_cast<DlpLinkFile*>(static_cast<uintptr_t>(ino));
+    Utils::UniqueReadGuard<Utils::RWLock> infoGuard(dlpLinkMapLock_);
+    for (auto& [name, node] : dlpLinkFileNameMap_) {
+        if (node == target) {
+            return node;
+        }
+    }
     return nullptr;
 }
 

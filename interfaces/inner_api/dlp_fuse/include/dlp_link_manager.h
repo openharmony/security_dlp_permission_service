@@ -21,6 +21,8 @@
 #include "dlp_link_file.h"
 #include "rwlock.h"
 
+#include <fuse_lowlevel.h>
+
 namespace OHOS {
 namespace Security {
 namespace DlpPermission {
@@ -36,7 +38,9 @@ public:
     int32_t ReplaceDlpLinkFile(const std::shared_ptr<DlpFile>& filePtr, const std::string& dlpLinkName);
     int32_t DeleteDlpLinkFile(const std::shared_ptr<DlpFile>& filePtr);
     DlpLinkFile* LookUpDlpLinkFile(const std::string& dlpLinkName);
+    DlpLinkFile* LookUpDlpLinkFileByIno(fuse_ino_t ino);
     void DumpDlpLinkFile(std::vector<DlpLinkFileInfo>& linkList);
+    void ReleaseDlpLinkFile(DlpLinkFile* node);
 
 private:
     DlpLinkManager();

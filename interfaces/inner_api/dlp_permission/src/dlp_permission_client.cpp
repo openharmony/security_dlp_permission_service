@@ -124,7 +124,7 @@ int32_t DlpPermissionClient::GenerateDlpCertificate(
 int32_t DlpPermissionClient::ParseDlpCertificate(sptr<CertParcel>& certParcel,
     std::shared_ptr<ParseDlpCertificateCallback> callback, const std::string& appId, bool offlineAccess)
 {
-    if (callback == nullptr || certParcel->cert.size() == 0) {
+    if (callback == nullptr || certParcel == nullptr || certParcel->cert.size() == 0) {
         return DLP_SERVICE_ERROR_VALUE_INVALID;
     }
     auto proxy = GetProxy(true);

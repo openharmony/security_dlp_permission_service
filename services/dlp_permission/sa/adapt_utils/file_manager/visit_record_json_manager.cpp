@@ -195,13 +195,10 @@ void VisitRecordJsonManager::FromJson(const Json& jsonObject)
 
 std::string VisitRecordJsonManager::ToString() const
 {
-    {
-        std::lock_guard<std::mutex> lock(mutex_);
-        if (infoList_.empty()) {
-            return "";
-        }
-    }
     auto jsonObject = ToJson();
+    if (jsonObject.empty()) {
+        return "";
+    }
     return jsonObject.dump();
 }
 } // namespace DlpPermission

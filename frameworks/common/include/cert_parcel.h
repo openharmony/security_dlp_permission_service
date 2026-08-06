@@ -29,6 +29,7 @@ public:
     ~CertParcel() override = default;
 
     virtual bool Marshalling(Parcel& data) const override;
+    bool MarshallingProperty(Parcel& data) const;
     static CertParcel* Unmarshalling(Parcel& data);
 
     std::vector<uint8_t> cert;

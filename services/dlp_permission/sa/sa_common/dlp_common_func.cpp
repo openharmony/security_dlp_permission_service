@@ -27,6 +27,15 @@ namespace Security {
 namespace DlpPermission {
 namespace {
 constexpr OHOS::HiviewDFX::HiLogLabel LABEL = { LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "DlpCommonFunc" };
+
+static bool ConstTimeMemEqual(const uint8_t *a, const uint8_t *b, uint32_t len)
+{
+    uint8_t diff = 0;
+    for (uint32_t i = 0; i < len; i++) {
+        diff |= a[i] ^ b[i];
+    }
+    return diff == 0;
+}
 }
 
 int32_t GetHMACValue(const HMACSrcParams *hmacSrcParams,
@@ -237,7 +246,7 @@ int32_t CompareHMACValue(const HMACSrcParams *hmacSrcParams, uint8_t **buffer, u
             DLP_FREE_PTR(*buffer);
             break;
         }
-        if (hmacLen1 == hmacLen2 && memcmp(hmacValue1, hmacValue2, hmacLen1) == 0) {
+        if (hmacLen1 == hmacLen2 && ConstTimeMemEqual(hmacValue1, hmacValue2, hmacLen1)) {
             ret = DLP_OK;
         } else {
             DLP_LOG_ERROR(LABEL, "HMAC values do not match.");
