@@ -79,7 +79,7 @@ static const std::unordered_map<int32_t, DLP_ErrCode> NATIVE_CODE_TO_C_CODE_MAP 
 static DLP_ErrCode CheckDevice()
 {
 #ifdef IS_CAR
-    return ERR_OH_CAPABILITY_NOT_SUPPORTED;
+    return OH_DLP_NOT_SUPPORTED;
 #endif
 #ifdef IS_EMULATOR
     return ERR_OH_CAPABILITY_NOT_SUPPORTED_EMULATOR;

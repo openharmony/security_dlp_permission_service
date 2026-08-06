@@ -27,6 +27,7 @@ namespace DlpPermission {
 
 bool CompareOnAndOffRef(const napi_env env, napi_ref subscriberRef, napi_ref unsubscriberRef);
 
+// IS_CAR and IS_EMULATOR only one can be defined at a time.
 inline bool CheckDevice(napi_env env)
 {
 #ifdef IS_CAR
@@ -40,6 +41,7 @@ inline bool CheckDevice(napi_env env)
     return false;
 }
 
+// IS_CAR and IS_EMULATOR only one can be defined at a time.
 inline int32_t CheckDevice()
 {
 #ifdef IS_CAR

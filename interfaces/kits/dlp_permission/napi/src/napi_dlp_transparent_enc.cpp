@@ -277,11 +277,9 @@ void ProcessPluginCommandComplete(napi_env env, napi_status status, void *data)
 
 napi_value ProcessPluginCommand(napi_env env, napi_callback_info cbInfo)
 {
-    if (!CheckEnterprisePlatform()) {
-        DlpNapiThrow(env, DLP_DEVICE_ERROR_CAPABILITY_NOT_SUPPORTED);
-        return nullptr;
-    }
-    if (CheckDevice(env)) {
+    int32_t deviceError = CheckDeviceForTransparentEnc();
+    if (deviceError != DLP_OK) {
+        DlpNapiThrow(env, deviceError);
         return nullptr;
     }
     if (!CheckPermission(env, PERMISSION_DLP_POLICY_MANAGER)) {
