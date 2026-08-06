@@ -44,15 +44,12 @@ namespace DlpPermission {
 
 using namespace OHOS::Security::DlpConnection;
 namespace {
-#ifdef IS_EMULATOR
-#define CheckEmulator(env)                                              \
-    do {                                                                \
-        DlpNapiThrow(env, DLP_DEVICE_ERROR_CAPABILITY_NOT_SUPPORTED_EMULATOR);   \
-        return nullptr;                                                 \
+#define RETURN_IF_DEVICE_NOT_SUPPORTED(env) \
+    do { \
+        if (CheckDevice(env)) { \
+            return nullptr; \
+        } \
     } while (0)
-#else
-#define CheckEmulator(env)
-#endif
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "DlpPermissionNapi"};
 std::mutex g_lockForOpenDlpFileSubscriber;
 std::set<OpenDlpFileSubscriberContext*> g_openDlpFileSubscribers;
@@ -66,7 +63,7 @@ static constexpr size_t MAX_TYPE_LEN = 64;
 
 napi_value NapiDlpPermission::GenerateDlpFile(napi_env env, napi_callback_info cbInfo)
 {
-    CheckEmulator(env);
+    RETURN_IF_DEVICE_NOT_SUPPORTED(env);
     if (!IsSystemApp(env)) {
         return nullptr;
     }
@@ -169,7 +166,7 @@ void NapiDlpPermission::GenerateDlpFileComplete(napi_env env, napi_status status
 
 napi_value NapiDlpPermission::OpenDlpFile(napi_env env, napi_callback_info cbInfo)
 {
-    CheckEmulator(env);
+    RETURN_IF_DEVICE_NOT_SUPPORTED(env);
     if (!IsSystemApp(env)) {
         return nullptr;
     }
@@ -304,7 +301,7 @@ void NapiDlpPermission::OpenDlpFileComplete(napi_env env, napi_status status, vo
 
 napi_value NapiDlpPermission::IsDlpFile(napi_env env, napi_callback_info cbInfo)
 {
-    CheckEmulator(env);
+    RETURN_IF_DEVICE_NOT_SUPPORTED(env);
     auto* asyncContext = new (std::nothrow) DlpFileAsyncContext(env);
     if (asyncContext == nullptr) {
         DLP_LOG_ERROR(LABEL, "insufficient memory for asyncContext!");
@@ -371,7 +368,7 @@ void NapiDlpPermission::IsDlpFileComplete(napi_env env, napi_status status, void
 
 napi_value NapiDlpPermission::AddDlpLinkFile(napi_env env, napi_callback_info cbInfo)
 {
-    CheckEmulator(env);
+    RETURN_IF_DEVICE_NOT_SUPPORTED(env);
     if (!IsSystemApp(env)) {
         return nullptr;
     }
@@ -445,7 +442,7 @@ void NapiDlpPermission::AddDlpLinkFileComplete(napi_env env, napi_status status,
 
 napi_value NapiDlpPermission::StopDlpLinkFile(napi_env env, napi_callback_info cbInfo)
 {
-    CheckEmulator(env);
+    RETURN_IF_DEVICE_NOT_SUPPORTED(env);
     if (!IsSystemApp(env)) {
         return nullptr;
     }
@@ -519,7 +516,7 @@ void NapiDlpPermission::StopDlpLinkFileComplete(napi_env env, napi_status status
 
 napi_value NapiDlpPermission::RestartDlpLinkFile(napi_env env, napi_callback_info cbInfo)
 {
-    CheckEmulator(env);
+    RETURN_IF_DEVICE_NOT_SUPPORTED(env);
     if (!IsSystemApp(env)) {
         return nullptr;
     }
@@ -593,7 +590,7 @@ void NapiDlpPermission::RestartDlpLinkFileComplete(napi_env env, napi_status sta
 
 napi_value NapiDlpPermission::ReplaceDlpLinkFile(napi_env env, napi_callback_info cbInfo)
 {
-    CheckEmulator(env);
+    RETURN_IF_DEVICE_NOT_SUPPORTED(env);
     if (!IsSystemApp(env)) {
         return nullptr;
     }
@@ -667,7 +664,7 @@ void NapiDlpPermission::ReplaceDlpLinkFileComplete(napi_env env, napi_status sta
 
 napi_value NapiDlpPermission::DeleteDlpLinkFile(napi_env env, napi_callback_info cbInfo)
 {
-    CheckEmulator(env);
+    RETURN_IF_DEVICE_NOT_SUPPORTED(env);
     if (!IsSystemApp(env)) {
         return nullptr;
     }
@@ -741,7 +738,7 @@ void NapiDlpPermission::DeleteDlpLinkFileComplete(napi_env env, napi_status stat
 
 napi_value NapiDlpPermission::RecoverDlpFile(napi_env env, napi_callback_info cbInfo)
 {
-    CheckEmulator(env);
+    RETURN_IF_DEVICE_NOT_SUPPORTED(env);
     if (!IsSystemApp(env)) {
         return nullptr;
     }
@@ -811,7 +808,7 @@ void NapiDlpPermission::RecoverDlpFileComplete(napi_env env, napi_status status,
 
 napi_value NapiDlpPermission::CloseDlpFile(napi_env env, napi_callback_info cbInfo)
 {
-    CheckEmulator(env);
+    RETURN_IF_DEVICE_NOT_SUPPORTED(env);
     if (!IsSystemApp(env)) {
         return nullptr;
     }
@@ -877,7 +874,7 @@ void NapiDlpPermission::CloseDlpFileComplete(napi_env env, napi_status status, v
 
 napi_value NapiDlpPermission::InstallDlpSandbox(napi_env env, napi_callback_info cbInfo)
 {
-    CheckEmulator(env);
+    RETURN_IF_DEVICE_NOT_SUPPORTED(env);
     if (!IsSystemApp(env)) {
         return nullptr;
     }
@@ -948,7 +945,7 @@ void NapiDlpPermission::InstallDlpSandboxComplete(napi_env env, napi_status stat
 
 napi_value NapiDlpPermission::UninstallDlpSandbox(napi_env env, napi_callback_info cbInfo)
 {
-    CheckEmulator(env);
+    RETURN_IF_DEVICE_NOT_SUPPORTED(env);
     if (!IsSystemApp(env)) {
         return nullptr;
     }
@@ -1016,7 +1013,7 @@ void NapiDlpPermission::UninstallDlpSandboxComplete(napi_env env, napi_status st
 
 napi_value NapiDlpPermission::GetDLPPermissionInfo(napi_env env, napi_callback_info cbInfo)
 {
-    CheckEmulator(env);
+    RETURN_IF_DEVICE_NOT_SUPPORTED(env);
     auto* asyncContext = new (std::nothrow) GetPermInfoAsyncContext(env);
     if (asyncContext == nullptr) {
         DLP_LOG_ERROR(LABEL, "insufficient memory for asyncContext!");
@@ -1082,7 +1079,7 @@ void NapiDlpPermission::GetDLPPermissionInfoComplete(napi_env env, napi_status s
 
 napi_value NapiDlpPermission::IsInSandbox(napi_env env, napi_callback_info cbInfo)
 {
-    CheckEmulator(env);
+    RETURN_IF_DEVICE_NOT_SUPPORTED(env);
     auto* asyncContext = new (std::nothrow) IsInSandboxAsyncContext(env);
     if (asyncContext == nullptr) {
         DLP_LOG_ERROR(LABEL, "insufficient memory for asyncContext!");
@@ -1147,7 +1144,7 @@ void NapiDlpPermission::IsInSandboxComplete(napi_env env, napi_status status, vo
 
 napi_value NapiDlpPermission::GetDlpSupportFileType(napi_env env, napi_callback_info cbInfo)
 {
-    CheckEmulator(env);
+    RETURN_IF_DEVICE_NOT_SUPPORTED(env);
     auto* asyncContext = new (std::nothrow) GetDlpSupportFileTypeAsyncContext(env);
     if (asyncContext == nullptr) {
         DLP_LOG_ERROR(LABEL, "insufficient memory for asyncContext!");
@@ -1322,7 +1319,7 @@ napi_value NapiDlpPermission::SubscribeOpenDlpFile(const napi_env env, const nap
 
 napi_value NapiDlpPermission::Subscribe(napi_env env, napi_callback_info cbInfo)
 {
-    CheckEmulator(env);
+    RETURN_IF_DEVICE_NOT_SUPPORTED(env);
     size_t argc = PARAM_SIZE_TWO;
     napi_value argv[PARAM_SIZE_TWO] = {nullptr};
     napi_value thisVar = nullptr;
@@ -1399,7 +1396,7 @@ napi_value NapiDlpPermission::UnSubscribeOpenDlpFile(const napi_env env, napi_re
 
 napi_value NapiDlpPermission::UnSubscribe(napi_env env, napi_callback_info cbInfo)
 {
-    CheckEmulator(env);
+    RETURN_IF_DEVICE_NOT_SUPPORTED(env);
     size_t argc = PARAM_SIZE_TWO;
     napi_value argv[PARAM_SIZE_TWO] = {nullptr};
     napi_value thisVar = nullptr;
@@ -1442,7 +1439,7 @@ napi_value NapiDlpPermission::UnSubscribe(napi_env env, napi_callback_info cbInf
 
 napi_value NapiDlpPermission::GetDlpGatheringPolicy(napi_env env, napi_callback_info cbInfo)
 {
-    CheckEmulator(env);
+    RETURN_IF_DEVICE_NOT_SUPPORTED(env);
     auto* asyncContext = new (std::nothrow) GetGatheringPolicyContext(env);
     if (asyncContext == nullptr) {
         DLP_LOG_ERROR(LABEL, "insufficient memory for asyncContext!");
@@ -1528,7 +1525,7 @@ napi_value NapiDlpPermission::DlpFile(napi_env env, napi_callback_info cbInfo)
 
 napi_value NapiDlpPermission::SetRetentionState(napi_env env, napi_callback_info cbInfo)
 {
-    CheckEmulator(env);
+    RETURN_IF_DEVICE_NOT_SUPPORTED(env);
     auto* asyncContext = new (std::nothrow) RetentionStateAsyncContext(env);
     if (asyncContext == nullptr) {
         DLP_LOG_ERROR(LABEL, "insufficient memory for asyncContext!");
@@ -1584,7 +1581,7 @@ void NapiDlpPermission::SetRetentionStateComplete(napi_env env, napi_status stat
 
 napi_value NapiDlpPermission::CancelRetentionState(napi_env env, napi_callback_info cbInfo)
 {
-    CheckEmulator(env);
+    RETURN_IF_DEVICE_NOT_SUPPORTED(env);
     auto* asyncContext = new (std::nothrow) RetentionStateAsyncContext(env);
     if (asyncContext == nullptr) {
         DLP_LOG_ERROR(LABEL, "insufficient memory for asyncContext!");
@@ -1640,7 +1637,7 @@ void NapiDlpPermission::CancelRetentionStateComplete(napi_env env, napi_status s
 
 napi_value NapiDlpPermission::GetRetentionSandboxList(napi_env env, napi_callback_info cbInfo)
 {
-    CheckEmulator(env);
+    RETURN_IF_DEVICE_NOT_SUPPORTED(env);
     DLP_LOG_DEBUG(LABEL, "napi_create_async_work running");
     auto* asyncContext = new (std::nothrow) GetRetentionSandboxListAsyncContext(env);
     if (asyncContext == nullptr) {
@@ -1699,7 +1696,7 @@ void NapiDlpPermission::GetRetentionSandboxListComplete(napi_env env, napi_statu
 
 napi_value NapiDlpPermission::GetDLPFileVisitRecord(napi_env env, napi_callback_info cbInfo)
 {
-    CheckEmulator(env);
+    RETURN_IF_DEVICE_NOT_SUPPORTED(env);
     DLP_LOG_DEBUG(LABEL, "napi_create_async_work running");
     auto* asyncContext = new (std::nothrow) GetDLPFileVisitRecordAsyncContext(env);
     if (asyncContext == nullptr) {
@@ -1757,7 +1754,7 @@ void NapiDlpPermission::GetDLPFileVisitRecordComplete(napi_env env, napi_status 
 
 napi_value NapiDlpPermission::SetSandboxAppConfig(napi_env env, napi_callback_info cbInfo)
 {
-    CheckEmulator(env);
+    RETURN_IF_DEVICE_NOT_SUPPORTED(env);
     DLP_LOG_DEBUG(LABEL, "napi_create_async_work SetSandboxAppConfig running");
     auto asyncContextPtr = std::make_unique<SandboxAppConfigAsyncContext>(env);
     if (!GetSandboxAppConfigParams(env, cbInfo, asyncContextPtr.get())) {
@@ -1807,7 +1804,7 @@ void NapiDlpPermission::SetSandboxAppConfigComplete(napi_env env, napi_status st
 
 napi_value NapiDlpPermission::CleanSandboxAppConfig(napi_env env, napi_callback_info cbInfo)
 {
-    CheckEmulator(env);
+    RETURN_IF_DEVICE_NOT_SUPPORTED(env);
     auto asyncContextPtr = std::make_unique<SandboxAppConfigAsyncContext>(env);
     napi_value result = nullptr;
     DLP_LOG_DEBUG(LABEL, "Create promise");
@@ -1853,7 +1850,7 @@ void NapiDlpPermission::CleanSandboxAppConfigComplete(napi_env env, napi_status 
 
 napi_value NapiDlpPermission::GetSandboxAppConfig(napi_env env, napi_callback_info cbInfo)
 {
-    CheckEmulator(env);
+    RETURN_IF_DEVICE_NOT_SUPPORTED(env);
     auto asyncContextPtr = std::make_unique<SandboxAppConfigAsyncContext>(env);
     if (!GetThirdInterfaceParams(env, cbInfo, *asyncContextPtr.get())) {
         return nullptr;
@@ -1905,7 +1902,7 @@ void NapiDlpPermission::GetSandboxAppConfigComplete(napi_env env, napi_status st
 
 napi_value NapiDlpPermission::IsDLPFeatureProvided(napi_env env, napi_callback_info cbInfo)
 {
-    CheckEmulator(env);
+    RETURN_IF_DEVICE_NOT_SUPPORTED(env);
     auto asyncContextPtr = std::make_unique<IsDLPFeatureProvidedAsyncContext>(env);
     if (!GetThirdInterfaceParams(env, cbInfo, *asyncContextPtr.get())) {
         return nullptr;
@@ -1954,7 +1951,7 @@ void NapiDlpPermission::IsDLPFeatureProvidedComplete(napi_env env, napi_status s
 
 napi_value NapiDlpPermission::GetDLPSuffix(napi_env env, napi_callback_info cbInfo)
 {
-    CheckEmulator(env);
+    RETURN_IF_DEVICE_NOT_SUPPORTED(env);
     GetSuffixAsyncContext *asyncContext = new (std::nothrow) GetSuffixAsyncContext(env);
     if (asyncContext == nullptr) {
         DLP_LOG_ERROR(LABEL, "insufficient memory for GetSuffixAsyncContext!");
@@ -1970,7 +1967,7 @@ napi_value NapiDlpPermission::GetDLPSuffix(napi_env env, napi_callback_info cbIn
 
 napi_value NapiDlpPermission::GetOriginalFileName(napi_env env, napi_callback_info cbInfo)
 {
-    CheckEmulator(env);
+    RETURN_IF_DEVICE_NOT_SUPPORTED(env);
     GetOriginalFileAsyncContext *asyncContext = new (std::nothrow) GetOriginalFileAsyncContext(env);
     if (asyncContext == nullptr) {
         DLP_LOG_ERROR(LABEL, "insufficient memory for GetFileNameAsyncContext!");
@@ -2003,7 +2000,7 @@ bool NapiDlpPermission::IsSystemApp(napi_env env)
 
 napi_value NapiDlpPermission::StartDLPManagerForResult(napi_env env, napi_callback_info cbInfo)
 {
-    CheckEmulator(env);
+    RETURN_IF_DEVICE_NOT_SUPPORTED(env);
     DLP_LOG_INFO(LABEL, "begin StartDLPManagerForResult");
     size_t argc = PARAM_SIZE_TWO;
     size_t maxArgcNum = PARAM_SIZE_TWO;

@@ -23,6 +23,7 @@
 #include "napi/native_api.h"
 #include "napi/native_node_api.h"
 #include "napi_common.h"
+#include "napi_dlp_permission_common.h"
 #include "parameters.h"
 
 namespace OHOS {
@@ -48,21 +49,13 @@ enum PluginCmd {
 };
 }  // namespace
 
-static bool CheckEmulator()
-{
-#ifdef IS_EMULATOR
-    return true;
-#endif
-    return false;
-}
-
-static bool CheckEnterprisePlatform()
+static int32_t CheckDeviceForTransparentEnc()
 {
     std::string value = OHOS::system::GetParameter("const.dlp.functiontypes", "0");
-    if (value == VERSION_FOR_2B) {
-        return true;
+    if (value != VERSION_FOR_2B) {
+        return DLP_DEVICE_ERROR_CAPABILITY_NOT_SUPPORTED;
     }
-    return false;
+    return CheckDevice();
 }
 
 int32_t ConvertCredentialError(int32_t errorCode)
@@ -191,12 +184,9 @@ void SetControlledAppListsComplete(napi_env env, napi_status status, void *data)
 
 napi_value SetControlledAppLists(napi_env env, napi_callback_info cbInfo)
 {
-    if (!CheckEnterprisePlatform()) {
-        DlpNapiThrow(env, DLP_DEVICE_ERROR_CAPABILITY_NOT_SUPPORTED);
-        return nullptr;
-    }
-    if (CheckEmulator()) {
-        DlpNapiThrow(env, DLP_DEVICE_ERROR_CAPABILITY_NOT_SUPPORTED_EMULATOR);
+    int32_t deviceError = CheckDeviceForTransparentEnc();
+    if (deviceError != DLP_OK) {
+        DlpNapiThrow(env, deviceError);
         return nullptr;
     }
     if (!CheckPermission(env, PERMISSION_DLP_POLICY_MANAGER)) {
@@ -291,8 +281,7 @@ napi_value ProcessPluginCommand(napi_env env, napi_callback_info cbInfo)
         DlpNapiThrow(env, DLP_DEVICE_ERROR_CAPABILITY_NOT_SUPPORTED);
         return nullptr;
     }
-    if (CheckEmulator()) {
-        DlpNapiThrow(env, DLP_DEVICE_ERROR_CAPABILITY_NOT_SUPPORTED_EMULATOR);
+    if (CheckDevice(env)) {
         return nullptr;
     }
     if (!CheckPermission(env, PERMISSION_DLP_POLICY_MANAGER)) {
@@ -361,12 +350,9 @@ void GetControlledAppListsComplete(napi_env env, napi_status status, void *data)
 
 napi_value GetControlledAppLists(napi_env env, napi_callback_info cbInfo)
 {
-    if (!CheckEnterprisePlatform()) {
-        DlpNapiThrow(env, DLP_DEVICE_ERROR_CAPABILITY_NOT_SUPPORTED);
-        return nullptr;
-    }
-    if (CheckEmulator()) {
-        DlpNapiThrow(env, DLP_DEVICE_ERROR_CAPABILITY_NOT_SUPPORTED_EMULATOR);
+    int32_t deviceError = CheckDeviceForTransparentEnc();
+    if (deviceError != DLP_OK) {
+        DlpNapiThrow(env, deviceError);
         return nullptr;
     }
     if (!CheckPermission(env, PERMISSION_DLP_POLICY_MANAGER)) {

@@ -19,6 +19,7 @@
 #include "napi/native_api.h"
 #include "napi/native_node_api.h"
 #include "napi_common.h"
+#include "napi_dlp_permission_common.h"
 #include "securec.h"
 #include "accesstoken_kit.h"
 #include "dlp_permission.h"
@@ -51,14 +52,7 @@ NapiDlpConnectionPlugin::NapiDlpConnectionPlugin(napi_env env, const JsDlpConnPl
     : env_(env), jsPlugin_(jsPlugin)
 {}
 
-static bool CheckEmulator(napi_env env)
-{
-#ifdef IS_EMULATOR
-    DlpNapiThrow(env, DLP_DEVICE_ERROR_CAPABILITY_NOT_SUPPORTED_EMULATOR);
-    return true;
-#endif
-    return false;
-}
+using OHOS::Security::DlpPermission::CheckDevice;
 
 static void ReleaseNapiRefArray(napi_env env, const std::vector<napi_ref> &napiRefVec)
 {
@@ -295,7 +289,7 @@ static bool GetCallbackProperty(napi_env env, napi_value obj, napi_ref &property
 
 static bool GetNamedJsFunction(napi_env env, napi_value object, const std::string &name, napi_ref &callback)
 {
-    if (CheckEmulator(env)) {
+    if (CheckDevice(env)) {
         return false;
     }
     napi_valuetype valueType = napi_undefined;
@@ -356,7 +350,7 @@ static void* DlpStaticHandle(napi_env env)
 
 static napi_value RegisterPlugin(napi_env env, napi_callback_info cbInfo)
 {
-    if (CheckEmulator(env)) {
+    if (CheckDevice(env)) {
         return nullptr;
     }
     JsDlpConnPlugin jsPlugin;
@@ -407,7 +401,7 @@ static napi_value RegisterPlugin(napi_env env, napi_callback_info cbInfo)
 
 static napi_value UnregisterPlugin(napi_env env, napi_callback_info cbInfo)
 {
-    if (CheckEmulator(env)) {
+    if (CheckDevice(env)) {
         return nullptr;
     }
     bool hasEnterprisePerm = AccessToken::AccessTokenKit::VerifyAccessToken(
@@ -432,7 +426,7 @@ static napi_value UnregisterPlugin(napi_env env, napi_callback_info cbInfo)
 
 static napi_value JsConstructor(napi_env env, napi_callback_info cbinfo)
 {
-    if (CheckEmulator(env)) {
+    if (CheckDevice(env)) {
         return nullptr;
     }
     napi_value thisVar = nullptr;

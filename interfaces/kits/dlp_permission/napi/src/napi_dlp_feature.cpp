@@ -22,6 +22,7 @@
 #include "napi/native_api.h"
 #include "napi/native_node_api.h"
 #include "napi_common.h"
+#include "napi_dlp_permission_common.h"
 
 namespace OHOS {
 namespace Security {
@@ -84,6 +85,9 @@ bool GetDlpFeatureParams(
 
 napi_value NapiDlpFeature::SetDlpFeature(napi_env env, napi_callback_info cbInfo)
 {
+    if (CheckDevice(env)) {
+        return nullptr;
+    }
     auto* asyncContext = new (std::nothrow) SetDlpFeatureAsyncContext(env);
     if (asyncContext == nullptr) {
         DLP_LOG_ERROR(LABEL, "insufficient memory for asyncContext!");

@@ -76,12 +76,15 @@ static const std::unordered_map<int32_t, DLP_ErrCode> NATIVE_CODE_TO_C_CODE_MAP 
 };
 } // namespace
 
-static bool CheckEmulator()
+static DLP_ErrCode CheckDevice()
 {
-#ifdef IS_EMULATOR
-    return true;
+#ifdef IS_CAR
+    return ERR_OH_CAPABILITY_NOT_SUPPORTED;
 #endif
-    return false;
+#ifdef IS_EMULATOR
+    return ERR_OH_CAPABILITY_NOT_SUPPORTED_EMULATOR;
+#endif
+    return ERR_OH_SUCCESS;
 }
 
 static DLP_ErrCode ConvertApiResult(int32_t result)
@@ -95,8 +98,9 @@ static DLP_ErrCode ConvertApiResult(int32_t result)
 
 DLP_ErrCode OH_DLP_GetDlpPermissionInfo(DLP_FileAccess *dlpFileAccess, uint32_t *flag)
 {
-    if (CheckEmulator()) {
-        return ERR_OH_CAPABILITY_NOT_SUPPORTED_EMULATOR;
+    DLP_ErrCode deviceError = CheckDevice();
+    if (deviceError != ERR_OH_SUCCESS) {
+        return deviceError;
     }
     if (dlpFileAccess == nullptr || flag == nullptr) {
         DLP_LOG_ERROR(LABEL, "Invalid parameter.");
@@ -117,8 +121,9 @@ DLP_ErrCode OH_DLP_GetDlpPermissionInfo(DLP_FileAccess *dlpFileAccess, uint32_t 
 
 DLP_ErrCode OH_DLP_GetOriginalFileName(const char *fileName, char **originalFileName)
 {
-    if (CheckEmulator()) {
-        return ERR_OH_CAPABILITY_NOT_SUPPORTED_EMULATOR;
+    DLP_ErrCode deviceError = CheckDevice();
+    if (deviceError != ERR_OH_SUCCESS) {
+        return deviceError;
     }
     *originalFileName = nullptr;
     if (fileName == nullptr) {
@@ -151,8 +156,9 @@ DLP_ErrCode OH_DLP_GetOriginalFileName(const char *fileName, char **originalFile
 
 DLP_ErrCode OH_DLP_IsInSandbox(bool *isInSandbox)
 {
-    if (CheckEmulator()) {
-        return ERR_OH_CAPABILITY_NOT_SUPPORTED_EMULATOR;
+    DLP_ErrCode deviceError = CheckDevice();
+    if (deviceError != ERR_OH_SUCCESS) {
+        return deviceError;
     }
     if (isInSandbox == nullptr) {
         DLP_LOG_ERROR(LABEL, "Invalid parameter.");
@@ -167,8 +173,9 @@ DLP_ErrCode OH_DLP_IsInSandbox(bool *isInSandbox)
 
 DLP_ErrCode OH_DLP_SetSandboxAppConfig(const char *configInfo)
 {
-    if (CheckEmulator()) {
-        return ERR_OH_CAPABILITY_NOT_SUPPORTED_EMULATOR;
+    DLP_ErrCode deviceError = CheckDevice();
+    if (deviceError != ERR_OH_SUCCESS) {
+        return deviceError;
     }
     if (configInfo == nullptr) {
         DLP_LOG_ERROR(LABEL, "Invalid parameter.");
@@ -184,8 +191,9 @@ DLP_ErrCode OH_DLP_SetSandboxAppConfig(const char *configInfo)
 
 DLP_ErrCode OH_DLP_GetSandboxAppConfig(char **configInfo)
 {
-    if (CheckEmulator()) {
-        return ERR_OH_CAPABILITY_NOT_SUPPORTED_EMULATOR;
+    DLP_ErrCode deviceError = CheckDevice();
+    if (deviceError != ERR_OH_SUCCESS) {
+        return deviceError;
     }
     *configInfo = nullptr;
     std::string strConfigInfo = "";
@@ -206,8 +214,9 @@ DLP_ErrCode OH_DLP_GetSandboxAppConfig(char **configInfo)
 
 DLP_ErrCode OH_DLP_CleanSandboxAppConfig()
 {
-    if (CheckEmulator()) {
-        return ERR_OH_CAPABILITY_NOT_SUPPORTED_EMULATOR;
+    DLP_ErrCode deviceError = CheckDevice();
+    if (deviceError != ERR_OH_SUCCESS) {
+        return deviceError;
     }
     int32_t result = DlpPermissionKit::CleanSandboxAppConfig();
     if (result != DLP_OK) {

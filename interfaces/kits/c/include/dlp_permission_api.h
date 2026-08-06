@@ -51,6 +51,8 @@ extern "C" {
 typedef enum {
     /** @error The operation is successful. */
     ERR_OH_SUCCESS = 0,
+    /** @error The capability is not supported on the current device at this time. */
+    OH_DLP_NOT_SUPPORTED = 801,
     /** @error Invalid parameter value. */
     ERR_OH_INVALID_PARAMETER = 19100001,
     /** @error No permission to call this API, which is available only for DLP sandbox applications. */
@@ -89,6 +91,7 @@ typedef enum {
  * @param dlpFileAccess - Indicates the access permission for the DLP file.
  * @param flags - Indicates the actions allowed for the DLP file.
  * @return {@link DLP_ErrCode#ERR_OH_SUCCESS} 0 - If the operation is successful.
+ *         {@link DLP_ErrCode#OH_DLP_NOT_SUPPORT} 801 - If the device is car which not support DLP feature.
  *         {@link DLP_ErrCode#ERR_OH_INVALID_PARAMETER} 19100001 - If the parameter value is invalid.
  *         {@link DLP_ErrCode#ERR_OH_API_ONLY_FOR_SANDBOX} 19100006 - If no permission to
  *             call this API, which is available only for DLP sandbox applications.
@@ -106,6 +109,7 @@ DLP_ErrCode OH_DLP_GetDlpPermissionInfo(DLP_FileAccess *dlpFileAccess, uint32_t 
  * @param fileName - Indicates the DLP file name.
  * @param originalFileName - Indicates the original file name obtained.
  * @return {@link DLP_ErrCode#ERR_OH_SUCCESS} 0 - If the operation is successful.
+ *         {@link DLP_ErrCode#OH_DLP_NOT_SUPPORT} 801 - If the device is car which not support DLP feature.
  *         {@link DLP_ErrCode#ERR_OH_INVALID_PARAMS} 19100001 - If the parameter value is invalid.
  *         {@link DLP_ErrCode#ERR_OH_OUT_OF_MEMORY} 19100012 - If the memory error.
  * @since 14
@@ -118,6 +122,7 @@ DLP_ErrCode OH_DLP_GetOriginalFileName(const char *fileName, char **originalFile
  * @param isInSandbox - Indicates output parameter,
  *                      {@code true} if current application is in a DLP sandbox, {@code false} otherwise.
  * @return {@link DLP_ErrCode#ERR_OH_SUCCESS} 0 - If the operation is successful.
+ *         {@link DLP_ErrCode#OH_DLP_NOT_SUPPORT} 801 - If the device is car which not support DLP feature.
  *         {@link DLP_ErrCode#ERR_OH_SYSTEM_SERVICE_EXCEPTION} 19100011 - If the system ability
  *             works abnormally.
  *         {@link DLP_ErrCode#ERR_OH_OUT_OF_MEMORY} 19100012 - If the memory error.
@@ -130,6 +135,7 @@ DLP_ErrCode OH_DLP_IsInSandbox(bool *isInSandbox);
  *
  * @param configInfo - Configuration of the sandbox application.
  * @return {@link DLP_ErrCode#ERR_OH_SUCCESS} 0 - If the operation is successful.
+ *         {@link DLP_ErrCode#OH_DLP_NOT_SUPPORT} 801 - If the device is car which not support DLP feature.
  *         {@link DLP_ErrCode#ERR_OH_INVALID_PARAMETER} 19100001 - If the parameter value is invalid.
  *         {@link DLP_ErrCode#ERR_OH_API_NOT_FOR_SANDBOX} 19100007 - If no permission to
  *             call this API, which is available only for non-DLP sandbox applications.
@@ -145,6 +151,7 @@ DLP_ErrCode OH_DLP_SetSandboxAppConfig(const char *configInfo);
  *
  * @param configInfo - Configuration of the sandbox application.
  * @return {@link DLP_ErrCode#ERR_OH_SUCCESS} 0 - If the operation is successful.
+ *         {@link DLP_ErrCode#OH_DLP_NOT_SUPPORT} 801 - If the device is car which not support DLP feature.
  *         {@link DLP_ErrCode#ERR_OH_SYSTEM_SERVICE_EXCEPTION} 19100011 - If the system ability
  *             works abnormally.
  *         {@link DLP_ErrCode#ERR_OH_OUT_OF_MEMORY} 19100012 - If the memory error.
@@ -157,6 +164,7 @@ DLP_ErrCode OH_DLP_GetSandboxAppConfig(char **configInfo);
  * @brief Cleans sandbox application configuration.
  *
  * @return {@link DLP_ErrCode#ERR_OH_SUCCESS} 0 - If the operation is successful.
+ *         {@link DLP_ErrCode#OH_DLP_NOT_SUPPORT} 801 - If the device is car which not support DLP feature.
  *         {@link DLP_ErrCode#ERR_OH_API_NOT_FOR_SANDBOX} 19100007 - If no permission to
  *             call this API, which is available only for non-DLP sandbox applications.
  *         {@link DLP_ErrCode#ERR_OH_SYSTEM_SERVICE_EXCEPTION} 19100011 - If the system ability
