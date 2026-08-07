@@ -1446,12 +1446,10 @@ napi_value NapiDlpPermission::UnSubscribe(napi_env env, napi_callback_info cbInf
             return nullptr;
         }
     }
-
+    DLP_LOG_INFO(LABEL, "SubEvent op=off_all kit=DataProtectionKit event=%{public}s", type.c_str());
     if (type == "openDLPFile") {
-        DLP_LOG_INFO(LABEL, "SubEvent op=off_all kit=DataProtectionKit event=openDLPFile");
         return UnSubscribeOpenDlpFile(env, callback);
     } else if (type == "uninstallDLPSandbox") {
-        DLP_LOG_INFO(LABEL, "SubEvent op=off_all kit=DataProtectionKit event=uninstallDLPSandbox");
         if (callback != nullptr) {
             napi_delete_reference(env, callback);
             callback = nullptr;
