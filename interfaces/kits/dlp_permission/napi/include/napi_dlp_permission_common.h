@@ -18,6 +18,7 @@
 
 #include "napi/native_api.h"
 #include "napi/native_node_api.h"
+#include "dlp_permission.h"
 #include "napi_common.h"
 
 namespace OHOS {
@@ -25,6 +26,32 @@ namespace Security {
 namespace DlpPermission {
 
 bool CompareOnAndOffRef(const napi_env env, napi_ref subscriberRef, napi_ref unsubscriberRef);
+
+// IS_CAR and IS_EMULATOR only one can be defined at a time.
+inline bool CheckDevice(napi_env env)
+{
+#ifdef IS_CAR
+    DlpNapiThrow(env, DLP_DEVICE_ERROR_CAPABILITY_NOT_SUPPORTED);
+    return true;
+#endif
+#ifdef IS_EMULATOR
+    DlpNapiThrow(env, DLP_DEVICE_ERROR_CAPABILITY_NOT_SUPPORTED_EMULATOR);
+    return true;
+#endif
+    return false;
+}
+
+// IS_CAR and IS_EMULATOR only one can be defined at a time.
+inline int32_t CheckDevice()
+{
+#ifdef IS_CAR
+    return DLP_DEVICE_ERROR_CAPABILITY_NOT_SUPPORTED;
+#endif
+#ifdef IS_EMULATOR
+    return DLP_DEVICE_ERROR_CAPABILITY_NOT_SUPPORTED_EMULATOR;
+#endif
+    return DLP_OK;
+}
 
 }  // namespace DlpPermission
 }  // namespace Security
