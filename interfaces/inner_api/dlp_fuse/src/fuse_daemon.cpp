@@ -251,7 +251,7 @@ static void FuseDaemonForget(fuse_req_t req, fuse_ino_t ino, uint64_t nlookup)
         return;
     }
 
-    DlpLinkFile* dlp = GetFileNode(ino);
+    DlpLinkFile* dlp = reinterpret_cast<DlpLinkFile*>(static_cast<uintptr_t>(ino));
     if (dlp == nullptr) {
         DLP_LOG_ERROR(LABEL, "Forgot link file fail, wrong ino");
         fuse_reply_none(req);
@@ -261,10 +261,7 @@ static void FuseDaemonForget(fuse_req_t req, fuse_ino_t ino, uint64_t nlookup)
         dlp->GetLinkName().c_str(), static_cast<uint32_t>(nlookup));
     if (dlp->SubAndCheckZeroRef(nlookup)) {
         DLP_LOG_INFO(LABEL, "Link file reference is less than 0, delete link file ok");
-        DlpLinkManager* manager = DlpFuseHelper::GetDlpLinkManagerInstance();
-        if (manager != nullptr) {
-            manager->ReleaseDlpLinkFile(dlp);
-        }
+        delete dlp;
     }
     fuse_reply_none(req);
 }
