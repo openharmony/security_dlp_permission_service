@@ -86,6 +86,7 @@ public:
     void EraseFileInfoByUri(const std::string& uri);
     bool AddUriAndEnterpriseInfo(const std::string& uri, const EnterpriseInfo& enterpriseInfo);
     bool GetEnterpriseInfoByUri(const std::string& uri, EnterpriseInfo& enterpriseInfo);
+    bool GetEnterpriseInfoByUid(int32_t uid, EnterpriseInfo& enterpriseInfo);
     void UpdateEnterpriseUidByUri(const std::string& uri, const std::string& fileId, int32_t uid);
     void EraseEnterpriseInfoByUid(const std::vector<DlpSandboxInfo>& appInfos);
     void EraseEnterpriseInfoByUri(const std::string& uri, const std::string& fileId);

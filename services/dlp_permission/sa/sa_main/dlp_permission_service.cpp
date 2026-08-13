@@ -1229,8 +1229,9 @@ int32_t DlpPermissionService::QueryDlpFileCopyableByTokenId(bool& copyable, uint
     }
     int32_t res = observer->QueryDlpFileCopyableByTokenId(copyable, tokenId);
     DlpSandboxInfo sandboxInfo;
+    EnterpriseInfo enterpriseInfo;
     if (observer->GetSandboxInfoByTokenId(tokenId, sandboxInfo) &&
-        !sandboxInfo.classificationLabel.empty()) {
+        observer->GetEnterpriseInfoByUid(sandboxInfo.uid, enterpriseInfo)) {
         ProcessCopyReport(sandboxInfo.fileId, res);
     }
     return res;

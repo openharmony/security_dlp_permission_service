@@ -804,6 +804,19 @@ bool AppStateObserver::GetEnterpriseInfoByUri(const std::string& uri, Enterprise
     return false;
 }
 
+bool AppStateObserver::GetEnterpriseInfoByUid(int32_t uid, EnterpriseInfo& enterpriseInfo)
+{
+    std::lock_guard<std::mutex> lock(enterpriseUriMapLock_);
+    for (const auto& entry : enterpriseUriMap_) {
+        if (entry.second.uid == uid) {
+            enterpriseInfo = entry.second;
+            DLP_LOG_INFO(LABEL, "enterprise info hit for uid");
+            return true;
+        }
+    }
+    return false;
+}
+
 void AppStateObserver::UpdateEnterpriseUidByUri(const std::string& uri, const std::string& fileId, int32_t uid)
 {
     std::lock_guard<std::mutex> lock(enterpriseUriMapLock_);
