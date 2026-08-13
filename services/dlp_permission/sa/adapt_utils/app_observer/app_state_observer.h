@@ -94,6 +94,7 @@ public:
     void DecMaskInfoCnt(const DlpSandboxInfo& appInfo);
     void AddMaskInfoCnt(const DlpSandboxInfo& appInfo);
     bool GetSandboxInfoByAppIndex(const std::string& bundleName, int32_t appIndex, DlpSandboxInfo& appInfo);
+    bool GetSandboxInfoByTokenId(uint32_t tokenId, DlpSandboxInfo& appInfo);
 
 private:
     void UninstallDlpSandbox(DlpSandboxInfo& appInfo);

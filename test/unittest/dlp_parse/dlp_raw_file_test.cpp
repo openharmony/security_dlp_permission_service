@@ -644,3 +644,53 @@ HWTEST_F(DlpRawFileTest, DestructorOfflineCertMemsetSize001, TestSize.Level0)
     close(fd);
     unlink("/data/fuse_test_offline_memset.txt");
 }
+
+/**
+ * @tc.name: RebuildRawFileTailTest_InvalidFd
+ * @tc.desc: test RebuildRawFileTail with invalid file descriptor
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpRawFileTest, RebuildRawFileTailTest_InvalidFd, TestSize.Level0)
+{
+    // Create DlpRawFile with invalid fd (-1)
+    std::shared_ptr<DlpRawFile> filePtr = std::make_shared<DlpRawFile>(-1, "txt");
+    ASSERT_NE(filePtr, nullptr);
+ 
+    // RebuildRawFileTail should return error when fstat fails on invalid fd
+    ASSERT_EQ(filePtr->RebuildRawFileTail(), DLP_PARSE_ERROR_FILE_OPERATE_FAIL);
+}
+ 
+/**
+ * @tc.name: ComputeContentHmacTest_InvalidFd
+ * @tc.desc: test ComputeContentHmac with invalid file descriptor
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpRawFileTest, ComputeContentHmacTest_InvalidFd, TestSize.Level0)
+{
+    // Create DlpRawFile with invalid fd (-1)
+    std::shared_ptr<DlpRawFile> filePtr = std::make_shared<DlpRawFile>(-1, "txt");
+    ASSERT_NE(filePtr, nullptr);
+ 
+    std::string hmacHexStr;
+    // ComputeContentHmac should return error when lseek fails on invalid fd
+    ASSERT_EQ(filePtr->ComputeContentHmac(100, hmacHexStr), DLP_PARSE_ERROR_FILE_OPERATE_FAIL);
+}
+ 
+/**
+ * @tc.name: WriteRawFileTailAndHeaderTest_InvalidFd
+ * @tc.desc: test WriteRawFileTailAndHeader with invalid file descriptor
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpRawFileTest, WriteRawFileTailAndHeaderTest_InvalidFd, TestSize.Level0)
+{
+    // Create DlpRawFile with invalid fd (-1)
+    std::shared_ptr<DlpRawFile> filePtr = std::make_shared<DlpRawFile>(-1, "txt");
+    ASSERT_NE(filePtr, nullptr);
+ 
+    std::string hmacStr = "test";
+    // WriteRawFileTailAndHeader should return error when ftruncate fails on invalid fd
+    ASSERT_EQ(filePtr->WriteRawFileTailAndHeader(hmacStr, hmacStr.size()), DLP_PARSE_ERROR_FILE_OPERATE_FAIL);
+}

@@ -21,6 +21,15 @@
 #include "dlp_permission_log.h"
 #include "fuse_daemon.h"
 
+#ifdef SECURITY_GUARD_ENABLE
+#include <chrono>
+#include "nlohmann/json.hpp"
+#include "event_info.h"
+#include "sg_collect_client.h"
+
+extern "C" int GetDevUdid(char *udid, int size);
+#endif
+
 namespace OHOS {
 namespace Security {
 namespace DlpPermission {
@@ -28,6 +37,10 @@ namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "DlpLinkFile"};
 static const int DEFAULT_INODE_RO_ACCESS = 0440;
 static const int DEFAULT_INODE_RW_ACCESS = 0640;
+#ifdef SECURITY_GUARD_ENABLE
+static const int64_t EVENTID = 0x00F000006;
+static const std::string SGVERSION = "1";
+#endif
 } // namespace
 
 DlpLinkFile::DlpLinkFile(const std::string& dlpLinkName, const std::shared_ptr<DlpFile>& dlpFile)
@@ -136,6 +149,49 @@ void DlpLinkFile::UpdateMtimeStat()
     DlpFuseUtils::UpdateCurrTimeStat(&fileStat_.st_mtim);
 }
 
+static int32_t ProcessWriteReport(std::shared_ptr<DlpFile> &filePtr, int32_t ret)
+{
+    int32_t res = DLP_OK;
+#ifdef SECURITY_GUARD_ENABLE
+    DLP_LOG_INFO(LABEL, "ProcessWriteReport begin!");
+    const int32_t INPUT_UDID_LEN = 65;
+    std::string udid = "UNKNOW";
+    char *udidStr = reinterpret_cast<char*>(malloc(INPUT_UDID_LEN));
+    if (udidStr != nullptr) {
+        (void)memset_s(udidStr, INPUT_UDID_LEN, 0, INPUT_UDID_LEN);
+        if (GetDevUdid(udidStr, INPUT_UDID_LEN) == 0) {
+            udid = udidStr;
+        }
+        free(udidStr);
+    }
+    int64_t timeStamp = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now()
+        .time_since_epoch()).count();
+ 
+    nlohmann::json reportJson;
+    std::string fileId;
+    filePtr->GetFileId(fileId);
+    reportJson["operation"] =  "DLP_FILE_WRITE";
+    reportJson["status"] =  ret >= 0 ? "0" : "1";
+    reportJson["deviceUDID"] =  udid;
+    reportJson["fileIdentification"] =  fileId;
+    reportJson["lastOperationId"] =  filePtr->GetEventId();
+    reportJson["currOperationId"] =  "";
+    reportJson["happenTime"] =  timeStamp;
+ 
+    std::string context = reportJson.dump();
+    std::shared_ptr<SecurityGuard::EventInfo> eventInfo =
+        std::make_shared<SecurityGuard::EventInfo>(EVENTID, SGVERSION, context);
+ 
+    res = OHOS::Security::SecurityGuard::NativeDataCollectKit::ReportSecurityInfo(eventInfo);
+    if (res == DLP_OK) {
+        DLP_LOG_INFO(LABEL, "ReportSecurityInfo success");
+    } else {
+        DLP_LOG_ERROR(LABEL, "ReportSecurityInfo, fail: %{public}d", res);
+    }
+#endif
+    return res;
+}
+
 int32_t DlpLinkFile::Write(uint64_t offset, void* buf, uint32_t size)
 {
     std::unique_lock<std::shared_mutex> lock(linkRwMutex_);
@@ -153,6 +209,9 @@ int32_t DlpLinkFile::Write(uint64_t offset, void* buf, uint32_t size)
         DLP_LOG_ERROR(LABEL, "Write link file fail, err=%{public}d.", res);
     }
     DlpFuseUtils::UpdateCurrTimeStat(&fileStat_.st_mtim);
+    if (res >= 0 && dlpFile_->GetAccountType() == ENTERPRISE_ACCOUNT) {
+        ProcessWriteReport(dlpFile_, res);
+    }
     return res;
 }
 

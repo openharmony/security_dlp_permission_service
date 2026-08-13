@@ -907,6 +907,16 @@ bool AppStateObserver::GetSandboxInfoByAppIndex(const std::string& bundleName,
     }
     return false;
 }
+
+bool AppStateObserver::GetSandboxInfoByTokenId(uint32_t tokenId, DlpSandboxInfo& appInfo)
+{
+    int32_t uid;
+    if (!GetUidByTokenId(tokenId, uid)) {
+        DLP_LOG_WARN(LABEL, "current tokenId %{public}d is not a sandbox app", tokenId);
+        return false;
+    }
+    return GetSandboxInfo(uid, appInfo);
+}
 }  // namespace DlpPermission
 }  // namespace Security
 }  // namespace OHOS

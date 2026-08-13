@@ -73,5 +73,13 @@ ohos_shared_library("libdlp_fuse") {
     "-DFUSE_USE_VERSION=35",
   ]
 
+  if (security_guard_flag) {
+    external_deps += [
+      "security_guard:libsg_collect_sdk",
+      "init:libbegetutil",
+    ]
+    cflags_cc += [ "-DSECURITY_GUARD_ENABLE" ]
+  }
+
   cflags = [ "-DHILOG_ENABLE" ]
 }

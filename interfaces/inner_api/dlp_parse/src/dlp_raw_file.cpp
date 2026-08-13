@@ -1014,6 +1014,118 @@ int32_t DlpRawFile::DecryptAndCopyData(uint64_t alignSize, uint64_t prefixingSiz
     return static_cast<int32_t>(message2.size - prefixingSize);
 }
 
+int32_t DlpRawFile::ComputeContentHmac(uint64_t contentSize, std::string& hmacHexStr)
+{
+    LSEEK_AND_CHECK(dlpFd_, head_.txtOffset, SEEK_SET, DLP_PARSE_ERROR_FILE_OPERATE_FAIL, LABEL);
+    uint8_t* outBuf = new (std::nothrow) uint8_t[HMAC_SIZE];
+    if (outBuf == nullptr) {
+        DLP_LOG_ERROR(LABEL, "New memory fail");
+        return DLP_SERVICE_ERROR_MEMORY_OPERATE_FAIL;
+    }
+    struct DlpBlob out = {
+        .size = HMAC_SIZE,
+        .data = outBuf,
+    };
+    if (DlpHmacEncodeForRaw(cipher_.hmacKey, dlpFd_, contentSize, out) != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "DlpHmacEncodeForRaw fail");
+        CleanBlobParam(out);
+        return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
+    }
+ 
+    if (hmac_.size != 0) {
+        CleanBlobParam(hmac_);
+    }
+    hmac_.size = out.size;
+    hmac_.data = out.data;
+ 
+    uint32_t hmacHexLen = hmac_.size * BYTE_TO_HEX_OPER_LENGTH + 1;
+    char* hmacHex = new (std::nothrow) char[hmacHexLen];
+    if (hmacHex == nullptr) {
+        DLP_LOG_ERROR(LABEL, "New memory fail");
+        CleanBlobParam(out);
+        return DLP_SERVICE_ERROR_MEMORY_OPERATE_FAIL;
+    }
+    int32_t ret = ByteToHexString(hmac_.data, hmac_.size, hmacHex, hmacHexLen);
+    if (ret != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "ByteToHexString error");
+        FreeCharBuffer(hmacHex, hmacHexLen);
+        return ret;
+    }
+    hmacHexStr = hmacHex;
+    FreeCharBuffer(hmacHex, hmacHexLen);
+    return DLP_OK;
+}
+ 
+int32_t DlpRawFile::WriteRawFileTailAndHeader(std::string& hmacStr, uint32_t hmacStrLen)
+{
+    if (ftruncate(dlpFd_, head_.hmacOffset) == -1) {
+        DLP_LOG_ERROR(LABEL, "ftruncate to content end failed, %{private}s", strerror(errno));
+        return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
+    }
+ 
+    LSEEK_AND_CHECK(dlpFd_, head_.hmacOffset, SEEK_SET, DLP_PARSE_ERROR_FILE_OPERATE_FAIL, LABEL);
+    int32_t result = DoWriteHmacAndCert(hmacStrLen, hmacStr);
+    if (result != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "DoWriteHmacAndCert fail");
+        return result;
+    }
+ 
+    if (lseek(dlpFd_, FILE_HEAD, SEEK_SET) == static_cast<off_t>(-1)) {
+        DLP_LOG_ERROR(LABEL, "lseek header failed, %{private}s", strerror(errno));
+        return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
+    }
+    if (write(dlpFd_, &head_, sizeof(head_)) != sizeof(head_)) {
+        DLP_LOG_ERROR(LABEL, "write header failed, %{private}s", strerror(errno));
+        return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
+    }
+ 
+    (void)fsync(dlpFd_);
+    return DLP_OK;
+}
+ 
+int32_t DlpRawFile::RebuildRawFileTail()
+{
+    struct stat fileStat;
+    int32_t ret = fstat(dlpFd_, &fileStat);
+    if (ret != 0) {
+        DLP_LOG_ERROR(LABEL, "fstat error %{public}d", ret);
+        return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
+    }
+ 
+    // All callers (DlpFileWrite, Truncate) have already ftruncate'd the tail before
+    // calling this function, so the file only contains [header][content] at this point.
+    // Simply calculate content size as fileSize - txtOffset.
+    if (static_cast<uint64_t>(fileStat.st_size) < head_.txtOffset) {
+        DLP_LOG_ERROR(LABEL, "file too small, size=%{public}s txtOffset=%{public}s",
+            std::to_string(static_cast<uint64_t>(fileStat.st_size)).c_str(),
+            std::to_string(head_.txtOffset).c_str());
+        return DLP_PARSE_ERROR_FILE_FORMAT_ERROR;
+    }
+    uint64_t contentSize = static_cast<uint64_t>(fileStat.st_size) - head_.txtOffset;
+    DLP_LOG_INFO(LABEL, "RebuildRawFileTail fileSize=%{public}s txtOffset=%{public}s contentSize=%{public}s",
+        std::to_string(static_cast<uint64_t>(fileStat.st_size)).c_str(),
+        std::to_string(head_.txtOffset).c_str(),
+        std::to_string(contentSize).c_str());
+ 
+    head_.txtSize = contentSize;
+    head_.hmacOffset = head_.txtOffset + contentSize;
+    head_.certOffset = head_.hmacOffset + head_.hmacSize;
+    head_.offlineCertOffset = head_.hmacOffset + head_.hmacSize;
+ 
+    std::string hmacStr;
+    ret = ComputeContentHmac(contentSize, hmacStr);
+    if (ret != DLP_OK) {
+        return ret;
+    }
+ 
+    ret = WriteRawFileTailAndHeader(hmacStr, hmacStr.size());
+    if (ret != DLP_OK) {
+        return ret;
+    }
+    DLP_LOG_INFO(LABEL, "RebuildRawFileTail success, contentSize=%{public}s", std::to_string(contentSize).c_str());
+    return DLP_OK;
+}
+
 uint64_t DlpRawFile::GetFsContentSize() const
 {
     std::lock_guard<std::recursive_mutex> lock(opMutex_);
@@ -1191,18 +1303,32 @@ int32_t DlpRawFile::DlpFileWrite(uint64_t offset, void* buf, uint32_t size)
         return DLP_PARSE_ERROR_VALUE_INVALID;
     }
 
-    uint64_t curSize = GetFsContentSize();
-    if (curSize != INVALID_FILE_SIZE && curSize < offset &&
-        (FillHoleData(curSize, offset - curSize) != DLP_OK)) {
+    uint64_t curSize = head_.txtSize;
+    DLP_LOG_INFO(LABEL, "DlpFileWrite offset=%{public}s size=%{public}u curSize=%{public}s hmacOffset=%{public}s",
+        std::to_string(offset).c_str(), size, std::to_string(curSize).c_str(),
+        std::to_string(head_.hmacOffset).c_str());
+    // Always remove tail before writing to ensure RebuildRawFileTail can correctly
+    // calculate contentSize from fileSize (without tail padding the size)
+    if (ftruncate(opFd, head_.hmacOffset) == -1) {
+        DLP_LOG_ERROR(LABEL, "ftruncate to remove tail failed, %{private}s", strerror(errno));
+        return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
+    }
+ 
+    if (curSize < offset && (FillHoleData(curSize, offset - curSize) != DLP_OK)) {
         DLP_LOG_ERROR(LABEL, "Fill hole data failed");
         return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
     }
     int32_t res = DoDlpFileWrite(offset, buf, size);
-    UpdateDlpFileContentSize();
-
-    // modify dlp file, clear old hmac value and will generate new
-    if (hmac_.size != 0) {
-        CleanBlobParam(hmac_);
+    if (res < 0) {
+        DLP_LOG_ERROR(LABEL, "DoDlpFileWrite failed");
+        return res;
+    }
+ 
+    // Rebuild tail: recompute HMAC, rewrite cert+properties, update header, fsync
+    int32_t tailRes = RebuildRawFileTail();
+    if (tailRes != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "RebuildRawFileTail failed");
+        return tailRes;
     }
     return res;
 }
@@ -1211,7 +1337,7 @@ int32_t DlpRawFile::Truncate(uint64_t size)
 {
     std::lock_guard<std::recursive_mutex> lock(opMutex_);
     DLP_LOG_INFO(LABEL, "Truncate file size %{public}s", std::to_string(size).c_str());
-
+ 
     if (authPerm_ == DLPFileAccess::READ_ONLY) {
         DLP_LOG_ERROR(LABEL, "Dlp file is readonly, truncate failed");
         return DLP_PARSE_ERROR_FILE_READ_ONLY;
@@ -1221,26 +1347,41 @@ int32_t DlpRawFile::Truncate(uint64_t size)
         DLP_LOG_ERROR(LABEL, "Param invalid");
         return DLP_PARSE_ERROR_VALUE_INVALID;
     }
-
-    uint64_t curSize = GetFsContentSize();
+ 
+    uint64_t curSize = head_.txtSize;
     int32_t res = DLP_OK;
     if (curSize == INVALID_FILE_SIZE) {
         DLP_LOG_ERROR(LABEL, "FsContentSize invalid");
         return DLP_PARSE_ERROR_VALUE_INVALID;
     }
     if (size < curSize) {
-        res = ftruncate(opFd, head_.txtOffset + size);
-        UpdateDlpFileContentSize();
+        // Truncate to content area only (remove old tail with HMAC+cert+properties)
+        if (ftruncate(opFd, head_.txtOffset + size) == -1) {
+            DLP_LOG_ERROR(LABEL, "ftruncate failed, %{private}s", strerror(errno));
+            return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
+        }
+        // Rebuild tail: recompute HMAC, rewrite cert+properties, update header, fsync
+        res = RebuildRawFileTail();
     } else if (size > curSize) {
+        // Remove tail before expanding content to avoid overwriting tail data
+        if (ftruncate(opFd, head_.hmacOffset) == -1) {
+            DLP_LOG_ERROR(LABEL, "ftruncate to remove tail failed, %{private}s", strerror(errno));
+            return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
+        }
         res = FillHoleData(curSize, size - curSize);
-        UpdateDlpFileContentSize();
+        if (res != DLP_OK) {
+            DLP_LOG_ERROR(LABEL, "FillHoleData failed");
+            return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
+        }
+        // Rebuild tail after expanding content
+        res = RebuildRawFileTail();
     } else {
         DLP_LOG_INFO(LABEL, "Truncate file size equals origin file");
     }
-
+ 
     if (res != DLP_OK) {
-        DLP_LOG_ERROR(LABEL, "Truncate file size %{public}s failed, %{public}s",
-            std::to_string(size).c_str(), strerror(errno));
+        DLP_LOG_ERROR(LABEL, "Truncate file size %{public}s failed",
+            std::to_string(size).c_str());
         return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
     }
     return DLP_OK;
