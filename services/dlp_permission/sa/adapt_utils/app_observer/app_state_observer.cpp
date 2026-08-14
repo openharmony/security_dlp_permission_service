@@ -804,6 +804,19 @@ bool AppStateObserver::GetEnterpriseInfoByUri(const std::string& uri, Enterprise
     return false;
 }
 
+bool AppStateObserver::GetEnterpriseInfoByUid(int32_t uid, EnterpriseInfo& enterpriseInfo)
+{
+    std::lock_guard<std::mutex> lock(enterpriseUriMapLock_);
+    for (const auto& entry : enterpriseUriMap_) {
+        if (entry.second.uid == uid) {
+            enterpriseInfo = entry.second;
+            DLP_LOG_INFO(LABEL, "enterprise info hit for uid");
+            return true;
+        }
+    }
+    return false;
+}
+
 void AppStateObserver::UpdateEnterpriseUidByUri(const std::string& uri, const std::string& fileId, int32_t uid)
 {
     std::lock_guard<std::mutex> lock(enterpriseUriMapLock_);
@@ -906,6 +919,16 @@ bool AppStateObserver::GetSandboxInfoByAppIndex(const std::string& bundleName,
         return true;
     }
     return false;
+}
+
+bool AppStateObserver::GetSandboxInfoByTokenId(uint32_t tokenId, DlpSandboxInfo& appInfo)
+{
+    int32_t uid;
+    if (!GetUidByTokenId(tokenId, uid)) {
+        DLP_LOG_WARN(LABEL, "current tokenId %{public}d is not a sandbox app", tokenId);
+        return false;
+    }
+    return GetSandboxInfo(uid, appInfo);
 }
 }  // namespace DlpPermission
 }  // namespace Security

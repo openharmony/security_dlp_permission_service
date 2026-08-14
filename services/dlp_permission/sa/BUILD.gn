@@ -258,6 +258,13 @@ ohos_shared_library("dlp_permission_service") {
     "ability_base:configuration",
   ]
 
+  if (security_guard_flag) {
+    external_deps += [
+      "security_guard:libsg_collect_sdk",
+    ]
+    cflags_cc += [ "-DSECURITY_GUARD_ENABLE" ]
+  }
+  
   if (dlp_credential_enable == true) {
     cflags_cc += [ "-DSUPPORT_DLP_CREDENTIAL" ]
   }

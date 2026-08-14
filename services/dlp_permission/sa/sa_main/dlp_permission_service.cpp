@@ -64,6 +64,13 @@
 #include "critical_helper.h"
 #include "account_status_listener.h"
 
+#ifdef SECURITY_GUARD_ENABLE
+#include "nlohmann/json.hpp"
+#include "event_info.h"
+#include "sg_collect_client.h"
+extern "C" int GetDevUdid(char *udid, int size);
+#endif
+
 namespace OHOS {
 namespace Security {
 namespace DlpPermission {
@@ -73,6 +80,10 @@ namespace {
 constexpr const int32_t SA_ID_DLP_PERMISSION_SERVICE = 3521;
 static const std::string ALLOW_ACTION[] = {"ohos.want.action.CREATE_FILE"};
 static const std::string DLP_MANAGER = "com.ohos.dlpmanager";
+#ifdef SECURITY_GUARD_ENABLE
+static const int64_t EVENTID = 0x00F000006;
+static const std::string SGVERSION = "1";
+#endif
 static const std::string SETTINGS_BUNDLE_NAME = "com.huawei.hmos.settings";
 static const std::string DLP_CONFIG = "etc/dlp_permission/dlp_config.json";
 static const std::string SUPPORT_FILE_TYPE = "support_file_type";
@@ -1152,6 +1163,51 @@ int32_t DlpPermissionService::GetSandboxExternalAuthorization(
     return DLP_OK;
 }
 
+static int32_t ProcessCopyReport(const std::string& fileId, int32_t ret)
+{
+    int32_t res = DLP_OK;
+#ifdef SECURITY_GUARD_ENABLE
+    DLP_LOG_INFO(LABEL, "ProcessCopyReport begin!");
+    if (fileId.empty()) {
+        DLP_LOG_ERROR(LABEL, "fileId is empty, skip report");
+        return res;
+    }
+    const int32_t INPUT_UDID_LEN = 65;
+    std::string udid = "UNKNOW";
+    char *udidStr = reinterpret_cast<char*>(malloc(INPUT_UDID_LEN));
+    if (udidStr != nullptr) {
+        (void)memset_s(udidStr, INPUT_UDID_LEN, 0, INPUT_UDID_LEN);
+        if (GetDevUdid(udidStr, INPUT_UDID_LEN) == 0) {
+            udid = udidStr;
+        }
+        free(udidStr);
+    }
+    int64_t timeStamp = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now()
+        .time_since_epoch()).count();
+ 
+    nlohmann::json reportJson;
+    reportJson["operation"] =  "DLP_FILE_COPY";
+    reportJson["status"] =  ret == DLP_OK ? "0" : "1";
+    reportJson["deviceUDID"] =  udid;
+    reportJson["fileIdentification"] =  fileId;
+    reportJson["lastOperationId"] =  "";
+    reportJson["currOperationId"] =  "";
+    reportJson["happenTime"] =  timeStamp;
+ 
+    std::string context = reportJson.dump();
+    std::shared_ptr<SecurityGuard::EventInfo> eventInfo =
+        std::make_shared<SecurityGuard::EventInfo>(EVENTID, SGVERSION, context);
+ 
+    res = OHOS::Security::SecurityGuard::NativeDataCollectKit::ReportSecurityInfo(eventInfo);
+    if (res == DLP_OK) {
+        DLP_LOG_INFO(LABEL, "ReportSecurityInfo success");
+    } else {
+        DLP_LOG_ERROR(LABEL, "ReportSecurityInfo, fail: %{public}d", res);
+    }
+#endif
+    return res;
+}
+
 int32_t DlpPermissionService::QueryDlpFileCopyableByTokenId(bool& copyable, uint32_t tokenId)
 {
     CriticalHelper criticalHelper("QueryDlpFileCopyableByTokenId");
@@ -1172,6 +1228,12 @@ int32_t DlpPermissionService::QueryDlpFileCopyableByTokenId(bool& copyable, uint
         return DLP_SERVICE_ERROR_VALUE_INVALID;
     }
     int32_t res = observer->QueryDlpFileCopyableByTokenId(copyable, tokenId);
+    DlpSandboxInfo sandboxInfo;
+    EnterpriseInfo enterpriseInfo;
+    if (observer->GetSandboxInfoByTokenId(tokenId, sandboxInfo) &&
+        observer->GetEnterpriseInfoByUid(sandboxInfo.uid, enterpriseInfo)) {
+        ProcessCopyReport(sandboxInfo.fileId, res);
+    }
     return res;
 }
 

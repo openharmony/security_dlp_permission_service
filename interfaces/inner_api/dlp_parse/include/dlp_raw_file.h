@@ -73,6 +73,9 @@ private:
     int32_t WriteRawFileProperty(void);
     int32_t ReadNickNameMask(void);
     int32_t ReadFileId(void);
+    int32_t ComputeContentHmac(uint64_t contentSize, std::string& hmacHexStr);
+    int32_t WriteRawFileTailAndHeader(std::string& hmacStr, uint32_t hmacStrLen);
+    int32_t RebuildRawFileTail(void);
 
     struct DlpHeader head_;
     bool hiaeInit_;

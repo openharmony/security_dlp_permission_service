@@ -1819,13 +1819,13 @@ HWTEST_F(DlpFileTest, Truncate001, TestSize.Level0)
 
     EXPECT_EQ(DLP_PARSE_ERROR_VALUE_INVALID, testFile.Truncate(0x100000000 + 0xA00000));
 
-    EXPECT_EQ(DLP_PARSE_ERROR_VALUE_INVALID, testFile.Truncate(0));
+    EXPECT_EQ(DLP_OK, testFile.Truncate(0));
 
     // fill hole data fail
     DlpCMockCondition condition;
     condition.mockSequence = { true };
     SetMockConditions("lseek", condition);
-    EXPECT_EQ(DLP_PARSE_ERROR_VALUE_INVALID, testFile.Truncate(16));
+    EXPECT_EQ(DLP_PARSE_ERROR_FILE_OPERATE_FAIL, testFile.Truncate(16));
     CleanMockConditions();
     close(fdPlain);
     close(fdDlp);
@@ -2755,7 +2755,7 @@ HWTEST_F(DlpFileTest, TruncateZeroSize002, TestSize.Level0)
     testFile.authPerm_ = DLPFileAccess::FULL_CONTROL;
     testFile.dlpFd_ = fdDlp;
 
-    EXPECT_EQ(DLP_PARSE_ERROR_VALUE_INVALID, testFile.Truncate(0));
+    EXPECT_EQ(DLP_OK, testFile.Truncate(0));
 
     close(fdPlain);
     close(fdDlp);
@@ -2787,7 +2787,7 @@ HWTEST_F(DlpFileTest, TruncateFillHoleDataFail002, TestSize.Level0)
     DlpCMockCondition condition;
     condition.mockSequence = { true };
     SetMockConditions("lseek", condition);
-    EXPECT_EQ(DLP_PARSE_ERROR_VALUE_INVALID, testFile.Truncate(16));
+    EXPECT_EQ(DLP_PARSE_ERROR_FILE_OPERATE_FAIL, testFile.Truncate(16));
     CleanMockConditions();
     close(fdPlain);
     close(fdDlp);

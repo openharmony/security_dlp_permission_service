@@ -86,6 +86,7 @@ public:
     void EraseFileInfoByUri(const std::string& uri);
     bool AddUriAndEnterpriseInfo(const std::string& uri, const EnterpriseInfo& enterpriseInfo);
     bool GetEnterpriseInfoByUri(const std::string& uri, EnterpriseInfo& enterpriseInfo);
+    bool GetEnterpriseInfoByUid(int32_t uid, EnterpriseInfo& enterpriseInfo);
     void UpdateEnterpriseUidByUri(const std::string& uri, const std::string& fileId, int32_t uid);
     void EraseEnterpriseInfoByUid(const std::vector<DlpSandboxInfo>& appInfos);
     void EraseEnterpriseInfoByUri(const std::string& uri, const std::string& fileId);
@@ -94,6 +95,7 @@ public:
     void DecMaskInfoCnt(const DlpSandboxInfo& appInfo);
     void AddMaskInfoCnt(const DlpSandboxInfo& appInfo);
     bool GetSandboxInfoByAppIndex(const std::string& bundleName, int32_t appIndex, DlpSandboxInfo& appInfo);
+    bool GetSandboxInfoByTokenId(uint32_t tokenId, DlpSandboxInfo& appInfo);
 
 private:
     void UninstallDlpSandbox(DlpSandboxInfo& appInfo);
