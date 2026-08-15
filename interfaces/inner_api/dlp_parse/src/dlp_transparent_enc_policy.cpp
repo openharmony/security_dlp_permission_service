@@ -31,7 +31,7 @@ namespace DlpPermission {
 
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION,
-                                                        "DlpTransparentEncPolicy"};
+    "DlpTransparentEncPolicy"};
 static const std::string VERSION_FOR_2B = "1";
 static const char *TRANSPARENT_CRYPTO_STATUS_KEY = "security.dlp.transparent.crypto.status";
 static const std::string DLP_CREDENTIAL_SA_NAME = "dlp_credential_service";
