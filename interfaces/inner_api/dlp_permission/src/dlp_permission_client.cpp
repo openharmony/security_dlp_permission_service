@@ -257,7 +257,7 @@ int32_t DlpPermissionClient::GetSandboxExternalAuthorization(
         auth = SandBoxExternalAuthorType::ALLOW_START_ABILITY;
         return DLP_OK;
     }
-    auto proxy = GetProxy(false);
+    auto proxy = GetProxy(true);
     if (proxy == nullptr) {
         DLP_LOG_ERROR(LABEL, "Proxy is null, dlpmanager service no start.");
         return DLP_SERVICE_ERROR_SERVICE_NOT_EXIST;
@@ -283,7 +283,7 @@ int32_t DlpPermissionClient::QueryDlpFileCopyableByTokenId(bool& copyable, uint3
         return DLP_OK;
     }
 
-    auto proxy = GetProxy(false);
+    auto proxy = GetProxy(true);
     if (proxy == nullptr) {
         DLP_LOG_ERROR(LABEL, "Proxy is null");
         copyable = false;

@@ -687,15 +687,17 @@ static bool IsCopyable(DLPFileAccess dlpFileAccess)
     }
 }
 
-int32_t AppStateObserver::QueryDlpFileCopyableByTokenId(bool& copyable, uint32_t tokenId)
+int32_t AppStateObserver::QueryDlpFileCopyableByTokenId(bool& copyable, uint32_t tokenId, bool& inDlpsandbox)
 {
     int32_t uid;
     copyable = false;
+    inDlpsandbox = false;
     if (!GetUidByTokenId(tokenId, uid)) {
         DLP_LOG_WARN(LABEL, "current tokenId %{public}d is not a sandbox app", tokenId);
-        copyable = false;
+        inDlpsandbox = false;
         return DLP_SERVICE_ERROR_APPOBSERVER_ERROR;
     }
+    inDlpsandbox = true;
     DLPFileAccess dlpFileAccess = DLPFileAccess::NO_PERMISSION;
     int32_t res = QueryDlpFileAccessByUid(dlpFileAccess, uid);
     if (res != DLP_OK) {

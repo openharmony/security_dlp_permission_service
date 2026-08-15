@@ -1079,6 +1079,28 @@ int32_t DlpCredential::SetEnterprisePolicy(const std::string& policy)
     }
     return DLP_OK;
 }
+
+int32_t DlpCredential::QueryDlpFileCopyableByTokenId(bool& copyable, uint32_t tokenId)
+{
+    copyable = false;
+#ifdef DLP_PERMISSION_SERVICE_PC_FEATURE
+    std::string value = OHOS::system::GetParameter("const.dlp.functiontypes", "0");
+    if (value != "1") {
+        DLP_LOG_ERROR(LABEL, "const.dlp.functiontypes is not 1, value=%{public}s", value.c_str());
+        return DLP_SERVICE_ERROR_VALUE_INVALID;
+    }
+    int32_t ret = DLP_QueryDlpFileCopyableByTokenId(tokenId, &copyable);
+    if (ret != DLP_OK) {
+        DLP_LOG_ERROR(LABEL, "DLP_QueryDlpFileCopyableByTokenId fail, ret=%{public}d", ret);
+        copyable = false;
+        return DLP_SERVICE_ERROR_IPC_REQUEST_FAIL;
+    }
+    return DLP_OK;
+#else
+    DLP_LOG_ERROR(LABEL, "DLP_PERMISSION_SERVICE_PC_FEATURE not enabled");
+    return DLP_SERVICE_ERROR_VALUE_INVALID;
+#endif
+}
 }  // namespace DlpPermission
 }  // namespace Security
 }  // namespace OHOS

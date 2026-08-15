@@ -576,13 +576,14 @@ HWTEST_F(AppStateObserverTest, QueryDlpFileCopyableByTokenId001, TestSize.Level1
 
     AppStateObserver observer;
     bool copyable = false;
+    bool inDlpsandbox = false;
     uint32_t tokenId = 0;
 
-    int32_t ret = observer.QueryDlpFileCopyableByTokenId(copyable, tokenId);
+    int32_t ret = observer.QueryDlpFileCopyableByTokenId(copyable, tokenId, inDlpsandbox);
     ASSERT_EQ(DLP_SERVICE_ERROR_APPOBSERVER_ERROR, ret);
 
     observer.AddUidWithTokenId(tokenId, 1);
-    ret = observer.QueryDlpFileCopyableByTokenId(copyable, tokenId);
+    ret = observer.QueryDlpFileCopyableByTokenId(copyable, tokenId, inDlpsandbox);
     ASSERT_EQ(DLP_SERVICE_ERROR_APPOBSERVER_ERROR, ret);
 }
 
@@ -598,6 +599,7 @@ HWTEST_F(AppStateObserverTest, QueryDlpFileCopyableByTokenId002, TestSize.Level1
 
     AppStateObserver observer;
     bool copyable = false;
+    bool inDlpsandbox = false;
     uint32_t tokenId = 100;
     int32_t uid = 100;
     int32_t storeUid;
@@ -620,7 +622,7 @@ HWTEST_F(AppStateObserverTest, QueryDlpFileCopyableByTokenId002, TestSize.Level1
     observer.AddSandboxInfo(appInfo);
     ASSERT_TRUE(observer.CheckSandboxInfo(bundleName, appIndex, userId));
 
-    int32_t ret = observer.QueryDlpFileCopyableByTokenId(copyable, tokenId);
+    int32_t ret = observer.QueryDlpFileCopyableByTokenId(copyable, tokenId, inDlpsandbox);
     ASSERT_EQ(DLP_OK, ret);
     ASSERT_TRUE(copyable);
 }
@@ -637,6 +639,7 @@ HWTEST_F(AppStateObserverTest, QueryDlpFileCopyableByTokenId003, TestSize.Level1
 
     AppStateObserver observer;
     bool copyable = false;
+    bool inDlpsandbox = false;
     uint32_t tokenId = 100;
     int32_t uid = 100;
     int32_t storeUid;
@@ -659,9 +662,71 @@ HWTEST_F(AppStateObserverTest, QueryDlpFileCopyableByTokenId003, TestSize.Level1
     observer.AddSandboxInfo(appInfo);
     ASSERT_TRUE(observer.CheckSandboxInfo(bundleName, appIndex, userId));
 
-    int32_t ret = observer.QueryDlpFileCopyableByTokenId(copyable, tokenId);
+    int32_t ret = observer.QueryDlpFileCopyableByTokenId(copyable, tokenId, inDlpsandbox);
     ASSERT_EQ(DLP_OK, ret);
     ASSERT_FALSE(copyable);
+}
+
+/**
+ * @tc.name: QueryDlpFileCopyableByTokenId004
+ * @tc.desc: QueryDlpFileCopyableByTokenId test - verify inDlpsandbox output
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AppStateObserverTest, QueryDlpFileCopyableByTokenId004, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL, "QueryDlpFileCopyableByTokenId004");
+
+    AppStateObserver observer;
+    bool copyable = false;
+    bool inDlpsandbox = true;
+    uint32_t tokenId = 0;
+
+    // Token not found - inDlpsandbox should be false
+    int32_t ret = observer.QueryDlpFileCopyableByTokenId(copyable, tokenId, inDlpsandbox);
+    ASSERT_EQ(DLP_SERVICE_ERROR_APPOBSERVER_ERROR, ret);
+    ASSERT_FALSE(inDlpsandbox);
+}
+
+/**
+ * @tc.name: QueryDlpFileCopyableByTokenId005
+ * @tc.desc: QueryDlpFileCopyableByTokenId test - verify inDlpsandbox true when token found
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AppStateObserverTest, QueryDlpFileCopyableByTokenId005, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL, "QueryDlpFileCopyableByTokenId005");
+
+    AppStateObserver observer;
+    bool copyable = false;
+    bool inDlpsandbox = false;
+    uint32_t tokenId = 200;
+    int32_t uid = 200;
+    int32_t storeUid;
+
+    observer.AddUidWithTokenId(tokenId, uid);
+    observer.GetUidByTokenId(tokenId, storeUid);
+    ASSERT_TRUE(uid == storeUid);
+
+    std::string bundleName = "test2";
+    int32_t appIndex = 200;
+    int32_t userId = 200;
+    DlpSandboxInfo appInfo = {
+        .uid = uid,
+        .bundleName = bundleName,
+        .appIndex = appIndex,
+        .userId = userId,
+        .dlpFileAccess = DLPFileAccess::FULL_CONTROL
+    };
+
+    observer.AddSandboxInfo(appInfo);
+    ASSERT_TRUE(observer.CheckSandboxInfo(bundleName, appIndex, userId));
+
+    int32_t ret = observer.QueryDlpFileCopyableByTokenId(copyable, tokenId, inDlpsandbox);
+    ASSERT_EQ(DLP_OK, ret);
+    ASSERT_TRUE(inDlpsandbox);
+    ASSERT_TRUE(copyable);
 }
 
 /**

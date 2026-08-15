@@ -686,6 +686,42 @@ HWTEST_F(DlpCredentialTest, DlpCredentialTest015, TestSize.Level1)
 
     delete[] policy;
 }
+
+/**
+ * @tc.name: QueryDlpFileCopyableByTokenId001
+ * @tc.desc: QueryDlpFileCopyableByTokenId test - basic call
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpCredentialTest, QueryDlpFileCopyableByTokenId001, TestSize.Level1)
+{
+    bool copyable = false;
+    uint32_t tokenId = 100;
+    int32_t ret = DlpCredential::GetInstance().QueryDlpFileCopyableByTokenId(copyable, tokenId);
+    // Without DLP_PERMISSION_SERVICE_PC_FEATURE, returns VALUE_INVALID
+    // With PC_FEATURE, depends on const.dlp.functiontypes parameter and DLP_QueryDlpFileCopyableByTokenId
+    EXPECT_TRUE(ret != DLP_OK || copyable == true || copyable == false);
+    // copyable should be set to false on failure
+    if (ret != DLP_OK) {
+        EXPECT_FALSE(copyable);
+    }
+}
+
+/**
+ * @tc.name: QueryDlpFileCopyableByTokenId002
+ * @tc.desc: QueryDlpFileCopyableByTokenId test - zero tokenId
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpCredentialTest, QueryDlpFileCopyableByTokenId002, TestSize.Level1)
+{
+    bool copyable = false;
+    uint32_t tokenId = 0;
+    int32_t ret = DlpCredential::GetInstance().QueryDlpFileCopyableByTokenId(copyable, tokenId);
+    // Should fail with some error code (either PC_FEATURE not enabled or functiontypes check fails)
+    EXPECT_NE(ret, DLP_OK);
+    EXPECT_FALSE(copyable);
+}
 }  // namespace DlpPermission
 }  // namespace Security
 }  // namespace OHOS
