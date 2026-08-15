@@ -397,11 +397,11 @@ bool DlpFileKits::GetSandboxFlag(Want& want)
         return false;
     }
     if (!IsDlpFile(fd)) {
+        DLP_LOG_WARN(LABEL, "Fd %{public}d is not dlp file", fd);
         close(fd);
         if (QueryDockerPolicyNeedSandbox(uri, want)) {
             return true;
         }
-        DLP_LOG_WARN(LABEL, "Fd %{public}d is not dlp file", fd);
         return false;
     }
     SetWantType(want, fd);
