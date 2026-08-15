@@ -35,7 +35,7 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_
 static const std::string VERSION_FOR_2B = "1";
 static const char *TRANSPARENT_CRYPTO_STATUS_KEY = "security.dlp.transparent.crypto.status";
 static const std::string DLP_CREDENTIAL_SA_NAME = "dlp_credential_service";
-
+static const std::string DLP_PARAMS_CUSTOM_FLAG = "ohos.dlp.params.customFlag";
 static bool IsEnterprisePlatform()
 {
     std::string value = OHOS::system::GetParameter("const.dlp.functiontypes", "0");
@@ -86,7 +86,7 @@ static bool CheckEnterpriseEncryptedFile(const DockerPolicyInfo &dockerPolicy, A
         DLP_LOG_ERROR(LABEL, "Docker policy needSandbox is false");
         return false;
     }
-    want.SetParam("ohos.dlp.params.customDlp", true);
+    want.SetParam(DLP_PARAMS_CUSTOM_FLAG, true);
     DLP_LOG_INFO(LABEL, "Docker policy needSandbox is true");
     return true;
 }

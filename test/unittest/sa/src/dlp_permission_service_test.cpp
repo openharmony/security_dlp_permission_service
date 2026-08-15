@@ -1957,7 +1957,48 @@ HWTEST_F(DlpPermissionServiceTest, QueryDlpFileCopyableByTokenId002, TestSize.Le
     EXPECT_EQ(0, SetSelfTokenID(pasteboardToken));
     bool copyable = false;
     int32_t res = dlpPermissionService_->QueryDlpFileCopyableByTokenId(copyable, pasteboardToken);
-    EXPECT_EQ(res, DLP_SERVICE_ERROR_APPOBSERVER_ERROR);
+    EXPECT_EQ(res, DLP_SERVICE_ERROR_VALUE_INVALID);
+    EXPECT_EQ(0, SetSelfTokenID(selfTokenId));
+}
+
+/**
+ * @tc.name: QueryDlpFileCopyableByTokenId003
+ * @tc.desc: QueryDlpFileCopyableByTokenId test - not in dlp sandbox, fallback to credential service
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionServiceTest, QueryDlpFileCopyableByTokenId003, TestSize.Level1)
+{
+    DLP_LOG_DEBUG(LABEL, "QueryDlpFileCopyableByTokenId003");
+    uint64_t selfTokenId = GetSelfTokenID();
+    uint64_t pasteboardToken = AccessTokenKit::GetNativeTokenId(PASTEBOARD_SERVICE_NAME);
+    EXPECT_EQ(0, SetSelfTokenID(pasteboardToken));
+    bool copyable = false;
+    // pasteboardToken is not a sandbox app, so inDlpsandbox will be false,
+    // and the service will fall back to DlpCredential::QueryDlpFileCopyableByTokenId
+    int32_t res = dlpPermissionService_->QueryDlpFileCopyableByTokenId(copyable, pasteboardToken);
+    // The result depends on whether DLP_PERMISSION_SERVICE_PC_FEATURE is enabled
+    // Without PC_FEATURE, DlpCredential::QueryDlpFileCopyableByTokenId returns VALUE_INVALID
+    EXPECT_TRUE(res != DLP_OK);
+    EXPECT_EQ(0, SetSelfTokenID(selfTokenId));
+}
+
+/**
+ * @tc.name: QueryDlpFileCopyableByTokenId004
+ * @tc.desc: QueryDlpFileCopyableByTokenId test - tokenId is 0, returns VALUE_INVALID
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionServiceTest, QueryDlpFileCopyableByTokenId004, TestSize.Level1)
+{
+    DLP_LOG_DEBUG(LABEL, "QueryDlpFileCopyableByTokenId004");
+    uint64_t selfTokenId = GetSelfTokenID();
+    uint64_t pasteboardToken = AccessTokenKit::GetNativeTokenId(PASTEBOARD_SERVICE_NAME);
+    EXPECT_EQ(0, SetSelfTokenID(pasteboardToken));
+    bool copyable = false;
+    uint32_t tokenId = 0;
+    int32_t res = dlpPermissionService_->QueryDlpFileCopyableByTokenId(copyable, tokenId);
+    EXPECT_EQ(res, DLP_SERVICE_ERROR_VALUE_INVALID);
     EXPECT_EQ(0, SetSelfTokenID(selfTokenId));
 }
 

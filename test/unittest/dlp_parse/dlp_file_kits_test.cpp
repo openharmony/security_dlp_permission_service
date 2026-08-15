@@ -890,3 +890,74 @@ HWTEST_F(DlpFileKitsTest, ConvertAbilityInfoWithSupportDlp007, TestSize.Level0)
     DlpFileKits::ConvertAbilityInfoWithSupportDlp(want, abilityInfos);
     EXPECT_EQ(abilityInfos.size(), 0);
 }
+
+/**
+ * @tc.name: GetSandboxFlag017
+ * @tc.desc: Get Sandbox flag with non-dlp filename, QueryDockerPolicyNeedSandbox returns false
+ * @tc.type: FUNC
+ */
+HWTEST_F(DlpFileKitsTest, GetSandboxFlag017, TestSize.Level0)
+{
+    DLP_LOG_INFO(LABEL, "GetSandboxFlag017");
+    OHOS::AAFwk::Want want;
+    want.SetAction(TAG_ACTION_VIEW);
+    // Non-dlp file name (no .dlp suffix), QueryDockerPolicyNeedSandbox will return false
+    want.SetUri(PLAIN_FILE_URI);
+    ASSERT_FALSE(DlpFileKits::GetSandboxFlag(want));
+}
+
+/**
+ * @tc.name: GetSandboxFlag018
+ * @tc.desc: Get Sandbox flag with empty filename, returns false early
+ * @tc.type: FUNC
+ */
+HWTEST_F(DlpFileKitsTest, GetSandboxFlag018, TestSize.Level0)
+{
+    DLP_LOG_INFO(LABEL, "GetSandboxFlag018");
+    OHOS::AAFwk::Want want;
+    want.SetAction(TAG_ACTION_VIEW);
+    want.SetUri("file://data/test/");
+    ASSERT_FALSE(DlpFileKits::GetSandboxFlag(want));
+}
+
+/**
+ * @tc.name: ConvertAbilityInfoWithSupportDlp008
+ * @tc.desc: cover ohos.dlp.params.customDlp true early return branch
+ * @tc.type: FUNC
+ */
+HWTEST_F(DlpFileKitsTest, ConvertAbilityInfoWithSupportDlp008, TestSize.Level0)
+{
+    DLP_LOG_INFO(LABEL, "ConvertAbilityInfoWithSupportDlp008");
+    OHOS::AAFwk::Want want;
+    want.SetUri(DLP_FILE_URI);
+    want.SetType("text/plain");
+    want.SetParam("ohos.dlp.params.customDlp", true);
+
+    std::vector<OHOS::AppExecFwk::AbilityInfo> abilityInfos;
+    OHOS::AppExecFwk::AbilityInfo abilityInfo;
+    abilityInfo.bundleName = "bundle.keep";
+    abilityInfos.push_back(abilityInfo);
+
+    DlpFileKits::ConvertAbilityInfoWithSupportDlp(want, abilityInfos);
+    // When customDlp is true, it returns early and does not filter abilityInfos
+    EXPECT_EQ(abilityInfos.size(), 1);
+    EXPECT_EQ(abilityInfos[0].bundleName, "bundle.keep");
+}
+
+/**
+ * @tc.name: ConvertAbilityInfoWithSupportDlp009
+ * @tc.desc: cover ohos.dlp.params.customDlp false normal flow
+ * @tc.type: FUNC
+ */
+HWTEST_F(DlpFileKitsTest, ConvertAbilityInfoWithSupportDlp009, TestSize.Level0)
+{
+    DLP_LOG_INFO(LABEL, "ConvertAbilityInfoWithSupportDlp009");
+    OHOS::AAFwk::Want want;
+    want.SetUri(DLP_FILE_URI);
+    want.SetType("text/plain");
+    // customDlp not set (default false), should go through normal flow
+    std::vector<OHOS::AppExecFwk::AbilityInfo> abilityInfos;
+    DlpFileKits::ConvertAbilityInfoWithSupportDlp(want, abilityInfos);
+    // Normal flow: no abilityInfos to filter, stays empty
+    EXPECT_EQ(abilityInfos.size(), 0);
+}
