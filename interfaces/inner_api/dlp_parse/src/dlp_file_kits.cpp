@@ -397,6 +397,7 @@ bool DlpFileKits::GetSandboxFlag(Want& want)
         return false;
     }
     if (!IsDlpFile(fd)) {
+        close(fd);
         if (QueryDockerPolicyNeedSandbox(uri, want)) {
             return true;
         }
