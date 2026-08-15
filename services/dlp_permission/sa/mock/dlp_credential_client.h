@@ -39,6 +39,8 @@ __attribute__ ((visibility("default"))) int DLP_PackPolicy(uint32_t osAccountId,
 __attribute__ ((visibility("default"))) int DLP_RestorePolicy(uint32_t osAccountId, const DLP_EncPolicyData *params,
     DLP_RestorePolicyCallback callback, uint64_t *requestId);
 
+__attribute__ ((visibility("default"))) int DLP_QueryDlpFileCopyableByTokenId(uint32_t tokenId, bool *copyable);
+
 #ifdef __cplusplus
 }
 #endif

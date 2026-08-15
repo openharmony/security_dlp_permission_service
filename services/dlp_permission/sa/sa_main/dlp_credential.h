@@ -48,6 +48,7 @@ public:
     int32_t RemoveMDMPolicy();
     int32_t CheckMdmPermission(const std::string& bundleName, int32_t userId);
     int32_t SetEnterprisePolicy(const std::string& policy);
+    int32_t QueryDlpFileCopyableByTokenId(bool& copyable, uint32_t tokenId);
     int32_t ParseDlpInfo(const sptr<CertParcel>& certParcel, const sptr<IDlpPermissionCallback>& callback,
         DLP_EncPolicyData& encPolicy, AppExecFwk::ApplicationInfo& applicationInfo, DlpAccountType accountType);
 private:

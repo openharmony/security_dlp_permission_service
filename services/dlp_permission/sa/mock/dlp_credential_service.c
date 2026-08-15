@@ -425,3 +425,13 @@ int32_t DLP_SetEnterprisePolicy(const uint8_t *policy, uint32_t policyLen)
     (void)policyLen;
     return DLP_SUCCESS;
 }
+
+int DLP_QueryDlpFileCopyableByTokenId(uint32_t tokenId, bool *copyable)
+{
+    (void)tokenId;
+    if (copyable == NULL) {
+        return DLP_ERROR;
+    }
+    *copyable = false;
+    return DLP_ERROR;
+}

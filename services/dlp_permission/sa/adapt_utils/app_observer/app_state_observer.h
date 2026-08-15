@@ -53,6 +53,7 @@ public:
     virtual ~AppStateObserver();
 
     void OnProcessDied(const AppExecFwk::ProcessData& processData) override;
+    int32_t QueryDlpFileCopyableByTokenId(bool& copyable, uint32_t tokenId, bool& inDlpsandbox);
     int32_t QueryDlpFileCopyableByTokenId(bool& copyable, uint32_t tokenId);
     int32_t QueryDlpFileAccessByUid(DLPFileAccess& dlpFileAccess, int32_t uid);
     int32_t IsInDlpSandbox(bool& inSandbox, int32_t uid);

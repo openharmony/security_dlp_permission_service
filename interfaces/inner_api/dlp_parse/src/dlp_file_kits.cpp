@@ -30,6 +30,7 @@
 #include "dlp_utils.h"
 #include "dlp_permission.h"
 #include "dlp_permission_public_interface.h"
+#include "dlp_transparent_enc_policy.h"
 
 namespace OHOS {
 namespace Security {
@@ -374,7 +375,6 @@ bool DlpFileKits::GetSandboxFlag(Want& want)
         DLP_LOG_DEBUG(LABEL, "Action %{public}s is not dlp scene", action.c_str());
         return false;
     }
-
     std::string uri = want.GetUriString();
     if (uri.find(FILE_SCHEME_PREFIX) != 0) {
         DLP_LOG_DEBUG(LABEL, "uri is missing file://");
@@ -382,9 +382,13 @@ bool DlpFileKits::GetSandboxFlag(Want& want)
     }
     AppFileService::ModuleFileUri::FileUri fileUri(uri);
     std::string fileName = fileUri.GetName();
-    if (fileName.empty() || !IsDlpFileName(fileName)) {
-        DLP_LOG_DEBUG(LABEL, "File name is not exist or not dlp, name=%{private}s", fileName.c_str());
+    if (fileName.empty()) {
+        DLP_LOG_DEBUG(LABEL, "File name is empty");
         return false;
+    }
+    if (!IsDlpFileName(fileName)) {
+        DLP_LOG_DEBUG(LABEL, "File name is not dlp file, name=%{private}s", fileName.c_str());
+        return QueryDockerPolicyNeedSandbox(uri, want);
     }
     std::string path = fileUri.GetRealPath();
     int fd = open(path.c_str(), O_RDONLY);
@@ -393,7 +397,11 @@ bool DlpFileKits::GetSandboxFlag(Want& want)
         return false;
     }
     if (!IsDlpFile(fd)) {
+        if (QueryDockerPolicyNeedSandbox(uri, want)) {
+            return true;
+        }
         DLP_LOG_WARN(LABEL, "Fd %{public}d is not dlp file", fd);
+        return false;
     }
     SetWantType(want, fd);
     close(fd);
@@ -467,6 +475,10 @@ static std::string GetRealFileType(const AAFwk::Want &want)
 void DlpFileKits::ConvertAbilityInfoWithSupportDlp(AAFwk::Want &want,
     std::vector<AppExecFwk::AbilityInfo> &abilityInfos)
 {
+    if (want.GetBoolParam("ohos.dlp.params.customDlp", false)) {
+        DLP_LOG_INFO(LABEL, "Transparent enc file, terminate original process.");
+        return;
+    }
     std::string fileType = GetRealFileType(want);
     if (fileType == DEFAULT_STRING) {
         return;

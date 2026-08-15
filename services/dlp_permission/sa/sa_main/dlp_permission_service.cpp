@@ -1227,12 +1227,18 @@ int32_t DlpPermissionService::QueryDlpFileCopyableByTokenId(bool& copyable, uint
     if (tokenId == 0) {
         return DLP_SERVICE_ERROR_VALUE_INVALID;
     }
-    int32_t res = observer->QueryDlpFileCopyableByTokenId(copyable, tokenId);
+    bool inDlpsandbox = false;
+    int32_t res = observer->QueryDlpFileCopyableByTokenId(copyable, tokenId, inDlpsandbox);
     DlpSandboxInfo sandboxInfo;
     EnterpriseInfo enterpriseInfo;
     if (observer->GetSandboxInfoByTokenId(tokenId, sandboxInfo) &&
         observer->GetEnterpriseInfoByUid(sandboxInfo.uid, enterpriseInfo)) {
         ProcessCopyReport(sandboxInfo.fileId, res);
+    }
+    
+    if (!inDlpsandbox) {
+        DLP_LOG_INFO(LABEL, "tokenId %{public}u is not in dlp sandbox, query from credential service", tokenId);
+        res = DlpCredential::GetInstance().QueryDlpFileCopyableByTokenId(copyable, tokenId);
     }
     return res;
 }
