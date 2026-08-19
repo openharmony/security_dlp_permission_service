@@ -1439,10 +1439,12 @@ napi_value NapiDlpPermission::UnSubscribe(napi_env env, napi_callback_info cbInf
         return nullptr;
     }
     napi_ref callback = nullptr;
-    if (argc == PARAM_SIZE_TWO && !ParseCallback(env, argv[PARAM1], callback)) {
-        DLP_LOG_ERROR(LABEL, "event listener is invalid");
-        ThrowParamError(env, "listener", "function");
-        return nullptr;
+    if (argc == PARAM_SIZE_TWO) {	 
+        if (!ParseCallback(env, argv[PARAM1], callback)) {	 
+            DLP_LOG_ERROR(LABEL, "event listener is invalid");	 
+            ThrowParamError(env, "listener", "function");	 
+            return nullptr;	 
+        }
     }
     if (callback == nullptr) {
         DLP_LOG_INFO(LABEL, "SubEvent op=off_all kit=DataProtectionKit event=%{public}s", type.c_str());
@@ -1455,14 +1457,13 @@ napi_value NapiDlpPermission::UnSubscribe(napi_env env, napi_callback_info cbInf
             callback = nullptr;
         }
         return UnregisterSandboxChangeCallback(env, cbInfo);
-    } else {
-        if (callback != nullptr) {
-            napi_delete_reference(env, callback);
-            callback = nullptr;
-        }
-        NAPI_CALL(env, napi_throw(env, GenerateBusinessError(env, ERR_JS_PARAMETER_ERROR, "event type is wrong")));
-        return nullptr;
     }
+    if (callback != nullptr) {
+        napi_delete_reference(env, callback);
+        callback = nullptr;
+    }
+    NAPI_CALL(env, napi_throw(env, GenerateBusinessError(env, ERR_JS_PARAMETER_ERROR, "event type is wrong")));
+    return nullptr;
 }
 
 napi_value NapiDlpPermission::GetDlpGatheringPolicy(napi_env env, napi_callback_info cbInfo)
