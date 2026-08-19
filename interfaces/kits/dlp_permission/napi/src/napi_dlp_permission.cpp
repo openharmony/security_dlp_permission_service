@@ -1562,8 +1562,7 @@ napi_value NapiDlpPermission::SetRetentionState(napi_env env, napi_callback_info
     auto* asyncContext = new (std::nothrow) RetentionStateAsyncContext(env);
     if (asyncContext == nullptr) {
         DLP_LOG_ERROR(LABEL, "insufficient memory for asyncContext!");
-        std::string jsErrMsg = "The system ability works abnormally.";
-        DlpNapiThrow(env, ERR_JS_SYSTEM_SERVICE_EXCEPTION, jsErrMsg);
+        DlpNapiThrow(env, ERR_JS_SYSTEM_SERVICE_EXCEPTION, "The system ability works abnormally.");
         return nullptr;
     }
     std::unique_ptr<RetentionStateAsyncContext> asyncContextPtr { asyncContext };
