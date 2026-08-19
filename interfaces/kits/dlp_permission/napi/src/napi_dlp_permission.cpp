@@ -1450,8 +1450,8 @@ napi_value NapiDlpPermission::UnSubscribe(napi_env env, napi_callback_info cbInf
         return UnregisterSandboxChangeCallback(env, cbInfo);
     } else {
         if (callback != nullptr) {
-        napi_delete_reference(env, callback);
-        callback = nullptr;
+            napi_delete_reference(env, callback);
+            callback = nullptr;
         }
         NAPI_CALL(env, napi_throw(env, GenerateBusinessError(env, ERR_JS_PARAMETER_ERROR, "event type is wrong")));
         return nullptr;
