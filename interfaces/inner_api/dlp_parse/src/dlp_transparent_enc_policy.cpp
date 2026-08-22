@@ -34,8 +34,26 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_
     "DlpTransparentEncPolicy"};
 static const std::string VERSION_FOR_2B = "1";
 static const char *TRANSPARENT_CRYPTO_STATUS_KEY = "security.dlp.transparent.crypto.status";
-static const std::string DLP_CREDENTIAL_SA_NAME = "dlp_credential_service";
+static const std::string DLP_CREDENTIAL_SA_NAME = "dlp_credential_service_sa";
 static const std::string DLP_PARAMS_CUSTOM_FLAG = "ohos.dlp.params.customFlag";
+static constexpr int32_t DLP_MANAGER_FULL_CONTROL = 37;
+static constexpr int32_t DLP_MANAGER_READ_ONLY = 38;
+static const std::string PERMISSION_SANDBOX_ACCESS_MANAGER = "ohos.permission.SANDBOX_ACCESS_MANAGER";
+static const std::string PERMISSION_FILE_ACCESS_MANAGER = "ohos.permission.FILE_ACCESS_MANAGER";
+static const std::string URI_PREFIX_FILE_DOCS = "file://docs";
+
+static int32_t ConvertPermissionToCustomFlag(uint32_t permission)
+{
+    bool screenShot = (permission >> 3) & 1;
+    bool networkAndSelinux = permission & 1;
+    bool securityFlag = !screenShot;  // screenShot=1 → can screenshot → securityFlag=false
+ 
+    if (!networkAndSelinux) {
+        return 0;
+    }
+    return securityFlag ? DLP_MANAGER_READ_ONLY : DLP_MANAGER_FULL_CONTROL;
+}
+
 static bool IsEnterprisePlatform()
 {
     std::string value = OHOS::system::GetParameter("const.dlp.functiontypes", "0");
@@ -56,16 +74,43 @@ static bool IsTransparentCryptoReady()
     // "1" = READY_NO_CHANGE, "2" = READY_NEED_CHANGE
     return value == "1" || value == "2";
 }
+
+static bool CheckPermission(const std::string &permission)
+{
+    Security::AccessToken::AccessTokenID callingToken = IPCSkeleton::GetCallingTokenID();
+    int res = Security::AccessToken::AccessTokenKit::VerifyAccessToken(callingToken, permission);
+    if (res == Security::AccessToken::PermissionState::PERMISSION_GRANTED) {
+        DLP_LOG_INFO(LABEL, "Check permission %{public}s pass", permission.c_str());
+        return true;
+    }
+    DLP_LOG_ERROR(LABEL, "Check permission %{public}s fail", permission.c_str());
+    return false;
+}
+ 
+static bool CheckDockerPolicyPermission(const std::string &uri)
+{
+    if (CheckPermission(PERMISSION_SANDBOX_ACCESS_MANAGER)) {
+        DLP_LOG_INFO(LABEL, "Caller has SANDBOX_ACCESS_MANAGER permission");
+        return true;
+    }
+    if (CheckPermission(PERMISSION_FILE_ACCESS_MANAGER) &&
+        uri.compare(0, URI_PREFIX_FILE_DOCS.size(), URI_PREFIX_FILE_DOCS) == 0) {
+        DLP_LOG_INFO(LABEL, "Caller has FILE_ACCESS_MANAGER permission");
+        return true;
+    }
+    DLP_LOG_ERROR(LABEL, "Permission denied");
+    return false;
+}
 }  // namespace
 
 static bool IsEnvironmentValid(const AAFwk::Want &want)
 {
     if (!IsEnterprisePlatform()) {
-        DLP_LOG_ERROR(LABEL, "Not enterprise platform, skip docker policy query");
+        DLP_LOG_DEBUG(LABEL, "Not enterprise platform, skip docker policy query");
         return false;
     }
     if (IsDlpCredentialSa()) {
-        DLP_LOG_ERROR(LABEL, "Current process is dlp_credential SA, skip docker policy query");
+        DLP_LOG_DEBUG(LABEL, "Current process is dlp_credential SA, skip docker policy query");
         return false;
     }
     if (!IsTransparentCryptoReady()) {
@@ -78,21 +123,25 @@ static bool IsEnvironmentValid(const AAFwk::Want &want)
 static bool CheckEnterpriseEncryptedFile(const DockerPolicyInfo &dockerPolicy, AAFwk::Want &want)
 {
     if (!dockerPolicy.isEncrypted) {
-        DLP_LOG_ERROR(LABEL, "Docker policy isEncrypted is false");
+        DLP_LOG_INFO(LABEL, "Docker policy isEncrypted is false");
         return false;
     }
-    want.SetType(std::to_string(dockerPolicy.mimeType));
+    want.SetType(dockerPolicy.mimeType);
     if (!dockerPolicy.needSandbox) {
-        DLP_LOG_ERROR(LABEL, "Docker policy needSandbox is false");
+        DLP_LOG_INFO(LABEL, "Docker policy needSandbox is false");
         return false;
     }
-    want.SetParam(DLP_PARAMS_CUSTOM_FLAG, true);
-    DLP_LOG_INFO(LABEL, "Docker policy needSandbox is true");
+    int32_t customFlag = ConvertPermissionToCustomFlag(dockerPolicy.permission);
+    want.SetParam(DLP_PARAMS_CUSTOM_FLAG, customFlag);
+    DLP_LOG_INFO(LABEL, "Docker policy needSandbox is true, customFlag=%{public}d", customFlag);
     return true;
 }
 
 bool QueryDockerPolicyNeedSandbox(const std::string &uri, AAFwk::Want &want)
 {
+    if (!CheckDockerPolicyPermission(uri)) {
+        return false;
+    }
     if (!IsEnvironmentValid(want)) {
         return false;
     }

@@ -1957,7 +1957,7 @@ HWTEST_F(DlpPermissionServiceTest, QueryDlpFileCopyableByTokenId002, TestSize.Le
     EXPECT_EQ(0, SetSelfTokenID(pasteboardToken));
     bool copyable = false;
     int32_t res = dlpPermissionService_->QueryDlpFileCopyableByTokenId(copyable, pasteboardToken);
-    EXPECT_EQ(res, DLP_SERVICE_ERROR_VALUE_INVALID);
+    EXPECT_EQ(res, DLP_SERVICE_ERROR_APPOBSERVER_ERROR);
     EXPECT_EQ(0, SetSelfTokenID(selfTokenId));
 }
 

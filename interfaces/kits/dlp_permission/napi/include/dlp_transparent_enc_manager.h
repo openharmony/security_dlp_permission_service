@@ -27,7 +27,7 @@ struct DockerPolicyPayload {
     bool is_encrypted;
     bool need_sandbox;
     char bundle_name[256];
-    uint32_t mime_type;
+    char mime_type[128];
     uint32_t permission;
 };
 #pragma pack(pop)
@@ -40,7 +40,7 @@ struct DockerPolicyInfo {
     bool isEncrypted = false;
     bool needSandbox = false;
     std::string bundleName;
-    uint32_t mimeType = 0;
+    std::string mimeType;
     uint32_t permission = 0;
 };
 

@@ -1237,8 +1237,10 @@ int32_t DlpPermissionService::QueryDlpFileCopyableByTokenId(bool& copyable, uint
     }
     
     if (!inDlpsandbox) {
-        DLP_LOG_INFO(LABEL, "tokenId %{public}u is not in dlp sandbox, query from credential service", tokenId);
-        res = DlpCredential::GetInstance().QueryDlpFileCopyableByTokenId(copyable, tokenId);
+        int32_t credRes = DlpCredential::GetInstance().QueryDlpFileCopyableByTokenId(copyable, tokenId);
+        if (credRes == DLP_OK) {
+            res = DLP_OK;
+        }
     }
     return res;
 }

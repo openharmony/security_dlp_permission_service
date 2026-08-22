@@ -182,6 +182,9 @@ ohos_shared_library("dlp_permission_service") {
   cflags_cc = [ "-DHILOG_ENABLE" ]
   cflags = [ "-DHILOG_ENABLE" ]
 
+  if (dlp_permission_service_pc_feature) {
+    cflags_cc += [ "-DDLP_PERMISSION_SERVICE_PC_FEATURE" ]
+  }
   if (build_variant == "user") {
     cflags_cc += [ "-DDLP_DEBUG_ENABLE=0" ]
     cflags += [ "-DDLP_DEBUG_ENABLE=0" ]

@@ -253,7 +253,7 @@ int32_t DlpTransparentEncManager::GetDockerPolicy(const std::string &fileUri, Do
         policy.isEncrypted = policyPtr->is_encrypted;
         policy.needSandbox = policyPtr->need_sandbox;
         policy.bundleName = std::string(policyPtr->bundle_name);
-        policy.mimeType = policyPtr->mime_type;
+        policy.mimeType = std::string(policyPtr->mime_type);
         policy.permission = policyPtr->permission;
         freeDockerPolicyFunc_(&policyPtr);
     }

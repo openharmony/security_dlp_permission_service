@@ -40,6 +40,9 @@ namespace {
     static const std::string FILE_SCHEME_PREFIX = "file://";
     static const std::string DEFAULT_STRINGS = "";
     static const std::string DLP_TYPE = "dlp";
+    static const std::string DLP_PARAMS_CUSTOM_FLAG = "ohos.dlp.params.customFlag";
+    static constexpr int32_t DLP_MANAGER_FULL_CONTROL = 37;
+    static constexpr int32_t DLP_MANAGER_READ_ONLY = 38;
     static const uint32_t BYTE_TO_HEX_OPER_LENGTH = 2;
     static const uint32_t FILE_HEAD = 8;
     static const uint32_t HMAC_SIZE = 32;
@@ -473,11 +476,23 @@ static std::string GetRealFileType(const AAFwk::Want &want)
     return fileType;
 }
 
+static bool IsTransparentEncFile(const AAFwk::Want &want)
+{
+    if (!want.HasParameter(DLP_PARAMS_CUSTOM_FLAG)) {
+        return false;
+    }
+    int32_t customFlag = want.GetIntParam(DLP_PARAMS_CUSTOM_FLAG, -1);
+    if (customFlag == 0 || customFlag == DLP_MANAGER_FULL_CONTROL || customFlag == DLP_MANAGER_READ_ONLY) {
+        DLP_LOG_INFO(LABEL, "Transparent enc file, customFlag=%{public}d, terminate original process.", customFlag);
+        return true;
+    }
+    return false;
+}
+
 void DlpFileKits::ConvertAbilityInfoWithSupportDlp(AAFwk::Want &want,
     std::vector<AppExecFwk::AbilityInfo> &abilityInfos)
 {
-    if (want.GetBoolParam("ohos.dlp.params.customDlp", false)) {
-        DLP_LOG_INFO(LABEL, "Transparent enc file, terminate original process.");
+    if (IsTransparentEncFile(want)) {
         return;
     }
     std::string fileType = GetRealFileType(want);
