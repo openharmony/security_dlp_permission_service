@@ -91,6 +91,7 @@ static bool CheckEnterpriseEncryptedFile(const DockerPolicyInfo &dockerPolicy, A
     return true;
 }
 
+//
 bool QueryDockerPolicyNeedSandbox(const std::string &uri, AAFwk::Want &want)
 {
     if (!IsEnvironmentValid(want)) {
