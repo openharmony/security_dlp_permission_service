@@ -1,0 +1,480 @@
+diff --git a/test/fuzztest/dlp_permission/BUILD.gn b/test/fuzztest/dlp_permission/BUILD.gn
+index fb149c3..b248464 100644
+--- a/test/fuzztest/dlp_permission/BUILD.gn
++++ b/test/fuzztest/dlp_permission/BUILD.gn
+@@ -60,6 +60,8 @@ group("fuzztest") {
+     "fuzzer/unregisterdlpsandboxchangecallback_fuzzer:UnRegisterDlpSandboxChangeCallbackFuzzTest",
+     "fuzzer/unregisteropendlpfilecallback_fuzzer:UnRegisterOpenDlpFileCallbackFuzzTest",
+     "fuzzer/watermarkproxy_fuzzer:WaterMarkProxyFuzzTest",
++    "fuzzer/querydockerpolicyneedsandbox_auto_fuzzer:QueryDockerPolicyNeedSandboxAutoFuzzTest",
++    "fuzzer/dlptransparentencpolicy_auto_fuzzer:DlpTransparentEncPolicyAutoFuzzTest",
+     "stub_fuzzer/bundlemanageradapter_fuzzer:BundleManagerAdapterFuzzTest",
+     "stub_fuzzer/cancelretentionstatestub_fuzzer:CancelRetentionStateStubFuzzTest",
+     "stub_fuzzer/cleansandboxconfigstub_fuzzer:CleanSandboxConfigStubFuzzTest",
+diff --git a/test/fuzztest/dlp_permission/fuzzer/dlptransparentencpolicy_auto_fuzzer/BUILD.gn b/test/fuzztest/dlp_permission/fuzzer/dlptransparentencpolicy_auto_fuzzer/BUILD.gn
+new file mode 100644
+index 0000000..db58d21
+--- /dev/null
++++ b/test/fuzztest/dlp_permission/fuzzer/dlptransparentencpolicy_auto_fuzzer/BUILD.gn
+@@ -0,0 +1,43 @@
++# Copyright (c) 2026 Huawei Device Co., Ltd.
++# Licensed under the Apache License, Version 2.0 (the "License");
++# you may not use this file except in compliance with the License.
++# You may obtain a copy of the License at
++#
++#     http://www.apache.org/licenses/LICENSE-2.0
++#
++# Unless required by applicable law or agreed to in writing, software
++# distributed under the License is distributed on an "AS IS" BASIS,
++# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++# See the License for the specific language governing permissions and
++# limitations under the License.
++
++import("//build/config/features.gni")
++import("//build/test.gni")
++import("../../../../../dlp_permission_service.gni")
++
++module_output_path = "dlp_permission_service/dlp_permission_service"
++
++ohos_fuzztest("DlpTransparentEncPolicyAutoFuzzTest") {
++  module_out_path = module_output_path
++  fuzz_config_file = "${dlp_root_dir}/test/fuzztest/dlp_permission/fuzzer/dlptransparentencpolicy_auto_fuzzer"
++
++  configs = [ "${dlp_root_dir}/test/fuzztest/dlp_permission:napi_fuzz_config" ]
++
++  sources = [
++    "dlptransparentencpolicy_auto_fuzzer.cpp",
++  ]
++
++  deps = [
++    "${dlp_root_dir}/interfaces/inner_api/dlp_parse:libdlpparse",
++  ]
++
++  external_deps = [
++    "ability_base:want",
++    "access_token:libaccesstoken_sdk",
++    "access_token:libtokensetproc_shared",
++    "bounds_checking_function:libsec_shared",
++    "bundle_framework:appexecfwk_base",
++    "c_utils:utils",
++    "hilog:libhilog",
++  ]
++}
+diff --git a/test/fuzztest/dlp_permission/fuzzer/dlptransparentencpolicy_auto_fuzzer/corpus/init b/test/fuzztest/dlp_permission/fuzzer/dlptransparentencpolicy_auto_fuzzer/corpus/init
+new file mode 100644
+index 0000000..f0e1346
+--- /dev/null
++++ b/test/fuzztest/dlp_permission/fuzzer/dlptransparentencpolicy_auto_fuzzer/corpus/init
+@@ -0,0 +1,5 @@
++/*
++ * Copyright (C) 2026 Huawei Device Co., Ltd.
++ * Licensed under the Apache License, Version 2.0
++ */
++file:///data/test/document.dlp
+diff --git a/test/fuzztest/dlp_permission/fuzzer/dlptransparentencpolicy_auto_fuzzer/dlptransparentencpolicy_auto_fuzzer.cpp b/test/fuzztest/dlp_permission/fuzzer/dlptransparentencpolicy_auto_fuzzer/dlptransparentencpolicy_auto_fuzzer.cpp
+new file mode 100644
+index 0000000..3c336f4
+--- /dev/null
++++ b/test/fuzztest/dlp_permission/fuzzer/dlptransparentencpolicy_auto_fuzzer/dlptransparentencpolicy_auto_fuzzer.cpp
+@@ -0,0 +1,138 @@
++/*
++ * Copyright (c) 2026 Huawei Device Co., Ltd.
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++#include "dlptransparentencpolicy_auto_fuzzer.h"
++#include <fuzzer/FuzzedDataProvider.h>
++#include <string>
++#include <vector>
++#include "dlp_file_kits.h"
++#include "dlp_permission_log.h"
++#include "securec.h"
++
++using namespace OHOS::Security::DlpPermission;
++namespace OHOS {
++namespace {
++static constexpr uint32_t METHOD_NUMBER_GROUP = 2;
++}
++
++enum class DlpTransparentEncMethodGroup {
++    GET_SANDBOX_FLAG = 0,
++    CONVERT_ABILITY_INFO = 1,
++};
++
++static void FuzzGetSandboxFlag(FuzzedDataProvider &provider)
++{
++    AAFwk::Want want;
++
++    // Construct Want with fuzz-derived action
++    // Valid actions for DLP: "ohos.want.action.viewData" or "ohos.want.action.editData"
++    // Also fuzz with arbitrary actions to test rejection paths
++    std::string action = provider.ConsumeRandomLengthString(256);
++    if (!action.empty()) {
++        want.SetAction(action);
++    }
++
++    // Construct URI string from fuzz data
++    // The URI should start with "file://" to pass the prefix check
++    std::string uri = provider.ConsumeRandomLengthString(1024);
++    if (!uri.empty()) {
++        want.SetUri(uri);
++    }
++
++    // Set customFlag parameter to exercise transparent encryption path
++    // customFlag values: 0, 37 (DLP_MANAGER_FULL_CONTROL), 38 (DLP_MANAGER_READ_ONLY)
++    if (provider.remaining_bytes() >= sizeof(int32_t)) {
++        int32_t customFlag = provider.ConsumeIntegral<int32_t>();
++        want.SetParam("ohos.dlp.params.customFlag", customFlag);
++    }
++
++    // Call the target API
++    DlpFileKits::GetSandboxFlag(want);
++}
++
++static void FuzzConvertAbilityInfoWithSupportDlp(FuzzedDataProvider &provider)
++{
++    AAFwk::Want want;
++
++    // Construct Want with fuzz-derived type (MIME type for file association)
++    std::string type = provider.ConsumeRandomLengthString(128);
++    if (!type.empty()) {
++        want.SetType(type);
++    }
++
++    // Construct URI
++    std::string uri = provider.ConsumeRandomLengthString(256);
++    if (!uri.empty()) {
++        want.SetUri(uri);
++    }
++
++    // Set action
++    std::string action = provider.ConsumeRandomLengthString(256);
++    if (!action.empty()) {
++        want.SetAction(action);
++    }
++
++    // Set customFlag to test IsTransparentEncFile branch
++    // This directly tests the new IsTransparentEncFile logic added in commit e410520
++    if (provider.remaining_bytes() >= sizeof(int32_t)) {
++        int32_t customFlag = provider.ConsumeIntegral<int32_t>();
++        want.SetParam("ohos.dlp.params.customFlag", customFlag);
++    }
++
++    // Prepare abilityInfos vector
++    std::vector<AppExecFwk::AbilityInfo> abilityInfos;
++
++    // Call the target API
++    DlpFileKits::ConvertAbilityInfoWithSupportDlp(want, abilityInfos);
++}
++
++static void FuzzDlpTransparentEncPolicy(const uint8_t *data, size_t size)
++{
++    if (data == nullptr || size == 0) {
++        return;
++    }
++    FuzzedDataProvider provider(data, size);
++
++    // Use first byte to select which method to fuzz
++    uint32_t methodIndex = provider.ConsumeIntegral<uint32_t>();
++
++    switch (methodIndex % METHOD_NUMBER_GROUP) {
++        case static_cast<uint32_t>(DlpTransparentEncMethodGroup::GET_SANDBOX_FLAG): {
++            FuzzGetSandboxFlag(provider);
++            break;
++        }
++        case static_cast<uint32_t>(DlpTransparentEncMethodGroup::CONVERT_ABILITY_INFO): {
++            FuzzConvertAbilityInfoWithSupportDlp(provider);
++            break;
++        }
++        default: {
++            break;
++        }
++    }
++}
++
++bool DlpTransparentEncPolicyFuzzTest(const uint8_t *data, size_t size)
++{
++    FuzzDlpTransparentEncPolicy(data, size);
++    return true;
++}
++}  // namespace OHOS
++
++/* Fuzzer entry point */
++extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
++{
++    OHOS::DlpTransparentEncPolicyFuzzTest(data, size);
++    return 0;
++}
+diff --git a/test/fuzztest/dlp_permission/fuzzer/dlptransparentencpolicy_auto_fuzzer/dlptransparentencpolicy_auto_fuzzer.h b/test/fuzztest/dlp_permission/fuzzer/dlptransparentencpolicy_auto_fuzzer/dlptransparentencpolicy_auto_fuzzer.h
+new file mode 100644
+index 0000000..5d4f5ed
+--- /dev/null
++++ b/test/fuzztest/dlp_permission/fuzzer/dlptransparentencpolicy_auto_fuzzer/dlptransparentencpolicy_auto_fuzzer.h
+@@ -0,0 +1,23 @@
++/*
++ * Copyright (c) 2026 Huawei Device Co., Ltd.
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++#ifndef TEST_FUZZTEST_DLP_TRANSPARENT_ENC_POLICY_AUTO_FUZZER_H
++#define TEST_FUZZTEST_DLP_TRANSPARENT_ENC_POLICY_AUTO_FUZZER_H
++
++#define FUZZ_PROJECT_NAME "dlptransparentencpolicy_auto_fuzzer"
++
++#include "dlp_file_kits.h"
++
++#endif  // TEST_FUZZTEST_DLP_TRANSPARENT_ENC_POLICY_AUTO_FUZZER_H
+diff --git a/test/fuzztest/dlp_permission/fuzzer/dlptransparentencpolicy_auto_fuzzer/project.xml b/test/fuzztest/dlp_permission/fuzzer/dlptransparentencpolicy_auto_fuzzer/project.xml
+new file mode 100644
+index 0000000..f551031
+--- /dev/null
++++ b/test/fuzztest/dlp_permission/fuzzer/dlptransparentencpolicy_auto_fuzzer/project.xml
+@@ -0,0 +1,25 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- Copyright (c) 2026 Huawei Device Co., Ltd.
++
++     Licensed under the Apache License, Version 2.0 (the "License");
++     you may not use this file except in compliance with the License.
++     You may obtain a copy of the License at
++
++          http://www.apache.org/licenses/LICENSE-2.0
++
++     Unless required by applicable law or agreed to in writing, software
++     distributed under the License is distributed on an "AS IS" BASIS,
++     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++     See the License for the specific language governing permissions and
++     limitations under the License.
++-->
++<fuzz_config>
++  <fuzztest>
++    <!-- maximum length of a test input -->
++    <max_len>2048</max_len>
++    <!-- maximum total time in seconds to run the fuzzer -->
++    <max_total_time>300</max_total_time>
++    <!-- memory usage limit in Mb -->
++    <rss_limit_mb>4096</rss_limit_mb>
++  </fuzztest>
++</fuzz_config>
+diff --git a/test/fuzztest/dlp_permission/fuzzer/querydockerpolicyneedsandbox_auto_fuzzer/BUILD.gn b/test/fuzztest/dlp_permission/fuzzer/querydockerpolicyneedsandbox_auto_fuzzer/BUILD.gn
+new file mode 100644
+index 0000000..013fca1
+--- /dev/null
++++ b/test/fuzztest/dlp_permission/fuzzer/querydockerpolicyneedsandbox_auto_fuzzer/BUILD.gn
+@@ -0,0 +1,42 @@
++# Copyright (c) 2026 Huawei Device Co., Ltd.
++# Licensed under the Apache License, Version 2.0 (the "License");
++# you may not use this file except in compliance with the License.
++# You may obtain a copy of the License at
++#
++#     http://www.apache.org/licenses/LICENSE-2.0
++#
++# Unless required by applicable law or agreed to in writing, software
++# distributed under the License is distributed on an "AS IS" BASIS,
++# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++# See the License for the specific language governing permissions and
++# limitations under the License.
++
++import("//build/config/features.gni")
++import("//build/test.gni")
++import("../../../../../dlp_permission_service.gni")
++
++module_output_path = "dlp_permission_service/dlp_permission_service"
++
++ohos_fuzztest("QueryDockerPolicyNeedSandboxAutoFuzzTest") {
++  module_out_path = module_output_path
++  fuzz_config_file = "${dlp_root_dir}/test/fuzztest/dlp_permission/fuzzer/querydockerpolicyneedsandbox_auto_fuzzer"
++
++  configs = [ "${dlp_root_dir}/test/fuzztest/dlp_permission:napi_fuzz_config" ]
++
++  sources = [
++    "querydockerpolicyneedsandbox_auto_fuzzer.cpp",
++  ]
++
++  deps = [
++    "${dlp_root_dir}/interfaces/inner_api/dlp_parse:libdlpparse",
++  ]
++
++  external_deps = [
++    "ability_base:want",
++    "access_token:libaccesstoken_sdk",
++    "access_token:libtokensetproc_shared",
++    "bounds_checking_function:libsec_shared",
++    "c_utils:utils",
++    "hilog:libhilog",
++  ]
++}
+diff --git a/test/fuzztest/dlp_permission/fuzzer/querydockerpolicyneedsandbox_auto_fuzzer/corpus/init b/test/fuzztest/dlp_permission/fuzzer/querydockerpolicyneedsandbox_auto_fuzzer/corpus/init
+new file mode 100644
+index 0000000..187bd92
+--- /dev/null
++++ b/test/fuzztest/dlp_permission/fuzzer/querydockerpolicyneedsandbox_auto_fuzzer/corpus/init
+@@ -0,0 +1,5 @@
++/*
++ * Copyright (C) 2026 Huawei Device Co., Ltd.
++ * Licensed under the Apache License, Version 2.0
++ */
++file:///data/test/document.doc
+diff --git a/test/fuzztest/dlp_permission/fuzzer/querydockerpolicyneedsandbox_auto_fuzzer/project.xml b/test/fuzztest/dlp_permission/fuzzer/querydockerpolicyneedsandbox_auto_fuzzer/project.xml
+new file mode 100644
+index 0000000..f551031
+--- /dev/null
++++ b/test/fuzztest/dlp_permission/fuzzer/querydockerpolicyneedsandbox_auto_fuzzer/project.xml
+@@ -0,0 +1,25 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- Copyright (c) 2026 Huawei Device Co., Ltd.
++
++     Licensed under the Apache License, Version 2.0 (the "License");
++     you may not use this file except in compliance with the License.
++     You may obtain a copy of the License at
++
++          http://www.apache.org/licenses/LICENSE-2.0
++
++     Unless required by applicable law or agreed to in writing, software
++     distributed under the License is distributed on an "AS IS" BASIS,
++     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++     See the License for the specific language governing permissions and
++     limitations under the License.
++-->
++<fuzz_config>
++  <fuzztest>
++    <!-- maximum length of a test input -->
++    <max_len>2048</max_len>
++    <!-- maximum total time in seconds to run the fuzzer -->
++    <max_total_time>300</max_total_time>
++    <!-- memory usage limit in Mb -->
++    <rss_limit_mb>4096</rss_limit_mb>
++  </fuzztest>
++</fuzz_config>
+diff --git a/test/fuzztest/dlp_permission/fuzzer/querydockerpolicyneedsandbox_auto_fuzzer/querydockerpolicyneedsandbox_auto_fuzzer.cpp b/test/fuzztest/dlp_permission/fuzzer/querydockerpolicyneedsandbox_auto_fuzzer/querydockerpolicyneedsandbox_auto_fuzzer.cpp
+new file mode 100644
+index 0000000..27d0ca5
+--- /dev/null
++++ b/test/fuzztest/dlp_permission/fuzzer/querydockerpolicyneedsandbox_auto_fuzzer/querydockerpolicyneedsandbox_auto_fuzzer.cpp
+@@ -0,0 +1,78 @@
++/*
++ * Copyright (c) 2026 Huawei Device Co., Ltd.
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++#include "querydockerpolicyneedsandbox_auto_fuzzer.h"
++#include <fuzzer/FuzzedDataProvider.h>
++#include <string>
++#include "dlp_permission_log.h"
++#include "securec.h"
++
++using namespace OHOS::Security::DlpPermission;
++namespace OHOS {
++static void FuzzQueryDockerPolicyNeedSandbox(const uint8_t *data, size_t size)
++{
++    if (data == nullptr || size == 0) {
++        return;
++    }
++    FuzzedDataProvider provider(data, size);
++
++    // Construct URI string from fuzz data - this is the file URI input
++    std::string uri = provider.ConsumeRandomLengthString(1024);
++
++    // Construct Want object with fuzz-derived parameters
++    AAFwk::Want want;
++
++    // Set action from fuzz data
++    std::string action = provider.ConsumeRandomLengthString(256);
++    if (!action.empty()) {
++        want.SetAction(action);
++    }
++
++    // Set URI in Want from fuzz data
++    std::string wantUri = provider.ConsumeRandomLengthString(256);
++    if (!wantUri.empty()) {
++        want.SetUri(wantUri);
++    }
++
++    // Set type from fuzz data
++    std::string type = provider.ConsumeRandomLengthString(128);
++    if (!type.empty()) {
++        want.SetType(type);
++    }
++
++    // Consume remaining bytes to set optional custom flag parameter
++    // This exercises the ohos.dlp.params.customFlag path in related code
++    if (provider.remaining_bytes() >= sizeof(int32_t)) {
++        int32_t customFlag = provider.ConsumeIntegral<int32_t>();
++        want.SetParam("ohos.dlp.params.customFlag", customFlag);
++    }
++
++    // Call the target API
++    QueryDockerPolicyNeedSandbox(uri, want);
++}
++
++bool QueryDockerPolicyNeedSandboxFuzzTest(const uint8_t *data, size_t size)
++{
++    FuzzQueryDockerPolicyNeedSandbox(data, size);
++    return true;
++}
++}  // namespace OHOS
++
++/* Fuzzer entry point */
++extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
++{
++    OHOS::QueryDockerPolicyNeedSandboxFuzzTest(data, size);
++    return 0;
++}
+diff --git a/test/fuzztest/dlp_permission/fuzzer/querydockerpolicyneedsandbox_auto_fuzzer/querydockerpolicyneedsandbox_auto_fuzzer.h b/test/fuzztest/dlp_permission/fuzzer/querydockerpolicyneedsandbox_auto_fuzzer/querydockerpolicyneedsandbox_auto_fuzzer.h
+new file mode 100644
+index 0000000..295b485
+--- /dev/null
++++ b/test/fuzztest/dlp_permission/fuzzer/querydockerpolicyneedsandbox_auto_fuzzer/querydockerpolicyneedsandbox_auto_fuzzer.h
+@@ -0,0 +1,23 @@
++/*
++ * Copyright (c) 2026 Huawei Device Co., Ltd.
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++#ifndef TEST_FUZZTEST_QUERY_DOCKER_POLICY_NEED_SANDBOX_AUTO_FUZZER_H
++#define TEST_FUZZTEST_QUERY_DOCKER_POLICY_NEED_SANDBOX_AUTO_FUZZER_H
++
++#define FUZZ_PROJECT_NAME "querydockerpolicyneedsandbox_auto_fuzzer"
++
++#include "dlp_transparent_enc_policy.h"
++
++#endif  // TEST_FUZZTEST_QUERY_DOCKER_POLICY_NEED_SANDBOX_AUTO_FUZZER_H
