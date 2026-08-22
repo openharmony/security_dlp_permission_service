@@ -104,13 +104,13 @@ void MockSetPluginCommandResultData(const char *result)
 }
 
 void MockSetDockerPolicyInfoData(bool isEncrypted, bool needSandbox,
-    const char *bundleName, uint32_t mimeType, uint32_t permission)
+    const char *bundleName, const char *mimeType, uint32_t permission)
 {
     DockerPolicyInfo info;
     info.isEncrypted = isEncrypted;
     info.needSandbox = needSandbox;
     info.bundleName = bundleName != nullptr ? std::string(bundleName) : "";
-    info.mimeType = mimeType;
+    info.mimeType = mimeType != nullptr ? std::string(mimeType) : "";
     info.permission = permission;
     DlpTransparentEncMock::GetInstance().SetMockDockerPolicyInfo(info);
 }
@@ -256,7 +256,6 @@ int32_t DLP_GetDockerPolicy(const char *fileUri, DockerPolicyPayload **policy)
 
     (*policy)->is_encrypted = policyInfo.isEncrypted;
     (*policy)->need_sandbox = policyInfo.needSandbox;
-    (*policy)->mime_type = policyInfo.mimeType;
     (*policy)->permission = policyInfo.permission;
     if (policyInfo.bundleName.size() >= sizeof((*policy)->bundle_name)) {
         free(*policy);
@@ -269,7 +268,16 @@ int32_t DLP_GetDockerPolicy(const char *fileUri, DockerPolicyPayload **policy)
         *policy = nullptr;
         return -1;
     }
-
+    if (policyInfo.mimeType.size() >= sizeof((*policy)->mime_type)) {
+        free(*policy);
+        *policy = nullptr;
+        return -1;
+    }
+    if (strcpy_s((*policy)->mime_type, sizeof((*policy)->mime_type), policyInfo.mimeType.c_str()) != EOK) {
+        free(*policy);
+        *policy = nullptr;
+        return -1;
+    }
     return 0;
 }
 

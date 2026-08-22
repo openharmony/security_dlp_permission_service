@@ -66,6 +66,7 @@ typedef int32_t (*DlpPackPolicyFunction)(uint32_t osAccountId, const DLP_PackPol
 typedef int32_t (*DlpRestorePolicyFunction)(uint32_t osAccountId, const DLP_EncPolicyData *params,
     DLP_RestorePolicyCallback callback, uint64_t *requestId);
 typedef int32_t (*DlpSetEnterprisePolicyFunction)(const uint8_t *policy, uint32_t policyLen);
+typedef int32_t (*DlpQueryDlpFileCopyableByTokenIdFunction)(uint32_t tokenId, bool *copyable);
 
 static void *g_dlpCredentialSdkHandle = nullptr;
 std::mutex g_lockDlpCredSdk;
@@ -1086,20 +1087,26 @@ int32_t DlpCredential::QueryDlpFileCopyableByTokenId(bool& copyable, uint32_t to
 #ifdef DLP_PERMISSION_SERVICE_PC_FEATURE
     std::string value = OHOS::system::GetParameter("const.dlp.functiontypes", "0");
     if (value != "1") {
-        DLP_LOG_ERROR(LABEL, "const.dlp.functiontypes is not 1, value=%{public}s", value.c_str());
+        DLP_LOG_DEBUG(LABEL, "Not enterprise platform, functionTypes=%{public}s", value.c_str());
         return DLP_SERVICE_ERROR_VALUE_INVALID;
     }
-    int32_t ret = DLP_QueryDlpFileCopyableByTokenId(tokenId, &copyable);
+    DlpQueryDlpFileCopyableByTokenIdFunction dlpQueryCopyableFunc =
+        reinterpret_cast<DlpQueryDlpFileCopyableByTokenIdFunction>(
+            GetDlpCredSdkLibFunc("DLP_QueryDlpFileCopyableByTokenId"));
+    if (dlpQueryCopyableFunc == nullptr) {
+        DLP_LOG_ERROR(LABEL, "dlsym DLP_QueryDlpFileCopyableByTokenId error.");
+        return DLP_SERVICE_ERROR_VALUE_INVALID;
+    }
+    int32_t ret = (*dlpQueryCopyableFunc)(tokenId, &copyable);
+    ReleaseSdkRef();
     if (ret != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "DLP_QueryDlpFileCopyableByTokenId fail, ret=%{public}d", ret);
         copyable = false;
-        return DLP_SERVICE_ERROR_IPC_REQUEST_FAIL;
     }
-    return DLP_OK;
 #else
-    DLP_LOG_ERROR(LABEL, "DLP_PERMISSION_SERVICE_PC_FEATURE not enabled");
-    return DLP_SERVICE_ERROR_VALUE_INVALID;
+    int32_t ret = DLP_QueryDlpFileCopyableByTokenId(tokenId, &copyable);
 #endif
+    return ret;
 }
 }  // namespace DlpPermission
 }  // namespace Security
