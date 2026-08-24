@@ -976,7 +976,7 @@ HWTEST_F(DlpFileKitsTest, ConvertAbilityInfoWithSupportDlp010, TestSize.Level0)
     want.SetUri(DLP_FILE_URI);
     want.SetType("text/plain");
     // notOriginalDlp=false, but parameter exists, IsTransparentEncFile checks HasParameter
-    want.SetParam("ohos.dlp.params.notOriginalDlp", false);
+    want.SetParam("ohos.dlp.params.notOriginalDlp", true);
 
     std::vector<OHOS::AppExecFwk::AbilityInfo> abilityInfos;
     OHOS::AppExecFwk::AbilityInfo abilityInfo;
