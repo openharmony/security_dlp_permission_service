@@ -1230,10 +1230,11 @@ int32_t DlpPermissionService::QueryDlpFileCopyableByTokenId(bool& copyable, uint
     bool inDlpsandbox = false;
     int32_t res = observer->QueryDlpFileCopyableByTokenId(copyable, tokenId, inDlpsandbox);
     DlpSandboxInfo sandboxInfo;
-    EnterpriseInfo enterpriseInfo;
-    if (observer->GetSandboxInfoByTokenId(tokenId, sandboxInfo) &&
-        observer->GetEnterpriseInfoByUid(sandboxInfo.uid, enterpriseInfo)) {
-        ProcessCopyReport(sandboxInfo.fileId, res);
+    if (observer->GetSandboxInfoByTokenId(tokenId, sandboxInfo)) {
+        std::string fileIds;
+        if (observer->GetEnterpriseFileIdsByUid(sandboxInfo.uid, fileIds)) {
+            ProcessCopyReport(fileIds, res);
+        }
     }
     
     if (!inDlpsandbox) {

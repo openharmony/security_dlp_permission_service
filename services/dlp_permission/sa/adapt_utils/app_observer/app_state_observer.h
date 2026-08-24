@@ -16,6 +16,7 @@
 #ifndef DLP_PERMISSION_SERVICE_SERVICES_DLP_PERMISSION_SA_APP_STATE_OBSERVER_APP_STATE_OBSERVER_H
 #define DLP_PERMISSION_SERVICE_SERVICES_DLP_PERMISSION_SA_APP_STATE_OBSERVER_APP_STATE_OBSERVER_H
 
+#include <set>
 #include <unordered_map>
 #include <mutex>
 #include "application_state_observer_stub.h"
@@ -87,7 +88,7 @@ public:
     void EraseFileInfoByUri(const std::string& uri);
     bool AddUriAndEnterpriseInfo(const std::string& uri, const EnterpriseInfo& enterpriseInfo);
     bool GetEnterpriseInfoByUri(const std::string& uri, EnterpriseInfo& enterpriseInfo);
-    bool GetEnterpriseInfoByUid(int32_t uid, EnterpriseInfo& enterpriseInfo);
+    bool GetEnterpriseFileIdsByUid(int32_t uid, std::string& fileIds);
     void UpdateEnterpriseUidByUri(const std::string& uri, const std::string& fileId, int32_t uid);
     void EraseEnterpriseInfoByUid(const std::vector<DlpSandboxInfo>& appInfos);
     void EraseEnterpriseInfoByUri(const std::string& uri, const std::string& fileId);
