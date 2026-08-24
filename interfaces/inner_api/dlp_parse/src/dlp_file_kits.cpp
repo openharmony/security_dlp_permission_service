@@ -40,9 +40,7 @@ namespace {
     static const std::string FILE_SCHEME_PREFIX = "file://";
     static const std::string DEFAULT_STRINGS = "";
     static const std::string DLP_TYPE = "dlp";
-    static const std::string DLP_PARAMS_CUSTOM_FLAG = "ohos.dlp.params.customFlag";
-    static constexpr int32_t DLP_MANAGER_FULL_CONTROL = 37;
-    static constexpr int32_t DLP_MANAGER_READ_ONLY = 38;
+    static const std::string DLP_PARAMS_NOT_DLP = "ohos.dlp.params.notOriginalDlp";
     static const uint32_t BYTE_TO_HEX_OPER_LENGTH = 2;
     static const uint32_t FILE_HEAD = 8;
     static const uint32_t HMAC_SIZE = 32;
@@ -371,6 +369,14 @@ static void SetWantType(Want& want, const int32_t& fd)
     }
 }
 
+static void RemoveNotOriginalDlpFlag(AAFwk::Want &want)
+{
+    if (want.HasParameter(DLP_PARAMS_NOT_DLP)) {
+        DLP_LOG_INFO(LABEL, "not original dlp file");
+        want.RemoveParam(DLP_PARAMS_NOT_DLP);
+    }
+}
+
 bool DlpFileKits::GetSandboxFlag(Want& want)
 {
     std::string action = want.GetAction();
@@ -393,6 +399,7 @@ bool DlpFileKits::GetSandboxFlag(Want& want)
         DLP_LOG_DEBUG(LABEL, "File name is not dlp file, name=%{private}s", fileName.c_str());
         return QueryDockerPolicyNeedSandbox(uri, want);
     }
+    RemoveNotOriginalDlpFlag(want);
     std::string path = fileUri.GetRealPath();
     int fd = open(path.c_str(), O_RDONLY);
     if (fd == -1) {
@@ -478,15 +485,12 @@ static std::string GetRealFileType(const AAFwk::Want &want)
 
 static bool IsTransparentEncFile(const AAFwk::Want &want)
 {
-    if (!want.HasParameter(DLP_PARAMS_CUSTOM_FLAG)) {
+    if (!want.HasParameter(DLP_PARAMS_NOT_DLP) ||
+        !want.GetBoolParam(DLP_PARAMS_NOT_DLP, false)) {
         return false;
     }
-    int32_t customFlag = want.GetIntParam(DLP_PARAMS_CUSTOM_FLAG, -1);
-    if (customFlag == 0 || customFlag == DLP_MANAGER_FULL_CONTROL || customFlag == DLP_MANAGER_READ_ONLY) {
-        DLP_LOG_INFO(LABEL, "Transparent enc file, customFlag=%{public}d, terminate original process.", customFlag);
-        return true;
-    }
-    return false;
+    DLP_LOG_INFO(LABEL, "Transparent enc file, terminate original process.");
+    return true;
 }
 
 void DlpFileKits::ConvertAbilityInfoWithSupportDlp(AAFwk::Want &want,

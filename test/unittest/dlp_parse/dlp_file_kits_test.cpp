@@ -922,7 +922,7 @@ HWTEST_F(DlpFileKitsTest, GetSandboxFlag018, TestSize.Level0)
 
 /**
  * @tc.name: ConvertAbilityInfoWithSupportDlp008
- * @tc.desc: cover customFlag=0 (networkAndSelinux=false) early return branch
+ * @tc.desc: cover notOriginalDlp flag set (enterprise encrypted file) early return branch
  * @tc.type: FUNC
  */
 HWTEST_F(DlpFileKitsTest, ConvertAbilityInfoWithSupportDlp008, TestSize.Level0)
@@ -931,8 +931,8 @@ HWTEST_F(DlpFileKitsTest, ConvertAbilityInfoWithSupportDlp008, TestSize.Level0)
     OHOS::AAFwk::Want want;
     want.SetUri(DLP_FILE_URI);
     want.SetType("text/plain");
-    // customFlag=0 means networkAndSelinux=false, should trigger early return
-    want.SetParam("ohos.dlp.params.customFlag", static_cast<int32_t>(0));
+    // notOriginalDlp flag means enterprise encrypted file, should trigger early return
+    want.SetParam("ohos.dlp.params.notOriginalDlp", true);
 
     std::vector<OHOS::AppExecFwk::AbilityInfo> abilityInfos;
     OHOS::AppExecFwk::AbilityInfo abilityInfo;
@@ -940,13 +940,14 @@ HWTEST_F(DlpFileKitsTest, ConvertAbilityInfoWithSupportDlp008, TestSize.Level0)
     abilityInfos.push_back(abilityInfo);
 
     DlpFileKits::ConvertAbilityInfoWithSupportDlp(want, abilityInfos);
+    // When notOriginalDlp flag is set, IsTransparentEncFile returns true, early return without filtering
     EXPECT_EQ(abilityInfos.size(), 1);
     EXPECT_EQ(abilityInfos[0].bundleName, "bundle.keep");
 }
 
 /**
  * @tc.name: ConvertAbilityInfoWithSupportDlp009
- * @tc.desc: cover customFlag=37 (DLP_MANAGER_FULL_CONTROL) early return branch
+ * @tc.desc: cover no notOriginalDlp flag, normal flow
  * @tc.type: FUNC
  */
 HWTEST_F(DlpFileKitsTest, ConvertAbilityInfoWithSupportDlp009, TestSize.Level0)
@@ -955,23 +956,17 @@ HWTEST_F(DlpFileKitsTest, ConvertAbilityInfoWithSupportDlp009, TestSize.Level0)
     OHOS::AAFwk::Want want;
     want.SetUri(DLP_FILE_URI);
     want.SetType("text/plain");
-    // customFlag=37 means DLP_MANAGER_FULL_CONTROL
-    want.SetParam("ohos.dlp.params.customFlag", static_cast<int32_t>(37));
- 
+    // No notOriginalDlp flag set, should go through normal flow
+
     std::vector<OHOS::AppExecFwk::AbilityInfo> abilityInfos;
-    OHOS::AppExecFwk::AbilityInfo abilityInfo;
-    abilityInfo.bundleName = "bundle.keep";
-    abilityInfos.push_back(abilityInfo);
- 
     DlpFileKits::ConvertAbilityInfoWithSupportDlp(want, abilityInfos);
-    // When customFlag is 37, IsTransparentEncFile returns true, early return without filtering
-    EXPECT_EQ(abilityInfos.size(), 1);
-    EXPECT_EQ(abilityInfos[0].bundleName, "bundle.keep");
+    // No notOriginalDlp flag, normal flow (no abilityInfos to filter, stays empty)
+    EXPECT_EQ(abilityInfos.size(), 0);
 }
  
 /**
  * @tc.name: ConvertAbilityInfoWithSupportDlp010
- * @tc.desc: cover customFlag=38 (DLP_MANAGER_READ_ONLY) early return branch
+ * @tc.desc: cover notOriginalDlp=false still triggers early return (HasParameter is true)
  * @tc.type: FUNC
  */
 HWTEST_F(DlpFileKitsTest, ConvertAbilityInfoWithSupportDlp010, TestSize.Level0)
@@ -980,58 +975,20 @@ HWTEST_F(DlpFileKitsTest, ConvertAbilityInfoWithSupportDlp010, TestSize.Level0)
     OHOS::AAFwk::Want want;
     want.SetUri(DLP_FILE_URI);
     want.SetType("text/plain");
-    // customFlag=38 means DLP_MANAGER_READ_ONLY
-    want.SetParam("ohos.dlp.params.customFlag", static_cast<int32_t>(38));
- 
+    // notOriginalDlp=false, but parameter exists, IsTransparentEncFile checks HasParameter
+    want.SetParam("ohos.dlp.params.notOriginalDlp", false);
+
     std::vector<OHOS::AppExecFwk::AbilityInfo> abilityInfos;
     OHOS::AppExecFwk::AbilityInfo abilityInfo;
     abilityInfo.bundleName = "bundle.keep";
     abilityInfos.push_back(abilityInfo);
  
     DlpFileKits::ConvertAbilityInfoWithSupportDlp(want, abilityInfos);
-    // When customFlag is 38, IsTransparentEncFile returns true, early return without filtering
+    // When notOriginalDlp flag parameter exists, IsTransparentEncFile returns true, early return
     EXPECT_EQ(abilityInfos.size(), 1);
     EXPECT_EQ(abilityInfos[0].bundleName, "bundle.keep");
 }
- 
-/**
- * @tc.name: ConvertAbilityInfoWithSupportDlp011
- * @tc.desc: cover customFlag with invalid value (e.g. 1,2,39) does NOT early return
- * @tc.type: FUNC
- */
-HWTEST_F(DlpFileKitsTest, ConvertAbilityInfoWithSupportDlp011, TestSize.Level0)
-{
-    DLP_LOG_INFO(LABEL, "ConvertAbilityInfoWithSupportDlp011");
-    // customFlag=1 is not a valid value (only 0,37,38 are valid), should NOT trigger early return
-    OHOS::AAFwk::Want want;
-    want.SetUri(DLP_FILE_URI);
-    want.SetType("text/plain");
-    want.SetParam("ohos.dlp.params.customFlag", static_cast<int32_t>(1));
- 
-    std::vector<OHOS::AppExecFwk::AbilityInfo> abilityInfos;
-    DlpFileKits::ConvertAbilityInfoWithSupportDlp(want, abilityInfos);
-    // Invalid customFlag value, should go through normal flow (no abilityInfos to filter, stays empty)
-    EXPECT_EQ(abilityInfos.size(), 0);
- 
-    // customFlag=39 is not a valid value
-    OHOS::AAFwk::Want want2;
-    want2.SetUri(DLP_FILE_URI);
-    want2.SetType("text/plain");
-    want2.SetParam("ohos.dlp.params.customFlag", static_cast<int32_t>(39));
-    std::vector<OHOS::AppExecFwk::AbilityInfo> abilityInfos2;
-    DlpFileKits::ConvertAbilityInfoWithSupportDlp(want2, abilityInfos2);
-    EXPECT_EQ(abilityInfos2.size(), 0);
- 
-    // customFlag=-1 is not a valid value
-    OHOS::AAFwk::Want want3;
-    want3.SetUri(DLP_FILE_URI);
-    want3.SetType("text/plain");
-    want3.SetParam("ohos.dlp.params.customFlag", static_cast<int32_t>(-1));
-    std::vector<OHOS::AppExecFwk::AbilityInfo> abilityInfos3;
-    DlpFileKits::ConvertAbilityInfoWithSupportDlp(want3, abilityInfos3);
-    EXPECT_EQ(abilityInfos3.size(), 0);
-}
- 
+
 /**
  * @tc.name: ConvertAbilityInfoWithSupportDlp012
  * @tc.desc: cover no customFlag parameter set, normal flow

@@ -35,24 +35,10 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_
 static const std::string VERSION_FOR_2B = "1";
 static const char *TRANSPARENT_CRYPTO_STATUS_KEY = "security.dlp.transparent.crypto.status";
 static const std::string DLP_CREDENTIAL_SA_NAME = "dlp_credential_service_sa";
-static const std::string DLP_PARAMS_CUSTOM_FLAG = "ohos.dlp.params.customFlag";
-static constexpr int32_t DLP_MANAGER_FULL_CONTROL = 37;
-static constexpr int32_t DLP_MANAGER_READ_ONLY = 38;
+static const std::string DLP_PARAMS_NOT_DLP = "ohos.dlp.params.notOriginalDlp";
 static const std::string PERMISSION_SANDBOX_ACCESS_MANAGER = "ohos.permission.SANDBOX_ACCESS_MANAGER";
 static const std::string PERMISSION_FILE_ACCESS_MANAGER = "ohos.permission.FILE_ACCESS_MANAGER";
 static const std::string URI_PREFIX_FILE_DOCS = "file://docs";
-
-static int32_t ConvertPermissionToCustomFlag(uint32_t permission)
-{
-    bool screenShot = (permission >> 3) & 1;
-    bool networkAndSelinux = permission & 1;
-    bool securityFlag = !screenShot;  // screenShot=1 → can screenshot → securityFlag=false
- 
-    if (!networkAndSelinux) {
-        return 0;
-    }
-    return securityFlag ? DLP_MANAGER_READ_ONLY : DLP_MANAGER_FULL_CONTROL;
-}
 
 static bool IsEnterprisePlatform()
 {
@@ -131,9 +117,8 @@ static bool CheckEnterpriseEncryptedFile(const DockerPolicyInfo &dockerPolicy, A
         DLP_LOG_INFO(LABEL, "Docker policy needSandbox is false");
         return false;
     }
-    int32_t customFlag = ConvertPermissionToCustomFlag(dockerPolicy.permission);
-    want.SetParam(DLP_PARAMS_CUSTOM_FLAG, customFlag);
-    DLP_LOG_INFO(LABEL, "Docker policy needSandbox is true, customFlag=%{public}d", customFlag);
+    want.SetParam(DLP_PARAMS_NOT_DLP, true);
+    DLP_LOG_INFO(LABEL, "Docker policy needSandbox is true, set notOriginalDlp flag");
     return true;
 }
 
