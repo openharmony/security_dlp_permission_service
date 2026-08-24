@@ -1914,3 +1914,140 @@ HWTEST_F(AppStateObserverTest, GetOpeningEnterpriseReadOnlySandbox001, TestSize.
     ASSERT_EQ(-1, dlpSandboxInfo.appIndex);
     ASSERT_EQ(-1, dlpSandboxInfo.bindAppIndex);
 }
+
+/**
+ * @tc.name: GetEnterpriseFileIdsByUid001
+ * @tc.desc: GetEnterpriseFileIdsByUid test - no matching uid
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AppStateObserverTest, GetEnterpriseFileIdsByUid001, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL, "GetEnterpriseFileIdsByUid001");
+    AppStateObserver observer;
+
+    std::string fileIds;
+    ASSERT_FALSE(observer.GetEnterpriseFileIdsByUid(999, fileIds));
+    ASSERT_TRUE(fileIds.empty());
+}
+
+/**
+ * @tc.name: GetEnterpriseFileIdsByUid002
+ * @tc.desc: GetEnterpriseFileIdsByUid test - single uri matches uid
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AppStateObserverTest, GetEnterpriseFileIdsByUid002, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL, "GetEnterpriseFileIdsByUid002");
+    AppStateObserver observer;
+
+    EnterpriseInfo info1;
+    info1.fileId = "f1";
+    info1.classificationLabel = "L1";
+    info1.uid = 101;
+    ASSERT_TRUE(observer.AddUriAndEnterpriseInfo("uri1", info1));
+
+    std::string fileIds;
+    ASSERT_TRUE(observer.GetEnterpriseFileIdsByUid(101, fileIds));
+    ASSERT_EQ(fileIds, "f1");
+}
+
+/**
+ * @tc.name: GetEnterpriseFileIdsByUid003
+ * @tc.desc: GetEnterpriseFileIdsByUid test - multiple uris match same uid, deduplicate fileIds
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AppStateObserverTest, GetEnterpriseFileIdsByUid003, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL, "GetEnterpriseFileIdsByUid003");
+    AppStateObserver observer;
+
+    EnterpriseInfo info1;
+    info1.fileId = "f1";
+    info1.classificationLabel = "L1";
+    info1.uid = 101;
+
+    EnterpriseInfo info2;
+    info2.fileId = "f2";
+    info2.classificationLabel = "L2";
+    info2.uid = 101;
+
+    EnterpriseInfo info3;
+    info3.fileId = "f1";
+    info3.classificationLabel = "L3";
+    info3.uid = 101;
+
+    ASSERT_TRUE(observer.AddUriAndEnterpriseInfo("uri1", info1));
+    ASSERT_TRUE(observer.AddUriAndEnterpriseInfo("uri2", info2));
+    ASSERT_TRUE(observer.AddUriAndEnterpriseInfo("uri3", info3));
+
+    std::string fileIds;
+    ASSERT_TRUE(observer.GetEnterpriseFileIdsByUid(101, fileIds));
+    ASSERT_EQ(fileIds, "f1,f2");
+}
+
+/**
+ * @tc.name: GetEnterpriseFileIdsByUid004
+ * @tc.desc: GetEnterpriseFileIdsByUid test - empty fileId entries are skipped
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AppStateObserverTest, GetEnterpriseFileIdsByUid004, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL, "GetEnterpriseFileIdsByUid004");
+    AppStateObserver observer;
+
+    EnterpriseInfo info1;
+    info1.fileId = "";
+    info1.classificationLabel = "L1";
+    info1.uid = 101;
+
+    EnterpriseInfo info2;
+    info2.fileId = "f2";
+    info2.classificationLabel = "L2";
+    info2.uid = 101;
+
+    ASSERT_TRUE(observer.AddUriAndEnterpriseInfo("uri1", info1));
+    ASSERT_TRUE(observer.AddUriAndEnterpriseInfo("uri2", info2));
+
+    std::string fileIds;
+    ASSERT_TRUE(observer.GetEnterpriseFileIdsByUid(101, fileIds));
+    ASSERT_EQ(fileIds, "f2");
+}
+
+/**
+ * @tc.name: GetEnterpriseFileIdsByUid005
+ * @tc.desc: GetEnterpriseFileIdsByUid test - different uids are isolated
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AppStateObserverTest, GetEnterpriseFileIdsByUid005, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL, "GetEnterpriseFileIdsByUid005");
+    AppStateObserver observer;
+
+    EnterpriseInfo info1;
+    info1.fileId = "f1";
+    info1.classificationLabel = "L1";
+    info1.uid = 101;
+
+    EnterpriseInfo info2;
+    info2.fileId = "f2";
+    info2.classificationLabel = "L2";
+    info2.uid = 202;
+
+    ASSERT_TRUE(observer.AddUriAndEnterpriseInfo("uri1", info1));
+    ASSERT_TRUE(observer.AddUriAndEnterpriseInfo("uri2", info2));
+
+    std::string fileIds;
+    ASSERT_TRUE(observer.GetEnterpriseFileIdsByUid(101, fileIds));
+    ASSERT_EQ(fileIds, "f1");
+
+    fileIds.clear();
+    ASSERT_TRUE(observer.GetEnterpriseFileIdsByUid(202, fileIds));
+    ASSERT_EQ(fileIds, "f2");
+
+    ASSERT_FALSE(observer.GetEnterpriseFileIdsByUid(999, fileIds));
+}
