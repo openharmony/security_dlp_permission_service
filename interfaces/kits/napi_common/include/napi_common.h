@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -33,6 +33,7 @@
 #include "retention_sandbox_info.h"
 #include "ui_content.h"
 #include "visited_dlp_file_info.h"
+#include "window.h"
 
 namespace OHOS {
 namespace Security {
@@ -262,6 +263,8 @@ struct UIExtensionRequestContext : public CommonAsyncContext {
     explicit UIExtensionRequestContext(napi_env env) : CommonAsyncContext(env) {};
     std::shared_ptr<OHOS::AbilityRuntime::AbilityContext> context = nullptr;
     OHOS::AAFwk::Want requestWant;
+    sptr<Rosen::Window> window = nullptr;
+    OHOS::Ace::UIContent* uiContent = nullptr;
 };
 
 struct SetEnterprisePolicyContext : public CommonAsyncContext {
@@ -423,8 +426,12 @@ napi_value SandboxInfoToJs(napi_env env, const SandboxInfo& sandboxInfo);
 
 bool ParseUIAbilityContextReq(
     napi_env env, const napi_value& obj, std::shared_ptr<OHOS::AbilityRuntime::AbilityContext>& abilityContext);
+bool ParseContextReq(napi_env env, const napi_value& obj,
+    std::shared_ptr<OHOS::AbilityRuntime::AbilityContext>& abilityContext);
 bool ParseWantReq(napi_env env, const napi_value& obj, OHOS::AAFwk::Want& requestWant);
 void StartUIExtensionAbility(std::shared_ptr<UIExtensionRequestContext> asyncContext);
+bool GetCustomShowingWindow(napi_env env, napi_value windowObj, sptr<Rosen::Window>& window);
+void StartUIExtensionAbilityWithWindow(std::shared_ptr<UIExtensionRequestContext> asyncContext);
 
 bool IsStringLengthValid(std::string& str, size_t maxLen, size_t minLen = 0);
 }  // namespace DlpPermission
