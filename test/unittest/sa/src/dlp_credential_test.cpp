@@ -718,7 +718,37 @@ HWTEST_F(DlpCredentialTest, QueryDlpFileCopyableByTokenId002, TestSize.Level1)
     bool copyable = false;
     uint32_t tokenId = 0;
     int32_t ret = DlpCredential::GetInstance().QueryDlpFileCopyableByTokenId(copyable, tokenId);
-    // Should fail with some error code (either PC_FEATURE not enabled or functiontypes check fails)
+    EXPECT_NE(ret, DLP_OK);
+    EXPECT_FALSE(copyable);
+}
+
+/**
+ * @tc.name: QueryDlpFileCopyableByTokenId003
+ * @tc.desc: QueryDlpFileCopyableByTokenId test - copyable initialized true stays false
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpCredentialTest, QueryDlpFileCopyableByTokenId003, TestSize.Level1)
+{
+    bool copyable = true;
+    uint32_t tokenId = 100;
+    int32_t ret = DlpCredential::GetInstance().QueryDlpFileCopyableByTokenId(copyable, tokenId);
+    // copyable is set to false at start of function, then mock returns DLP_ERROR
+    EXPECT_NE(ret, DLP_OK);
+    EXPECT_FALSE(copyable);
+}
+
+/**
+ * @tc.name: QueryDlpFileCopyableByTokenId004
+ * @tc.desc: QueryDlpFileCopyableByTokenId test - large tokenId value
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpCredentialTest, QueryDlpFileCopyableByTokenId004, TestSize.Level1)
+{
+    bool copyable = false;
+    uint32_t tokenId = UINT32_MAX;
+    int32_t ret = DlpCredential::GetInstance().QueryDlpFileCopyableByTokenId(copyable, tokenId);
     EXPECT_NE(ret, DLP_OK);
     EXPECT_FALSE(copyable);
 }

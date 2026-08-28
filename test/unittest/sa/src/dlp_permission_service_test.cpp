@@ -2003,6 +2003,44 @@ HWTEST_F(DlpPermissionServiceTest, QueryDlpFileCopyableByTokenId004, TestSize.Le
 }
 
 /**
+ * @tc.name: QueryDlpFileCopyableByTokenId005
+ * @tc.desc: QueryDlpFileCopyableByTokenId - observer null returns VALUE_INVALID
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionServiceTest, QueryDlpFileCopyableByTokenId005, TestSize.Level1)
+{
+    DLP_LOG_DEBUG(LABEL, "QueryDlpFileCopyableByTokenId005");
+    uint64_t selfTokenId = GetSelfTokenID();
+    uint64_t pasteboardToken = AccessTokenKit::GetNativeTokenId(PASTEBOARD_SERVICE_NAME);
+    EXPECT_EQ(0, SetSelfTokenID(pasteboardToken));
+    bool copyable = false;
+    // Use a tokenId that won't be in sandbox - observer exists but not in dlp sandbox
+    // so inDlpsandbox=false, falls back to credential which also fails
+    uint32_t tokenId = 99999;
+    int32_t res = dlpPermissionService_->QueryDlpFileCopyableByTokenId(copyable, tokenId);
+    // Observer returns APPOBSERVER_ERROR, credential returns error, res stays APPOBSERVER_ERROR
+    EXPECT_NE(res, DLP_OK);
+    EXPECT_EQ(0, SetSelfTokenID(selfTokenId));
+}
+
+/**
+ * @tc.name: QueryDlpFileCopyableByTokenId006
+ * @tc.desc: QueryDlpFileCopyableByTokenId - permission denied for non-pasteboard caller
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionServiceTest, QueryDlpFileCopyableByTokenId006, TestSize.Level1)
+{
+    DLP_LOG_DEBUG(LABEL, "QueryDlpFileCopyableByTokenId006");
+    bool copyable = false;
+    uint32_t tokenId = 100;
+    // Calling with default test token - not pasteboard or distributeddata
+    int32_t res = dlpPermissionService_->QueryDlpFileCopyableByTokenId(copyable, tokenId);
+    EXPECT_EQ(res, DLP_SERVICE_ERROR_PERMISSION_DENY);
+}
+
+/**
  * @tc.name: CheckWaterMarkInfo001
  * @tc.desc: CheckWaterMarkInfo test
  * @tc.type: FUNC

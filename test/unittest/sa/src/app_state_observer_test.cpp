@@ -730,6 +730,58 @@ HWTEST_F(AppStateObserverTest, QueryDlpFileCopyableByTokenId005, TestSize.Level1
 }
 
 /**
+ * @tc.name: QueryDlpFileCopyableByTokenId006
+ * @tc.desc: QueryDlpFileCopyableByTokenId test - CONTENT_EDIT access returns copyable
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AppStateObserverTest, QueryDlpFileCopyableByTokenId006, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL, "QueryDlpFileCopyableByTokenId006");
+    AppStateObserver observer;
+    bool copyable = false;
+    bool inDlpsandbox = false;
+    uint32_t tokenId = 300;
+    int32_t uid = 300;
+    observer.AddUidWithTokenId(tokenId, uid);
+    DlpSandboxInfo appInfo = {
+        .uid = uid,
+        .bundleName = "test3",
+        .appIndex = 300,
+        .userId = 300,
+        .dlpFileAccess = DLPFileAccess::CONTENT_EDIT
+    };
+    observer.AddSandboxInfo(appInfo);
+    int32_t ret = observer.QueryDlpFileCopyableByTokenId(copyable, tokenId, inDlpsandbox);
+    ASSERT_EQ(DLP_OK, ret);
+    ASSERT_TRUE(inDlpsandbox);
+    ASSERT_TRUE(copyable);
+}
+
+/**
+ * @tc.name: QueryDlpFileCopyableByTokenId007
+ * @tc.desc: QueryDlpFileCopyableByTokenId test - sandbox app with no sandbox info
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AppStateObserverTest, QueryDlpFileCopyableByTokenId007, TestSize.Level1)
+{
+    DLP_LOG_INFO(LABEL, "QueryDlpFileCopyableByTokenId007");
+    AppStateObserver observer;
+    bool copyable = false;
+    bool inDlpsandbox = false;
+    uint32_t tokenId = 400;
+    int32_t uid = 400;
+    // Add tokenId->uid mapping but no sandbox info for this uid
+    observer.AddUidWithTokenId(tokenId, uid);
+    // QueryDlpFileAccessByUid will fail since no sandbox info exists
+    int32_t ret = observer.QueryDlpFileCopyableByTokenId(copyable, tokenId, inDlpsandbox);
+    ASSERT_EQ(DLP_SERVICE_ERROR_APPOBSERVER_ERROR, ret);
+    ASSERT_TRUE(inDlpsandbox);
+    ASSERT_FALSE(copyable);
+}
+
+/**
  * @tc.name: GetOpeningReadOnlySandbox001
  * @tc.desc: GetOpeningReadOnlySandbox test
  * @tc.type: FUNC
