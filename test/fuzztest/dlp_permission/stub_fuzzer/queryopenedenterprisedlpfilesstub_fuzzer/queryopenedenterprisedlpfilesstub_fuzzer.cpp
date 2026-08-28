@@ -32,6 +32,7 @@ namespace {
 static const uint64_t SYSTEM_APP_MASK = 0x100000000;
 static const int32_t DEFAULT_USER_ID = 100;
 static const size_t MAX_SAFE_SIZE = 256;
+static const size_t MAX_WAITING_TIME = 500;
 } // namespace
 
 namespace OHOS {
@@ -57,6 +58,7 @@ static void FuzzTest(const uint8_t* data, size_t size)
     auto service = std::make_shared<DlpPermissionService>(SA_ID_DLP_PERMISSION_SERVICE, true);
     service->appStateObserver_ = new (std::nothrow) AppStateObserver();
     service->OnRemoteRequest(code, datas, reply, option);
+    std::this_thread::sleep_for(std::chrono::milliseconds(MAX_WAITING_TIME));
 }
 
 bool QueryOpenedEnterpriseDlpFilesFuzzTest(const uint8_t* data, size_t size)
