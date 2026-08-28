@@ -141,7 +141,11 @@ int32_t AddFileContextToZip(int32_t fd, const char *nameInZip, const char *zipNa
     }
     int32_t readLen;
     int32_t res = DLP_ZIP_OK;
-    auto buf = std::make_unique<char[]>(ZIP_BUFF_SIZE);
+    std::unique_ptr<char[]> buf(new (std::nothrow) char[ZIP_BUFF_SIZE]);
+    if (buf == nullptr) {
+        DLP_LOG_ERROR(LABEL, "malloc buf failed");
+        return DLP_ZIP_FAIL;
+    }
     while ((readLen = read(fd, buf.get(), ZIP_BUFF_SIZE)) > 0) {
         err = zipWriteInFileInZip (zf, buf.get(), static_cast<unsigned>(readLen));
         if (err != ZIP_OK) {
