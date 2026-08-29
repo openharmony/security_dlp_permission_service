@@ -1208,7 +1208,8 @@ HWTEST_F(DlpPermissionKitTest, RegisterDlpSandboxChangeCallback001, TestSize.Lev
         ASSERT_TRUE(ret == DLP_OK || ret == DLP_SERVICE_ERROR_INSTALL_SANDBOX_FAIL
             || ret == DLP_SERVICE_ERROR_VALUE_INVALID);
         if (ret == DLP_OK) {
-            ASSERT_EQ(DLP_OK, DlpPermissionKit::UninstallDlpSandbox(DLP_MANAGER_APP, sandboxInfo.appIndex, DEFAULT_USERID));
+            ASSERT_EQ(DLP_OK, DlpPermissionKit::UninstallDlpSandbox(DLP_MANAGER_APP,
+                sandboxInfo.appIndex, DEFAULT_USERID));
             res = DlpPermissionKit::UnregisterDlpSandboxChangeCallback(result);
             ASSERT_EQ(DLP_OK, res);
         }
@@ -1292,7 +1293,7 @@ HWTEST_F(DlpPermissionKitTest, RegisterOpenDlpFileCallback001, TestSize.Level1)
     const std::shared_ptr<TestOpenDlpFileCallbackCustomize> callbackPtr =
         std::make_shared<TestOpenDlpFileCallbackCustomize>();
     ASSERT_NE(callbackPtr, nullptr);
-    if (DlpPermissionKit::RegisterOpenDlpFileCallback(callbackPtr)) == DLP_OK) {
+    if (DlpPermissionKit::RegisterOpenDlpFileCallback(callbackPtr) == DLP_OK) {
         SandboxInfo sandboxInfo;
         int32_t result = DlpPermissionKit::InstallDlpSandbox(DLP_MANAGER_APP,
             DLPFileAccess::FULL_CONTROL, DEFAULT_USERID, sandboxInfo, TEST_URI);
