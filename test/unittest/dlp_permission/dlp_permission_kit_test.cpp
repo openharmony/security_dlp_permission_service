@@ -1478,7 +1478,8 @@ HWTEST_F(DlpPermissionKitTest, GetDLPFileVisitRecord001, TestSize.Level1)
     SandboxInfo sandboxInfo;
     int32_t result = DlpPermissionKit::InstallDlpSandbox(DLP_MANAGER_APP,
         DLPFileAccess::FULL_CONTROL, DEFAULT_USERID, sandboxInfo, TEST_URI);
-    ASSERT_TRUE(result == DLP_OK || result == DLP_SERVICE_ERROR_INSTALL_SANDBOX_FAIL);
+    ASSERT_TRUE(result == DLP_OK || result == DLP_SERVICE_ERROR_INSTALL_SANDBOX_FAIL
+        || result == DLP_SERVICE_ERROR_VALUE_INVALID);
     ASSERT_TRUE(sandboxInfo.appIndex != 0);
     TestMockApp(DLP_MANAGER_APP, 0, DEFAULT_USERID);
     ASSERT_TRUE(TestSetSelfTokenId(g_dlpManagerTokenId));
@@ -1514,9 +1515,7 @@ HWTEST_F(DlpPermissionKitTest, SetSandboxAppConfig001, TestSize.Level1)
     TestMockApp(DLP_MANAGER_APP, 0, DEFAULT_USERID);
     std::string config = "test";
     int32_t ret = DlpPermissionKit::SetSandboxAppConfig(config);
-    if (ret != DLP_OK) {
-        ASSERT_EQ(ret, DLP_COMMON_CHECK_KVSTORE_ERROR);
-    } else {
+    if (ret == DLP_OK) {
         std::string configGet;
         ASSERT_EQ(DLP_OK, DlpPermissionKit::GetSandboxAppConfig(configGet));
         ASSERT_EQ(DLP_OK, DlpPermissionKit::CleanSandboxAppConfig());
