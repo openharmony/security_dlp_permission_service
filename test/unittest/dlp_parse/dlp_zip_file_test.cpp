@@ -566,7 +566,7 @@ HWTEST_F(DlpZipFileTest, SetEncryptCert004, TestSize.Level0)
     const uint32_t oldCertSize = 16;
     uint8_t *oldCert = new (std::nothrow) uint8_t[oldCertSize];
     ASSERT_NE(oldCert, nullptr);
-    memset(oldCert, 0xAA, oldCertSize);  // Fill with recognizable pattern
+    (void)memset_s(oldCert, oldCertSize, 0xAA, oldCertSize);  // Fill with recognizable pattern
     testFile.cert_.data = oldCert;
     testFile.cert_.size = oldCertSize;
 
