@@ -1,0 +1,395 @@
+diff --git a/interfaces/inner_api/dlp_parse/src/dlp_zip_file.cpp b/interfaces/inner_api/dlp_parse/src/dlp_zip_file.cpp
+index 9ef7775..868ad98 100644
+--- a/interfaces/inner_api/dlp_parse/src/dlp_zip_file.cpp
++++ b/interfaces/inner_api/dlp_parse/src/dlp_zip_file.cpp
+@@ -374,6 +374,7 @@ int32_t DlpZipFile::SetEncryptCert(const struct DlpBlob& cert)
+     }
+ 
+     if (cert_.data != nullptr) {
++        (void)memset_s(cert_.data, cert_.size, 0, cert_.size);
+         delete[] cert_.data;
+         cert_.data = nullptr;
+     }
+diff --git a/interfaces/kits/dlp_permission/napi/src/dlp_transparent_enc_manager.cpp b/interfaces/kits/dlp_permission/napi/src/dlp_transparent_enc_manager.cpp
+index ca673a2..9de2131 100644
+--- a/interfaces/kits/dlp_permission/napi/src/dlp_transparent_enc_manager.cpp
++++ b/interfaces/kits/dlp_permission/napi/src/dlp_transparent_enc_manager.cpp
+@@ -32,6 +32,7 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
+     LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "DlpTransparentEncManager"
+ };
+ constexpr size_t SIZE_64_BIT = 8;
++constexpr uint32_t MAX_APP_LISTS_SIZE = 100;
+ static const std::string DLP_CREDENTIAL_TRANSPARENT_ENC_32_PATH = "/system/lib/libdlp_transparent_enc_sdk.z.so";
+ static const std::string DLP_CREDENTIAL_TRANSPARENT_ENC_64_PATH = "/system/lib64/libdlp_transparent_enc_sdk.z.so";
+ }  // namespace
+@@ -128,6 +129,11 @@ int32_t DlpTransparentEncManager::LoadDlpCredentialService()
+ int32_t DlpTransparentEncManager::SetControlledAppLists(const std::vector<std::string> &appLists,
+     int32_t userId, bool userIdSet)
+ {
++    if (appLists.size() > MAX_APP_LISTS_SIZE) {
++        DLP_LOG_ERROR(LABEL, "appLists size %{public}zu exceeds max limit %{public}u",
++            appLists.size(), MAX_APP_LISTS_SIZE);
++        return DLP_PARSE_ERROR_VALUE_INVALID;
++    }
+     {
+         std::lock_guard<std::mutex> lock(mutex_);
+         int32_t ret = LoadDlpCredentialService();
+diff --git a/interfaces/kits/dlp_permission/napi/src/napi_dlp_transparent_enc.cpp b/interfaces/kits/dlp_permission/napi/src/napi_dlp_transparent_enc.cpp
+index 3373e17..85e3181 100644
+--- a/interfaces/kits/dlp_permission/napi/src/napi_dlp_transparent_enc.cpp
++++ b/interfaces/kits/dlp_permission/napi/src/napi_dlp_transparent_enc.cpp
+@@ -37,6 +37,7 @@ static constexpr int32_t THE_PARAM_ONE = 1;
+ static constexpr int32_t THE_PARAM_ZERO = 0;
+ static constexpr int32_t DEFAULT_USER_ID = 0;
+ static constexpr int32_t MAX_MESSAGE_LEN = 4096;
++static constexpr uint32_t MAX_APP_LISTS_SIZE = 100;
+ static std::string VERSION_FOR_2B = "1";
+ static const std::string PERMISSION_DLP_POLICY_MANAGER = "ohos.permission.DLP_POLICY_MANAGER";
+ enum PluginCmd {
+@@ -116,6 +117,10 @@ bool GetStringArrayValue(napi_env env, napi_value jsObject, std::vector<std::str
+         DLP_LOG_ERROR(LABEL, "js get array size fail");
+         return false;
+     }
++    if (size > MAX_APP_LISTS_SIZE) {
++        DLP_LOG_ERROR(LABEL, "appLists size %{public}u exceeds max limit %{public}u", size, MAX_APP_LISTS_SIZE);
++        return false;
++    }
+     for (uint32_t i = 0; i < size; i++) {
+         napi_value obj;
+         NAPI_CALL_BASE(env, napi_get_element(env, jsObject, i, &obj), false);
+diff --git a/test/unittest/dlp_parse/dlp_zip_file_test.cpp b/test/unittest/dlp_parse/dlp_zip_file_test.cpp
+index 18afb65..9103477 100644
+--- a/test/unittest/dlp_parse/dlp_zip_file_test.cpp
++++ b/test/unittest/dlp_parse/dlp_zip_file_test.cpp
+@@ -547,6 +547,141 @@ HWTEST_F(DlpZipFileTest, Truncate001, TestSize.Level0)
+     unlink("/data/fuse_test_dlp.txt");
+ }
+ 
++/**
++ * @tc.name: SetEncryptCert004
++ * @tc.desc: test SetEncryptCert clears old cert data with memset_s before delete when cert_.data is not null
++ * @tc.type: FUNC
++ * @tc.require:
++ */
++HWTEST_F(DlpZipFileTest, SetEncryptCert004, TestSize.Level0)
++{
++    DLP_LOG_INFO(LABEL, "SetEncryptCert004");
++    int fdDlp = open("/data/fuse_test_dlp.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
++    ASSERT_NE(fdDlp, -1);
++
++    DlpZipFile testFile(fdDlp, DLP_TEST_DIR, 0, "txt");
++    initDlpFileCiper(testFile);
++
++    // Set up old cert with known data pattern
++    const uint32_t oldCertSize = 16;
++    uint8_t *oldCert = new (std::nothrow) uint8_t[oldCertSize];
++    ASSERT_NE(oldCert, nullptr);
++    memset(oldCert, 0xAA, oldCertSize);  // Fill with recognizable pattern
++    testFile.cert_.data = oldCert;
++    testFile.cert_.size = oldCertSize;
++
++    // Prepare new cert
++    uint8_t newCertData[32] = {};
++    struct DlpBlob newCert = {
++        .data = newCertData,
++        .size = 32
++    };
++
++    // Reset memset_s recording, then call SetEncryptCert
++    ResetMemsetSRecord();
++    EXPECT_EQ(DLP_OK, testFile.SetEncryptCert(newCert));
++
++    // Verify memset_s was called to clear old cert data before delete
++    EXPECT_GE(GetMemsetSCallCount(), 1);
++    EXPECT_EQ(oldCert, GetMemsetSLastDest());
++    EXPECT_EQ(static_cast<size_t>(oldCertSize), GetMemsetSLastDestMax());
++    EXPECT_EQ(0, GetMemsetSLastC());
++    EXPECT_EQ(static_cast<size_t>(oldCertSize), GetMemsetSLastCount());
++
++    // Verify new cert is set correctly
++    ASSERT_NE(testFile.cert_.data, nullptr);
++    EXPECT_EQ(testFile.cert_.size, static_cast<uint32_t>(32));
++
++    close(fdDlp);
++    unlink("/data/fuse_test_dlp.txt");
++}
++
++/**
++ * @tc.name: SetEncryptCert005
++ * @tc.desc: test SetEncryptCert does not crash when cert_.data is null
++ * @tc.type: FUNC
++ * @tc.require:
++ */
++HWTEST_F(DlpZipFileTest, SetEncryptCert005, TestSize.Level0)
++{
++    DLP_LOG_INFO(LABEL, "SetEncryptCert005");
++    int fdDlp = open("/data/fuse_test_dlp.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
++    ASSERT_NE(fdDlp, -1);
++
++    DlpZipFile testFile(fdDlp, DLP_TEST_DIR, 0, "txt");
++    initDlpFileCiper(testFile);
++
++    // Ensure cert_.data is null
++    if (testFile.cert_.data != nullptr) {
++        delete[] testFile.cert_.data;
++        testFile.cert_.data = nullptr;
++        testFile.cert_.size = 0;
++    }
++
++    // Set new cert when old cert is null - should not crash
++    uint8_t newCertData[16] = {};
++    struct DlpBlob newCert = {
++        .data = newCertData,
++        .size = 16
++    };
++
++    EXPECT_EQ(DLP_OK, testFile.SetEncryptCert(newCert));
++    ASSERT_NE(testFile.cert_.data, nullptr);
++    EXPECT_EQ(testFile.cert_.size, static_cast<uint32_t>(16));
++
++    close(fdDlp);
++    unlink("/data/fuse_test_dlp.txt");
++}
++
++/**
++ * @tc.name: SetEncryptCert006
++ * @tc.desc: test SetEncryptCert called multiple times consecutively, old cert cleared each time
++ * @tc.type: FUNC
++ * @tc.require:
++ */
++HWTEST_F(DlpZipFileTest, SetEncryptCert006, TestSize.Level0)
++{
++    DLP_LOG_INFO(LABEL, "SetEncryptCert006");
++    int fdDlp = open("/data/fuse_test_dlp.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
++    ASSERT_NE(fdDlp, -1);
++
++    DlpZipFile testFile(fdDlp, DLP_TEST_DIR, 0, "txt");
++    initDlpFileCiper(testFile);
++
++    // First call: set cert with size 16
++    uint8_t certData1[16] = {};
++    struct DlpBlob cert1 = {
++        .data = certData1,
++        .size = 16
++    };
++    EXPECT_EQ(DLP_OK, testFile.SetEncryptCert(cert1));
++    ASSERT_NE(testFile.cert_.data, nullptr);
++    EXPECT_EQ(testFile.cert_.size, static_cast<uint32_t>(16));
++
++    // Second call: set cert with size 32, old cert should be memset_s cleared before delete
++    uint8_t certData2[32] = {};
++    struct DlpBlob cert2 = {
++        .data = certData2,
++        .size = 32
++    };
++    EXPECT_EQ(DLP_OK, testFile.SetEncryptCert(cert2));
++    ASSERT_NE(testFile.cert_.data, nullptr);
++    EXPECT_EQ(testFile.cert_.size, static_cast<uint32_t>(32));
++
++    // Third call: set cert with size 8, old cert should be memset_s cleared before delete
++    uint8_t certData3[8] = {};
++    struct DlpBlob cert3 = {
++        .data = certData3,
++        .size = 8
++    };
++    EXPECT_EQ(DLP_OK, testFile.SetEncryptCert(cert3));
++    ASSERT_NE(testFile.cert_.data, nullptr);
++    EXPECT_EQ(testFile.cert_.size, static_cast<uint32_t>(8));
++
++    close(fdDlp);
++    unlink("/data/fuse_test_dlp.txt");
++}
++
+ /**
+  * @tc.name: Truncate002
+  * @tc.desc: test size overflow
+diff --git a/test/unittest/dlp_permission/dlp_transparent_enc_manager_test.cpp b/test/unittest/dlp_permission/dlp_transparent_enc_manager_test.cpp
+index cbcec84..f3a5ff3 100644
+--- a/test/unittest/dlp_permission/dlp_transparent_enc_manager_test.cpp
++++ b/test/unittest/dlp_permission/dlp_transparent_enc_manager_test.cpp
+@@ -450,6 +450,85 @@ HWTEST_F(DlpTransparentEncManagerTest, DockerPolicyPayloadFieldLayout001, TestSi
+     ASSERT_EQ(payload.permission, static_cast<uint32_t>(2));
+ }
+ 
++/**
++ * @tc.name: SetControlledAppLists004
++ * @tc.desc: test SetControlledAppLists returns DLP_PARSE_ERROR_VALUE_INVALID when appLists exceeds 100
++ * @tc.type: FUNC
++ * @tc.require:
++ */
++HWTEST_F(DlpTransparentEncManagerTest, SetControlledAppLists004, TestSize.Level1)
++{
++    std::vector<std::string> appLists(101, "com.test.app");
++    int32_t ret = DlpTransparentEncManager::GetInstance().SetControlledAppLists(appLists, DEFAULT_USER_ID, true);
++    ASSERT_EQ(ret, DLP_PARSE_ERROR_VALUE_INVALID);
++}
++
++/**
++ * @tc.name: SetControlledAppLists005
++ * @tc.desc: test SetControlledAppLists succeeds when appLists size equals exactly 100
++ * @tc.type: FUNC
++ * @tc.require:
++ */
++HWTEST_F(DlpTransparentEncManagerTest, SetControlledAppLists005, TestSize.Level1)
++{
++    TestMock::SetDlopenShouldFail(false);
++    TestMock::SetDlsymShouldFailFor(nullptr);
++    MockSetResult(0);
++    std::vector<std::string> appLists(100, "com.test.app");
++    int32_t ret = DlpTransparentEncManager::GetInstance().SetControlledAppLists(appLists, DEFAULT_USER_ID, true);
++    ASSERT_EQ(ret, DLP_OK);
++}
++
++/**
++ * @tc.name: SetControlledAppLists006
++ * @tc.desc: test SetControlledAppLists with empty appLists does not trigger size limit rejection
++ * @tc.type: FUNC
++ * @tc.require:
++ */
++HWTEST_F(DlpTransparentEncManagerTest, SetControlledAppLists006, TestSize.Level1)
++{
++    TestMock::SetDlopenShouldFail(false);
++    TestMock::SetDlsymShouldFailFor(nullptr);
++    MockSetResult(0);
++    std::vector<std::string> appLists;
++    int32_t ret = DlpTransparentEncManager::GetInstance().SetControlledAppLists(appLists, DEFAULT_USER_ID, true);
++    // Empty list passes the size check (> MAX_APP_LISTS_SIZE), so it should NOT return
++    // DLP_PARSE_ERROR_VALUE_INVALID. The mock SDK may still reject empty lists,
++    // but that is not the concern of the size validation.
++    ASSERT_NE(ret, DLP_PARSE_ERROR_VALUE_INVALID);
++}
++
++/**
++ * @tc.name: SetControlledAppLists007
++ * @tc.desc: test SetControlledAppLists succeeds when appLists size is less than 100
++ * @tc.type: FUNC
++ * @tc.require:
++ */
++HWTEST_F(DlpTransparentEncManagerTest, SetControlledAppLists007, TestSize.Level1)
++{
++    TestMock::SetDlopenShouldFail(false);
++    TestMock::SetDlsymShouldFailFor(nullptr);
++    MockSetResult(0);
++    std::vector<std::string> appLists;
++    appLists.push_back("com.test.app1");
++    appLists.push_back("com.test.app2");
++    int32_t ret = DlpTransparentEncManager::GetInstance().SetControlledAppLists(appLists, DEFAULT_USER_ID, true);
++    ASSERT_EQ(ret, DLP_OK);
++}
++
++/**
++ * @tc.name: SetControlledAppListsLargeExceed001
++ * @tc.desc: test SetControlledAppLists returns DLP_PARSE_ERROR_VALUE_INVALID with large appLists far exceeding 100
++ * @tc.type: FUNC
++ * @tc.require:
++ */
++HWTEST_F(DlpTransparentEncManagerTest, SetControlledAppListsLargeExceed001, TestSize.Level1)
++{
++    std::vector<std::string> appLists(200, "com.test.app");
++    int32_t ret = DlpTransparentEncManager::GetInstance().SetControlledAppLists(appLists, DEFAULT_USER_ID, true);
++    ASSERT_EQ(ret, DLP_PARSE_ERROR_VALUE_INVALID);
++}
++
+ HWTEST_F(DlpTransparentEncManagerTest, DockerPolicyInfoDefaultValues001, TestSize.Level0)
+ {
+     DockerPolicyInfo info;
+diff --git a/test/unittest/mock/c_mock_common.h b/test/unittest/mock/c_mock_common.h
+index efff23e..f54772a 100644
+--- a/test/unittest/mock/c_mock_common.h
++++ b/test/unittest/mock/c_mock_common.h
+@@ -42,6 +42,15 @@ CommonMockFuncT GetMockFunc(const std::string& funcName);
+ void SetMockCallback(const std::string& funcName, CommonMockFuncT func);
+ 
+ uint32_t GetMockConditionCounts(const std::string& funcName);
++
++// memset_s call recording accessors
++void ResetMemsetSRecord(void);
++int GetMemsetSCallCount(void);
++void *GetMemsetSLastDest(void);
++size_t GetMemsetSLastDestMax(void);
++int GetMemsetSLastC(void);
++size_t GetMemsetSLastCount(void);
++
+ #ifdef __cplusplus
+ }
+ #endif
+diff --git a/test/unittest/mock/file_io_mock.cpp b/test/unittest/mock/file_io_mock.cpp
+index 253a894..62a1c7b 100644
+--- a/test/unittest/mock/file_io_mock.cpp
++++ b/test/unittest/mock/file_io_mock.cpp
+@@ -28,6 +28,14 @@ typedef ssize_t (*WriteFuncT)(int fd, const void *buf, size_t count);
+ typedef int (*FtruncateFuncT)(int fd, off_t length);
+ typedef errno_t (*MemcpyFuncT)(void *dest, size_t destMax, const void *src, size_t count);
+ typedef ssize_t (*ReadFuncT)(int fd, void *dest, size_t maxCount);
++typedef errno_t (*MemsetFuncT)(void *dest, size_t destMax, int c, size_t count);
++
++// Recording state for memset_s calls
++static void *g_memsetSLastDest = nullptr;
++static size_t g_memsetSLastDestMax = 0;
++static int g_memsetSLastC = -1;
++static size_t g_memsetSLastCount = 0;
++static int g_memsetSCallCount = 0;
+ 
+ off_t lseek(int fd, off_t offset, int whence)
+ {
+@@ -103,6 +111,60 @@ ssize_t read(int fd, void *dest, size_t maxCount)
+     return (*func)(fd, dest, maxCount);
+ }
+ 
++void ResetMemsetSRecord(void)
++{
++    g_memsetSLastDest = nullptr;
++    g_memsetSLastDestMax = 0;
++    g_memsetSLastC = -1;
++    g_memsetSLastCount = 0;
++    g_memsetSCallCount = 0;
++}
++
++int GetMemsetSCallCount(void)
++{
++    return g_memsetSCallCount;
++}
++
++void *GetMemsetSLastDest(void)
++{
++    return g_memsetSLastDest;
++}
++
++size_t GetMemsetSLastDestMax(void)
++{
++    return g_memsetSLastDestMax;
++}
++
++int GetMemsetSLastC(void)
++{
++    return g_memsetSLastC;
++}
++
++size_t GetMemsetSLastCount(void)
++{
++    return g_memsetSLastCount;
++}
++
++errno_t memset_s(void *dest, size_t destMax, int c, size_t count)
++{
++    // Record call info (always, regardless of mock state)
++    g_memsetSLastDest = dest;
++    g_memsetSLastDestMax = destMax;
++    g_memsetSLastC = c;
++    g_memsetSLastCount = count;
++    g_memsetSCallCount++;
++
++    if (IsFuncNeedMock("memset_s")) {
++        return -1;
++    }
++
++    MemsetFuncT func = reinterpret_cast<MemsetFuncT>(dlsym(RTLD_NEXT, "memset_s"));
++    if (func == nullptr) {
++        return -1;
++    }
++    return (*func)(dest, destMax, c, count);
++}
++
+ #ifdef __cplusplus
+ }
+ #endif
