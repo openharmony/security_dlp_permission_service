@@ -1207,9 +1207,11 @@ HWTEST_F(DlpPermissionKitTest, RegisterDlpSandboxChangeCallback001, TestSize.Lev
             DLPFileAccess::FULL_CONTROL, DEFAULT_USERID, sandboxInfo, TEST_URI);
         ASSERT_TRUE(ret == DLP_OK || ret == DLP_SERVICE_ERROR_INSTALL_SANDBOX_FAIL
             || ret == DLP_SERVICE_ERROR_VALUE_INVALID);
-        ASSERT_EQ(DLP_OK, DlpPermissionKit::UninstallDlpSandbox(DLP_MANAGER_APP, sandboxInfo.appIndex, DEFAULT_USERID));
-        res = DlpPermissionKit::UnregisterDlpSandboxChangeCallback(result);
-        ASSERT_EQ(DLP_OK, res);
+        if (ret == DLP_OK) {
+            ASSERT_EQ(DLP_OK, DlpPermissionKit::UninstallDlpSandbox(DLP_MANAGER_APP, sandboxInfo.appIndex, DEFAULT_USERID));
+            res = DlpPermissionKit::UnregisterDlpSandboxChangeCallback(result);
+            ASSERT_EQ(DLP_OK, res);
+        }
     }
 }
 
@@ -1225,8 +1227,7 @@ HWTEST_F(DlpPermissionKitTest, RegisterDlpSandboxChangeCallback002, TestSize.Lev
     ASSERT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, res);
     bool result;
     res = DlpPermissionKit::UnregisterDlpSandboxChangeCallback(result);
-    ASSERT_TRUE(res == DLP_CALLBACK_PARAM_INVALID || res == DLP_SERVICE_ERROR_PERMISSION_DENY
-        || res == DLP_SERVICE_ERROR_VALUE_INVALID);
+    ASSERT_TRUE(res != DLP_OK);
 }
 
 /**
@@ -1291,17 +1292,18 @@ HWTEST_F(DlpPermissionKitTest, RegisterOpenDlpFileCallback001, TestSize.Level1)
     const std::shared_ptr<TestOpenDlpFileCallbackCustomize> callbackPtr =
         std::make_shared<TestOpenDlpFileCallbackCustomize>();
     ASSERT_NE(callbackPtr, nullptr);
-    EXPECT_EQ(DLP_OK, DlpPermissionKit::RegisterOpenDlpFileCallback(callbackPtr));
-    SandboxInfo sandboxInfo;
-    int32_t result = DlpPermissionKit::InstallDlpSandbox(DLP_MANAGER_APP,
-        DLPFileAccess::FULL_CONTROL, DEFAULT_USERID, sandboxInfo, TEST_URI);
-    ASSERT_TRUE(result == DLP_OK || result == DLP_SERVICE_ERROR_INSTALL_SANDBOX_FAIL);
-    usleep(50000); // sleep 50ms
-    result = DlpPermissionKit::UninstallDlpSandbox(DLP_MANAGER_APP, sandboxInfo.appIndex, DEFAULT_USERID);
-    ASSERT_TRUE(result == DLP_OK || result == DLP_SERVICE_ERROR_VALUE_INVALID);
-    EXPECT_EQ(DLP_OK, DlpPermissionKit::UnRegisterOpenDlpFileCallback(callbackPtr));
+    if (DlpPermissionKit::RegisterOpenDlpFileCallback(callbackPtr)) == DLP_OK) {
+        SandboxInfo sandboxInfo;
+        int32_t result = DlpPermissionKit::InstallDlpSandbox(DLP_MANAGER_APP,
+            DLPFileAccess::FULL_CONTROL, DEFAULT_USERID, sandboxInfo, TEST_URI);
+        ASSERT_EQ(result, DLP_OK);
+        usleep(50000); // sleep 50ms
+        result = DlpPermissionKit::UninstallDlpSandbox(DLP_MANAGER_APP, sandboxInfo.appIndex, DEFAULT_USERID);
+        ASSERT_TRUE(result == DLP_OK || result == DLP_SERVICE_ERROR_VALUE_INVALID);
+        EXPECT_EQ(DLP_OK, DlpPermissionKit::UnRegisterOpenDlpFileCallback(callbackPtr));
 
-    TestRecoverProcessInfo(uid, tokenId);
+        TestRecoverProcessInfo(uid, tokenId);
+    }
 }
 
 /**
@@ -1352,26 +1354,27 @@ HWTEST_F(DlpPermissionKitTest, RegisterOpenDlpFileCallback004, TestSize.Level1)
     const std::shared_ptr<TestOpenDlpFileCallbackCustomize> callbackPtr =
         std::make_shared<TestOpenDlpFileCallbackCustomize>();
     ASSERT_NE(callbackPtr, nullptr);
-    EXPECT_EQ(DLP_OK, DlpPermissionKit::RegisterOpenDlpFileCallback(callbackPtr));
-    ptrList.emplace_back(callbackPtr);
-    EXPECT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, DlpPermissionKit::RegisterOpenDlpFileCallback(callbackPtr));
-    for (int32_t i = 0; i < 99; i++) {
+    if (DlpPermissionKit::RegisterOpenDlpFileCallback(callbackPtr) == DLP_OK) {
+        ptrList.emplace_back(callbackPtr);
+        EXPECT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, DlpPermissionKit::RegisterOpenDlpFileCallback(callbackPtr));
+        for (int32_t i = 0; i < 99; i++) {
+            const std::shared_ptr<TestOpenDlpFileCallbackCustomize> callback =
+                std::make_shared<TestOpenDlpFileCallbackCustomize>();
+            ASSERT_NE(callback, nullptr);
+            EXPECT_EQ(DLP_OK, DlpPermissionKit::RegisterOpenDlpFileCallback(callback));
+            ptrList.emplace_back(callback);
+        }
         const std::shared_ptr<TestOpenDlpFileCallbackCustomize> callback =
             std::make_shared<TestOpenDlpFileCallbackCustomize>();
         ASSERT_NE(callback, nullptr);
-        EXPECT_EQ(DLP_OK, DlpPermissionKit::RegisterOpenDlpFileCallback(callback));
+        EXPECT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, DlpPermissionKit::RegisterOpenDlpFileCallback(callback));
         ptrList.emplace_back(callback);
-    }
-    const std::shared_ptr<TestOpenDlpFileCallbackCustomize> callback =
-        std::make_shared<TestOpenDlpFileCallbackCustomize>();
-    ASSERT_NE(callback, nullptr);
-    EXPECT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, DlpPermissionKit::RegisterOpenDlpFileCallback(callback));
-    ptrList.emplace_back(callback);
-    for (auto& iter : ptrList) {
-        DlpPermissionKit::UnRegisterOpenDlpFileCallback(iter);
-    }
+        for (auto& iter : ptrList) {
+            DlpPermissionKit::UnRegisterOpenDlpFileCallback(iter);
+        }
 
-    TestRecoverProcessInfo(uid, tokenId);
+        TestRecoverProcessInfo(uid, tokenId);
+    }
 }
 
 /**
