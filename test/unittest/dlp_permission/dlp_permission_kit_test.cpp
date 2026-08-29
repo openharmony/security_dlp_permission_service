@@ -437,7 +437,7 @@ HWTEST_F(DlpPermissionKitTest, SetRetentionState01, TestSize.Level1)
         ASSERT_TRUE(TestSetSelfTokenId(tokenId));
         retentionSandBoxInfoVec.clear();
         int32_t ret = DlpPermissionKit::GetRetentionSandboxList(DLP_MANAGER_APP, retentionSandBoxInfoVec);
-        ASSERT_EQ(ret == DLP_SERVICE_ERROR_API_NOT_FOR_SANDBOX_ERROR || ret == DLP_SERVICE_ERROR_VALUE_INVALID);
+        ASSERT_TRUE(ret == DLP_SERVICE_ERROR_API_NOT_FOR_SANDBOX_ERROR || ret == DLP_SERVICE_ERROR_VALUE_INVALID);
         ASSERT_TRUE(TestSetSelfTokenId(normalTokenId));
         ASSERT_EQ(DLP_OK, DlpPermissionKit::GetRetentionSandboxList(DLP_MANAGER_APP, retentionSandBoxInfoVec));
         ASSERT_TRUE(0 == retentionSandBoxInfoVec.size());
@@ -995,7 +995,7 @@ HWTEST_F(DlpPermissionKitTest, IsInDlpSandbox002, TestSize.Level1)
             || result == DLP_SERVICE_ERROR_PERMISSION_DENY);
         if (result == DLP_OK) {
             ASSERT_EQ(inSandbox, true);
-        }       
+        }
     }
     TestUninstallDlpSandbox(DLP_MANAGER_APP, sandboxInfo.appIndex, DEFAULT_USERID);
     TestRecoverProcessInfo(uid, tokenId);
