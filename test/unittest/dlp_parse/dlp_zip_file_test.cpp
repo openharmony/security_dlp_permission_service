@@ -16,6 +16,7 @@
 #include "dlp_zip_file_test.h"
 #include <cstdio>
 #include <cstring>
+#include <securec.h>
 #include <fcntl.h>
 #include <iostream>
 #include <fstream>
