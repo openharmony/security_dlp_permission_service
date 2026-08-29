@@ -34,6 +34,8 @@ group("dlp_permission_build_module_test") {
       ":dlp_permission_static_test",
       ":dlp_permission_sdk_load_test",
       ":dlp_transparent_enc_manager_test",
+      add
+      
     ]
   }
 }
