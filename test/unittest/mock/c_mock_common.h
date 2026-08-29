@@ -42,6 +42,15 @@ CommonMockFuncT GetMockFunc(const std::string& funcName);
 void SetMockCallback(const std::string& funcName, CommonMockFuncT func);
 
 uint32_t GetMockConditionCounts(const std::string& funcName);
+
+// memset_s call recording accessors
+void ResetMemsetSRecord(void);
+int GetMemsetSCallCount(void);
+void *GetMemsetSLastDest(void);
+size_t GetMemsetSLastDestMax(void);
+int GetMemsetSLastC(void);
+size_t GetMemsetSLastCount(void);
+
 #ifdef __cplusplus
 }
 #endif

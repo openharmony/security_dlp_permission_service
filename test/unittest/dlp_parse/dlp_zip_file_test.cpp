@@ -548,6 +548,141 @@ HWTEST_F(DlpZipFileTest, Truncate001, TestSize.Level0)
 }
 
 /**
+ * @tc.name: SetEncryptCert004
+ * @tc.desc: test SetEncryptCert clears old cert data with memset_s before delete when cert_.data is not null
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpZipFileTest, SetEncryptCert004, TestSize.Level0)
+{
+    DLP_LOG_INFO(LABEL, "SetEncryptCert004");
+    int fdDlp = open("/data/fuse_test_dlp.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
+    ASSERT_NE(fdDlp, -1);
+
+    DlpZipFile testFile(fdDlp, DLP_TEST_DIR, 0, "txt");
+    initDlpFileCiper(testFile);
+
+    // Set up old cert with known data pattern
+    const uint32_t oldCertSize = 16;
+    uint8_t *oldCert = new (std::nothrow) uint8_t[oldCertSize];
+    ASSERT_NE(oldCert, nullptr);
+    memset(oldCert, 0xAA, oldCertSize);  // Fill with recognizable pattern
+    testFile.cert_.data = oldCert;
+    testFile.cert_.size = oldCertSize;
+
+    // Prepare new cert
+    uint8_t newCertData[32] = {};
+    struct DlpBlob newCert = {
+        .data = newCertData,
+        .size = 32
+    };
+
+    // Reset memset_s recording, then call SetEncryptCert
+    ResetMemsetSRecord();
+    EXPECT_EQ(DLP_OK, testFile.SetEncryptCert(newCert));
+
+    // Verify memset_s was called to clear old cert data before delete
+    EXPECT_GE(GetMemsetSCallCount(), 1);
+    EXPECT_EQ(oldCert, GetMemsetSLastDest());
+    EXPECT_EQ(static_cast<size_t>(oldCertSize), GetMemsetSLastDestMax());
+    EXPECT_EQ(0, GetMemsetSLastC());
+    EXPECT_EQ(static_cast<size_t>(oldCertSize), GetMemsetSLastCount());
+
+    // Verify new cert is set correctly
+    ASSERT_NE(testFile.cert_.data, nullptr);
+    EXPECT_EQ(testFile.cert_.size, static_cast<uint32_t>(32));
+
+    close(fdDlp);
+    unlink("/data/fuse_test_dlp.txt");
+}
+
+/**
+ * @tc.name: SetEncryptCert005
+ * @tc.desc: test SetEncryptCert does not crash when cert_.data is null
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpZipFileTest, SetEncryptCert005, TestSize.Level0)
+{
+    DLP_LOG_INFO(LABEL, "SetEncryptCert005");
+    int fdDlp = open("/data/fuse_test_dlp.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
+    ASSERT_NE(fdDlp, -1);
+
+    DlpZipFile testFile(fdDlp, DLP_TEST_DIR, 0, "txt");
+    initDlpFileCiper(testFile);
+
+    // Ensure cert_.data is null
+    if (testFile.cert_.data != nullptr) {
+        delete[] testFile.cert_.data;
+        testFile.cert_.data = nullptr;
+        testFile.cert_.size = 0;
+    }
+
+    // Set new cert when old cert is null - should not crash
+    uint8_t newCertData[16] = {};
+    struct DlpBlob newCert = {
+        .data = newCertData,
+        .size = 16
+    };
+
+    EXPECT_EQ(DLP_OK, testFile.SetEncryptCert(newCert));
+    ASSERT_NE(testFile.cert_.data, nullptr);
+    EXPECT_EQ(testFile.cert_.size, static_cast<uint32_t>(16));
+
+    close(fdDlp);
+    unlink("/data/fuse_test_dlp.txt");
+}
+
+/**
+ * @tc.name: SetEncryptCert006
+ * @tc.desc: test SetEncryptCert called multiple times consecutively, old cert cleared each time
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpZipFileTest, SetEncryptCert006, TestSize.Level0)
+{
+    DLP_LOG_INFO(LABEL, "SetEncryptCert006");
+    int fdDlp = open("/data/fuse_test_dlp.txt", O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
+    ASSERT_NE(fdDlp, -1);
+
+    DlpZipFile testFile(fdDlp, DLP_TEST_DIR, 0, "txt");
+    initDlpFileCiper(testFile);
+
+    // First call: set cert with size 16
+    uint8_t certData1[16] = {};
+    struct DlpBlob cert1 = {
+        .data = certData1,
+        .size = 16
+    };
+    EXPECT_EQ(DLP_OK, testFile.SetEncryptCert(cert1));
+    ASSERT_NE(testFile.cert_.data, nullptr);
+    EXPECT_EQ(testFile.cert_.size, static_cast<uint32_t>(16));
+
+    // Second call: set cert with size 32, old cert should be memset_s cleared before delete
+    uint8_t certData2[32] = {};
+    struct DlpBlob cert2 = {
+        .data = certData2,
+        .size = 32
+    };
+    EXPECT_EQ(DLP_OK, testFile.SetEncryptCert(cert2));
+    ASSERT_NE(testFile.cert_.data, nullptr);
+    EXPECT_EQ(testFile.cert_.size, static_cast<uint32_t>(32));
+
+    // Third call: set cert with size 8, old cert should be memset_s cleared before delete
+    uint8_t certData3[8] = {};
+    struct DlpBlob cert3 = {
+        .data = certData3,
+        .size = 8
+    };
+    EXPECT_EQ(DLP_OK, testFile.SetEncryptCert(cert3));
+    ASSERT_NE(testFile.cert_.data, nullptr);
+    EXPECT_EQ(testFile.cert_.size, static_cast<uint32_t>(8));
+
+    close(fdDlp);
+    unlink("/data/fuse_test_dlp.txt");
+}
+
+/**
  * @tc.name: Truncate002
  * @tc.desc: test size overflow
  * @tc.type: FUNC

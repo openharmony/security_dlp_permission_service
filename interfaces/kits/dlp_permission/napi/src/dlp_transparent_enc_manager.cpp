@@ -32,6 +32,7 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
     LOG_CORE, SECURITY_DOMAIN_DLP_PERMISSION, "DlpTransparentEncManager"
 };
 constexpr size_t SIZE_64_BIT = 8;
+constexpr uint32_t MAX_APP_LISTS_SIZE = 100;
 static const std::string DLP_CREDENTIAL_TRANSPARENT_ENC_32_PATH = "/system/lib/libdlp_transparent_enc_sdk.z.so";
 static const std::string DLP_CREDENTIAL_TRANSPARENT_ENC_64_PATH = "/system/lib64/libdlp_transparent_enc_sdk.z.so";
 }  // namespace
@@ -128,6 +129,11 @@ int32_t DlpTransparentEncManager::LoadDlpCredentialService()
 int32_t DlpTransparentEncManager::SetControlledAppLists(const std::vector<std::string> &appLists,
     int32_t userId, bool userIdSet)
 {
+    if (appLists.size() > MAX_APP_LISTS_SIZE) {
+        DLP_LOG_ERROR(LABEL, "appLists size %{public}zu exceeds max limit %{public}u",
+            appLists.size(), MAX_APP_LISTS_SIZE);
+        return DLP_PARSE_ERROR_VALUE_INVALID;
+    }
     {
         std::lock_guard<std::mutex> lock(mutex_);
         int32_t ret = LoadDlpCredentialService();

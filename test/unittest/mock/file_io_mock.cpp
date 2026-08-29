@@ -28,6 +28,14 @@ typedef ssize_t (*WriteFuncT)(int fd, const void *buf, size_t count);
 typedef int (*FtruncateFuncT)(int fd, off_t length);
 typedef errno_t (*MemcpyFuncT)(void *dest, size_t destMax, const void *src, size_t count);
 typedef ssize_t (*ReadFuncT)(int fd, void *dest, size_t maxCount);
+typedef errno_t (*MemsetFuncT)(void *dest, size_t destMax, int c, size_t count);
+
+// Recording state for memset_s calls
+static void *g_memsetSLastDest = nullptr;
+static size_t g_memsetSLastDestMax = 0;
+static int g_memsetSLastC = -1;
+static size_t g_memsetSLastCount = 0;
+static int g_memsetSCallCount = 0;
 
 off_t lseek(int fd, off_t offset, int whence)
 {
@@ -101,6 +109,60 @@ ssize_t read(int fd, void *dest, size_t maxCount)
         return -1;
     }
     return (*func)(fd, dest, maxCount);
+}
+
+void ResetMemsetSRecord(void)
+{
+    g_memsetSLastDest = nullptr;
+    g_memsetSLastDestMax = 0;
+    g_memsetSLastC = -1;
+    g_memsetSLastCount = 0;
+    g_memsetSCallCount = 0;
+}
+
+int GetMemsetSCallCount(void)
+{
+    return g_memsetSCallCount;
+}
+
+void *GetMemsetSLastDest(void)
+{
+    return g_memsetSLastDest;
+}
+
+size_t GetMemsetSLastDestMax(void)
+{
+    return g_memsetSLastDestMax;
+}
+
+int GetMemsetSLastC(void)
+{
+    return g_memsetSLastC;
+}
+
+size_t GetMemsetSLastCount(void)
+{
+    return g_memsetSLastCount;
+}
+
+errno_t memset_s(void *dest, size_t destMax, int c, size_t count)
+{
+    // Record call info (always, regardless of mock state)
+    g_memsetSLastDest = dest;
+    g_memsetSLastDestMax = destMax;
+    g_memsetSLastC = c;
+    g_memsetSLastCount = count;
+    g_memsetSCallCount++;
+
+    if (IsFuncNeedMock("memset_s")) {
+        return -1;
+    }
+
+    MemsetFuncT func = reinterpret_cast<MemsetFuncT>(dlsym(RTLD_NEXT, "memset_s"));
+    if (func == nullptr) {
+        return -1;
+    }
+    return (*func)(dest, destMax, c, count);
 }
 
 #ifdef __cplusplus
