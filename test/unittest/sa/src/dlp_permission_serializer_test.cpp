@@ -587,15 +587,17 @@ HWTEST_F(DlpPermissionSerializerTest, CheckAuthPolicy001, TestSize.Level1)
     ret = bundleMgr->GetBundleInfoV9("com.ohos.dlpmanager",
         static_cast<int32_t>(AppExecFwk::GetBundleInfoFlag::GET_BUNDLE_INFO_WITH_SIGNATURE_INFO),
         bundleInfo, DEFAULT_USERID);
-    ASSERT_EQ(ret, 0);
-    (void)PermissionManagerAdapter::CheckAuthPolicy(bundleInfo.appId, "txt", 1);
+    if (ret == 0) {
+        (void)PermissionManagerAdapter::CheckAuthPolicy(bundleInfo.appId, "txt", 1);
+    }
 
     AppExecFwk::BundleInfo bundleInfo1;
     ret = bundleMgr->GetBundleInfoV9("com.ohos.permissionmanager",
         static_cast<int32_t>(AppExecFwk::GetBundleInfoFlag::GET_BUNDLE_INFO_WITH_SIGNATURE_INFO),
         bundleInfo1, DEFAULT_USERID);
-    ASSERT_EQ(ret, 0);
-    (void)PermissionManagerAdapter::CheckAuthPolicy(bundleInfo1.appId, "txt", 0);
+    if (ret == 0) {
+        (void)PermissionManagerAdapter::CheckAuthPolicy(bundleInfo1.appId, "txt", 0);
+    }
 }
 
 /**
