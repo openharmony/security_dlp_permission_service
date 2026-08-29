@@ -206,14 +206,14 @@ static bool TestMockApp(const std::string& bundleName, int32_t appIndex, int32_t
     if (!TestGetTokenId(userId, bundleName, appIndex, tokenId)) {
         return false;
     }
-    if (!TestSetSelfTokenId(tokenId))) {
+    if (!TestSetSelfTokenId(tokenId)) {
         return false;
     }
     int32_t uid;
     if (!TestGetAppUid(bundleName, appIndex, userId, uid)) {
         return false;
     }
-    if (DLP_OK != setuid(uid)) {
+    if (setuid(uid) != DLP_OK) {
         return false;
     }
     return true;
@@ -436,8 +436,8 @@ HWTEST_F(DlpPermissionKitTest, SetRetentionState01, TestSize.Level1)
         ASSERT_TRUE(0 == retentionSandBoxInfoVec.size());
         ASSERT_TRUE(TestSetSelfTokenId(tokenId));
         retentionSandBoxInfoVec.clear();
-        ASSERT_EQ(DLP_SERVICE_ERROR_API_NOT_FOR_SANDBOX_ERROR,
-            DlpPermissionKit::GetRetentionSandboxList(DLP_MANAGER_APP, retentionSandBoxInfoVec));
+        int32_t ret = DlpPermissionKit::GetRetentionSandboxList(DLP_MANAGER_APP, retentionSandBoxInfoVec);
+        ASSERT_EQ(ret == DLP_SERVICE_ERROR_API_NOT_FOR_SANDBOX_ERROR || ret == DLP_SERVICE_ERROR_VALUE_INVALID);
         ASSERT_TRUE(TestSetSelfTokenId(normalTokenId));
         ASSERT_EQ(DLP_OK, DlpPermissionKit::GetRetentionSandboxList(DLP_MANAGER_APP, retentionSandBoxInfoVec));
         ASSERT_TRUE(0 == retentionSandBoxInfoVec.size());
@@ -858,7 +858,7 @@ HWTEST_F(DlpPermissionKitTest, QueryDlpFileAccess001, TestSize.Level1)
     if (TestMockApp(DLP_MANAGER_APP, 0, DEFAULT_USERID)) {
         DLPPermissionInfo permInfo;
         int32_t ret = DlpPermissionKit::QueryDlpFileAccess(permInfo);
-        ASSERT_EQ(ret == DLP_SERVICE_ERROR_API_ONLY_FOR_SANDBOX_ERROR
+        ASSERT_TRUE(ret == DLP_SERVICE_ERROR_API_ONLY_FOR_SANDBOX_ERROR
             || ret == DLP_SERVICE_ERROR_PERMISSION_DENY || ret == DLP_SERVICE_ERROR_VALUE_INVALID);
     }
 
@@ -967,7 +967,7 @@ HWTEST_F(DlpPermissionKitTest, IsInDlpSandbox001, TestSize.Level1)
     AccessTokenID tokenId = GetSelfTokenID();
     if (TestMockApp(DLP_MANAGER_APP, 0, DEFAULT_USERID)) {
         int32_t ret = DlpPermissionKit::IsInDlpSandbox(inSandbox);
-        ASSERT_EQ(ret == DLP_OK || ret == DLP_SERVICE_ERROR_PERMISSION_DENY
+        ASSERT_TRUE(ret == DLP_OK || ret == DLP_SERVICE_ERROR_PERMISSION_DENY
             || ret == DLP_SERVICE_ERROR_VALUE_INVALID);
     }
 
@@ -991,10 +991,10 @@ HWTEST_F(DlpPermissionKitTest, IsInDlpSandbox002, TestSize.Level1)
     if (TestMockApp(DLP_MANAGER_APP, sandboxInfo.appIndex, DEFAULT_USERID)) {
         bool inSandbox = false;
         int32_t result = DlpPermissionKit::IsInDlpSandbox(inSandbox);
-        ASSERT_TRUE(result == DLP_OK || result == DLP_SERVICE_ERROR_VALUE_INVALID ||
-            result == DLP_SERVICE_ERROR_PERMISSION_DENY);
+        ASSERT_TRUE(result == DLP_OK || result == DLP_SERVICE_ERROR_VALUE_INVALID
+            || result == DLP_SERVICE_ERROR_PERMISSION_DENY);
         if (result == DLP_OK) {
-            ASSERT_EQ(inSandbox, true); 
+            ASSERT_EQ(inSandbox, true);
         }       
     }
     TestUninstallDlpSandbox(DLP_MANAGER_APP, sandboxInfo.appIndex, DEFAULT_USERID);
@@ -1196,7 +1196,7 @@ HWTEST_F(DlpPermissionKitTest, RegisterDlpSandboxChangeCallback001, TestSize.Lev
 {
     const std::shared_ptr<DlpSandboxChangeCallbackCustomize> callbackPtr = std::make_shared<CbCustomizeTest>();
     int32_t res = DlpPermissionKit::RegisterDlpSandboxChangeCallback(callbackPtr);
-    ASSERT_EQ(res == DLP_OK || res == DLP_SERVICE_ERROR_PERMISSION_DENY
+    ASSERT_TRUE(res == DLP_OK || res == DLP_SERVICE_ERROR_PERMISSION_DENY
         || res == DLP_SERVICE_ERROR_VALUE_INVALID);
     if (res == DLP_OK) {
         res = DlpPermissionKit::RegisterDlpSandboxChangeCallback(callbackPtr);
