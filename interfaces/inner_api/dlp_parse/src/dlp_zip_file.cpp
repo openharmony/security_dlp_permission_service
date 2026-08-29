@@ -374,6 +374,7 @@ int32_t DlpZipFile::SetEncryptCert(const struct DlpBlob& cert)
     }
 
     if (cert_.data != nullptr) {
+        (void)memset_s(cert_.data, cert_.size, 0, cert_.size);
         delete[] cert_.data;
         cert_.data = nullptr;
     }
