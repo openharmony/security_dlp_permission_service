@@ -811,8 +811,7 @@ HWTEST_F(DlpPermissionKitTest, QueryDlpFileCopyableByTokenId003, TestSize.Level1
     // query dlp file access with normal app tokenId
     bool copyable = false;
     AccessTokenID normalTokenId;
-    int32_t res = TestGetTokenId(DEFAULT_USERID, DLP_MANAGER_APP, 0, normalTokenId);
-    ASSERT_EQ(1, res);
+    ASSERT_TRUE(TestGetTokenId(DEFAULT_USERID, DLP_MANAGER_APP, 0, normalTokenId));
     ASSERT_EQ(copyable, false);
 }
 
