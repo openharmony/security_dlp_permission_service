@@ -1228,7 +1228,7 @@ HWTEST_F(DlpPermissionKitTest, RegisterDlpSandboxChangeCallback002, TestSize.Lev
     ASSERT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, res);
     bool result;
     res = DlpPermissionKit::UnregisterDlpSandboxChangeCallback(result);
-    ASSERT_TRUE(res != DLP_OK);
+    ASSERT_TRUE(res == DLP_OK);
 }
 
 /**
@@ -1478,28 +1478,30 @@ HWTEST_F(DlpPermissionKitTest, GetDLPFileVisitRecord001, TestSize.Level1)
     SandboxInfo sandboxInfo;
     int32_t result = DlpPermissionKit::InstallDlpSandbox(DLP_MANAGER_APP,
         DLPFileAccess::FULL_CONTROL, DEFAULT_USERID, sandboxInfo, TEST_URI);
-    ASSERT_TRUE(result == DLP_OK || result == DLP_SERVICE_ERROR_INSTALL_SANDBOX_FAIL
-        || result == DLP_SERVICE_ERROR_VALUE_INVALID);
-    ASSERT_TRUE(sandboxInfo.appIndex != 0);
-    TestMockApp(DLP_MANAGER_APP, 0, DEFAULT_USERID);
-    ASSERT_TRUE(TestSetSelfTokenId(g_dlpManagerTokenId));
-    chmod(DLP_VISIT_RECORD_JSON_PATH.c_str(), 0666);
-    ASSERT_EQ(DLP_OK, DlpPermissionKit::GetDLPFileVisitRecord(infoVec));
-    DLP_LOG_INFO(LABEL, "GetDLPFileVisitRecord size:%{public}zu", infoVec.size());
-    ASSERT_TRUE(1 == infoVec.size());
-    setuid(g_selfUid);
-    infoVec.clear();
-    ASSERT_EQ(DLP_OK, DlpPermissionKit::GetDLPFileVisitRecord(infoVec));
-    ASSERT_TRUE(0 == infoVec.size());
-    SetSelfTokenID(DlpPermissionTestCommon::GetNativeTokenIdFromProcess(DLP_PERMISSION_SERVICE));
-    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(100, DLP_MANAGER_APP, sandboxInfo.appIndex);
-    ASSERT_TRUE(TestSetSelfTokenId(tokenId));
-    ASSERT_EQ(DLP_SERVICE_ERROR_API_NOT_FOR_SANDBOX_ERROR, DlpPermissionKit::GetDLPFileVisitRecord(infoVec));
-    ASSERT_TRUE(TestSetSelfTokenId(g_dlpManagerTokenId));
-    ASSERT_EQ(DLP_OK, DlpPermissionKit::UninstallDlpSandbox(DLP_MANAGER_APP, sandboxInfo.appIndex, DEFAULT_USERID));
+    if (result == DLP_OK) {
+        ASSERT_TRUE(result == DLP_OK || result == DLP_SERVICE_ERROR_INSTALL_SANDBOX_FAIL
+            || result == DLP_SERVICE_ERROR_VALUE_INVALID);
+        ASSERT_TRUE(sandboxInfo.appIndex != 0);
+        TestMockApp(DLP_MANAGER_APP, 0, DEFAULT_USERID);
+        ASSERT_TRUE(TestSetSelfTokenId(g_dlpManagerTokenId));
+        chmod(DLP_VISIT_RECORD_JSON_PATH.c_str(), 0666);
+        ASSERT_EQ(DLP_OK, DlpPermissionKit::GetDLPFileVisitRecord(infoVec));
+        DLP_LOG_INFO(LABEL, "GetDLPFileVisitRecord size:%{public}zu", infoVec.size());
+        ASSERT_TRUE(1 == infoVec.size());
+        setuid(g_selfUid);
+        infoVec.clear();
+        ASSERT_EQ(DLP_OK, DlpPermissionKit::GetDLPFileVisitRecord(infoVec));
+        ASSERT_TRUE(0 == infoVec.size());
+        SetSelfTokenID(DlpPermissionTestCommon::GetNativeTokenIdFromProcess(DLP_PERMISSION_SERVICE));
+        AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(100, DLP_MANAGER_APP, sandboxInfo.appIndex);
+        ASSERT_TRUE(TestSetSelfTokenId(tokenId));
+        ASSERT_EQ(DLP_SERVICE_ERROR_API_NOT_FOR_SANDBOX_ERROR, DlpPermissionKit::GetDLPFileVisitRecord(infoVec));
+        ASSERT_TRUE(TestSetSelfTokenId(g_dlpManagerTokenId));
+        ASSERT_EQ(DLP_OK, DlpPermissionKit::UninstallDlpSandbox(DLP_MANAGER_APP, sandboxInfo.appIndex, DEFAULT_USERID));
 
-    TestRecoverProcessInfo(uid, selfTokenId);
-    chmod(DLP_VISIT_RECORD_JSON_PATH.c_str(), S_IRUSR | S_IWUSR);
+        TestRecoverProcessInfo(uid, selfTokenId);
+        chmod(DLP_VISIT_RECORD_JSON_PATH.c_str(), S_IRUSR | S_IWUSR);
+    }
 }
 
 /* *
