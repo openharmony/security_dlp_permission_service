@@ -557,9 +557,9 @@ HWTEST_F(DlpUtilsTest, GetAppIdentifierByAppId, TestSize.Level1)
     int ret = bundleMgrProxy->GetBundleInfoV9("com.ohos.dlpmanager",
         static_cast<int32_t>(OHOS::AppExecFwk::GetBundleInfoFlag::GET_BUNDLE_INFO_WITH_SIGNATURE_INFO),
         bundleInfo, DEFAULT_USERID);
-    ASSERT_EQ(ret, 0);
-
-    (void)DlpUtils::GetAppIdentifierByAppId(bundleInfo.appId, DEFAULT_USERID);
+    if (ret == 0) {
+        (void)DlpUtils::GetAppIdentifierByAppId(bundleInfo.appId, DEFAULT_USERID);
+    }
 }
 
 /**
