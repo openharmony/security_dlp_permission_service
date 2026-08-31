@@ -1479,8 +1479,6 @@ HWTEST_F(DlpPermissionKitTest, GetDLPFileVisitRecord001, TestSize.Level1)
     int32_t result = DlpPermissionKit::InstallDlpSandbox(DLP_MANAGER_APP,
         DLPFileAccess::FULL_CONTROL, DEFAULT_USERID, sandboxInfo, TEST_URI);
     if (result == DLP_OK) {
-        ASSERT_TRUE(result == DLP_OK || result == DLP_SERVICE_ERROR_INSTALL_SANDBOX_FAIL
-            || result == DLP_SERVICE_ERROR_VALUE_INVALID);
         ASSERT_TRUE(sandboxInfo.appIndex != 0);
         TestMockApp(DLP_MANAGER_APP, 0, DEFAULT_USERID);
         ASSERT_TRUE(TestSetSelfTokenId(g_dlpManagerTokenId));
