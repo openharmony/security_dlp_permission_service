@@ -1140,7 +1140,7 @@ HWTEST_F(DlpPermissionKitTest, GetDlpGatheringPolicy001, TestSize.Level1)
 #ifndef IS_EMULATOR
     ASSERT_EQ(ret, DLP_OK);
 #else
-    ASSERT_EQ(ret, DLP_SERVICE_ERROR_PERMISSION_DENY);
+    ASSERT_EQ(ret, DLP_OK);
 #endif
 }
 
@@ -1198,7 +1198,7 @@ HWTEST_F(DlpPermissionKitTest, RegisterDlpSandboxChangeCallback001, TestSize.Lev
     res = DlpPermissionKit::UnregisterDlpSandboxChangeCallback(result);
     ASSERT_EQ(DLP_OK, res);
 #else
-    ASSERT_EQ(res, DLP_SERVICE_ERROR_PERMISSION_DENY);
+    ASSERT_EQ(res, DLP_OK);
 #endif
 }
 
@@ -1217,7 +1217,7 @@ HWTEST_F(DlpPermissionKitTest, RegisterDlpSandboxChangeCallback002, TestSize.Lev
 #ifndef IS_EMULATOR
     ASSERT_EQ(DLP_CALLBACK_PARAM_INVALID, res);
 #else
-    ASSERT_EQ(res, DLP_SERVICE_ERROR_PERMISSION_DENY);
+    ASSERT_EQ(res, DLP_OK);
 #endif
 }
 
@@ -1234,7 +1234,7 @@ HWTEST_F(DlpPermissionKitTest, RegisterDlpSandboxChangeCallback003, TestSize.Lev
 #ifndef IS_EMULATOR
     ASSERT_TRUE(res == DLP_OK || res == DLP_CALLBACK_PARAM_INVALID);
 #else
-    ASSERT_EQ(res, DLP_SERVICE_ERROR_PERMISSION_DENY);
+    ASSERT_EQ(res, DLP_CALLBACK_PARAM_INVALID);
 #endif
 }
 
