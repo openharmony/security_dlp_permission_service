@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -1871,154 +1871,39 @@ bool ParseUIAbilityContextReq(
     return true;
 }
 
-static bool ParseWantUri(napi_env env, const napi_value& obj, OHOS::AAFwk::Want& requestWant, std::string& uri)
+bool ParseContextReq(napi_env env, const napi_value& obj,
+    std::shared_ptr<OHOS::AbilityRuntime::AbilityContext>& abilityContext)
 {
-    if (!GetStringValueByKey(env, obj, "uri", uri)) {
-        DLP_LOG_ERROR(LABEL, "get uri failed");
-        DlpNapiThrow(env, ERR_JS_URI_NOT_EXIST, "uri not exist in want");
+    DLP_LOG_DEBUG(LABEL, "begin ParseContextReq");
+    if (obj == nullptr) {
+        DLP_LOG_ERROR(LABEL, "context argument is null");
         return false;
     }
-    if (!IsStringLengthValid(uri, MAX_URI_LEN) || uri.empty()) {
-        DLP_LOG_ERROR(LABEL, "uri length is invalid");
-        DlpNapiThrow(env, ERR_JS_URI_NOT_EXIST, "uri length is invalid");
+    napi_valuetype valueType = napi_undefined;
+    napi_status typeofStatus = napi_typeof(env, obj, &valueType);
+    if (typeofStatus != napi_ok || valueType != napi_object) {
+        DLP_LOG_ERROR(LABEL, "context argument is not an object");
         return false;
     }
-    requestWant.SetUri(uri);
+    // Pre-check stage mode before calling ParseUIAbilityContextReq: for non-AbilityContext
+    // objects (e.g. ServiceExtensionContext) the conversion attempt is expected to fail,
+    // and ParseUIAbilityContextReq would log an ERROR, which is misleading for a normal
+    // 3-param flow. Only attempt the conversion for genuine stage contexts.
+    bool stageMode = false;
+    napi_status status = OHOS::AbilityRuntime::IsStageContext(env, obj, stageMode);
+    if (status != napi_ok || !stageMode) {
+        DLP_LOG_INFO(LABEL, "not a stage context (e.g. ServiceExtensionContext), context field will be null");
+        abilityContext = nullptr;
+        return true;
+    }
+    // This is a stage (AbilityContext-derived) object: parse it for SendMessageBack
+    // fallback. Failure here is abnormal and is logged as ERROR inside.
+    if (!ParseUIAbilityContextReq(env, obj, abilityContext)) {
+        DLP_LOG_INFO(LABEL, "not UIAbilityContext, context field will be null");
+        abilityContext = nullptr;
+    }
+    DLP_LOG_DEBUG(LABEL, "end ParseContextReq");
     return true;
-}
-static bool ParseWantParameters(napi_env env, const napi_value& obj, napi_value& wantParameters)
-{
-    wantParameters = GetNapiValue(env, obj, "parameters");
-    if (wantParameters == nullptr) {
-        DLP_LOG_ERROR(LABEL, "get wantParameters failed");
-        DlpNapiThrow(env, ERR_JS_PARAM_DISPLAY_NAME_NOT_EXIST, "parameters not exist in want");
-        return false;
-    }
-    return true;
-}
-static bool ParseDisplayName(napi_env env, napi_value wantParameters, std::string& displayName)
-{
-    if (!GetStringValueByKey(env, wantParameters, "displayName", displayName)) {
-        DLP_LOG_ERROR(LABEL, "get displayName failed");
-        DlpNapiThrow(env, ERR_JS_PARAM_DISPLAY_NAME_NOT_EXIST, "displayName not exist in want parameters");
-        return false;
-    }
-    if (!IsStringLengthValid(displayName, MAX_FILE_NAME_LEN) || displayName.empty()) {
-        DLP_LOG_ERROR(LABEL, "displayName length is invalid");
-        DlpNapiThrow(env, ERR_JS_PARAM_DISPLAY_NAME_NOT_EXIST, "displayName length is invalid");
-        return false;
-    }
-    return true;
-}
-static void BuildWantParams(AAFwk::WantParams& requestWantParam, const std::string& displayName)
-{
-    requestWantParam.SetParam("displayName", AAFwk::String::Box(displayName));
-    AAFwk::WantParams fileNameObj;
-    fileNameObj.SetParam("name", AAFwk::String::Box(displayName));
-    requestWantParam.SetParam("fileName", AAFwk::WantParamWrapper::Box(fileNameObj));
-}
-static void ParseLinkFileName(napi_env env, napi_value wantParameters, AAFwk::WantParams& requestWantParam)
-{
-    bool ret = false;
-    napi_status result = napi_has_named_property(env, wantParameters, "linkFileName", &ret);
-    if (result == napi_ok && ret) {
-        napi_value linkFileName = GetNapiValue(env, wantParameters, "linkFileName");
-        std::string linkFileNameStr;
-        ret = GetStringValueByKey(env, linkFileName, "name", linkFileNameStr) &&
-            IsStringLengthValid(linkFileNameStr, MAX_FILE_NAME_LEN);
-        if (ret && !linkFileNameStr.empty()) {
-            AAFwk::WantParams linkFileNameObj;
-            linkFileNameObj.SetParam("name", AAFwk::String::Box(linkFileNameStr));
-            requestWantParam.SetParam("linkFileName", AAFwk::WantParamWrapper::Box(linkFileNameObj));
-            DLP_LOG_DEBUG(LABEL, "set linkFileName");
-        }
-    }
-}
-bool ParseWantReq(napi_env env, const napi_value& obj, OHOS::AAFwk::Want& requestWant)
-{
-    requestWant.SetElementName(DLP_MANAGER_BUNDLENAME, DLP_MANAGER_ABILITYNAME);
-    std::string uri;
-    if (!ParseWantUri(env, obj, requestWant, uri)) {
-        return false;
-    }
-    napi_value wantParameters;
-    if (!ParseWantParameters(env, obj, wantParameters)) {
-        return false;
-    }
-    std::string displayName;
-    if (!ParseDisplayName(env, wantParameters, displayName)) {
-        return false;
-    }
-    AAFwk::WantParams requestWantParam;
-    BuildWantParams(requestWantParam, displayName);
-    ParseLinkFileName(env, wantParameters, requestWantParam);
-    requestWant.SetParams(requestWantParam);
-    requestWant.SetParam(PARAM_UI_EXTENSION_TYPE, SYS_COMMON_UI);
-    DLP_LOG_DEBUG(LABEL, "end ParseWantReq");
-    return true;
-}
-
-OHOS::Ace::ModalUIExtensionCallbacks CreateExtensionCallbacks(
-    std::shared_ptr<UIExtensionCallback>& uiExtCallback)
-{
-    OHOS::Ace::ModalUIExtensionCallbacks extensionCallbacks = {
-        [uiExtCallback](int32_t releaseCode) { uiExtCallback->OnRelease(releaseCode); },
-        [uiExtCallback](int32_t resultCode, const OHOS::AAFwk::Want& result) {
-            uiExtCallback->OnResult(resultCode, result); },
-        [uiExtCallback](const OHOS::AAFwk::WantParams& request) { uiExtCallback->OnReceive(request); },
-        [uiExtCallback](int32_t errorCode, const std::string& name, const std::string& message) {
-            uiExtCallback->OnError(errorCode, name, message); },
-        [uiExtCallback](const std::shared_ptr<OHOS::Ace::ModalUIExtensionProxy>& uiProxy) {
-            uiExtCallback->OnRemoteReady(uiProxy); },
-        [uiExtCallback]() { uiExtCallback->OnDestroy(); }
-    };
-    return extensionCallbacks;
-}
-
-void StartUIExtensionAbility(std::shared_ptr<UIExtensionRequestContext> asyncContext)
-{
-    DLP_LOG_DEBUG(LABEL, "begin StartUIExtensionAbility");
-    if (asyncContext == nullptr) {
-        DLP_LOG_ERROR(LABEL, "asyncContext is null");
-        return;
-    }
-    int32_t errCode = ERR_JS_INVALID_PARAMETER;
-    const char* errMsg = "StartUIExtensionAbility failed";
-    do {
-        auto abilityContext = asyncContext->context;
-        if (abilityContext == nullptr) {
-            DLP_LOG_ERROR(LABEL, "abilityContext is null");
-            errMsg = "abilityContext is null";
-            break;
-        }
-        auto uiContent = abilityContext->GetUIContent();
-        if (uiContent == nullptr) {
-            DLP_LOG_ERROR(LABEL, "uiContent is null");
-            errMsg = "uiContent is null";
-            break;
-        }
-
-        auto uiExtCallback = std::make_shared<UIExtensionCallback>(asyncContext);
-        auto extensionCallbacks = CreateExtensionCallbacks(uiExtCallback);
-
-        OHOS::Ace::ModalUIExtensionConfig uiExtConfig;
-        uiExtConfig.isProhibitBack = false;
-        int32_t sessionId =
-            uiContent->CreateModalUIExtension(asyncContext->requestWant, extensionCallbacks, uiExtConfig);
-        DLP_LOG_INFO(LABEL, "end CreateModalUIExtension sessionId = %{public}d", sessionId);
-        if (sessionId == 0) {
-            DLP_LOG_ERROR(LABEL, "CreateModalUIExtension failed, sessionId is %{public}d", sessionId);
-            errCode = ERR_JS_SYSTEM_SERVICE_EXCEPTION;
-            errMsg = "CreateModalUIExtension failed";
-            break;
-        }
-        uiExtCallback->SetSessionId(sessionId);
-        return;
-    } while (0);
-
-    napi_value error = GenerateBusinessError(asyncContext->env, errCode, errMsg);
-    napi_reject_deferred(asyncContext->env, asyncContext->deferred, error);
-    asyncContext->deferred = nullptr;
 }
 
 bool IsStringLengthValid(std::string& str, size_t maxLen, size_t minLen)
@@ -2029,110 +1914,6 @@ bool IsStringLengthValid(std::string& str, size_t maxLen, size_t minLen)
         return false;
     }
     return true;
-}
-
-UIExtensionCallback::UIExtensionCallback(std::shared_ptr<UIExtensionRequestContext>& reqContext)
-{
-    this->reqContext_ = reqContext;
-}
-
-void UIExtensionCallback::SetSessionId(int32_t sessionId)
-{
-    this->sessionId_ = sessionId;
-}
-
-bool UIExtensionCallback::SetErrorCode(int32_t code)
-{
-    if (this->reqContext_ == nullptr) {
-        DLP_LOG_ERROR(LABEL, "OnError reqContext is nullptr");
-        return false;
-    }
-    if (this->alreadyCallback_) {
-        DLP_LOG_DEBUG(LABEL, "alreadyCallback");
-        return false;
-    }
-    this->alreadyCallback_ = true;
-    this->reqContext_->errCode = code;
-    return true;
-}
-
-void UIExtensionCallback::OnRelease(int32_t releaseCode)
-{
-    DLP_LOG_DEBUG(LABEL, "UIExtensionComponent OnRelease(), releaseCode = %{public}d", releaseCode);
-    if (SetErrorCode(releaseCode)) {
-        SendMessageBack();
-    }
-}
-
-void UIExtensionCallback::OnResult(int32_t resultCode, const OHOS::AAFwk::Want& result)
-{
-    DLP_LOG_DEBUG(LABEL, "UIExtensionComponent OnResult(), resultCode = %{public}d", resultCode);
-    this->resultCode_ = resultCode;
-    this->resultWant_ = result;
-    if (SetErrorCode(0)) {
-        SendMessageBack();
-    }
-}
-
-void UIExtensionCallback::OnReceive(const OHOS::AAFwk::WantParams& request)
-{
-    DLP_LOG_DEBUG(LABEL, "UIExtensionComponent OnReceive()");
-}
-
-void UIExtensionCallback::OnError(int32_t errorCode, const std::string& name, const std::string& message)
-{
-    DLP_LOG_ERROR(LABEL,
-        "UIExtensionComponent OnError(), errorCode = %{public}d, name = %{public}s, message = %{public}s",
-        errorCode, name.c_str(), message.c_str());
-    if (SetErrorCode(errorCode)) {
-        SendMessageBack();
-    }
-}
-
-void UIExtensionCallback::OnRemoteReady(const std::shared_ptr<OHOS::Ace::ModalUIExtensionProxy>& uiProxy)
-{
-    DLP_LOG_DEBUG(LABEL, "UIExtensionComponent OnRemoteReady()");
-}
-
-void UIExtensionCallback::OnDestroy()
-{
-    DLP_LOG_DEBUG(LABEL, "UIExtensionComponent OnDestroy()");
-    if (SetErrorCode(0)) {
-        SendMessageBack();
-    }
-}
-
-void UIExtensionCallback::SendMessageBack()
-{
-    DLP_LOG_INFO(LABEL, "start SendMessageBack");
-    if (this->reqContext_ == nullptr) {
-        DLP_LOG_ERROR(LABEL, "reqContext is nullptr");
-        return;
-    }
-
-    auto abilityContext = this->reqContext_->context;
-    if (abilityContext != nullptr) {
-        auto uiContent = abilityContext->GetUIContent();
-        if (uiContent != nullptr) {
-            DLP_LOG_DEBUG(LABEL, "CloseModalUIExtension");
-            uiContent->CloseModalUIExtension(this->sessionId_);
-        }
-    }
-
-    napi_value nativeObjJs = nullptr;
-    NAPI_CALL_RETURN_VOID(this->reqContext_->env, napi_create_object(this->reqContext_->env, &nativeObjJs));
-    napi_value resultCode = nullptr;
-    NAPI_CALL_RETURN_VOID(this->reqContext_->env,
-        napi_create_int32(this->reqContext_->env, this->resultCode_, &resultCode));
-    NAPI_CALL_RETURN_VOID(this->reqContext_->env,
-        napi_set_named_property(this->reqContext_->env, nativeObjJs, "resultCode", resultCode));
-    napi_value resultWant = nullptr;
-    resultWant = OHOS::AppExecFwk::WrapWant(this->reqContext_->env, this->resultWant_);
-    NAPI_CALL_RETURN_VOID(this->reqContext_->env,
-        napi_set_named_property(this->reqContext_->env, nativeObjJs, "want", resultWant));
-
-    DLP_LOG_DEBUG(LABEL, "ProcessCallbackOrPromise");
-    ProcessCallbackOrPromise(this->reqContext_->env, this->reqContext_.get(), nativeObjJs);
 }
 
 }  // namespace DlpPermission
