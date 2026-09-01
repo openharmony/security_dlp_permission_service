@@ -58,7 +58,8 @@ static void TestGenerateCert(const uint8_t* data, size_t size)
     MessageParcel reply;
     MessageOption option;
     MessageParcel datas;
-    auto service = std::make_shared<DlpPermissionService>(SA_ID_DLP_PERMISSION_SERVICE, fdp.ConsumeIntegral<uint8_t>() % STATUS_NUM);
+    auto service = std::make_shared<DlpPermissionService>(SA_ID_DLP_PERMISSION_SERVICE,
+        fdp.ConsumeIntegral<uint8_t>() % STATUS_NUM);
     service->appStateObserver_ = new (std::nothrow) AppStateObserver();
     service->OnRemoteRequest(code, datas, reply, option);
 
@@ -66,7 +67,8 @@ static void TestGenerateCert(const uint8_t* data, size_t size)
     if (!datas1.WriteInterfaceToken(DlpPermissionServiceStub::GetDescriptor())) {
         return;
     }
-    auto service1 = std::make_shared<DlpPermissionService>(SA_ID_DLP_PERMISSION_SERVICE, fdp.ConsumeIntegral<uint8_t>() % STATUS_NUM);
+    auto service1 = std::make_shared<DlpPermissionService>(SA_ID_DLP_PERMISSION_SERVICE,
+        fdp.ConsumeIntegral<uint8_t>() % STATUS_NUM);
     service1->appStateObserver_ = new (std::nothrow) AppStateObserver();
     service1->OnRemoteRequest(code, datas1, reply, option);
 
@@ -78,7 +80,8 @@ static void TestGenerateCert(const uint8_t* data, size_t size)
     if (!datas2.WriteParcelable(&parcel)) {
         return;
     }
-    auto service2 = std::make_shared<DlpPermissionService>(SA_ID_DLP_PERMISSION_SERVICE, fdp.ConsumeIntegral<uint8_t>() % STATUS_NUM);
+    auto service2 = std::make_shared<DlpPermissionService>(SA_ID_DLP_PERMISSION_SERVICE,
+        fdp.ConsumeIntegral<uint8_t>() % STATUS_NUM);
     service2->appStateObserver_ = new (std::nothrow) AppStateObserver();
     service2->OnRemoteRequest(code, datas2, reply, option);
 }
@@ -96,7 +99,8 @@ static void TestParseCert(const uint8_t* data, size_t size)
     if (!datas.WriteInterfaceToken(DlpPermissionServiceStub::GetDescriptor())) {
         return;
     }
-    auto service = std::make_shared<DlpPermissionService>(SA_ID_DLP_PERMISSION_SERVICE, fdp.ConsumeIntegral<uint8_t>() % STATUS_NUM);
+    auto service = std::make_shared<DlpPermissionService>(SA_ID_DLP_PERMISSION_SERVICE,
+        fdp.ConsumeIntegral<uint8_t>() % STATUS_NUM);
     service->appStateObserver_ = new (std::nothrow) AppStateObserver();
     service->OnRemoteRequest(code, datas, reply, option);
 
@@ -108,7 +112,8 @@ static void TestParseCert(const uint8_t* data, size_t size)
     if (!datas1.WriteParcelable(certParcel)) {
         return;
     }
-    auto service1 = std::make_shared<DlpPermissionService>(SA_ID_DLP_PERMISSION_SERVICE, fdp.ConsumeIntegral<uint8_t>() % STATUS_NUM);
+    auto service1 = std::make_shared<DlpPermissionService>(SA_ID_DLP_PERMISSION_SERVICE,
+        fdp.ConsumeIntegral<uint8_t>() % STATUS_NUM);
     service1->appStateObserver_ = new (std::nothrow) AppStateObserver();
     service1->OnRemoteRequest(code, datas1, reply, option);
 
@@ -125,7 +130,8 @@ static void TestParseCert(const uint8_t* data, size_t size)
     if (!datas2.WriteRemoteObject(asyncStub->AsObject())) {
         return;
     }
-    auto service2 = std::make_shared<DlpPermissionService>(SA_ID_DLP_PERMISSION_SERVICE, fdp.ConsumeIntegral<uint8_t>() % STATUS_NUM);
+    auto service2 = std::make_shared<DlpPermissionService>(SA_ID_DLP_PERMISSION_SERVICE,
+        fdp.ConsumeIntegral<uint8_t>() % STATUS_NUM);
     service2->appStateObserver_ = new (std::nothrow) AppStateObserver();
     service2->OnRemoteRequest(code, datas2, reply, option);
 }
@@ -143,7 +149,8 @@ static void TestInstallDlpSandbox(const uint8_t* data, size_t size)
     if (!datas.WriteInterfaceToken(DlpPermissionServiceStub::GetDescriptor())) {
         return;
     }
-    auto service = std::make_shared<DlpPermissionService>(SA_ID_DLP_PERMISSION_SERVICE, fdp.ConsumeIntegral<uint8_t>() % STATUS_NUM);
+    auto service = std::make_shared<DlpPermissionService>(SA_ID_DLP_PERMISSION_SERVICE,
+        fdp.ConsumeIntegral<uint8_t>() % STATUS_NUM);
     service->appStateObserver_ = new (std::nothrow) AppStateObserver();
     service->OnRemoteRequest(code, datas, reply, option);
 }
@@ -161,7 +168,8 @@ static void TestGetSandboxExternalAuthorization(const uint8_t* data, size_t size
     if (!datas.WriteInterfaceToken(DlpPermissionServiceStub::GetDescriptor())) {
         return;
     }
-    auto service = std::make_shared<DlpPermissionService>(SA_ID_DLP_PERMISSION_SERVICE, fdp.ConsumeIntegral<uint8_t>() % STATUS_NUM);
+    auto service = std::make_shared<DlpPermissionService>(SA_ID_DLP_PERMISSION_SERVICE,
+        fdp.ConsumeIntegral<uint8_t>() % STATUS_NUM);
     service->appStateObserver_ = new (std::nothrow) AppStateObserver();
     service->OnRemoteRequest(code, datas, reply, option);
 }
@@ -179,7 +187,8 @@ static void TestRegisterRegisterDlpSandboxChangeCallback(const uint8_t* data, si
     if (!datas.WriteInterfaceToken(DlpPermissionServiceStub::GetDescriptor())) {
         return;
     }
-    auto service = std::make_shared<DlpPermissionService>(SA_ID_DLP_PERMISSION_SERVICE, fdp.ConsumeIntegral<uint8_t>() % STATUS_NUM);
+    auto service = std::make_shared<DlpPermissionService>(SA_ID_DLP_PERMISSION_SERVICE,
+        fdp.ConsumeIntegral<uint8_t>() % STATUS_NUM);
     service->appStateObserver_ = new (std::nothrow) AppStateObserver();
     service->OnRemoteRequest(code, datas, reply, option);
 }
@@ -197,7 +206,8 @@ static void TestRegisterRegisterOpenDlpFileCallback(const uint8_t* data, size_t 
     if (!datas.WriteInterfaceToken(DlpPermissionServiceStub::GetDescriptor())) {
         return;
     }
-    auto service = std::make_shared<DlpPermissionService>(SA_ID_DLP_PERMISSION_SERVICE, fdp.ConsumeIntegral<uint8_t>() % STATUS_NUM);
+    auto service = std::make_shared<DlpPermissionService>(SA_ID_DLP_PERMISSION_SERVICE,
+        fdp.ConsumeIntegral<uint8_t>() % STATUS_NUM);
     service->appStateObserver_ = new (std::nothrow) AppStateObserver();
     service->OnRemoteRequest(code, datas, reply, option);
 }
@@ -215,7 +225,8 @@ static void TestUnRegisterUnregisterOpenDlpFileCallback(const uint8_t* data, siz
     if (!datas.WriteInterfaceToken(DlpPermissionServiceStub::GetDescriptor())) {
         return;
     }
-    auto service = std::make_shared<DlpPermissionService>(SA_ID_DLP_PERMISSION_SERVICE, fdp.ConsumeIntegral<uint8_t>() % STATUS_NUM);
+    auto service = std::make_shared<DlpPermissionService>(SA_ID_DLP_PERMISSION_SERVICE,
+        fdp.ConsumeIntegral<uint8_t>() % STATUS_NUM);
     service->appStateObserver_ = new (std::nothrow) AppStateObserver();
     service->OnRemoteRequest(code, datas, reply, option);
 }
@@ -231,7 +242,8 @@ static void TestSetSandboxConfig(const uint8_t* data, size_t size)
     uint32_t code = static_cast<uint32_t>(IDlpPermissionServiceIpcCode::COMMAND_GET_SANDBOX_APP_CONFIG);
     MessageParcel reply;
     MessageOption option;
-    auto service = std::make_shared<DlpPermissionService>(SA_ID_DLP_PERMISSION_SERVICE, fdp.ConsumeIntegral<uint8_t>() % STATUS_NUM);
+    auto service = std::make_shared<DlpPermissionService>(SA_ID_DLP_PERMISSION_SERVICE,
+        fdp.ConsumeIntegral<uint8_t>() % STATUS_NUM);
     service->appStateObserver_ = new (std::nothrow) AppStateObserver();
     service->OnRemoteRequest(code, datas, reply, option);
 }
@@ -243,7 +255,8 @@ static void TestSetSandboxAppConfig(const uint8_t* data, size_t size)
     }
     FuzzedDataProvider fdp(data, size);
     std::string configInfo = CONFIGINGO;
-    auto service = std::make_shared<DlpPermissionService>(SA_ID_DLP_PERMISSION_SERVICE, fdp.ConsumeIntegral<uint8_t>() % STATUS_NUM);
+    auto service = std::make_shared<DlpPermissionService>(SA_ID_DLP_PERMISSION_SERVICE,
+        fdp.ConsumeIntegral<uint8_t>() % STATUS_NUM);
     service->appStateObserver_ = new (std::nothrow) AppStateObserver();
     service->SetSandboxAppConfig(configInfo);
 }
@@ -254,7 +267,8 @@ static void TestUnRegisterDlpSandboxChangeCallback(const uint8_t* data, size_t s
         return;
     }
     FuzzedDataProvider fdp(data, size);
-    auto service = std::make_shared<DlpPermissionService>(SA_ID_DLP_PERMISSION_SERVICE, fdp.ConsumeIntegral<uint8_t>() % STATUS_NUM);
+    auto service = std::make_shared<DlpPermissionService>(SA_ID_DLP_PERMISSION_SERVICE,
+        fdp.ConsumeIntegral<uint8_t>() % STATUS_NUM);
     service->appStateObserver_ = new (std::nothrow) AppStateObserver();
     bool flag = false;
     service->UnRegisterDlpSandboxChangeCallback(flag);
@@ -268,7 +282,8 @@ static void TestDump(const uint8_t* data, size_t size)
         return;
     }
     FuzzedDataProvider fdp(data, size);
-    auto service = std::make_shared<DlpPermissionService>(SA_ID_DLP_PERMISSION_SERVICE, fdp.ConsumeIntegral<uint8_t>() % STATUS_NUM);
+    auto service = std::make_shared<DlpPermissionService>(SA_ID_DLP_PERMISSION_SERVICE,
+        fdp.ConsumeIntegral<uint8_t>() % STATUS_NUM);
     service->appStateObserver_ = new (std::nothrow) AppStateObserver();
     std::vector<std::u16string> args;
     args.emplace_back(Str8ToStr16("-h"));
@@ -292,7 +307,8 @@ static void TestRemoveMDMPolicy(const uint8_t* data, size_t size)
         return;
     }
     FuzzedDataProvider fdp(data, size);
-    auto service = std::make_shared<DlpPermissionService>(SA_ID_DLP_PERMISSION_SERVICE, fdp.ConsumeIntegral<uint8_t>() % STATUS_NUM);
+    auto service = std::make_shared<DlpPermissionService>(SA_ID_DLP_PERMISSION_SERVICE,
+        fdp.ConsumeIntegral<uint8_t>() % STATUS_NUM);
     service->appStateObserver_ = new (std::nothrow) AppStateObserver();
     service->RemoveMDMPolicy();
 }
@@ -303,7 +319,8 @@ static void TestClearUnreservedSandbox(const uint8_t* data, size_t size)
         return;
     }
     FuzzedDataProvider fdp(data, size);
-    auto service = std::make_shared<DlpPermissionService>(SA_ID_DLP_PERMISSION_SERVICE, fdp.ConsumeIntegral<uint8_t>() % STATUS_NUM);
+    auto service = std::make_shared<DlpPermissionService>(SA_ID_DLP_PERMISSION_SERVICE,
+        fdp.ConsumeIntegral<uint8_t>() % STATUS_NUM);
     service->appStateObserver_ = new (std::nothrow) AppStateObserver();
     service->ClearUnreservedSandbox();
 }
@@ -314,7 +331,8 @@ static void TestRegister(const uint8_t* data, size_t size)
         return;
     }
     FuzzedDataProvider fdp(data, size);
-    auto service = std::make_shared<DlpPermissionService>(SA_ID_DLP_PERMISSION_SERVICE, fdp.ConsumeIntegral<uint8_t>() % STATUS_NUM);
+    auto service = std::make_shared<DlpPermissionService>(SA_ID_DLP_PERMISSION_SERVICE,
+        fdp.ConsumeIntegral<uint8_t>() % STATUS_NUM);
     service->appStateObserver_ = new (std::nothrow) AppStateObserver();
     service->UnregisterAccount();
     service->RegisterAccount();
@@ -334,7 +352,8 @@ static void TestWaterMark(const uint8_t* data, size_t size)
         return;
     }
     FuzzedDataProvider fdp(data, size);
-    auto service = std::make_shared<DlpPermissionService>(SA_ID_DLP_PERMISSION_SERVICE, fdp.ConsumeIntegral<uint8_t>() % STATUS_NUM);
+    auto service = std::make_shared<DlpPermissionService>(SA_ID_DLP_PERMISSION_SERVICE,
+        fdp.ConsumeIntegral<uint8_t>() % STATUS_NUM);
     service->appStateObserver_ = new (std::nothrow) AppStateObserver();
     service->CheckWaterMarkInfo();
     service->ChangeWaterMarkInfo();
@@ -348,7 +367,8 @@ static void TestDomainAccount(const uint8_t* data, size_t size)
         return;
     }
     FuzzedDataProvider fdp(data, size);
-    auto service = std::make_shared<DlpPermissionService>(SA_ID_DLP_PERMISSION_SERVICE, fdp.ConsumeIntegral<uint8_t>() % STATUS_NUM);
+    auto service = std::make_shared<DlpPermissionService>(SA_ID_DLP_PERMISSION_SERVICE,
+        fdp.ConsumeIntegral<uint8_t>() % STATUS_NUM);
     service->appStateObserver_ = new (std::nothrow) AppStateObserver();
     std::string accountNameInfo = fdp.ConsumeBytesAsString(FOUR);
     service->GetDomainAccountNameInfo(accountNameInfo);
