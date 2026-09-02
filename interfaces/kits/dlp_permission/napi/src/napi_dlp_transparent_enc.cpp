@@ -37,7 +37,6 @@ static constexpr int32_t THE_PARAM_ONE = 1;
 static constexpr int32_t THE_PARAM_ZERO = 0;
 static constexpr int32_t DEFAULT_USER_ID = 0;
 static constexpr int32_t MAX_MESSAGE_LEN = 4096;
-static constexpr uint32_t MAX_APP_LISTS_SIZE = 100;
 static std::string VERSION_FOR_2B = "1";
 static const std::string PERMISSION_DLP_POLICY_MANAGER = "ohos.permission.DLP_POLICY_MANAGER";
 enum PluginCmd {
@@ -115,10 +114,6 @@ bool GetStringArrayValue(napi_env env, napi_value jsObject, std::vector<std::str
     uint32_t size = 0;
     if (napi_get_array_length(env, jsObject, &size) != napi_ok) {
         DLP_LOG_ERROR(LABEL, "js get array size fail");
-        return false;
-    }
-    if (size > MAX_APP_LISTS_SIZE) {
-        DLP_LOG_ERROR(LABEL, "appLists size %{public}u exceeds max limit %{public}u", size, MAX_APP_LISTS_SIZE);
         return false;
     }
     for (uint32_t i = 0; i < size; i++) {
