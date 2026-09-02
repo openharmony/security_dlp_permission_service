@@ -772,3 +772,57 @@ HWTEST_F(DlpUtilsTest, IsExistFileLargeFile001, TestSize.Level1)
 
     unlink(path.c_str());
 }
+
+/**
+ * @tc.name: GetUdid001
+ * @tc.desc: test GetUdid success path, verify udid is populated
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpUtilsTest, GetUdid001, TestSize.Level0)
+{
+    DLP_LOG_INFO(UT_LABEL, "GetUdid001");
+    std::string udid;
+    bool ret = DlpUtils::GetUdid(udid);
+    if (ret) {
+        EXPECT_FALSE(udid.empty());
+        // Verify the udid string length is reasonable (UDID is typically 64 chars)
+        EXPECT_GT(udid.size(), 0u);
+    } else {
+        EXPECT_TRUE(udid.empty());
+    }
+}
+
+/**
+ * @tc.name: GetUdid002
+ * @tc.desc: test GetUdid called twice returns same udid value (idempotent)
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpUtilsTest, GetUdid002, TestSize.Level0)
+{
+    DLP_LOG_INFO(UT_LABEL, "GetUdid002");
+    std::string udid1;
+    std::string udid2;
+    bool ret1 = DlpUtils::GetUdid(udid1);
+    bool ret2 = DlpUtils::GetUdid(udid2);
+    if (ret1 && ret2) {
+        EXPECT_EQ(udid1, udid2);  // Same device should return same UDID
+    }
+}
+
+/**
+ * @tc.name: GetUdid003
+ * @tc.desc: test GetUdid with pre-populated string, verify it gets overwritten
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpUtilsTest, GetUdid003, TestSize.Level0)
+{
+    DLP_LOG_INFO(UT_LABEL, "GetUdid003");
+    std::string udid = "old_value_should_be_replaced";
+    bool ret = DlpUtils::GetUdid(udid);
+    if (ret) {
+        EXPECT_NE(udid, "old_value_should_be_replaced");
+    }
+}

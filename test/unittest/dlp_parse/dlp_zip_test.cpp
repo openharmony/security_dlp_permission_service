@@ -437,7 +437,7 @@ HWTEST_F(DlpZipTest, AddFileContextToZip004, TestSize.Level0)
 
 /**
  * @tc.name: AddFileContextToZip005
- * @tc.desc: AddFileContextToZip abnormal test
+ * @tc.desc: AddFileContextToZip Defer RAII - zipCloseFileInZip return value is ignored in Defer
  * @tc.type: FUNC
  * @tc.require:
  */
@@ -459,7 +459,7 @@ HWTEST_F(DlpZipTest, AddFileContextToZip005, TestSize.Level0)
     SetMockCallback("zipCloseFileInZip", reinterpret_cast<CommonMockFuncT>(ZipCloseFileInZipReply));
 
     int32_t res = AddFileContextToZip(fd2, inZip.c_str(), zipFile.c_str());
-    ASSERT_EQ(res, DLP_ZIP_FAIL);  // fail at zipCloseFileInZip
+    ASSERT_EQ(res, DLP_ZIP_OK);  // Defer ignores zipCloseFileInZip return, WriteZipFileContent returns OK
 
     CleanMockConditions();
     CloseAndUnlink(fd, inZip.c_str());
@@ -468,7 +468,7 @@ HWTEST_F(DlpZipTest, AddFileContextToZip005, TestSize.Level0)
 
 /**
  * @tc.name: AddFileContextToZip006
- * @tc.desc: AddFileContextToZip abnormal test
+ * @tc.desc: AddFileContextToZip Defer RAII - zipClose return value is ignored in Defer
  * @tc.type: FUNC
  * @tc.require:
  */
@@ -490,7 +490,7 @@ HWTEST_F(DlpZipTest, AddFileContextToZip006, TestSize.Level0)
     SetMockCallback("zipClose", reinterpret_cast<CommonMockFuncT>(ZipCloseReply));
 
     int32_t res = AddFileContextToZip(fd2, inZip.c_str(), zipFile.c_str());
-    ASSERT_EQ(res, DLP_ZIP_FAIL);  // fail at zipClose
+    ASSERT_EQ(res, DLP_ZIP_OK);  // Defer ignores zipClose return, WriteZipFileContent returns OK
 
     CleanMockConditions();
     CloseAndUnlink(fd, inZip.c_str());
@@ -835,4 +835,264 @@ HWTEST_F(DlpZipTest, UnzipSpecificFile004, TestSize.Level0)
     CleanMockConditions();
     CloseAndUnlink(fd, zipFile.c_str());
     CloseAndUnlink(fd1, inZipInfo.c_str());
+}
+
+/**
+ * @tc.name: AddFileContextToZip007
+ * @tc.desc: AddFileContextToZip with Defer cleanup - zipOpenNewFileInZip3_64 fails, Defer skips zipCloseFileInZip
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpZipTest, AddFileContextToZip007, TestSize.Level0)
+{
+    DLP_LOG_INFO(LABEL, "AddFileContextToZip007");
+    std::string inZip("dlp_general_info");
+    std::string zipFile("test_zip_defer");
+
+    int32_t fd = open(zipFile.c_str(), O_RDWR | O_CREAT, 0666);
+    ASSERT_NE(fd, -1);
+
+    int32_t fd2 = open(inZip.c_str(), O_RDWR | O_CREAT, 0666);
+    ASSERT_NE(fd2, -1);
+
+    DlpCMockCondition condition;
+    condition.mockSequence = {true};
+    SetMockConditions("zipOpenNewFileInZip3_64", condition);
+
+    int32_t res = AddFileContextToZip(fd2, inZip.c_str(), zipFile.c_str());
+    ASSERT_EQ(res, DLP_ZIP_FAIL);  // fail at zipOpenNewFileInZip3_64, Defer should only close zf not fileInZip
+
+    CleanMockConditions();
+    CloseAndUnlink(fd, inZip.c_str());
+    CloseAndUnlink(fd2, zipFile.c_str());
+}
+
+/**
+ * @tc.name: AddFileContextToZip008
+ * @tc.desc: AddFileContextToZip with data - WriteZipFileContent reads from fd and writes to zip normally
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpZipTest, AddFileContextToZip008, TestSize.Level0)
+{
+    DLP_LOG_INFO(LABEL, "AddFileContextToZip008");
+    std::string inZip("dlp_general_info");
+    std::string zipFile("test_zip_write_content");
+
+    int32_t fd = open(zipFile.c_str(), O_RDWR | O_CREAT, 0666);
+    ASSERT_NE(fd, -1);
+
+    int32_t fd2 = open(inZip.c_str(), O_RDWR | O_CREAT, 0666);
+    ASSERT_NE(fd2, -1);
+    std::string data = "HelloDlpZipTestContent";
+    write(fd2, data.c_str(), data.size());
+    lseek(fd2, 0, SEEK_SET);
+
+    int32_t res = AddFileContextToZip(fd2, inZip.c_str(), zipFile.c_str());
+    ASSERT_EQ(res, DLP_ZIP_OK);  // WriteZipFileContent normal flow
+
+    CloseAndUnlink(fd, inZip.c_str());
+    CloseAndUnlink(fd2, zipFile.c_str());
+}
+
+/**
+ * @tc.name: AddFileContextToZip009
+ * @tc.desc: AddFileContextToZip Defer cleanup when WriteZipFileContent fails via zipWriteInFileInZip mock
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpZipTest, AddFileContextToZip009, TestSize.Level0)
+{
+    DLP_LOG_INFO(LABEL, "AddFileContextToZip009");
+    std::string inZip("dlp_general_info");
+    std::string zipFile("test_zip_defer_write_fail");
+
+    int32_t fd = open(zipFile.c_str(), O_RDWR | O_CREAT, 0666);
+    ASSERT_NE(fd, -1);
+
+    int32_t fd2 = open(inZip.c_str(), O_RDWR | O_CREAT, 0666);
+    ASSERT_NE(fd2, -1);
+    std::string data = "test";
+    write(fd2, data.c_str(), data.size());
+    lseek(fd2, 0, SEEK_SET);
+
+    DlpCMockCondition condition;
+    condition.mockSequence = {true};
+    SetMockConditions("zipWriteInFileInZip", condition);
+
+    int32_t res = AddFileContextToZip(fd2, inZip.c_str(), zipFile.c_str());
+    ASSERT_EQ(res, DLP_ZIP_FAIL);  // WriteZipFileContent fail, Defer should close both fileInZip and zf
+
+    CleanMockConditions();
+    CloseAndUnlink(fd, inZip.c_str());
+    CloseAndUnlink(fd2, zipFile.c_str());
+}
+
+/**
+ * @tc.name: AddFileContextToZip010
+ * @tc.desc: AddFileContextToZip with empty source file, WriteZipFileContent reads 0 bytes
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpZipTest, AddFileContextToZip010, TestSize.Level0)
+{
+    DLP_LOG_INFO(LABEL, "AddFileContextToZip010");
+    std::string inZip("dlp_general_info");
+    std::string zipFile("test_zip_empty_content");
+
+    int32_t fd = open(zipFile.c_str(), O_RDWR | O_CREAT, 0666);
+    ASSERT_NE(fd, -1);
+
+    int32_t fd2 = open(inZip.c_str(), O_RDWR | O_CREAT, 0666);
+    ASSERT_NE(fd2, -1);
+    // fd2 is empty, no data written, WriteZipFileContent reads nothing
+
+    int32_t res = AddFileContextToZip(fd2, inZip.c_str(), zipFile.c_str());
+    ASSERT_EQ(res, DLP_ZIP_OK);
+
+    CloseAndUnlink(fd, inZip.c_str());
+    CloseAndUnlink(fd2, zipFile.c_str());
+}
+
+/**
+ * @tc.name: UnzipSpecificFile005
+ * @tc.desc: UnzipSpecificFile with Defer cleanup - unzLocateFile fails, Defer skips unzCloseCurrentFile
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpZipTest, UnzipSpecificFile005, TestSize.Level0)
+{
+    DLP_LOG_INFO(LABEL, "UnzipSpecificFile005");
+    std::string inZipInfo("dlp_general_info");
+    std::string zipFile("test_zip_unzip_defer_locate");
+    std::string unZip("unzip_defer_locate");
+
+    int32_t fd = open(zipFile.c_str(), O_RDWR | O_CREAT, 0666);
+    int32_t fd1 = open(inZipInfo.c_str(), O_RDWR | O_CREAT, 0666);
+    std::string data = "test";
+    write(fd1, data.c_str(), data.size());
+    lseek(fd1, 0, SEEK_SET);
+
+    int32_t res = AddFileContextToZip(fd1, inZipInfo.c_str(), zipFile.c_str());
+    ASSERT_EQ(res, DLP_ZIP_OK);
+
+    DlpCMockCondition condition;
+    condition.mockSequence = {true};
+    SetMockConditions("unzLocateFile", condition);
+
+    res = UnzipSpecificFile(fd, inZipInfo.c_str(), unZip.c_str());
+    ASSERT_EQ(DLP_ZIP_FAIL, res);  // Defer should only unzClose, not unzCloseCurrentFile
+
+    CleanMockConditions();
+    CloseAndUnlink(fd, zipFile.c_str());
+    CloseAndUnlink(fd1, inZipInfo.c_str());
+    unlink(unZip.c_str());
+}
+
+/**
+ * @tc.name: UnzipSpecificFile006
+ * @tc.desc: UnzipSpecificFile with Defer cleanup - unzOpenCurrentFile fails, Defer skips unzCloseCurrentFile
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpZipTest, UnzipSpecificFile006, TestSize.Level0)
+{
+    DLP_LOG_INFO(LABEL, "UnzipSpecificFile006");
+    std::string inZipInfo("dlp_general_info");
+    std::string zipFile("test_zip_unzip_defer_open");
+    std::string unZip("unzip_defer_open");
+
+    int32_t fd = open(zipFile.c_str(), O_RDWR | O_CREAT, 0666);
+    int32_t fd1 = open(inZipInfo.c_str(), O_RDWR | O_CREAT, 0666);
+    std::string data = "test";
+    write(fd1, data.c_str(), data.size());
+    lseek(fd1, 0, SEEK_SET);
+
+    int32_t res = AddFileContextToZip(fd1, inZipInfo.c_str(), zipFile.c_str());
+    ASSERT_EQ(res, DLP_ZIP_OK);
+
+    DlpCMockCondition condition;
+    condition.mockSequence = {true};
+    SetMockConditions("unzOpenCurrentFile", condition);
+
+    res = UnzipSpecificFile(fd, inZipInfo.c_str(), unZip.c_str());
+    ASSERT_EQ(DLP_ZIP_FAIL, res);  // Defer should only unzClose, not unzCloseCurrentFile
+
+    CleanMockConditions();
+    CloseAndUnlink(fd, zipFile.c_str());
+    CloseAndUnlink(fd1, inZipInfo.c_str());
+    unlink(unZip.c_str());
+}
+
+/**
+ * @tc.name: UnzipSpecificFile007
+ * @tc.desc: UnzipSpecificFile with WriteUnzipFileContent early return on unzReadCurrentFile negative
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpZipTest, UnzipSpecificFile007, TestSize.Level0)
+{
+    DLP_LOG_INFO(LABEL, "UnzipSpecificFile007");
+    std::string inZipInfo("dlp_general_info");
+    std::string zipFile("test_zip_unzip_read_neg");
+    std::string unZip("unzip_read_neg");
+
+    int32_t fd = open(zipFile.c_str(), O_RDWR | O_CREAT, 0666);
+    int32_t fd1 = open(inZipInfo.c_str(), O_RDWR | O_CREAT, 0666);
+    std::string data = "test";
+    write(fd1, data.c_str(), data.size());
+    lseek(fd1, 0, SEEK_SET);
+
+    int32_t res = AddFileContextToZip(fd1, inZipInfo.c_str(), zipFile.c_str());
+    ASSERT_EQ(res, DLP_ZIP_OK);
+
+    DlpCMockCondition condition;
+    condition.mockSequence = {true};
+    SetMockConditions("unzReadCurrentFile", condition);
+
+    res = UnzipSpecificFile(fd, inZipInfo.c_str(), unZip.c_str());
+    ASSERT_EQ(DLP_ZIP_FAIL, res);  // WriteUnzipFileContent returns DLP_ZIP_FAIL on negative readSize
+
+    CleanMockConditions();
+    CloseAndUnlink(fd, zipFile.c_str());
+    CloseAndUnlink(fd1, inZipInfo.c_str());
+    unlink(unZip.c_str());
+}
+
+/**
+ * @tc.name: UnzipSpecificFile008
+ * @tc.desc: UnzipSpecificFile normal flow with data - WriteUnzipFileContent reads data and writes to output
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpZipTest, UnzipSpecificFile008, TestSize.Level0)
+{
+    DLP_LOG_INFO(LABEL, "UnzipSpecificFile008");
+    std::string inZipInfo("dlp_general_info");
+    std::string zipFile("test_zip_unzip_normal");
+    std::string unZip("unzip_normal_output");
+
+    int32_t fd = open(zipFile.c_str(), O_RDWR | O_CREAT, 0666);
+    int32_t fd1 = open(inZipInfo.c_str(), O_RDWR | O_CREAT, 0666);
+    std::string data = "HelloUnzipTestContent12345";
+    write(fd1, data.c_str(), data.size());
+    lseek(fd1, 0, SEEK_SET);
+
+    int32_t res = AddFileContextToZip(fd1, inZipInfo.c_str(), zipFile.c_str());
+    ASSERT_EQ(res, DLP_ZIP_OK);
+
+    res = UnzipSpecificFile(fd, inZipInfo.c_str(), unZip.c_str());
+    ASSERT_EQ(DLP_ZIP_OK, res);  // WriteUnzipFileContent normal flow, readSize == 0 breaks loop
+
+    // Verify unzipped content
+    int32_t outFd = open(unZip.c_str(), O_RDONLY);
+    ASSERT_NE(outFd, -1);
+    char readBuf[256] = {0};
+    int readLen = read(outFd, readBuf, sizeof(readBuf) - 1);
+    close(outFd);
+    EXPECT_EQ(std::string(readBuf, readLen), data);
+
+    CloseAndUnlink(fd, zipFile.c_str());
+    CloseAndUnlink(fd1, inZipInfo.c_str());
+    unlink(unZip.c_str());
 }

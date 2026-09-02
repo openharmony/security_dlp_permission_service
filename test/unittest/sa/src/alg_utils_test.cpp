@@ -16,6 +16,10 @@
 #include "alg_utils_test.h"
 #include <gtest/gtest.h>
 #include <securec.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <cstring>
 #include "dlp_permission.h"
 #include "dlp_permission_log.h"
 #include "alg_utils.cpp"
@@ -488,4 +492,195 @@ HWTEST_F(AlgUtilsTest, HcFileSubTest, TestSize.Level3)
 
     testData.allocUnit = PARCEL_LARGE_ALLOC_UNIT;
     EXPECT_EQ(GetParcelIncreaseSize(&testData, PARCEL_LARGE_ALLOC_UNIT), PARCEL_LARGE_ALLOC_UNIT);
+}
+
+/**
+ * @tc.name: HcFileRead001
+ * @tc.desc: HcFileRead with valid file, read data successfully
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AlgUtilsTest, HcFileRead001, TestSize.Level3)
+{
+    DLP_LOG_INFO(LABEL_TEST, "HcFileRead001");
+    const char *testPath = "/data/hc_file_read_test.txt";
+    const char *testData = "HelloHcFileRead";
+    int fd = open(testPath, O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
+    ASSERT_NE(fd, -1);
+    write(fd, testData, strlen(testData));
+    close(fd);
+
+    FileHandle file;
+    EXPECT_EQ(HcFileOpen(testPath, MODE_FILE_READ, &file, 0), 0);
+    char buf[64] = {0};
+    int ret = HcFileRead(file, buf, strlen(testData));
+    EXPECT_EQ(ret, static_cast<int>(strlen(testData)));
+    EXPECT_EQ(std::string(buf, ret), std::string(testData));
+    HcFileClose(file);
+    unlink(testPath);
+}
+
+/**
+ * @tc.name: HcFileRead002
+ * @tc.desc: HcFileRead with null dst returns -1
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AlgUtilsTest, HcFileRead002, TestSize.Level3)
+{
+    DLP_LOG_INFO(LABEL_TEST, "HcFileRead002");
+    const char *testPath = "/data/hc_file_read_null.txt";
+    int fd = open(testPath, O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
+    ASSERT_NE(fd, -1);
+    write(fd, "test", 4);
+    close(fd);
+
+    FileHandle file;
+    EXPECT_EQ(HcFileOpen(testPath, MODE_FILE_READ, &file, 0), 0);
+    EXPECT_EQ(HcFileRead(file, nullptr, 10), -1);
+    HcFileClose(file);
+    unlink(testPath);
+}
+
+/**
+ * @tc.name: HcFileRead003
+ * @tc.desc: HcFileRead with negative dstSize returns -1
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AlgUtilsTest, HcFileRead003, TestSize.Level3)
+{
+    DLP_LOG_INFO(LABEL_TEST, "HcFileRead003");
+    FileHandle file;
+    char buf[10];
+    EXPECT_EQ(HcFileRead(file, buf, -1), -1);
+}
+
+/**
+ * @tc.name: HcFileRead004
+ * @tc.desc: HcFileRead with null file pfd returns -1
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AlgUtilsTest, HcFileRead004, TestSize.Level3)
+{
+    DLP_LOG_INFO(LABEL_TEST, "HcFileRead004");
+    FileHandle file;
+    file.pfd = nullptr;
+    char buf[10];
+    EXPECT_EQ(HcFileRead(file, buf, 10), -1);
+}
+
+/**
+ * @tc.name: HcFileWrite001
+ * @tc.desc: HcFileWrite with valid file, write data successfully
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AlgUtilsTest, HcFileWrite001, TestSize.Level3)
+{
+    DLP_LOG_INFO(LABEL_TEST, "HcFileWrite001");
+    const char *testPath = "/data/hc_file_write_test.txt";
+    const char *testData = "HelloHcFileWrite";
+
+    FileHandle file;
+    EXPECT_EQ(HcFileOpen(testPath, MODE_FILE_WRITE, &file, S_IRWXU), 0);
+    int ret = HcFileWrite(file, testData, strlen(testData));
+    EXPECT_EQ(ret, static_cast<int>(strlen(testData)));
+    HcFileClose(file);
+    unlink(testPath);
+}
+
+/**
+ * @tc.name: HcFileWrite002
+ * @tc.desc: HcFileWrite with null src returns -1
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AlgUtilsTest, HcFileWrite002, TestSize.Level3)
+{
+    DLP_LOG_INFO(LABEL_TEST, "HcFileWrite002");
+    const char *testPath = "/data/hc_file_write_null.txt";
+
+    FileHandle file;
+    EXPECT_EQ(HcFileOpen(testPath, MODE_FILE_WRITE, &file, S_IRWXU), 0);
+    EXPECT_EQ(HcFileWrite(file, nullptr, 10), -1);
+    HcFileClose(file);
+    unlink(testPath);
+}
+
+/**
+ * @tc.name: HcFileWrite003
+ * @tc.desc: HcFileWrite with negative srcSize returns -1
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AlgUtilsTest, HcFileWrite003, TestSize.Level3)
+{
+    DLP_LOG_INFO(LABEL_TEST, "HcFileWrite003");
+    FileHandle file;
+    char buf[10] = {0};
+    EXPECT_EQ(HcFileWrite(file, buf, -1), -1);
+}
+
+/**
+ * @tc.name: HcFileWrite004
+ * @tc.desc: HcFileWrite with null file pfd returns -1
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AlgUtilsTest, HcFileWrite004, TestSize.Level3)
+{
+    DLP_LOG_INFO(LABEL_TEST, "HcFileWrite004");
+    FileHandle file;
+    file.pfd = nullptr;
+    char buf[10] = {0};
+    EXPECT_EQ(HcFileWrite(file, buf, 10), -1);
+}
+
+/**
+ * @tc.name: HcFileOpenClose001
+ * @tc.desc: HcFileOpen and HcFileClose with valid read path
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AlgUtilsTest, HcFileOpenClose001, TestSize.Level3)
+{
+    DLP_LOG_INFO(LABEL_TEST, "HcFileOpenClose001");
+    const char *testPath = "/data/hc_file_open_read.txt";
+    int fd = open(testPath, O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
+    ASSERT_NE(fd, -1);
+    write(fd, "test", 4);
+    close(fd);
+
+    FileHandle file;
+    EXPECT_EQ(HcFileOpen(testPath, MODE_FILE_READ, &file, 0), 0);
+    EXPECT_EQ(HcFileSize(file), 4);
+    HcFileClose(file);
+    unlink(testPath);
+}
+
+/**
+ * @tc.name: HcFileOpenClose002
+ * @tc.desc: HcFileOpen and HcFileClose with valid write path
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AlgUtilsTest, HcFileOpenClose002, TestSize.Level3)
+{
+    DLP_LOG_INFO(LABEL_TEST, "HcFileOpenClose002");
+    const char *testPath = "/data/hc_file_open_write.txt";
+
+    FileHandle file;
+    EXPECT_EQ(HcFileOpen(testPath, MODE_FILE_WRITE, &file, S_IRWXU), 0);
+    EXPECT_EQ(HcFileWrite(file, "write_test", 10), 10);
+    HcFileClose(file);
+
+    // Verify written content
+    EXPECT_EQ(HcFileOpen(testPath, MODE_FILE_READ, &file, 0), 0);
+    char buf[16] = {0};
+    int ret = HcFileRead(file, buf, 10);
+    EXPECT_EQ(ret, 10);
+    HcFileClose(file);
+    unlink(testPath);
 }
