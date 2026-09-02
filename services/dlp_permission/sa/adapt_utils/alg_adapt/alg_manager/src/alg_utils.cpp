@@ -369,6 +369,7 @@ int HcFileRead(FileHandle file, void *dst, int dstSize)
         int readCount = static_cast<int>(fread(dstBuffer + total, 1, dstSize - total, fp));
         if (ferror(fp) != 0) {
             DLP_LOG_ERROR(LABEL, "read file error!");
+            return -1;
         }
         if (readCount == 0) {
             return total;
@@ -398,7 +399,7 @@ int HcFileWrite(FileHandle file, const void *src, int srcSize)
             retryCount++;
             if (retryCount >= MAX_RETRY_COUNT) {
                 DLP_LOG_ERROR(LABEL, "write file retry exceeded max count!");
-                break;
+                return -1;
             }
             continue;
         }
