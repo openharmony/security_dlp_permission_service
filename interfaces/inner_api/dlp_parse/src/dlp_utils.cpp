@@ -558,10 +558,12 @@ bool DlpUtils::GetUdid(std::string &udid)
     int32_t res = GetDevUdid(udidStr, INPUT_UDID_LEN);
     if (res != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "GetDevUdid is error : %{public}d.", res);
+        (void)memset_s(udidStr, INPUT_UDID_LEN, 0, INPUT_UDID_LEN);
         free(udidStr);
         return false;
     }
     udid = udidStr;
+    (void)memset_s(udidStr, INPUT_UDID_LEN, 0, INPUT_UDID_LEN);
     free(udidStr);
     return true;
 }

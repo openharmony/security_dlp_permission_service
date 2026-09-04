@@ -227,7 +227,9 @@ static void ConnectServerWork(JsDlpConnectionParam *param)
     param->lockInfo->count--;
     param->lockInfo->condition.notify_all();
     param->lockInfo->mutex.unlock();
-    napi_close_handle_scope(param->env, scope);
+    if (scope != nullptr) {
+        napi_close_handle_scope(param->env, scope);
+    }
     if (res != 0 && !hasCreateCallBack) {
         delete param;
     }
