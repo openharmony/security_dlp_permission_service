@@ -65,6 +65,7 @@ public:
         const std::string& realType, sptr<CertParcel>& certParcel);
     int32_t ParseZipDlpFile(std::shared_ptr<DlpFile>& filePtr, const std::string& appId, int32_t dlpFileFd,
         sptr<CertParcel>& certParcel);
+    std::shared_ptr<DlpFile> GetDlpFileByPtr(const DlpFile* rawPtr);
 
 private:
     DlpFileManager() {};

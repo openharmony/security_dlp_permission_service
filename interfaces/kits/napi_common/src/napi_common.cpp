@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <unistd.h>
 #include "dlp_file_kits.h"
+#include "dlp_file_manager.h"
 #include "dlp_permission.h"
 #include "dlp_permission_log.h"
 #include "napi_error_msg.h"
@@ -742,9 +743,15 @@ bool GetDlpLinkFileParams(const napi_env env, const napi_callback_info info, Dlp
         return false;
     }
 
-    NAPI_CALL_BASE(env, napi_unwrap(env, thisVar, reinterpret_cast<void**>(&asyncContext.dlpFileNative)), false);
-    if (asyncContext.dlpFileNative == nullptr) {
+    DlpFile* rawDlpFile = nullptr;
+    NAPI_CALL_BASE(env, napi_unwrap(env, thisVar, reinterpret_cast<void**>(&rawDlpFile)), false);
+    if (rawDlpFile == nullptr) {
         DLP_LOG_ERROR(LABEL, "cannot get native object");
+        return false;
+    }
+    asyncContext.dlpFileNative = DlpFileManager::GetInstance().GetDlpFileByPtr(rawDlpFile);
+    if (asyncContext.dlpFileNative == nullptr) {
+        DLP_LOG_ERROR(LABEL, "cannot get dlp file from manager");
         return false;
     }
 
@@ -785,9 +792,15 @@ bool GetLinkFileStatusParams(const napi_env env, const napi_callback_info info, 
         return false;
     }
 
-    NAPI_CALL_BASE(env, napi_unwrap(env, thisVar, reinterpret_cast<void**>(&asyncContext.dlpFileNative)), false);
-    if (asyncContext.dlpFileNative == nullptr) {
+    DlpFile* rawDlpFile = nullptr;
+    NAPI_CALL_BASE(env, napi_unwrap(env, thisVar, reinterpret_cast<void**>(&rawDlpFile)), false);
+    if (rawDlpFile == nullptr) {
         DLP_LOG_ERROR(LABEL, "cannot get native object");
+        return false;
+    }
+    asyncContext.dlpFileNative = DlpFileManager::GetInstance().GetDlpFileByPtr(rawDlpFile);
+    if (asyncContext.dlpFileNative == nullptr) {
+        DLP_LOG_ERROR(LABEL, "cannot get dlp file from manager");
         return false;
     }
 
@@ -817,9 +830,15 @@ bool GetRecoverDlpFileParams(
         return false;
     }
 
-    NAPI_CALL_BASE(env, napi_unwrap(env, thisVar, reinterpret_cast<void**>(&asyncContext.dlpFileNative)), false);
-    if (asyncContext.dlpFileNative == nullptr) {
+    DlpFile* rawDlpFile = nullptr;
+    NAPI_CALL_BASE(env, napi_unwrap(env, thisVar, reinterpret_cast<void**>(&rawDlpFile)), false);
+    if (rawDlpFile == nullptr) {
         DLP_LOG_ERROR(LABEL, "cannot get native object");
+        return false;
+    }
+    asyncContext.dlpFileNative = DlpFileManager::GetInstance().GetDlpFileByPtr(rawDlpFile);
+    if (asyncContext.dlpFileNative == nullptr) {
+        DLP_LOG_ERROR(LABEL, "cannot get dlp file from manager");
         return false;
     }
 
@@ -851,9 +870,15 @@ bool GetCloseDlpFileParams(const napi_env env, const napi_callback_info info, Cl
         return false;
     }
 
-    NAPI_CALL_BASE(env, napi_unwrap(env, thisVar, reinterpret_cast<void**>(&asyncContext.dlpFileNative)), false);
-    if (asyncContext.dlpFileNative == nullptr) {
+    DlpFile* rawDlpFile = nullptr;
+    NAPI_CALL_BASE(env, napi_unwrap(env, thisVar, reinterpret_cast<void**>(&rawDlpFile)), false);
+    if (rawDlpFile == nullptr) {
         DLP_LOG_ERROR(LABEL, "cannot get native object");
+        return false;
+    }
+    asyncContext.dlpFileNative = DlpFileManager::GetInstance().GetDlpFileByPtr(rawDlpFile);
+    if (asyncContext.dlpFileNative == nullptr) {
+        DLP_LOG_ERROR(LABEL, "cannot get dlp file from manager");
         return false;
     }
 

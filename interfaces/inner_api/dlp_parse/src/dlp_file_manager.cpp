@@ -108,6 +108,23 @@ std::shared_ptr<DlpFile> DlpFileManager::GetDlpFile(int32_t dlpFd)
     return nullptr;
 }
 
+std::shared_ptr<DlpFile> DlpFileManager::GetDlpFileByPtr(const DlpFile* rawPtr)
+{
+    if (rawPtr == nullptr) {
+        DLP_LOG_ERROR(LABEL, "Get dlp file by ptr failed, rawPtr is null");
+        return nullptr;
+    }
+    Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->g_DlpMapLock_);
+    for (auto iter = g_DlpFileMap_.begin(); iter != g_DlpFileMap_.end(); iter++) {
+        if (iter->second.get() == rawPtr) {
+            return iter->second;
+        }
+    }
+
+    DLP_LOG_ERROR(LABEL, "Get dlp file by ptr fail, ptr not exist in map");
+    return nullptr;
+}
+
 int32_t DlpFileManager::GenerateCertData(const PermissionPolicy& policy, struct DlpBlob& certData) const
 {
     std::vector<uint8_t> cert;
