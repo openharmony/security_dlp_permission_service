@@ -1282,6 +1282,25 @@ static bool IsSubscribeExist(napi_env env, OpenDlpFileSubscriberContext* subscri
         });
 }
 
+static void RemoveWrapFromThisVar(napi_env env, napi_value thisVar, OpenDlpFileSubscriberPtr* subscriber)
+{
+    if (thisVar == nullptr || subscriber == nullptr) {
+        return;
+    }
+    void* nativeData = nullptr;
+    napi_status status = napi_unwrap(env, thisVar, &nativeData);
+    if (status != napi_ok) {
+        DLP_LOG_ERROR(LABEL, "napi_unwrap failed, status %{public}d", static_cast<int32_t>(status));
+        return;
+    }
+    if (nativeData == reinterpret_cast<void*>(subscriber)) {
+        napi_status removeStatus = napi_remove_wrap(env, thisVar, nullptr);
+        if (removeStatus != napi_ok) {
+            DLP_LOG_ERROR(LABEL, "napi_remove_wrap failed, status %{public}d", static_cast<int32_t>(removeStatus));
+        }
+    }
+}
+
 napi_value NapiDlpPermission::SubscribeOpenDlpFile(const napi_env env, const napi_value thisVar, napi_ref& callback)
 {
     DLP_LOG_INFO(LABEL, "Subscribe open dlp file");
@@ -1375,7 +1394,7 @@ napi_value NapiDlpPermission::Subscribe(napi_env env, napi_callback_info cbInfo)
     }
 }
 
-napi_value NapiDlpPermission::UnSubscribeOpenDlpFile(const napi_env env, napi_ref& callback)
+napi_value NapiDlpPermission::UnSubscribeOpenDlpFile(const napi_env env, const napi_value thisVar, napi_ref& callback)
 {
     std::lock_guard<std::mutex> lock(g_lockForOpenDlpFileSubscriber);
     if (callback == nullptr) {
@@ -1387,6 +1406,7 @@ napi_value NapiDlpPermission::UnSubscribeOpenDlpFile(const napi_env env, napi_re
                 DlpNapiThrow(env, result);
                 return nullptr;
             }
+            RemoveWrapFromThisVar(env, thisVar, (*iter)->subscriber.get());
             delete *iter;
             iter = g_openDlpFileSubscribers.erase(iter);
         }
@@ -1403,6 +1423,7 @@ napi_value NapiDlpPermission::UnSubscribeOpenDlpFile(const napi_env env, napi_re
                 DlpNapiThrow(env, result);
                 return nullptr;
             }
+            RemoveWrapFromThisVar(env, thisVar, (*iter)->subscriber.get());
             delete *iter;
             g_openDlpFileSubscribers.erase(iter);
             break;
@@ -1441,7 +1462,7 @@ napi_value NapiDlpPermission::UnSubscribe(napi_env env, napi_callback_info cbInf
         DLP_LOG_INFO(LABEL, "SubEvent op=off_all kit=DataProtectionKit event=%{public}s", type.c_str());
     }
     if (type == "openDLPFile") {
-        return UnSubscribeOpenDlpFile(env, callback);
+        return UnSubscribeOpenDlpFile(env, thisVar, callback);
     } else if (type == "uninstallDLPSandbox") {
         if (callback != nullptr) {
             napi_delete_reference(env, callback);
