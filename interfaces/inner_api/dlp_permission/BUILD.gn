@@ -46,6 +46,8 @@ ohos_shared_library("libdlp_permission_common_interface") {
     debug = false
   }
 
+  version_script = "dlp_permission_common_interface.map"
+
   subsystem_name = "security"
   innerapi_tags = [ "platformsdk" ]
   part_name = "dlp_permission_service"

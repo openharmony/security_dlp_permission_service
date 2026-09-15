@@ -104,6 +104,8 @@ ohos_shared_library("dlp_permission_service") {
     debug = false
   }
 
+  version_script = "dlp_permission_service.map"
+
   subsystem_name = "security"
   part_name = "dlp_permission_service"
 
@@ -268,6 +270,184 @@ ohos_shared_library("dlp_permission_service") {
     cflags_cc += [ "-DSECURITY_GUARD_ENABLE" ]
   }
   
+  if (dlp_credential_enable == true) {
+    cflags_cc += [ "-DSUPPORT_DLP_CREDENTIAL" ]
+  }
+}
+
+ohos_shared_library("dlp_permission_service_fuzz") {
+  testonly = true
+
+  branch_protector_ret = "pac_ret"
+
+  sanitize = {
+    integer_overflow = true
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
+
+  subsystem_name = "security"
+  part_name = "dlp_permission_service"
+
+  include_dirs = [
+    "adapt_utils/account_adapt",
+    "adapt_utils/alg_adapt/alg_manager/include",
+    "adapt_utils/alg_adapt/huks_adapt_manager/include",
+    "adapt_utils/app_observer",
+    "adapt_utils/critical_handler",
+    "adapt_utils/file_manager",
+    "callback/dlp_sandbox_change_callback",
+    "callback/open_dlp_file_callback",
+    "mock",
+    "sa_main",
+    "sa_common",
+    "storage/include",
+    "${dlp_root_dir}/frameworks/common/include",
+    "${dlp_root_dir}/frameworks/dlp_permission/include",
+    "${dlp_root_dir}/interfaces/inner_api/dlp_parse/include",
+    "${dlp_root_dir}/interfaces/inner_api/dlp_permission/include",
+  ]
+
+  sources = [
+    "${dlp_root_dir}/frameworks/common/src/cert_parcel.cpp",
+    "${dlp_root_dir}/frameworks/common/src/permission_policy.cpp",
+    "${dlp_root_dir}/frameworks/common/src/retention_sandbox_info.cpp",
+    "${dlp_root_dir}/frameworks/common/src/visited_dlp_file_info.cpp",
+    "${dlp_root_dir}/frameworks/dlp_permission/src/auth_user_info_parcel.cpp",
+    "${dlp_root_dir}/frameworks/dlp_permission/src/dlp_permission_info_parcel.cpp",
+    "${dlp_root_dir}/frameworks/dlp_permission/src/dlp_policy_parcel.cpp",
+    "${dlp_root_dir}/frameworks/dlp_permission/src/dlp_sandbox_callback_info_parcel.cpp",
+    "${dlp_root_dir}/frameworks/dlp_permission/src/open_dlp_file_callback_info_parcel.cpp",
+    "${dlp_root_dir}/interfaces/inner_api/dlp_permission/src/dlp_permission_public_interface.cpp",
+    "${dlp_root_dir}/interfaces/inner_api/dlp_parse/src/dlp_utils.cpp",
+    "${dlp_root_dir}/interfaces/inner_api/dlp_parse/src/dlp_zip.cpp",
+    "adapt_utils/alg_adapt/alg_manager/src/alg_manager.cpp",
+    "adapt_utils/alg_adapt/alg_manager/src/alg_utils.cpp",
+    "adapt_utils/alg_adapt/huks_adapt_manager/src/huks_adapt_manager.cpp",
+    "adapt_utils/account_adapt/account_adapt.cpp",
+    "adapt_utils/app_observer/app_state_observer.cpp",
+    "adapt_utils/app_observer/app_uninstall_observer.cpp",
+    "adapt_utils/critical_handler/critical_handler.cpp",
+    "adapt_utils/critical_handler/critical_helper.cpp",
+    "adapt_utils/file_manager/file_operator.cpp",
+    "adapt_utils/file_manager/retention_file_manager.cpp",
+    "adapt_utils/file_manager/sandbox_json_manager.cpp",
+    "adapt_utils/file_manager/visit_record_file_manager.cpp",
+    "adapt_utils/file_manager/visit_record_json_manager.cpp",
+    "callback/dlp_sandbox_change_callback/dlp_sandbox_change_callback_death_recipient.cpp",
+    "callback/dlp_sandbox_change_callback/dlp_sandbox_change_callback_manager.cpp",
+    "callback/dlp_sandbox_change_callback/dlp_sandbox_change_callback_proxy.cpp",
+    "callback/open_dlp_file_callback/open_dlp_file_callback_death_recipient.cpp",
+    "callback/open_dlp_file_callback/open_dlp_file_callback_manager.cpp",
+    "callback/open_dlp_file_callback/open_dlp_file_callback_proxy.cpp",
+    "mock/dlp_credential_service.c",
+    "mock/mock_utils.cpp",
+    "sa_common/access_token_adapter.cpp",
+    "sa_common/bundle_manager_adapter.cpp",
+    "sa_common/dlp_common_func.cpp",
+    "sa_common/dlp_feature_info.cpp",
+    "sa_common/permission_manager_adapter.cpp",
+    "sa_common/dlp_ability_adapter.cpp",
+    "sa_common/dlp_ability_conn.cpp",
+    "sa_common/dlp_ability_proxy.cpp",
+    "sa_common/dlp_ability_stub.cpp",
+    "sa_common/account_event_subscriber.cpp",
+    "sa_common/account_status_listener.cpp",
+    "sa_main/dlp_credential.cpp",
+    "sa_main/dlp_permission_async_proxy.cpp",
+    "sa_main/dlp_permission_service.cpp",
+    "sa_main/dlp_permission_service_ext.cpp",
+    "storage/src/dlp_kv_data_storage.cpp",
+    "storage/src/sandbox_config_kv_data_storage.cpp",
+  ]
+
+  cflags_cc = [ "-DHILOG_ENABLE" ]
+  cflags = [ "-DHILOG_ENABLE" ]
+
+  if (dlp_permission_service_pc_feature) {
+    cflags_cc += [ "-DDLP_PERMISSION_SERVICE_PC_FEATURE" ]
+  }
+  if (build_variant == "user") {
+    cflags_cc += [ "-DDLP_DEBUG_ENABLE=0" ]
+    cflags += [ "-DDLP_DEBUG_ENABLE=0" ]
+  } else if (build_variant == "root") {
+    cflags_cc += [ "-DDLP_DEBUG_ENABLE=1" ]
+    cflags += [ "-DDLP_DEBUG_ENABLE=1" ]
+  } else {
+    cflags_cc += [ "-DDLP_DEBUG_ENABLE=1" ]
+    cflags += [ "-DDLP_DEBUG_ENABLE=1" ]
+  }
+
+  if (dlp_permission_service_gathering_policy) {
+    cflags_cc += [ "-DDLP_GATHERING_SANDBOX" ]
+    cflags += [ "-DDLP_GATHERING_SANDBOX" ]
+  }
+
+  deps = [
+    ":dlp_hex_string_static",
+    ":dlp_permission_serializer_static",
+    "${dlp_permission_public_config_path}/:dlp_permission_stub",
+  ]
+
+  configs = [
+    "${dlp_root_dir}/config:coverage_flags",
+    "${dlp_root_dir}/config:common_build_options_flags",
+  ]
+
+  external_deps = [
+    "ability_base:want",
+    "ability_base:zuri",
+    "ability_runtime:app_manager",
+    "ability_runtime:extension_manager",
+    "ability_runtime:ability_manager",
+    "ability_runtime:ability_connect_callback_stub",
+    "access_token:libaccesstoken_sdk",
+    "access_token:libtokenid_sdk",
+    "app_file_service:fileuri_native",
+    "bundle_framework:appexecfwk_base",
+    "bundle_framework:appexecfwk_core",
+    "bounds_checking_function:libsec_shared",
+    "c_utils:utils",
+    "common_event_service:cesfwk_core",
+    "common_event_service:cesfwk_innerkits",
+    "config_policy:configpolicy_util",
+    "eventhandler:libeventhandler",
+    "hilog:libhilog",
+    "hisysevent:libhisysevent",
+    "huks:libhukssdk",
+    "init:libbegetutil",
+    "ipc:ipc_core",
+    "json:nlohmann_json_static",
+    "kv_store:distributeddata_inner",
+    "memmgr:memmgrclient",
+    "os_account:domain_account_innerkits",
+    "os_account:libaccountkits",
+    "os_account:os_account_innerkits",
+    "safwk:system_ability_fwk",
+    "samgr:samgr_proxy",
+    "zlib:shared_libz",
+    "window_manager:libwm_lite",
+    "image_framework:image_native",
+    "image_framework:image_source",
+    "image_framework:image_source_ndk",
+    "image_framework:pixelmap_ndk",
+    "image_framework:pixelmap",
+    "resource_management:librawfile",
+    "graphic_2d:librender_service_client",
+    "graphic_2d:librender_service_base",
+    "napi:ace_napi",
+    "node:node_header_notice",
+    "ability_base:configuration",
+  ]
+
+  if (security_guard_flag) {
+    external_deps += [
+      "security_guard:libsg_collect_sdk",
+    ]
+    cflags_cc += [ "-DSECURITY_GUARD_ENABLE" ]
+  }
+
   if (dlp_credential_enable == true) {
     cflags_cc += [ "-DSUPPORT_DLP_CREDENTIAL" ]
   }

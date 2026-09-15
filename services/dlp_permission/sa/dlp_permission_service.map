@@ -1,0 +1,26 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
+ */
+ 
+{
+  global:
+    extern "C++" {
+      *DlpPermissionService*;
+      *DlpPermissionServiceStub*;
+      *DlpPermissionServiceProxy*;
+      *DlpAbility*;
+      *DlpPolicyParcel*;
+      *CertParcel*;
+      *FileInfo*;
+      *RetentionSandBoxInfo*;
+      *SandboxInfo*;
+      *VisitedDLPFileInfo*;
+      *DLPPermissionInfoParcel*;
+      *WaterMarkInfo*;
+      *DLPFileAccess*;
+      *FileOperator*;
+      *PermissionPolicy*;
+    };
+  local:
+    *;
+};

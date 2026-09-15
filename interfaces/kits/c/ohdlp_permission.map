@@ -1,0 +1,15 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
+ */
+ 
+{
+  global:
+    OH_DLP_CleanSandboxAppConfig;
+    OH_DLP_GetDlpPermissionInfo;
+    OH_DLP_GetOriginalFileName;
+    OH_DLP_GetSandboxAppConfig;
+    OH_DLP_IsInSandbox;
+    OH_DLP_SetSandboxAppConfig;
+  local:
+    *;
+};
