@@ -51,6 +51,7 @@ RegisterDlpSandboxChangeInfo *g_dlpSandboxChangeInfoRegister = nullptr;
 static constexpr size_t MAX_TYPE_LEN = 64;
 }  // namespace
 
+
 napi_value NapiDlpPermission::RegisterSandboxChangeCallback(napi_env env, napi_callback_info cbInfo)
 {
     RegisterDlpSandboxChangeInfo *registerDlpSandboxChangeInfo = new (std::nothrow) RegisterDlpSandboxChangeInfo();
