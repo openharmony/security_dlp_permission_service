@@ -51,7 +51,6 @@ RegisterDlpSandboxChangeInfo *g_dlpSandboxChangeInfoRegister = nullptr;
 static constexpr size_t MAX_TYPE_LEN = 64;
 }  // namespace
 
-
 napi_value NapiDlpPermission::RegisterSandboxChangeCallback(napi_env env, napi_callback_info cbInfo)
 {
     RegisterDlpSandboxChangeInfo *registerDlpSandboxChangeInfo = new (std::nothrow) RegisterDlpSandboxChangeInfo();
@@ -290,7 +289,12 @@ napi_value NapiDlpPermission::UnSubscribe(napi_env env, napi_callback_info cbInf
         DLP_LOG_INFO(LABEL, "SubEvent op=off_all kit=DataProtectionKit event=%{public}s", type.c_str());
     }
     if (type == "openDLPFile") {
-        return UnSubscribeOpenDlpFile(env, thisVar, callback);
+        napi_value ret = UnSubscribeOpenDlpFile(env, thisVar, callback);
+        if (callback != nullptr) {
+            napi_delete_reference(env, callback);
+            callback = nullptr;
+        }
+        return ret;
     } else if (type == "uninstallDLPSandbox") {
         if (callback != nullptr) {
             napi_delete_reference(env, callback);
