@@ -25,6 +25,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include "dlp_permission_log.h"
+#include "dlp_fdsan.h"
 
 #include "securec.h"
 
@@ -332,8 +333,9 @@ int32_t UnzipSpecificFile(int32_t fd, const char*nameInZip, const char *unZipNam
         DLP_LOG_ERROR(LABEL, "open fail %{public}s errno %{public}d", unZipName, errno);
         return DLP_ZIP_FAIL;
     }
+    DlpFdsanMark(outFd);
     Defer p(nullptr, [&](...) {
-        close(outFd);
+        (void)DlpFdsanClose(outFd);
     });
 
     void* opaque = nullptr;
