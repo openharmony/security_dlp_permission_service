@@ -97,14 +97,14 @@ static const uint32_t MAX_SUPPORT_FILE_TYPE_NUM = 1024;
 static const uint32_t MAX_RETENTION_SIZE = 1024;
 static const uint32_t MAX_BUNDLENAME_SIZE = 1024;
 static const uint32_t MAX_CERT_SIZE = 1024 * 1024 * 40 * 2;
-constexpr int32_t MAX_JSON_DEPTH = 10;
+constexpr int32_t MAX_JSON_DEPTH = 64;
 static const int32_t HIPREVIEW_SANDBOX_LOW_BOUND = 1000;
 static const int32_t LIBCESFWK_SERVICES_ID = 3299;
 constexpr int32_t PARSE_WAIT_TIME_OUT = 5;
 static AccountListenerCallback *g_accountListenerCallback = nullptr;
 static const std::vector<std::string> SANDBOX_WHITELIST = { HIPREVIEW_LOW, SETTINGS_BUNDLE_NAME };
 
-static bool IsCertJsonDepthExceeded(const std::vector<uint8_t>& cert)
+static bool IsCertJsonInvalid(const std::vector<uint8_t>& cert)
 {
     bool depthExceeded = false;
     auto callback = [&depthExceeded](int depth, unordered_json::parse_event_t event,
@@ -116,8 +116,8 @@ static bool IsCertJsonDepthExceeded(const std::vector<uint8_t>& cert)
         return true;
     };
     std::string jsonStr(cert.begin(), cert.end());
-    unordered_json::parse(jsonStr, callback, false);
-    return depthExceeded;
+    auto jsonObj = unordered_json::parse(jsonStr, callback, false);
+    return depthExceeded || jsonObj.is_discarded() || !jsonObj.is_object();
 }
 }
 REGISTER_SYSTEM_ABILITY_BY_ID(DlpPermissionService, SA_ID_DLP_PERMISSION_SERVICE, true);
@@ -434,8 +434,8 @@ int32_t DlpPermissionService::ParseDlpCertificate(const sptr<CertParcel>& certPa
         DLP_LOG_ERROR(LABEL, "Callback is null or cert is invalid");
         return DLP_SERVICE_ERROR_VALUE_INVALID;
     }
-    if (IsCertJsonDepthExceeded(certParcel->cert)) {
-        DLP_LOG_ERROR(LABEL, "Cert json depth exceeded limit");
+    if (IsCertJsonInvalid(certParcel->cert)) {
+        DLP_LOG_ERROR(LABEL, "Cert json is invalid or depth exceeded limit");
         return DLP_SERVICE_ERROR_VALUE_INVALID;
     }
     if (appId.empty() || appId.size() > MAX_APPID_SIZE) {
