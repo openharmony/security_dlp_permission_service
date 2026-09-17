@@ -28,6 +28,7 @@
 #include "file_uri.h"
 #include "securec.h"
 #include "dlp_utils.h"
+#include "dlp_fdsan.h"
 #include "dlp_permission.h"
 #include "dlp_permission_public_interface.h"
 #include "dlp_transparent_enc_policy.h"
@@ -406,16 +407,17 @@ bool DlpFileKits::GetSandboxFlag(Want& want)
         DLP_LOG_ERROR(LABEL, "open file error, error=%{public}d", errno);
         return false;
     }
+    DlpFdsanMark(fd);
     if (!IsDlpFile(fd)) {
         DLP_LOG_WARN(LABEL, "Fd %{public}d is not dlp file", fd);
-        close(fd);
+        (void)DlpFdsanClose(fd);
         if (QueryDockerPolicyNeedSandbox(uri, want)) {
             return true;
         }
         return false;
     }
     SetWantType(want, fd);
-    close(fd);
+    (void)DlpFdsanClose(fd);
     fd = -1;
     DLP_LOG_INFO(LABEL, "Sanbox flag is true");
     return true;

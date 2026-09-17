@@ -29,6 +29,7 @@
 #include "dlp_permission_log.h"
 #include "dlp_zip.h"
 #include "dlp_utils.h"
+#include "dlp_fdsan.h"
 #include "hex_string.h"
 #include "openssl/crypto.h"
 #ifdef DLP_PARSE_INNER
@@ -240,9 +241,9 @@ bool DlpZipFile::ParseCert()
         DLP_LOG_ERROR(LABEL, "open failed, %{public}s", strerror(errno));
         return false;
     }
-
+    DlpFdsanMark(fd);
     uint32_t size = static_cast<uint32_t>(read(fd, cert_.data, cert_.size));
-    (void)close(fd);
+    (void)DlpFdsanClose(fd);
     fd = -1;
     if (size != cert_.size) {
         DLP_LOG_ERROR(LABEL, "read failed, %{public}s", strerror(errno));
@@ -258,13 +259,16 @@ bool DlpZipFile::ParseEncData()
         DLP_LOG_ERROR(LABEL, "ParseEncData failed, %{public}s", strerror(errno));
         return false;
     }
+    DlpFdsanMark(fd);
     encDataFd_ = fd;
     return true;
 }
 
 bool DlpZipFile::CleanTmpFile()
 {
-    close(encDataFd_);
+    if (encDataFd_ != -1) {
+        (void)DlpFdsanClose(encDataFd_);
+    }
     encDataFd_ = -1;
     std::lock_guard<std::mutex> lock(g_fileOpLock_);
     char cwd[DLP_CWD_MAX] = {0};
@@ -495,22 +499,23 @@ int32_t DlpZipFile::GenerateHmacVal(int32_t encFile, struct DlpBlob& out)
         DLP_LOG_ERROR(LABEL, "dup file failed");
         return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
     }
+    DlpFdsanMark(fd);
     uint64_t fileLen = 0;
 
     int32_t ret = GetFileSize(fd, fileLen);
     if (ret != DLP_OK) {
-        (void)close(fd);
+        (void)DlpFdsanClose(fd);
         DLP_LOG_ERROR(LABEL, "failed to get fileLen");
         return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
     }
     if (fileLen == 0) {
-        (void)close(fd);
+        (void)DlpFdsanClose(fd);
         CleanBlobParam(out);
         return DLP_OK;
     }
 
     ret = DlpHmacEncode(cipher_.hmacKey, fd, out);
-    (void)close(fd);
+    (void)DlpFdsanClose(fd);
     return ret;
 }
 
@@ -606,7 +611,7 @@ int32_t DlpZipFile::GenFileInZip(int32_t inPlainFileFd)
     OPEN_AND_CHECK(tmpFile, DLP_GEN_FILE.c_str(), O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR,
         DLP_PARSE_ERROR_FILE_OPERATE_FAIL, LABEL);
     Defer p2(nullptr, [&](...) {
-        (void)close(tmpFile);
+        (void)DlpFdsanClose(tmpFile);
         (void)unlink(DLP_GEN_FILE.c_str());
     });
     int32_t ret = AddBuffToZip(reinterpret_cast<const void *>(cert_.data), cert_.size,
@@ -616,7 +621,7 @@ int32_t DlpZipFile::GenFileInZip(int32_t inPlainFileFd)
     int32_t encFile = GenEncData(inPlainFileFd);
     Defer p3(nullptr, [&](...) {
         if (inPlainFileFd == -1) {
-            (void)close(encFile);
+            (void)DlpFdsanClose(encFile);
         }
     });
 
@@ -671,8 +676,13 @@ int32_t DlpZipFile::RemoveDlpPermissionInZip(int32_t outPlainFileFd)
     CHDIR_AND_CHECK(dirIndex_.c_str(), DLP_PARSE_ERROR_FILE_OPERATE_FAIL, LABEL);
 
     int32_t encFd = open(DLP_OPENING_ENC_DATA.c_str(), O_RDWR, S_IRUSR | S_IWUSR);
+    if (encFd == -1) {
+        DLP_LOG_ERROR(LABEL, "open fail %{public}s errno %{public}d", DLP_OPENING_ENC_DATA.c_str(), errno);
+        return DLP_PARSE_ERROR_FILE_OPERATE_FAIL;
+    }
+    DlpFdsanMark(encFd);
     Defer p2(nullptr, [&](...) {
-        if (close(encFd) != 0) {
+        if (DlpFdsanClose(encFd) != 0) {
             DLP_LOG_ERROR(LABEL, "close failed, %{public}s", strerror(errno));
         }
     });

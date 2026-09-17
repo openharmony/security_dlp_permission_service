@@ -19,6 +19,7 @@
 #include <mutex>
 #include <string>
 #include "dlp_crypt.h"
+#include "dlp_fdsan.h"
 #include "permission_policy.h"
 
 namespace OHOS {
@@ -128,10 +129,10 @@ enum VALID_KEY_SIZE {
     do {                                                                \
         fd = open(path, flag, mode);                                    \
         if ((fd) == -1) {                                                \
-            DLP_LOG_ERROR(TAG, "open failed, %{public}s",               \
-                strerror(errno));                                       \
+            DLP_LOG_ERROR(TAG, "open failed, %{public}s", strerror(errno)); \
             return ret;                                                 \
         }                                                               \
+        DlpFdsanMark(fd);                                             \
     } while (0)                                                         \
 
 #define FTRUNCATE_AND_CHECK(fd, size, ret, TAG)                         \
