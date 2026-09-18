@@ -119,6 +119,21 @@ static bool SafeGetInt32(const unordered_json& json, const std::string& key, int
 }
 }  // namespace
 
+bool ParseJsonWithDepthCheck(const std::string& jsonStr, unordered_json& out)
+{
+    bool depthExceeded = false;
+    auto callback = [&depthExceeded](int depth, unordered_json::parse_event_t event,
+        unordered_json& parsed) -> bool {
+        if (depth > MAX_JSON_DEPTH) {
+            depthExceeded = true;
+            return false;
+        }
+        return true;
+    };
+    out = unordered_json::parse(jsonStr, callback, false);
+    return !depthExceeded && !out.is_discarded() && out.is_object();
+}
+
 DlpPermissionSerializer& DlpPermissionSerializer::GetInstance()
 {
     static DlpPermissionSerializer instance;
@@ -505,12 +520,8 @@ static int32_t GetPolicyJson(const unordered_json& permJson, unordered_json& pla
         permJson.at(ONLINE_POLICY_CONTENT).get_to(plainHexPolicy);
         std::string plainPolicy;
         TransHexStringToByte(plainPolicy, plainHexPolicy);
-        if (!unordered_json::accept(plainPolicy)) {
-            return DLP_PARSE_ERROR_VALUE_INVALID;
-        }
-        plainPolicyJson = unordered_json::parse(plainPolicy);
-        if (plainPolicyJson.is_discarded() || (!plainPolicyJson.is_object())) {
-            DLP_LOG_ERROR(LABEL, "JsonObj is discarded");
+        if (!ParseJsonWithDepthCheck(plainPolicy, plainPolicyJson)) {
+            DLP_LOG_ERROR(LABEL, "JsonObj is invalid or depth exceeded");
             return DLP_PARSE_ERROR_VALUE_INVALID;
         }
     } else {
@@ -581,9 +592,8 @@ static void ParseCustomProperty(PermissionPolicy& policy, unordered_json policyJ
     if (policyJson.find(CUSTOM_PROPERTY) != policyJson.end()
         && policyJson.at(CUSTOM_PROPERTY).is_string()) {
         std::string customPropertyStr = policyJson.at(CUSTOM_PROPERTY).get<std::string>();
-        auto parseResult = unordered_json::parse(customPropertyStr, nullptr, false);
-        if (!parseResult.is_discarded() && parseResult.is_object()) {
-            unordered_json customPropertyJson = parseResult;
+        unordered_json customPropertyJson;
+        if (ParseJsonWithDepthCheck(customPropertyStr, customPropertyJson)) {
             if (customPropertyJson.find(ENTERPRISE) != customPropertyJson.end()
                 && customPropertyJson.at(ENTERPRISE).is_string()) {
                 customPropertyJson.at(ENTERPRISE).get_to(policy.customProperty_);
@@ -593,7 +603,7 @@ static void ParseCustomProperty(PermissionPolicy& policy, unordered_json policyJ
                 customPropertyJson.at(CLASSIFICATIONLABEL).get_to(policy.classificationLabel_);
             }
         } else {
-            DLP_LOG_ERROR(LABEL, "Parse customProperty json failed");
+            DLP_LOG_ERROR(LABEL, "Parse customProperty json failed or depth exceeded");
         }
     }
 }
