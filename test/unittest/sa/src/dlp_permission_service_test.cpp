@@ -1018,6 +1018,8 @@ HWTEST_F(DlpPermissionServiceTest, ParseDlpCertificate001, TestSize.Level1)
     std::shared_ptr<GenerateDlpCertificateCallback> callback1 =
         std::make_shared<ClientGenerateDlpCertificateCallback>();
     callback = new (std::nothrow) DlpPermissionAsyncStub(callback1);
+    std::string validJson = R"({"test":"value"})";
+    certParcel->cert = std::vector<uint8_t>(validJson.begin(), validJson.end());
     ret = dlpPermissionService_->ParseDlpCertificate(certParcel, callback, "", true);
     ASSERT_EQ(DLP_CREDENTIAL_ERROR_APPID_NOT_AUTHORIZED, ret);
 }

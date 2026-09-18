@@ -177,6 +177,8 @@ HWTEST_F(DlpPermissionServiceTest, ParseDlpCertificate003, TestSize.Level1)
         std::make_shared<ClientGenerateDlpCertificateCallback>();
     callback = new (std::nothrow) DlpPermissionAsyncStub(callback1);
     ASSERT_NE(callback, nullptr);
+    std::string validJson = R"({"test":"value"})";
+    certParcel->cert = std::vector<uint8_t>(validJson.begin(), validJson.end());
     std::string appId(MAX_APPID_SIZE + 1, 'a');
     int32_t ret = dlpPermissionService_->ParseDlpCertificate(certParcel, callback, appId, true);
     ASSERT_EQ(DLP_CREDENTIAL_ERROR_APPID_NOT_AUTHORIZED, ret);
@@ -186,6 +188,106 @@ HWTEST_F(DlpPermissionServiceTest, ParseDlpCertificate003, TestSize.Level1)
     certParcel->cert = std::vector<uint8_t>(MAX_CERT_SIZE + 1, 0x01);
     ret = dlpPermissionService_->ParseDlpCertificate(certParcel, callback, appId, true);
     ASSERT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, ret);
+}
+
+/**
+ * @tc.name: ParseDlpCertificate004
+ * @tc.desc: ParseDlpCertificate with json depth exceeded
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionServiceTest, ParseDlpCertificate004, TestSize.Level1)
+{
+    sptr<IDlpPermissionCallback> callback = nullptr;
+    sptr<CertParcel> certParcel = new (std::nothrow) CertParcel();
+    std::shared_ptr<GenerateDlpCertificateCallback> callback1 =
+        std::make_shared<ClientGenerateDlpCertificateCallback>();
+    callback = new (std::nothrow) DlpPermissionAsyncStub(callback1);
+    ASSERT_NE(callback, nullptr);
+    // build a deeply nested json exceeding MAX_JSON_DEPTH(64)
+    std::string deepJson;
+    for (int i = 0; i < 100; ++i) {
+        deepJson += "{\"a\":";
+    }
+    deepJson += "1";
+    for (int i = 0; i < 100; ++i) {
+        deepJson += "}";
+    }
+    certParcel->cert = std::vector<uint8_t>(deepJson.begin(), deepJson.end());
+    std::string appId = "testAppId";
+    int32_t ret = dlpPermissionService_->ParseDlpCertificate(certParcel, callback, appId, true);
+    ASSERT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, ret);
+}
+
+/**
+ * @tc.name: ParseDlpCertificate005
+ * @tc.desc: ParseDlpCertificate with invalid json format
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionServiceTest, ParseDlpCertificate005, TestSize.Level1)
+{
+    sptr<IDlpPermissionCallback> callback = nullptr;
+    sptr<CertParcel> certParcel = new (std::nothrow) CertParcel();
+    std::shared_ptr<GenerateDlpCertificateCallback> callback1 =
+        std::make_shared<ClientGenerateDlpCertificateCallback>();
+    callback = new (std::nothrow) DlpPermissionAsyncStub(callback1);
+    ASSERT_NE(callback, nullptr);
+    std::string invalidJson = "invalid json string";
+    certParcel->cert = std::vector<uint8_t>(invalidJson.begin(), invalidJson.end());
+    std::string appId = "testAppId";
+    int32_t ret = dlpPermissionService_->ParseDlpCertificate(certParcel, callback, appId, true);
+    ASSERT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, ret);
+}
+
+/**
+ * @tc.name: ParseDlpCertificate006
+ * @tc.desc: ParseDlpCertificate with non-object json
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionServiceTest, ParseDlpCertificate006, TestSize.Level1)
+{
+    sptr<IDlpPermissionCallback> callback = nullptr;
+    sptr<CertParcel> certParcel = new (std::nothrow) CertParcel();
+    std::shared_ptr<GenerateDlpCertificateCallback> callback1 =
+        std::make_shared<ClientGenerateDlpCertificateCallback>();
+    callback = new (std::nothrow) DlpPermissionAsyncStub(callback1);
+    ASSERT_NE(callback, nullptr);
+    // json array is not a valid cert object
+    std::string arrayJson = "[1,2,3]";
+    certParcel->cert = std::vector<uint8_t>(arrayJson.begin(), arrayJson.end());
+    std::string appId = "testAppId";
+    int32_t ret = dlpPermissionService_->ParseDlpCertificate(certParcel, callback, appId, true);
+    ASSERT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, ret);
+
+    // json string primitive is not a valid cert object
+    std::string strJson = "\"hello\"";
+    certParcel->cert = std::vector<uint8_t>(strJson.begin(), strJson.end());
+    ret = dlpPermissionService_->ParseDlpCertificate(certParcel, callback, appId, true);
+    ASSERT_EQ(DLP_SERVICE_ERROR_VALUE_INVALID, ret);
+}
+
+/**
+ * @tc.name: ParseDlpCertificate007
+ * @tc.desc: ParseDlpCertificate with valid shallow json passes depth check
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DlpPermissionServiceTest, ParseDlpCertificate007, TestSize.Level1)
+{
+    sptr<IDlpPermissionCallback> callback = nullptr;
+    sptr<CertParcel> certParcel = new (std::nothrow) CertParcel();
+    std::shared_ptr<GenerateDlpCertificateCallback> callback1 =
+        std::make_shared<ClientGenerateDlpCertificateCallback>();
+    callback = new (std::nothrow) DlpPermissionAsyncStub(callback1);
+    ASSERT_NE(callback, nullptr);
+    // valid shallow json object should pass depth check and reach appId check
+    std::string validJson = R"({"key":"value"})";
+    certParcel->cert = std::vector<uint8_t>(validJson.begin(), validJson.end());
+    std::string emptyAppId = "";
+    int32_t ret = dlpPermissionService_->ParseDlpCertificate(certParcel, callback, emptyAppId, true);
+    ASSERT_EQ(DLP_CREDENTIAL_ERROR_APPID_NOT_AUTHORIZED, ret);
 }
 
 /**
