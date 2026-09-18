@@ -63,6 +63,7 @@ ohos_shared_library("libdlp_setconfig_sdk") {
     "hilog:libhilog",
     "ipc:ipc_single",
     "json:nlohmann_json_static",
+    "c_utils:utils",
   ]
 
   cflags_cc = [ "-DHILOG_ENABLE" ]
