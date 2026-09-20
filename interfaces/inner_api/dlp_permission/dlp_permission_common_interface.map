@@ -1,0 +1,13 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
+ */
+ 
+{
+  global:
+    _ZN4OHOS8Security13DlpPermission13ParseFeaturesERKN8nlohmann16json_abi_v3_12_010basic_jsonINSt3__h3mapENS5_6vectorENS5_12basic_stringIcNS5_11char_traitsIcEENS5_9allocatorIcEEEEblmdSB_NS3_14adl_serializerENS7_IhNSB_IhEEEEvEERNS1_18GenerateInfoParamsE;
+    _ZN4OHOS8Security13DlpPermission16ParseGeneralInfoERKN8nlohmann16json_abi_v3_12_010basic_jsonINSt3__h3mapENS5_6vectorENS5_12basic_stringIcNS5_11char_traitsIcEENS5_9allocatorIcEEEEblmdSB_NS3_14adl_serializerENS7_IhNSB_IhEEEEvEERNS1_18GenerateInfoParamsE;
+    _ZN4OHOS8Security13DlpPermission19ParseDlpGeneralInfoERKNSt3__h12basic_stringIcNS2_11char_traitsIcEENS2_9allocatorIcEEEERNS1_18GenerateInfoParamsE;
+    _ZN4OHOS8Security13DlpPermission22GenerateDlpGeneralInfoERKNS1_18GenerateInfoParamsERNSt3__h12basic_stringIcNS5_11char_traitsIcEENS5_9allocatorIcEEEE;
+  local:
+    *;
+};
