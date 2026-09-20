@@ -394,6 +394,31 @@ static bool GetApplicationInfo(std::string appId, AppExecFwk::ApplicationInfo& a
     return true;
 }
 
+static int32_t CheckCertParcelValid(const sptr<CertParcel>& certParcel,
+    const sptr<IDlpPermissionCallback>& callback)
+{
+    if (callback == nullptr || certParcel->cert.size() > MAX_CERT_SIZE) {
+        DLP_LOG_ERROR(LABEL, "Callback is null or cert is invalid");
+        return DLP_SERVICE_ERROR_VALUE_INVALID;
+    }
+    std::string certJsonStr(certParcel->cert.begin(), certParcel->cert.end());
+    unordered_json certJsonObj;
+    if (!ParseJsonWithDepthCheck(certJsonStr, certJsonObj)) {
+        DLP_LOG_ERROR(LABEL, "Cert json is invalid or depth exceeded limit");
+        return DLP_SERVICE_ERROR_VALUE_INVALID;
+    }
+    if (certParcel->isNeedAdapter && !certParcel->offlineCert.empty() &&
+        certParcel->offlineCert.size() <= MAX_CERT_SIZE) {
+        std::string offlineJsonStr(certParcel->offlineCert.begin(), certParcel->offlineCert.end());
+        unordered_json offlineJsonObj;
+        if (!ParseJsonWithDepthCheck(offlineJsonStr, offlineJsonObj)) {
+            DLP_LOG_ERROR(LABEL, "Offline cert json is invalid or depth exceeded limit");
+            return DLP_SERVICE_ERROR_VALUE_INVALID;
+        }
+    }
+    return DLP_OK;
+}
+
 int32_t DlpPermissionService::ParseDlpCertificate(const sptr<CertParcel>& certParcel,
     const sptr<IDlpPermissionCallback>& callback, const std::string& appId, bool offlineAccess)
 {
@@ -413,29 +438,15 @@ int32_t DlpPermissionService::ParseDlpCertificate(const sptr<CertParcel>& certPa
         !(appIdentifier == MDM_APPIDENTIFIER)) {
         return DLP_SERVICE_ERROR_PERMISSION_DENY;
     }
-    if (callback == nullptr || certParcel->cert.size() > MAX_CERT_SIZE) {
-        DLP_LOG_ERROR(LABEL, "Callback is null or cert is invalid");
-        return DLP_SERVICE_ERROR_VALUE_INVALID;
-    }
-    std::string certJsonStr(certParcel->cert.begin(), certParcel->cert.end());
-    unordered_json certJsonObj;
-    if (!ParseJsonWithDepthCheck(certJsonStr, certJsonObj)) {
-        DLP_LOG_ERROR(LABEL, "Cert json is invalid or depth exceeded limit");
-        return DLP_SERVICE_ERROR_VALUE_INVALID;
-    }
-    if (!certParcel->offlineCert.empty() && certParcel->offlineCert.size() <= MAX_CERT_SIZE) {
-        std::string offlineJsonStr(certParcel->offlineCert.begin(), certParcel->offlineCert.end());
-        unordered_json offlineJsonObj;
-        if (!ParseJsonWithDepthCheck(offlineJsonStr, offlineJsonObj)) {
-            DLP_LOG_ERROR(LABEL, "Offline cert json is invalid or depth exceeded limit");
-            return DLP_SERVICE_ERROR_VALUE_INVALID;
-        }
+    int32_t ret = CheckCertParcelValid(certParcel, callback);
+    if (ret != DLP_OK) {
+        return ret;
     }
     if (appId.empty() || appId.size() > MAX_APPID_SIZE) {
         DLP_LOG_ERROR(LABEL, "AppId is invalid");
         return DLP_CREDENTIAL_ERROR_APPID_NOT_AUTHORIZED;
     }
-    int32_t ret = PermissionManagerAdapter::CheckAuthPolicy(appId, certParcel->realFileType,
+    ret = PermissionManagerAdapter::CheckAuthPolicy(appId, certParcel->realFileType,
         certParcel->allowedOpenCount);
     if (ret != DLP_OK) {
         DLP_LOG_ERROR(LABEL, "CheckAuthPolicy error");
