@@ -19,7 +19,6 @@
 #include "napi_dia_error_msg.h"
 #include "napi_dia_common.h"
 #include "accesstoken_kit.h"
-#include "ipc_skeleton.h"
 #include "token_setproc.h"
 
 namespace OHOS::Security::DIA {
