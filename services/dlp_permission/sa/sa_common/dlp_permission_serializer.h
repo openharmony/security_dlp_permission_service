@@ -26,6 +26,13 @@ namespace OHOS {
 namespace Security {
 namespace DlpPermission {
 using unordered_json = nlohmann::ordered_json;
+constexpr int32_t MAX_JSON_DEPTH = 64;
+
+// Parses JSON with depth-limiting callback to prevent stack overflow from deeply nested input.
+// Returns true if parse succeeded, depth is within MAX_JSON_DEPTH, and result is an object.
+// On success, parsed JSON is stored in 'out'. Returns false otherwise.
+bool ParseJsonWithDepthCheck(const std::string& jsonStr, unordered_json& out);
+
 class DlpPermissionSerializer {
 public:
     static DlpPermissionSerializer& GetInstance();

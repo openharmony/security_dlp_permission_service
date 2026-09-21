@@ -325,14 +325,13 @@ static bool SetPermissionPolicy(DLP_RestorePolicyData* outParams, sptr<IDlpPermi
         return false;
     }
     policyStr[outParams->dataLen] = '\0';
-    jsonObj = unordered_json::parse(policyStr, policyStr + outParams->dataLen + 1, nullptr, false);
-    if (jsonObj.is_discarded() || (!jsonObj.is_object())) {
-        DLP_LOG_ERROR(LABEL, "JsonObj is discarded");
-        FreeBuffer(&policyStr, outParams->dataLen + 1);
+    std::string policyJsonStr(policyStr, outParams->dataLen);
+    FreeBuffer(&policyStr, outParams->dataLen + 1);
+    if (!ParseJsonWithDepthCheck(policyJsonStr, jsonObj)) {
+        DLP_LOG_ERROR(LABEL, "JsonObj is invalid or depth exceeded");
         callback->OnParseDlpCertificate(DLP_SERVICE_ERROR_JSON_OPERATE_FAIL, policyInfo, {});
         return false;
     }
-    FreeBuffer(&policyStr, outParams->dataLen + 1);
     auto res = DlpPermissionSerializer::GetInstance().DeserializeDlpPermission(jsonObj, policyInfo);
     if (res != DLP_OK) {
         callback->OnParseDlpCertificate(res, policyInfo, {});
@@ -667,9 +666,8 @@ static int32_t AdapterData(const std::vector<uint8_t>& offlineCert, bool isOwner
     unordered_json offlineJsonObj;
     if (!offlineCert.empty()) {
         std::string offlineEncDataJsonStr(offlineCert.begin(), offlineCert.end());
-        offlineJsonObj = unordered_json::parse(offlineEncDataJsonStr, nullptr, false);
-        if (offlineJsonObj.is_discarded()) {
-            DLP_LOG_ERROR(LABEL, "offlineJsonObj is discarded");
+        if (!ParseJsonWithDepthCheck(offlineEncDataJsonStr, offlineJsonObj)) {
+            DLP_LOG_ERROR(LABEL, "offlineJsonObj is invalid or depth exceeded");
             return DLP_SERVICE_ERROR_JSON_OPERATE_FAIL;
         }
     }
@@ -741,8 +739,8 @@ int32_t DlpCredential::ParseDlpCertificate(const sptr<CertParcel>& certParcel,
     AppExecFwk::ApplicationInfo& applicationInfo)
 {
     std::string encDataJsonStr(certParcel->cert.begin(), certParcel->cert.end());
-    auto jsonObj = unordered_json::parse(encDataJsonStr, nullptr, false);
-    if (jsonObj.is_discarded() || (!jsonObj.is_object())) {
+    unordered_json jsonObj;
+    if (!ParseJsonWithDepthCheck(encDataJsonStr, jsonObj)) {
         return DLP_SERVICE_ERROR_JSON_OPERATE_FAIL;
     }
     EncAndDecOptions options;
