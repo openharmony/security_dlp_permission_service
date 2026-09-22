@@ -5,9 +5,32 @@
 {
   global:
     __SystemAbility*;
-    _ZN4OHOS8Security13DlpPermission20DlpPermissionService*;
     extern "C++" {
       *DlpAbility*;
+      OHOS::Security::DlpPermission::DlpPermissionService::Init*;
+      OHOS::Security::DlpPermission::DlpPermissionService::Set*;
+      OHOS::Security::DlpPermission::DlpPermissionService::Get*;
+      OHOS::Security::DlpPermission::DlpPermissionService::Check*;
+      OHOS::Security::DlpPermission::DlpPermissionService::On*;
+      OHOS::Security::DlpPermission::DlpPermissionService::Register*;
+      OHOS::Security::DlpPermission::DlpPermissionService::Unregister*;
+      OHOS::Security::DlpPermission::DlpPermissionService::Remove*;
+      OHOS::Security::DlpPermission::DlpPermissionService::Install*;
+      OHOS::Security::DlpPermission::DlpPermissionService::Uninstall*;
+      OHOS::Security::DlpPermission::DlpPermissionService::Is*;
+      OHOS::Security::DlpPermission::DlpPermissionService::Sandbox*;
+      OHOS::Security::DlpPermission::DlpPermissionService::Query*;
+      OHOS::Security::DlpPermission::DlpPermissionService::Generate*;
+      OHOS::Security::DlpPermission::DlpPermissionService::Parse*;
+      OHOS::Security::DlpPermission::DlpPermissionService::Clean*;
+      OHOS::Security::DlpPermission::DlpPermissionService::Handle*;
+      OHOS::Security::DlpPermission::DlpPermissionService::Delete*;
+      OHOS::Security::DlpPermission::DlpPermissionService::Insert*;
+      OHOS::Security::DlpPermission::DlpPermissionService::Update*;
+      OHOS::Security::DlpPermission::DlpPermissionService::Del*;
+      OHOS::Security::DlpPermission::DlpPermissionService::Dump*;
+      OHOS::Security::DlpPermission::DlpPermissionService::DlpPermissionService*;
+      OHOS::Security::DlpPermission::DlpPermissionService::~DlpPermissionService*;
     };
   local:
     *;
