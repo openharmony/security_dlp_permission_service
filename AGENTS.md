@@ -2,7 +2,7 @@
 
 ## 项目定位
 
-本仓库对应 OpenHarmony `base/security/dlp_permission_service`。DLP（Data Leak Prevention，数据防泄漏）权限管理服务为终端用户提供对文档的权限保护能力：给原始文件添加权限保护、为指定终端用户授予只读/编辑权限，生成 DLP 权限保护文件（简称 DLP 文件）；只有经授权的终端用户才能通过系统能力访问解密内容。本仓 SA ID = 3521，进程名 `dlp_permission_service`，UID `dlp_permission`，APL `system_basic`，SysCap `SystemCapability.Security.DataLossPrevention`。
+本仓库对应 OpenHarmony `base/security/dlp_permission_service`。DLP（Data Loss Prevention，数据防泄漏）权限管理服务为终端用户提供对文档的权限保护能力：给原始文件添加权限保护、为指定终端用户授予只读/编辑权限，生成 DLP 权限保护文件（简称 DLP 文件）；只有经授权的终端用户才能通过系统能力访问解密内容。本仓 SA ID = 3521，进程名 `dlp_permission_service`，UID `dlp_permission`，APL `system_basic`，SysCap `SystemCapability.Security.DataLossPrevention`。
 
 本仓分四层：
 
