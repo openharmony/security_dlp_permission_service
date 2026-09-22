@@ -21,10 +21,12 @@ namespace OHOS::Security::DIA {
 
 static const std::unordered_map<int32_t, std::string> DIA_JS_ERROR_MSG_MAP = {
     //  error + message
-    { ERR_DIA_JS_SUCCESS, "success" },
-    { ERR_DIA_JS_PERMISSION_DENIED, "Permission denied." },
+    { ERR_DIA_JS_SUCCESS, "Success" },
+    { ERR_DIA_JS_PERMISSION_DENIED,
+        "Permission verification failed. The application does not have the permission required to call the API." },
     { ERR_DIA_JS_PARAMETER_ERROR, "Parameter type error, please check parameter type." },
-    { ERR_DIA_JS_CAPABILITY_NOT_SUPPORTED, "Capability is not supported." },
+    { ERR_DIA_JS_CAPABILITY_NOT_SUPPORTED,
+        "Capability not supported. Possible causes: The device type does not support the capability." },
     { ERR_DIA_JS_INVALID_PARAMETER, "Parameter error" },
     { ERR_DIA_JS_TIME_OUT, "Sensitive file content identification timed out." },
     { ERR_DIA_JS_FILE_NOT_SUPPORTED, "The file is not supported." },
