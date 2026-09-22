@@ -42,6 +42,7 @@ ohos_shared_library("identifysensitivecontent_napi") {
     "ipc:ipc_core",
     "napi:ace_napi",
     "libuv:uv",
+    "c_utils:utils",
     "node:node_header_notice",
   ]
 
