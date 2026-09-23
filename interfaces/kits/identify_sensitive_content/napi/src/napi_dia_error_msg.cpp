@@ -21,7 +21,7 @@ namespace OHOS::Security::DIA {
 
 static const std::unordered_map<int32_t, std::string> DIA_JS_ERROR_MSG_MAP = {
     //  error + message
-    { ERR_DIA_JS_SUCCESS, "Success" },
+    { ERR_DIA_JS_SUCCESS, "Success." },
     { ERR_DIA_JS_PERMISSION_DENIED,
         "Permission verification failed. The application does not have the permission required to call the API." },
     {ERR_DIA_JS_PARAMETER_ERROR,
