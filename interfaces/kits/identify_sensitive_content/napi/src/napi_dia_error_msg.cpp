@@ -24,7 +24,7 @@ static const std::unordered_map<int32_t, std::string> DIA_JS_ERROR_MSG_MAP = {
     { ERR_DIA_JS_SUCCESS, "Success." },
     { ERR_DIA_JS_PERMISSION_DENIED,
         "Permission verification failed. The application does not have the permission required to call the API." },
-    {ERR_DIA_JS_PARAMETER_ERROR,
+    { ERR_DIA_JS_PARAMETER_ERROR,
         "Parameter error. Possible causes: 1.Mandatory parameters are left unspecified. "
         "2.Incorrect parameter types. 3.Parameter verification failed."},
     { ERR_DIA_JS_CAPABILITY_NOT_SUPPORTED,
