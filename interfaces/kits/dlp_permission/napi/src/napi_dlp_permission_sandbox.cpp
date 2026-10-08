@@ -167,9 +167,9 @@ void NapiDlpPermission::UninstallDlpSandboxExcute(napi_env env, void* data)
         DLP_LOG_ERROR(LABEL, "asyncContext is nullptr");
         return;
     }
-
+    SandboxInfo sandboxInfo = asyncContext->sandboxInfo;
     asyncContext->errCode = DlpPermissionKit::UninstallDlpSandbox(
-        asyncContext->bundleName, asyncContext->sandboxInfo.appIndex, asyncContext->userId);
+        asyncContext->bundleName, sandboxInfo.appIndex, asyncContext->userId);
 }
 
 void NapiDlpPermission::UninstallDlpSandboxComplete(napi_env env, napi_status status, void* data)
