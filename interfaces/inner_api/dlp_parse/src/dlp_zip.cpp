@@ -190,7 +190,8 @@ static void *FdOpenFileFunc(void *opaque, const char *filename, int mode)
         if (fd != -1) {
             file = fdopen(fd, modeFopen);
             if (file == nullptr) {
-                close(fd);
+                DlpFdsanMark(fd);
+                (void)DlpFdsanClose(fd);
             }
         }
     }
